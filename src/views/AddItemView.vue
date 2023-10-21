@@ -1,12 +1,12 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useFirestore } from 'vuefire'
+import { RouterLink, useRouter } from 'vue-router'
+import { useFirestore, useCurrentUser } from 'vuefire'
 import { collection, addDoc } from 'firebase/firestore'
-import { useFirebaseAuth } from 'vuefire'
 
 const db = useFirestore()
 const router = useRouter()
+const user = useCurrentUser()
 
 const newItem = ref({
 	name: '',
@@ -31,8 +31,8 @@ async function addItem() {
 </script>
 
 <template>
-	<div class="p-4 pt-8">
-		<h2 class="text-xl font-bold mb-6 h2">Add item</h2>
+	<div v-if="user?.email" class="p-4 pt-8">
+		<h2 class="text-xl font-bold mb-6">Add item</h2>
 		<form @submit.prevent="addItem">
 			<label for="name">Name</label>
 			<input type="text" id="name" v-model="newItem.name" required />
@@ -50,6 +50,9 @@ async function addItem() {
 			<input type="text" id="category" v-model="newItem.category" required />
 			<button type="submit">Add new item</button>
 		</form>
+	</div>
+	<div v-else class="p-4 pt-8">
+		<RouterLink to="/login">Login to view this page</RouterLink>
 	</div>
 </template>
 
