@@ -2,12 +2,16 @@
 import { RouterLink, RouterView } from 'vue-router'
 import { useCurrentUser } from 'vuefire'
 
+import HeaderBanner from './components/HeaderBanner.vue'
+import HeaderIntro from './components/HeaderIntro.vue'
+
 const user = useCurrentUser()
 </script>
 
 <template>
 	<header>
-		<h1 class="text-3xl font-bold underline">verzion's price guide</h1>
+		<HeaderBanner />
+		<HeaderIntro />
 		<div class="wrapper">
 			<nav>
 				<RouterLink to="/">Home</RouterLink>
