@@ -7,7 +7,7 @@ const user = useCurrentUser()
 
 <template>
 	<header>
-		<h1>verzion's price guide</h1>
+		<h1 class="text-3xl font-bold underline">verzion's price guide</h1>
 		<div class="wrapper">
 			<nav>
 				<RouterLink to="/">Home</RouterLink>
