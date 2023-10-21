@@ -1,0 +1,67 @@
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useFirestore } from 'vuefire'
+import { collection, addDoc } from 'firebase/firestore'
+import { useFirebaseAuth } from 'vuefire'
+
+const db = useFirestore()
+const router = useRouter()
+
+const newItem = ref({
+	name: '',
+	material_id: '',
+	image: '',
+	url: '',
+	price: 1,
+	stack: 64,
+	category: ''
+})
+
+// Add a new document with a generated id.
+async function addItem() {
+	const newDoc = await addDoc(collection(db, 'items'), {
+		...newItem.value
+	})
+
+	if (newDoc.id) {
+		router.push('/')
+	}
+}
+</script>
+
+<template>
+	<div class="p-4 pt-8">
+		<h2 class="text-xl font-bold mb-6 h2">Add item</h2>
+		<form @submit.prevent="addItem">
+			<label for="name">Name</label>
+			<input type="text" id="name" v-model="newItem.name" required />
+			<label for="materialId">Material ID</label>
+			<input type="text" id="materialId" v-model="newItem.material_id" required />
+			<label for="image">Image</label>
+			<input type="text" id="image" v-model="newItem.image" required />
+			<label for="url">Url</label>
+			<input type="text" id="url" v-model="newItem.url" required />
+			<label for="price">Price</label>
+			<input type="number" id="price" v-model="newItem.price" required />
+			<label for="stack">Stack</label>
+			<input type="number" id="stack" v-model="newItem.stack" required />
+			<label for="category">Category</label>
+			<input type="text" id="category" v-model="newItem.category" required />
+			<button type="submit">Add new item</button>
+		</form>
+	</div>
+</template>
+
+<style lang="scss" scoped>
+label {
+	@apply block text-base font-medium leading-6 text-gray-900;
+}
+input[type='text'],
+input[type='number'] {
+	@apply block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;
+}
+button {
+	@apply rounded-md bg-gray-asparagus px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600;
+}
+</style>
