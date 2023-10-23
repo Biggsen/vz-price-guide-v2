@@ -5,7 +5,8 @@ module.exports = {
 		extend: {
 			colors: {
 				'gray-asparagus': '#49584b',
-				laurel: '#789471'
+				laurel: '#789471',
+				norway: '#a7c3a0'
 			}
 		}
 	},
