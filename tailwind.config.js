@@ -6,7 +6,8 @@ module.exports = {
 			colors: {
 				'gray-asparagus': '#49584b',
 				laurel: '#789471',
-				norway: '#a7c3a0'
+				norway: '#a7c3a0',
+				'heavy-metal': '#242c25'
 			}
 		}
 	},

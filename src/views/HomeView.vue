@@ -7,67 +7,85 @@ import ItemTable from '../components/ItemTable.vue'
 
 const db = useFirestore()
 
-const qDrops = query(
-	collection(db, 'items'),
-	where('category', '==', 'drops'),
-	orderBy('name', 'asc')
-)
-const qEarth = query(
-	collection(db, 'items'),
-	where('category', '==', 'earth'),
-	orderBy('name', 'asc')
-)
-const qFood = query(
-	collection(db, 'items'),
-	where('category', '==', 'food'),
-	orderBy('name', 'asc')
-)
-const qStone = query(
-	collection(db, 'items'),
-	where('category', '==', 'stone'),
-	orderBy('name', 'asc')
-)
-const qSand = query(
-	collection(db, 'items'),
-	where('category', '==', 'sand'),
-	orderBy('name', 'asc')
-)
-const qWood = query(
-	collection(db, 'items'),
-	where('category', '==', 'wood'),
-	orderBy('name', 'asc')
-)
-const qUtility = query(
-	collection(db, 'items'),
-	where('category', '==', 'utility'),
-	orderBy('name', 'asc')
-)
 const qOres = query(
 	collection(db, 'items'),
 	where('category', '==', 'ores'),
 	orderBy('name', 'asc')
 )
 
-const dropsCollection = useCollection(qDrops)
-const earthCollection = useCollection(qEarth)
-const foodCollection = useCollection(qFood)
+const qStone = query(
+	collection(db, 'items'),
+	where('category', '==', 'stone'),
+	orderBy('name', 'asc')
+)
+
+const qEarth = query(
+	collection(db, 'items'),
+	where('category', '==', 'earth'),
+	orderBy('name', 'asc')
+)
+
+const qSand = query(
+	collection(db, 'items'),
+	where('category', '==', 'sand'),
+	orderBy('name', 'asc')
+)
+
+const qWood = query(
+	collection(db, 'items'),
+	where('category', '==', 'wood'),
+	orderBy('name', 'asc')
+)
+
+const qDrops = query(
+	collection(db, 'items'),
+	where('category', '==', 'drops'),
+	orderBy('name', 'asc')
+)
+
+const qFood = query(
+	collection(db, 'items'),
+	where('category', '==', 'food'),
+	orderBy('name', 'asc')
+)
+
+const qUtility = query(
+	collection(db, 'items'),
+	where('category', '==', 'utility'),
+	orderBy('name', 'asc')
+)
+
+const oresCollection = useCollection(qOres)
 const stoneCollection = useCollection(qStone)
+const earthCollection = useCollection(qEarth)
 const sandCollection = useCollection(qSand)
 const woodCollection = useCollection(qWood)
+const dropsCollection = useCollection(qDrops)
+const foodCollection = useCollection(qFood)
 const utilityCollection = useCollection(qUtility)
-const oresCollection = useCollection(qOres)
+
+const categories = ['ores', 'stone', 'earth', 'sand', 'wood', 'drops', 'food', 'utility']
 </script>
 
 <template>
-	<main>
+	<main id="top">
 		<HeaderIntro />
-		<ItemTable :collection="oresCollection" />
-		<ItemTable :collection="stoneCollection" />
-		<ItemTable :collection="earthCollection" />
-		<ItemTable :collection="sandCollection" />
-		<ItemTable :collection="woodCollection" />
-		<ItemTable :collection="dropsCollection" />
-		<ItemTable :collection="foodCollection" />
-		<ItemTable :collection="utilityCollection" />
+		<nav class="bg-norway border-2 border-white p-3 px-10">
+			<ul class="flex justify-between">
+				<li v-for="(cat, index) in categories">
+					<a :href="`#${cat}`" class="capitalize underline hover:text-gray-asparagus">{{
+						cat
+					}}</a>
+				</li>
+			</ul>
+		</nav>
+		<ItemTable :collection="oresCollection" :categories="categories" />
+		<ItemTable :collection="stoneCollection" :categories="categories" />
+		<ItemTable :collection="earthCollection" :categories="categories" />
+		<ItemTable :collection="sandCollection" :categories="categories" />
+		<ItemTable :collection="woodCollection" :categories="categories" />
+		<ItemTable :collection="dropsCollection" :categories="categories" />
+		<ItemTable :collection="foodCollection" :categories="categories" />
+		<ItemTable :collection="utilityCollection" :categories="categories" />
 	</main>
 </template>
