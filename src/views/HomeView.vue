@@ -88,4 +88,12 @@ const categories = ['ores', 'stone', 'earth', 'sand', 'wood', 'drops', 'food', '
 		<ItemTable :collection="foodCollection" :categories="categories" />
 		<ItemTable :collection="utilityCollection" :categories="categories" />
 	</main>
+	<footer class="bg-heavy-metal p-3 border-2 border-white">
+		<a href="#top" class="text-norway underline block mb-4 text-sm">Back to top</a>
+		<p class="text-norway text-sm">
+			© Copyright 2021 Devillion Ltd<br />
+			minecraft-economy-price-guide.net is not affiliated with
+			<a href="https://minecraft.net/" class="underline">Mojang</a>.
+		</p>
+	</footer>
 </template>
