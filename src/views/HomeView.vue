@@ -72,21 +72,21 @@ const categories = ['ores', 'stone', 'earth', 'sand', 'wood', 'drops', 'food', '
 		<HeaderIntro />
 		<nav class="bg-norway border-2 border-white p-3 px-10">
 			<ul class="flex justify-between">
-				<li v-for="(cat, index) in categories">
+				<li v-for="(cat, index) in categories" :key="index">
 					<a :href="`#${cat}`" class="capitalize underline hover:text-gray-asparagus">{{
 						cat
 					}}</a>
 				</li>
 			</ul>
 		</nav>
-		<ItemTable :collection="oresCollection" :categories="categories" />
-		<ItemTable :collection="stoneCollection" :categories="categories" />
-		<ItemTable :collection="earthCollection" :categories="categories" />
-		<ItemTable :collection="sandCollection" :categories="categories" />
-		<ItemTable :collection="woodCollection" :categories="categories" />
-		<ItemTable :collection="dropsCollection" :categories="categories" />
-		<ItemTable :collection="foodCollection" :categories="categories" />
-		<ItemTable :collection="utilityCollection" :categories="categories" />
+		<ItemTable :collection="oresCollection" category="ores" :categories="categories" />
+		<ItemTable :collection="stoneCollection" category="stone" :categories="categories" />
+		<ItemTable :collection="earthCollection" category="earth" :categories="categories" />
+		<ItemTable :collection="sandCollection" category="sand" :categories="categories" />
+		<ItemTable :collection="woodCollection" category="wood" :categories="categories" />
+		<ItemTable :collection="dropsCollection" category="drops" :categories="categories" />
+		<ItemTable :collection="foodCollection" category="food" :categories="categories" />
+		<ItemTable :collection="utilityCollection" category="utility" :categories="categories" />
 	</main>
 	<footer class="bg-heavy-metal p-3 border-2 border-white">
 		<a href="#top" class="text-norway underline block mb-4 text-sm">Back to top</a>

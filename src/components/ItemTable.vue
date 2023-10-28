@@ -3,16 +3,17 @@ const props = defineProps({
 	collection: {
 		type: Object
 	},
+	category: {
+		type: String
+	},
 	categories: {
 		type: Array
 	}
 })
 
-const category = props.collection[0].category
-
-const currentCatIndex = props.categories.indexOf(category)
 let prevCat = ''
 let nextCat = ''
+const currentCatIndex = props.categories.indexOf(props.category)
 if (currentCatIndex !== 0) {
 	prevCat = props.categories[currentCatIndex - 1]
 }
@@ -27,10 +28,10 @@ if (currentCatIndex !== props.categories.length - 1) {
 		<a href="#top">↑ Back to top</a>
 		<a v-if="nextCat !== ''" :href="`#${nextCat}`">{{ nextCat }} ↓</a>
 	</nav>
-	<table class="table-auto">
+	<table v-if="collection.length > 0" class="table-auto">
 		<caption :id="category == 'ores' ? 'ores' : ''">
 			{{
-				collection[0].category
+				category
 			}}
 		</caption>
 		<thead>
