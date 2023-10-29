@@ -1,5 +1,5 @@
 <template>
-	<div class="p-4 prose leading-5">
+	<div class="p-4 prose-sm sm:prose leading-5">
 		<p><strong>This is a work in progress</strong></p>
 		<p>
 			This economy price guide is based off of Naughty_UK's super useful

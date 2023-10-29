@@ -61,7 +61,7 @@ if (currentCatIndex !== props.categories.length - 1) {
 					>
 				</th>
 				<td width="5%">
-					<img :src="item.image" alt="" class="max-w-[50px]" />
+					<img :src="item.image" alt="" class="max-w-[30px] lg:max-w-[50px]" />
 				</td>
 				<td class="text-center">{{ item.price }}</td>
 
@@ -78,14 +78,14 @@ if (currentCatIndex !== props.categories.length - 1) {
 
 <style lang="scss" scoped>
 nav {
-	@apply bg-norway border-x-2 border-white border-b-4 py-2 px-4 flex justify-between;
+	@apply bg-norway border-x-2 border-white border-b-4 py-1 sm:py-2 px-3 sm:px-4 flex justify-between;
 	a {
-		@apply text-heavy-metal text-base font-bold capitalize underline;
+		@apply text-heavy-metal text-sm sm:text-base font-bold capitalize underline;
 	}
 }
 
 caption {
-	@apply bg-gray-asparagus text-white text-xl capitalize font-bold py-5 border-2 border-white border-b-0;
+	@apply bg-gray-asparagus text-white text-base sm:text-xl capitalize font-bold py-2 sm:py-5 border-2 border-white border-b-0;
 }
 
 thead th {
@@ -101,6 +101,6 @@ tbody {
 
 th,
 td {
-	@apply border-2 border-white px-3 py-1;
+	@apply text-sm sm:text-base border-2 border-white px-1 sm:px-3 py-0.5 sm:py-1;
 }
 </style>
