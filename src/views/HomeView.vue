@@ -76,8 +76,8 @@ const economyConfig = {
 	<main>
 		<HeaderIntro />
 		<nav id="top" class="bg-norway border-2 border-white p-3 sm:px-10 text-sm sm:text-base">
-			<ul class="flex justify-between flex-wrap">
-				<li v-for="(cat, index) in categories" :key="index">
+			<ul class="flex sm:justify-between flex-wrap">
+				<li v-for="(cat, index) in categories" :key="index" class="mr-3 last:mr-0">
 					<a :href="`#${cat}`" class="capitalize underline hover:text-gray-asparagus">{{
 						cat
 					}}</a>
