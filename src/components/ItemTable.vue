@@ -8,6 +8,9 @@ const props = defineProps({
 	},
 	categories: {
 		type: Array
+	},
+	economyConfig: {
+		type: Object
 	}
 })
 
@@ -19,6 +22,35 @@ if (currentCatIndex !== 0) {
 }
 if (currentCatIndex !== props.categories.length - 1) {
 	nextCat = props.categories[currentCatIndex + 1]
+}
+
+const priceMultiplier = props.economyConfig.priceMultiplier
+const sellMargin = props.economyConfig.sellMargin
+
+function buyUnitPrice(price) {
+	return price * priceMultiplier
+}
+
+function sellUnitPrice(price) {
+	const sellPrice = price * sellMargin
+	if (sellPrice < 1) {
+		return +parseFloat(sellPrice).toFixed(2)
+	} else {
+		return Math.round(sellPrice)
+	}
+}
+
+function buyStackPrice(price, stack) {
+	return price * stack * priceMultiplier
+}
+
+function sellStackPrice(price, stack) {
+	const sellPrice = price * stack * sellMargin
+	if (sellPrice < 1) {
+		return +parseFloat(sellPrice).toFixed(2)
+	} else {
+		return Math.round(sellPrice)
+	}
 }
 </script>
 
@@ -63,13 +95,15 @@ if (currentCatIndex !== props.categories.length - 1) {
 				<td width="5%">
 					<img :src="item.image" alt="" class="max-w-[30px] lg:max-w-[50px]" />
 				</td>
-				<td class="text-center">{{ item.price }}</td>
+				<td class="text-center">{{ buyUnitPrice(item.price) }}</td>
 
-				<td class="text-center">{{ +parseFloat(item.price * 0.3).toFixed(2) }}</td>
+				<td class="text-center">{{ sellUnitPrice(item.price) }}</td>
 
-				<td class="text-center">{{ item.price * item.stack }}</td>
 				<td class="text-center">
-					{{ +parseFloat(item.price * 0.3 * item.stack).toFixed(2) }}
+					{{ buyStackPrice(item.price, item.stack) }}
+				</td>
+				<td class="text-center">
+					{{ sellStackPrice(item.price, item.stack) }}
 				</td>
 			</tr>
 		</tbody>

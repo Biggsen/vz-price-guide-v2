@@ -65,6 +65,11 @@ const foodCollection = useCollection(qFood)
 const utilityCollection = useCollection(qUtility)
 
 const categories = ['ores', 'stone', 'earth', 'sand', 'wood', 'drops', 'food', 'utility']
+
+const economyConfig = {
+	priceMultiplier: 1,
+	sellMargin: 0.3
+}
 </script>
 
 <template>
@@ -79,14 +84,54 @@ const categories = ['ores', 'stone', 'earth', 'sand', 'wood', 'drops', 'food', '
 				</li>
 			</ul>
 		</nav>
-		<ItemTable :collection="oresCollection" category="ores" :categories="categories" />
-		<ItemTable :collection="stoneCollection" category="stone" :categories="categories" />
-		<ItemTable :collection="earthCollection" category="earth" :categories="categories" />
-		<ItemTable :collection="sandCollection" category="sand" :categories="categories" />
-		<ItemTable :collection="woodCollection" category="wood" :categories="categories" />
-		<ItemTable :collection="dropsCollection" category="drops" :categories="categories" />
-		<ItemTable :collection="foodCollection" category="food" :categories="categories" />
-		<ItemTable :collection="utilityCollection" category="utility" :categories="categories" />
+		<ItemTable
+			:collection="oresCollection"
+			category="ores"
+			:categories="categories"
+			:economyConfig="economyConfig"
+		/>
+		<ItemTable
+			:collection="stoneCollection"
+			category="stone"
+			:categories="categories"
+			:economyConfig="economyConfig"
+		/>
+		<ItemTable
+			:collection="earthCollection"
+			category="earth"
+			:categories="categories"
+			:economyConfig="economyConfig"
+		/>
+		<ItemTable
+			:collection="sandCollection"
+			category="sand"
+			:categories="categories"
+			:economyConfig="economyConfig"
+		/>
+		<ItemTable
+			:collection="woodCollection"
+			category="wood"
+			:categories="categories"
+			:economyConfig="economyConfig"
+		/>
+		<ItemTable
+			:collection="dropsCollection"
+			category="drops"
+			:categories="categories"
+			:economyConfig="economyConfig"
+		/>
+		<ItemTable
+			:collection="foodCollection"
+			category="food"
+			:categories="categories"
+			:economyConfig="economyConfig"
+		/>
+		<ItemTable
+			:collection="utilityCollection"
+			category="utility"
+			:categories="categories"
+			:economyConfig="economyConfig"
+		/>
 	</main>
 	<footer class="bg-heavy-metal p-3 border-2 border-white">
 		<a href="#top" class="text-norway underline block mb-4 text-sm">Back to top</a>
