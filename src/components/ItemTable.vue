@@ -41,7 +41,9 @@ function sellUnitPrice(price) {
 }
 
 function buyStackPrice(price, stack) {
-	return price * stack * priceMultiplier
+	let buyPrice = price * stack * priceMultiplier
+	buyPrice = buyPrice.toString().replace('000', 'k')
+	return buyPrice
 }
 
 function sellStackPrice(price, stack) {
