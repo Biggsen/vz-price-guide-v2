@@ -1,4 +1,7 @@
 <script setup>
+import { useCurrentUser } from 'vuefire'
+const user = useCurrentUser()
+
 const props = defineProps({
 	collection: {
 		type: Object
@@ -75,6 +78,7 @@ function sellStackPrice(price, stack) {
 				<th rowspan="2"></th>
 				<th colspan="2">Unit Price</th>
 				<th colspan="2">Stack Price</th>
+				<th rowspan="2" v-if="user?.email">Actions</th>
 			</tr>
 			<tr>
 				<th>Buy</th>
@@ -106,6 +110,13 @@ function sellStackPrice(price, stack) {
 				</td>
 				<td class="text-center">
 					{{ sellStackPrice(item.price, item.stack) }}
+				</td>
+				<td v-if="user?.email">
+					<a
+						:href="`/edit/${item.id}`"
+						class="text-white bg-gray-asparagus px-4 py-2 hover:bg-heavy-metal"
+						>Edit</a
+					>
 				</td>
 			</tr>
 		</tbody>
