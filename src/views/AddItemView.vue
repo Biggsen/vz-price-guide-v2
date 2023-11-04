@@ -15,7 +15,8 @@ const newItemInitial = ref({
 	url: '',
 	price: 1,
 	stack: 64,
-	category: ''
+	category: '',
+	subcategory: ''
 })
 
 const newItem = ref({
@@ -81,6 +82,8 @@ function applyToForm(index) {
 			<input type="number" id="stack" v-model="newItem.stack" required />
 			<label for="category">Category</label>
 			<input type="text" id="category" v-model="newItem.category" required />
+			<label for="subcategory">Subcategory</label>
+			<input type="text" id="subcategory" v-model="newItem.subcategory" required />
 			<button type="submit">Add new item</button>
 		</form>
 	</div>

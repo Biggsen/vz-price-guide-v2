@@ -10,48 +10,56 @@ const db = useFirestore()
 const qOres = query(
 	collection(db, 'items'),
 	where('category', '==', 'ores'),
+	orderBy('subcategory', 'asc'),
 	orderBy('name', 'asc')
 )
 
 const qStone = query(
 	collection(db, 'items'),
 	where('category', '==', 'stone'),
+	orderBy('subcategory', 'asc'),
 	orderBy('name', 'asc')
 )
 
 const qEarth = query(
 	collection(db, 'items'),
 	where('category', '==', 'earth'),
+	orderBy('subcategory', 'asc'),
 	orderBy('name', 'asc')
 )
 
 const qSand = query(
 	collection(db, 'items'),
 	where('category', '==', 'sand'),
+	orderBy('subcategory', 'asc'),
 	orderBy('name', 'asc')
 )
 
 const qWood = query(
 	collection(db, 'items'),
 	where('category', '==', 'wood'),
+	orderBy('subcategory', 'asc'),
 	orderBy('name', 'asc')
 )
 
 const qDrops = query(
 	collection(db, 'items'),
 	where('category', '==', 'drops'),
+	orderBy('subcategory', 'asc'),
 	orderBy('name', 'asc')
 )
 
 const qFood = query(
 	collection(db, 'items'),
 	where('category', '==', 'food'),
+	orderBy('subcategory', 'asc'),
 	orderBy('name', 'asc')
 )
 
 const qUtility = query(
 	collection(db, 'items'),
 	where('category', '==', 'utility'),
+	orderBy('subcategory', 'asc'),
 	orderBy('name', 'asc')
 )
 
