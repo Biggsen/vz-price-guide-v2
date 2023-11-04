@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useFirestore, useCurrentUser } from 'vuefire'
-import { collection, addDoc } from 'firebase/firestore'
+import { collection, doc, addDoc, getDocs, query } from 'firebase/firestore'
 
 const db = useFirestore()
 const router = useRouter()
@@ -39,6 +39,20 @@ async function addItem() {
 	}
 }
 
+// Add a new field to items collection
+async function addField() {
+	const querySnapshot = await getDocs(query(collection(db, 'items')))
+	querySnapshot.forEach(async function (item) {
+		const docRef = doc(db, 'items', `${item.id}`)
+		console.log(item.data())
+
+		// This creates (or updates) a field
+		// await updateDoc(docRef, {
+		// 	subcategory: ''
+		// })
+	})
+}
+
 const transformedSource = computed(() => {
 	if (importItem.value.source !== '') {
 		return JSON.parse(importItem.value.source)
@@ -58,6 +72,9 @@ function applyToForm(index) {
 
 <template>
 	<div v-if="user?.email" class="p-4 pt-8">
+		<div class="mb-10">
+			<button @click="addField">Add 'subcategory' field</button>
+		</div>
 		<div class="mb-10">
 			<textarea name="" id="" cols="30" rows="3" v-model="importItem.source"></textarea>
 			<ul>
