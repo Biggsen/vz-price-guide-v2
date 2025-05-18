@@ -1,6 +1,6 @@
 <template>
-	<div class="bg-gray-asparagus p-10 pt-7 pattern">
-		<h1 class="text-3xl text-white font-bold [text-shadow:_2px_2px_2px_#000]">
+	<div class="bg-gray-asparagus p-8 pt-7 pattern">
+		<h1 class="text-2xl text-white font-bold [text-shadow:_2px_2px_2px_#000]">
 			verzion's economy price guide for Minecraft 1.16
 		</h1>
 	</div>

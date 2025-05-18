@@ -60,12 +60,7 @@ function sellStackPrice(price, stack) {
 </script>
 
 <template>
-	<nav v-if="prevCat !== ''" :id="category">
-		<a :href="`#${prevCat}`">↑ {{ prevCat }}</a>
-		<a href="#top">↑ Back to top</a>
-		<a v-if="nextCat !== ''" :href="`#${nextCat}`">{{ nextCat }} ↓</a>
-	</nav>
-	<table v-if="collection.length > 0" class="table-auto">
+	<table v-if="collection.length > 0" class="w-full table-auto">
 		<caption :id="category == 'ores' ? 'ores' : ''">
 			{{
 				category
