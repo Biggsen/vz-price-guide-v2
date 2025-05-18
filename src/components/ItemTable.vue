@@ -92,11 +92,10 @@ function sellStackPrice(price, stack) {
 				<td class="hidden">{{ item.material_id }}</td>
 				<th width="50%" class="text-left">
 					<a
-						:href="item.url"
+						:href="item.url && item.url.trim() !== '' ? item.url : `https://minecraft.fandom.com/wiki/${item.material_id}`"
 						target="_blank"
 						class="font-normal hover:text-gray-asparagus hover:underline"
-						>{{ item.name }}</a
-					>
+					>{{ item.name }}</a>
 				</th>
 				<td width="5%">
 					<img :src="item.image" alt="" class="max-w-[30px] lg:max-w-[50px]" />
