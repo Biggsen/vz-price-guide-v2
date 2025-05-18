@@ -90,15 +90,25 @@ function applyToForm(index) {
 			<label for="materialId">Material ID</label>
 			<input type="text" id="materialId" v-model="newItem.material_id" required />
 			<label for="image">Image</label>
-			<input type="text" id="image" v-model="newItem.image" required />
+			<input type="text" id="image" v-model="newItem.image" />
 			<label for="url">Url</label>
-			<input type="text" id="url" v-model="newItem.url" required />
+			<input type="text" id="url" v-model="newItem.url" />
 			<label for="price">Price</label>
 			<input type="number" id="price" v-model="newItem.price" required />
 			<label for="stack">Stack</label>
 			<input type="number" id="stack" v-model="newItem.stack" required />
 			<label for="category">Category</label>
-			<input type="text" id="category" v-model="newItem.category" required />
+			<select id="category" v-model="newItem.category" required class="block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;">
+				<option value="">Select category</option>
+				<option value="ores">ores</option>
+				<option value="stone">stone</option>
+				<option value="earth">earth</option>
+				<option value="sand">sand</option>
+				<option value="wood">wood</option>
+				<option value="drops">drops</option>
+				<option value="food">food</option>
+				<option value="utility">utility</option>
+			</select>
 			<label for="subcategory">Subcategory</label>
 			<input type="text" id="subcategory" v-model="newItem.subcategory" required />
 			<button type="submit">Add new item</button>

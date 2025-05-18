@@ -51,15 +51,25 @@ async function updateItem() {
 			<label for="materialId">Material ID</label>
 			<input type="text" id="materialId" v-model="editItem.material_id" required />
 			<label for="image">Image</label>
-			<input type="text" id="image" v-model="editItem.image" required />
+			<input type="text" id="image" v-model="editItem.image" />
 			<label for="url">Url</label>
-			<input type="text" id="url" v-model="editItem.url" required />
+			<input type="text" id="url" v-model="editItem.url" />
 			<label for="price">Price</label>
 			<input type="number" id="price" v-model="editItem.price" required />
 			<label for="stack">Stack</label>
 			<input type="number" id="stack" v-model="editItem.stack" required />
 			<label for="category">Category</label>
-			<input type="text" id="category" v-model="editItem.category" required />
+			<select id="category" v-model="editItem.category" required class="block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;">
+				<option value="">Select category</option>
+				<option value="ores">ores</option>
+				<option value="stone">stone</option>
+				<option value="earth">earth</option>
+				<option value="sand">sand</option>
+				<option value="wood">wood</option>
+				<option value="drops">drops</option>
+				<option value="food">food</option>
+				<option value="utility">utility</option>
+			</select>
 			<label for="subcategory">Subcategory</label>
 			<input type="text" id="subcategory" v-model="editItem.subcategory" required />
 			<button type="submit">Update item</button>
