@@ -26,7 +26,7 @@ async function loadJsonItems() {
 // Load items from Firestore
 async function loadDbItems() {
   const snapshot = await getDocs(collection(db, 'items'))
-  dbItems.value = snapshot.docs.map(doc => doc.data())
+  dbItems.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
 }
 
 onMounted(async () => {
@@ -110,6 +110,11 @@ async function addSingleItem(item) {
   }
   addingItem.value = null
 }
+
+function getDbItemId(jsonName) {
+  const found = dbItems.value.find(item => item.material_id === jsonName)
+  return found ? found.id : null
+}
 </script>
 
 <template>
@@ -166,7 +171,14 @@ async function addSingleItem(item) {
                 Add
               </button>
               <span v-else-if="addingItem === item.name">Adding...</span>
-              <span v-else-if="isInDb(item.name)" class="text-green-600">✔</span>
+              <template v-else-if="isInDb(item.name)">
+                <a
+                  v-if="getDbItemId(item.name)"
+                  :href="`/edit/${getDbItemId(item.name)}`"
+                  class="text-white bg-gray-asparagus px-4 py-2 rounded hover:bg-heavy-metal"
+                >Edit</a>
+                <span v-else class="text-green-600">✔</span>
+              </template>
             </td>
           </tr>
         </tbody>
