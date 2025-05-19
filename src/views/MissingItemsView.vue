@@ -16,6 +16,7 @@ const adding = ref(false)
 const addResult = ref(null)
 const addingItem = ref(null)
 const addedItems = ref([])
+const selectedItems = ref([])
 
 // Load items from JSON file
 async function loadJsonItems() {
@@ -115,6 +116,62 @@ function getDbItemId(jsonName) {
   const found = dbItems.value.find(item => item.material_id === jsonName)
   return found ? found.id : null
 }
+
+function toggleSelectAllMissing(checked) {
+  if (checked) {
+    selectedItems.value = itemsJson.value.filter(item => !isInDb(item.name)).map(item => item.name)
+  } else {
+    selectedItems.value = []
+  }
+}
+
+function isSelected(itemName) {
+  return selectedItems.value.includes(itemName)
+}
+
+function toggleSelectItem(itemName) {
+  if (isSelected(itemName)) {
+    selectedItems.value = selectedItems.value.filter(name => name !== itemName)
+  } else {
+    selectedItems.value.push(itemName)
+  }
+}
+
+const allMissingSelected = computed(() => {
+  const missing = itemsJson.value.filter(item => !isInDb(item.name)).map(item => item.name)
+  return missing.length > 0 && missing.every(name => selectedItems.value.includes(name))
+})
+
+const anySelected = computed(() => selectedItems.value.length > 0)
+
+async function addSelectedMissing() {
+  adding.value = true
+  addResult.value = null
+  const toAdd = itemsJson.value.filter(item => selectedItems.value.includes(item.name))
+  let added = 0, failed = 0
+  for (const item of toAdd) {
+    try {
+      await addDoc(collection(db, 'items'), {
+        material_id: item.name,
+        name: item.displayName.toLowerCase(),
+        stack: item.stackSize,
+        image: '',
+        url: '',
+        price: 1,
+        category: '',
+        subcategory: ''
+      })
+      added++
+      addedItems.value.push(item.name)
+    } catch (e) {
+      failed++
+    }
+  }
+  addResult.value = `Added: ${added}, Failed: ${failed}`
+  await loadDbItems()
+  adding.value = false
+  selectedItems.value = []
+}
 </script>
 
 <template>
@@ -124,6 +181,15 @@ function getDbItemId(jsonName) {
     <div v-else>
       <div class="mb-4">
         <button
+          v-if="anySelected"
+          @click="addSelectedMissing"
+          :disabled="adding || selectedItems.length === 0"
+          class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800"
+        >
+          Add Selected Missing Items
+        </button>
+        <button
+          v-else
           @click="addAllMissing"
           :disabled="adding"
           class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800"
@@ -140,6 +206,14 @@ function getDbItemId(jsonName) {
       <table class="table-auto w-full">
         <thead>
           <tr>
+            <th>
+              <input
+                type="checkbox"
+                :checked="allMissingSelected"
+                @change="toggleSelectAllMissing($event.target.checked)"
+                :disabled="filteredItems.filter(item => !isInDb(item.name)).length === 0"
+              />
+            </th>
             <th @click="setSort('name')" class="cursor-pointer select-none">
               Name
               <span v-if="sortKey === 'name'">{{ sortAsc ? '▲' : '▼' }}</span>
@@ -155,6 +229,14 @@ function getDbItemId(jsonName) {
         </thead>
         <tbody>
           <tr v-for="item in filteredItems" :key="item.name">
+            <td>
+              <input
+                v-if="!isInDb(item.name)"
+                type="checkbox"
+                :checked="isSelected(item.name)"
+                @change="toggleSelectItem(item.name)"
+              />
+            </td>
             <td>{{ item.name }}</td>
             <td>{{ item.displayName }}</td>
             <td>{{ item.stackSize }}</td>
