@@ -1,7 +1,8 @@
 <script setup>
 import { useFirestore, useCollection } from 'vuefire'
 import { query, collection, orderBy, where } from 'firebase/firestore'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useCurrentUser } from 'vuefire'
 
 import HeaderIntro from '../components/HeaderIntro.vue'
 import ItemTable from '../components/ItemTable.vue'
@@ -20,6 +21,7 @@ const allItemsCollection = useCollection(allItemsQuery)
 const groupedItems = computed(() => {
 	if (!allItemsCollection.value) return {}
 	return allItemsCollection.value.reduce((acc, item) => {
+		if (!user.value?.email && (!item.image || item.image.trim() === '')) return acc
 		if (!acc[item.category]) acc[item.category] = []
 		acc[item.category].push(item)
 		return acc
@@ -28,7 +30,11 @@ const groupedItems = computed(() => {
 
 const uncategorizedItems = computed(() => {
 	if (!allItemsCollection.value) return []
-	return allItemsCollection.value.filter(item => !item.category || !categories.includes(item.category))
+	return allItemsCollection.value.filter(item => {
+		const isUncat = !item.category || !categories.includes(item.category)
+		const hasImage = item.image && item.image.trim() !== ''
+		return isUncat && (user.value?.email || hasImage)
+	})
 })
 
 const searchQuery = ref('')
@@ -61,6 +67,16 @@ const economyConfig = {
 
 const visibleCategories = ref([...categories])
 const showUncategorised = ref(true)
+const user = useCurrentUser()
+
+// Hide Uncategorised by default for not logged in users
+watch(user, (val) => {
+	if (!val?.email) {
+		showUncategorised.value = false
+	} else {
+		showUncategorised.value = true
+	}
+}, { immediate: true })
 
 const allVisible = computed(() => visibleCategories.value.length === categories.length)
 
@@ -144,6 +160,7 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 				{{ cat.charAt(0).toUpperCase() + cat.slice(1) }}
 			</button>
 			<button
+				v-if="user?.email"
 				@click="toggleUncategorised"
 				:class="[
 					showUncategorised
@@ -169,7 +186,7 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 			/>
 		</template>
 		<ItemTable
-			v-if="showUncategorised && filteredUncategorizedItems.length > 0"
+			v-if="user?.email && showUncategorised && filteredUncategorizedItems.length > 0"
 			:collection="filteredUncategorizedItems"
 			category="Uncategorised"
 			:categories="categories"
