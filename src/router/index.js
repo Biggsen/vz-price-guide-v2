@@ -37,6 +37,12 @@ const router = createRouter({
 			name: 'missing-items',
 			component: () => import('../views/MissingItemsView.vue'),
 			meta: { requiresAuth: true }
+		},
+		{
+			path: '/bulk-update',
+			name: 'bulk-update',
+			component: () => import('../views/BulkUpdateItemsView.vue'),
+			meta: { requiresAuth: true }
 		}
 	]
 })

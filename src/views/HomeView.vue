@@ -125,7 +125,7 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 				{{ allVisible ? 'Hide all categories' : 'Show all categories' }}
 			</button>
 		</div>
-		<div class="flex flex-wrap gap-2 mb-4 justify-start max-w-4xl">
+		<div class="flex flex-wrap gap-2 mb-4 justify-start">
 			<button
 				v-for="cat in categories"
 				:key="cat"
