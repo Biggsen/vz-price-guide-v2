@@ -62,9 +62,7 @@ function sellStackPrice(price, stack) {
 <template>
 	<table v-if="collection.length > 0" class="w-full table-auto">
 		<caption :id="category == 'ores' ? 'ores' : ''">
-			{{
-				category
-			}}
+			{{ category }} ({{ collection.length }})
 		</caption>
 		<thead>
 			<tr>
