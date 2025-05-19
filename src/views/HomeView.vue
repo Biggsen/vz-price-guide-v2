@@ -5,6 +5,7 @@ import { computed, ref } from 'vue'
 
 import HeaderIntro from '../components/HeaderIntro.vue'
 import ItemTable from '../components/ItemTable.vue'
+import { categories } from '../constants.js'
 
 const db = useFirestore()
 
@@ -15,8 +16,6 @@ const allItemsQuery = query(
 	orderBy('name', 'asc')
 )
 const allItemsCollection = useCollection(allItemsQuery)
-
-const categories = ['ores', 'stone', 'earth', 'sand', 'wood', 'drops', 'food', 'utility']
 
 const groupedItems = computed(() => {
 	if (!allItemsCollection.value) return {}

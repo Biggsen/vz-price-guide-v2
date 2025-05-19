@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { useFirestore, useCurrentUser, useDocument } from 'vuefire'
 import { collection, doc, addDoc, getDocs, query, updateDoc } from 'firebase/firestore'
+import { categories } from '../constants.js'
 
 const db = useFirestore()
 const router = useRouter()
@@ -61,14 +62,7 @@ async function updateItem() {
 			<label for="category">Category</label>
 			<select id="category" v-model="editItem.category" required class="block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;">
 				<option value="">Select category</option>
-				<option value="ores">ores</option>
-				<option value="stone">stone</option>
-				<option value="earth">earth</option>
-				<option value="sand">sand</option>
-				<option value="wood">wood</option>
-				<option value="drops">drops</option>
-				<option value="food">food</option>
-				<option value="utility">utility</option>
+				<option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
 			</select>
 			<label for="subcategory">Subcategory</label>
 			<input type="text" id="subcategory" v-model="editItem.subcategory" required />

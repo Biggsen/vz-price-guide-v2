@@ -1,0 +1,22 @@
+export const categories = [
+  'ores',
+  'stone',
+  'earth',
+  'sand',
+  'wood',
+  'drops',
+  'food',
+  'utility',
+  'plants',
+  'redstone',
+  'nether',
+  'ocean',
+  'tools',
+  'weapons',
+  'armor',
+  'end',
+  'ice',
+  'books',
+  'dyed',
+  'spawn'
+]; 
