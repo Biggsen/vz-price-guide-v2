@@ -103,7 +103,7 @@ function applyToForm(index) {
 				<option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
 			</select>
 			<label for="subcategory">Subcategory</label>
-			<input type="text" id="subcategory" v-model="newItem.subcategory" required />
+			<input type="text" id="subcategory" v-model="newItem.subcategory" />
 			<button type="submit">Add new item</button>
 		</form>
 	</div>

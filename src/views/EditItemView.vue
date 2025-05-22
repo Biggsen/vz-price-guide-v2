@@ -65,7 +65,7 @@ async function updateItem() {
 				<option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
 			</select>
 			<label for="subcategory">Subcategory</label>
-			<input type="text" id="subcategory" v-model="editItem.subcategory" required />
+			<input type="text" id="subcategory" v-model="editItem.subcategory" />
 			<button type="submit">Update item</button>
 		</form>
 	</div>
