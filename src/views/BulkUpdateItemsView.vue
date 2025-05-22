@@ -105,6 +105,28 @@ async function updateSelectedCategories() {
   newCategory.value = ''
   newSubcategory.value = ''
 }
+
+async function clearSelectedCategories() {
+  if (!anySelected.value) return
+  updating.value = true
+  updateResult.value = null
+  let updated = 0, failed = 0
+  for (const id of selectedItems.value) {
+    try {
+      await updateDoc(doc(db, 'items', id), {
+        category: '',
+        subcategory: ''
+      })
+      updated++
+    } catch (e) {
+      failed++
+    }
+  }
+  updateResult.value = `Cleared: ${updated}, Failed: ${failed}`
+  await loadDbItems()
+  updating.value = false
+  selectedItems.value = []
+}
 </script>
 
 <template>
@@ -135,6 +157,13 @@ async function updateSelectedCategories() {
           class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:opacity-50"
         >
           Update Selected
+        </button>
+        <button
+          @click="clearSelectedCategories"
+          :disabled="!anySelected || updating"
+          class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+        >
+          Clear Category
         </button>
         <span v-if="updating" class="ml-2">Updating...</span>
         <span v-if="updateResult" class="ml-2">{{ updateResult }}</span>
