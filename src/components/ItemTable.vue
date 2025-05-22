@@ -1,6 +1,8 @@
 <script setup>
-import { useCurrentUser } from 'vuefire'
+import { useCurrentUser, useFirestore } from 'vuefire'
+import { doc, deleteDoc } from 'firebase/firestore'
 const user = useCurrentUser()
+const db = useFirestore()
 
 const props = defineProps({
 	collection: {
@@ -57,6 +59,12 @@ function sellStackPrice(price, stack) {
 		return Math.round(sellPrice)
 	}
 }
+
+async function deleteItem(itemId) {
+	if (confirm('Are you sure you want to delete this item?')) {
+		await deleteDoc(doc(db, 'items', itemId))
+	}
+}
 </script>
 
 <template>
@@ -106,8 +114,15 @@ function sellStackPrice(price, stack) {
 				<td v-if="user?.email">
 					<a
 						:href="`/edit/${item.id}`"
-						class="text-white bg-gray-asparagus px-4 py-2 hover:bg-heavy-metal"
+						class="text-gray-asparagus underline hover:text-heavy-metal px-1 py-0"
 						>Edit</a
+					>
+					<span class="mx-1">|</span>
+					<a
+						href="#"
+						@click.prevent="deleteItem(item.id)"
+						class="text-red-600 underline hover:text-red-800 px-1 py-0"
+						>Delete</a
 					>
 				</td>
 			</tr>
