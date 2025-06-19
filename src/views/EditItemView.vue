@@ -87,7 +87,7 @@ async function updateItem() {
 			<label for="url">Url</label>
 			<input type="text" id="url" v-model="editItem.url" />
 			<label for="price">Price</label>
-			<input type="number" id="price" v-model="editItem.price" required />
+			<input type="number" id="price" v-model="editItem.price" step="0.1" min="0" required />
 			<label for="stack">Stack</label>
 			<input type="number" id="stack" v-model="editItem.stack" required />
 			<label for="category">Category</label>

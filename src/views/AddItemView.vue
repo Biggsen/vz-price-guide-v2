@@ -95,7 +95,7 @@ function applyToForm(index) {
 			<label for="url">Url</label>
 			<input type="text" id="url" v-model="newItem.url" />
 			<label for="price">Price</label>
-			<input type="number" id="price" v-model="newItem.price" required />
+			<input type="number" id="price" v-model="newItem.price" step="0.1" min="0" required />
 			<label for="stack">Stack</label>
 			<input type="number" id="stack" v-model="newItem.stack" required />
 			<label for="category">Category</label>
