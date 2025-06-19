@@ -13,6 +13,7 @@ const updating = ref(false)
 const updateResult = ref(null)
 const newCategory = ref('')
 const newSubcategory = ref('')
+const newPrice = ref('')
 const sortKey = ref('name')
 const sortAsc = ref(true)
 const showOnlyNoCategory = ref(false)
@@ -127,6 +128,28 @@ async function clearSelectedCategories() {
   updating.value = false
   selectedItems.value = []
 }
+
+async function updateSelectedPrices() {
+  if (!newPrice.value || !anySelected.value) return
+  updating.value = true
+  updateResult.value = null
+  let updated = 0, failed = 0
+  for (const id of selectedItems.value) {
+    try {
+      await updateDoc(doc(db, 'items', id), {
+        price: parseFloat(newPrice.value)
+      })
+      updated++
+    } catch (e) {
+      failed++
+    }
+  }
+  updateResult.value = `Price updated: ${updated}, Failed: ${failed}`
+  await loadDbItems()
+  updating.value = false
+  selectedItems.value = []
+  newPrice.value = ''
+}
 </script>
 
 <template>
@@ -186,6 +209,28 @@ async function clearSelectedCategories() {
           <input type="checkbox" v-model="showOnlyNoCategory" class="mr-2 align-middle" />
           Show only items without a category
         </label>
+      </div>
+
+      <!-- Price section -->
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold mb-2">Price</h3>
+        <div class="flex gap-4 items-center">
+          <input
+            type="number"
+            v-model="newPrice"
+            placeholder="New price"
+            step="0.01"
+            min="0"
+            class="border-2 border-gray-asparagus rounded px-3 py-1 w-32"
+          />
+          <button
+            @click="updateSelectedPrices"
+            :disabled="!anySelected || !newPrice || updating"
+            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          >
+            Update Price
+          </button>
+        </div>
       </div>
       <table class="table-auto w-full">
         <thead>
