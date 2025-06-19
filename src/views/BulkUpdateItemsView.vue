@@ -131,43 +131,56 @@ async function clearSelectedCategories() {
 
 <template>
   <div class="p-4 pt-8">
-    <h2 class="text-xl font-bold mb-6">Bulk Update Item Categories</h2>
+    <h2 class="text-xl font-bold mb-6">Bulk update items</h2>
     <div v-if="loading">Loading...</div>
     <div v-else>
-      <div class="mb-4 flex gap-4 items-end">
+      <!-- Search input on its own line -->
+      <div class="mb-4">
         <input
           type="text"
           v-model="searchQuery"
           placeholder="Search for an item..."
           class="border-2 border-gray-asparagus rounded px-3 py-1 w-full max-w-md"
         />
-        <select v-model="newCategory" class="border-2 border-gray-asparagus rounded px-3 py-1">
-          <option value="">Set category...</option>
-          <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-        </select>
-        <input
-          type="text"
-          v-model="newSubcategory"
-          placeholder="Subcategory (optional)"
-          class="border-2 border-gray-asparagus rounded px-3 py-1 w-48"
-        />
-        <button
-          @click="updateSelectedCategories"
-          :disabled="!anySelected || !newCategory || updating"
-          class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:opacity-50"
-        >
-          Update Selected
-        </button>
-        <button
-          @click="clearSelectedCategories"
-          :disabled="!anySelected || updating"
-          class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-        >
-          Clear Category
-        </button>
-        <span v-if="updating" class="ml-2">Updating...</span>
-        <span v-if="updateResult" class="ml-2">{{ updateResult }}</span>
       </div>
+
+      <!-- Categories section -->
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold mb-2">Categories</h3>
+        <div class="flex gap-4 items-center mb-2">
+          <select v-model="newCategory" class="border-2 border-gray-asparagus rounded px-3 py-1">
+            <option value="">Set category...</option>
+            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+          </select>
+          <input
+            type="text"
+            v-model="newSubcategory"
+            placeholder="Subcategory (optional)"
+            class="border-2 border-gray-asparagus rounded px-3 py-1 w-48"
+          />
+        </div>
+        
+        <!-- Buttons on their own line -->
+        <div class="flex gap-4 items-center">
+          <button
+            @click="updateSelectedCategories"
+            :disabled="!anySelected || !newCategory || updating"
+            class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:opacity-50"
+          >
+            Update Selected
+          </button>
+          <button
+            @click="clearSelectedCategories"
+            :disabled="!anySelected || updating"
+            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+          >
+            Clear Category
+          </button>
+          <span v-if="updating" class="ml-2">Updating...</span>
+          <span v-if="updateResult" class="ml-2">{{ updateResult }}</span>
+        </div>
+      </div>
+
       <div class="mb-4">
         <label class="inline-flex items-center">
           <input type="checkbox" v-model="showOnlyNoCategory" class="mr-2 align-middle" />
@@ -198,6 +211,10 @@ async function clearSelectedCategories() {
               Subcategory
               <span v-if="sortKey === 'subcategory'">{{ sortAsc ? '▲' : '▼' }}</span>
             </th>
+            <th @click="setSort('price')" class="cursor-pointer select-none">
+              Price
+              <span v-if="sortKey === 'price'">{{ sortAsc ? '▲' : '▼' }}</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -213,6 +230,7 @@ async function clearSelectedCategories() {
             <td>{{ item.name }}</td>
             <td>{{ item.category }}</td>
             <td>{{ item.subcategory }}</td>
+            <td>{{ item.price }}</td>
           </tr>
         </tbody>
       </table>
