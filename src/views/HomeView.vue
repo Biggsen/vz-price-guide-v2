@@ -1,14 +1,17 @@
 <script setup>
 import { useFirestore, useCollection } from 'vuefire'
 import { query, collection, orderBy, where } from 'firebase/firestore'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useCurrentUser } from 'vuefire'
+import { useRoute, useRouter } from 'vue-router'
 
 import HeaderIntro from '../components/HeaderIntro.vue'
 import ItemTable from '../components/ItemTable.vue'
 import { categories } from '../constants.js'
 
 const db = useFirestore()
+const route = useRoute()
+const router = useRouter()
 
 const allItemsQuery = query(
 	collection(db, 'items'),
@@ -69,6 +72,46 @@ const visibleCategories = ref([...categories])
 const showUncategorised = ref(true)
 const user = useCurrentUser()
 
+// Initialize from URL query parameters
+function initializeFromQuery() {
+	const catParam = route.query.cat
+	const uncatParam = route.query.uncat
+	
+	if (catParam) {
+		const selectedCategories = catParam.split(',').map(c => c.trim()).filter(c => categories.includes(c))
+		if (selectedCategories.length > 0) {
+			visibleCategories.value = selectedCategories
+		}
+	}
+	
+	if (uncatParam !== undefined) {
+		showUncategorised.value = uncatParam === 'true' || uncatParam === '1'
+	}
+}
+
+// Update URL query parameters
+function updateQuery() {
+	const query = {}
+	
+	// Only add cat param if not all categories are selected
+	if (visibleCategories.value.length !== categories.length) {
+		query.cat = visibleCategories.value.join(',')
+	}
+	
+	// Only add uncat param if it's false (since true is default for logged in users)
+	if (!showUncategorised.value) {
+		query.uncat = 'false'
+	}
+	
+	// Update URL without triggering navigation
+	router.replace({ query })
+}
+
+// Watch for changes and update URL
+watch([visibleCategories, showUncategorised], () => {
+	updateQuery()
+}, { deep: true })
+
 // Hide Uncategorised by default for not logged in users
 watch(user, (val) => {
 	if (!val?.email) {
@@ -77,6 +120,11 @@ watch(user, (val) => {
 		showUncategorised.value = true
 	}
 }, { immediate: true })
+
+// Initialize from query on mount
+onMounted(() => {
+	initializeFromQuery()
+})
 
 const allVisible = computed(() => visibleCategories.value.length === categories.length)
 
