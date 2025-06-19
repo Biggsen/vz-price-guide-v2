@@ -64,9 +64,11 @@ function sellStackPrice(price, stack) {
 
 // Create the redirect URL with current query parameters
 function getEditLinkQuery(itemId) {
-	const currentUrl = new URL(window.location.href)
+	// Use the current route's query object directly to avoid double-encoding
+	const queryString = new URLSearchParams(route.query).toString()
+	const redirectPath = route.path + (queryString ? `?${queryString}` : '')
 	return {
-		redirect: currentUrl.pathname + currentUrl.search
+		redirect: redirectPath
 	}
 }
 
