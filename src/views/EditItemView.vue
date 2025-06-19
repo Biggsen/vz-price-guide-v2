@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { useFirestore, useCurrentUser, useDocument } from 'vuefire'
 import { collection, doc, addDoc, getDocs, query, updateDoc } from 'firebase/firestore'
@@ -10,6 +10,36 @@ const router = useRouter()
 const route = useRoute()
 const user = useCurrentUser()
 const docRef = doc(db, 'items', route.params.id)
+
+// Store the home page query parameters to restore them after editing
+const homeQuery = ref({})
+
+// Capture the referring page's query parameters
+onMounted(() => {
+	// If there's a redirect query parameter, use it; otherwise use the document referrer
+	const redirectQuery = route.query.redirect
+	if (redirectQuery) {
+		try {
+			const url = new URL(redirectQuery, window.location.origin)
+			homeQuery.value = Object.fromEntries(url.searchParams.entries())
+		} catch (e) {
+			// If parsing fails, keep empty query
+			homeQuery.value = {}
+		}
+	} else {
+		// Try to extract query parameters from the referrer
+		try {
+			const referrer = document.referrer
+			if (referrer && referrer.includes(window.location.origin)) {
+				const url = new URL(referrer)
+				homeQuery.value = Object.fromEntries(url.searchParams.entries())
+			}
+		} catch (e) {
+			// If parsing fails, keep empty query
+			homeQuery.value = {}
+		}
+	}
+})
 
 const itemSource = useDocument(docRef)
 
@@ -35,7 +65,8 @@ async function updateItem() {
 		...editItem.value
 	})
 		.then((docRef) => {
-			router.push('/')
+			// Navigate back to home with preserved query parameters
+			router.push({ path: '/', query: homeQuery.value })
 		})
 		.catch((error) => {
 			console.log(error)

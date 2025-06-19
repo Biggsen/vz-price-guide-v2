@@ -1,8 +1,10 @@
 <script setup>
 import { useCurrentUser, useFirestore } from 'vuefire'
+import { useRoute, RouterLink } from 'vue-router'
 import { doc, deleteDoc } from 'firebase/firestore'
 const user = useCurrentUser()
 const db = useFirestore()
+const route = useRoute()
 
 const props = defineProps({
 	collection: {
@@ -60,6 +62,14 @@ function sellStackPrice(price, stack) {
 	}
 }
 
+// Create the redirect URL with current query parameters
+function getEditLinkQuery(itemId) {
+	const currentUrl = new URL(window.location.href)
+	return {
+		redirect: currentUrl.pathname + currentUrl.search
+	}
+}
+
 async function deleteItem(itemId) {
 	if (confirm('Are you sure you want to delete this item?')) {
 		await deleteDoc(doc(db, 'items', itemId))
@@ -112,10 +122,10 @@ async function deleteItem(itemId) {
 					{{ sellStackPrice(item.price, item.stack) }}
 				</td>
 				<td v-if="user?.email">
-					<a
-						:href="`/edit/${item.id}`"
+					<RouterLink
+						:to="{ path: `/edit/${item.id}`, query: getEditLinkQuery(item.id) }"
 						class="text-gray-asparagus underline hover:text-heavy-metal px-1 py-0"
-						>Edit</a
+						>Edit</RouterLink
 					>
 					<span class="mx-1">|</span>
 					<a

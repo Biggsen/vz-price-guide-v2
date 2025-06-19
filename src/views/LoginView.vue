@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useFirebaseAuth, useCurrentUser } from 'vuefire'
+import { useRouter, useRoute } from 'vue-router'
 import { signInWithEmailAndPassword, signOut } from '@firebase/auth'
 
 const userInput = ref({
@@ -10,13 +11,18 @@ const userInput = ref({
 
 const auth = useFirebaseAuth()
 const currentUser = useCurrentUser()
+const router = useRouter()
+const route = useRoute()
 
 async function loginToFirebase() {
 	signInWithEmailAndPassword(auth, userInput.value.email, userInput.value.password)
 		.then((userCredential) => {
 			// Signed in
 			const user = userCredential.user
-			// ...
+			
+			// Redirect to the original page or home
+			const redirectPath = route.query.redirect || '/'
+			router.push(redirectPath)
 		})
 		.catch((error) => {
 			const errorCode = error.code
