@@ -1,0 +1,58 @@
+[
+	{
+		"id": 1,
+		"title": "Complete 1.16 catalog (pricing and images)",
+		"status": "In Progress",
+		"description": "Set prices and correct images for all items. Still a lot of price of 1, I'm getting through it slowly!",
+		"features": [
+			{ "name": "ores", "completed": true },
+			{ "name": "stone", "completed": true },
+			{ "name": "earth", "completed": true },
+			{ "name": "sand", "completed": true },
+			{ "name": "wood", "completed": true },
+			{ "name": "drops", "completed": true },
+			{ "name": "food", "completed": true },
+			{ "name": "utility", "completed": true },
+			{ "name": "plants", "completed": true },
+			{ "name": "redstone", "completed": true },
+			{ "name": "nether", "completed": false },
+			{ "name": "ocean", "completed": false },
+			{ "name": "tools", "completed": false },
+			{ "name": "weapons", "completed": false },
+			{ "name": "armor", "completed": false },
+			{ "name": "end", "completed": false },
+			{ "name": "ice", "completed": false },
+			{ "name": "books", "completed": false },
+			{ "name": "dyed", "completed": false },
+			{ "name": "spawn", "completed": false }
+		]
+	},
+	{
+		"id": 2,
+		"title": "Add rest of 1.16 items",
+		"status": "Pending",
+		"description": "There's still around 150 items uncategorized which need to be added to the catalog",
+		"features": [
+			{ "name": "150 to go", "completed": false },
+			{ "name": "130 to go", "completed": false },
+			{ "name": "110 to go", "completed": false },
+			{ "name": "90 to go", "completed": false },
+			{ "name": "70 to go", "completed": false },
+			{ "name": "50 to go", "completed": false },
+			{ "name": "30 to go", "completed": false },
+			{ "name": "10 to go!!", "completed": false }
+		]
+	},
+	{
+		"id": 3,
+		"title": "Add all 1.16 enchanted books",
+		"status": "Pending",
+		"description": "Add all the enchanted books with levels and prices",
+		"features": [
+			{ "name": "Armor enchantments", "completed": false },
+			{ "name": "Weapons enchantments", "completed": false },
+			{ "name": "Tools enchantments", "completed": false },
+			{ "name": "General enchantments", "completed": false }
+		]
+	}
+] 

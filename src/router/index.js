@@ -43,6 +43,11 @@ const router = createRouter({
 			name: 'bulk-update',
 			component: () => import('../views/BulkUpdateItemsView.vue'),
 			meta: { requiresAuth: true }
+		},
+		{
+			path: '/updates',
+			name: 'updates',
+			component: () => import('../views/UpdatesView.vue')
 		}
 	]
 })

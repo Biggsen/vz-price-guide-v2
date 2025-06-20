@@ -18,6 +18,7 @@ function signOutOfFirebase() {
 		<HeaderBanner />
 		<nav class="bg-gray-800 text-white px-4 py-2 flex gap-4 items-center">
 			<RouterLink class="hover:underline" to="/">Home</RouterLink>
+			<RouterLink class="hover:underline" to="/updates">Updates</RouterLink>
 			<RouterLink v-if="user?.email" class="hover:underline" to="/about">About</RouterLink>
 			<RouterLink v-if="user?.email" class="hover:underline" to="/missing-items">Missing Items</RouterLink>
 			<RouterLink v-if="user?.email" class="hover:underline" to="/add">Add Item</RouterLink>

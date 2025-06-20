@@ -1,0 +1,22 @@
+[
+	{
+		"id": 1,
+		"title": "Added an 'Update' page with latest updates and roadmap",
+		"date": "2025-06-20",
+		"type": "Feature",
+		"description": "Added this page to show you all that stuff is happening :)"
+	},
+	{
+		"id": 1,
+		"title": "Almost Complete 1.16 Items List, Search and Categories Filtering",
+		"date": "2025-05-19",
+		"type": "Feature",
+		"description": "Major content update adding almost all items from Minecraft 1.16 with categories and item search.",
+		"changes": [
+			"Added almost complete 1.16 items",
+			"Total of 20 item categories",
+			"Category filtering",
+			"Search functionality across all items"
+		]
+	}
+] 
