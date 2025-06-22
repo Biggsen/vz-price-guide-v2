@@ -182,20 +182,20 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 
 <template>
 	<!-- Dismissible Info Alert -->
-	<div v-if="showAlert" class="bg-norway bg-opacity-20 border-l-4 border-laurel text-heavy-metal p-4 relative mb-4">
+	<div v-if="showAlert" class="bg-norway bg-opacity-20 border-l-4 border-laurel text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
-				<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+				<svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
 					<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
 				</svg>
-				<span>Hey! Check out the <router-link to="/updates" class="underline hover:text-gray-asparagus">Updates</router-link> page for latest updates and roadmap to see what I've got planned.</span>
+				<span class="text-sm sm:text-base">Hey! Check out the <router-link to="/updates" class="underline hover:text-gray-asparagus">Updates</router-link> page for latest updates and roadmap to see what I've got planned.</span>
 			</div>
 			<button 
 				@click="dismissAlert"
-				class="text-gray-asparagus hover:text-heavy-metal ml-4 p-1"
+				class="text-gray-asparagus hover:text-heavy-metal ml-2 sm:ml-4 p-1"
 				aria-label="Dismiss alert"
 			>
-				<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+				<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
 					<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
 				</svg>
 			</button>
@@ -204,25 +204,27 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 
 	<main>
 
-		<div class="my-4 flex gap-4">
+		<div class="my-4 flex flex-col sm:flex-row sm:gap-4">
 			<input
 				type="text"
 				v-model="searchQuery"
 				placeholder="Search for an item..."
-				class="border-2 border-gray-asparagus rounded px-3 py-1 w-full max-w-md"
+				class="border-2 border-gray-asparagus rounded px-3 py-2 w-full sm:max-w-md mb-2 sm:mb-0"
 			/>
-			<button
-				@click="resetCategories"
-				class="bg-laurel text-white border-2 border-gray-asparagus rounded px-3 py-1 transition ml-2 whitespace-nowrap"
-			>
-				Reset
-			</button>
-			<button
-				@click="toggleAllCategories"
-				:class="[allVisible ? 'bg-norway text-heavy-metal border-2 border-gray-asparagus' : 'bg-gray-asparagus text-white border-2 border-gray-asparagus', 'rounded px-3 py-1 transition']"
-			>
-				{{ allVisible ? 'Hide all categories' : 'Show all categories' }}
-			</button>
+			<div class="flex gap-2 sm:gap-0 sm:ml-2">
+				<button
+					@click="resetCategories"
+					class="bg-laurel text-white border-2 border-gray-asparagus rounded px-3 py-2 transition flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2"
+				>
+					Reset
+				</button>
+				<button
+					@click="toggleAllCategories"
+					:class="[allVisible ? 'bg-norway text-heavy-metal border-2 border-gray-asparagus' : 'bg-gray-asparagus text-white border-2 border-gray-asparagus', 'rounded px-3 py-2 transition flex-1 sm:flex-none text-sm sm:text-base sm:whitespace-nowrap']"
+				>
+					{{ allVisible ? 'Hide all categories' : 'Show all categories' }}
+				</button>
+			</div>
 		</div>
 		<div class="flex flex-wrap gap-2 mb-4 justify-start">
 			<button
