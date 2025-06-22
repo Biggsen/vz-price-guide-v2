@@ -18,5 +18,6 @@ export const categories = [
   'ice',
   'books',
   'dyed',
-  'spawn'
+  'spawn',
+  'discs'
 ]; 

@@ -24,16 +24,17 @@
 			{ "name": "ice", "completed": false },
 			{ "name": "books", "completed": false },
 			{ "name": "dyed", "completed": false },
-			{ "name": "spawn", "completed": false }
+			{ "name": "spawn", "completed": false },
+			{ "name": "discs", "completed": false }
 		]
 	},
 	{
 		"id": 2,
 		"title": "Add rest of 1.16 items",
-		"status": "Pending",
+		"status": "In Progress",
 		"description": "There's still around 150 items uncategorized which need to be added to the catalog",
 		"features": [
-			{ "name": "150 to go", "completed": false },
+			{ "name": "150 to go", "completed": true },
 			{ "name": "130 to go", "completed": false },
 			{ "name": "110 to go", "completed": false },
 			{ "name": "90 to go", "completed": false },
