@@ -1,13 +1,20 @@
 [
 	{
 		"id": 1,
+		"title": "Catalog update: Nether items priced and updated images",
+		"date": "2025-06-22",
+		"type": "Feature",
+		"description": "Added prices to all the items within the Nether category. Fixed incorrect images as well."
+	},
+	{
+		"id": 1,
 		"title": "Added an 'Update' page with latest updates and roadmap",
 		"date": "2025-06-20",
 		"type": "Feature",
 		"description": "Added this page to show you all that stuff is happening :)"
 	},
 	{
-		"id": 1,
+		"id": 2,
 		"title": "Almost Complete 1.16 Items List, Search and Categories Filtering",
 		"date": "2025-05-19",
 		"type": "Feature",
