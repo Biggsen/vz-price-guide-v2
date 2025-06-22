@@ -1,0 +1,287 @@
+# cleanImageUrls.js Usage
+
+## Purpose
+This Node.js script cleans up image URLs in Firestore by removing unwanted parameters or suffixes that come after the actual image file extension (.png or .gif).
+
+## Prerequisites
+1. **Node.js** installed on your system
+2. **firebase-admin** package: `npm install firebase-admin`
+3. **Firebase service account key** JSON file
+
+## Setup
+1. Obtain your Firebase service account key JSON file from the Firebase Console:
+   - Go to Project Settings → Service Accounts
+   - Generate new private key
+   - Save the JSON file as `service-account.json` in the project root
+
+2. Update the path to your service account file in the script:
+   ```javascript
+   const serviceAccount = require('../service-account.json');
+   ```
+
+## Configuration
+The script has a `DRY_RUN` constant that controls its behavior:
+- `DRY_RUN = true`: Only logs what would be updated (safe for testing)
+- `DRY_RUN = false`: Actually updates the Firestore database
+
+## How it Works
+The script:
+1. Connects to your Firestore database using the service account credentials
+2. Fetches all documents from the 'items' collection
+3. For each item with an image URL:
+   - Skips URLs that already end with `.png` or `.gif`
+   - Cleans URLs by truncating everything after the first occurrence of `.png` or `.gif`
+   - Updates the document in Firestore (or logs the change if in DRY_RUN mode)
+
+## Usage
+1. **Test run (recommended first):**
+   ```bash
+   # Ensure DRY_RUN = true in the script
+   node scripts/cleanImageUrls.js
+   ```
+
+2. **Actual cleanup:**
+   ```bash
+   # Set DRY_RUN = false in the script
+   node scripts/cleanImageUrls.js
+   ```
+
+## Example
+If an item has an image URL like:
+```
+https://example.com/image.png?size=large&quality=high
+```
+
+The script will clean it to:
+```
+https://example.com/image.png
+```
+
+## Output
+The script provides console output showing:
+- Items being processed
+- URLs being cleaned
+- Success/failure counts
+- Any errors encountered
+
+## Safety Features
+- DRY_RUN mode allows you to preview changes before applying them
+- Only processes items that actually need cleaning
+- Provides detailed logging of all operations
+- Error handling for failed updates
+
+---
+
+# fetchImages.js Usage
+
+## Purpose
+This Node.js script automatically fetches image URLs from Minecraft Wiki for items in your Firestore database that don't already have images. It scrapes the infobox images from wiki pages and populates your database.
+
+## Prerequisites
+1. **Node.js** installed on your system
+2. **Required packages**: `npm install firebase-admin axios cheerio fs`
+3. **Firebase service account key** JSON file
+
+## Setup
+1. Obtain your Firebase service account key JSON file from the Firebase Console:
+   - Go to Project Settings → Service Accounts
+   - Generate new private key
+   - Save the JSON file as `service-account.json` in the project root
+
+2. Update the path to your service account file in the script:
+   ```javascript
+   const serviceAccount = require('../service-account.json');
+   ```
+
+## Configuration
+The script has a `DRY_RUN` constant that controls its behavior:
+- `DRY_RUN = true`: Only logs what would be updated (safe for testing)
+- `DRY_RUN = false`: Actually updates the Firestore database with images and URLs
+
+## How it Works
+The script:
+1. Connects to your Firestore database using the service account credentials
+2. Fetches all documents from the 'items' collection
+3. For each item **without an existing image**:
+   - Constructs or uses the wiki URL (from `item.url` or generated from `item.name`)
+   - Scrapes the first infobox image from the Minecraft Wiki page
+   - Processes the image URL (removes query params, resizes to 50px width, cleans up)
+   - Updates the Firestore document with both the image URL and wiki URL
+
+## Wiki URL Generation
+- If an item has a `url` field, it uses that
+- Otherwise, it constructs the URL from the item name:
+  - Replaces underscores with spaces
+  - Capitalizes words
+  - Creates: `https://minecraft.fandom.com/wiki/Item_Name`
+
+## Image Processing
+The script automatically:
+- Extracts the first image from the wiki page's infobox
+- Removes query parameters from the URL
+- Resizes images to 50px width (replaces `/268` with `/50`)
+- Truncates everything after `.png` to ensure clean URLs
+
+## Usage
+1. **Install dependencies:**
+   ```bash
+   npm install firebase-admin axios cheerio fs
+   ```
+
+2. **Test run (recommended first):**
+   ```bash
+   # Ensure DRY_RUN = true in the script
+   node scripts/fetchImages.js
+   ```
+
+3. **Actual image fetching:**
+   ```bash
+   # Set DRY_RUN = false in the script
+   node scripts/fetchImages.js
+   ```
+
+## Example
+For an item named "ancient_debris", the script will:
+1. Generate wiki URL: `https://minecraft.fandom.com/wiki/Ancient_Debris`
+2. Scrape the infobox image
+3. Process the image URL to something like: `https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/50/Ancient_Debris_JE2_BE1.png`
+4. Update the Firestore document with both the image URL and wiki URL
+
+## Output
+The script provides console output showing:
+- Items being processed
+- Successfully fetched images with URLs
+- Items where no images were found
+- Success/failure counts
+- Any errors encountered
+
+## Safety Features
+- **Selective processing**: Only updates items that don't already have images
+- **DRY_RUN mode**: Preview changes before applying them
+- **Error handling**: Continues processing even if individual items fail
+- **Detailed logging**: Shows exactly what's being updated
+- **URL validation**: Handles various wiki URL formats and edge cases
+
+## Notes
+- The script is specifically designed for Minecraft Wiki scraping
+- It targets the infobox images which are typically the main item images
+- Image URLs are processed to be consistent and clean
+- Both image URL and wiki URL are stored for future reference
+
+---
+
+# getGalleryImageUrls.js Usage
+
+## Purpose
+This Node.js script fetches specific images from Minecraft Wiki gallery sections or tabbed content for individual items. Unlike `fetchImages.js` which processes all items in bulk, this script targets specific items and image variants with precise control.
+
+## Prerequisites
+1. **Node.js** installed on your system
+2. **Required packages**: `npm install firebase-admin axios cheerio`
+3. **Firebase service account key** JSON file
+
+## Setup
+1. Obtain your Firebase service account key JSON file from the Firebase Console:
+   - Go to Project Settings → Service Accounts
+   - Generate new private key
+   - Save the JSON file as `service-account.json` in the project root
+
+## Configuration
+The script has a `DRY_RUN` constant that controls its behavior:
+- `DRY_RUN = true`: Only logs what would be updated (safe for testing)
+- `DRY_RUN = false`: Actually updates the Firestore database with the found image
+
+## Command Line Arguments
+The script accepts several command-line arguments to target specific images:
+
+### Required:
+- `item:ItemName` - The name of the item to search for
+
+### Optional:
+- `tabbed:VariantAlt` - For images in tabbed sections (e.g., different variants)
+- `gallery:GalleryAlt` - For images in gallery sections with specific alt text
+- `gallery:[item1, item2, item3]` - Process multiple gallery items at once
+- `altsuffix:AltSuffix` - Suffix to append to gallery item names
+
+## Usage Examples
+
+### Basic gallery image:
+```bash
+node scripts/getGalleryImageUrls.js item:Allium
+```
+
+### Tabbed content (variants):
+```bash
+node scripts/getGalleryImageUrls.js item:Wood tabbed:"Oak Wood"
+```
+
+### Specific gallery item:
+```bash
+node scripts/getGalleryImageUrls.js item:Flowers gallery:"Red Tulip"
+```
+
+### Multiple gallery items:
+```bash
+node scripts/getGalleryImageUrls.js item:Wool gallery:["White Wool", "Red Wool", "Blue Wool"]
+```
+
+### Gallery items with suffix:
+```bash
+node scripts/getGalleryImageUrls.js item:Concrete gallery:["White", "Red", "Blue"] altsuffix:"Concrete"
+```
+
+## How it Works
+The script:
+1. Parses command-line arguments to determine target item and image type
+2. Constructs the wiki URL from the item name
+3. Fetches and follows redirects to get the final wiki page
+4. Depending on the arguments:
+   - **Gallery mode**: Searches `li.gallerybox img` elements for matching alt text
+   - **Tabbed mode**: Searches `.wds-tab__content img` elements in aside sections
+   - **Array mode**: Processes multiple gallery items in sequence
+5. Extracts and cleans the image URL (removes query params, truncates after .png)
+6. Updates the corresponding Firestore item by name
+
+## Image Processing
+The script automatically:
+- Prioritizes `data-src` over `srcset` over `src` attributes
+- Handles srcset by taking the first URL
+- Removes query parameters from URLs
+- Truncates everything after `.png` for clean URLs
+- Follows redirects to get the final wiki page URL
+
+## Firestore Updates
+- Queries Firestore for items matching the specified name (case-sensitive)
+- Updates the `image` field with the found URL
+- For array processing, updates multiple items based on constructed names
+
+## Output Examples
+```bash
+# Single item
+Image URL for 'Allium': https://static.wikia.nocookie.net/minecraft_gamepedia/images/b/b7/Allium_JE7_BE2.png
+Wiki page: https://minecraft.fandom.com/wiki/Allium
+
+# Multiple items
+Image URL for 'Wool' (gallery: White Wool): https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/14/White_Wool_JE3_BE3.png
+Image URL for 'Wool' (gallery: Red Wool): https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/8c/Red_Wool_JE3_BE3.png
+```
+
+## Use Cases
+- **Variant items**: Get specific color/type variants from gallery sections
+- **Tabbed content**: Extract images from different tabs (Java vs Bedrock editions)
+- **Bulk variant processing**: Process multiple related items in one command
+- **Precise targeting**: When `fetchImages.js` gets the wrong image or you need a specific variant
+- **Manual corrections**: Fix individual items that need specific gallery images
+
+## Safety Features
+- **DRY_RUN mode**: Preview what would be updated before making changes
+- **Error handling**: Gracefully handles missing items or failed requests
+- **Redirect following**: Automatically follows wiki redirects to final pages
+- **Flexible matching**: Handles various image attribute combinations
+- **Detailed logging**: Shows exactly which images are found and updated
+
+## Notes
+- This script is designed for precision rather than bulk processing
+- It's perfect for handling edge cases that the bulk `fetchImages.js` script can't handle
+- The array syntax allows processing multiple related items efficiently
+- Alt text matching is case-insensitive for better reliability
