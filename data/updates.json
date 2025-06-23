@@ -1,16 +1,23 @@
 [
 	{
 		"id": 1,
+		"title": "Catalog update: Ocean items priced and updated images",
+		"date": "2025-06-23",
+		"type": "Content",
+		"description": "Added prices to all the items within the Ocean category. Fixed incorrect images as well."
+	},
+	{
+		"id": 1,
 		"title": "Catalog update: Nether items priced and updated images",
 		"date": "2025-06-22",
-		"type": "Feature",
+		"type": "Content",
 		"description": "Added prices to all the items within the Nether category. Fixed incorrect images as well."
 	},
 	{
 		"id": 1,
 		"title": "Added an 'Update' page with latest updates and roadmap",
 		"date": "2025-06-20",
-		"type": "Feature",
+		"type": "Content",
 		"description": "Added this page to show you all that stuff is happening :)"
 	},
 	{

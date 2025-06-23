@@ -11,7 +11,7 @@
 				
 				<div class="space-y-6">
 					<div 
-						v-for="update in updates" 
+						v-for="update in displayedUpdates" 
 						:key="update.id"
 						class="bg-white rounded-lg shadow-md p-6 border-l-4 border-laurel"
 					>
@@ -40,6 +40,16 @@
 							</li>
 						</ul>
 					</div>
+				</div>
+				
+				<!-- Show All/Show Less Toggle -->
+				<div v-if="updates.length > 3" class="mt-6 text-center">
+					<button
+						@click="toggleShowAllUpdates"
+						class="text-laurel hover:text-gray-asparagus font-medium underline transition-colors duration-200"
+					>
+						{{ showAllUpdates ? 'Show less' : `Show all ${updates.length} updates` }}
+					</button>
 				</div>
 			</section>
 
@@ -124,13 +134,41 @@ const updates = ref(updatesData.map(update => ({
 })))
 
 const roadmap = ref(roadmapData)
+const showAllUpdates = ref(false)
+
+// Computed property to control displayed updates
+const displayedUpdates = computed(() => {
+	if (showAllUpdates.value) {
+		return updates.value
+	}
+	return updates.value.slice(0, 3)
+})
+
+function toggleShowAllUpdates() {
+	showAllUpdates.value = !showAllUpdates.value
+}
 
 function formatDate(date) {
-	return date.toLocaleDateString('en-US', {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric'
-	})
+	const today = new Date()
+	const yesterday = new Date(today)
+	yesterday.setDate(yesterday.getDate() - 1)
+	
+	// Reset time to compare just dates
+	const inputDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+	const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+	const yesterdayDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate())
+	
+	if (inputDate.getTime() === todayDate.getTime()) {
+		return 'Today'
+	} else if (inputDate.getTime() === yesterdayDate.getTime()) {
+		return 'Yesterday'
+	} else {
+		return date.toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric'
+		})
+	}
 }
 
 function getUpdateTypeClass(type) {
