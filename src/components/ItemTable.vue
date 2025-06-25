@@ -2,6 +2,7 @@
 import { useCurrentUser, useFirestore } from 'vuefire'
 import { useRoute, RouterLink } from 'vue-router'
 import { doc, deleteDoc } from 'firebase/firestore'
+import { buyUnitPrice, sellUnitPrice, buyStackPrice, sellStackPrice } from '../utils/pricing.js'
 const user = useCurrentUser()
 const db = useFirestore()
 const route = useRoute()
@@ -21,89 +22,11 @@ const props = defineProps({
 	}
 })
 
-let prevCat = ''
-let nextCat = ''
-const currentCatIndex = props.categories.indexOf(props.category)
-if (currentCatIndex !== 0) {
-	prevCat = props.categories[currentCatIndex - 1]
-}
-if (currentCatIndex !== props.categories.length - 1) {
-	nextCat = props.categories[currentCatIndex + 1]
-}
-
 const priceMultiplier = props.economyConfig.priceMultiplier
 const sellMargin = props.economyConfig.sellMargin
 
-// Smart number formatting utility
-function formatNumber(num) {
-	// Handle undefined, null, or non-numeric values
-	if (num === undefined || num === null || typeof num !== 'number' || isNaN(num)) {
-		return '0'
-	}
-	
-	if (num < 1000) {
-		return num.toString()
-	}
-	
-	if (num < 1000000) {
-		const thousands = num / 1000
-		if (thousands === Math.floor(thousands)) {
-			return thousands + 'k'
-		}
-		return (Math.round(thousands * 10) / 10) + 'k'
-	}
-	
-	if (num < 1000000000) {
-		const millions = num / 1000000
-		if (millions === Math.floor(millions)) {
-			return millions + 'M'
-		}
-		return (Math.round(millions * 10) / 10) + 'M'
-	}
-	
-	const billions = num / 1000000000
-	if (billions === Math.floor(billions)) {
-		return billions + 'B'
-	}
-	return (Math.round(billions * 10) / 10) + 'B'
-}
-
-// Format currency with proper decimal handling
-function formatCurrency(num) {
-	// Handle undefined, null, or non-numeric values
-	if (num === undefined || num === null || typeof num !== 'number' || isNaN(num)) {
-		return '0'
-	}
-	
-	if (num < 1) {
-		return parseFloat(num.toFixed(2)).toString()
-	}
-	
-	return formatNumber(Math.round(num))
-}
-
-function buyUnitPrice(price) {
-	const buyPrice = price * priceMultiplier
-	return formatCurrency(buyPrice)
-}
-
-function sellUnitPrice(price) {
-	const sellPrice = price * sellMargin
-	return formatCurrency(sellPrice)
-}
-
-function buyStackPrice(price, stack) {
-	const buyPrice = price * stack * priceMultiplier
-	return formatCurrency(buyPrice)
-}
-
-function sellStackPrice(price, stack) {
-	const sellPrice = price * stack * sellMargin
-	return formatCurrency(sellPrice)
-}
-
 // Create the redirect URL with current query parameters
-function getEditLinkQuery(itemId) {
+function getEditLinkQuery() {
 	// Use the current route's query object directly to avoid double-encoding
 	const queryString = new URLSearchParams(route.query).toString()
 	const redirectPath = route.path + (queryString ? `?${queryString}` : '')
@@ -122,7 +45,12 @@ async function deleteItem(itemId) {
 <template>
 	<table v-if="collection.length > 0" class="w-full table-auto">
 		<caption :id="category == 'ores' ? 'ores' : ''">
-			{{ category }} ({{ collection.length }})
+			{{
+				category
+			}}
+			({{
+				collection.length
+			}})
 		</caption>
 		<thead>
 			<tr>
@@ -145,27 +73,32 @@ async function deleteItem(itemId) {
 				<td class="hidden">{{ item.material_id }}</td>
 				<th width="50%" class="text-left">
 					<a
-						:href="item.url && item.url.trim() !== '' ? item.url : `https://minecraft.fandom.com/wiki/${item.material_id}`"
+						:href="
+							item.url && item.url.trim() !== ''
+								? item.url
+								: `https://minecraft.fandom.com/wiki/${item.material_id}`
+						"
 						target="_blank"
 						class="font-normal hover:text-gray-asparagus hover:underline"
-					>{{ item.name }}</a>
+						>{{ item.name }}</a
+					>
 				</th>
 				<td width="5%">
 					<img :src="item.image" alt="" class="max-w-[30px] lg:max-w-[50px]" />
 				</td>
-				<td class="text-center">{{ buyUnitPrice(item.price) }}</td>
+				<td class="text-center">{{ buyUnitPrice(item.price, priceMultiplier) }}</td>
 
-				<td class="text-center">{{ sellUnitPrice(item.price) }}</td>
+				<td class="text-center">{{ sellUnitPrice(item.price, sellMargin) }}</td>
 
 				<td class="text-center">
-					{{ buyStackPrice(item.price, item.stack) }}
+					{{ buyStackPrice(item.price, item.stack, priceMultiplier) }}
 				</td>
 				<td class="text-center">
-					{{ sellStackPrice(item.price, item.stack) }}
+					{{ sellStackPrice(item.price, item.stack, sellMargin) }}
 				</td>
 				<td v-if="user?.email">
 					<RouterLink
-						:to="{ path: `/edit/${item.id}`, query: getEditLinkQuery(item.id) }"
+						:to="{ path: `/edit/${item.id}`, query: getEditLinkQuery() }"
 						class="text-gray-asparagus underline hover:text-heavy-metal px-1 py-0"
 						>Edit</RouterLink
 					>

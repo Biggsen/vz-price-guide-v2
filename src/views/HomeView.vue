@@ -1,11 +1,9 @@
 <script setup>
 import { useFirestore, useCollection } from 'vuefire'
-import { query, collection, orderBy, where } from 'firebase/firestore'
+import { query, collection, orderBy } from 'firebase/firestore'
 import { computed, ref, watch, onMounted } from 'vue'
 import { useCurrentUser } from 'vuefire'
 import { useRoute, useRouter } from 'vue-router'
-
-import HeaderIntro from '../components/HeaderIntro.vue'
 import ItemTable from '../components/ItemTable.vue'
 import { categories } from '../constants.js'
 
@@ -49,7 +47,7 @@ const groupedItems = computed(() => {
 
 const uncategorizedItems = computed(() => {
 	if (!allItemsCollection.value) return []
-	return allItemsCollection.value.filter(item => {
+	return allItemsCollection.value.filter((item) => {
 		const isUncat = !item.category || !categories.includes(item.category)
 		const hasImage = item.image && item.image.trim() !== ''
 		return isUncat && (user.value?.email || hasImage)
@@ -64,7 +62,7 @@ const filteredGroupedItems = computed(() => {
 	return categories.reduce((acc, cat) => {
 		const items = groupedItems.value[cat] || []
 		acc[cat] = query
-			? items.filter(item => item.name && item.name.toLowerCase().includes(query))
+			? items.filter((item) => item.name && item.name.toLowerCase().includes(query))
 			: items
 		return acc
 	}, {})
@@ -75,7 +73,7 @@ const filteredUncategorizedItems = computed(() => {
 	const query = searchQuery.value.trim().toLowerCase()
 	const items = uncategorizedItems.value
 	return query
-		? items.filter(item => item.name && item.name.toLowerCase().includes(query))
+		? items.filter((item) => item.name && item.name.toLowerCase().includes(query))
 		: items
 })
 
@@ -92,14 +90,17 @@ const user = useCurrentUser()
 function initializeFromQuery() {
 	const catParam = route.query.cat
 	const uncatParam = route.query.uncat
-	
+
 	if (catParam) {
-		const selectedCategories = catParam.split(',').map(c => c.trim()).filter(c => categories.includes(c))
+		const selectedCategories = catParam
+			.split(',')
+			.map((c) => c.trim())
+			.filter((c) => categories.includes(c))
 		if (selectedCategories.length > 0) {
 			visibleCategories.value = selectedCategories
 		}
 	}
-	
+
 	if (uncatParam !== undefined) {
 		showUncategorised.value = uncatParam === 'true' || uncatParam === '1'
 	}
@@ -108,45 +109,53 @@ function initializeFromQuery() {
 // Update URL query parameters
 function updateQuery() {
 	const query = {}
-	
+
 	// Only add cat param if not all categories are selected
 	if (visibleCategories.value.length !== categories.length) {
 		query.cat = visibleCategories.value.join(',')
 	}
-	
+
 	// Only add uncat param if it's false (since true is default for logged in users)
 	if (!showUncategorised.value) {
 		query.uncat = 'false'
 	}
-	
+
 	// Update URL without triggering navigation
 	router.replace({ query })
 }
 
 // Watch for changes and update URL
-watch([visibleCategories, showUncategorised], () => {
-	updateQuery()
-}, { deep: true })
+watch(
+	[visibleCategories, showUncategorised],
+	() => {
+		updateQuery()
+	},
+	{ deep: true }
+)
 
 // Hide Uncategorised by default for not logged in users
-watch(user, (val) => {
-	if (!val?.email) {
-		showUncategorised.value = false
-	} else {
-		showUncategorised.value = true
-	}
-}, { immediate: true })
+watch(
+	user,
+	(val) => {
+		if (!val?.email) {
+			showUncategorised.value = false
+		} else {
+			showUncategorised.value = true
+		}
+	},
+	{ immediate: true }
+)
 
 // Initialize from query on mount
 onMounted(() => {
 	initializeFromQuery()
-	
+
 	// Check if alert was previously dismissed
 	const dismissed = localStorage.getItem('homeAlertDismissed')
 	if (dismissed === 'true') {
 		showAlert.value = false
 	}
-	
+
 	// Initialize mobile filters visibility from localStorage
 	const mobileFiltersState = localStorage.getItem('showMobileFilters')
 	if (mobileFiltersState !== null) {
@@ -209,28 +218,44 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 
 <template>
 	<!-- Dismissible Info Alert -->
-	<div v-if="showAlert" class="bg-norway bg-opacity-20 border-l-4 border-laurel text-heavy-metal p-2 sm:p-4 relative mb-4">
+	<div
+		v-if="showAlert"
+		class="bg-norway bg-opacity-20 border-l-4 border-laurel text-heavy-metal p-2 sm:p-4 relative mb-4"
+	>
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
 				<svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-					<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+					<path
+						fill-rule="evenodd"
+						d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+						clip-rule="evenodd"
+					></path>
 				</svg>
-				<span class="text-sm sm:text-base">Hey! Check out the <router-link to="/updates" class="underline hover:text-gray-asparagus">Updates</router-link> page for latest updates and roadmap to see what I've got planned.</span>
+				<span class="text-sm sm:text-base"
+					>Hey! Check out the
+					<router-link to="/updates" class="underline hover:text-gray-asparagus"
+						>Updates</router-link
+					>
+					page for latest updates and roadmap to see what I've got planned.</span
+				>
 			</div>
-			<button 
+			<button
 				@click="dismissAlert"
 				class="text-gray-asparagus hover:text-heavy-metal ml-2 sm:ml-4 p-1"
 				aria-label="Dismiss alert"
 			>
 				<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
-					<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+					<path
+						fill-rule="evenodd"
+						d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+						clip-rule="evenodd"
+					></path>
 				</svg>
 			</button>
 		</div>
 	</div>
 
 	<main>
-
 		<div class="my-4 flex flex-col sm:flex-row sm:gap-4">
 			<input
 				type="text"
@@ -247,13 +272,18 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 				</button>
 				<button
 					@click="toggleAllCategories"
-					:class="[allVisible ? 'bg-norway text-heavy-metal border-2 border-gray-asparagus' : 'bg-gray-asparagus text-white border-2 border-gray-asparagus', 'rounded px-3 py-2 transition flex-1 sm:flex-none text-sm sm:text-base sm:whitespace-nowrap']"
+					:class="[
+						allVisible
+							? 'bg-norway text-heavy-metal border-2 border-gray-asparagus'
+							: 'bg-gray-asparagus text-white border-2 border-gray-asparagus',
+						'rounded px-3 py-2 transition flex-1 sm:flex-none text-sm sm:text-base sm:whitespace-nowrap'
+					]"
 				>
 					{{ allVisible ? 'Hide all categories' : 'Show all categories' }}
 				</button>
 			</div>
 		</div>
-		
+
 		<!-- Mobile filters toggle (only visible on mobile) -->
 		<div class="block sm:hidden mb-3">
 			<button
@@ -263,8 +293,14 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 				{{ showMobileFilters ? 'Hide filters' : 'Show filters' }}
 			</button>
 		</div>
-		
-		<div :class="['flex flex-wrap gap-2 mb-4 justify-start', {'hidden': !showMobileFilters}, 'sm:flex']">
+
+		<div
+			:class="[
+				'flex flex-wrap gap-2 mb-4 justify-start',
+				{ hidden: !showMobileFilters },
+				'sm:flex'
+			]"
+		>
 			<button
 				v-for="cat in categories"
 				:key="cat"
@@ -274,13 +310,15 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 						? 'bg-gray-asparagus text-white'
 						: 'bg-norway text-heavy-metal',
 					'border-2 border-gray-asparagus rounded px-3 py-1 transition',
-					(!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0)
+					!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0
 						? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
 						: ''
 				]"
 				:disabled="!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0"
 			>
-				{{ cat.charAt(0).toUpperCase() + cat.slice(1) }} ({{ filteredGroupedItems[cat]?.length || 0 }})
+				{{ cat.charAt(0).toUpperCase() + cat.slice(1) }} ({{
+					filteredGroupedItems[cat]?.length || 0
+				}})
 			</button>
 			<button
 				v-if="user?.email"
@@ -290,7 +328,7 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 						? 'bg-gray-asparagus text-white'
 						: 'bg-norway text-heavy-metal',
 					'border-2 border-gray-asparagus rounded px-3 py-1 transition',
-					(filteredUncategorizedItems.length === 0)
+					filteredUncategorizedItems.length === 0
 						? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
 						: ''
 				]"

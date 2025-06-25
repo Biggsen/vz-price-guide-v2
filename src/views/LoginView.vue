@@ -16,17 +16,14 @@ const route = useRoute()
 
 async function loginToFirebase() {
 	signInWithEmailAndPassword(auth, userInput.value.email, userInput.value.password)
-		.then((userCredential) => {
+		.then(() => {
 			// Signed in
-			const user = userCredential.user
-			
 			// Redirect to the original page or home
 			const redirectPath = route.query.redirect || '/'
 			router.push(redirectPath)
 		})
 		.catch((error) => {
-			const errorCode = error.code
-			const errorMessage = error.message
+			console.error('Login error:', error.code, error.message)
 		})
 }
 
