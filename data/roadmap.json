@@ -19,10 +19,9 @@
 			{ "name": "ocean", "completed": true },
 			{ "name": "tools", "completed": true },
 			{ "name": "weapons", "completed": true },
-			{ "name": "armor", "completed": false },
-			{ "name": "end", "completed": false },
-			{ "name": "ice", "completed": false },
-			{ "name": "books", "completed": false },
+			{ "name": "armor", "completed": true },
+			{ "name": "end", "completed": true },
+			{ "name": "ice", "completed": true },
 			{ "name": "dyed", "completed": false },
 			{ "name": "spawn", "completed": false },
 			{ "name": "discs", "completed": false }

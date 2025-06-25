@@ -16,7 +16,6 @@ export const categories = [
   'armor',
   'end',
   'ice',
-  'books',
   'dyed',
   'spawn',
   'discs'
