@@ -142,6 +142,19 @@ onMounted(() => {
 
 const allVisible = computed(() => visibleCategories.value.length === categories.length)
 
+const totalVisibleItems = computed(() => {
+	let total = 0
+	// Count items from visible categories
+	for (const cat of visibleCategories.value) {
+		total += filteredGroupedItems.value[cat]?.length || 0
+	}
+	// Add uncategorized items if shown
+	if (showUncategorised.value) {
+		total += filteredUncategorizedItems.value.length
+	}
+	return total
+})
+
 function toggleCategory(cat) {
 	const idx = visibleCategories.value.indexOf(cat)
 	if (idx !== -1) {
@@ -242,7 +255,7 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 				]"
 				:disabled="!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0"
 			>
-				{{ cat.charAt(0).toUpperCase() + cat.slice(1) }}
+				{{ cat.charAt(0).toUpperCase() + cat.slice(1) }} ({{ filteredGroupedItems[cat]?.length || 0 }})
 			</button>
 			<button
 				v-if="user?.email"
@@ -258,8 +271,11 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 				]"
 				:disabled="filteredUncategorizedItems.length === 0"
 			>
-				Uncategorised
+				Uncategorised ({{ filteredUncategorizedItems.length }})
 			</button>
+		</div>
+		<div class="mb-4 text-sm text-gray-asparagus">
+			Showing {{ totalVisibleItems }} item{{ totalVisibleItems === 1 ? '' : 's' }}
 		</div>
 		<template v-for="cat in categories" :key="cat">
 			<ItemTable

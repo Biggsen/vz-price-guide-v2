@@ -1,10 +1,10 @@
 [
 	{
 		"id": 1,
-		"title": "Smart number formatting for prices",
+		"title": "Smart number formatting for prices and item count on category filters",
 		"date": "2025-06-25",
 		"type": "Enhancement",
-		"description": "Large numbers now display with smart formatting (20k instead of 20000, 1.3M instead of 1300000) making prices easier to read at a glance."
+		"description": "Large numbers now display with smart formatting (20k instead of 20000, 1.3M instead of 1300000) making prices easier to read at a glance. Category filters now display the item count."
 	},
 	{
 		"id": 1,
