@@ -36,7 +36,7 @@
 		"features": [
 			{ "name": "150 to go", "completed": true },
 			{ "name": "130 to go", "completed": true },
-			{ "name": "110 to go", "completed": false },
+			{ "name": "110 to go", "completed": true },
 			{ "name": "90 to go", "completed": false },
 			{ "name": "70 to go", "completed": false },
 			{ "name": "50 to go", "completed": false },
