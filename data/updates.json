@@ -8,10 +8,10 @@
 	},
 	{
 		"id": 1,
-		"title": "Catalog update: Armor, End and Ice prices added + updated images. Books category removed.",
+		"title": "Catalog update: Armor, End, Ice and Dyed prices added + updated images. Books category removed.",
 		"date": "2025-06-25",
 		"type": "Content",
-		"description": "Added prices to all the items within the Armor, End and Ice categories. Fixed incorrect images as well. Moved Book, Book and Quill and Bookshelf into the Utility category. Removed the Books category all together. Will be making an 'Enchantments' category later instead."
+		"description": "Added prices to all the items within the Armor, End, Ice and Dyed categories. Fixed incorrect images as well. Moved Book, Book and Quill and Bookshelf into the Utility category. Removed the Books category all together. Will be making an 'Enchantments' category later instead."
 	},
 	{
 		"id": 1,

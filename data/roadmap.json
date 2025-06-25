@@ -22,7 +22,7 @@
 			{ "name": "armor", "completed": true },
 			{ "name": "end", "completed": true },
 			{ "name": "ice", "completed": true },
-			{ "name": "dyed", "completed": false },
+			{ "name": "dyed", "completed": true },
 			{ "name": "spawn", "completed": false },
 			{ "name": "discs", "completed": false }
 		]
