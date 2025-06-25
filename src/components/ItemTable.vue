@@ -2,12 +2,7 @@
 import { useCurrentUser, useFirestore } from 'vuefire'
 import { useRoute, RouterLink } from 'vue-router'
 import { doc, deleteDoc } from 'firebase/firestore'
-import {
-        buyUnitPrice,
-        sellUnitPrice,
-        buyStackPrice,
-        sellStackPrice
-} from '../utils/pricing.js'
+import { buyUnitPrice, sellUnitPrice, buyStackPrice, sellStackPrice } from '../utils/pricing.js'
 const user = useCurrentUser()
 const db = useFirestore()
 const route = useRoute()
@@ -27,21 +22,11 @@ const props = defineProps({
 	}
 })
 
-let prevCat = ''
-let nextCat = ''
-const currentCatIndex = props.categories.indexOf(props.category)
-if (currentCatIndex !== 0) {
-	prevCat = props.categories[currentCatIndex - 1]
-}
-if (currentCatIndex !== props.categories.length - 1) {
-	nextCat = props.categories[currentCatIndex + 1]
-}
-
 const priceMultiplier = props.economyConfig.priceMultiplier
 const sellMargin = props.economyConfig.sellMargin
 
 // Create the redirect URL with current query parameters
-function getEditLinkQuery(itemId) {
+function getEditLinkQuery() {
 	// Use the current route's query object directly to avoid double-encoding
 	const queryString = new URLSearchParams(route.query).toString()
 	const redirectPath = route.path + (queryString ? `?${queryString}` : '')
@@ -60,7 +45,12 @@ async function deleteItem(itemId) {
 <template>
 	<table v-if="collection.length > 0" class="w-full table-auto">
 		<caption :id="category == 'ores' ? 'ores' : ''">
-			{{ category }} ({{ collection.length }})
+			{{
+				category
+			}}
+			({{
+				collection.length
+			}})
 		</caption>
 		<thead>
 			<tr>
@@ -83,27 +73,32 @@ async function deleteItem(itemId) {
 				<td class="hidden">{{ item.material_id }}</td>
 				<th width="50%" class="text-left">
 					<a
-						:href="item.url && item.url.trim() !== '' ? item.url : `https://minecraft.fandom.com/wiki/${item.material_id}`"
+						:href="
+							item.url && item.url.trim() !== ''
+								? item.url
+								: `https://minecraft.fandom.com/wiki/${item.material_id}`
+						"
 						target="_blank"
 						class="font-normal hover:text-gray-asparagus hover:underline"
-					>{{ item.name }}</a>
+						>{{ item.name }}</a
+					>
 				</th>
 				<td width="5%">
 					<img :src="item.image" alt="" class="max-w-[30px] lg:max-w-[50px]" />
 				</td>
-                                <td class="text-center">{{ buyUnitPrice(item.price, priceMultiplier) }}</td>
+				<td class="text-center">{{ buyUnitPrice(item.price, priceMultiplier) }}</td>
 
-                                <td class="text-center">{{ sellUnitPrice(item.price, sellMargin) }}</td>
+				<td class="text-center">{{ sellUnitPrice(item.price, sellMargin) }}</td>
 
-                                <td class="text-center">
-                                        {{ buyStackPrice(item.price, item.stack, priceMultiplier) }}
-                                </td>
-                                <td class="text-center">
-                                        {{ sellStackPrice(item.price, item.stack, sellMargin) }}
-                                </td>
+				<td class="text-center">
+					{{ buyStackPrice(item.price, item.stack, priceMultiplier) }}
+				</td>
+				<td class="text-center">
+					{{ sellStackPrice(item.price, item.stack, sellMargin) }}
+				</td>
 				<td v-if="user?.email">
 					<RouterLink
-						:to="{ path: `/edit/${item.id}`, query: getEditLinkQuery(item.id) }"
+						:to="{ path: `/edit/${item.id}`, query: getEditLinkQuery() }"
 						class="text-gray-asparagus underline hover:text-heavy-metal px-1 py-0"
 						>Edit</RouterLink
 					>

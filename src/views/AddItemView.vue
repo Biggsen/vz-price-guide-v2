@@ -1,12 +1,11 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { useFirestore, useCurrentUser } from 'vuefire'
-import { collection, doc, addDoc, getDocs, query } from 'firebase/firestore'
+import { collection, addDoc, getDocs, query } from 'firebase/firestore'
 import { categories } from '../constants.js'
 
 const db = useFirestore()
-const router = useRouter()
 const user = useCurrentUser()
 
 const newItemInitial = ref({
@@ -44,7 +43,6 @@ async function addItem() {
 async function addField() {
 	const querySnapshot = await getDocs(query(collection(db, 'items')))
 	querySnapshot.forEach(async function (item) {
-		const docRef = doc(db, 'items', `${item.id}`)
 		console.log(item.data())
 
 		// This creates (or updates) a field
@@ -99,7 +97,12 @@ function applyToForm(index) {
 			<label for="stack">Stack</label>
 			<input type="number" id="stack" v-model="newItem.stack" required />
 			<label for="category">Category</label>
-			<select id="category" v-model="newItem.category" required class="block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;">
+			<select
+				id="category"
+				v-model="newItem.category"
+				required
+				class="block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;"
+			>
 				<option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
 			</select>
 			<label for="subcategory">Subcategory</label>
