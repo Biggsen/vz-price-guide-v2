@@ -29,6 +29,14 @@ function dismissAlert() {
 	localStorage.setItem('homeAlertDismissed', 'true')
 }
 
+// Mobile filters visibility state
+const showMobileFilters = ref(true)
+
+function toggleMobileFilters() {
+	showMobileFilters.value = !showMobileFilters.value
+	localStorage.setItem('showMobileFilters', showMobileFilters.value.toString())
+}
+
 const groupedItems = computed(() => {
 	if (!allItemsCollection.value) return {}
 	return allItemsCollection.value.reduce((acc, item) => {
@@ -138,6 +146,12 @@ onMounted(() => {
 	if (dismissed === 'true') {
 		showAlert.value = false
 	}
+	
+	// Initialize mobile filters visibility from localStorage
+	const mobileFiltersState = localStorage.getItem('showMobileFilters')
+	if (mobileFiltersState !== null) {
+		showMobileFilters.value = mobileFiltersState === 'true'
+	}
 })
 
 const allVisible = computed(() => visibleCategories.value.length === categories.length)
@@ -239,7 +253,18 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 				</button>
 			</div>
 		</div>
-		<div class="flex flex-wrap gap-2 mb-4 justify-start">
+		
+		<!-- Mobile filters toggle (only visible on mobile) -->
+		<div class="block sm:hidden mb-3">
+			<button
+				@click="toggleMobileFilters"
+				class="text-gray-asparagus hover:text-heavy-metal underline text-sm"
+			>
+				{{ showMobileFilters ? 'Hide filters' : 'Show filters' }}
+			</button>
+		</div>
+		
+		<div :class="['flex flex-wrap gap-2 mb-4 justify-start', {'hidden': !showMobileFilters}, 'sm:flex']">
 			<button
 				v-for="cat in categories"
 				:key="cat"
