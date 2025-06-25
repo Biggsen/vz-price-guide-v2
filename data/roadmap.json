@@ -55,5 +55,17 @@
 			{ "name": "Tools enchantments", "completed": false },
 			{ "name": "General enchantments", "completed": false }
 		]
+	},
+	{
+		"id": 4,
+		"title": "User accounts and community features",
+		"status": "Pending",
+		"description": "Enable users to create accounts, provide feedback and suggest new features for the price guide",
+		"features": [
+			{ "name": "User registration system", "completed": false },
+			{ "name": "User authentication/login", "completed": false },
+			{ "name": "User profile pages", "completed": false },
+			{ "name": "Community feedback and feature suggestions", "completed": false }
+		]
 	}
 ] 
