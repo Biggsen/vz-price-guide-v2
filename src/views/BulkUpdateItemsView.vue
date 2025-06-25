@@ -275,7 +275,7 @@ async function updateSelectedPrices() {
             <td>{{ item.name }}</td>
             <td>{{ item.category }}</td>
             <td>{{ item.subcategory }}</td>
-            <td>{{ item.price }}</td>
+            <td>{{ item.price || 0 }}</td>
           </tr>
         </tbody>
       </table>

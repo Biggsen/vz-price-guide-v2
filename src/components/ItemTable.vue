@@ -34,32 +34,72 @@ if (currentCatIndex !== props.categories.length - 1) {
 const priceMultiplier = props.economyConfig.priceMultiplier
 const sellMargin = props.economyConfig.sellMargin
 
+// Smart number formatting utility
+function formatNumber(num) {
+	// Handle undefined, null, or non-numeric values
+	if (num === undefined || num === null || typeof num !== 'number' || isNaN(num)) {
+		return '0'
+	}
+	
+	if (num < 1000) {
+		return num.toString()
+	}
+	
+	if (num < 1000000) {
+		const thousands = num / 1000
+		if (thousands === Math.floor(thousands)) {
+			return thousands + 'k'
+		}
+		return (Math.round(thousands * 10) / 10) + 'k'
+	}
+	
+	if (num < 1000000000) {
+		const millions = num / 1000000
+		if (millions === Math.floor(millions)) {
+			return millions + 'M'
+		}
+		return (Math.round(millions * 10) / 10) + 'M'
+	}
+	
+	const billions = num / 1000000000
+	if (billions === Math.floor(billions)) {
+		return billions + 'B'
+	}
+	return (Math.round(billions * 10) / 10) + 'B'
+}
+
+// Format currency with proper decimal handling
+function formatCurrency(num) {
+	// Handle undefined, null, or non-numeric values
+	if (num === undefined || num === null || typeof num !== 'number' || isNaN(num)) {
+		return '0'
+	}
+	
+	if (num < 1) {
+		return parseFloat(num.toFixed(2)).toString()
+	}
+	
+	return formatNumber(Math.round(num))
+}
+
 function buyUnitPrice(price) {
-	return price * priceMultiplier
+	const buyPrice = price * priceMultiplier
+	return formatCurrency(buyPrice)
 }
 
 function sellUnitPrice(price) {
 	const sellPrice = price * sellMargin
-	if (sellPrice < 1) {
-		return +parseFloat(sellPrice).toFixed(2)
-	} else {
-		return Math.round(sellPrice)
-	}
+	return formatCurrency(sellPrice)
 }
 
 function buyStackPrice(price, stack) {
-	let buyPrice = price * stack * priceMultiplier
-	buyPrice = buyPrice.toString().replace('000', 'k')
-	return buyPrice
+	const buyPrice = price * stack * priceMultiplier
+	return formatCurrency(buyPrice)
 }
 
 function sellStackPrice(price, stack) {
 	const sellPrice = price * stack * sellMargin
-	if (sellPrice < 1) {
-		return +parseFloat(sellPrice).toFixed(2)
-	} else {
-		return Math.round(sellPrice)
-	}
+	return formatCurrency(sellPrice)
 }
 
 // Create the redirect URL with current query parameters

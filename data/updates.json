@@ -1,17 +1,17 @@
 [
 	{
 		"id": 1,
-		"title": "Catalog update: Books category removed",
+		"title": "Smart number formatting for prices",
 		"date": "2025-06-25",
-		"type": "Content",
-		"description": "Moved Book, Book and Quill and Bookshelf into the Utility category. Removed the Book category all together. Will be making an 'Enchantments' category later instead."
+		"type": "Enhancement",
+		"description": "Large numbers now display with smart formatting (20k instead of 20000, 1.3M instead of 1300000) making prices easier to read at a glance."
 	},
 	{
 		"id": 1,
-		"title": "Catalog update: Armor, End and Ice prices added + updated images",
+		"title": "Catalog update: Armor, End and Ice prices added + updated images. Books category removed.",
 		"date": "2025-06-25",
 		"type": "Content",
-		"description": "Added prices to all the items within the Armor, End and Ice categories. Fixed incorrect images as well."
+		"description": "Added prices to all the items within the Armor, End and Ice categories. Fixed incorrect images as well. Moved Book, Book and Quill and Bookshelf into the Utility category. Removed the Books category all together. Will be making an 'Enchantments' category later instead."
 	},
 	{
 		"id": 1,
