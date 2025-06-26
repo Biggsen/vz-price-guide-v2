@@ -220,36 +220,32 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 	<!-- Dismissible Info Alert -->
 	<div
 		v-if="showAlert"
-		class="bg-norway bg-opacity-20 border-l-4 border-laurel text-heavy-metal p-2 sm:p-4 relative mb-4"
-	>
+		class="bg-norway bg-opacity-20 border-l-4 border-laurel text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
 				<svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
 					<path
 						fill-rule="evenodd"
 						d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-						clip-rule="evenodd"
-					></path>
+						clip-rule="evenodd"></path>
 				</svg>
-				<span class="text-sm sm:text-base"
-					>Hey! Check out the
-					<router-link to="/updates" class="underline hover:text-gray-asparagus"
-						>Updates</router-link
-					>
-					page for latest updates and roadmap to see what I've got planned.</span
-				>
+				<span class="text-sm sm:text-base">
+					Hey! Check out the
+					<router-link to="/updates" class="underline hover:text-gray-asparagus">
+						Updates
+					</router-link>
+					page for latest updates and roadmap to see what I've got planned.
+				</span>
 			</div>
 			<button
 				@click="dismissAlert"
 				class="text-gray-asparagus hover:text-heavy-metal ml-2 sm:ml-4 p-1"
-				aria-label="Dismiss alert"
-			>
+				aria-label="Dismiss alert">
 				<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
 					<path
 						fill-rule="evenodd"
 						d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-						clip-rule="evenodd"
-					></path>
+						clip-rule="evenodd"></path>
 				</svg>
 			</button>
 		</div>
@@ -261,13 +257,11 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 				type="text"
 				v-model="searchQuery"
 				placeholder="Search for an item..."
-				class="border-2 border-gray-asparagus rounded px-3 py-2 w-full sm:max-w-md mb-2 sm:mb-0"
-			/>
+				class="border-2 border-gray-asparagus rounded px-3 py-2 w-full sm:max-w-md mb-2 sm:mb-0" />
 			<div class="flex gap-2 sm:gap-0 sm:ml-2">
 				<button
 					@click="resetCategories"
-					class="bg-laurel text-white border-2 border-gray-asparagus rounded px-3 py-2 transition flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2"
-				>
+					class="bg-laurel text-white border-2 border-gray-asparagus rounded px-3 py-2 transition flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2">
 					Reset
 				</button>
 				<button
@@ -277,8 +271,7 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 							? 'bg-norway text-heavy-metal border-2 border-gray-asparagus'
 							: 'bg-gray-asparagus text-white border-2 border-gray-asparagus',
 						'rounded px-3 py-2 transition flex-1 sm:flex-none text-sm sm:text-base sm:whitespace-nowrap'
-					]"
-				>
+					]">
 					{{ allVisible ? 'Hide all categories' : 'Show all categories' }}
 				</button>
 			</div>
@@ -288,8 +281,7 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 		<div class="block sm:hidden mb-3">
 			<button
 				@click="toggleMobileFilters"
-				class="text-gray-asparagus hover:text-heavy-metal underline text-sm"
-			>
+				class="text-gray-asparagus hover:text-heavy-metal underline text-sm">
 				{{ showMobileFilters ? 'Hide filters' : 'Show filters' }}
 			</button>
 		</div>
@@ -299,8 +291,7 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 				'flex flex-wrap gap-2 mb-4 justify-start',
 				{ hidden: !showMobileFilters },
 				'sm:flex'
-			]"
-		>
+			]">
 			<button
 				v-for="cat in categories"
 				:key="cat"
@@ -314,8 +305,7 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 						? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
 						: ''
 				]"
-				:disabled="!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0"
-			>
+				:disabled="!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0">
 				{{ cat.charAt(0).toUpperCase() + cat.slice(1) }} ({{
 					filteredGroupedItems[cat]?.length || 0
 				}})
@@ -332,8 +322,7 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 						? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
 						: ''
 				]"
-				:disabled="filteredUncategorizedItems.length === 0"
-			>
+				:disabled="filteredUncategorizedItems.length === 0">
 				Uncategorised ({{ filteredUncategorizedItems.length }})
 			</button>
 		</div>
@@ -346,15 +335,13 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 				:collection="filteredGroupedItems[cat] || []"
 				:category="cat"
 				:categories="categories"
-				:economyConfig="economyConfig"
-			/>
+				:economyConfig="economyConfig" />
 		</template>
 		<ItemTable
 			v-if="user?.email && showUncategorised && filteredUncategorizedItems.length > 0"
 			:collection="filteredUncategorizedItems"
 			category="Uncategorised"
 			:categories="categories"
-			:economyConfig="economyConfig"
-		/>
+			:economyConfig="economyConfig" />
 	</main>
 </template>

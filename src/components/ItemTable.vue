@@ -45,12 +45,8 @@ async function deleteItem(itemId) {
 <template>
 	<table v-if="collection.length > 0" class="w-full table-auto">
 		<caption :id="category == 'ores' ? 'ores' : ''">
-			{{
-				category
-			}}
-			({{
-				collection.length
-			}})
+			{{ category }}
+			({{ collection.length }})
 		</caption>
 		<thead>
 			<tr>
@@ -79,9 +75,9 @@ async function deleteItem(itemId) {
 								: `https://minecraft.fandom.com/wiki/${item.material_id}`
 						"
 						target="_blank"
-						class="font-normal hover:text-gray-asparagus hover:underline"
-						>{{ item.name }}</a
-					>
+						class="font-normal hover:text-gray-asparagus hover:underline">
+						{{ item.name }}
+					</a>
 				</th>
 				<td width="5%">
 					<img :src="item.image" alt="" class="max-w-[30px] lg:max-w-[50px]" />
@@ -99,16 +95,16 @@ async function deleteItem(itemId) {
 				<td v-if="user?.email">
 					<RouterLink
 						:to="{ path: `/edit/${item.id}`, query: getEditLinkQuery() }"
-						class="text-gray-asparagus underline hover:text-heavy-metal px-1 py-0"
-						>Edit</RouterLink
-					>
+						class="text-gray-asparagus underline hover:text-heavy-metal px-1 py-0">
+						Edit
+					</RouterLink>
 					<span class="mx-1">|</span>
 					<a
 						href="#"
 						@click.prevent="deleteItem(item.id)"
-						class="text-red-600 underline hover:text-red-800 px-1 py-0"
-						>Delete</a
-					>
+						class="text-red-600 underline hover:text-red-800 px-1 py-0">
+						Delete
+					</a>
 				</td>
 			</tr>
 		</tbody>
