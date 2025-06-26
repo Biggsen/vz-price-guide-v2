@@ -4,6 +4,7 @@ import { useCurrentUser, useFirebaseAuth } from 'vuefire'
 import { signOut } from '@firebase/auth'
 
 import HeaderBanner from './components/HeaderBanner.vue'
+import Footer from './components/Footer.vue'
 
 const user = useCurrentUser()
 const auth = useFirebaseAuth()
@@ -29,4 +30,5 @@ function signOutOfFirebase() {
 	</header>
 
 	<RouterView />
+	<Footer />
 </template>
