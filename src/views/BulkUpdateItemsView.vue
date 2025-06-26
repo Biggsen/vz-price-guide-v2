@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
-import { categories } from '../constants.js'
+import { enabledCategories } from '../constants.js'
 
 const db = useFirestore()
 const dbItems = ref([])
@@ -178,7 +178,9 @@ async function updateSelectedPrices() {
 						v-model="newCategory"
 						class="border-2 border-gray-asparagus rounded px-3 py-1">
 						<option value="">Set category...</option>
-						<option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+						<option v-for="cat in enabledCategories" :key="cat" :value="cat">
+							{{ cat }}
+						</option>
 					</select>
 					<input
 						type="text"

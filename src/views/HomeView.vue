@@ -5,7 +5,7 @@ import { computed, ref, watch, onMounted } from 'vue'
 import { useCurrentUser } from 'vuefire'
 import { useRoute, useRouter } from 'vue-router'
 import ItemTable from '../components/ItemTable.vue'
-import { categories } from '../constants.js'
+import { categories, enabledCategories } from '../constants.js'
 
 const db = useFirestore()
 const route = useRoute()
@@ -59,7 +59,7 @@ const searchQuery = ref('')
 const filteredGroupedItems = computed(() => {
 	if (!allItemsCollection.value) return {}
 	const query = searchQuery.value.trim().toLowerCase()
-	return categories.reduce((acc, cat) => {
+	return enabledCategories.reduce((acc, cat) => {
 		const items = groupedItems.value[cat] || []
 		acc[cat] = query
 			? items.filter((item) => item.name && item.name.toLowerCase().includes(query))
@@ -82,7 +82,7 @@ const economyConfig = {
 	sellMargin: 0.3
 }
 
-const visibleCategories = ref([...categories])
+const visibleCategories = ref([...enabledCategories])
 const showUncategorised = ref(true)
 const user = useCurrentUser()
 
@@ -95,7 +95,7 @@ function initializeFromQuery() {
 		const selectedCategories = catParam
 			.split(',')
 			.map((c) => c.trim())
-			.filter((c) => categories.includes(c))
+			.filter((c) => enabledCategories.includes(c))
 		if (selectedCategories.length > 0) {
 			visibleCategories.value = selectedCategories
 		}
@@ -111,7 +111,7 @@ function updateQuery() {
 	const query = {}
 
 	// Only add cat param if not all categories are selected
-	if (visibleCategories.value.length !== categories.length) {
+	if (visibleCategories.value.length !== enabledCategories.length) {
 		query.cat = visibleCategories.value.join(',')
 	}
 
@@ -163,7 +163,7 @@ onMounted(() => {
 	}
 })
 
-const allVisible = computed(() => visibleCategories.value.length === categories.length)
+const allVisible = computed(() => visibleCategories.value.length === enabledCategories.length)
 
 const totalVisibleItems = computed(() => {
 	let total = 0
@@ -191,7 +191,7 @@ function toggleUncategorised() {
 }
 
 function showAllCategories() {
-	visibleCategories.value = [...categories]
+	visibleCategories.value = [...enabledCategories]
 	showUncategorised.value = true
 }
 function hideAllCategories() {
@@ -207,7 +207,7 @@ function toggleAllCategories() {
 	}
 }
 function resetCategories() {
-	visibleCategories.value = [...categories]
+	visibleCategories.value = [...enabledCategories]
 	showUncategorised.value = true
 	searchQuery.value = ''
 }
@@ -293,7 +293,7 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 				'sm:flex'
 			]">
 			<button
-				v-for="cat in categories"
+				v-for="cat in enabledCategories"
 				:key="cat"
 				@click="toggleCategory(cat)"
 				:class="[
@@ -329,19 +329,19 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 		<div class="mb-4 text-sm text-gray-asparagus">
 			Showing {{ totalVisibleItems }} item{{ totalVisibleItems === 1 ? '' : 's' }}
 		</div>
-		<template v-for="cat in categories" :key="cat">
+		<template v-for="cat in enabledCategories" :key="cat">
 			<ItemTable
 				v-if="visibleCategories.includes(cat)"
 				:collection="filteredGroupedItems[cat] || []"
 				:category="cat"
-				:categories="categories"
+				:categories="enabledCategories"
 				:economyConfig="economyConfig" />
 		</template>
 		<ItemTable
 			v-if="user?.email && showUncategorised && filteredUncategorizedItems.length > 0"
 			:collection="filteredUncategorizedItems"
 			category="Uncategorised"
-			:categories="categories"
+			:categories="enabledCategories"
 			:economyConfig="economyConfig" />
 	</main>
 </template>

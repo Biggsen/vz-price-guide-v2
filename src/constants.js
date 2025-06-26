@@ -20,3 +20,7 @@ export const categories = [
 	'spawn',
 	'discs'
 ]
+
+export const disabledCategories = ['spawn']
+
+export const enabledCategories = categories.filter((cat) => !disabledCategories.includes(cat))
