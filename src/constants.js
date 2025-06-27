@@ -25,17 +25,20 @@ export const disabledCategories = ['spawn']
 
 export const enabledCategories = categories.filter((cat) => !disabledCategories.includes(cat))
 
-// Admin configuration
-export const ADMIN_UIDS = [
-	// Add your UID here - you can get it from the Firebase console or by logging it in your profile
-	'dx4cm54EArZeVE3d1CPJuU2kJbl2' // Replace with your actual Firebase UID
-]
+// Admin utility functions using custom claims
+export async function isAdmin(user) {
+	if (!user) return false
 
-// Admin utility functions
-export function isAdmin(user) {
-	return user && ADMIN_UIDS.includes(user.uid)
+	try {
+		// Get the user's ID token to access custom claims
+		const idTokenResult = await user.getIdTokenResult()
+		return idTokenResult.claims.admin === true
+	} catch (error) {
+		console.error('Error checking admin status:', error)
+		return false
+	}
 }
 
-export function requiresAdmin(user) {
-	return !isAdmin(user)
+export async function requiresAdmin(user) {
+	return !(await isAdmin(user))
 }

@@ -1,13 +1,36 @@
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useCurrentUser } from 'vuefire'
-import { ADMIN_UIDS } from '../constants.js'
 
-// Composable for admin functionality
+// Composable for admin functionality using custom claims
 export function useAdmin() {
 	const user = useCurrentUser()
+	const adminStatus = ref(false)
+	const adminStatusLoaded = ref(false)
+
+	// Watch for user changes and check admin status
+	watch(
+		user,
+		async (newUser) => {
+			if (newUser) {
+				try {
+					const idTokenResult = await newUser.getIdTokenResult()
+					adminStatus.value = idTokenResult.claims.admin === true
+					adminStatusLoaded.value = true
+				} catch (error) {
+					console.error('Error checking admin status:', error)
+					adminStatus.value = false
+					adminStatusLoaded.value = true
+				}
+			} else {
+				adminStatus.value = false
+				adminStatusLoaded.value = true
+			}
+		},
+		{ immediate: true }
+	)
 
 	const isAdmin = computed(() => {
-		return user.value && ADMIN_UIDS.includes(user.value.uid)
+		return adminStatus.value
 	})
 
 	const canEditItems = computed(() => {
@@ -33,6 +56,7 @@ export function useAdmin() {
 	return {
 		user,
 		isAdmin,
+		adminStatusLoaded,
 		canEditItems,
 		canAddItems,
 		canBulkUpdate,
