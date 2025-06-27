@@ -17,13 +17,9 @@
 			</span>
 		</div>
 		<div class="mb-10">
-			<span>
-				<strong>
-					<span>
-						<span class="text-gray-500">Last updated June 19, 2025</span>
-					</span>
-				</strong>
-			</span>
+			<strong>
+				<span class="text-gray-500">Last updated June 27, 2025</span>
+			</strong>
 		</div>
 		<p>
 			<span>
