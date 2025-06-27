@@ -9,6 +9,9 @@
 			<router-link to="/cookie-policy" class="text-norway underline ml-4">
 				Cookie Policy
 			</router-link>
+			<router-link to="/terms-of-use" class="text-norway underline ml-4">
+				Terms of Use
+			</router-link>
 			<br />
 			minecraft-economy-price-guide.net is not affiliated with
 			<a href="https://minecraft.net/" class="underline">Mojang</a>
