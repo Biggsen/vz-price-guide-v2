@@ -547,369 +547,162 @@
 		<!-- 9 -->
 		<div>
 			<div id="privacyrights">
-				<span>
-					<span>
-						<span>
-							<span>
-								<span id="control">
-									<strong>
-										<span>
-											<h2>9. WHAT ARE YOUR PRIVACY RIGHTS?</h2>
-										</span>
-									</strong>
-								</span>
-							</span>
-						</span>
-					</span>
+				<span id="control">
+					<strong>
+						<h2>9. WHAT ARE YOUR PRIVACY RIGHTS?</h2>
+					</strong>
 				</span>
-				<span>
-					<span>
-						<span>
-							<strong>
-								<em>In Short:</em>
-							</strong>
-							<em>
-								<span>
-									<span>
-										<span></span>
-									</span>
-								</span>
-								Depending on your state of residence in the US or in some regions,
-								such as the European Economic Area (EEA), United Kingdom (UK),
-								Switzerland, and Canada , you have rights that allow you greater
-								access to and control over your personal information.
-								<span>
-									<span>
-										<span></span>
-									</span>
-								</span>
-								You may review, change, or terminate your account at any time,
-								depending on your country, province, or state of residence.
-							</em>
-						</span>
-					</span>
-				</span>
+
+				<p>
+					<strong>
+						<em>In Short:</em>
+					</strong>
+					<em>
+						Depending on your state of residence in the US or in some regions, such as
+						the European Economic Area (EEA), United Kingdom (UK), Switzerland, and
+						Canada, you have rights that allow you greater access to and control over
+						your personal information. You may review, change, or terminate your account
+						at any time, depending on your country, province, or state of residence.
+					</em>
+				</p>
 			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							In some regions (like the EEA, UK, Switzerland, and Canada ), you have
-							certain rights under applicable data protection laws. These may include
-							the right (i) to request access and obtain a copy of your personal
-							information, (ii) to request rectification or erasure; (iii) to restrict
-							the processing of your personal information; (iv) if applicable, to data
-							portability; and (v) not to be subject to automated decision-making. If
-							a decision that produces legal or similarly significant effects is made
-							solely by automated means, we will inform you, explain the main factors,
-							and offer a simple way to request human review. In certain
-							circumstances, you may also have the right to object to the processing
-							of your personal information. You can make such a request by contacting
-							us by using the contact details provided in the section '
-						</span>
-					</span>
-				</span>
+			<p>
+				In some regions (like the EEA, UK, Switzerland, and Canada), you have certain rights
+				under applicable data protection laws. These may include the right (i) to request
+				access and obtain a copy of your personal information, (ii) to request rectification
+				or erasure; (iii) to restrict the processing of your personal information; (iv) if
+				applicable, to data portability; and (v) not to be subject to automated
+				decision-making. If a decision that produces legal or similarly significant effects
+				is made solely by automated means, we will inform you, explain the main factors, and
+				offer a simple way to request human review. In certain circumstances, you may also
+				have the right to object to the processing of your personal information. You can
+				make such a request by contacting us by using the contact details provided in the
+				section '
 				<a data-custom-class="link" href="#contact">
-					<span>
-						<span>
-							<span>HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</span>
-						</span>
-					</span>
+					<span>HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</span>
 				</a>
-				<span>
-					<span>
-						<span>' below.</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							We will consider and act upon any request in accordance with applicable
-							data protection laws.
-						</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							If you are located in the EEA or UK and you believe we are unlawfully
-							processing your personal information, you also have the right to
-							complain to your
-							<span>
-								<span>
-									<span>
-										<span>
-											<span>
-												<a
-													data-custom-class="link"
-													href="https://ec.europa.eu/justice/data-protection/bodies/authorities/index_en.htm"
-													rel="noopener noreferrer"
-													target="_blank">
-													<span>
-														Member State data protection authority
-													</span>
-												</a>
-											</span>
-										</span>
-									</span>
-								</span>
-							</span>
-							or
-						</span>
-					</span>
-				</span>
+				' below.
+			</p>
+			<p>
+				We will consider and act upon any request in accordance with applicable data
+				protection laws.
+			</p>
+			<p>
+				If you are located in the EEA or UK and you believe we are unlawfully processing
+				your personal information, you also have the right to complain to your
+				<a
+					data-custom-class="link"
+					href="https://ec.europa.eu/justice/data-protection/bodies/authorities/index_en.htm"
+					rel="noopener noreferrer"
+					target="_blank">
+					<span>Member State data protection authority</span>
+				</a>
+				or
 				<a
 					data-custom-class="link"
 					href="https://ico.org.uk/make-a-complaint/data-protection-complaints/data-protection-complaints/"
 					rel="noopener noreferrer"
 					target="_blank">
-					<span>
-						<span>
-							<span>UK data protection authority</span>
-						</span>
-					</span>
+					<span>UK data protection authority</span>
 				</a>
-				<span>
-					<span>
-						<span>.</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							If you are located in Switzerland, you may contact the
-							<span>
-								<span>
-									<span>
-										<span>
-											<span>
-												<span>
-													<a
-														data-custom-class="link"
-														href="https://www.edoeb.admin.ch/edoeb/en/home.html"
-														rel="noopener noreferrer"
-														target="_blank">
-														Federal Data Protection and Information
-														Commissioner
-													</a>
-												</span>
-											</span>
-										</span>
-									</span>
-								</span>
-							</span>
-							.
-						</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<br />
-			</div>
+				.
+			</p>
+			<p>
+				If you are located in Switzerland, you may contact the
+				<a
+					data-custom-class="link"
+					href="https://www.edoeb.admin.ch/edoeb/en/home.html"
+					rel="noopener noreferrer"
+					target="_blank">
+					Federal Data Protection and Information Commissioner
+				</a>
+				.
+			</p>
 			<div id="withdrawconsent">
-				<span>
-					<span>
-						<span>
-							<strong>
-								<u>Withdrawing your consent:</u>
-							</strong>
-							If we are relying on your consent to process your personal information,
-							which may be express and/or implied consent depending on the applicable
-							law, you have the right to withdraw your consent at any time. You can
-							withdraw your consent at any time by contacting us by using the contact
-							details provided in the section '
-						</span>
-					</span>
-				</span>
-				<a data-custom-class="link" href="#contact">
-					<span>
-						<span>
-							<span>HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</span>
-						</span>
-					</span>
-				</a>
-				<span>
-					<span>
-						<span>' below .</span>
-					</span>
-				</span>
+				<p>
+					<strong>
+						<u>Withdrawing your consent:</u>
+					</strong>
+					If we are relying on your consent to process your personal information, which
+					may be express and/or implied consent depending on the applicable law, you have
+					the right to withdraw your consent at any time. You can withdraw your consent at
+					any time by contacting us by using the contact details provided in the section '
+					<a data-custom-class="link" href="#contact">
+						<span>HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</span>
+					</a>
+					' below.
+				</p>
 			</div>
-			<div>
-				<span>
-					<span>
-						However, please note that this will not affect the lawfulness of the
-						processing before its withdrawal nor, when applicable law allows, will it
-						affect the processing of your personal information conducted in reliance on
-						lawful processing grounds other than consent.
-					</span>
-				</span>
-				<span>
-					<span>
-						<strong>
-							<h3>Account Information</h3>
-						</strong>
-					</span>
-				</span>
-				<span>
-					<span>
-						If you would at any time like to review or change the information in your
-						account or terminate your account, you can:
-					</span>
-				</span>
-			</div>
+			<p>
+				However, please note that this will not affect the lawfulness of the processing
+				before its withdrawal nor, when applicable law allows, will it affect the processing
+				of your personal information conducted in reliance on lawful processing grounds
+				other than consent.
+			</p>
+			<h3>Account Information</h3>
+			<p>
+				If you would at any time like to review or change the information in your account or
+				terminate your account, you can:
+			</p>
 			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>Log in to your account settings and update your user account.</span>
-					</span>
+					<span>Log in to your account settings and update your user account.</span>
 				</li>
 			</ul>
-			<div></div>
-			<div>
-				<span>
-					<span>
-						Upon your request to terminate your account, we will deactivate or delete
-						your account and information from our active databases. However, we may
-						retain some information in our files to prevent fraud, troubleshoot
-						problems, assist with any investigations, enforce our legal terms and/or
-						comply with applicable legal requirements.
-					</span>
-				</span>
-				<span>
-					<span>
-						<span>
-							<span>
-								<span>
-									<span>
-										<span>
-											<span></span>
-										</span>
-									</span>
-								</span>
-							</span>
-						</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							<strong>
-								<u>Cookies and similar technologies:</u>
-							</strong>
-							Most Web browsers are set to accept cookies by default. If you prefer,
-							you can usually choose to set your browser to remove cookies and to
-							reject cookies. If you choose to remove cookies or reject cookies, this
-							could affect certain features or services of our Services.
-							<span></span>
-							For further information, please see our Cookie Notice:
-							<span>
-								<span>
-									<span>
-										<span>
-											<a
-												data-custom-class="link"
-												href="https://minecraft-economy-price-guide.net/cookies"
-												target="_blank">
-												https://minecraft-economy-price-guide.net/cookies
-											</a>
-										</span>
-										.
-										<span>
-											<span>
-												<span>
-													<span></span>
-												</span>
-											</span>
-										</span>
-									</span>
-								</span>
-							</span>
-						</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						If you have questions or comments about your privacy rights, you may email
-						us at verzionspriceguide@pm.me .
-					</span>
-				</span>
-			</div>
+			<p>
+				Upon your request to terminate your account, we will deactivate or delete your
+				account and information from our active databases. However, we may retain some
+				information in our files to prevent fraud, troubleshoot problems, assist with any
+				investigations, enforce our legal terms and/or comply with applicable legal
+				requirements.
+			</p>
+			<p>
+				<strong>
+					<u>Cookies and similar technologies:</u>
+				</strong>
+				Most Web browsers are set to accept cookies by default. If you prefer, you can
+				usually choose to set your browser to remove cookies and to reject cookies. If you
+				choose to remove cookies or reject cookies, this could affect certain features or
+				services of our Services. For further information, please see our Cookie Notice:
+				<a
+					data-custom-class="link"
+					href="https://minecraft-economy-price-guide.net/cookies"
+					target="_blank">
+					<span>https://minecraft-economy-price-guide.net/cookies</span>
+				</a>
+				.
+			</p>
+			<p>
+				If you have questions or comments about your privacy rights, you may email us at
+				verzionspriceguide@pm.me.
+			</p>
 		</div>
 		<!-- 10 -->
 		<div>
 			<div id="DNT">
-				<span>
-					<span>
-						<span>
-							<span>
-								<span id="control">
-									<strong>
-										<span>
-											<h2>10. CONTROLS FOR DO-NOT-TRACK FEATURES</h2>
-										</span>
-									</strong>
-								</span>
-							</span>
-						</span>
-					</span>
+				<span id="control">
+					<strong>
+						<h2>10. CONTROLS FOR DO-NOT-TRACK FEATURES</h2>
+					</strong>
 				</span>
-				<span>
-					<span>
-						<span>
-							Most web browsers and some mobile operating systems and mobile
-							applications include a Do-Not-Track ( 'DNT' ) feature or setting you can
-							activate to signal your privacy preference not to have data about your
-							online browsing activities monitored and collected. At this stage, no
-							uniform technology standard for recognising and implementing DNT signals
-							has been finalised . As such, we do not currently respond to DNT browser
-							signals or any other mechanism that automatically communicates your
-							choice not to be tracked online. If a standard for online tracking is
-							adopted that we must follow in the future, we will inform you about that
-							practice in a revised version of this Privacy Notice.
-						</span>
-					</span>
-				</span>
+
+				<p>
+					Most web browsers and some mobile operating systems and mobile applications
+					include a Do-Not-Track ('DNT') feature or setting you can activate to signal
+					your privacy preference not to have data about your online browsing activities
+					monitored and collected. At this stage, no uniform technology standard for
+					recognising and implementing DNT signals has been finalised. As such, we do not
+					currently respond to DNT browser signals or any other mechanism that
+					automatically communicates your choice not to be tracked online. If a standard
+					for online tracking is adopted that we must follow in the future, we will inform
+					you about that practice in a revised version of this Privacy Notice.
+				</p>
 			</div>
-			<div>
-				<span>
-					<br />
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						California law requires us to let you know how we respond to web browser DNT
-						signals. Because there currently is not an industry or legal standard for
-						recognising or honouring DNT signals, we do not respond to them at this
-						time.
-					</span>
-				</span>
-			</div>
-			<div>
-				<span></span>
-			</div>
+			<p>
+				California law requires us to let you know how we respond to web browser DNT
+				signals. Because there currently is not an industry or legal standard for
+				recognising or honouring DNT signals, we do not respond to them at this time.
+			</p>
 		</div>
 		<!-- 11 -->
 		<div>
