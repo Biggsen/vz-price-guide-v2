@@ -19,12 +19,7 @@ const router = createRouter({
 			component: HomeView,
 			meta: { title: "verzion's economy price guide for Minecraft" }
 		},
-		{
-			path: '/about',
-			name: 'about',
-			component: () => import('../views/AboutView.vue'),
-			meta: { title: "About - verzion's economy price guide for Minecraft" }
-		},
+
 		{
 			path: '/login',
 			name: 'login',
