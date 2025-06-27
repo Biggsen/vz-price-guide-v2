@@ -95,9 +95,9 @@
 				<span>
 					<a
 						data-custom-class="link"
-						href="https://minecraft-economy-price-guide.net/cookies"
+						href="https://minecraft-economy-price-guide.net/cookie-policy"
 						target="_blank">
-						https://minecraft-economy-price-guide.net/cookies
+						https://minecraft-economy-price-guide.net/cookie-policy
 					</a>
 				</span>
 				.
@@ -411,9 +411,9 @@
 				certain cookies is set out in our Cookie Notice:
 				<a
 					data-custom-class="link"
-					href="https://minecraft-economy-price-guide.net/cookies"
+					href="https://minecraft-economy-price-guide.net/cookie-policy"
 					target="_blank">
-					<span>https://minecraft-economy-price-guide.net/cookies</span>
+					<span>https://minecraft-economy-price-guide.net/cookie-policy</span>
 				</a>
 				.
 			</p>
@@ -666,9 +666,9 @@
 				services of our Services. For further information, please see our Cookie Notice:
 				<a
 					data-custom-class="link"
-					href="https://minecraft-economy-price-guide.net/cookies"
+					href="https://minecraft-economy-price-guide.net/cookie-policy"
 					target="_blank">
-					<span>https://minecraft-economy-price-guide.net/cookies</span>
+					<span>https://minecraft-economy-price-guide.net/cookie-policy</span>
 				</a>
 				.
 			</p>
