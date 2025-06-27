@@ -707,72 +707,41 @@
 		<!-- 11 -->
 		<div>
 			<div id="uslaws">
-				<span>
-					<span>
-						<span>
-							<span>
-								<span id="control">
-									<strong>
-										<span>
-											<h2>
-												11. DO UNITED STATES RESIDENTS HAVE SPECIFIC PRIVACY
-												RIGHTS?
-											</h2>
-										</span>
-									</strong>
-								</span>
-							</span>
-						</span>
-					</span>
+				<span id="control">
+					<strong>
+						<h2>11. DO UNITED STATES RESIDENTS HAVE SPECIFIC PRIVACY RIGHTS?</h2>
+					</strong>
 				</span>
-				<span>
-					<span>
-						<span>
-							<strong>
-								<em>In Short:</em>
-							</strong>
-							<em>
-								If you are a resident of California, Colorado, Connecticut,
-								Delaware, Florida, Indiana, Iowa, Kentucky, Maryland, Minnesota,
-								Montana, Nebraska, New Hampshire, New Jersey, Oregon, Rhode Island,
-								Tennessee, Texas, Utah, or Virginia , you may have the right to
-								request access to and receive details about the personal information
-								we maintain about you and how we have processed it, correct
-								inaccuracies, get a copy of, or delete your personal information.
-								You may also have the right to withdraw your consent to our
-								processing of your personal information. These rights may be limited
-								in some circumstances by applicable law. More information is
-								provided below.
-							</em>
-						</span>
-						<strong>
-							<span>
-								<h3>Categories of Personal Information We Collect</h3>
-							</span>
-						</strong>
-						<span>
-							The table below shows the categories of personal information we have
-							collected in the past twelve (12) months. The table includes
-							illustrative examples of each category and does not reflect the personal
-							information we collect from you. For a comprehensive inventory of all
-							personal information we process, please refer to the section '
-						</span>
-					</span>
-				</span>
-				<a href="#infocollect">
-					<span>
-						<span>
-							<span>
-								<span>WHAT INFORMATION DO WE COLLECT?</span>
-							</span>
-						</span>
-					</span>
-				</a>
-				<span>
-					<span>
-						<span>'</span>
-					</span>
-				</span>
+
+				<p>
+					<strong>
+						<em>In Short:</em>
+					</strong>
+					<em>
+						If you are a resident of California, Colorado, Connecticut, Delaware,
+						Florida, Indiana, Iowa, Kentucky, Maryland, Minnesota, Montana, Nebraska,
+						New Hampshire, New Jersey, Oregon, Rhode Island, Tennessee, Texas, Utah, or
+						Virginia, you may have the right to request access to and receive details
+						about the personal information we maintain about you and how we have
+						processed it, correct inaccuracies, get a copy of, or delete your personal
+						information. You may also have the right to withdraw your consent to our
+						processing of your personal information. These rights may be limited in some
+						circumstances by applicable law. More information is provided below.
+					</em>
+				</p>
+
+				<h3>Categories of Personal Information We Collect</h3>
+				<p>
+					The table below shows the categories of personal information we have collected
+					in the past twelve (12) months. The table includes illustrative examples of each
+					category and does not reflect the personal information we collect from you. For
+					a comprehensive inventory of all personal information we process, please refer
+					to the section '
+					<a href="#infocollect">
+						<span>WHAT INFORMATION DO WE COLLECT?</span>
+					</a>
+					'
+				</p>
 			</div>
 			<table style="width: 100%">
 				<thead>
@@ -785,13 +754,7 @@
 								border-top: 1px solid black;
 								text-align: left;
 							">
-							<span>
-								<span>
-									<span>
-										<strong>Category</strong>
-									</span>
-								</span>
-							</span>
+							<strong>Category</strong>
 						</th>
 						<th
 							style="
@@ -800,13 +763,7 @@
 								border-right: 1px solid black;
 								text-align: left;
 							">
-							<span>
-								<span>
-									<span>
-										<strong>Examples</strong>
-									</span>
-								</span>
-							</span>
+							<strong>Examples</strong>
 						</th>
 						<th
 							style="
@@ -816,13 +773,7 @@
 								text-align: center;
 								text-align: left;
 							">
-							<span>
-								<span>
-									<span>
-										<strong>Collected</strong>
-									</span>
-								</span>
-							</span>
+							<strong>Collected</strong>
 						</th>
 					</tr>
 				</thead>
@@ -886,8 +837,6 @@
 						</td>
 					</tr>
 				</tbody>
-			</table>
-			<table style="width: 100%">
 				<tbody>
 					<tr>
 						<td
@@ -945,8 +894,6 @@
 						</td>
 					</tr>
 				</tbody>
-			</table>
-			<table style="width: 100%">
 				<tbody>
 					<tr>
 						<td
@@ -1428,29 +1375,18 @@
 					</tr>
 				</tbody>
 			</table>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						We may also collect other personal information outside of these categories
-						through instances where you interact with us in person, online, or by phone
-						or mail in the context of:
-					</span>
-				</span>
-			</div>
+			<p>
+				We may also collect other personal information outside of these categories through
+				instances where you interact with us in person, online, or by phone or mail in the
+				context of:
+			</p>
 			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
 					<span>Receiving help through our customer support channels;</span>
 				</li>
-			</ul>
-			<ul>
 				<li data-custom-class="body_text">
 					<span>Participation in customer surveys or contests; and</span>
 				</li>
-			</ul>
-			<ul>
 				<li data-custom-class="body_text">
 					<span>
 						Facilitation in the delivery of our Services and to respond to your
@@ -1458,892 +1394,441 @@
 					</span>
 				</li>
 			</ul>
-			<div>
-				<span>
-					We will use and retain the collected personal information as needed to provide
-					the Services or for:
-				</span>
+			<p>
+				We will use and retain the collected personal information as needed to provide the
+				Services or for:
+			</p>
 
-				<div>
-					<ul>
-						<li data-custom-class="body_text" style="line-height: 1.5">
-							<span>Category H - As long as the user has an account with us</span>
-						</li>
-					</ul>
+			<ul>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>Category H - As long as the user has an account with us</span>
+				</li>
+			</ul>
 
-					<div>
-						<div>
-							<strong>
-								<span>
-									<span>
-										<h3>Sources of Personal Information</h3>
-									</span>
-								</span>
-							</strong>
-							<span>
-								<span>
-									Learn more about the sources of personal information we collect
-									in '
-								</span>
-							</span>
-							<span>
-								<span>
-									<a data-custom-class="link" href="#infocollect">
-										<span>WHAT INFORMATION DO WE COLLECT?</span>
-									</a>
-								</span>
-							</span>
-							<span>
-								<span>'</span>
-							</span>
-							<span>
-								<span>
-									<strong>
-										<span>
-											<h3>How We Use and Share Personal Information</h3>
-										</span>
-									</strong>
-								</span>
-							</span>
-							<span>
-								Learn more about how we use your personal information in the
-								section, '
-							</span>
-							<a data-custom-class="link" href="#infouse">
-								<span>HOW DO WE PROCESS YOUR INFORMATION?</span>
-							</a>
-							<span>'</span>
-						</div>
-						<div>
-							<br />
-						</div>
-						<div>
-							<span>
-								<span>
-									<span></span>
-								</span>
-							</span>
-						</div>
-						<div>
-							<span>
-								<span>
-									<span>
-										<strong>
-											Will your information be shared with anyone else?
-										</strong>
-									</span>
-								</span>
-							</span>
-						</div>
-						<div>
-							<span>
-								<span>
-									<span>
-										We may disclose your personal information with our service
-										providers pursuant to a written contract between us and each
-										service provider. Learn more about how we disclose personal
-										information to in the section, '
-									</span>
-								</span>
-							</span>
-							<a data-custom-class="link" href="#whoshare">
-								<span>
-									<span>
-										WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?
-									</span>
-								</span>
-							</a>
-							<span>
-								<span>
-									<span>'</span>
-								</span>
-							</span>
-						</div>
-						<div>
-							<br />
-						</div>
-						<div>
-							<span>
-								<span>
-									<span>
-										We may use your personal information for our own business
-										purposes, such as for undertaking internal research for
-										technological development and demonstration. This is not
-										considered to be 'selling' of your personal information.
-									</span>
-								</span>
-							</span>
-						</div>
-						<div>
-							<br />
-						</div>
-						<div>
-							<span>
-								<span>
-									<span>
-										We have not disclosed, sold, or shared any personal
-										information to third parties for a business or commercial
-										purpose in the preceding twelve (12) months. We will not
-										sell or share personal information in the future belonging
-										to website visitors, users, and other consumers.
-										<span>
-											<span>
-												<span>
-													<span></span>
-												</span>
-											</span>
-										</span>
-									</span>
-								</span>
-							</span>
-							<span></span>
-						</div>
-						<div>
-							<span>
-								<strong>
-									<span>
-										<h3>Your Rights</h3>
-									</span>
-								</strong>
-								<span>
-									You have rights under certain US state data protection laws.
-									However, these rights are not absolute, and in certain cases, we
-									may decline your request as permitted by law. These rights
-									include:
-								</span>
-							</span>
-						</div>
-						<ul>
-							<li data-custom-class="body_text" style="line-height: 1.5">
-								<span>
-									<strong>Right to know</strong>
-									whether or not we are processing your personal data
-								</span>
-							</li>
-						</ul>
-						<ul>
-							<li data-custom-class="body_text" style="line-height: 1.5">
-								<span>
-									<strong>Right to access</strong>
-									your personal data
-								</span>
-							</li>
-						</ul>
-						<ul>
-							<li data-custom-class="body_text" style="line-height: 1.5">
-								<span>
-									<strong>Right to correct</strong>
-									inaccuracies in your personal data
-								</span>
-							</li>
-						</ul>
-						<ul>
-							<li data-custom-class="body_text" style="line-height: 1.5">
-								<span>
-									<strong>Right to request</strong>
-									the deletion of your personal data
-								</span>
-							</li>
-						</ul>
-						<ul>
-							<li data-custom-class="body_text" style="line-height: 1.5">
-								<span>
-									<strong>Right to obtain a copy</strong>
-									of the personal data you previously shared with us
-								</span>
-							</li>
-						</ul>
-						<ul>
-							<li data-custom-class="body_text" style="line-height: 1.5">
-								<span>
-									<strong>Right to non-discrimination</strong>
-									for exercising your rights
-								</span>
-							</li>
-						</ul>
-						<ul>
-							<li data-custom-class="body_text" style="line-height: 1.5">
-								<span>
-									<strong>Right to opt out</strong>
-									of the processing of your personal data if it is used for
-									targeted advertising (or sharing as defined under California's
-									privacy law) , the sale of personal data, or profiling in
-									furtherance of decisions that produce legal or similarly
-									significant effects ( 'profiling' )
-								</span>
-							</li>
-						</ul>
-						<div>
-							<span>
-								<span>
-									Depending upon the state where you live, you may also have the
-									following rights:
-								</span>
-							</span>
-						</div>
-						<ul>
-							<li data-custom-class="body_text" style="line-height: 1.5">
-								<span>
-									Right to access the categories of personal data being processed
-									(as permitted by applicable law, including the privacy law in
-									Minnesota)
-								</span>
-							</li>
-						</ul>
-						<ul>
-							<li data-custom-class="body_text" style="line-height: 1.5">
-								<span>
-									Right to obtain a list of the categories of third parties to
-									which we have disclosed personal data (as permitted by
-									applicable law, including the privacy law in California,
-									Delaware, and Maryland )
-								</span>
-							</li>
-						</ul>
-						<ul>
-							<li data-custom-class="body_text" style="line-height: 1.5">
-								<span>
-									Right to obtain a list of specific third parties to which we
-									have disclosed personal data (as permitted by applicable law,
-									including the privacy law in Minnesota and Oregon )
-								</span>
-							</li>
-						</ul>
-						<ul>
-							<li data-custom-class="body_text" style="line-height: 1.5">
-								<span>
-									Right to review, understand, question, and correct how personal
-									data has been profiled (as permitted by applicable law,
-									including the privacy law in Minnesota)
-								</span>
-							</li>
-						</ul>
-						<ul>
-							<li data-custom-class="body_text" style="line-height: 1.5">
-								<span>
-									Right to limit use and disclosure of sensitive personal data (as
-									permitted by applicable law, including the privacy law in
-									California)
-								</span>
-							</li>
-						</ul>
-						<ul>
-							<li data-custom-class="body_text" style="line-height: 1.5">
-								<span>
-									Right to opt out of the collection of sensitive data and
-									personal data collected through the operation of a voice or
-									facial recognition feature (as permitted by applicable law,
-									including the privacy law in Florida)
-								</span>
-							</li>
-						</ul>
-						<div>
-							<strong>
-								<span>
-									<span>
-										<h3>How to Exercise Your Rights</h3>
-									</span>
-								</span>
-							</strong>
-							<span>
-								<span>
-									<span>
-										To exercise these rights, you can contact us by submitting a
-									</span>
-								</span>
-							</span>
-							<a
-								data-custom-class="link"
-								href="https://app.termly.io/notify/608dc5a2-7eda-4074-9958-83ea1df0c6a5"
-								rel="noopener noreferrer"
-								target="_blank">
-								<span>
-									<span>data subject access request</span>
-								</span>
-							</a>
-							<span>
-								<span>
-									<span>,</span>
-									<span>
-										<span>
-											<span>
-												<span>
-													by emailing us at verzionspriceguide@pm.me ,
-												</span>
-												<span>
-													by visiting
-													<span>
-														<a
-															data-custom-class="link"
-															href="https://minecraft-economy-price-guide.net/contact"
-															target="_blank">
-															https://minecraft-economy-price-guide.net/contact
-														</a>
-													</span>
-													,
-												</span>
-											</span>
-										</span>
-									</span>
-								</span>
-							</span>
-							<span>
-								or by referring to the contact details at the bottom of this
-								document.
-							</span>
-						</div>
-						<div>
-							<span>
-								<span>
-									We will honour your opt-out preferences if you enact the
-								</span>
-							</span>
-							<span>
-								<a
-									data-custom-class="link"
-									href="https://globalprivacycontrol.org/"
-									rel="noopener noreferrer"
-									target="_blank">
-									<span>Global Privacy Control</span>
-								</a>
-							</span>
-							<span>
-								<span>(GPC) opt-out signal on your browser.</span>
-							</span>
-						</div>
-						<div>
-							<br />
-						</div>
-						<div>
-							<span>
-								<span>
-									Under certain US state data protection laws, you can designate
-									an authorised agent to make a request on your behalf. We may
-									deny a request from an authorised agent that does not submit
-									proof that they have been validly authorised to act on your
-									behalf in accordance with applicable laws.
-								</span>
-								<br />
-								<strong>
-									<span>
-										<h3>Request Verification</h3>
-									</span>
-								</strong>
-								<span>
-									Upon receiving your request, we will need to verify your
-									identity to determine you are the same person about whom we have
-									the information in our system. We will only use personal
-									information provided in your request to verify your identity or
-									authority to make the request. However, if we cannot verify your
-									identity from the information already maintained by us, we may
-									request that you provide additional information for the purposes
-									of verifying your identity and for security or fraud-prevention
-									purposes.
-								</span>
-							</span>
-						</div>
-						<div>
-							<span>
-								<span>
-									If you submit the request through an authorised agent, we may
-									need to collect additional information to verify your identity
-									before processing your request and the agent will need to
-									provide a written and signed permission from you to submit such
-									request on your behalf.
-								</span>
-							</span>
-							<span>
-								<span>
-									<strong>
-										<h3>Appeals</h3>
-									</strong>
-								</span>
-								<span>
-									Under certain US state data protection laws, if we decline to
-									take action regarding your request, you may appeal our decision
-									by emailing us at verzionspriceguide@pm.me . We will inform you
-									in writing of any action taken or not taken in response to the
-									appeal, including a written explanation of the reasons for the
-									decisions. If your appeal is denied, you may submit a complaint
-									to your state attorney general.
-								</span>
-							</span>
-							<span>
-								<span></span>
-							</span>
-							<span>
-								<strong>
-									<span>
-										<h3>California 'Shine The Light' Law</h3>
-									</span>
-								</strong>
-								<span>
-									California Civil Code Section 1798.83, also known as the 'Shine
-									The Light' law, permits our users who are California residents
-									to request and obtain from us, once a year and free of charge,
-									information about categories of personal information (if any) we
-									disclosed to third parties for direct marketing purposes and the
-									names and addresses of all third parties with which we shared
-									personal information in the immediately preceding calendar year.
-									If you are a California resident and would like to make such a
-									request, please submit your request in writing to us by using
-									the contact details provided in the section '
-								</span>
-							</span>
-							<span>
-								<a data-custom-class="link" href="#contact">
-									<span>HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</span>
-								</a>
-								'
-							</span>
-						</div>
-					</div>
-				</div>
-			</div>
+			<h3>Sources of Personal Information</h3>
+			<p>
+				Learn more about the sources of personal information we collect in '
+
+				<a data-custom-class="link" href="#infocollect">
+					<span>WHAT INFORMATION DO WE COLLECT?</span>
+				</a>
+
+				<span>'</span>
+			</p>
+			<h3>How We Use and Share Personal Information</h3>
+
+			<p>
+				<span>Learn more about how we use your personal information in the section, '</span>
+				<a data-custom-class="link" href="#infouse">
+					<span>HOW DO WE PROCESS YOUR INFORMATION?</span>
+				</a>
+				<span>'</span>
+			</p>
+			<p>
+				<strong>Will your information be shared with anyone else?</strong>
+			</p>
+			<p>
+				We may disclose your personal information with our service providers pursuant to a
+				written contract between us and each service provider. Learn more about how we
+				disclose personal information to in the section, '
+
+				<a data-custom-class="link" href="#whoshare">
+					<span>
+						<span>WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</span>
+					</span>
+				</a>
+
+				<span>'</span>
+			</p>
+			<p>
+				We may use your personal information for our own business purposes, such as for
+				undertaking internal research for technological development and demonstration. This
+				is not considered to be 'selling' of your personal information.
+			</p>
+
+			<p>
+				We have not disclosed, sold, or shared any personal information to third parties for
+				a business or commercial purpose in the preceding twelve (12) months. We will not
+				sell or share personal information in the future belonging to website visitors,
+				users, and other consumers.
+			</p>
+			<h3>Your Rights</h3>
+			<p>
+				You have rights under certain US state data protection laws. However, these rights
+				are not absolute, and in certain cases, we may decline your request as permitted by
+				law. These rights include:
+			</p>
+			<ul>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>
+						<strong>Right to know</strong>
+						whether or not we are processing your personal data
+					</span>
+				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>
+						<strong>Right to access</strong>
+						your personal data
+					</span>
+				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>
+						<strong>Right to correct</strong>
+						inaccuracies in your personal data
+					</span>
+				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>
+						<strong>Right to request</strong>
+						the deletion of your personal data
+					</span>
+				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>
+						<strong>Right to obtain a copy</strong>
+						of the personal data you previously shared with us
+					</span>
+				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>
+						<strong>Right to non-discrimination</strong>
+						for exercising your rights
+					</span>
+				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>
+						<strong>Right to opt out</strong>
+						of the processing of your personal data if it is used for targeted
+						advertising (or sharing as defined under California's privacy law) , the
+						sale of personal data, or profiling in furtherance of decisions that produce
+						legal or similarly significant effects ( 'profiling' )
+					</span>
+				</li>
+			</ul>
+			<p>Depending upon the state where you live, you may also have the following rights:</p>
+			<ul>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>
+						Right to access the categories of personal data being processed (as
+						permitted by applicable law, including the privacy law in Minnesota)
+					</span>
+				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>
+						Right to obtain a list of the categories of third parties to which we have
+						disclosed personal data (as permitted by applicable law, including the
+						privacy law in California, Delaware, and Maryland )
+					</span>
+				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>
+						Right to obtain a list of specific third parties to which we have disclosed
+						personal data (as permitted by applicable law, including the privacy law in
+						Minnesota and Oregon )
+					</span>
+				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>
+						Right to review, understand, question, and correct how personal data has
+						been profiled (as permitted by applicable law, including the privacy law in
+						Minnesota)
+					</span>
+				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>
+						Right to limit use and disclosure of sensitive personal data (as permitted
+						by applicable law, including the privacy law in California)
+					</span>
+				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<span>
+						Right to opt out of the collection of sensitive data and personal data
+						collected through the operation of a voice or facial recognition feature (as
+						permitted by applicable law, including the privacy law in Florida)
+					</span>
+				</li>
+			</ul>
+			<h3>How to Exercise Your Rights</h3>
+			<p>
+				To exercise these rights, you can contact us by submitting a
+				<a
+					data-custom-class="link"
+					href="https://app.termly.io/notify/608dc5a2-7eda-4074-9958-83ea1df0c6a5"
+					rel="noopener noreferrer"
+					target="_blank">
+					<span>data subject access request</span>
+				</a>
+				, by emailing us at verzionspriceguide@pm.me , by visiting
+				<a
+					data-custom-class="link"
+					href="https://minecraft-economy-price-guide.net/contact"
+					target="_blank">
+					https://minecraft-economy-price-guide.net/contact
+				</a>
+				, or by referring to the contact details at the bottom of this document.
+			</p>
+			<p>
+				We will honour your opt-out preferences if you enact the
+				<a
+					data-custom-class="link"
+					href="https://globalprivacycontrol.org/"
+					rel="noopener noreferrer"
+					target="_blank">
+					<span>Global Privacy Control</span>
+				</a>
+				(GPC) opt-out signal on your browser.
+			</p>
+			<p>
+				Under certain US state data protection laws, you can designate an authorised agent
+				to make a request on your behalf. We may deny a request from an authorised agent
+				that does not submit proof that they have been validly authorised to act on your
+				behalf in accordance with applicable laws.
+			</p>
+			<h3>Request Verification</h3>
+			<p>
+				Upon receiving your request, we will need to verify your identity to determine you
+				are the same person about whom we have the information in our system. We will only
+				use personal information provided in your request to verify your identity or
+				authority to make the request. However, if we cannot verify your identity from the
+				information already maintained by us, we may request that you provide additional
+				information for the purposes of verifying your identity and for security or
+				fraud-prevention purposes.
+			</p>
+			<p>
+				If you submit the request through an authorised agent, we may need to collect
+				additional information to verify your identity before processing your request and
+				the agent will need to provide a written and signed permission from you to submit
+				such request on your behalf.
+			</p>
+			<h3>Appeals</h3>
+			<p>
+				Under certain US state data protection laws, if we decline to take action regarding
+				your request, you may appeal our decision by emailing us at verzionspriceguide@pm.me
+				. We will inform you in writing of any action taken or not taken in response to the
+				appeal, including a written explanation of the reasons for the decisions. If your
+				appeal is denied, you may submit a complaint to your state attorney general.
+			</p>
+			<h3>California 'Shine The Light' Law</h3>
+
+			<p>
+				California Civil Code Section 1798.83, also known as the 'Shine The Light' law,
+				permits our users who are California residents to request and obtain from us, once a
+				year and free of charge, information about categories of personal information (if
+				any) we disclosed to third parties for direct marketing purposes and the names and
+				addresses of all third parties with which we shared personal information in the
+				immediately preceding calendar year. If you are a California resident and would like
+				to make such a request, please submit your request in writing to us by using the
+				contact details provided in the section '
+				<a data-custom-class="link" href="#contact">
+					<span>HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</span>
+				</a>
+				'
+			</p>
 		</div>
 		<!-- 12 -->
 		<div>
 			<div>
 				<span id="otherlaws">
 					<strong>
-						<span>
-							<h2>12. DO OTHER REGIONS HAVE SPECIFIC PRIVACY RIGHTS?</h2>
-						</span>
+						<h2>12. DO OTHER REGIONS HAVE SPECIFIC PRIVACY RIGHTS?</h2>
 					</strong>
 				</span>
-				<span>
+
+				<p>
 					<em>
-						<strong>
-							<span>In Short:</span>
-						</strong>
-						<span>
-							You may have additional rights based on the country you reside in.
-						</span>
+						<strong>In Short:</strong>
+						You may have additional rights based on the country you reside in.
 					</em>
-				</span>
+				</p>
 			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						<h3>
-							<strong>Australia</strong>
-							<strong>and</strong>
-							<strong>New Zealand</strong>
-						</h3>
-					</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						We collect and process your personal information under the obligations and
-						conditions set by Australia's Privacy Act 1988 and New Zealand's Privacy Act
-						2020 (Privacy Act).
-					</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						This Privacy Notice satisfies the notice requirements defined in both
-						Privacy Acts , in particular: what personal information we collect from you,
-						from which sources, for which purposes, and other recipients of your
-						personal information.
-					</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<br />
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						If you do not wish to provide the personal information necessary to fulfil
-						their applicable purpose, it may affect our ability to provide our services,
-						in particular:
-					</span>
-				</span>
-			</div>
+
+			<h3>
+				<strong>Australia</strong>
+				and
+				<strong>New Zealand</strong>
+			</h3>
+			<p>
+				We collect and process your personal information under the obligations and
+				conditions set by Australia's Privacy Act 1988 and New Zealand's Privacy Act 2020
+				(Privacy Act).
+			</p>
+			<p>
+				This Privacy Notice satisfies the notice requirements defined in both Privacy Acts,
+				in particular: what personal information we collect from you, from which sources,
+				for which purposes, and other recipients of your personal information.
+			</p>
+			<p>
+				If you do not wish to provide the personal information necessary to fulfil their
+				applicable purpose, it may affect our ability to provide our services, in
+				particular:
+			</p>
 			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>offer you the products or services that you want</span>
-					</span>
+					<span>offer you the products or services that you want</span>
 				</li>
-			</ul>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>respond to or help with your requests</span>
-					</span>
+					<span>respond to or help with your requests</span>
 				</li>
-			</ul>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>manage your account with us</span>
-					</span>
+					<span>manage your account with us</span>
 				</li>
-			</ul>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>confirm your identity and protect your account</span>
-					</span>
+					<span>confirm your identity and protect your account</span>
 				</li>
 			</ul>
-			<div>
-				<span>
-					<span>
-						At any time, you have the right to request access to or correction of your
-						personal information. You can make such a request by contacting us by using
-						the contact details provided in the section '
-						<a data-custom-class="link" href="#request">
-							<span>
-								<span>
-									HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM
-									YOU?
-								</span>
-							</span>
-						</a>
-						'
-					</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<br />
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						If you believe we are unlawfully processing your personal information, you
-						have the right to submit a complaint about a breach of the Australian
-						Privacy Principles to the
-						<a
-							data-custom-class="link"
-							href="https://www.oaic.gov.au/privacy/privacy-complaints/lodge-a-privacy-complaint-with-us"
-							rel="noopener noreferrer"
-							target="_blank">
-							<span>
-								<span>Office of the Australian Information Commissioner</span>
-							</span>
-						</a>
-						and a breach of New Zealand's Privacy Principles to the
-						<a
-							data-custom-class="link"
-							href="https://www.privacy.org.nz/your-rights/making-a-complaint/"
-							rel="noopener noreferrer"
-							target="_blank">
-							<span>
-								<span>Office of New Zealand Privacy Commissioner</span>
-							</span>
-						</a>
-						.
-					</span>
-				</span>
-				<span>
-					<strong>
-						<span>
-							<h3>Republic of South Africa</h3>
-						</span>
-					</strong>
-					<span>
-						At any time, you have the right to request access to or correction of your
-						personal information. You can make such a request by contacting us by using
-						the contact details provided in the section '
-					</span>
-				</span>
-				<span>
-					<a href="#request">
-						<span>
-							<span>
-								HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?
-							</span>
-						</span>
-					</a>
-				</span>
-				<span>
-					<span>'</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						If you are unsatisfied with the manner in which we address any complaint
-						with regard to our processing of personal information, you can contact the
-						office of the regulator, the details of which are:
-					</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<br />
-				</span>
-			</div>
-			<div>
+			<p>
+				At any time, you have the right to request access to or correction of your personal
+				information. You can make such a request by contacting us by using the contact
+				details provided in the section '
+				<a data-custom-class="link" href="#request">
+					<span>HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?</span>
+				</a>
+				'
+			</p>
+			<p>
+				If you believe we are unlawfully processing your personal information, you have the
+				right to submit a complaint about a breach of the Australian Privacy Principles to
+				the
+				<a
+					data-custom-class="link"
+					href="https://www.oaic.gov.au/privacy/privacy-complaints/lodge-a-privacy-complaint-with-us"
+					rel="noopener noreferrer"
+					target="_blank">
+					<span>Office of the Australian Information Commissioner</span>
+				</a>
+				and a breach of New Zealand's Privacy Principles to the
+				<a
+					data-custom-class="link"
+					href="https://www.privacy.org.nz/your-rights/making-a-complaint/"
+					rel="noopener noreferrer"
+					target="_blank">
+					<span>Office of New Zealand Privacy Commissioner</span>
+				</a>
+				.
+			</p>
+
+			<h3>Republic of South Africa</h3>
+			<p>
+				At any time, you have the right to request access to or correction of your personal
+				information. You can make such a request by contacting us by using the contact
+				details provided in the section '
+				<a href="#request">
+					<span>HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?</span>
+				</a>
+				'
+			</p>
+			<p>
+				If you are unsatisfied with the manner in which we address any complaint with regard
+				to our processing of personal information, you can contact the office of the
+				regulator, the details of which are:
+			</p>
+			<p>
 				<a
 					data-custom-class="link"
 					href="https://inforegulator.org.za/"
 					rel="noopener noreferrer"
 					target="_blank">
-					<span>
-						<span>
-							<span>The Information Regulator (South Africa)</span>
-						</span>
-					</span>
+					<span>The Information Regulator (South Africa)</span>
 				</a>
-			</div>
-			<div>
-				<span>
-					<span>General enquiries:</span>
-					<a
-						data-custom-class="link"
-						href="mailto:enquiries@inforegulator.org.za"
-						rel="noopener noreferrer"
-						target="_blank">
-						<span>
-							<span>enquiries@inforegulator.org.za</span>
-						</span>
-					</a>
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>Complaints (complete POPIA/PAIA form 5):</span>
-					<a
-						data-custom-class="link"
-						href="mailto:PAIAComplaints@inforegulator.org.za"
-						rel="noopener noreferrer"
-						target="_blank">
-						<span>
-							<span>PAIAComplaints@inforegulator.org.za</span>
-						</span>
-					</a>
-					<span>&amp;</span>
-				</span>
+			</p>
+			<p>
+				General enquiries:
+				<a
+					data-custom-class="link"
+					href="mailto:enquiries@inforegulator.org.za"
+					rel="noopener noreferrer"
+					target="_blank">
+					<span>enquiries@inforegulator.org.za</span>
+				</a>
+			</p>
+			<p>
+				Complaints (complete POPIA/PAIA form 5):
+				<a
+					data-custom-class="link"
+					href="mailto:PAIAComplaints@inforegulator.org.za"
+					rel="noopener noreferrer"
+					target="_blank">
+					<span>PAIAComplaints@inforegulator.org.za</span>
+				</a>
+				&amp;
 				<a
 					data-custom-class="link"
 					href="mailto:POPIAComplaints@inforegulator.org.za"
 					rel="noopener noreferrer"
 					target="_blank">
-					<span>
-						<span>
-							<span>POPIAComplaints@inforegulator.org.za</span>
-						</span>
-					</span>
+					<span>POPIAComplaints@inforegulator.org.za</span>
 				</a>
-			</div>
+			</p>
 		</div>
 		<!-- 13 -->
 		<div>
 			<div id="policyupdates">
-				<span>
-					<span>
-						<span>
-							<span>
-								<span id="control">
-									<strong>
-										<span>
-											<h2>13. DO WE MAKE UPDATES TO THIS NOTICE?</h2>
-										</span>
-									</strong>
-								</span>
-							</span>
-						</span>
-					</span>
+				<span id="control">
+					<strong>
+						<h2>13. DO WE MAKE UPDATES TO THIS NOTICE?</h2>
+					</strong>
 				</span>
-				<span>
-					<span>
-						<span>
-							<em>
-								<strong>In Short:</strong>
-								Yes, we will update this notice as necessary to stay compliant with
-								relevant laws.
-							</em>
-						</span>
-					</span>
-				</span>
+
+				<p>
+					<em>
+						<strong>In Short:</strong>
+						Yes, we will update this notice as necessary to stay compliant with relevant
+						laws.
+					</em>
+				</p>
 			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							We may update this Privacy Notice from time to time. The updated version
-							will be indicated by an updated 'Revised' date at the top of this
-							Privacy Notice. If we make material changes to this Privacy Notice, we
-							may notify you either by prominently posting a notice of such changes or
-							by directly sending you a notification. We encourage you to review this
-							Privacy Notice frequently to be informed of how we are protecting your
-							information.
-						</span>
-					</span>
-				</span>
-			</div>
+			<p>
+				We may update this Privacy Notice from time to time. The updated version will be
+				indicated by an updated 'Revised' date at the top of this Privacy Notice. If we make
+				material changes to this Privacy Notice, we may notify you either by prominently
+				posting a notice of such changes or by directly sending you a notification. We
+				encourage you to review this Privacy Notice frequently to be informed of how we are
+				protecting your information.
+			</p>
 		</div>
 		<!-- 14 -->
 		<div>
 			<div id="contact">
-				<span>
-					<span>
-						<span>
-							<span>
-								<span id="control">
-									<strong>
-										<span>
-											<h2>14. HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</h2>
-										</span>
-									</strong>
-								</span>
-							</span>
-						</span>
-					</span>
+				<span id="control">
+					<strong>
+						<h2>14. HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</h2>
+					</strong>
 				</span>
-				<span>
-					<span>
-						<span>
-							If you have questions or comments about this notice, you may contact our
-							Data Protection Officer (DPO)
-							<span>
-								<span>
-									<span>by email at</span>
-								</span>
-							</span>
-							<span>
-								<span>biggsy@pm.me</span>
-							</span>
-							,
-						</span>
-						<span>
-							<span>or</span>
-						</span>
-						<span>
-							<span>
-								<span>contact us by post at:</span>
-							</span>
-						</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							<span>
-								<span>
-									<span>
-										<span>verzion's price guide</span>
-									</span>
-								</span>
-							</span>
-						</span>
-						<span></span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>Data Protection Officer</span>
-					<span>
-						<span>
-							<span></span>
-						</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							<span>PO Box 35382</span>
-						</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					London
-					<span></span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>United Kingdom</span>
-				</span>
-				<span>
-					<span>
-						<span>
-							<span>
-								<span></span>
-							</span>
-						</span>
-					</span>
-					<span>
-						<span>
-							<span></span>
-						</span>
-					</span>
-				</span>
+
+				<p>
+					If you have questions or comments about this notice, you may contact our Data
+					Protection Officer (DPO) by email at verzionspriceguide@pm.me
+				</p>
 			</div>
 		</div>
 		<!-- 15 -->
 		<div>
 			<div id="request">
-				<span>
-					<span>
-						<span>
-							<span>
-								<span id="control">
-									<strong>
-										<span>
-											<h2>
-												15. HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA
-												WE COLLECT FROM YOU?
-											</h2>
-										</span>
-									</strong>
-								</span>
-							</span>
-						</span>
-					</span>
+				<span id="control">
+					<strong>
+						<h2>
+							15. HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?
+						</h2>
+					</strong>
 				</span>
-				<span>
-					<span>
-						<span>
-							Based on the applicable laws of your country or state of residence in
-							the US , you may have the right to request access to the personal
-							information we collect from you, details about how we have processed it,
-							correct inaccuracies, or delete your personal information. You may also
-							have the right to withdraw your consent to our processing of your
-							personal information. These rights may be limited in some circumstances
-							by applicable law. To request to review, update, or delete your personal
-							information, please fill out and submit a
-						</span>
-						<span>
-							<span>
-								<span>
-									<a
-										data-custom-class="link"
-										href="https://app.termly.io/notify/608dc5a2-7eda-4074-9958-83ea1df0c6a5"
-										rel="noopener noreferrer"
-										target="_blank">
-										data subject access request
-									</a>
-								</span>
-							</span>
-						</span>
-					</span>
-				</span>
-				<span>.</span>
+
+				<p>
+					Based on the applicable laws of your country or state of residence in the US,
+					you may have the right to request access to the personal information we collect
+					from you, details about how we have processed it, correct inaccuracies, or
+					delete your personal information. You may also have the right to withdraw your
+					consent to our processing of your personal information. These rights may be
+					limited in some circumstances by applicable law. To request to review, update,
+					or delete your personal information, please fill out and submit a
+					<a
+						data-custom-class="link"
+						href="https://app.termly.io/notify/608dc5a2-7eda-4074-9958-83ea1df0c6a5"
+						rel="noopener noreferrer"
+						target="_blank">
+						data subject access request
+					</a>
+					.
+				</p>
 			</div>
 		</div>
 	</div>
