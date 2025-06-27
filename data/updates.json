@@ -1,5 +1,12 @@
 [
 	{
+		"id": 7,
+		"title": "Complete 1.16 catalog (pricing and images) - COMPLETED!",
+		"date": "2025-06-27",
+		"type": "Content",
+		"description": "🎉 Major milestone achieved! All 19 categories in the 1.16 catalog now have complete pricing and correct images. This includes Ores, Stone, Earth, Sand, Wood, Drops, Food, Utility, Plants, Redstone, Nether, Ocean, Tools, Weapons, Armor, End, Ice, Dyed, and Discs categories. The price guide is now fully functional for all included items!"
+	},
+	{
 		"id": 1,
 		"title": "Smart number formatting for prices and item count on category filters",
 		"date": "2025-06-25",
@@ -47,4 +54,4 @@
 			"Search functionality across all items"
 		]
 	}
-] 
+]

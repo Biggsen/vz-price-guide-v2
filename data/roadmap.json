@@ -1,32 +1,5 @@
 [
 	{
-		"id": 1,
-		"title": "Complete 1.16 catalog (pricing and images)",
-		"status": "In Progress",
-		"description": "Set prices and correct images for all items. Still a lot of price of 1, I'm getting through it slowly!",
-		"features": [
-			{ "name": "ores", "completed": true },
-			{ "name": "stone", "completed": true },
-			{ "name": "earth", "completed": true },
-			{ "name": "sand", "completed": true },
-			{ "name": "wood", "completed": true },
-			{ "name": "drops", "completed": true },
-			{ "name": "food", "completed": true },
-			{ "name": "utility", "completed": true },
-			{ "name": "plants", "completed": true },
-			{ "name": "redstone", "completed": true },
-			{ "name": "nether", "completed": true },
-			{ "name": "ocean", "completed": true },
-			{ "name": "tools", "completed": true },
-			{ "name": "weapons", "completed": true },
-			{ "name": "armor", "completed": true },
-			{ "name": "end", "completed": true },
-			{ "name": "ice", "completed": true },
-			{ "name": "dyed", "completed": true },
-			{ "name": "discs", "completed": false }
-		]
-	},
-	{
 		"id": 2,
 		"title": "Add rest of 1.16 items",
 		"status": "In Progress",
