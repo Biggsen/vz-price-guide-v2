@@ -4,6 +4,14 @@ import { getCurrentUser } from 'vuefire'
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
+	scrollBehavior(to, from, savedPosition) {
+		// If there's a saved position (like when using browser back/forward), use it
+		if (savedPosition) {
+			return savedPosition
+		}
+		// Otherwise, scroll to top
+		return { top: 0 }
+	},
 	routes: [
 		{
 			path: '/',
