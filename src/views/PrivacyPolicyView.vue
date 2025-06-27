@@ -365,408 +365,184 @@
 		<!-- 5 -->
 		<div>
 			<div id="cookies">
-				<span>
-					<span>
-						<span>
-							<span>
-								<span id="control">
-									<strong>
-										<span>
-											<h2>
-												5. DO WE USE COOKIES AND OTHER TRACKING
-												TECHNOLOGIES?
-											</h2>
-										</span>
-									</strong>
-								</span>
-							</span>
-						</span>
-					</span>
-				</span>
-				<span>
-					<span>
-						<span>
-							<strong>
-								<em>In Short:</em>
-							</strong>
-							<em>
-								We may use cookies and other tracking technologies to collect and
-								store your information.
-							</em>
-						</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							We may use cookies and similar tracking technologies (like web beacons
-							and pixels) to gather information when you interact with our Services.
-							Some online tracking technologies help us maintain the security of our
-							Services and your account , prevent crashes, fix bugs, save your
-							preferences, and assist with basic site functions.
-						</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							We also permit third parties and service providers to use online
-							tracking technologies on our Services for analytics and advertising,
-							including to help manage and display advertisements, to tailor
-							advertisements to your interests, or to send abandoned shopping cart
-							reminders (depending on your communication preferences). The third
-							parties and service providers use their technology to provide
-							advertising about products and services tailored to your interests which
-							may appear either on our Services or on other websites.
-						</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						To the extent these online tracking technologies are deemed to be a
-						'sale'/'sharing' (which includes targeted advertising, as defined under the
-						applicable laws) under applicable US state laws, you can opt out of these
-						online tracking technologies by submitting a request as described below
-						under section '
-					</span>
-				</span>
-				<span>
-					<a data-custom-class="link" href="#uslaws">
-						<span>DO UNITED STATES RESIDENTS HAVE SPECIFIC PRIVACY RIGHTS?</span>
-					</a>
-				</span>
-				<span>
-					<span>'</span>
-				</span>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							Specific information about how we use such technologies and how you can
-							refuse certain cookies is set out in our Cookie Notice :
-							<span>
-								<span>
-									<a
-										data-custom-class="link"
-										href="https://minecraft-economy-price-guide.net/cookies"
-										target="_blank">
-										https://minecraft-economy-price-guide.net/cookies
-									</a>
-								</span>
-							</span>
-							<span>.</span>
-						</span>
-					</span>
-				</span>
-				<span>
+				<span id="control">
 					<strong>
-						<span>
-							<h3>Google Analytics</h3>
-						</span>
+						<h2>5. DO WE USE COOKIES AND OTHER TRACKING TECHNOLOGIES?</h2>
 					</strong>
-					<span>
-						We may share your information with Google Analytics to track and analyse the
-						use of the Services. To opt out of being tracked by Google Analytics across
-						the Services, visit
-						<span>
-							<a
-								data-custom-class="link"
-								href="https://tools.google.com/dlpage/gaoptout"
-								rel="noopener noreferrer"
-								target="_blank">
-								https://tools.google.com/dlpage/gaoptout
-							</a>
-							.
-						</span>
-						For more information on the privacy practices of Google, please visit the
-						<span>
-							<a
-								data-custom-class="link"
-								href="https://policies.google.com/privacy"
-								rel="noopener noreferrer"
-								target="_blank">
-								Google Privacy &amp; Terms page
-							</a>
-						</span>
-						.
-					</span>
 				</span>
-				<span>
-					<span>
-						<span>
-							<span>
-								<span>
-									<span>
-										<span>
-											<span></span>
-										</span>
-									</span>
-								</span>
-							</span>
-						</span>
-					</span>
-				</span>
-				<span>
-					<span>
-						<span>
-							<span>
-								<span>
-									<span>
-										<span>
-											<span>
-												<span></span>
-											</span>
-										</span>
-									</span>
-								</span>
-							</span>
-						</span>
-					</span>
-				</span>
+
+				<p>
+					<strong>
+						<em>In Short:</em>
+					</strong>
+					<em>
+						We may use cookies and other tracking technologies to collect and store your
+						information.
+					</em>
+				</p>
 			</div>
+			<p>
+				We may use cookies and similar tracking technologies (like web beacons and pixels)
+				to gather information when you interact with our Services. Some online tracking
+				technologies help us maintain the security of our Services and your account, prevent
+				crashes, fix bugs, save your preferences, and assist with basic site functions.
+			</p>
+			<p>
+				We also permit third parties and service providers to use online tracking
+				technologies on our Services for analytics and advertising, including to help manage
+				and display advertisements, to tailor advertisements to your interests, or to send
+				abandoned shopping cart reminders (depending on your communication preferences). The
+				third parties and service providers use their technology to provide advertising
+				about products and services tailored to your interests which may appear either on
+				our Services or on other websites.
+			</p>
+			<p>
+				To the extent these online tracking technologies are deemed to be a 'sale'/'sharing'
+				(which includes targeted advertising, as defined under the applicable laws) under
+				applicable US state laws, you can opt out of these online tracking technologies by
+				submitting a request as described below under section '
+				<a data-custom-class="link" href="#uslaws">
+					<span>DO UNITED STATES RESIDENTS HAVE SPECIFIC PRIVACY RIGHTS?</span>
+				</a>
+				'
+			</p>
+			<p>
+				Specific information about how we use such technologies and how you can refuse
+				certain cookies is set out in our Cookie Notice:
+				<a
+					data-custom-class="link"
+					href="https://minecraft-economy-price-guide.net/cookies"
+					target="_blank">
+					<span>https://minecraft-economy-price-guide.net/cookies</span>
+				</a>
+				.
+			</p>
+			<h3>Google Analytics</h3>
+			<p>
+				We may share your information with Google Analytics to track and analyse the use of
+				the Services. To opt out of being tracked by Google Analytics across the Services,
+				visit
+				<a
+					data-custom-class="link"
+					href="https://tools.google.com/dlpage/gaoptout"
+					rel="noopener noreferrer"
+					target="_blank">
+					https://tools.google.com/dlpage/gaoptout
+				</a>
+				. For more information on the privacy practices of Google, please visit the
+				<a
+					data-custom-class="link"
+					href="https://policies.google.com/privacy"
+					rel="noopener noreferrer"
+					target="_blank">
+					Google Privacy &amp; Terms page
+				</a>
+				.
+			</p>
 		</div>
 		<!-- 6 -->
 		<div>
 			<div id="sociallogins">
-				<span>
-					<span>
-						<span>
-							<span>
-								<span id="control">
-									<strong>
-										<span>
-											<h2>6. HOW DO WE HANDLE YOUR SOCIAL LOGINS?</h2>
-										</span>
-									</strong>
-								</span>
-							</span>
-						</span>
-					</span>
+				<span id="control">
+					<strong>
+						<h2>6. HOW DO WE HANDLE YOUR SOCIAL LOGINS?</h2>
+					</strong>
 				</span>
-				<span>
-					<span>
-						<span>
-							<strong>
-								<em>In Short:</em>
-							</strong>
-							<em>
-								If you choose to register or log in to our Services using a social
-								media account, we may have access to certain information about you.
-							</em>
-						</span>
-					</span>
-				</span>
+
+				<p>
+					<strong>
+						<em>In Short:</em>
+					</strong>
+					<em>
+						If you choose to register or log in to our Services using a social media
+						account, we may have access to certain information about you.
+					</em>
+				</p>
 			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							Our Services offer you the ability to register and log in using your
-							third-party social media account details (like your Facebook or X
-							logins). Where you choose to do this, we will receive certain profile
-							information about you from your social media provider. The profile
-							information we receive may vary depending on the social media provider
-							concerned, but will often include your name, email address, friends
-							list, and profile picture, as well as other information you choose to
-							make public on such a social media platform.
-							<span></span>
-						</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							We will use the information we receive only for the purposes that are
-							described in this Privacy Notice or that are otherwise made clear to you
-							on the relevant Services. Please note that we do not control, and are
-							not responsible for, other uses of your personal information by your
-							third-party social media provider. We recommend that you review their
-							privacy notice to understand how they collect, use, and share your
-							personal information, and how you can set your privacy preferences on
-							their sites and apps.
-							<span>
-								<span>
-									<span>
-										<span>
-											<span>
-												<span>
-													<span></span>
-												</span>
-											</span>
-										</span>
-									</span>
-								</span>
-							</span>
-						</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							<span>
-								<span>
-									<span>
-										<span>
-											<span>
-												<span>
-													<span>
-														<span></span>
-													</span>
-												</span>
-											</span>
-										</span>
-									</span>
-								</span>
-							</span>
-						</span>
-					</span>
-				</span>
-				<br />
-			</div>
+			<p>
+				Our Services offer you the ability to register and log in using your third-party
+				social media account details (like your Facebook or X logins). Where you choose to
+				do this, we will receive certain profile information about you from your social
+				media provider. The profile information we receive may vary depending on the social
+				media provider concerned, but will often include your name, email address, friends
+				list, and profile picture, as well as other information you choose to make public on
+				such a social media platform.
+			</p>
+			<p>
+				We will use the information we receive only for the purposes that are described in
+				this Privacy Notice or that are otherwise made clear to you on the relevant
+				Services. Please note that we do not control, and are not responsible for, other
+				uses of your personal information by your third-party social media provider. We
+				recommend that you review their privacy notice to understand how they collect, use,
+				and share your personal information, and how you can set your privacy preferences on
+				their sites and apps.
+			</p>
 		</div>
 		<!-- 7 -->
 		<div>
 			<div id="inforetain">
-				<span>
-					<span>
-						<span>
-							<span>
-								<span id="control">
-									<strong>
-										<span>
-											<h2>7. HOW LONG DO WE KEEP YOUR INFORMATION?</h2>
-										</span>
-									</strong>
-								</span>
-							</span>
-						</span>
-					</span>
+				<span id="control">
+					<strong>
+						<h2>7. HOW LONG DO WE KEEP YOUR INFORMATION?</h2>
+					</strong>
 				</span>
-				<span>
-					<span>
-						<span>
-							<strong>
-								<em>In Short:</em>
-							</strong>
-							<em>
-								We keep your information for as long as necessary to fulfil the
-								purposes outlined in this Privacy Notice unless otherwise required
-								by law.
-							</em>
-						</span>
-					</span>
-				</span>
+
+				<p>
+					<strong>
+						<em>In Short:</em>
+					</strong>
+					<em>
+						We keep your information for as long as necessary to fulfil the purposes
+						outlined in this Privacy Notice unless otherwise required by law.
+					</em>
+				</p>
 			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							We will only keep your personal information for as long as it is
-							necessary for the purposes set out in this Privacy Notice, unless a
-							longer retention period is required or permitted by law (such as tax,
-							accounting, or other legal requirements). No purpose in this notice will
-							require us keeping your personal information for longer than
-							<span></span>
-							the period of time in which users have an account with us
-							<span></span>
-							.
-						</span>
-					</span>
-				</span>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							When we have no ongoing legitimate business need to process your
-							personal information, we will either delete or anonymise such
-							information, or, if this is not possible (for example, because your
-							personal information has been stored in backup archives), then we will
-							securely store your personal information and isolate it from any further
-							processing until deletion is possible.
-						</span>
-					</span>
-				</span>
-			</div>
+			<p>
+				We will only keep your personal information for as long as it is necessary for the
+				purposes set out in this Privacy Notice, unless a longer retention period is
+				required or permitted by law (such as tax, accounting, or other legal requirements).
+				No purpose in this notice will require us keeping your personal information for
+				longer than the period of time in which users have an account with us.
+			</p>
+			<p>
+				When we have no ongoing legitimate business need to process your personal
+				information, we will either delete or anonymise such information, or, if this is not
+				possible (for example, because your personal information has been stored in backup
+				archives), then we will securely store your personal information and isolate it from
+				any further processing until deletion is possible.
+			</p>
 		</div>
 		<!-- 8 -->
 		<div>
 			<div id="infosafe">
-				<span>
-					<span>
-						<span>
-							<span>
-								<span id="control">
-									<strong>
-										<span>
-											<h2>8. HOW DO WE KEEP YOUR INFORMATION SAFE?</h2>
-										</span>
-									</strong>
-								</span>
-							</span>
-						</span>
-					</span>
+				<span id="control">
+					<strong>
+						<h2>8. HOW DO WE KEEP YOUR INFORMATION SAFE?</h2>
+					</strong>
 				</span>
-				<span>
-					<span>
-						<span>
-							<strong>
-								<em>In Short:</em>
-							</strong>
-							<em>
-								We aim to protect your personal information through a system of
-								organisational and technical security measures.
-							</em>
-						</span>
-					</span>
-				</span>
+
+				<p>
+					<strong>
+						<em>In Short:</em>
+					</strong>
+					<em>
+						We aim to protect your personal information through a system of
+						organisational and technical security measures.
+					</em>
+				</p>
 			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							We have implemented appropriate and reasonable technical and
-							organisational security measures designed to protect the security of any
-							personal information we process. However, despite our safeguards and
-							efforts to secure your information, no electronic transmission over the
-							Internet or information storage technology can be guaranteed to be 100%
-							secure, so we cannot promise or guarantee that hackers, cybercriminals,
-							or other unauthorised third parties will not be able to defeat our
-							security and improperly collect, access, steal, or modify your
-							information. Although we will do our best to protect your personal
-							information, transmission of personal information to and from our
-							Services is at your own risk. You should only access the Services within
-							a secure environment.
-						</span>
-					</span>
-				</span>
-			</div>
+			<p>
+				We have implemented appropriate and reasonable technical and organisational security
+				measures designed to protect the security of any personal information we process.
+				However, despite our safeguards and efforts to secure your information, no
+				electronic transmission over the Internet or information storage technology can be
+				guaranteed to be 100% secure, so we cannot promise or guarantee that hackers,
+				cybercriminals, or other unauthorised third parties will not be able to defeat our
+				security and improperly collect, access, steal, or modify your information. Although
+				we will do our best to protect your personal information, transmission of personal
+				information to and from our Services is at your own risk. You should only access the
+				Services within a secure environment.
+			</p>
 		</div>
 		<!-- 9 -->
 		<div>
