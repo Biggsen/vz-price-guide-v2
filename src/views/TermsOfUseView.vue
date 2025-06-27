@@ -1081,428 +1081,188 @@
 				</p>
 			</section>
 			<!-- 15 -->
-			<div>
-				<div data-custom-class="heading_1" id="law">
-					<strong>
-						<span>
-							<h2>15. GOVERNING LAW</h2>
-						</span>
-					</strong>
-				</div>
-				<div>
-					<span>
-						<bdt class="block-component"></bdt>
-					</span>
-				</div>
-				<div data-custom-class="body_text">
-					<span>
-						These Legal Terms are governed by and interpreted following the laws of
-						<bdt class="block-component">
-							the
-							<bdt class="question">United Kingdom</bdt>
-							<bdt class="else-block"></bdt>
-						</bdt>
-					</span>
-					, and the use of the United Nations Convention of Contracts for the
-					International Sales of Goods is expressly excluded. If your habitual residence
-					is in the EU, and you are a consumer, you additionally possess the protection
-					provided to you by obligatory provisions of the law in your country to
-					residence.
-					<bdt class="question">verzion's price guide</bdt>
-					and yourself both agree to submit to the non-exclusive jurisdiction of the
-					courts of
-					<bdt class="question">__________</bdt>
-					, which means that you may make a claim to defend your consumer protection
-					rights in regards to these Legal Terms in
-					<bdt class="block-component">
-						the
-						<bdt class="question">United Kingdom</bdt>
-						<bdt class="else-block"></bdt>
-						, or in the EU country in which you reside.
-						<bdt class="else-block"></bdt>
-					</bdt>
-				</div>
-			</div>
+			<section id="law">
+				<h2>15. GOVERNING LAW</h2>
+				<p>
+					These Legal Terms are governed by and interpreted following the laws of the
+					United Kingdom, and the use of the United Nations Convention of Contracts for
+					the International Sales of Goods is expressly excluded. If your habitual
+					residence is in the EU, and you are a consumer, you additionally possess the
+					protection provided to you by obligatory provisions of the law in your country
+					to residence. verzion's price guide and yourself both agree to submit to the
+					non-exclusive jurisdiction of the courts of the United Kingdom, which means that
+					you may make a claim to defend your consumer protection rights in regards to
+					these Legal Terms in the United Kingdom, or in the EU country in which you
+					reside.
+				</p>
+			</section>
 			<!-- 16 -->
-			<div>
-				<div data-custom-class="heading_1" id="disputes">
-					<strong>
-						<span>
-							<h2>16. DISPUTE RESOLUTION</h2>
-						</span>
-					</strong>
-				</div>
-				<div>
-					<bdt class="block-component"></bdt>
-					<bdt class="block-component"></bdt>
-				</div>
-				<div data-custom-class="body_text">
-					<span>The European Commission provides an&nbsp;</span>
-					<span>
-						<a
-							data-custom-class="link"
-							href="https://ec.europa.eu/consumers/odr"
-							rel="noopener noreferrer"
-							target="_blank">
-							online dispute resolution platform
-						</a>
-					</span>
-					<span>
-						, which you can access. If you would like to bring this subject to our
-						attention, please contact us.
-					</span>
-					<bdt class="else-block"></bdt>
-				</div>
-				<div>
-					<bdt class="statement-end-if-in-editor"><bdt class="else-block"></bdt></bdt>
-				</div>
-			</div>
+			<section id="disputes">
+				<h2>16. DISPUTE RESOLUTION</h2>
+				<p>
+					The European Commission provides an
+					<a
+						href="https://ec.europa.eu/consumers/odr"
+						rel="noopener noreferrer"
+						target="_blank">
+						online dispute resolution platform
+					</a>
+					, which you can access. If you would like to bring this subject to our
+					attention, please contact us.
+				</p>
+			</section>
 			<!-- 17 -->
-			<div>
-				<div data-custom-class="heading_1" id="corrections">
-					<strong>
-						<span>
-							<h2>17. CORRECTIONS</h2>
-						</span>
-					</strong>
-				</div>
-				<div data-custom-class="body_text">
+			<section id="corrections">
+				<h2>17. CORRECTIONS</h2>
+				<p>
 					There may be information on the Services that contains typographical errors,
 					inaccuracies, or omissions, including descriptions, pricing, availability, and
 					various other information. We reserve the right to correct any errors,
 					inaccuracies, or omissions and to change or update the information on the
 					Services at any time, without prior notice.
-				</div>
-			</div>
+				</p>
+			</section>
 			<!-- 18 -->
-			<div>
-				<div data-custom-class="heading_1" id="disclaimer">
-					<span>
-						<strong><h2>18. DISCLAIMER</h2></strong>
-					</span>
-				</div>
-				<div data-custom-class="body_text">
-					<span>
-						THE SERVICES ARE PROVIDED ON AN AS-IS AND AS-AVAILABLE BASIS. YOU AGREE THAT
-						YOUR USE OF THE SERVICES WILL BE AT YOUR SOLE RISK. TO THE FULLEST EXTENT
-						PERMITTED BY LAW, WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, IN
-						CONNECTION WITH THE SERVICES AND YOUR USE THEREOF, INCLUDING, WITHOUT
-						LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-						PARTICULAR PURPOSE, AND NON-INFRINGEMENT. WE MAKE NO WARRANTIES OR
-						REPRESENTATIONS ABOUT THE ACCURACY OR COMPLETENESS OF THE SERVICES' CONTENT
-						OR THE CONTENT OF ANY WEBSITES OR MOBILE APPLICATIONS LINKED TO THE SERVICES
-						AND WE WILL ASSUME NO LIABILITY OR RESPONSIBILITY FOR ANY (1) ERRORS,
-						MISTAKES, OR INACCURACIES OF CONTENT AND MATERIALS, (2) PERSONAL INJURY OR
-						PROPERTY DAMAGE, OF ANY NATURE WHATSOEVER, RESULTING FROM YOUR ACCESS TO AND
-						USE OF THE SERVICES, (3) ANY
-						<bdt class="block-component"></bdt>
-						UNAUTHORISED
-						<bdt class="else-block"></bdt>
-						ACCESS TO OR USE OF OUR SECURE SERVERS AND/OR ANY AND ALL PERSONAL
-						INFORMATION AND/OR FINANCIAL INFORMATION STORED THEREIN, (4) ANY
-						INTERRUPTION OR CESSATION OF TRANSMISSION TO OR FROM THE SERVICES, (5) ANY
-						BUGS, VIRUSES, TROJAN HORSES, OR THE LIKE WHICH MAY BE TRANSMITTED TO OR
-						THROUGH THE SERVICES BY ANY THIRD PARTY, AND/OR (6) ANY ERRORS OR OMISSIONS
-						IN ANY CONTENT AND MATERIALS OR FOR ANY LOSS OR DAMAGE OF ANY KIND INCURRED
-						AS A RESULT OF THE USE OF ANY CONTENT POSTED, TRANSMITTED, OR OTHERWISE MADE
-						AVAILABLE VIA THE SERVICES. WE DO NOT WARRANT, ENDORSE, GUARANTEE, OR ASSUME
-						RESPONSIBILITY FOR ANY PRODUCT OR SERVICE ADVERTISED OR OFFERED BY A THIRD
-						PARTY THROUGH THE SERVICES, ANY HYPERLINKED WEBSITE, OR ANY WEBSITE OR
-						MOBILE APPLICATION FEATURED IN ANY BANNER OR OTHER ADVERTISING, AND WE WILL
-						NOT BE A PARTY TO OR IN ANY WAY BE RESPONSIBLE FOR MONITORING ANY
-						TRANSACTION BETWEEN YOU AND ANY THIRD-PARTY PROVIDERS OF PRODUCTS OR
-						SERVICES. AS WITH THE PURCHASE OF A PRODUCT OR SERVICE THROUGH ANY MEDIUM OR
-						IN ANY ENVIRONMENT, YOU SHOULD USE YOUR BEST
-						<bdt class="block-component"></bdt>
-						JUDGEMENT
-						<bdt class="else-block"></bdt>
-						AND EXERCISE CAUTION WHERE APPROPRIATE.
-					</span>
-				</div>
-			</div>
+			<section id="disclaimer">
+				<h2>18. DISCLAIMER</h2>
+				<p>
+					THE SERVICES ARE PROVIDED ON AN AS-IS AND AS-AVAILABLE BASIS. YOU AGREE THAT
+					YOUR USE OF THE SERVICES WILL BE AT YOUR SOLE RISK. TO THE FULLEST EXTENT
+					PERMITTED BY LAW, WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, IN CONNECTION
+					WITH THE SERVICES AND YOUR USE THEREOF, INCLUDING, WITHOUT LIMITATION, THE
+					IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+					NON-INFRINGEMENT. WE MAKE NO WARRANTIES OR REPRESENTATIONS ABOUT THE ACCURACY OR
+					COMPLETENESS OF THE SERVICES' CONTENT OR THE CONTENT OF ANY WEBSITES OR MOBILE
+					APPLICATIONS LINKED TO THE SERVICES AND WE WILL ASSUME NO LIABILITY OR
+					RESPONSIBILITY FOR ANY (1) ERRORS, MISTAKES, OR INACCURACIES OF CONTENT AND
+					MATERIALS, (2) PERSONAL INJURY OR PROPERTY DAMAGE, OF ANY NATURE WHATSOEVER,
+					RESULTING FROM YOUR ACCESS TO AND USE OF THE SERVICES, (3) ANY UNAUTHORISED
+					ACCESS TO OR USE OF OUR SECURE SERVERS AND/OR ANY AND ALL PERSONAL INFORMATION
+					AND/OR FINANCIAL INFORMATION STORED THEREIN, (4) ANY INTERRUPTION OR CESSATION
+					OF TRANSMISSION TO OR FROM THE SERVICES, (5) ANY BUGS, VIRUSES, TROJAN HORSES,
+					OR THE LIKE WHICH MAY BE TRANSMITTED TO OR THROUGH THE SERVICES BY ANY THIRD
+					PARTY, AND/OR (6) ANY ERRORS OR OMISSIONS IN ANY CONTENT AND MATERIALS OR FOR
+					ANY LOSS OR DAMAGE OF ANY KIND INCURRED AS A RESULT OF THE USE OF ANY CONTENT
+					POSTED, TRANSMITTED, OR OTHERWISE MADE AVAILABLE VIA THE SERVICES. WE DO NOT
+					WARRANT, ENDORSE, GUARANTEE, OR ASSUME RESPONSIBILITY FOR ANY PRODUCT OR SERVICE
+					ADVERTISED OR OFFERED BY A THIRD PARTY THROUGH THE SERVICES, ANY HYPERLINKED
+					WEBSITE, OR ANY WEBSITE OR MOBILE APPLICATION FEATURED IN ANY BANNER OR OTHER
+					ADVERTISING, AND WE WILL NOT BE A PARTY TO OR IN ANY WAY BE RESPONSIBLE FOR
+					MONITORING ANY TRANSACTION BETWEEN YOU AND ANY THIRD-PARTY PROVIDERS OF PRODUCTS
+					OR SERVICES. AS WITH THE PURCHASE OF A PRODUCT OR SERVICE THROUGH ANY MEDIUM OR
+					IN ANY ENVIRONMENT, YOU SHOULD USE YOUR BEST JUDGEMENT AND EXERCISE CAUTION
+					WHERE APPROPRIATE.
+				</p>
+			</section>
 			<!-- 19 -->
-			<div>
-				<div data-custom-class="heading_1" id="liability">
-					<strong>
-						<span>
-							<h2>19. LIMITATIONS OF LIABILITY</h2>
-						</span>
-					</strong>
-				</div>
-				<div>
-					<span>
-						<span data-custom-class="body_text">
-							IN NO EVENT WILL WE OR OUR DIRECTORS, EMPLOYEES, OR AGENTS BE LIABLE TO
-							YOU OR ANY THIRD PARTY FOR ANY DIRECT, INDIRECT, CONSEQUENTIAL,
-							EXEMPLARY, INCIDENTAL, SPECIAL, OR PUNITIVE DAMAGES, INCLUDING LOST
-							PROFIT, LOST REVENUE, LOSS OF DATA, OR OTHER DAMAGES ARISING FROM YOUR
-							USE OF THE SERVICES, EVEN IF WE HAVE BEEN ADVISED OF THE POSSIBILITY OF
-							SUCH DAMAGES.
-						</span>
-						<bdt
-							class="block-container if"
-							data-type="if"
-							id="3c3071ce-c603-4812-b8ca-ac40b91b9943">
-							<span data-custom-class="body_text">
-								<bdt data-type="conditional-block">
-									<bdt
-										class="block-component"
-										data-record-question-key="limitations_liability_option"
-										data-type="statement"></bdt>
-								</bdt>
-							</span>
-						</bdt>
-					</span>
-				</div>
-			</div>
+			<section id="liability">
+				<h2>19. LIMITATIONS OF LIABILITY</h2>
+				<p>
+					IN NO EVENT WILL WE OR OUR DIRECTORS, EMPLOYEES, OR AGENTS BE LIABLE TO YOU OR
+					ANY THIRD PARTY FOR ANY DIRECT, INDIRECT, CONSEQUENTIAL, EXEMPLARY, INCIDENTAL,
+					SPECIAL, OR PUNITIVE DAMAGES, INCLUDING LOST PROFIT, LOST REVENUE, LOSS OF DATA,
+					OR OTHER DAMAGES ARISING FROM YOUR USE OF THE SERVICES, EVEN IF WE HAVE BEEN
+					ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+				</p>
+			</section>
 			<!-- 20 -->
-			<div>
-				<div data-custom-class="heading_1" id="indemnification">
-					<strong>
-						<span>
-							<h2>20. INDEMNIFICATION</h2>
-						</span>
-					</strong>
-				</div>
-				<div data-custom-class="body_text">
-					<span>
-						You agree to defend, indemnify, and hold us harmless, including our
-						subsidiaries, affiliates, and all of our respective officers, agents,
-						partners, and employees, from and against any loss, damage, liability,
-						claim, or demand, including reasonable attorneys’ fees and expenses, made by
-						any third party due to or arising out of:
-						<bdt
-							class="block-container if"
-							data-type="if"
-							id="475fffa5-05ca-def8-ac88-f426b238903c">
-							<bdt data-type="conditional-block">
-								<bdt
-									class="block-component"
-									data-record-question-key="user_post_content_option"
-									data-type="statement"></bdt>
-								<bdt data-type="body">(1) your Contributions;&nbsp;</bdt>
-							</bdt>
-							<bdt class="statement-end-if-in-editor" data-type="close"></bdt>
-						</bdt>
-						(
-						<span>2</span>
-						) use of the Services; (
-						<span>3</span>
-						) breach of these Legal Terms; (
-						<span>4</span>
-						) any breach of your representations and warranties set forth in these Legal
-						Terms; (
-						<span>5</span>
-						) your violation of the rights of a third party, including but not limited
-						to intellectual property rights; or (
-						<span>6</span>
-						) any overt harmful act toward any other user of the Services with whom you
-						connected via the Services. Notwithstanding the foregoing, we reserve the
-						right, at your expense, to assume the exclusive
-						<bdt class="block-component"></bdt>
-						defence
-						<bdt class="else-block"></bdt>
-						and control of any matter for which you are required to indemnify us, and
-						you agree to cooperate, at your expense, with our
-						<bdt class="block-component"></bdt>
-						defence
-						<bdt class="else-block"></bdt>
-						of such claims. We will use reasonable efforts to notify you of any such
-						claim, action, or proceeding which is subject to this indemnification upon
-						becoming aware of it.
-					</span>
-				</div>
-			</div>
+			<section id="indemnification">
+				<h2>20. INDEMNIFICATION</h2>
+				<p>
+					You agree to defend, indemnify, and hold us harmless, including our
+					subsidiaries, affiliates, and all of our respective officers, agents, partners,
+					and employees, from and against any loss, damage, liability, claim, or demand,
+					including reasonable attorneys' fees and expenses, made by any third party due
+					to or arising out of: (1) your Contributions; (2) use of the Services; (3)
+					breach of these Legal Terms; (4) any breach of your representations and
+					warranties set forth in these Legal Terms; (5) your violation of the rights of a
+					third party, including but not limited to intellectual property rights; or (6)
+					any overt harmful act toward any other user of the Services with whom you
+					connected via the Services. Notwithstanding the foregoing, we reserve the right,
+					at your expense, to assume the exclusive defence and control of any matter for
+					which you are required to indemnify us, and you agree to cooperate, at your
+					expense, with our defence of such claims. We will use reasonable efforts to
+					notify you of any such claim, action, or proceeding which is subject to this
+					indemnification upon becoming aware of it.
+				</p>
+			</section>
 			<!-- 21 -->
-			<div>
-				<div data-custom-class="heading_1" id="userdata">
-					<strong>
-						<span>
-							<h2>21. USER DATA</h2>
-						</span>
-					</strong>
-				</div>
-				<div data-custom-class="body_text">
-					<span>
-						We will maintain certain data that you transmit to the Services for the
-						purpose of managing the performance of the Services, as well as data
-						relating to your use of the Services. Although we perform regular routine
-						backups of data, you are solely responsible for all data that you transmit
-						or that relates to any activity you have undertaken using the Services. You
-						agree that we shall have no liability to you for any loss or corruption of
-						any such data, and you hereby waive any right of action against us arising
-						from any such loss or corruption of such data.
-					</span>
-				</div>
-			</div>
+			<section id="userdata">
+				<h2>21. USER DATA</h2>
+				<p>
+					We will maintain certain data that you transmit to the Services for the purpose
+					of managing the performance of the Services, as well as data relating to your
+					use of the Services. Although we perform regular routine backups of data, you
+					are solely responsible for all data that you transmit or that relates to any
+					activity you have undertaken using the Services. You agree that we shall have no
+					liability to you for any loss or corruption of any such data, and you hereby
+					waive any right of action against us arising from any such loss or corruption of
+					such data.
+				</p>
+			</section>
 			<!-- 22 -->
-			<div>
-				<div data-custom-class="heading_1" id="electronic">
-					<strong>
-						<span>
-							<h2>22. ELECTRONIC COMMUNICATIONS, TRANSACTIONS, AND SIGNATURES</h2>
-						</span>
-					</strong>
-				</div>
-				<div data-custom-class="body_text">
-					<span>
-						Visiting the Services, sending us emails, and completing online forms
-						constitute electronic communications. You consent to receive electronic
-						communications, and you agree that all agreements, notices, disclosures, and
-						other communications we provide to you electronically, via email and on the
-						Services, satisfy any legal requirement that such communication be in
-						writing. YOU HEREBY AGREE TO THE USE OF ELECTRONIC SIGNATURES, CONTRACTS,
-						ORDERS, AND OTHER RECORDS, AND TO ELECTRONIC DELIVERY OF NOTICES, POLICIES,
-						AND RECORDS OF TRANSACTIONS INITIATED OR COMPLETED BY US OR VIA THE
-						SERVICES. You hereby waive any rights or requirements under any statutes,
-						regulations, rules, ordinances, or other laws in any jurisdiction which
-						require an original signature or delivery or retention of non-electronic
-						records, or to payments or the granting of credits by any means other than
-						electronic means.
-					</span>
-				</div>
-				<div>
-					<bdt class="block-component"><span></span></bdt>
-					<bdt class="block-component"></bdt>
-				</div>
-			</div>
+			<section id="electronic">
+				<h2>22. ELECTRONIC COMMUNICATIONS, TRANSACTIONS, AND SIGNATURES</h2>
+				<p>
+					Visiting the Services, sending us emails, and completing online forms constitute
+					electronic communications. You consent to receive electronic communications, and
+					you agree that all agreements, notices, disclosures, and other communications we
+					provide to you electronically, via email and on the Services, satisfy any legal
+					requirement that such communication be in writing. YOU HEREBY AGREE TO THE USE
+					OF ELECTRONIC SIGNATURES, CONTRACTS, ORDERS, AND OTHER RECORDS, AND TO
+					ELECTRONIC DELIVERY OF NOTICES, POLICIES, AND RECORDS OF TRANSACTIONS INITIATED
+					OR COMPLETED BY US OR VIA THE SERVICES. You hereby waive any rights or
+					requirements under any statutes, regulations, rules, ordinances, or other laws
+					in any jurisdiction which require an original signature or delivery or retention
+					of non-electronic records, or to payments or the granting of credits by any
+					means other than electronic means.
+				</p>
+			</section>
 			<!-- 23 -->
-			<div>
-				<div data-custom-class="heading_1" id="california">
-					<strong>
-						<span>
-							<h2>23. CALIFORNIA USERS AND RESIDENTS</h2>
-						</span>
-					</strong>
-				</div>
-				<div data-custom-class="body_text">
-					<span>
-						If any complaint with us is not satisfactorily resolved, you can contact the
-						Complaint Assistance Unit of the Division of Consumer Services of the
-						California Department of Consumer Affairs in writing at 1625 North Market
-						Blvd., Suite N 112, Sacramento, California 95834 or by telephone at (800)
-						952-5210 or (916) 445-1254.
-					</span>
-				</div>
-				<div>
-					<bdt class="statement-end-if-in-editor"></bdt>
-				</div>
-			</div>
+			<section id="california">
+				<h2>23. CALIFORNIA USERS AND RESIDENTS</h2>
+				<p>
+					If any complaint with us is not satisfactorily resolved, you can contact the
+					Complaint Assistance Unit of the Division of Consumer Services of the California
+					Department of Consumer Affairs in writing at 1625 North Market Blvd., Suite N
+					112, Sacramento, California 95834 or by telephone at (800) 952-5210 or (916)
+					445-1254.
+				</p>
+			</section>
 			<!-- 24 -->
-			<div>
-				<div data-custom-class="heading_1" id="misc">
-					<strong>
-						<span>
-							<h2>24. MISCELLANEOUS</h2>
-						</span>
-					</strong>
-				</div>
-				<div data-custom-class="body_text">
-					<span>
-						These Legal Terms and any policies or operating rules posted by us on the
-						Services or in respect to the Services constitute the entire agreement and
-						understanding between you and us. Our failure to exercise or enforce any
-						right or provision of these Legal Terms shall not operate as a waiver of
-						such right or provision. These Legal Terms operate to the fullest extent
-						permissible by law. We may assign any or all of our rights and obligations
-						to others at any time. We shall not be responsible or liable for any loss,
-						damage, delay, or failure to act caused by any cause beyond our reasonable
-						control. If any provision or part of a provision of these Legal Terms is
-						determined to be unlawful, void, or unenforceable, that provision or part of
-						the provision is deemed severable from these Legal Terms and does not affect
-						the validity and enforceability of any remaining provisions. There is no
-						joint venture, partnership, employment or agency relationship created
-						between you and us as a result of these Legal Terms or use of the Services.
-						You agree that these Legal Terms will not be construed against us by virtue
-						of having drafted them. You hereby waive any and all
-						<bdt class="block-component"></bdt>
-						defences
-						<bdt class="else-block"></bdt>
-						you may have based on the electronic form of these Legal Terms and the lack
-						of signing by the parties hereto to execute these Legal Terms.
-					</span>
-				</div>
-				<div>
-					<bdt class="block-component"><span></span></bdt>
-				</div>
-			</div>
+			<section id="misc">
+				<h2>24. MISCELLANEOUS</h2>
+				<p>
+					These Legal Terms and any policies or operating rules posted by us on the
+					Services or in respect to the Services constitute the entire agreement and
+					understanding between you and us. Our failure to exercise or enforce any right
+					or provision of these Legal Terms shall not operate as a waiver of such right or
+					provision. These Legal Terms operate to the fullest extent permissible by law.
+					We may assign any or all of our rights and obligations to others at any time. We
+					shall not be responsible or liable for any loss, damage, delay, or failure to
+					act caused by any cause beyond our reasonable control. If any provision or part
+					of a provision of these Legal Terms is determined to be unlawful, void, or
+					unenforceable, that provision or part of the provision is deemed severable from
+					these Legal Terms and does not affect the validity and enforceability of any
+					remaining provisions. There is no joint venture, partnership, employment or
+					agency relationship created between you and us as a result of these Legal Terms
+					or use of the Services. You agree that these Legal Terms will not be construed
+					against us by virtue of having drafted them. You hereby waive any and all
+					defences you may have based on the electronic form of these Legal Terms and the
+					lack of signing by the parties hereto to execute these Legal Terms.
+				</p>
+			</section>
 			<!-- 25 -->
-			<div>
-				<div data-custom-class="heading_1" id="contact">
-					<strong>
-						<span>
-							<span>
-								<h2>25. CONTACT US</h2>
-							</span>
-						</span>
-					</strong>
-				</div>
-				<div data-custom-class="body_text">
-					<span>
-						In order to resolve a complaint regarding the Services or to receive further
-						information regarding use of the Services, please contact us at:
-					</span>
-				</div>
-				<div><br /></div>
-				<div data-custom-class="body_text">
-					<span>
-						<span>
-							<bdt class="question"><strong>verzion's price guide</strong></bdt>
-							<strong><bdt class="block-component"></bdt></strong>
-						</span>
-						<strong><bdt class="block-component"></bdt></strong>
-					</span>
-				</div>
-				<div data-custom-class="body_text">
-					<strong>
-						<span>
-							<strong>
-								<span>
-									<bdt class="question"><bdt class="block-component"></bdt></bdt>
-									<bdt class="block-component"></bdt>
-									<bdt class="block-component"></bdt>
-								</span>
-							</strong>
-							<strong>
-								<span>
-									<bdt class="block-component"></bdt>
-								</span>
-							</strong>
-						</span>
-					</strong>
-				</div>
-				<div data-custom-class="body_text">
-					<strong>
-						<strong>
-							<span>
-								<strong><bdt class="block-component"></bdt></strong>
-							</span>
-						</strong>
-					</strong>
-				</div>
-				<div data-custom-class="body_text">
-					<strong>
-						<strong>
-							<span>
-								<strong><bdt class="block-component"></bdt></strong>
-							</span>
-						</strong>
-					</strong>
-				</div>
-				<div data-custom-class="body_text">
-					<strong>
-						<span>
-							<strong>
-								<bdt class="question">
-									<bdt class="block-component"></bdt>
-									<bdt class="question">verzionspriceguide@pm.me</bdt>
-									<bdt class="statement-end-if-in-editor"></bdt>
-								</bdt>
-							</strong>
-						</span>
-					</strong>
-				</div>
-			</div>
+			<section id="contact">
+				<h2>25. CONTACT US</h2>
+				<p>
+					In order to resolve a complaint regarding the Services or to receive further
+					information regarding use of the Services, please contact us at:
+				</p>
+				<p>
+					<strong>verzionspriceguide@pm.me</strong>
+				</p>
+			</section>
 		</div>
 	</div>
 </template>
