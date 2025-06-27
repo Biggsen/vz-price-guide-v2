@@ -232,7 +232,7 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 				<span class="text-sm sm:text-base">
 					Hey! Check out the
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
-						Updates
+						<span>Updates</span>
 					</router-link>
 					page for latest updates and roadmap to see what I've got planned.
 				</span>
