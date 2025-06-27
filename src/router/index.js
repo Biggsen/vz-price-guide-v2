@@ -66,6 +66,11 @@ const router = createRouter({
 			path: '/cookie-policy',
 			name: 'cookie-policy',
 			component: () => import('../views/CookiePolicyView.vue')
+		},
+		{
+			path: '/terms-of-use',
+			name: 'terms-of-use',
+			component: () => import('../views/TermsOfUseView.vue')
 		}
 	]
 })
