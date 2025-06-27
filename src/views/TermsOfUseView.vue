@@ -1269,9 +1269,6 @@
 
 <script>
 export default {
-	name: 'TermsOfUseView',
-	mounted() {
-		document.title = "Terms of Use - verzion's economy price guide for Minecraft"
-	}
+	name: 'TermsOfUseView'
 }
 </script>
