@@ -3,6 +3,7 @@
 		<PrivacyPolicyHeader />
 		<PrivacyPolicyTOC />
 
+		<!-- 1 -->
 		<div>
 			<div id="infocollect">
 				<span id="control">
@@ -88,331 +89,155 @@
 				needed to maintain the security and operation of our Services, and for our internal
 				analytics and reporting purposes.
 			</p>
-			<div>
-				<span></span>
-			</div>
-			<div>
+			<p>
+				Like many businesses, we also collect information through cookies and similar
+				technologies. You can find out more about this in our Cookie Notice:
 				<span>
-					<span>
-						<span>
-							Like many businesses, we also collect information through cookies and
-							similar technologies. You can find out more about this in our Cookie
-							Notice:
-							<span>
-								<a
-									data-custom-class="link"
-									href="https://minecraft-economy-price-guide.net/cookies"
-									target="_blank">
-									https://minecraft-economy-price-guide.net/cookies
-								</a>
-							</span>
-							.
-						</span>
-					</span>
+					<a
+						data-custom-class="link"
+						href="https://minecraft-economy-price-guide.net/cookies"
+						target="_blank">
+						https://minecraft-economy-price-guide.net/cookies
+					</a>
 				</span>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span></span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>The information we collect includes:</span>
-					</span>
-				</span>
-			</div>
+				.
+			</p>
+			<p>The information we collect includes:</p>
 			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							<span>
-								<em>Log and Usage Data.</em>
-								Log and usage data is service-related, diagnostic, usage, and
-								performance information our servers automatically collect when you
-								access or use our Services and which we record in log files.
-								Depending on how you interact with us, this log data may include
-								your IP address, device information, browser type, and settings and
-								information about your activity in the Services (such as the
-								date/time stamps associated with your usage, pages and files viewed,
-								searches, and other actions you take such as which features you
-								use), device event information (such as system activity, error
-								reports (sometimes called 'crash dumps' ), and hardware settings).
-								<span>
-									<span>
-										<span></span>
-									</span>
-								</span>
-							</span>
-						</span>
-					</span>
+					<em>Log and Usage Data.</em>
+					Log and usage data is service-related, diagnostic, usage, and performance
+					information our servers automatically collect when you access or use our
+					Services and which we record in log files. Depending on how you interact with
+					us, this log data may include your IP address, device information, browser type,
+					and settings and information about your activity in the Services (such as the
+					date/time stamps associated with your usage, pages and files viewed, searches,
+					and other actions you take such as which features you use), device event
+					information (such as system activity, error reports (sometimes called 'crash
+					dumps' ), and hardware settings).
 				</li>
-			</ul>
-			<div></div>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							<span>
-								<em>Device Data.</em>
-								We collect device data such as information about your computer,
-								phone, tablet, or other device you use to access the Services.
-								Depending on the device used, this device data may include
-								information such as your IP address (or proxy server), device and
-								application identification numbers, location, browser type, hardware
-								model, Internet service provider and/or mobile carrier, operating
-								system, and system configuration information.
-								<span>
-									<span>
-										<span></span>
-									</span>
-								</span>
-							</span>
-						</span>
-					</span>
+					<em>Device Data.</em>
+					We collect device data such as information about your computer, phone, tablet,
+					or other device you use to access the Services. Depending on the device used,
+					this device data may include information such as your IP address (or proxy
+					server), device and application identification numbers, location, browser type,
+					hardware model, Internet service provider and/or mobile carrier, operating
+					system, and system configuration information.
 				</li>
-			</ul>
-			<div></div>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							<span>
-								<em>Location Data.</em>
-								We collect location data such as information about your device's
-								location, which can be either precise or imprecise. How much
-								information we collect depends on the type and settings of the
-								device you use to access the Services. For example, we may use GPS
-								and other technologies to collect geolocation data that tells us
-								your current location (based on your IP address). You can opt out of
-								allowing us to collect this information either by refusing access to
-								the information or by disabling your Location setting on your
-								device. However, if you choose to opt out, you may not be able to
-								use certain aspects of the Services.
-								<span>
-									<span>
-										<span></span>
-									</span>
-								</span>
-							</span>
-						</span>
-					</span>
+					<em>Location Data.</em>
+					We collect location data such as information about your device's location, which
+					can be either precise or imprecise. How much information we collect depends on
+					the type and settings of the device you use to access the Services. For example,
+					we may use GPS and other technologies to collect geolocation data that tells us
+					your current location (based on your IP address). You can opt out of allowing us
+					to collect this information either by refusing access to the information or by
+					disabling your Location setting on your device. However, if you choose to opt
+					out, you may not be able to use certain aspects of the Services.
 				</li>
 			</ul>
-			<div>
-				<span>
-					<strong>
-						<span>
-							<h3>Google API</h3>
-						</span>
-					</strong>
-					<span>Our use of information received from Google APIs will adhere to</span>
-				</span>
+			<h3>Google API</h3>
+			<p>
+				Our use of information received from Google APIs will adhere to
 				<a
 					data-custom-class="link"
 					href="https://developers.google.com/terms/api-services-user-data-policy"
 					rel="noopener noreferrer"
 					target="_blank">
-					<span>
-						<span>Google API Services User Data Policy</span>
-					</span>
+					<span>Google API Services User Data Policy</span>
 				</a>
-				<span>
-					<span>, including the</span>
-				</span>
+				, including the
 				<a
 					data-custom-class="link"
 					href="https://developers.google.com/terms/api-services-user-data-policy#limited-use"
 					rel="noopener noreferrer"
 					target="_blank">
-					<span>
-						<span>Limited Use requirements</span>
-					</span>
+					<span>Limited Use requirements</span>
 				</a>
-				<span>
-					<span>.</span>
-					<br />
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							<span>
-								<span></span>
-							</span>
-						</span>
-					</span>
-				</span>
-			</div>
+				.
+			</p>
 		</div>
+		<!-- 2 -->
 		<div>
-			<div>
-				<br />
-			</div>
 			<div id="infouse">
-				<span>
-					<span>
-						<span>
-							<span>
-								<span id="control">
-									<strong>
-										<span>
-											<h2>2. HOW DO WE PROCESS YOUR INFORMATION?</h2>
-										</span>
-									</strong>
-								</span>
-							</span>
-						</span>
-						<span>
-							<span>
-								<span>
-									<span>
-										<strong>
-											<em>In Short:</em>
-										</strong>
-										<em>
-											We process your information to provide, improve, and
-											administer our Services, communicate with you, for
-											security and fraud prevention, and to comply with law.
-											We process the personal information for the following
-											purposes listed below. We may also process your
-											information for other purposes only with your prior
-											explicit consent.
-										</em>
-									</span>
-								</span>
-							</span>
-						</span>
-					</span>
+				<span id="control">
+					<strong>
+						<h2>2. HOW DO WE PROCESS YOUR INFORMATION?</h2>
+					</strong>
 				</span>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						<span>
-							<strong>
-								We process your personal information for a variety of reasons,
-								depending on how you interact with our Services, including:
-							</strong>
-						</span>
-					</span>
-				</span>
-			</div>
-			<ul>
-				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							<span>
-								<strong>
-									To facilitate account creation and authentication and otherwise
-									manage user accounts.
-								</strong>
-								We may process your information so you can create and log in to your
-								account, as well as keep your account in working order.
-								<span>
-									<span>
-										<span>
-											<span>
-												<span>
-													<span>
-														<span></span>
-													</span>
-												</span>
-											</span>
-										</span>
-									</span>
-								</span>
-							</span>
-						</span>
-					</span>
-				</li>
-			</ul>
 
-			<div></div>
+				<p>
+					<strong>
+						<em>In Short:</em>
+					</strong>
+					<em>
+						We process your information to provide, improve, and administer our
+						Services, communicate with you, for security and fraud prevention, and to
+						comply with law. We process the personal information for the following
+						purposes listed below. We may also process your information for other
+						purposes only with your prior explicit consent.
+					</em>
+				</p>
+			</div>
+			<p>
+				<strong>
+					We process your personal information for a variety of reasons, depending on how
+					you interact with our Services, including:
+				</strong>
+			</p>
 			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							<strong>To save or protect an individual's vital interest.</strong>
-							We may process your information when necessary to save or protect an
-							individual's vital interest, such as to prevent harm.
-						</span>
-					</span>
+					<strong>
+						To facilitate account creation and authentication and otherwise manage user
+						accounts.
+					</strong>
+					We may process your information so you can create and log in to your account, as
+					well as keep your account in working order.
+				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<strong>To save or protect an individual's vital interest.</strong>
+					We may process your information when necessary to save or protect an
+					individual's vital interest, such as to prevent harm.
 				</li>
 			</ul>
 		</div>
+		<!-- 3 -->
 		<div>
 			<div id="legalbases">
 				<strong>
-					<span>
-						<span>
-							<h2>3. WHAT LEGAL BASES DO WE RELY ON TO PROCESS YOUR INFORMATION?</h2>
-						</span>
-					</span>
+					<h2>3. WHAT LEGAL BASES DO WE RELY ON TO PROCESS YOUR INFORMATION?</h2>
 				</strong>
+				<p>
+					<em>
+						<strong>In Short:</strong>
+						We only process your personal information when we believe it is necessary
+						and we have a valid legal reason (i.e. legal basis) to do so under
+						applicable law, like with your consent, to comply with laws, to provide you
+						with services to enter into or fulfil our contractual obligations, to
+						protect your rights, or to fulfil our legitimate business interests.
+					</em>
+				</p>
+			</div>
+			<p>
 				<em>
-					<span>
-						<span>
-							<strong>In Short:</strong>
-							We only process your personal information when we believe it is
-							necessary and we have a valid legal reason (i.e. legal basis) to do so
-							under applicable law, like with your consent, to comply with laws, to
-							provide you with services to enter into or fulfil our contractual
-							obligations, to protect your rights, or to fulfil our legitimate
-							business interests.
-						</span>
-					</span>
+					<strong>
+						<u>If you are located in the EU or UK, this section applies to you.</u>
+					</strong>
 				</em>
-			</div>
-			<div></div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<em>
-					<span>
-						<span>
-							<strong>
-								<u>
-									If you are located in the EU or UK, this section applies to you.
-								</u>
-							</strong>
-						</span>
-					</span>
-				</em>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div></div>
-			<div>
-				<span>
-					<span>
-						The General Data Protection Regulation (GDPR) and UK GDPR require us to
-						explain the valid legal bases we rely on in order to process your personal
-						information. As such, we may rely on the following legal bases to process
-						your personal information:
-					</span>
-				</span>
-			</div>
+			</p>
+			<p>
+				The General Data Protection Regulation (GDPR) and UK GDPR require us to explain the
+				valid legal bases we rely on in order to process your personal information. As such,
+				we may rely on the following legal bases to process your personal information:
+			</p>
 			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							<strong>Consent.</strong>
-							We may process your information if you have given us permission (i.e.
-							consent) to use your personal information for a specific purpose. You
-							can withdraw your consent at any time. Learn more about
-						</span>
-					</span>
+					<strong>Consent.</strong>
+					We may process your information if you have given us permission (i.e. consent)
+					to use your personal information for a specific purpose. You can withdraw your
+					consent at any time. Learn more about
+
 					<a data-custom-class="link" href="#withdrawconsent">
 						<span>
 							<span>withdrawing your consent</span>
@@ -420,272 +245,124 @@
 					</a>
 					<span>.</span>
 				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<strong>Legal Obligations.</strong>
+					We may process your information where we believe it is necessary for compliance
+					with our legal obligations, such as to cooperate with a law enforcement body or
+					regulatory agency, exercise or defend our legal rights, or disclose your
+					information as evidence in litigation in which we are involved.
+				</li>
+				<li data-custom-class="body_text" style="line-height: 1.5">
+					<strong>Vital Interests.</strong>
+					We may process your information where we believe it is necessary to protect your
+					vital interests or the vital interests of a third party, such as situations
+					involving potential threats to the safety of any person.
+				</li>
 			</ul>
+			<p>
+				<strong>
+					<u>
+						<em>If you are located in Canada, this section applies to you.</em>
+					</u>
+				</strong>
+			</p>
+			<p>
+				We may process your information if you have given us specific permission (i.e.
+				express consent) to use your personal information for a specific purpose, or in
+				situations where your permission can be inferred (i.e. implied consent). You can
 
-			<div></div>
-			<ul>
-				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							<strong>Legal Obligations.</strong>
-							We may process your information where we believe it is necessary for
-							compliance with our legal obligations, such as to cooperate with a law
-							enforcement body or regulatory agency, exercise or defend our legal
-							rights, or disclose your information as evidence in litigation in which
-							we are involved.
-						</span>
-					</span>
-				</li>
-			</ul>
-			<div></div>
-			<ul>
-				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							<strong>Vital Interests.</strong>
-							We may process your information where we believe it is necessary to
-							protect your vital interests or the vital interests of a third party,
-							such as situations involving potential threats to the safety of any
-							person.
-						</span>
-					</span>
-				</li>
-			</ul>
-			<div></div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						<strong>
-							<u>
-								<em>If you are located in Canada, this section applies to you.</em>
-							</u>
-						</strong>
-					</span>
-				</span>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div></div>
-			<div>
-				<span>
-					<span>
-						We may process your information if you have given us specific permission
-						(i.e. express consent) to use your personal information for a specific
-						purpose, or in situations where your permission can be inferred (i.e.
-						implied consent). You can
-					</span>
-				</span>
 				<a data-custom-class="link" href="#withdrawconsent">
-					<span>
-						<span>withdraw your consent</span>
-					</span>
+					<span>withdraw your consent</span>
 				</a>
-				<span>
-					<span>at any time.</span>
-				</span>
-			</div>
-			<div>
-				<span>
-					<span>
-						In some exceptional cases, we may be legally permitted under applicable law
-						to process your information without your consent, including, for example:
-					</span>
-				</span>
-			</div>
+				at any time.
+			</p>
+			<p>
+				In some exceptional cases, we may be legally permitted under applicable law to
+				process your information without your consent, including, for example:
+			</p>
 			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							If collection is clearly in the interests of an individual and consent
-							cannot be obtained in a timely way
-						</span>
-					</span>
+					If collection is clearly in the interests of an individual and consent cannot be
+					obtained in a timely way
 				</li>
-			</ul>
-			<div></div>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>For investigations and fraud detection and prevention</span>
-					</span>
+					For investigations and fraud detection and prevention
 				</li>
-			</ul>
-			<div></div>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>For business transactions provided certain conditions are met</span>
-					</span>
+					For business transactions provided certain conditions are met
 				</li>
-			</ul>
-			<div></div>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							If it is contained in a witness statement and the collection is
-							necessary to assess, process, or settle an insurance claim
-						</span>
-					</span>
+					If it is contained in a witness statement and the collection is necessary to
+					assess, process, or settle an insurance claim
 				</li>
-			</ul>
-			<div></div>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							For identifying injured, ill, or deceased persons and communicating with
-							next of kin
-						</span>
-					</span>
+					For identifying injured, ill, or deceased persons and communicating with next of
+					kin
 				</li>
-			</ul>
-			<div></div>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							If we have reasonable grounds to believe an individual has been, is, or
-							may be victim of financial abuse
-						</span>
-					</span>
+					If we have reasonable grounds to believe an individual has been, is, or may be
+					victim of financial abuse
 				</li>
-			</ul>
-			<div></div>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							If it is reasonable to expect collection and use with consent would
-							compromise the availability or the accuracy of the information and the
-							collection is reasonable for purposes related to investigating a breach
-							of an agreement or a contravention of the laws of Canada or a province
-						</span>
-					</span>
+					If it is reasonable to expect collection and use with consent would compromise
+					the availability or the accuracy of the information and the collection is
+					reasonable for purposes related to investigating a breach of an agreement or a
+					contravention of the laws of Canada or a province
 				</li>
-			</ul>
-			<div></div>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							If disclosure is required to comply with a subpoena, warrant, court
-							order, or rules of the court relating to the production of records
-						</span>
-					</span>
+					If disclosure is required to comply with a subpoena, warrant, court order, or
+					rules of the court relating to the production of records
 				</li>
-			</ul>
-			<div></div>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							If it was produced by an individual in the course of their employment,
-							business, or profession and the collection is consistent with the
-							purposes for which the information was produced
-						</span>
-					</span>
+					If it was produced by an individual in the course of their employment, business,
+					or profession and the collection is consistent with the purposes for which the
+					information was produced
 				</li>
-			</ul>
-			<div></div>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							If the collection is solely for journalistic, artistic, or literary
-							purposes
-						</span>
-					</span>
+					If the collection is solely for journalistic, artistic, or literary purposes
 				</li>
-			</ul>
-			<div></div>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							If the information is publicly available and is specified by the
-							regulations
-						</span>
-					</span>
+					If the information is publicly available and is specified by the regulations
 				</li>
-			</ul>
-			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						We may disclose de-identified information for approved research or
-						statistics projects, subject to ethics oversight and confidentiality
-						commitments
-					</span>
+					We may disclose de-identified information for approved research or statistics
+					projects, subject to ethics oversight and confidentiality commitments
 				</li>
 			</ul>
 		</div>
+		<!-- 4 -->
 		<div>
 			<div>
 				<br />
 			</div>
 			<div id="whoshare">
-				<span>
-					<span>
-						<span>
-							<span>
-								<span id="control">
-									<strong>
-										<span>
-											<h2>
-												4. WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL
-												INFORMATION?
-											</h2>
-										</span>
-									</strong>
-								</span>
-							</span>
-						</span>
-					</span>
+				<span id="control">
+					<strong>
+						<h2>4. WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</h2>
+					</strong>
 				</span>
-				<span>
-					<span>
-						<span>
-							<strong>
-								<em>In Short:</em>
-							</strong>
-							<em>
-								We may share information in specific situations described in this
-								section and/or with the following third parties.
-							</em>
-						</span>
-					</span>
-				</span>
+
+				<p>
+					<strong>
+						<em>In Short:</em>
+					</strong>
+					<em>
+						We may share information in specific situations described in this section
+						and/or with the following third parties.
+					</em>
+				</p>
 			</div>
-			<div>
-				<span></span>
-			</div>
-			<div>
-				<br />
-			</div>
-			<div>
-				<span>
-					<span>
-						We may need to share your personal information in the following situations:
-					</span>
-				</span>
-			</div>
+			<p>We may need to share your personal information in the following situations:</p>
 			<ul>
 				<li data-custom-class="body_text" style="line-height: 1.5">
-					<span>
-						<span>
-							<strong>Business Transfers.</strong>
-							We may share or transfer your information in connection with, or during
-							negotiations of, any merger, sale of company assets, financing, or
-							acquisition of all or a portion of our business to another company.
-						</span>
-					</span>
+					<strong>Business Transfers.</strong>
+					We may share or transfer your information in connection with, or during
+					negotiations of, any merger, sale of company assets, financing, or acquisition
+					of all or a portion of our business to another company.
 				</li>
 			</ul>
 		</div>
+		<!-- 5 -->
 		<div>
 			<div id="cookies">
 				<span>
@@ -864,6 +541,7 @@
 				</span>
 			</div>
 		</div>
+		<!-- 6 -->
 		<div>
 			<div id="sociallogins">
 				<span>
@@ -969,6 +647,7 @@
 				<br />
 			</div>
 		</div>
+		<!-- 7 -->
 		<div>
 			<div id="inforetain">
 				<span>
@@ -1036,6 +715,7 @@
 				</span>
 			</div>
 		</div>
+		<!-- 8 -->
 		<div>
 			<div id="infosafe">
 				<span>
@@ -1088,6 +768,7 @@
 				</span>
 			</div>
 		</div>
+		<!-- 9 -->
 		<div>
 			<div id="privacyrights">
 				<span>
@@ -1400,6 +1081,7 @@
 				</span>
 			</div>
 		</div>
+		<!-- 10 -->
 		<div>
 			<div id="DNT">
 				<span>
@@ -1453,6 +1135,7 @@
 				<span></span>
 			</div>
 		</div>
+		<!-- 11 -->
 		<div>
 			<div id="uslaws">
 				<span>
@@ -2649,6 +2332,7 @@
 				</div>
 			</div>
 		</div>
+		<!-- 12 -->
 		<div>
 			<div>
 				<span id="otherlaws">
@@ -2888,6 +2572,7 @@
 				</a>
 			</div>
 		</div>
+		<!-- 13 -->
 		<div>
 			<div id="policyupdates">
 				<span>
@@ -2933,6 +2618,7 @@
 				</span>
 			</div>
 		</div>
+		<!-- 14 -->
 		<div>
 			<div id="contact">
 				<span>
@@ -3040,6 +2726,7 @@
 				</span>
 			</div>
 		</div>
+		<!-- 15 -->
 		<div>
 			<div id="request">
 				<span>
