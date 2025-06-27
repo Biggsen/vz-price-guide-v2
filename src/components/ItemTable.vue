@@ -1,9 +1,11 @@
 <script setup>
-import { useCurrentUser, useFirestore } from 'vuefire'
+import { useFirestore } from 'vuefire'
 import { useRoute, RouterLink } from 'vue-router'
 import { doc, deleteDoc } from 'firebase/firestore'
 import { buyUnitPrice, sellUnitPrice, buyStackPrice, sellStackPrice } from '../utils/pricing.js'
-const user = useCurrentUser()
+import { useAdmin } from '../utils/admin.js'
+
+const { user, canEditItems } = useAdmin()
 const db = useFirestore()
 const route = useRoute()
 
@@ -55,7 +57,7 @@ async function deleteItem(itemId) {
 				<th rowspan="2"></th>
 				<th colspan="2">Unit Price</th>
 				<th colspan="2">Stack Price</th>
-				<th rowspan="2" v-if="user?.email">Actions</th>
+				<th rowspan="2" v-if="canEditItems">Actions</th>
 			</tr>
 			<tr>
 				<th>Buy</th>
@@ -92,7 +94,7 @@ async function deleteItem(itemId) {
 				<td class="text-center">
 					{{ sellStackPrice(item.price, item.stack, sellMargin) }}
 				</td>
-				<td v-if="user?.email">
+				<td v-if="canEditItems">
 					<RouterLink
 						:to="{ path: `/edit/${item.id}`, query: getEditLinkQuery() }"
 						class="text-gray-asparagus underline hover:text-heavy-metal px-1 py-0">

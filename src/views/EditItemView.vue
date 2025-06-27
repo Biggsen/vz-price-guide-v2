@@ -1,14 +1,15 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { RouterLink, useRouter, useRoute } from 'vue-router'
-import { useFirestore, useCurrentUser, useDocument } from 'vuefire'
+import { useFirestore, useDocument } from 'vuefire'
 import { doc, updateDoc } from 'firebase/firestore'
 import { enabledCategories } from '../constants.js'
+import { useAdmin } from '../utils/admin.js'
 
 const db = useFirestore()
 const router = useRouter()
 const route = useRoute()
-const user = useCurrentUser()
+const { user, canEditItems } = useAdmin()
 const docRef = doc(db, 'items', route.params.id)
 
 // Store the home page query parameters to restore them after editing
@@ -75,7 +76,7 @@ async function updateItem() {
 </script>
 
 <template>
-	<div v-if="user?.email" class="p-4 pt-8">
+	<div v-if="canEditItems" class="p-4 pt-8">
 		<h2 class="text-xl font-bold mb-6">Edit item</h2>
 		<form @submit.prevent="updateItem">
 			<label for="name">Name</label>
@@ -103,6 +104,13 @@ async function updateItem() {
 			<input type="text" id="subcategory" v-model="editItem.subcategory" />
 			<button type="submit">Update item</button>
 		</form>
+	</div>
+	<div v-else-if="user?.email" class="p-4 pt-8">
+		<div class="text-center">
+			<h2 class="text-xl font-bold mb-4">Access Denied</h2>
+			<p class="text-gray-600 mb-4">You need admin privileges to edit items.</p>
+			<RouterLink to="/" class="text-blue-600 hover:underline">Return to Home</RouterLink>
+		</div>
 	</div>
 	<div v-else class="p-4 pt-8">
 		<RouterLink to="/login">Login to view this page</RouterLink>

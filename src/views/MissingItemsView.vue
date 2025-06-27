@@ -1,9 +1,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, addDoc } from 'firebase/firestore'
+import { useAdmin } from '../utils/admin.js'
 
 const db = useFirestore()
+const { user, canViewMissingItems } = useAdmin()
 const itemsJson = ref([])
 const dbItems = ref([])
 const loading = ref(true)
@@ -182,7 +185,7 @@ async function addSelectedMissing() {
 </script>
 
 <template>
-	<div class="p-4 pt-8">
+	<div v-if="canViewMissingItems" class="p-4 pt-8">
 		<h2 class="text-xl font-bold mb-6">Missing Items Checker</h2>
 		<div v-if="loading">Loading...</div>
 		<div v-else>
@@ -273,6 +276,16 @@ async function addSelectedMissing() {
 				</tbody>
 			</table>
 		</div>
+	</div>
+	<div v-else-if="user?.email" class="p-4 pt-8">
+		<div class="text-center">
+			<h2 class="text-xl font-bold mb-4">Access Denied</h2>
+			<p class="text-gray-600 mb-4">You need admin privileges to view missing items.</p>
+			<RouterLink to="/" class="text-blue-600 hover:underline">Return to Home</RouterLink>
+		</div>
+	</div>
+	<div v-else class="p-4 pt-8">
+		<RouterLink to="/login">Login to view this page</RouterLink>
 	</div>
 </template>
 

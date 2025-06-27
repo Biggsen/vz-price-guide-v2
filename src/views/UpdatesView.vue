@@ -14,18 +14,18 @@
 					<div
 						v-for="update in displayedUpdates"
 						:key="update.id"
-						class="bg-white rounded-lg shadow-md p-6 border-l-4 border-laurel">
+						class="bg-gray-100 border border-gray-300 p-6 border-l-4 border-laurel">
 						<div class="flex justify-between items-start mb-3">
 							<h3 class="text-lg font-semibold text-gray-800">{{ update.title }}</h3>
 							<span
-								class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded whitespace-nowrap">
+								class="text-sm text-gray-500 bg-white px-2 py-1 rounded whitespace-nowrap">
 								{{ formatDate(update.date) }}
 							</span>
 						</div>
 						<div class="text-sm text-gray-600 mb-2">
 							<span
 								:class="getUpdateTypeClass(update.type)"
-								class="px-2 py-1 rounded-full text-xs font-medium">
+								class="px-2 py-1 rounded-full text-xs font-medium bg-white">
 								{{ update.type }}
 							</span>
 						</div>
@@ -64,13 +64,13 @@
 					<div
 						v-for="phase in roadmap"
 						:key="phase.id"
-						class="bg-white rounded-lg shadow-md p-6">
+						class="bg-gray-100 border border-gray-300 p-6">
 						<div class="flex items-center justify-between mb-4">
 							<h3 class="text-lg font-semibold text-gray-800">{{ phase.title }}</h3>
 							<div class="flex items-center gap-2">
 								<span
 									:class="getStatusClass(phase.status)"
-									class="px-3 py-1 rounded-full text-xs font-medium">
+									class="px-3 py-1 rounded-full text-xs font-medium bg-white">
 									{{ phase.status }}
 								</span>
 								<span v-if="phase.timeline" class="text-sm text-gray-500">

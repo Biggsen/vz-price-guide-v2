@@ -32,6 +32,15 @@ const router = createRouter({
 			meta: { title: "Login - verzion's economy price guide for Minecraft" }
 		},
 		{
+			path: '/profile',
+			name: 'profile',
+			component: () => import('../views/ProfileView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Profile - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/add',
 			name: 'add',
 			component: () => import('../views/AddItemView.vue'),

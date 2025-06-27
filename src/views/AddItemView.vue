@@ -1,12 +1,13 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { useFirestore, useCurrentUser } from 'vuefire'
+import { useFirestore } from 'vuefire'
 import { collection, addDoc, getDocs, query } from 'firebase/firestore'
 import { enabledCategories } from '../constants.js'
+import { useAdmin } from '../utils/admin.js'
 
 const db = useFirestore()
-const user = useCurrentUser()
+const { user, canAddItems } = useAdmin()
 
 const newItemInitial = ref({
 	name: '',
@@ -70,7 +71,7 @@ function applyToForm(index) {
 </script>
 
 <template>
-	<div v-if="user?.email" class="p-4 pt-8">
+	<div v-if="canAddItems" class="p-4 pt-8">
 		<div class="mb-10">
 			<button @click="addField">Add 'subcategory' field</button>
 		</div>
@@ -108,6 +109,13 @@ function applyToForm(index) {
 			<input type="text" id="subcategory" v-model="newItem.subcategory" />
 			<button type="submit">Add new item</button>
 		</form>
+	</div>
+	<div v-else-if="user?.email" class="p-4 pt-8">
+		<div class="text-center">
+			<h2 class="text-xl font-bold mb-4">Access Denied</h2>
+			<p class="text-gray-600 mb-4">You need admin privileges to add items.</p>
+			<RouterLink to="/" class="text-blue-600 hover:underline">Return to Home</RouterLink>
+		</div>
 	</div>
 	<div v-else class="p-4 pt-8">
 		<RouterLink to="/login">Login to view this page</RouterLink>

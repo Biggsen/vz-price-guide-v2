@@ -1,10 +1,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
 import { enabledCategories } from '../constants.js'
+import { useAdmin } from '../utils/admin.js'
 
 const db = useFirestore()
+const { user, canBulkUpdate } = useAdmin()
 const dbItems = ref([])
 const loading = ref(true)
 const searchQuery = ref('')
@@ -157,7 +160,7 @@ async function updateSelectedPrices() {
 </script>
 
 <template>
-	<div class="p-4 pt-8">
+	<div v-if="canBulkUpdate" class="p-4 pt-8">
 		<h2 class="text-xl font-bold mb-6">Bulk update items</h2>
 		<div v-if="loading">Loading...</div>
 		<div v-else>
@@ -280,6 +283,16 @@ async function updateSelectedPrices() {
 				</tbody>
 			</table>
 		</div>
+	</div>
+	<div v-else-if="user?.email" class="p-4 pt-8">
+		<div class="text-center">
+			<h2 class="text-xl font-bold mb-4">Access Denied</h2>
+			<p class="text-gray-600 mb-4">You need admin privileges to bulk update items.</p>
+			<RouterLink to="/" class="text-blue-600 hover:underline">Return to Home</RouterLink>
+		</div>
+	</div>
+	<div v-else class="p-4 pt-8">
+		<RouterLink to="/login">Login to view this page</RouterLink>
 	</div>
 </template>
 
