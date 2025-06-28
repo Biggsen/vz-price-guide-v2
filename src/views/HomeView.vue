@@ -369,7 +369,7 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 		<!-- Economy Configuration (Collapsible) -->
 		<div
 			v-if="showEconomySettings"
-			class="bg-norway bg-opacity-20 border-2 border-gray-asparagus rounded p-3 mb-4">
+			class="bg-norway bg-opacity-20 border border-gray-300 rounded p-3 mb-4">
 			<h4 class="text-base font-semibold text-heavy-metal mb-3">Prices</h4>
 			<div class="flex flex-wrap items-center gap-4 mb-3">
 				<!-- Price Multiplier -->
