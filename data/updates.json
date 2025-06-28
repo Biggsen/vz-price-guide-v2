@@ -1,5 +1,17 @@
 [
 	{
+		"id": 9,
+		"title": "All 1.16 Enchanted Books Added with Accurate Pricing!",
+		"date": "2025-06-28",
+		"type": "Content",
+		"description": "🎉 Complete enchanted book catalog is now live! Added all 110 enchanted books covering every enchantment type and level from Minecraft 1.16. Each book has been priced accurately based on rarity, usefulness, and market demand.",
+		"changes": [
+			"Added all 110 enchanted books with accurate pricing",
+			"Price range from 80 (Bane of Arthropods I) to 1400 (Mending)",
+			"New 'Enchantments' category for easy browsing"
+		]
+	},
+	{
 		"id": 8,
 		"title": "Price Customization, List View & Table Sorting",
 		"date": "2025-06-28",

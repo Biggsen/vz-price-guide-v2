@@ -16,18 +16,6 @@
 		]
 	},
 	{
-		"id": 3,
-		"title": "Add all 1.16 enchanted books",
-		"status": "Pending",
-		"description": "Add all the enchanted books with levels and prices",
-		"features": [
-			{ "name": "Armor enchantments", "completed": false },
-			{ "name": "Weapons enchantments", "completed": false },
-			{ "name": "Tools enchantments", "completed": false },
-			{ "name": "General enchantments", "completed": false }
-		]
-	},
-	{
 		"id": 4,
 		"title": "User accounts and community features",
 		"status": "Pending",
@@ -37,6 +25,19 @@
 			{ "name": "User authentication/login", "completed": false },
 			{ "name": "User profile pages", "completed": false },
 			{ "name": "Community feedback and feature suggestions", "completed": false }
+		]
+	},
+	{
+		"id": 3,
+		"title": "Add all 1.17 items",
+		"status": "Pending",
+		"description": "Add all new items introduced in Minecraft 1.17 (Caves & Cliffs Update) including copper, amethyst, deepslate, and other new blocks and items",
+		"features": [
+			{ "name": "Copper blocks and variants", "completed": false },
+			{ "name": "Amethyst items and blocks", "completed": false },
+			{ "name": "Deepslate blocks and variants", "completed": false },
+			{ "name": "New items (spyglass, bundle, etc.)", "completed": false },
+			{ "name": "Pricing and categorization", "completed": false }
 		]
 	}
 ]
