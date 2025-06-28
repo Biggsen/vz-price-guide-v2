@@ -8,7 +8,7 @@
 			{ "name": "150 to go", "completed": true },
 			{ "name": "130 to go", "completed": true },
 			{ "name": "110 to go", "completed": true },
-			{ "name": "90 to go", "completed": false },
+			{ "name": "90 to go", "completed": true },
 			{ "name": "70 to go", "completed": false },
 			{ "name": "50 to go", "completed": false },
 			{ "name": "30 to go", "completed": false },
