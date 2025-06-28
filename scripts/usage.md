@@ -450,3 +450,157 @@ Image URL for 'Wool' (gallery: Red Wool): https://static.wikia.nocookie.net/mine
 -   It's perfect for handling edge cases that the bulk `fetchImages.js` script can't handle
 -   The array syntax allows processing multiple related items efficiently
 -   Alt text matching is case-insensitive for better reliability
+
+---
+
+# addEnchantedBooks.js Usage
+
+## Purpose
+
+This Node.js script bulk adds all enchanted books to your Firestore database. It generates individual enchanted book entries for every enchantment and level combination in Minecraft 1.16, rather than having just one generic "Enchanted Book" item.
+
+## Prerequisites
+
+1. **Node.js** installed on your system
+2. **firebase-admin** package: `npm install firebase-admin`
+3. **Firebase service account key** JSON file
+
+## Setup
+
+1. Obtain your Firebase service account key JSON file from the Firebase Console:
+
+    - Go to Project Settings → Service Accounts
+    - Generate new private key
+    - Save the JSON file as `service-account.json` in the project root
+
+2. The script automatically resolves the path to your service account file
+
+## Configuration
+
+The script has important constants you can customize:
+
+### DRY_RUN
+
+-   `DRY_RUN = true`: Only logs what would be added (safe for testing)
+-   `DRY_RUN = false`: Actually adds items to the Firestore database
+
+### ENCHANTED_BOOK_DEFAULTS
+
+Default values applied to all enchanted books:
+
+-   `image`: Wiki image URL for enchanted books
+-   `url`: Wiki URL for enchanted books
+-   `stack`: Stack size (1 for enchanted books)
+-   `category`: "utility" (since "magic" isn't in your current enabled categories)
+-   `subcategory`: "Enchanted Books"
+-   `price`: Base price (5.0, increases with enchantment level)
+
+### ENCHANTMENTS
+
+Complete list of all 1.16 enchantments with their maximum levels, organized by type:
+
+-   **Armor Enchantments**: Protection, Fire Protection, Feather Falling, etc.
+-   **Weapon Enchantments**: Sharpness, Smite, Looting, etc.
+-   **Ranged Weapon Enchantments**: Power, Punch, Multishot, etc.
+-   **Tool Enchantments**: Efficiency, Silk Touch, Fortune, etc.
+-   **Universal Enchantments**: Mending, Unbreaking, Curses
+
+## How it Works
+
+The script:
+
+1. Connects to your Firestore database using the service account credentials
+2. Generates all possible enchanted book combinations:
+    - For each enchantment, creates books for levels 1 through max level
+    - Uses Roman numerals for level display (I, II, III, IV, V)
+    - Single-level enchantments don't show level numbers
+3. For each generated book:
+    - Checks if it already exists in the database (by `material_id`)
+    - Skips books that already exist
+    - Adds new books with proper naming and pricing
+4. Provides detailed logging and summary statistics
+
+## Generated Items
+
+The script will generate approximately **100+ enchanted books**, including:
+
+-   **Protection I** through **Protection IV**
+-   **Sharpness I** through **Sharpness V**
+-   **Efficiency I** through **Efficiency V**
+-   **Mending** (single level)
+-   **Silk Touch** (single level)
+-   And many more...
+
+Each book gets:
+
+-   **Name**: `enchanted book (protection i)`, `enchanted book (sharpness v)`, etc.
+-   **Material ID**: `enchanted_book_protection_1`, `enchanted_book_sharpness_5`, etc.
+-   **Price**: Base price + (level - 1) × 2 (so higher levels cost more)
+
+## Usage
+
+1. **Test run (recommended first):**
+
+    ```bash
+    # Ensure DRY_RUN = true in the script
+    node scripts/addEnchantedBooks.js
+    ```
+
+2. **Add the books:**
+    ```bash
+    # Set DRY_RUN = false in the script
+    node scripts/addEnchantedBooks.js
+    ```
+
+## Example Output
+
+```
+Starting bulk addition of enchanted books...
+DRY RUN mode: ENABLED
+
+Generated 87 enchanted books
+
+[DRY RUN] Would add: enchanted book (protection i) (enchanted_book_protection_1) - Price: $5
+[DRY RUN] Would add: enchanted book (protection ii) (enchanted_book_protection_2) - Price: $7
+[DRY RUN] Would add: enchanted book (sharpness v) (enchanted_book_sharpness_5) - Price: $13
+...
+
+============================================================
+BULK ADDITION SUMMARY
+============================================================
+Total enchanted books processed: 87
+Books would be added: 87
+Books skipped (already exist): 0
+Books failed: 0
+
+🔍 This was a DRY RUN - no changes were made.
+💡 Set DRY_RUN = false to apply changes.
+```
+
+## Safety Features
+
+-   **DRY_RUN mode** allows you to preview all changes before applying them
+-   **Duplicate detection** prevents adding books that already exist
+-   **Error handling** for failed additions with detailed logging
+-   **Comprehensive logging** shows exactly what's being added
+-   **Transaction safety** - each book is added individually so partial failures don't corrupt the whole operation
+
+## Customization
+
+You can easily customize the script by:
+
+1. **Adjusting pricing**: Modify the `price` calculation in `generateEnchantedBooks()`
+2. **Adding/removing enchantments**: Update the `ENCHANTMENTS` object
+3. **Changing defaults**: Modify `ENCHANTED_BOOK_DEFAULTS`
+4. **Custom categorization**: Change the `category` and `subcategory` values
+
+## Post-Addition
+
+After running the script successfully:
+
+1. **Use your bulk update tools** to adjust prices if needed
+2. **Add images** using your existing image fetching scripts
+3. **Categorize further** if you want more specific subcategories
+4. **Verify in your web app** that all books appear correctly
+
+This script integrates seamlessly with your existing admin tools and bulk update functionality.
