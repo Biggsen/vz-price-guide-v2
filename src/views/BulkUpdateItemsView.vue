@@ -17,9 +17,13 @@ const updateResult = ref(null)
 const newCategory = ref('')
 const newSubcategory = ref('')
 const newPrice = ref('')
+const newImage = ref('')
 const sortKey = ref('name')
 const sortAsc = ref(true)
 const showOnlyNoCategory = ref(false)
+const showCategoryColumns = ref(true)
+const showPriceColumn = ref(false)
+const showImageColumn = ref(false)
 
 async function loadDbItems() {
 	const snapshot = await getDocs(collection(db, 'items'))
@@ -157,6 +161,29 @@ async function updateSelectedPrices() {
 	selectedItems.value = []
 	newPrice.value = ''
 }
+
+async function updateSelectedImages() {
+	if (!newImage.value || !anySelected.value) return
+	updating.value = true
+	updateResult.value = null
+	let updated = 0,
+		failed = 0
+	for (const id of selectedItems.value) {
+		try {
+			await updateDoc(doc(db, 'items', id), {
+				image: newImage.value
+			})
+			updated++
+		} catch (e) {
+			failed++
+		}
+	}
+	updateResult.value = `Image updated: ${updated}, Failed: ${failed}`
+	await loadDbItems()
+	updating.value = false
+	selectedItems.value = []
+	newImage.value = ''
+}
 </script>
 
 <template>
@@ -209,6 +236,17 @@ async function updateSelectedPrices() {
 					<span v-if="updating" class="ml-2">Updating...</span>
 					<span v-if="updateResult" class="ml-2">{{ updateResult }}</span>
 				</div>
+
+				<!-- Column visibility checkbox -->
+				<div class="mt-2">
+					<label class="inline-flex items-center">
+						<input
+							type="checkbox"
+							v-model="showCategoryColumns"
+							class="mr-2 align-middle" />
+						Show categories columns
+					</label>
+				</div>
 			</div>
 
 			<div class="mb-4">
@@ -236,6 +274,46 @@ async function updateSelectedPrices() {
 						Update Price
 					</button>
 				</div>
+
+				<!-- Column visibility checkbox -->
+				<div class="mt-2">
+					<label class="inline-flex items-center">
+						<input
+							type="checkbox"
+							v-model="showPriceColumn"
+							class="mr-2 align-middle" />
+						Show price column
+					</label>
+				</div>
+			</div>
+
+			<!-- Image section -->
+			<div class="mb-4">
+				<h3 class="text-lg font-semibold mb-2">Image</h3>
+				<div class="flex gap-4 items-center">
+					<input
+						type="text"
+						v-model="newImage"
+						placeholder="Image URL"
+						class="border-2 border-gray-asparagus rounded px-3 py-1 w-80" />
+					<button
+						@click="updateSelectedImages"
+						:disabled="!anySelected || !newImage || updating"
+						class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50">
+						Update Image
+					</button>
+				</div>
+
+				<!-- Column visibility checkbox -->
+				<div class="mt-2">
+					<label class="inline-flex items-center">
+						<input
+							type="checkbox"
+							v-model="showImageColumn"
+							class="mr-2 align-middle" />
+						Show image column
+					</label>
+				</div>
 			</div>
 			<table class="table-auto w-full">
 				<thead>
@@ -252,17 +330,33 @@ async function updateSelectedPrices() {
 							Name
 							<span v-if="sortKey === 'name'">{{ sortAsc ? '▲' : '▼' }}</span>
 						</th>
-						<th @click="setSort('category')" class="cursor-pointer select-none">
+						<th
+							v-if="showCategoryColumns"
+							@click="setSort('category')"
+							class="cursor-pointer select-none">
 							Category
 							<span v-if="sortKey === 'category'">{{ sortAsc ? '▲' : '▼' }}</span>
 						</th>
-						<th @click="setSort('subcategory')" class="cursor-pointer select-none">
+						<th
+							v-if="showCategoryColumns"
+							@click="setSort('subcategory')"
+							class="cursor-pointer select-none">
 							Subcategory
 							<span v-if="sortKey === 'subcategory'">{{ sortAsc ? '▲' : '▼' }}</span>
 						</th>
-						<th @click="setSort('price')" class="cursor-pointer select-none">
+						<th
+							v-if="showPriceColumn"
+							@click="setSort('price')"
+							class="cursor-pointer select-none">
 							Price
 							<span v-if="sortKey === 'price'">{{ sortAsc ? '▲' : '▼' }}</span>
+						</th>
+						<th
+							v-if="showImageColumn"
+							@click="setSort('image')"
+							class="cursor-pointer select-none">
+							Image
+							<span v-if="sortKey === 'image'">{{ sortAsc ? '▲' : '▼' }}</span>
 						</th>
 					</tr>
 				</thead>
@@ -276,9 +370,12 @@ async function updateSelectedPrices() {
 						</td>
 						<td>{{ item.material_id }}</td>
 						<td>{{ item.name }}</td>
-						<td>{{ item.category }}</td>
-						<td>{{ item.subcategory }}</td>
-						<td>{{ item.price || 0 }}</td>
+						<td v-if="showCategoryColumns">{{ item.category }}</td>
+						<td v-if="showCategoryColumns">{{ item.subcategory }}</td>
+						<td v-if="showPriceColumn">{{ item.price || 0 }}</td>
+						<td v-if="showImageColumn" class="image-cell" :title="item.image || ''">
+							{{ item.image || '' }}
+						</td>
 					</tr>
 				</tbody>
 			</table>
@@ -304,5 +401,11 @@ th,
 td {
 	border: 1px solid #ccc;
 	padding: 0.5rem;
+}
+.image-cell {
+	max-width: 200px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 </style>
