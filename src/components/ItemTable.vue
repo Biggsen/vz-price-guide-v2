@@ -4,10 +4,15 @@ import { useRoute, RouterLink } from 'vue-router'
 import { doc, deleteDoc } from 'firebase/firestore'
 import { buyUnitPrice, sellUnitPrice, buyStackPrice, sellStackPrice } from '../utils/pricing.js'
 import { useAdmin } from '../utils/admin.js'
+import { computed, ref, watch } from 'vue'
 
 const { user, canEditItems } = useAdmin()
 const db = useFirestore()
 const route = useRoute()
+
+// Sorting state
+const sortField = ref('')
+const sortDirection = ref('asc') // 'asc' or 'desc'
 
 const props = defineProps({
 	collection: {
@@ -21,11 +26,76 @@ const props = defineProps({
 	},
 	economyConfig: {
 		type: Object
+	},
+	viewMode: {
+		type: String,
+		default: 'categories'
 	}
 })
 
-const priceMultiplier = props.economyConfig.priceMultiplier
-const sellMargin = props.economyConfig.sellMargin
+// Use computed properties to stay reactive to prop changes
+const priceMultiplier = computed(() => props.economyConfig.priceMultiplier)
+const sellMargin = computed(() => props.economyConfig.sellMargin)
+const roundToWhole = computed(() => props.economyConfig.roundToWhole)
+
+// Check if sorting is enabled (only in list view)
+const sortingEnabled = computed(() => props.viewMode === 'list')
+
+// Sorted collection
+const sortedCollection = computed(() => {
+	if (!props.collection || !sortingEnabled.value || !sortField.value) {
+		return props.collection
+	}
+
+	return [...props.collection].sort((a, b) => {
+		let valueA, valueB
+
+		if (sortField.value === 'name') {
+			valueA = a.name?.toLowerCase() || ''
+			valueB = b.name?.toLowerCase() || ''
+			const comparison = valueA.localeCompare(valueB)
+			return sortDirection.value === 'asc' ? comparison : -comparison
+		}
+
+		if (sortField.value === 'buy') {
+			// Calculate buy prices for comparison
+			valueA = (a.price || 0) * (priceMultiplier.value || 1)
+			valueB = (b.price || 0) * (priceMultiplier.value || 1)
+			const comparison = valueA - valueB
+			return sortDirection.value === 'asc' ? comparison : -comparison
+		}
+
+		return 0
+	})
+})
+
+// Watch for view mode changes and reset/set sorting accordingly
+watch(
+	() => props.viewMode,
+	(newMode) => {
+		if (newMode === 'list') {
+			// Enable default sorting in list view
+			sortField.value = 'name'
+			sortDirection.value = 'asc'
+		} else {
+			// Disable sorting in category view
+			sortField.value = ''
+		}
+	},
+	{ immediate: true }
+)
+
+// Toggle sort function (only works when sorting is enabled)
+function toggleSort(field) {
+	if (!sortingEnabled.value) return
+
+	if (sortField.value === field) {
+		sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+	} else {
+		sortField.value = field
+		sortDirection.value = 'asc'
+	}
+}
 
 // Create the redirect URL with current query parameters
 function getEditLinkQuery() {
@@ -48,26 +118,55 @@ async function deleteItem(itemId) {
 	<table v-if="collection.length > 0" class="w-full table-auto">
 		<caption :id="category == 'ores' ? 'ores' : ''">
 			{{ category }}
-			({{ collection.length }})
+			({{ sortedCollection.length }})
 		</caption>
 		<thead>
 			<tr>
 				<th rowspan="2" class="hidden">Material ID</th>
-				<th rowspan="2">Item/Block Name</th>
+				<th
+					rowspan="2"
+					:class="[sortingEnabled ? 'cursor-pointer hover:bg-opacity-80 transition' : '']"
+					@click="sortingEnabled ? toggleSort('name') : null">
+					<div v-if="sortingEnabled" class="flex items-center justify-center gap-1">
+						<span>Item/Block Name</span>
+						<span class="text-xs">
+							<span v-if="sortField === 'name' && sortDirection === 'asc'">▲</span>
+							<span v-else-if="sortField === 'name' && sortDirection === 'desc'">
+								▼
+							</span>
+							<span v-else class="opacity-50">▲▼</span>
+						</span>
+					</div>
+					<span v-else>Item/Block Name</span>
+				</th>
 				<th rowspan="2"></th>
 				<th colspan="2">Unit Price</th>
 				<th colspan="2">Stack Price</th>
 				<th rowspan="2" v-if="canEditItems">Actions</th>
 			</tr>
 			<tr>
-				<th>Buy</th>
+				<th
+					:class="[sortingEnabled ? 'cursor-pointer hover:bg-opacity-80 transition' : '']"
+					@click="sortingEnabled ? toggleSort('buy') : null">
+					<div v-if="sortingEnabled" class="flex items-center justify-center gap-1">
+						<span>Buy</span>
+						<span class="text-xs">
+							<span v-if="sortField === 'buy' && sortDirection === 'asc'">▲</span>
+							<span v-else-if="sortField === 'buy' && sortDirection === 'desc'">
+								▼
+							</span>
+							<span v-else class="opacity-50">▲▼</span>
+						</span>
+					</div>
+					<span v-else>Buy</span>
+				</th>
 				<th>Sell</th>
 				<th>Buy</th>
 				<th>Sell</th>
 			</tr>
 		</thead>
 		<tbody>
-			<tr v-for="item in collection" :key="item.id">
+			<tr v-for="item in sortedCollection" :key="item.id">
 				<td class="hidden">{{ item.material_id }}</td>
 				<th width="50%" class="text-left">
 					<a
@@ -84,15 +183,27 @@ async function deleteItem(itemId) {
 				<td width="5%">
 					<img :src="item.image" alt="" class="max-w-[30px] lg:max-w-[50px]" />
 				</td>
-				<td class="text-center">{{ buyUnitPrice(item.price, priceMultiplier) }}</td>
-
-				<td class="text-center">{{ sellUnitPrice(item.price, sellMargin) }}</td>
+				<td class="text-center">
+					{{ buyUnitPrice(item.price, priceMultiplier, roundToWhole) }}
+				</td>
 
 				<td class="text-center">
-					{{ buyStackPrice(item.price, item.stack, priceMultiplier) }}
+					{{ sellUnitPrice(item.price, priceMultiplier, sellMargin, roundToWhole) }}
+				</td>
+
+				<td class="text-center">
+					{{ buyStackPrice(item.price, item.stack, priceMultiplier, roundToWhole) }}
 				</td>
 				<td class="text-center">
-					{{ sellStackPrice(item.price, item.stack, sellMargin) }}
+					{{
+						sellStackPrice(
+							item.price,
+							item.stack,
+							priceMultiplier,
+							sellMargin,
+							roundToWhole
+						)
+					}}
 				</td>
 				<td v-if="canEditItems">
 					<RouterLink
@@ -111,6 +222,14 @@ async function deleteItem(itemId) {
 			</tr>
 		</tbody>
 	</table>
+
+	<!-- Empty state for individual categories -->
+	<div
+		v-else-if="collection.length === 0"
+		class="text-center py-8 border-2 border-gray-asparagus rounded bg-norway bg-opacity-20">
+		<div class="text-gray-asparagus font-medium mb-1">{{ category }}</div>
+		<div class="text-sm text-gray-500">No items in this category</div>
+	</div>
 </template>
 
 <style lang="scss" scoped>

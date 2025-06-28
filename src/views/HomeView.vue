@@ -56,6 +56,77 @@ const uncategorizedItems = computed(() => {
 
 const searchQuery = ref('')
 
+// Make economyConfig reactive with localStorage persistence
+const priceMultiplier = ref(1)
+const sellMargin = ref(0.3)
+const showEconomySettings = ref(false)
+const roundToWhole = ref(false)
+const viewMode = ref('categories') // 'categories' or 'list'
+
+// Computed property for percentage display (30 instead of 0.3)
+const sellMarginPercentage = computed({
+	get: () => Math.round(sellMargin.value * 100),
+	set: (value) => {
+		sellMargin.value = value / 100
+	}
+})
+
+const economyConfig = computed(() => ({
+	priceMultiplier: priceMultiplier.value,
+	sellMargin: sellMargin.value,
+	roundToWhole: roundToWhole.value
+}))
+
+// Load config from localStorage
+function loadEconomyConfig() {
+	const savedPriceMultiplier = localStorage.getItem('priceMultiplier')
+	const savedSellMargin = localStorage.getItem('sellMargin')
+	const savedShowEconomySettings = localStorage.getItem('showEconomySettings')
+	const savedRoundToWhole = localStorage.getItem('roundToWhole')
+	const savedViewMode = localStorage.getItem('viewMode')
+
+	if (savedPriceMultiplier !== null) {
+		priceMultiplier.value = parseFloat(savedPriceMultiplier)
+	}
+	if (savedSellMargin !== null) {
+		sellMargin.value = parseFloat(savedSellMargin)
+	}
+	if (savedShowEconomySettings !== null) {
+		showEconomySettings.value = savedShowEconomySettings === 'true'
+	}
+	if (savedRoundToWhole !== null) {
+		roundToWhole.value = savedRoundToWhole === 'true'
+	}
+	if (savedViewMode !== null) {
+		viewMode.value = savedViewMode
+	}
+}
+
+// Save config to localStorage
+function saveEconomyConfig() {
+	localStorage.setItem('priceMultiplier', priceMultiplier.value.toString())
+	localStorage.setItem('sellMargin', sellMargin.value.toString())
+	localStorage.setItem('showEconomySettings', showEconomySettings.value.toString())
+	localStorage.setItem('roundToWhole', roundToWhole.value.toString())
+	localStorage.setItem('viewMode', viewMode.value)
+}
+
+// Watch for changes and save to localStorage
+watch([priceMultiplier, sellMargin, showEconomySettings, roundToWhole, viewMode], () => {
+	saveEconomyConfig()
+})
+
+// Reset to defaults
+function resetEconomyConfig() {
+	priceMultiplier.value = 1
+	sellMargin.value = 0.3
+	roundToWhole.value = false
+}
+
+function toggleEconomySettings() {
+	showEconomySettings.value = !showEconomySettings.value
+}
+
 const filteredGroupedItems = computed(() => {
 	if (!allItemsCollection.value) return {}
 	const query = searchQuery.value.trim().toLowerCase()
@@ -77,10 +148,29 @@ const filteredUncategorizedItems = computed(() => {
 		: items
 })
 
-const economyConfig = {
-	priceMultiplier: 1,
-	sellMargin: 0.3
-}
+// Flat list view combining all visible items
+const allVisibleItems = computed(() => {
+	if (!allItemsCollection.value) return []
+	let items = []
+
+	// Add items from visible categories
+	for (const cat of visibleCategories.value) {
+		const categoryItems = filteredGroupedItems.value[cat] || []
+		items.push(...categoryItems)
+	}
+
+	// Add uncategorized items if shown AND user is admin
+	if (showUncategorised.value && user.value?.email) {
+		items.push(...filteredUncategorizedItems.value)
+	}
+
+	// Sort alphabetically by name
+	return items.sort((a, b) => {
+		const nameA = a.name?.toLowerCase() || ''
+		const nameB = b.name?.toLowerCase() || ''
+		return nameA.localeCompare(nameB)
+	})
+})
 
 const visibleCategories = ref([...enabledCategories])
 const showUncategorised = ref(true)
@@ -161,22 +251,12 @@ onMounted(() => {
 	if (mobileFiltersState !== null) {
 		showMobileFilters.value = mobileFiltersState === 'true'
 	}
+
+	// Initialize economy config from localStorage
+	loadEconomyConfig()
 })
 
 const allVisible = computed(() => visibleCategories.value.length === enabledCategories.length)
-
-const totalVisibleItems = computed(() => {
-	let total = 0
-	// Count items from visible categories
-	for (const cat of visibleCategories.value) {
-		total += filteredGroupedItems.value[cat]?.length || 0
-	}
-	// Add uncategorized items if shown
-	if (showUncategorised.value) {
-		total += filteredUncategorizedItems.value.length
-	}
-	return total
-})
 
 function toggleCategory(cat) {
 	const idx = visibleCategories.value.indexOf(cat)
@@ -277,6 +357,70 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 			</div>
 		</div>
 
+		<!-- Customisation Section -->
+		<div class="mb-4">
+			<button
+				@click="toggleEconomySettings"
+				class="text-gray-asparagus hover:text-heavy-metal underline text-sm">
+				{{ showEconomySettings ? 'Hide customisation' : 'Show customisation' }}
+			</button>
+		</div>
+
+		<!-- Economy Configuration (Collapsible) -->
+		<div
+			v-if="showEconomySettings"
+			class="bg-norway bg-opacity-20 border-2 border-gray-asparagus rounded p-3 mb-4">
+			<h4 class="text-base font-semibold text-heavy-metal mb-3">Prices</h4>
+			<div class="flex flex-wrap items-center gap-4 mb-3">
+				<!-- Price Multiplier -->
+				<div class="flex items-center gap-2">
+					<label
+						for="priceMultiplier"
+						class="text-sm font-medium text-heavy-metal whitespace-nowrap">
+						Buy ×
+					</label>
+					<input
+						id="priceMultiplier"
+						v-model.number="priceMultiplier"
+						type="number"
+						min="0.1"
+						max="10"
+						step="0.1"
+						class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
+				</div>
+
+				<!-- Sell Margin -->
+				<div class="flex items-center gap-2">
+					<label
+						for="sellMargin"
+						class="text-sm font-medium text-heavy-metal whitespace-nowrap">
+						Sell %
+					</label>
+					<input
+						id="sellMargin"
+						v-model.number="sellMarginPercentage"
+						type="number"
+						min="1"
+						max="100"
+						step="1"
+						class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
+				</div>
+
+				<!-- Reset Button -->
+				<button
+					@click="resetEconomyConfig"
+					class="bg-laurel text-white border-2 border-gray-asparagus rounded px-2 py-1 text-sm transition hover:bg-opacity-90">
+					Reset
+				</button>
+			</div>
+
+			<!-- Round to Whole (separate line) -->
+			<div class="flex items-center gap-2">
+				<input id="roundToWhole" v-model="roundToWhole" type="checkbox" class="w-4 h-4" />
+				<label for="roundToWhole" class="text-sm text-heavy-metal">Round to whole</label>
+			</div>
+		</div>
+
 		<!-- Mobile filters toggle (only visible on mobile) -->
 		<div class="block sm:hidden mb-3">
 			<button
@@ -327,21 +471,81 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 			</button>
 		</div>
 		<div class="mb-4 text-sm text-gray-asparagus">
-			Showing {{ totalVisibleItems }} item{{ totalVisibleItems === 1 ? '' : 's' }}
+			Showing {{ allVisibleItems.length }} item{{ allVisibleItems.length === 1 ? '' : 's' }}
 		</div>
-		<template v-for="cat in enabledCategories" :key="cat">
+
+		<!-- View Mode Toggle -->
+		<div class="mb-4 flex items-center gap-3">
+			<span class="text-sm font-medium text-heavy-metal">View as:</span>
+			<div class="flex border-2 border-gray-asparagus rounded overflow-hidden">
+				<button
+					@click="viewMode = 'categories'"
+					:class="[
+						viewMode === 'categories'
+							? 'bg-gray-asparagus text-white'
+							: 'bg-norway text-heavy-metal hover:bg-gray-100',
+						'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+					]">
+					Categories
+				</button>
+				<button
+					@click="viewMode = 'list'"
+					:class="[
+						viewMode === 'list'
+							? 'bg-gray-asparagus text-white'
+							: 'bg-norway text-heavy-metal hover:bg-gray-100',
+						'px-3 py-1 text-sm font-medium transition'
+					]">
+					List
+				</button>
+			</div>
+		</div>
+
+		<!-- Categories View -->
+		<template v-if="viewMode === 'categories'">
+			<template v-for="cat in enabledCategories" :key="cat">
+				<ItemTable
+					v-if="visibleCategories.includes(cat)"
+					:collection="filteredGroupedItems[cat] || []"
+					:category="cat"
+					:categories="enabledCategories"
+					:economyConfig="economyConfig"
+					:viewMode="viewMode" />
+			</template>
 			<ItemTable
-				v-if="visibleCategories.includes(cat)"
-				:collection="filteredGroupedItems[cat] || []"
-				:category="cat"
+				v-if="user?.email && showUncategorised && filteredUncategorizedItems.length > 0"
+				:collection="filteredUncategorizedItems"
+				category="Uncategorised"
 				:categories="enabledCategories"
-				:economyConfig="economyConfig" />
+				:economyConfig="economyConfig"
+				:viewMode="viewMode" />
+
+			<!-- Empty state for categories view -->
+			<div v-if="allVisibleItems.length === 0" class="text-center py-12">
+				<div class="text-gray-asparagus text-lg mb-2">No items found</div>
+				<div class="text-sm text-gray-500">
+					Try adjusting your search terms or category filters
+				</div>
+			</div>
 		</template>
-		<ItemTable
-			v-if="user?.email && showUncategorised && filteredUncategorizedItems.length > 0"
-			:collection="filteredUncategorizedItems"
-			category="Uncategorised"
-			:categories="enabledCategories"
-			:economyConfig="economyConfig" />
+
+		<!-- List View -->
+		<template v-if="viewMode === 'list'">
+			<ItemTable
+				v-if="allVisibleItems.length > 0"
+				:collection="allVisibleItems"
+				category="All Items"
+				:categories="enabledCategories"
+				:economyConfig="economyConfig"
+				:viewMode="viewMode" />
+
+			<!-- Empty state for list view -->
+			<div v-if="allVisibleItems.length === 0" class="text-center py-12">
+				<div class="text-gray-asparagus text-lg mb-2">No items found</div>
+				<div class="text-sm text-gray-500">
+					Try adjusting your search terms or category filters
+				</div>
+			</div>
+		</template>
 	</main>
 </template>

@@ -26,28 +26,35 @@ export function formatNumber(num) {
 	return Math.round(billions * 10) / 10 + 'B'
 }
 
-export function formatCurrency(num) {
+export function formatCurrency(num, roundToWhole = false) {
 	if (num === undefined || num === null || typeof num !== 'number' || isNaN(num)) {
 		return '0'
 	}
 	if (num < 1) {
 		return parseFloat(num.toFixed(2)).toString()
 	}
+	if (num < 1000) {
+		if (roundToWhole) {
+			return Math.round(num).toString()
+		}
+		// Show up to 2 decimal places, but remove trailing zeros
+		return parseFloat(num.toFixed(2)).toString()
+	}
 	return formatNumber(Math.round(num))
 }
 
-export function buyUnitPrice(price, priceMultiplier) {
-	return formatCurrency(price * priceMultiplier)
+export function buyUnitPrice(price, priceMultiplier, roundToWhole = false) {
+	return formatCurrency(price * priceMultiplier, roundToWhole)
 }
 
-export function sellUnitPrice(price, sellMargin) {
-	return formatCurrency(price * sellMargin)
+export function sellUnitPrice(price, priceMultiplier, sellMargin, roundToWhole = false) {
+	return formatCurrency(price * priceMultiplier * sellMargin, roundToWhole)
 }
 
-export function buyStackPrice(price, stack, priceMultiplier) {
-	return formatCurrency(price * stack * priceMultiplier)
+export function buyStackPrice(price, stack, priceMultiplier, roundToWhole = false) {
+	return formatCurrency(price * stack * priceMultiplier, roundToWhole)
 }
 
-export function sellStackPrice(price, stack, sellMargin) {
-	return formatCurrency(price * stack * sellMargin)
+export function sellStackPrice(price, stack, priceMultiplier, sellMargin, roundToWhole = false) {
+	return formatCurrency(price * stack * priceMultiplier * sellMargin, roundToWhole)
 }

@@ -1,5 +1,21 @@
 [
 	{
+		"id": 8,
+		"title": "Price Customization, List View & Table Sorting",
+		"date": "2025-06-28",
+		"type": "Feature",
+		"description": "Major UX enhancement introducing customizable pricing and flexible viewing options for better user experience.",
+		"changes": [
+			"Added price customization controls (buy multiplier and sell percentage)",
+			"New 'List' view option alongside traditional 'Categories' view",
+			"Alphabetical sorting by default in List view",
+			"Clickable column headers for sorting by item name or buy price",
+			"'Round to whole' option for cleaner price display",
+			"All settings are automatically saved and remembered",
+			"Improved decimal precision for accurate pricing calculations"
+		]
+	},
+	{
 		"id": 7,
 		"title": "Complete 1.16 catalog (pricing and images) - COMPLETED!",
 		"date": "2025-06-27",
