@@ -26,6 +26,8 @@ export const disabledCategories = ['spawn']
 
 export const enabledCategories = categories.filter((cat) => !disabledCategories.includes(cat))
 
+export const versions = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
+
 // Admin utility functions using custom claims
 export async function isAdmin(user) {
 	if (!user) return false
