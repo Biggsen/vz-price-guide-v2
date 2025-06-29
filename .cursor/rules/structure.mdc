@@ -1,0 +1,50 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# File Structure Rules
+
+## Resource Folder (`/resource/`)
+
+The `resource/` folder contains **static reference data files** that are NOT the application's primary data source. These files serve as reference material and backup data.
+
+### Items Data Files
+
+-   **Naming Convention**: `items_X_Y.json` where X.Y represents the Minecraft version
+-   **Current Files**:
+    -   `items_1_16.json` - Minecraft 1.16 items data
+    -   `items_1_17.json` - Minecraft 1.17 items data
+    -   `items_1_18.json` - Minecraft 1.18 items data
+    -   `items_1_19.json` - Minecraft 1.19 items data
+    -   `items_1_20.json` - Minecraft 1.20 items data
+    -   `items_1_21.json` - Minecraft 1.21 items data
+
+### Important Distinctions
+
+**❌ NOT Application Data**: These files are NOT the live data used by the application.
+
+**✅ Application Data Source**: The application's live data comes from the `items` collection in the Firestore database.
+
+**Purpose of Resource Files**:
+
+-   Reference material for Minecraft items across versions
+-   Backup/archive data
+-   Development and testing reference
+-   Historical version tracking
+
+## Data Folder (`/data/`)
+
+The `data/` folder contains application-specific configuration and metadata:
+
+-   `roadmap.json` - Application roadmap data
+-   `updates.json` - Application updates information
+
+## Key Rules for AI Systems
+
+1. **Never confuse resource files with live application data**
+2. **Resource files are version-specific static references**
+3. **Live pricing and item data comes from Firestore, not resource files**
+4. **Resource files follow the `items_X_Y.json` naming pattern**
+5. **When adding new Minecraft versions, follow the established naming convention**
+
