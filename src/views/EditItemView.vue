@@ -3,7 +3,7 @@ import { ref, watch, onMounted } from 'vue'
 import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { useFirestore, useDocument } from 'vuefire'
 import { doc, updateDoc } from 'firebase/firestore'
-import { enabledCategories } from '../constants.js'
+import { enabledCategories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 
 const db = useFirestore()
@@ -52,7 +52,8 @@ const editItem = ref({
 	price: 1,
 	stack: 64,
 	category: '',
-	subcategory: ''
+	subcategory: '',
+	version: ''
 })
 
 watch(itemSource, (itemSource) => {
@@ -87,21 +88,50 @@ async function updateItem() {
 			<input type="text" id="image" v-model="editItem.image" />
 			<label for="url">Url</label>
 			<input type="text" id="url" v-model="editItem.url" />
-			<label for="price">Price</label>
-			<input type="number" id="price" v-model="editItem.price" step="0.1" min="0" required />
-			<label for="stack">Stack</label>
-			<input type="number" id="stack" v-model="editItem.stack" required />
-			<label for="category">Category</label>
+			<div class="flex gap-4">
+				<div class="flex-1">
+					<label for="price">Price</label>
+					<input
+						type="number"
+						id="price"
+						v-model="editItem.price"
+						step="0.1"
+						min="0"
+						required />
+				</div>
+				<div class="flex-1">
+					<label for="stack">Stack</label>
+					<input type="number" id="stack" v-model="editItem.stack" required />
+				</div>
+			</div>
+			<div class="flex gap-4">
+				<div class="flex-1">
+					<label for="category">Category</label>
+					<select
+						id="category"
+						v-model="editItem.category"
+						class="block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;">
+						<option v-for="cat in enabledCategories" :key="cat" :value="cat">
+							{{ cat }}
+						</option>
+					</select>
+				</div>
+				<div class="flex-1">
+					<label for="subcategory">Subcategory</label>
+					<input type="text" id="subcategory" v-model="editItem.subcategory" />
+				</div>
+			</div>
+			<label for="version">Version</label>
 			<select
-				id="category"
-				v-model="editItem.category"
+				id="version"
+				v-model="editItem.version"
 				required
 				class="block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;">
-				<option value="">Select category</option>
-				<option v-for="cat in enabledCategories" :key="cat" :value="cat">{{ cat }}</option>
+				<option value="">Select a version</option>
+				<option v-for="version in versions" :key="version" :value="version">
+					{{ version }}
+				</option>
 			</select>
-			<label for="subcategory">Subcategory</label>
-			<input type="text" id="subcategory" v-model="editItem.subcategory" />
 			<button type="submit">Update item</button>
 		</form>
 	</div>
