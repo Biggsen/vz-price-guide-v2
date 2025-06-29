@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, addDoc } from 'firebase/firestore'
@@ -11,6 +11,7 @@ const itemsJson = ref([])
 const dbItems = ref([])
 const loading = ref(true)
 const showOnlyMissing = ref(false)
+const selectedVersion = ref('1.16')
 
 const sortKey = ref('name')
 const sortAsc = ref(true)
@@ -21,11 +22,24 @@ const addingItem = ref(null)
 const addedItems = ref([])
 const selectedItems = ref([])
 
-// Load items from JSON file
+// Available Minecraft versions
+const availableVersions = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
+
+// Load items from JSON file based on selected version
 async function loadJsonItems() {
-	const response = await fetch('/data/1.16/items.json')
+	const response = await fetch(`/resource/items_${selectedVersion.value.replace('.', '_')}.json`)
 	itemsJson.value = await response.json()
 }
+
+// Watch for version changes and reload data
+watch(selectedVersion, async () => {
+	loading.value = true
+	selectedItems.value = [] // Clear selected items when version changes
+	addedItems.value = [] // Clear added items tracking
+	addResult.value = null // Clear previous add results
+	await loadJsonItems()
+	loading.value = false
+})
 
 // Load items from Firestore
 async function loadDbItems() {
@@ -85,7 +99,8 @@ async function addAllMissing() {
 				url: '',
 				price: 1,
 				category: '',
-				subcategory: ''
+				subcategory: '',
+				version: selectedVersion.value
 			})
 			added++
 			addedItems.value.push(item.name)
@@ -109,7 +124,8 @@ async function addSingleItem(item) {
 			url: '',
 			price: 1,
 			category: '',
-			subcategory: ''
+			subcategory: '',
+			version: selectedVersion.value
 		})
 		addedItems.value.push(item.name)
 		await loadDbItems()
@@ -169,7 +185,8 @@ async function addSelectedMissing() {
 				url: '',
 				price: 1,
 				category: '',
-				subcategory: ''
+				subcategory: '',
+				version: selectedVersion.value
 			})
 			added++
 			addedItems.value.push(item.name)
@@ -187,6 +204,19 @@ async function addSelectedMissing() {
 <template>
 	<div v-if="canViewMissingItems" class="p-4 pt-8">
 		<h2 class="text-xl font-bold mb-6">Missing Items Checker</h2>
+
+		<!-- Version Selector -->
+		<div class="mb-6">
+			<label class="block text-sm font-medium mb-2">Minecraft Version:</label>
+			<select
+				v-model="selectedVersion"
+				class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+				<option v-for="version in availableVersions" :key="version" :value="version">
+					{{ version }}
+				</option>
+			</select>
+		</div>
+
 		<div v-if="loading">Loading...</div>
 		<div v-else>
 			<div class="mb-4">
