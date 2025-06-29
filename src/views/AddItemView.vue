@@ -24,10 +24,6 @@ const newItem = ref({
 	...newItemInitial.value
 })
 
-const importItem = ref({
-	source: ''
-})
-
 // Add a new document with a generated id.
 async function addItem() {
 	const newDoc = await addDoc(collection(db, 'items'), {
@@ -36,53 +32,12 @@ async function addItem() {
 
 	if (newDoc.id) {
 		newItem.value = { ...newItemInitial.value }
-		//importItem.value.source = ''
 	}
-}
-
-// Add a new field to items collection
-async function addField() {
-	const querySnapshot = await getDocs(query(collection(db, 'items')))
-	querySnapshot.forEach(async function (item) {
-		console.log(item.data())
-
-		// This creates (or updates) a field
-		// await updateDoc(docRef, {
-		// 	subcategory: ''
-		// })
-	})
-}
-
-const transformedSource = computed(() => {
-	if (importItem.value.source !== '') {
-		return JSON.parse(importItem.value.source)
-	} else {
-		return ''
-	}
-})
-
-function applyToForm(index) {
-	console.log(transformedSource.value[index])
-	newItem.value = {
-		...transformedSource.value[index]
-	}
-	//importedItemList.value.splice(index, 1)
 }
 </script>
 
 <template>
 	<div v-if="canAddItems" class="p-4 pt-8">
-		<div class="mb-10">
-			<button @click="addField">Add 'subcategory' field</button>
-		</div>
-		<div class="mb-10">
-			<textarea name="" id="" cols="30" rows="3" v-model="importItem.source"></textarea>
-			<ul>
-				<li v-for="(item, index) in transformedSource" :key="item.id">
-					<button @click="applyToForm(index)">Apply {{ item.name }}</button>
-				</li>
-			</ul>
-		</div>
 		<h2 class="text-xl font-bold mb-6">Add item</h2>
 		<form @submit.prevent="addItem">
 			<label for="name">Name</label>
