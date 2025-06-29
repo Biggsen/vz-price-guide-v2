@@ -140,7 +140,13 @@ async function clearSelectedCategories() {
 }
 
 async function updateSelectedPrices() {
-	if (!newPrice.value || !anySelected.value) return
+	if (
+		newPrice.value === '' ||
+		newPrice.value === null ||
+		newPrice.value === undefined ||
+		!anySelected.value
+	)
+		return
 	updating.value = true
 	updateResult.value = null
 	let updated = 0,
@@ -269,7 +275,13 @@ async function updateSelectedImages() {
 						class="border-2 border-gray-asparagus rounded px-3 py-1 w-32" />
 					<button
 						@click="updateSelectedPrices"
-						:disabled="!anySelected || !newPrice || updating"
+						:disabled="
+							!anySelected ||
+							newPrice === '' ||
+							newPrice === null ||
+							newPrice === undefined ||
+							updating
+						"
 						class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
 						Update Price
 					</button>
