@@ -3,7 +3,7 @@ import { ref, watch, onMounted } from 'vue'
 import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { useFirestore, useDocument } from 'vuefire'
 import { doc, updateDoc } from 'firebase/firestore'
-import { enabledCategories, versions } from '../constants.js'
+import { categories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 
 const db = useFirestore()
@@ -111,7 +111,7 @@ async function updateItem() {
 						id="category"
 						v-model="editItem.category"
 						class="block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;">
-						<option v-for="cat in enabledCategories" :key="cat" :value="cat">
+						<option v-for="cat in categories" :key="cat" :value="cat">
 							{{ cat }}
 						</option>
 					</select>

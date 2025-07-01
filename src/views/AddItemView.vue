@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, addDoc, getDocs, query } from 'firebase/firestore'
-import { enabledCategories, versions } from '../constants.js'
+import { categories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 
 const db = useFirestore()
@@ -72,7 +72,7 @@ async function addItem() {
 						id="category"
 						v-model="newItem.category"
 						class="block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;">
-						<option v-for="cat in enabledCategories" :key="cat" :value="cat">
+						<option v-for="cat in categories" :key="cat" :value="cat">
 							{{ cat }}
 						</option>
 					</select>
