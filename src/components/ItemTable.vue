@@ -222,14 +222,6 @@ async function deleteItem(itemId) {
 			</tr>
 		</tbody>
 	</table>
-
-	<!-- Empty state for individual categories -->
-	<div
-		v-else-if="collection.length === 0"
-		class="text-center py-8 border-2 border-gray-asparagus rounded bg-norway bg-opacity-20">
-		<div class="text-gray-asparagus font-medium mb-1">{{ category }}</div>
-		<div class="text-sm text-gray-500">No items in this category</div>
-	</div>
 </template>
 
 <style lang="scss" scoped>
