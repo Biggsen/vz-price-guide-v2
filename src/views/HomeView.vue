@@ -5,11 +5,35 @@ import { computed, ref, watch, onMounted } from 'vue'
 import { useCurrentUser } from 'vuefire'
 import { useRoute, useRouter } from 'vue-router'
 import ItemTable from '../components/ItemTable.vue'
-import { categories, enabledCategories } from '../constants.js'
+import { categories, enabledCategories, versions } from '../constants.js'
+import { useAdmin } from '../utils/admin.js'
 
 const db = useFirestore()
 const route = useRoute()
 const router = useRouter()
+const { user, canEditItems } = useAdmin()
+
+// Define which versions are currently available for regular users
+const baseEnabledVersions = ['1.16', '1.17']
+
+// Ensure versions array is available as fallback
+const fallbackVersions = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
+
+// Computed property for enabled versions based on user type
+const enabledVersions = computed(() => {
+	try {
+		// Admin users can access all versions (but only if admin status is fully loaded)
+		if (user.value?.email && canEditItems.value === true) {
+			return [...(versions || fallbackVersions)] // Return a copy to avoid mutations
+		}
+		// Regular users only get base enabled versions
+		return [...baseEnabledVersions] // Return a copy to avoid mutations
+	} catch (error) {
+		// Fallback to base enabled versions if anything goes wrong
+		console.warn('Error in enabledVersions computed:', error)
+		return [...baseEnabledVersions]
+	}
+})
 
 const allItemsQuery = query(
 	collection(db, 'items'),
@@ -35,23 +59,87 @@ function toggleMobileFilters() {
 	localStorage.setItem('showMobileFilters', showMobileFilters.value.toString())
 }
 
+// Version filtering state
+const selectedVersion = ref(baseEnabledVersions[baseEnabledVersions.length - 1]) // Default to latest base enabled version
+
+// Helper function to compare version strings (e.g., "1.16" vs "1.17")
+function isVersionLessOrEqual(itemVersion, targetVersion) {
+	if (!itemVersion || !targetVersion) return false
+
+	const [itemMajor, itemMinor] = itemVersion.split('.').map(Number)
+	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+
+	if (itemMajor < targetMajor) return true
+	if (itemMajor > targetMajor) return false
+	return itemMinor <= targetMinor
+}
+
+// Helper function to check if item should be shown for selected version
+function shouldShowItemForVersion(item, selectedVersion) {
+	// Item must have a version and be <= selected version
+	if (!item.version || !isVersionLessOrEqual(item.version, selectedVersion)) {
+		return false
+	}
+
+	// If item has version_removed and it's <= selected version, don't show it
+	if (item.version_removed && isVersionLessOrEqual(item.version_removed, selectedVersion)) {
+		return false
+	}
+
+	return true
+}
+
 const groupedItems = computed(() => {
 	if (!allItemsCollection.value) return {}
 	return allItemsCollection.value.reduce((acc, item) => {
+		// Skip items without images for non-admin users
 		if (!user.value?.email && (!item.image || item.image.trim() === '')) return acc
+		// Skip items not available in selected version
+		if (!shouldShowItemForVersion(item, selectedVersion.value)) return acc
+		// Skip zero-priced items unless admin has enabled showing them
+		if (!showZeroPricedItems.value && (!item.price || item.price === 0)) return acc
+
 		if (!acc[item.category]) acc[item.category] = []
 		acc[item.category].push(item)
 		return acc
 	}, {})
 })
 
-const uncategorizedItems = computed(() => {
-	if (!allItemsCollection.value) return []
-	return allItemsCollection.value.filter((item) => {
+const uncategorizedItemsByVersion = computed(() => {
+	if (!allItemsCollection.value) return {}
+
+	const uncatByVersion = {}
+
+	allItemsCollection.value.forEach((item) => {
 		const isUncat = !item.category || !categories.includes(item.category)
 		const hasImage = item.image && item.image.trim() !== ''
-		return isUncat && (user.value?.email || hasImage)
+		const isAvailableInVersion = shouldShowItemForVersion(item, selectedVersion.value)
+		const hasValidPrice = showZeroPricedItems.value || (item.price && item.price !== 0)
+
+		if (
+			isUncat &&
+			(user.value?.email || hasImage) &&
+			isAvailableInVersion &&
+			hasValidPrice &&
+			item.version
+		) {
+			if (!uncatByVersion[item.version]) {
+				uncatByVersion[item.version] = []
+			}
+			uncatByVersion[item.version].push(item)
+		}
 	})
+
+	return uncatByVersion
+})
+
+// Get all uncategorized items as a flat array (for backwards compatibility)
+const uncategorizedItems = computed(() => {
+	const allUncategorized = []
+	Object.values(uncategorizedItemsByVersion.value).forEach((versionItems) => {
+		allUncategorized.push(...versionItems)
+	})
+	return allUncategorized
 })
 
 const searchQuery = ref('')
@@ -62,6 +150,9 @@ const sellMargin = ref(0.3)
 const showEconomySettings = ref(false)
 const roundToWhole = ref(false)
 const viewMode = ref('categories') // 'categories' or 'list'
+
+// Admin-only option to show zero-priced items
+const showZeroPricedItems = ref(false)
 
 // Computed property for percentage display (30 instead of 0.3)
 const sellMarginPercentage = computed({
@@ -84,6 +175,8 @@ function loadEconomyConfig() {
 	const savedShowEconomySettings = localStorage.getItem('showEconomySettings')
 	const savedRoundToWhole = localStorage.getItem('roundToWhole')
 	const savedViewMode = localStorage.getItem('viewMode')
+	const savedSelectedVersion = localStorage.getItem('selectedVersion')
+	const savedShowZeroPricedItems = localStorage.getItem('showZeroPricedItems')
 
 	if (savedPriceMultiplier !== null) {
 		priceMultiplier.value = parseFloat(savedPriceMultiplier)
@@ -100,6 +193,12 @@ function loadEconomyConfig() {
 	if (savedViewMode !== null) {
 		viewMode.value = savedViewMode
 	}
+	if (savedSelectedVersion !== null) {
+		selectedVersion.value = savedSelectedVersion
+	}
+	if (savedShowZeroPricedItems !== null) {
+		showZeroPricedItems.value = savedShowZeroPricedItems === 'true'
+	}
 }
 
 // Save config to localStorage
@@ -109,12 +208,26 @@ function saveEconomyConfig() {
 	localStorage.setItem('showEconomySettings', showEconomySettings.value.toString())
 	localStorage.setItem('roundToWhole', roundToWhole.value.toString())
 	localStorage.setItem('viewMode', viewMode.value)
+	localStorage.setItem('selectedVersion', selectedVersion.value)
+	localStorage.setItem('showZeroPricedItems', showZeroPricedItems.value.toString())
 }
 
 // Watch for changes and save to localStorage
-watch([priceMultiplier, sellMargin, showEconomySettings, roundToWhole, viewMode], () => {
-	saveEconomyConfig()
-})
+watch(
+	[
+		priceMultiplier,
+		sellMargin,
+		showEconomySettings,
+		roundToWhole,
+		viewMode,
+		selectedVersion,
+		showZeroPricedItems
+	],
+	() => {
+		saveEconomyConfig()
+	},
+	{ deep: true }
+)
 
 // Reset to defaults
 function resetEconomyConfig() {
@@ -139,6 +252,31 @@ const filteredGroupedItems = computed(() => {
 	}, {})
 })
 
+const filteredUncategorizedItemsByVersion = computed(() => {
+	if (!allItemsCollection.value) return {}
+	const query = searchQuery.value.trim().toLowerCase()
+	const result = {}
+
+	Object.entries(uncategorizedItemsByVersion.value).forEach(([version, items]) => {
+		result[version] = query
+			? items.filter((item) => item.name && item.name.toLowerCase().includes(query))
+			: items
+	})
+
+	return result
+})
+
+// Get sorted versions for uncategorized items display
+const uncategorizedVersions = computed(() => {
+	return Object.keys(uncategorizedItemsByVersion.value).sort((a, b) => {
+		const [aMajor, aMinor] = a.split('.').map(Number)
+		const [bMajor, bMinor] = b.split('.').map(Number)
+
+		if (aMajor !== bMajor) return aMajor - bMajor
+		return aMinor - bMinor
+	})
+})
+
 const filteredUncategorizedItems = computed(() => {
 	if (!allItemsCollection.value) return []
 	const query = searchQuery.value.trim().toLowerCase()
@@ -161,7 +299,10 @@ const allVisibleItems = computed(() => {
 
 	// Add uncategorized items if shown AND user is admin
 	if (showUncategorised.value && user.value?.email) {
-		items.push(...filteredUncategorizedItems.value)
+		// Add all uncategorized items from all versions
+		Object.values(filteredUncategorizedItemsByVersion.value).forEach((versionItems) => {
+			items.push(...versionItems)
+		})
 	}
 
 	// Sort alphabetically by name
@@ -174,12 +315,20 @@ const allVisibleItems = computed(() => {
 
 const visibleCategories = ref([...enabledCategories])
 const showUncategorised = ref(true)
-const user = useCurrentUser()
+
+// Version filter functions
+function selectVersion(version) {
+	// Only allow selecting enabled versions
+	if (enabledVersions.value.includes(version)) {
+		selectedVersion.value = version
+	}
+}
 
 // Initialize from URL query parameters
 function initializeFromQuery() {
 	const catParam = route.query.cat
 	const uncatParam = route.query.uncat
+	const versionParam = route.query.version
 
 	if (catParam) {
 		const selectedCategories = catParam
@@ -193,6 +342,10 @@ function initializeFromQuery() {
 
 	if (uncatParam !== undefined) {
 		showUncategorised.value = uncatParam === 'true' || uncatParam === '1'
+	}
+
+	if (versionParam && enabledVersions.value.includes(versionParam)) {
+		selectedVersion.value = versionParam
 	}
 }
 
@@ -210,13 +363,18 @@ function updateQuery() {
 		query.uncat = 'false'
 	}
 
+	// Only add version param if not the default version (latest enabled)
+	if (selectedVersion.value !== enabledVersions.value[enabledVersions.value.length - 1]) {
+		query.version = selectedVersion.value
+	}
+
 	// Update URL without triggering navigation
 	router.replace({ query })
 }
 
 // Watch for changes and update URL
 watch(
-	[visibleCategories, showUncategorised],
+	[visibleCategories, showUncategorised, selectedVersion],
 	() => {
 		updateQuery()
 	},
@@ -289,11 +447,24 @@ function toggleAllCategories() {
 function resetCategories() {
 	visibleCategories.value = [...enabledCategories]
 	showUncategorised.value = true
+	selectedVersion.value = enabledVersions.value[enabledVersions.value.length - 1]
 	searchQuery.value = ''
 }
 
-console.log('visibleCategories', visibleCategories)
-console.log('filteredGroupedItems', filteredGroupedItems)
+// Watch for user changes and update selected version if needed
+watch(
+	[user, canEditItems],
+	() => {
+		// Ensure enabledVersions has a valid value
+		const currentEnabledVersions = enabledVersions.value || baseEnabledVersions
+
+		// If selected version is no longer available for current user, reset to latest enabled
+		if (!currentEnabledVersions.includes(selectedVersion.value)) {
+			selectedVersion.value = currentEnabledVersions[currentEnabledVersions.length - 1]
+		}
+	},
+	{ immediate: false } // Don't run immediately to avoid issues during initialization
+)
 </script>
 
 <template>
@@ -310,11 +481,12 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 						clip-rule="evenodd"></path>
 				</svg>
 				<span class="text-sm sm:text-base">
-					Hey! Check out the
+					🚀 New: Multi-version support is live! Switch between Minecraft versions below.
+					More versions coming soon! Check
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
 						<span>Updates</span>
 					</router-link>
-					page for latest updates and roadmap to see what I've got planned.
+					for details.
 				</span>
 			</div>
 			<button
@@ -355,6 +527,35 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 					{{ allVisible ? 'Hide all categories' : 'Show all categories' }}
 				</button>
 			</div>
+		</div>
+
+		<!-- Version Filters -->
+		<div v-if="enabledVersions && enabledVersions.length > 0" class="mb-4">
+			<span class="text-sm font-medium text-heavy-metal mb-2 block">Minecraft Version:</span>
+			<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+				<button
+					v-for="version in versions"
+					:key="version"
+					@click="selectVersion(version)"
+					:disabled="!enabledVersions.includes(version)"
+					:class="[
+						selectedVersion === version
+							? 'bg-gray-asparagus text-white'
+							: enabledVersions.includes(version)
+							? 'bg-norway text-heavy-metal hover:bg-gray-100'
+							: 'bg-gray-200 text-gray-400 cursor-not-allowed',
+						'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0',
+						!enabledVersions.includes(version) ? 'opacity-60' : ''
+					]">
+					{{ version }}
+				</button>
+			</div>
+			<p class="text-xs text-gray-500 mt-1">
+				<span v-if="user?.email && canEditItems">
+					All versions available for admin users
+				</span>
+				<span v-else>Grayed out versions will be available soon</span>
+			</p>
 		</div>
 
 		<!-- Customisation Section -->
@@ -419,6 +620,18 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 				<input id="roundToWhole" v-model="roundToWhole" type="checkbox" class="w-4 h-4" />
 				<label for="roundToWhole" class="text-sm text-heavy-metal">Round to whole</label>
 			</div>
+
+			<!-- Show Zero Priced Items (admin only) -->
+			<div v-if="canEditItems" class="flex items-center gap-2 mt-2">
+				<input
+					id="showZeroPricedItems"
+					v-model="showZeroPricedItems"
+					type="checkbox"
+					class="w-4 h-4" />
+				<label for="showZeroPricedItems" class="text-sm text-heavy-metal">
+					Show zero priced items
+				</label>
+			</div>
 		</div>
 
 		<!-- Mobile filters toggle (only visible on mobile) -->
@@ -475,9 +688,9 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 		</div>
 
 		<!-- View Mode Toggle -->
-		<div class="mb-4 flex items-center gap-3">
-			<span class="text-sm font-medium text-heavy-metal">View as:</span>
-			<div class="flex border-2 border-gray-asparagus rounded overflow-hidden">
+		<div class="mb-4">
+			<span class="text-sm font-medium text-heavy-metal mb-2 block">View as:</span>
+			<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
 				<button
 					@click="viewMode = 'categories'"
 					:class="[
@@ -512,13 +725,19 @@ console.log('filteredGroupedItems', filteredGroupedItems)
 					:economyConfig="economyConfig"
 					:viewMode="viewMode" />
 			</template>
-			<ItemTable
-				v-if="user?.email && showUncategorised && filteredUncategorizedItems.length > 0"
-				:collection="filteredUncategorizedItems"
-				category="Uncategorised"
-				:categories="enabledCategories"
-				:economyConfig="economyConfig"
-				:viewMode="viewMode" />
+			<template v-for="version in uncategorizedVersions" :key="`uncat-${version}`">
+				<ItemTable
+					v-if="
+						user?.email &&
+						showUncategorised &&
+						filteredUncategorizedItemsByVersion[version]?.length > 0
+					"
+					:collection="filteredUncategorizedItemsByVersion[version]"
+					:category="`Uncategorised ${version}`"
+					:categories="enabledCategories"
+					:economyConfig="economyConfig"
+					:viewMode="viewMode" />
+			</template>
 
 			<!-- Empty state for categories view -->
 			<div v-if="allVisibleItems.length === 0" class="text-center py-12">
