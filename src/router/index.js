@@ -9,6 +9,10 @@ const router = createRouter({
 		if (savedPosition) {
 			return savedPosition
 		}
+		// If only the query parameters changed (same path), preserve scroll position
+		if (to.path === from.path) {
+			return false // Don't scroll
+		}
 		// Otherwise, scroll to top
 		return { top: 0 }
 	},
