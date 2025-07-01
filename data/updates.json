@@ -1,5 +1,18 @@
 [
 	{
+		"id": 10,
+		"title": "Multi-Version Support Now Live! 🚀",
+		"date": "2025-07-01",
+		"type": "Feature",
+		"description": "Major infrastructure update! The price guide now supports multiple Minecraft versions. You can switch between 1.16 and 1.17 versions, with more versions being added progressively. Note there's only a handful of 1.17 items at this point. This foundation enables us to expand to all Minecraft versions over time.",
+		"changes": [
+			"Added version selector on homepage - switch between Minecraft versions",
+			"Currently supporting 1.16 and 1.17 versions",
+			"Smart filtering - items only show for their supported versions",
+			"Foundation laid for adding 1.18, 1.19, 1.20, 1.21 and future versions"
+		]
+	},
+	{
 		"id": 9,
 		"title": "All 1.16 Enchanted Books Added with Accurate Pricing!",
 		"date": "2025-06-28",
