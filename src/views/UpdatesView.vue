@@ -104,16 +104,16 @@
 							</ul>
 						</div>
 
-						<div v-if="phase.status === 'In Progress'" class="bg-blue-50 p-3 rounded">
+						<div v-if="phase.status === 'In Progress'" class="p-3 rounded">
 							<div class="flex justify-between items-center mb-1">
-								<span class="text-sm font-medium text-blue-800">Progress</span>
-								<span class="text-sm text-blue-600">
+								<span class="text-sm font-medium text-gray-800">Progress</span>
+								<span class="text-sm text-gray-600">
 									{{ calculateProgress(phase) }}%
 								</span>
 							</div>
-							<div class="w-full bg-blue-200 rounded-full h-2">
+							<div class="w-full bg-gray-300 rounded-full h-2">
 								<div
-									class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+									class="bg-gray-600 h-2 rounded-full transition-all duration-300"
 									:style="{ width: calculateProgress(phase) + '%' }"></div>
 							</div>
 						</div>
