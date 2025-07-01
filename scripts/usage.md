@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This Node.js script adds a version field to all existing items in your Firestore database. This is essential for supporting multiple Minecraft versions by marking when each item was introduced.
+This Node.js script adds version and version_removed fields to all existing items in your Firestore database. This is essential for supporting multiple Minecraft versions by marking when each item was introduced and when it might be removed.
 
 ## Prerequisites
 
@@ -36,8 +36,10 @@ The script:
 1. Connects to your Firestore database using the service account credentials
 2. Fetches all documents from the 'items' collection
 3. For each item:
-    - Skips items that already have a version field
+    - Checks if the item is missing the `version` field and/or `version_removed` field
     - Adds the specified version field to items that don't have one
+    - Adds the `version_removed` field with a `null` value to items that don't have one
+    - Skips items that already have both fields
     - Logs the progress and any errors
 
 ## Usage
@@ -57,14 +59,14 @@ The script:
 
 ## Example
 
-If you have an item without a version field:
+If you have an item without version fields:
 
 ```javascript
 {
   name: "stone",
   material_id: "stone",
   price: 1.0
-  // No version field
+  // No version or version_removed fields
 }
 ```
 
@@ -75,7 +77,8 @@ The script will update it to:
   name: "stone",
   material_id: "stone",
   price: 1.0,
-  version: "1.16"  // Added by script
+  version: "1.16",        // Added by script
+  version_removed: null   // Added by script
 }
 ```
 
@@ -91,7 +94,8 @@ The script provides detailed console output showing:
 ## Safety Features
 
 -   **DRY_RUN mode**: Preview all changes before applying them
--   **Skip existing versions**: Won't overwrite items that already have a version field
+-   **Skip existing fields**: Won't overwrite items that already have version or version_removed fields
+-   **Selective updates**: Only adds the fields that are missing from each item
 -   **Error handling**: Continues processing even if individual items fail
 -   **Detailed logging**: Shows exactly what's happening with each item
 -   **Safe default**: Starts in DRY_RUN mode to prevent accidental changes
@@ -101,7 +105,8 @@ The script provides detailed console output showing:
 -   This is typically a one-time migration script
 -   Essential for supporting multiple Minecraft versions in your app
 -   The version field indicates when an item was first introduced
--   Items with existing version fields are automatically skipped
+-   The version_removed field tracks when an item might be removed (null = still available)
+-   Items with existing version and version_removed fields are automatically skipped
 
 ---
 

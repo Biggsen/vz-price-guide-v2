@@ -1,5 +1,5 @@
 // scripts/addVersionField.js
-// Node.js script to add version field to all existing items
+// Node.js script to add version and version_removed fields to all existing items
 // Usage: node scripts/addVersionField.js
 // Requires: npm install firebase-admin
 
@@ -21,7 +21,9 @@ const DRY_RUN = false
 const VERSION_TO_ADD = '1.16'
 
 async function main() {
-	console.log(`Starting migration to add version: "${VERSION_TO_ADD}" to all items...`)
+	console.log(
+		`Starting migration to add version: "${VERSION_TO_ADD}" and version_removed: null to all items...`
+	)
 	console.log(`DRY RUN mode: ${DRY_RUN ? 'ENABLED' : 'DISABLED'}`)
 	console.log('')
 
@@ -36,9 +38,23 @@ async function main() {
 	for (const doc of itemsSnapshot.docs) {
 		const item = doc.data()
 
-		// Skip if item already has a version field
-		if (item.version) {
-			console.log(`⏭️  Skipped ${item.name || doc.id} - already has version: ${item.version}`)
+		// Determine what fields need to be added
+		const updates = {}
+		const fieldsToAdd = []
+
+		if (!item.version) {
+			updates.version = VERSION_TO_ADD
+			fieldsToAdd.push(`version: "${VERSION_TO_ADD}"`)
+		}
+
+		if (!item.hasOwnProperty('version_removed')) {
+			updates.version_removed = null
+			fieldsToAdd.push('version_removed: null')
+		}
+
+		// Skip if item already has both fields
+		if (Object.keys(updates).length === 0) {
+			console.log(`⏭️  Skipped ${item.name || doc.id} - already has both fields`)
 			skipped++
 			continue
 		}
@@ -46,13 +62,11 @@ async function main() {
 		try {
 			if (DRY_RUN) {
 				console.log(
-					`[DRY RUN] Would add version: "${VERSION_TO_ADD}" to ${item.name || doc.id}`
+					`[DRY RUN] Would add ${fieldsToAdd.join(', ')} to ${item.name || doc.id}`
 				)
 			} else {
-				await db.collection('items').doc(doc.id).update({
-					version: VERSION_TO_ADD
-				})
-				console.log(`✅ Updated ${item.name || doc.id} with version: "${VERSION_TO_ADD}"`)
+				await db.collection('items').doc(doc.id).update(updates)
+				console.log(`✅ Updated ${item.name || doc.id} with ${fieldsToAdd.join(', ')}`)
 			}
 			updated++
 		} catch (e) {
@@ -67,7 +81,7 @@ async function main() {
 	console.log('='.repeat(50))
 	console.log(`Total items processed: ${itemsSnapshot.docs.length}`)
 	console.log(`Items ${DRY_RUN ? 'would be updated' : 'updated'}: ${updated}`)
-	console.log(`Items skipped (already had version): ${skipped}`)
+	console.log(`Items skipped (already had both fields): ${skipped}`)
 	console.log(`Items failed: ${failed}`)
 
 	if (DRY_RUN) {
