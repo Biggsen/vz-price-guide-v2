@@ -340,7 +340,8 @@ function initializeFromQuery() {
 		}
 	}
 
-	if (uncatParam !== undefined) {
+	// Only process uncat param for admin users
+	if (uncatParam !== undefined && user.value?.email) {
 		showUncategorised.value = uncatParam === 'true' || uncatParam === '1'
 	}
 
@@ -358,8 +359,8 @@ function updateQuery() {
 		query.cat = visibleCategories.value.join(',')
 	}
 
-	// Only add uncat param if it's false (since true is default for logged in users)
-	if (!showUncategorised.value) {
+	// Only add uncat param if it's false and user is admin (since true is default for logged in users)
+	if (!showUncategorised.value && user.value?.email) {
 		query.uncat = 'false'
 	}
 
@@ -389,6 +390,11 @@ watch(
 			showUncategorised.value = false
 		} else {
 			showUncategorised.value = true
+			// Re-initialize from query when user logs in, in case there's an uncat param
+			const uncatParam = route.query.uncat
+			if (uncatParam !== undefined) {
+				showUncategorised.value = uncatParam === 'true' || uncatParam === '1'
+			}
 		}
 	},
 	{ immediate: true }
