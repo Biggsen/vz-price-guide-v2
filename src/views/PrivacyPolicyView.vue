@@ -1,3 +1,9 @@
+<script setup>
+import PrivacyPolicyHeader from '@/components/PrivacyPolicyHeader.vue'
+import PrivacyPolicyTOC from '@/components/PrivacyPolicyTOC.vue'
+defineOptions({ name: 'PrivacyPolicyView' })
+</script>
+
 <template>
 	<div class="prose mt-6">
 		<PrivacyPolicyHeader />
@@ -1833,19 +1839,6 @@
 		</div>
 	</div>
 </template>
-
-<script>
-import PrivacyPolicyHeader from '@/components/PrivacyPolicyHeader.vue'
-import PrivacyPolicyTOC from '@/components/PrivacyPolicyTOC.vue'
-
-export default {
-	name: 'PrivacyPolicyView',
-	components: {
-		PrivacyPolicyHeader,
-		PrivacyPolicyTOC
-	}
-}
-</script>
 
 <style scoped>
 [data-custom-class='body'],

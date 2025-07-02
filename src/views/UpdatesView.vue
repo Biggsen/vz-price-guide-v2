@@ -1,3 +1,90 @@
+<script setup>
+import { ref, computed } from 'vue'
+import updatesData from '../../data/updates.json'
+import roadmapData from '../../data/roadmap.json'
+
+// Load data from JSON files and convert date strings to Date objects
+const updates = ref(
+	updatesData.map((update) => ({
+		...update,
+		date: new Date(update.date)
+	}))
+)
+
+const roadmap = ref(roadmapData)
+const showAllUpdates = ref(false)
+
+// Computed property to control displayed updates
+const displayedUpdates = computed(() => {
+	if (showAllUpdates.value) {
+		return updates.value
+	}
+	return updates.value.slice(0, 3)
+})
+
+function toggleShowAllUpdates() {
+	showAllUpdates.value = !showAllUpdates.value
+}
+
+function formatDate(date) {
+	const today = new Date()
+	const yesterday = new Date(today)
+	yesterday.setDate(yesterday.getDate() - 1)
+
+	// Reset time to compare just dates
+	const inputDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+	const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+	const yesterdayDate = new Date(
+		yesterday.getFullYear(),
+		yesterday.getMonth(),
+		yesterday.getDate()
+	)
+
+	if (inputDate.getTime() === todayDate.getTime()) {
+		return 'Today'
+	} else if (inputDate.getTime() === yesterdayDate.getTime()) {
+		return 'Yesterday'
+	} else {
+		return date.toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric'
+		})
+	}
+}
+
+function getUpdateTypeClass(type) {
+	const classes = {
+		Feature: 'bg-green-100 text-green-800',
+		Enhancement: 'bg-blue-100 text-blue-800',
+		Security: 'bg-red-100 text-red-800',
+		'Bug Fix': 'bg-yellow-100 text-yellow-800'
+	}
+	return classes[type] || 'bg-gray-100 text-gray-800'
+}
+
+function getStatusClass(status) {
+	const classes = {
+		Completed: 'bg-green-100 text-green-800',
+		'In Progress': 'bg-blue-100 text-blue-800',
+		Planned: 'bg-yellow-100 text-yellow-800',
+		Future: 'bg-gray-100 text-gray-800'
+	}
+	return classes[status] || 'bg-gray-100 text-gray-800'
+}
+
+function calculateProgress(phase) {
+	if (!phase.features || phase.features.length === 0) {
+		return 0
+	}
+
+	const completedFeatures = phase.features.filter((feature) => feature.completed).length
+	const totalFeatures = phase.features.length
+
+	return Math.round((completedFeatures / totalFeatures) * 100)
+}
+</script>
+
 <template>
 	<main class="container px-4 py-6">
 		<div class="max-w-4xl">
@@ -123,93 +210,6 @@
 		</div>
 	</main>
 </template>
-
-<script setup>
-import { ref, computed } from 'vue'
-import updatesData from '../../data/updates.json'
-import roadmapData from '../../data/roadmap.json'
-
-// Load data from JSON files and convert date strings to Date objects
-const updates = ref(
-	updatesData.map((update) => ({
-		...update,
-		date: new Date(update.date)
-	}))
-)
-
-const roadmap = ref(roadmapData)
-const showAllUpdates = ref(false)
-
-// Computed property to control displayed updates
-const displayedUpdates = computed(() => {
-	if (showAllUpdates.value) {
-		return updates.value
-	}
-	return updates.value.slice(0, 3)
-})
-
-function toggleShowAllUpdates() {
-	showAllUpdates.value = !showAllUpdates.value
-}
-
-function formatDate(date) {
-	const today = new Date()
-	const yesterday = new Date(today)
-	yesterday.setDate(yesterday.getDate() - 1)
-
-	// Reset time to compare just dates
-	const inputDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-	const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-	const yesterdayDate = new Date(
-		yesterday.getFullYear(),
-		yesterday.getMonth(),
-		yesterday.getDate()
-	)
-
-	if (inputDate.getTime() === todayDate.getTime()) {
-		return 'Today'
-	} else if (inputDate.getTime() === yesterdayDate.getTime()) {
-		return 'Yesterday'
-	} else {
-		return date.toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric'
-		})
-	}
-}
-
-function getUpdateTypeClass(type) {
-	const classes = {
-		Feature: 'bg-green-100 text-green-800',
-		Enhancement: 'bg-blue-100 text-blue-800',
-		Security: 'bg-red-100 text-red-800',
-		'Bug Fix': 'bg-yellow-100 text-yellow-800'
-	}
-	return classes[type] || 'bg-gray-100 text-gray-800'
-}
-
-function getStatusClass(status) {
-	const classes = {
-		Completed: 'bg-green-100 text-green-800',
-		'In Progress': 'bg-blue-100 text-blue-800',
-		Planned: 'bg-yellow-100 text-yellow-800',
-		Future: 'bg-gray-100 text-gray-800'
-	}
-	return classes[status] || 'bg-gray-100 text-gray-800'
-}
-
-function calculateProgress(phase) {
-	if (!phase.features || phase.features.length === 0) {
-		return 0
-	}
-
-	const completedFeatures = phase.features.filter((feature) => feature.completed).length
-	const totalFeatures = phase.features.length
-
-	return Math.round((completedFeatures / totalFeatures) * 100)
-}
-</script>
 
 <style scoped>
 /* Additional custom styles if needed */
