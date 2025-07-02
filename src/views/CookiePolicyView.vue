@@ -1,3 +1,7 @@
+<script setup>
+// This page contains the cookie policy content
+</script>
+
 <template>
 	<div class="prose mt-6">
 		<span
@@ -369,10 +373,6 @@
 		</div>
 	</div>
 </template>
-
-<script setup>
-// This page contains the cookie policy content
-</script>
 
 <style scoped>
 [data-custom-class='body'],

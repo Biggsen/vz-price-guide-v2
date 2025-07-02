@@ -1,3 +1,7 @@
+<script setup>
+defineOptions({ name: 'TermsOfUseView' })
+</script>
+
 <template>
 	<div class="prose mt-6">
 		<span
@@ -1266,9 +1270,3 @@
 		</div>
 	</div>
 </template>
-
-<script>
-export default {
-	name: 'TermsOfUseView'
-}
-</script>
