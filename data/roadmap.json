@@ -1,21 +1,6 @@
 [
 	{
 		"id": 2,
-		"title": "Add remaining 1.16 items",
-		"status": "Pending",
-		"description": "Add remaining Minecraft 1.16 items",
-		"features": [
-			{ "name": "Redstone & Mechanical items (10 items)", "completed": true },
-			{ "name": "Nether-related items (5 items)", "completed": true },
-			{ "name": "Bee & Honey items (4 items)", "completed": true },
-			{ "name": "Transportation items (5 items)", "completed": false },
-			{ "name": "Potions & Consumables (9 items)", "completed": false },
-			{ "name": "Ocean & Sea items (6 items)", "completed": false },
-			{ "name": "Decorative & Utility items (11 items)", "completed": false }
-		]
-	},
-	{
-		"id": 2,
 		"title": "Add all 1.17 items",
 		"status": "Pending",
 		"description": "Add all new items introduced in Minecraft 1.17 (Caves & Cliffs Update) including copper, amethyst, deepslate, and other new blocks and items",
@@ -26,6 +11,25 @@
 			{ "name": "Azalea & Lush Cave items (10 items)", "completed": false },
 			{ "name": "New utility items (6 items)", "completed": false },
 			{ "name": "Amethyst & stone variants (8 items)", "completed": false }
+		]
+	},
+	{
+		"id": 3,
+		"title": "Add Brewing Category & 1.16 Potions",
+		"status": "Pending",
+		"description": "Create a comprehensive brewing category with all potions, splash potions, lingering potions, and tipped arrows for Minecraft 1.16",
+		"features": [
+			{
+				"name": "Base potions (water bottle, awkward potion, mundane potion, thick potion) (4 items)",
+				"completed": false
+			},
+			{
+				"name": "Effect potions - all variants (healing, harming, poison, regeneration, strength, etc.) (45+ items)",
+				"completed": false
+			},
+			{ "name": "Splash potion variants (45+ items)", "completed": false },
+			{ "name": "Lingering potion variants (45+ items)", "completed": false },
+			{ "name": "Tipped arrows with all potion effects (45+ items)", "completed": false }
 		]
 	},
 	{

@@ -1,5 +1,17 @@
 [
 	{
+		"id": 12,
+		"title": "All 1.16 Items Complete (Except Brewing) - Major Milestone! 🎉",
+		"date": "2025-01-15",
+		"type": "Content",
+		"description": "🎉 Another major milestone achieved! All Minecraft 1.16 items have now been categorized and priced, with the exception of the upcoming brewing category. This represents hundreds of items across all categories.",
+		"changes": [
+			"Completed all remaining 50 or so 1.16 items with accurate pricing",
+			"These items were nether star, kelp, turtle shell, fireworks and minecarts to name a few",
+			"Only brewing category remains for complete 1.16 coverage"
+		]
+	},
+	{
 		"id": 11,
 		"title": "Homepage UI Improvements",
 		"date": "2025-07-03",
