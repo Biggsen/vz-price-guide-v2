@@ -30,6 +30,10 @@ const props = defineProps({
 	viewMode: {
 		type: String,
 		default: 'categories'
+	},
+	layout: {
+		type: String,
+		default: 'comfortable'
 	}
 })
 
@@ -115,7 +119,10 @@ async function deleteItem(itemId) {
 </script>
 
 <template>
-	<table v-if="collection.length > 0" class="w-full table-auto">
+	<table
+		v-if="collection.length > 0"
+		class="w-full table-auto"
+		:class="{ 'table-condensed': layout === 'condensed' }">
 		<caption :id="category == 'ores' ? 'ores' : ''">
 			{{ category }}
 			({{ sortedCollection.length }})
@@ -181,7 +188,14 @@ async function deleteItem(itemId) {
 					</a>
 				</th>
 				<td width="5%">
-					<img :src="item.image" alt="" class="max-w-[30px] lg:max-w-[50px]" />
+					<img
+						:src="item.image"
+						alt=""
+						:class="
+							layout === 'condensed'
+								? 'max-w-[20px] lg:max-w-[30px]'
+								: 'max-w-[30px] lg:max-w-[50px]'
+						" />
 				</td>
 				<td class="text-center">
 					{{ buyUnitPrice(item.price, priceMultiplier, roundToWhole) }}
@@ -250,5 +264,25 @@ tbody {
 th,
 td {
 	@apply text-sm sm:text-base border-2 border-white px-1 sm:px-3 py-0.5 sm:py-1;
+}
+
+// Condensed table styles
+.table-condensed {
+	caption {
+		@apply py-1 sm:py-2 text-sm sm:text-base;
+	}
+
+	th,
+	td {
+		@apply text-xs sm:text-sm px-1 sm:px-2 py-0.5;
+	}
+
+	th {
+		@apply font-medium;
+	}
+
+	tbody tr {
+		@apply leading-tight;
+	}
 }
 </style>

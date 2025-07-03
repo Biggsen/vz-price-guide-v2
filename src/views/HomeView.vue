@@ -150,6 +150,7 @@ const sellMargin = ref(0.3)
 const showEconomySettings = ref(false)
 const roundToWhole = ref(false)
 const viewMode = ref('categories') // 'categories' or 'list'
+const layout = ref('comfortable') // 'comfortable' or 'condensed'
 
 // Admin-only option to show zero-priced items
 const showZeroPricedItems = ref(false)
@@ -175,6 +176,7 @@ function loadEconomyConfig() {
 	const savedShowEconomySettings = localStorage.getItem('showEconomySettings')
 	const savedRoundToWhole = localStorage.getItem('roundToWhole')
 	const savedViewMode = localStorage.getItem('viewMode')
+	const savedLayout = localStorage.getItem('layout')
 	const savedSelectedVersion = localStorage.getItem('selectedVersion')
 	const savedShowZeroPricedItems = localStorage.getItem('showZeroPricedItems')
 
@@ -193,6 +195,9 @@ function loadEconomyConfig() {
 	if (savedViewMode !== null) {
 		viewMode.value = savedViewMode
 	}
+	if (savedLayout !== null) {
+		layout.value = savedLayout
+	}
 	if (savedSelectedVersion !== null) {
 		selectedVersion.value = savedSelectedVersion
 	}
@@ -208,6 +213,7 @@ function saveEconomyConfig() {
 	localStorage.setItem('showEconomySettings', showEconomySettings.value.toString())
 	localStorage.setItem('roundToWhole', roundToWhole.value.toString())
 	localStorage.setItem('viewMode', viewMode.value)
+	localStorage.setItem('layout', layout.value)
 	localStorage.setItem('selectedVersion', selectedVersion.value)
 	localStorage.setItem('showZeroPricedItems', showZeroPricedItems.value.toString())
 }
@@ -220,6 +226,7 @@ watch(
 		showEconomySettings,
 		roundToWhole,
 		viewMode,
+		layout,
 		selectedVersion,
 		showZeroPricedItems
 	],
@@ -693,30 +700,62 @@ watch(
 			Showing {{ allVisibleItems.length }} item{{ allVisibleItems.length === 1 ? '' : 's' }}
 		</div>
 
-		<!-- View Mode Toggle -->
+		<!-- View Mode and Layout Toggle -->
 		<div class="mb-4">
-			<span class="text-sm font-medium text-heavy-metal mb-2 block">View as:</span>
-			<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-				<button
-					@click="viewMode = 'categories'"
-					:class="[
-						viewMode === 'categories'
-							? 'bg-gray-asparagus text-white'
-							: 'bg-norway text-heavy-metal hover:bg-gray-100',
-						'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
-					]">
-					Categories
-				</button>
-				<button
-					@click="viewMode = 'list'"
-					:class="[
-						viewMode === 'list'
-							? 'bg-gray-asparagus text-white'
-							: 'bg-norway text-heavy-metal hover:bg-gray-100',
-						'px-3 py-1 text-sm font-medium transition'
-					]">
-					List
-				</button>
+			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-8">
+				<!-- View Mode -->
+				<div>
+					<span class="text-sm font-medium text-heavy-metal mb-2 block">View as:</span>
+					<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+						<button
+							@click="viewMode = 'categories'"
+							:class="[
+								viewMode === 'categories'
+									? 'bg-gray-asparagus text-white'
+									: 'bg-norway text-heavy-metal hover:bg-gray-100',
+								'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+							]">
+							Categories
+						</button>
+						<button
+							@click="viewMode = 'list'"
+							:class="[
+								viewMode === 'list'
+									? 'bg-gray-asparagus text-white'
+									: 'bg-norway text-heavy-metal hover:bg-gray-100',
+								'px-3 py-1 text-sm font-medium transition'
+							]">
+							List
+						</button>
+					</div>
+				</div>
+
+				<!-- Layout -->
+				<div>
+					<span class="text-sm font-medium text-heavy-metal mb-2 block">Layout:</span>
+					<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+						<button
+							@click="layout = 'comfortable'"
+							:class="[
+								layout === 'comfortable'
+									? 'bg-gray-asparagus text-white'
+									: 'bg-norway text-heavy-metal hover:bg-gray-100',
+								'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+							]">
+							Comfortable
+						</button>
+						<button
+							@click="layout = 'condensed'"
+							:class="[
+								layout === 'condensed'
+									? 'bg-gray-asparagus text-white'
+									: 'bg-norway text-heavy-metal hover:bg-gray-100',
+								'px-3 py-1 text-sm font-medium transition'
+							]">
+							Condensed
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -729,7 +768,8 @@ watch(
 					:category="cat"
 					:categories="enabledCategories"
 					:economyConfig="economyConfig"
-					:viewMode="viewMode" />
+					:viewMode="viewMode"
+					:layout="layout" />
 			</template>
 			<template v-for="version in uncategorizedVersions" :key="`uncat-${version}`">
 				<ItemTable
@@ -742,7 +782,8 @@ watch(
 					:category="`Uncategorised ${version}`"
 					:categories="enabledCategories"
 					:economyConfig="economyConfig"
-					:viewMode="viewMode" />
+					:viewMode="viewMode"
+					:layout="layout" />
 			</template>
 
 			<!-- Empty state for categories view -->
@@ -762,7 +803,8 @@ watch(
 				category="All Items"
 				:categories="enabledCategories"
 				:economyConfig="economyConfig"
-				:viewMode="viewMode" />
+				:viewMode="viewMode"
+				:layout="layout" />
 
 			<!-- Empty state for list view -->
 			<div v-if="allVisibleItems.length === 0" class="text-center py-12">
