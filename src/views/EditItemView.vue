@@ -5,6 +5,7 @@ import { useFirestore, useDocument } from 'vuefire'
 import { doc, updateDoc } from 'firebase/firestore'
 import { categories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
+import BackButton from '../components/BackButton.vue'
 
 const db = useFirestore()
 const router = useRouter()
@@ -78,6 +79,7 @@ async function updateItem() {
 
 <template>
 	<div v-if="canEditItems" class="p-4 pt-8">
+		<BackButton />
 		<h2 class="text-xl font-bold mb-6">Edit item</h2>
 		<form @submit.prevent="updateItem">
 			<label for="name">Name</label>
