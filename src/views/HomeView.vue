@@ -337,13 +337,18 @@ function initializeFromQuery() {
 	const uncatParam = route.query.uncat
 	const versionParam = route.query.version
 
-	if (catParam) {
-		const selectedCategories = catParam
-			.split(',')
-			.map((c) => c.trim())
-			.filter((c) => enabledCategories.includes(c))
-		if (selectedCategories.length > 0) {
-			visibleCategories.value = selectedCategories
+	if (catParam !== undefined) {
+		if (catParam === '') {
+			// Empty cat param means no categories selected
+			visibleCategories.value = []
+		} else {
+			const selectedCategories = catParam
+				.split(',')
+				.map((c) => c.trim())
+				.filter((c) => enabledCategories.includes(c))
+			if (selectedCategories.length > 0) {
+				visibleCategories.value = selectedCategories
+			}
 		}
 	}
 
@@ -361,14 +366,17 @@ function initializeFromQuery() {
 function updateQuery() {
 	const query = {}
 
-	// Only add cat param if not all categories are selected
-	if (visibleCategories.value.length !== enabledCategories.length) {
+	// Always add cat param except when all categories are selected
+	if (visibleCategories.value.length === enabledCategories.length) {
+		// All categories selected - don't add cat param
+	} else {
+		// Some or no categories selected - add cat param (empty string if none selected)
 		query.cat = visibleCategories.value.join(',')
 	}
 
-	// Only add uncat param if it's false and user is admin (since true is default for logged in users)
-	if (!showUncategorised.value && user.value?.email) {
-		query.uncat = 'false'
+	// Always add uncat param for admin users to ensure filter state is preserved
+	if (user.value?.email) {
+		query.uncat = showUncategorised.value ? 'true' : 'false'
 	}
 
 	// Only add version param if not the default version (latest enabled)
