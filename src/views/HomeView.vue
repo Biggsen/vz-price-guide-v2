@@ -51,12 +51,12 @@ function dismissAlert() {
 	localStorage.setItem('homeAlertDismissed', 'true')
 }
 
-// Mobile filters visibility state
-const showMobileFilters = ref(true)
+// Category filters visibility state
+const showCategoryFilters = ref(true)
 
-function toggleMobileFilters() {
-	showMobileFilters.value = !showMobileFilters.value
-	localStorage.setItem('showMobileFilters', showMobileFilters.value.toString())
+function toggleCategoryFilters() {
+	showCategoryFilters.value = !showCategoryFilters.value
+	localStorage.setItem('showCategoryFilters', showCategoryFilters.value.toString())
 }
 
 // Version filtering state
@@ -417,10 +417,10 @@ onMounted(() => {
 		showAlert.value = false
 	}
 
-	// Initialize mobile filters visibility from localStorage
-	const mobileFiltersState = localStorage.getItem('showMobileFilters')
-	if (mobileFiltersState !== null) {
-		showMobileFilters.value = mobileFiltersState === 'true'
+	// Initialize category filters visibility from localStorage
+	const categoryFiltersState = localStorage.getItem('showCategoryFilters')
+	if (categoryFiltersState !== null) {
+		showCategoryFilters.value = categoryFiltersState === 'true'
 	}
 
 	// Initialize economy config from localStorage
@@ -647,21 +647,16 @@ watch(
 			</div>
 		</div>
 
-		<!-- Mobile filters toggle (only visible on mobile) -->
-		<div class="block sm:hidden mb-3">
+		<!-- Category filters toggle -->
+		<div class="block mb-3">
 			<button
-				@click="toggleMobileFilters"
+				@click="toggleCategoryFilters"
 				class="text-gray-asparagus hover:text-heavy-metal underline text-sm">
-				{{ showMobileFilters ? 'Hide filters' : 'Show filters' }}
+				{{ showCategoryFilters ? 'Hide category filters' : 'Show category filters' }}
 			</button>
 		</div>
 
-		<div
-			:class="[
-				'flex flex-wrap gap-2 mb-4 justify-start',
-				{ hidden: !showMobileFilters },
-				'sm:flex'
-			]">
+		<div :class="['flex flex-wrap gap-2 mb-4 justify-start', { hidden: !showCategoryFilters }]">
 			<button
 				v-for="cat in enabledCategories"
 				:key="cat"
@@ -670,7 +665,7 @@ watch(
 					visibleCategories.includes(cat)
 						? 'bg-gray-asparagus text-white'
 						: 'bg-norway text-heavy-metal',
-					'border-2 border-gray-asparagus rounded px-3 py-1 transition',
+					'border-2 border-gray-asparagus rounded px-3 py-1 transition text-sm',
 					!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0
 						? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
 						: ''
@@ -687,7 +682,7 @@ watch(
 					showUncategorised
 						? 'bg-gray-asparagus text-white'
 						: 'bg-norway text-heavy-metal',
-					'border-2 border-gray-asparagus rounded px-3 py-1 transition',
+					'border-2 border-gray-asparagus rounded px-3 py-1 transition text-sm',
 					filteredUncategorizedItems.length === 0
 						? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
 						: ''
