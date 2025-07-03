@@ -1,5 +1,17 @@
 [
 	{
+		"id": 11,
+		"title": "Homepage UI Improvements",
+		"date": "2025-07-03",
+		"type": "Enhancement",
+		"description": "Small but effective UI improvements to the homepage for better user experience and customization.",
+		"changes": [
+			"Added layout setting (comfortable/condensed) for table density preference",
+			"Reduced font size for category filters for cleaner appearance",
+			"Added option to hide/show category filters to reduce clutter"
+		]
+	},
+	{
 		"id": 10,
 		"title": "Multi-Version Support Now Live! 🚀",
 		"date": "2025-07-01",

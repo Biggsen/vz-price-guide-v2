@@ -5,9 +5,9 @@
 		"status": "Pending",
 		"description": "Add remaining Minecraft 1.16 items",
 		"features": [
-			{ "name": "Redstone & Mechanical items (10 items)", "completed": false },
-			{ "name": "Nether-related items (5 items)", "completed": false },
-			{ "name": "Bee & Honey items (4 items)", "completed": false },
+			{ "name": "Redstone & Mechanical items (10 items)", "completed": true },
+			{ "name": "Nether-related items (5 items)", "completed": true },
+			{ "name": "Bee & Honey items (4 items)", "completed": true },
 			{ "name": "Transportation items (5 items)", "completed": false },
 			{ "name": "Potions & Consumables (9 items)", "completed": false },
 			{ "name": "Ocean & Sea items (6 items)", "completed": false },
