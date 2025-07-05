@@ -39,6 +39,13 @@ export async function createShop(userId, shopData) {
 		shopData.is_own_shop = false // Default to competitor
 	}
 
+	// Validate owner_funds if provided
+	if (shopData.owner_funds !== null && shopData.owner_funds !== undefined) {
+		if (isNaN(shopData.owner_funds) || shopData.owner_funds < 0) {
+			throw new Error('Owner funds must be a valid positive number')
+		}
+	}
+
 	try {
 		const db = getFirestore()
 		const shop = {
@@ -48,6 +55,7 @@ export async function createShop(userId, shopData) {
 			is_own_shop: shopData.is_own_shop,
 			location: shopData.location?.trim() || '',
 			description: shopData.description?.trim() || '',
+			owner_funds: shopData.owner_funds || null,
 			created_at: new Date().toISOString(),
 			updated_at: new Date().toISOString()
 		}
@@ -66,6 +74,13 @@ export async function updateShop(shopId, updates) {
 	if (!shopId) throw new Error('Shop ID is required')
 	if (updates.name !== undefined && !updates.name?.trim()) {
 		throw new Error('Shop name cannot be empty')
+	}
+
+	// Validate owner_funds if provided
+	if (updates.owner_funds !== null && updates.owner_funds !== undefined) {
+		if (isNaN(updates.owner_funds) || updates.owner_funds < 0) {
+			throw new Error('Owner funds must be a valid positive number')
+		}
 	}
 
 	try {

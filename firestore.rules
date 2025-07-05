@@ -21,8 +21,20 @@ service cloud.firestore {
     // Shops: Users can read/write their own shops, read public shops for comparison
     match /shops/{shopId} {
       allow read: if request.auth != null; // Allow reading all shops for comparison
-      allow write: if request.auth != null && request.auth.uid == resource.data.owner_id;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.owner_id;
+      allow write: if request.auth != null && request.auth.uid == resource.data.owner_id &&
+        // Validate owner_funds if provided
+        (request.resource.data.owner_funds == null || 
+         (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0));
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.owner_id &&
+        // Validate required fields
+        request.resource.data.keys().hasAll(['name', 'server_id', 'owner_id', 'is_own_shop']) &&
+        request.resource.data.name is string &&
+        request.resource.data.server_id is string &&
+        request.resource.data.owner_id is string &&
+        request.resource.data.is_own_shop is bool &&
+        // Validate owner_funds if provided
+        (request.resource.data.owner_funds == null || 
+         (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0));
     }
     
     // Shop Items: Users can read/write items for their own shops, read public shop items for comparison

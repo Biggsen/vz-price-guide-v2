@@ -20,7 +20,8 @@ const shopForm = ref({
 	server_id: '',
 	location: '',
 	description: '',
-	is_own_shop: false
+	is_own_shop: false,
+	owner_funds: null
 })
 
 // Get user's servers for dropdown
@@ -89,7 +90,8 @@ function showEditShopForm(shop) {
 		server_id: shop.server_id,
 		location: shop.location || '',
 		description: shop.description || '',
-		is_own_shop: shop.is_own_shop
+		is_own_shop: shop.is_own_shop,
+		owner_funds: shop.owner_funds || null
 	}
 }
 
@@ -99,7 +101,8 @@ function resetForm() {
 		server_id: '',
 		location: '',
 		description: '',
-		is_own_shop: false
+		is_own_shop: false,
+		owner_funds: null
 	}
 }
 
@@ -163,6 +166,17 @@ const isFormValid = computed(() => {
 function getServerName(serverId) {
 	const server = servers.value?.find((s) => s.id === serverId)
 	return server ? server.name : 'Unknown Server'
+}
+
+// Handle owner funds input
+function handleFundsInput(event) {
+	const value = event.target.value
+	if (value === '' || value === null) {
+		shopForm.value.owner_funds = null
+	} else {
+		const numValue = parseFloat(value)
+		shopForm.value.owner_funds = isNaN(numValue) ? null : numValue
+	}
 }
 </script>
 
@@ -262,6 +276,25 @@ function getServerName(serverId) {
 						rows="3"
 						placeholder="Optional description for this shop..."
 						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+				</div>
+
+				<!-- Owner Funds -->
+				<div>
+					<label for="owner-funds" class="block text-sm font-medium text-gray-700 mb-1">
+						Owner Funds
+					</label>
+					<input
+						id="owner-funds"
+						:value="shopForm.owner_funds"
+						@input="handleFundsInput"
+						type="number"
+						step="0.01"
+						min="0"
+						placeholder="0.00"
+						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+					<p class="text-xs text-gray-500 mt-1">
+						Available money for buying items from players (affects sell prices)
+					</p>
 				</div>
 
 				<!-- Shop type -->
@@ -367,6 +400,13 @@ function getServerName(serverId) {
 								</p>
 								<p v-if="shop.description" class="text-gray-600 mb-2">
 									{{ shop.description }}
+								</p>
+								<p
+									v-if="
+										shop.owner_funds !== null && shop.owner_funds !== undefined
+									"
+									class="text-sm text-gray-600 mb-1">
+									💰 Available funds: {{ shop.owner_funds.toFixed(2) }}
 								</p>
 								<p class="text-xs text-gray-400">
 									Created: {{ new Date(shop.created_at).toLocaleDateString() }}

@@ -393,6 +393,7 @@ function getServerName(serverId) {
 						<ShopItemTable
 							:items="categoryItems"
 							:server="selectedServer"
+							:shop="selectedShop"
 							@edit="showEditItemForm"
 							@delete="handleItemDelete"
 							@bulk-update="handleBulkUpdate" />

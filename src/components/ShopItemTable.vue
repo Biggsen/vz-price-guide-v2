@@ -10,6 +10,10 @@ const props = defineProps({
 		type: Object,
 		required: true
 	},
+	shop: {
+		type: Object,
+		default: null
+	},
 	showShopNames: {
 		type: Boolean,
 		default: false
@@ -270,6 +274,22 @@ function handleQuantityInput(event) {
 		editingValues.value.stock_quantity = isNaN(numValue) ? null : numValue
 	}
 }
+
+// Check if shop has insufficient funds to buy items from customers
+function hasInsufficientFunds(item) {
+	// Get shop data either from props (single shop view) or from item.shopData (multi-shop view)
+	const shopData = props.shop || item.shopData
+
+	if (
+		!shopData ||
+		shopData.owner_funds === null ||
+		shopData.owner_funds === undefined ||
+		!item.sell_price
+	) {
+		return false
+	}
+	return shopData.owner_funds < item.sell_price
+}
 </script>
 
 <template>
@@ -439,12 +459,22 @@ function handleQuantityInput(event) {
 									class="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" />
 							</div>
 							<div v-else>
-								<div class="text-sm text-gray-900">
+								<div
+									class="text-sm"
+									:class="
+										hasInsufficientFunds(item)
+											? 'text-gray-400 line-through'
+											: 'text-gray-900'
+									"
+									:title="hasInsufficientFunds(item) ? 'Owner is broke' : ''">
 									{{ formatPrice(item.sell_price) }}
 								</div>
+
 								<div
 									v-if="
-										hasPriceHistory(item) && item.previous_sell_price !== null
+										!hasInsufficientFunds(item) &&
+										hasPriceHistory(item) &&
+										item.previous_sell_price !== null
 									"
 									class="text-xs text-gray-500">
 									{{
