@@ -76,6 +76,15 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/servers',
+			name: 'servers',
+			component: () => import('../views/ServersView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "My Servers - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/updates',
 			name: 'updates',
 			component: () => import('../views/UpdatesView.vue'),
