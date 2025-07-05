@@ -83,6 +83,24 @@ const hasSelected = computed(() => {
 	return selectedItems.value.length > 0
 })
 
+// Track first occurrence of each item for grouping
+const firstOccurrenceMap = computed(() => {
+	const map = new Map()
+	sortedItems.value.forEach((item, index) => {
+		const itemName = item.itemData?.name || 'Unknown Item'
+		if (!map.has(itemName)) {
+			map.set(itemName, index)
+		}
+	})
+	return map
+})
+
+// Check if this is the first occurrence of an item
+function isFirstOccurrence(item, index) {
+	const itemName = item.itemData?.name || 'Unknown Item'
+	return firstOccurrenceMap.value.get(itemName) === index
+}
+
 // Sorting methods
 function setSortField(field) {
 	if (sortField.value === field) {
@@ -333,11 +351,14 @@ function handleQuantityInput(event) {
 				</thead>
 				<tbody class="bg-white divide-y divide-gray-200">
 					<tr
-						v-for="item in sortedItems"
+						v-for="(item, index) in sortedItems"
 						:key="item.id"
-						:class="{ 'bg-blue-50': isSelected(item.id) && !readOnly }">
+						:class="{
+							'bg-blue-50': isSelected(item.id) && !readOnly,
+							'bg-green-50': item.shopData?.is_own_shop && !isSelected(item.id)
+						}">
 						<!-- Selection checkbox -->
-						<td v-if="!readOnly" class="px-4 py-4">
+						<td v-if="!readOnly" class="px-3 py-2">
 							<input
 								type="checkbox"
 								:checked="isSelected(item.id)"
@@ -346,11 +367,9 @@ function handleQuantityInput(event) {
 						</td>
 
 						<!-- Item info -->
-						<td class="px-4 py-4">
-							<div class="flex items-center">
-								<div
-									v-if="item.itemData?.image"
-									class="w-10 h-10 mr-3 flex-shrink-0">
+						<td class="px-3 py-2">
+							<div v-if="isFirstOccurrence(item, index)" class="flex items-center">
+								<div v-if="item.itemData?.image" class="w-8 h-8 mr-3 flex-shrink-0">
 									<img
 										:src="item.itemData.image"
 										:alt="item.itemData.name"
@@ -360,18 +379,20 @@ function handleQuantityInput(event) {
 									<div class="font-medium text-gray-900">
 										{{ item.itemData?.name || 'Unknown Item' }}
 									</div>
-									<div class="text-sm text-gray-500">
-										{{ item.itemData?.material_id || item.item_id }}
-									</div>
 									<div v-if="item.notes" class="text-xs text-gray-400 mt-1">
 										📝 {{ item.notes }}
 									</div>
 								</div>
 							</div>
+							<div v-else class="pl-11">
+								<div v-if="item.notes" class="text-xs text-gray-400">
+									📝 {{ item.notes }}
+								</div>
+							</div>
 						</td>
 
 						<!-- Shop name (only when showing shop names) -->
-						<td v-if="showShopNames" class="px-4 py-4">
+						<td v-if="showShopNames" class="px-3 py-2">
 							<div class="text-sm text-gray-900">
 								{{ item.shopData?.name || 'Unknown Shop' }}
 							</div>
@@ -381,7 +402,7 @@ function handleQuantityInput(event) {
 						</td>
 
 						<!-- Buy price -->
-						<td class="px-4 py-4">
+						<td class="px-3 py-2">
 							<div v-if="editingItemId === item.id && !readOnly">
 								<input
 									:value="editingValues.buy_price"
@@ -407,7 +428,7 @@ function handleQuantityInput(event) {
 						</td>
 
 						<!-- Sell price -->
-						<td class="px-4 py-4">
+						<td class="px-3 py-2">
 							<div v-if="editingItemId === item.id && !readOnly">
 								<input
 									:value="editingValues.sell_price"
@@ -438,7 +459,7 @@ function handleQuantityInput(event) {
 						</td>
 
 						<!-- Profit Margin -->
-						<td class="px-4 py-4">
+						<td class="px-3 py-2">
 							<span
 								v-if="calculateMargin(item) !== null"
 								class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
@@ -448,7 +469,7 @@ function handleQuantityInput(event) {
 						</td>
 
 						<!-- Stock -->
-						<td class="px-4 py-4">
+						<td class="px-3 py-2">
 							<div v-if="editingItemId === item.id && !readOnly">
 								<div class="space-y-1">
 									<input
@@ -477,7 +498,7 @@ function handleQuantityInput(event) {
 						</td>
 
 						<!-- Last updated -->
-						<td class="px-4 py-4">
+						<td class="px-3 py-2">
 							<div class="text-sm text-gray-900">
 								{{ formatDate(item.last_updated) }}
 							</div>
@@ -487,7 +508,7 @@ function handleQuantityInput(event) {
 						</td>
 
 						<!-- Actions -->
-						<td v-if="!readOnly" class="px-4 py-4">
+						<td v-if="!readOnly" class="px-3 py-2">
 							<div v-if="editingItemId === item.id" class="flex space-x-2">
 								<button
 									@click="saveEdit"

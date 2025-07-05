@@ -23,7 +23,13 @@ const activeMainNav = ref(null)
 // Determine active main nav based on current route
 function updateActiveMainNav() {
 	const adminRoutes = ['/admin', '/missing-items', '/add', '/bulk-update']
-	const shopManagerRoutes = ['/shop-manager', '/servers', '/shops', '/shop-items']
+	const shopManagerRoutes = [
+		'/shop-manager',
+		'/servers',
+		'/shops',
+		'/shop-items',
+		'/market-overview'
+	]
 
 	if (adminRoutes.includes(route.path) || route.path.startsWith('/edit/')) {
 		activeMainNav.value = 'admin'
