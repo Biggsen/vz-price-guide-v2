@@ -36,10 +36,38 @@ Shop_Prices Collection (🔄 PENDING)
 ├── item_id (reference to items collection)
 ├── buy_price (nullable)
 ├── sell_price (nullable)
+├── previous_buy_price (nullable)
+├── previous_sell_price (nullable)
+├── previous_price_date (nullable)
 ├── stock_quantity (optional)
+├── stock_full (boolean, default: false)
 ├── last_updated
 └── notes
 ```
+
+### Simple Price History Logic
+
+When updating prices in the `shopPrices.js` utility:
+
+1. **Before updating**: Save current `buy_price` → `previous_buy_price`, `sell_price` → `previous_sell_price`
+2. **Store timing**: Save current `last_updated` → `previous_price_date`
+3. **Update current**: Set new prices and `last_updated`
+
+This approach provides:
+
+-   **Current prices** for active trading
+-   **Previous prices** to show price trends (↑ ↓)
+-   **Change timing** to track when prices last changed
+-   **Simple implementation** without complex price history tables
+
+### Stock Management
+
+The `stock_full` boolean field handles a common Minecraft shop scenario:
+
+-   When set to `true`, indicates the shop's chest is full and cannot accept more items
+-   Useful for buy prices - shop owner can't purchase more items until chest is emptied
+-   Helps with shop status tracking and price comparison accuracy
+-   Defaults to `false` for normal trading operations
 
 ### Key Features
 
