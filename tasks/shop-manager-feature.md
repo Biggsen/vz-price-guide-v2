@@ -26,7 +26,6 @@ Shops Collection (🔄 PENDING)
 ├── server_id (server reference)
 ├── owner_id (user reference)
 ├── is_own_shop (boolean)
-├── shop_type (e.g., "buy", "sell", "both")
 ├── location (optional)
 ├── description
 ├── created_at
@@ -144,7 +143,6 @@ Shop_Prices Collection (🔄 PENDING)
 
     -   [ ] Shop name input
     -   [ ] Server selection dropdown
-    -   [ ] Shop type selection (buy/sell/both)
     -   [ ] Location input (optional)
     -   [ ] Description textarea
     -   [ ] "Is own shop" checkbox
@@ -203,7 +201,7 @@ Shop_Prices Collection (🔄 PENDING)
 -   [ ] **Task 7.1**: Create `PriceComparisonView.vue`
 
     -   [ ] Compare prices across shops
-    -   [ ] Filter by server/shop type
+    -   [ ] Filter by server
     -   [ ] Search items
     -   [ ] Export comparisons
 
