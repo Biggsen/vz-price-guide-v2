@@ -40,6 +40,24 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/admin',
+			name: 'admin',
+			component: () => import('../views/AdminView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Admin Dashboard - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/shop-manager',
+			name: 'shop-manager',
+			component: () => import('../views/ShopManagerView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Shop Manager - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/add',
 			name: 'add',
 			component: () => import('../views/AddItemView.vue'),
