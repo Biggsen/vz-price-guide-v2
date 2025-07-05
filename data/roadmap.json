@@ -2,15 +2,15 @@
 	{
 		"id": 2,
 		"title": "Add all 1.17 items",
-		"status": "Pending",
+		"status": "In Progress",
 		"description": "Add all new items introduced in Minecraft 1.17 (Caves & Cliffs Update) including copper, amethyst, deepslate, and other new blocks and items",
 		"features": [
 			{ "name": "Copper blocks & variants (32 items)", "completed": false },
 			{ "name": "Deepslate blocks & ores (28 items)", "completed": false },
-			{ "name": "Candles - all colors (17 items)", "completed": false },
+			{ "name": "Candles - all colors (17 items)", "completed": true },
 			{ "name": "Azalea & Lush Cave items (10 items)", "completed": false },
-			{ "name": "New utility items (6 items)", "completed": false },
-			{ "name": "Amethyst & stone variants (8 items)", "completed": false }
+			{ "name": "New utility items (6 items)", "completed": true },
+			{ "name": "Amethyst & stone variants (8 items)", "completed": true }
 		]
 	},
 	{
