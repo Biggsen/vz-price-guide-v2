@@ -16,11 +16,8 @@ const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAd
 		<RouterLink v-if="canBulkUpdate" class="hover:underline" to="/bulk-update">
 			Bulk Update
 		</RouterLink>
-		<div class="ml-auto flex items-center gap-2">
-			<RouterLink class="hover:underline" to="/profile">
-				{{ user.email }}
-			</RouterLink>
-			<span v-if="isAdmin" class="px-2 py-1 bg-red-600 text-xs rounded">ADMIN</span>
+		<div class="ml-auto">
+			<span v-if="isAdmin" class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
 		</div>
 	</nav>
 </template>
