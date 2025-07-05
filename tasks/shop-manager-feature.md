@@ -201,28 +201,40 @@ The `stock_full` boolean field handles a common Minecraft shop scenario:
     -   [x] `useItemAcrossShops(itemId)` - Item across shops
     -   [x] `usePriceComparison(itemIds)` - Multi-item comparison
 
-### Phase 6: Shop Items Management (Frontend)
+### Phase 6: Shop Items Management (Frontend) ✅ COMPLETED
 
--   [ ] **Task 6.1**: Create `ShopItemsView.vue`
+-   [x] **Task 6.1**: Create `ShopItemsView.vue`
 
-    -   [ ] List shop's items with prices
-    -   [ ] Add new items with prices
-    -   [ ] Edit existing items
-    -   [ ] Bulk import/export
+    -   [x] List shop's items with prices
+    -   [x] Add new items with prices
+    -   [x] Edit existing items
+    -   [x] Shop selector with server context
+    -   [x] Category-based organization
+    -   [x] Real-time integration with shop items backend
 
--   [ ] **Task 6.2**: Create `ShopItemForm.vue` component
+-   [x] **Task 6.2**: Create `ShopItemForm.vue` component
 
-    -   [ ] Item selection (filtered by server version)
-    -   [ ] Buy price input
-    -   [ ] Sell price input
-    -   [ ] Stock quantity input
-    -   [ ] Notes textarea
+    -   [x] Item selection (filtered by server version)
+    -   [x] Buy price input
+    -   [x] Sell price input
+    -   [x] Stock quantity input with "stock full" checkbox
+    -   [x] Notes textarea
+    -   [x] Smart item search and category-based dropdown
+    -   [x] Form validation
 
--   [ ] **Task 6.3**: Create `ShopItemTable.vue` component
-    -   [ ] Sortable table of items and prices
-    -   [ ] Edit inline functionality
-    -   [ ] Delete confirmation
-    -   [ ] Bulk selection
+-   [x] **Task 6.3**: Create `ShopItemTable.vue` component
+
+    -   [x] Sortable table of items and prices
+    -   [x] Inline editing functionality
+    -   [x] Delete confirmation
+    -   [x] Bulk selection and operations
+    -   [x] Price history display with change indicators
+    -   [x] Stock management with visual indicators
+
+-   [x] **Task 6.4**: Add navigation and routing
+    -   [x] Added `/shop-items` route to router
+    -   [x] Updated ShopManagerView with shop items link
+    -   [x] Integrated with existing authentication flow
 
 ### Phase 7: Price Comparison & Analysis
 
@@ -308,33 +320,35 @@ The `stock_full` boolean field handles a common Minecraft shop scenario:
 
 ---
 
-**Status**: 62.5% Complete - Phases 1, 2, 3, 4 & 5 implemented, ready for Phase 6
+**Status**: 75% Complete - Phases 1, 2, 3, 4, 5 & 6 implemented, ready for Phase 7
 **Priority**: High
 **Estimated Timeline**: 6-8 weeks (phased approach)
 **Dependencies**: Items collection (✅ exists)
 
 ## Implementation Status Summary
 
-### ✅ **COMPLETED** (62.5% - 5/8 phases)
+### ✅ **COMPLETED** (75% - 6/8 phases)
 
 -   **Phase 1**: Servers Collection (Backend) - Full `serverProfile.js` utility with CRUD operations
 -   **Phase 2**: Servers Collection (Frontend) - Complete `ServersView.vue` with form handling
 -   **Phase 3**: Shops Collection (Backend) - Complete `shopProfile.js` utility with CRUD operations and composables
 -   **Phase 4**: Shops Collection (Frontend) - Complete `ShopsView.vue` with shop management
 -   **Phase 5**: Shop Items Collection (Backend) - Complete `shopItems.js` utility with price history logic
+-   **Phase 6**: Shop Items Management (Frontend) - Complete `ShopItemsView.vue`, `ShopItemForm.vue`, and `ShopItemTable.vue` with full CRUD operations
 
 **Additional Infrastructure Built:**
 
--   `ShopManagerView.vue` - Main dashboard with navigation cards for servers and shops
+-   `ShopManagerView.vue` - Main dashboard with navigation cards for servers, shops, and shop items
 -   Firestore security rules for servers, shops, and shop_items collections
 -   Firestore indexes for optimal server, shop, and item queries
--   Router integration and navigation structure for both servers and shops
+-   Router integration and navigation structure for servers, shops, and shop items
 -   Price history logic with automatic previous price tracking
 -   Vue composables for reactive price data management
+-   Comprehensive shop items UI with inline editing, bulk operations, and price history display
 
-### 🔄 **NEXT UP** (Phase 6)
+### 🔄 **NEXT UP** (Phase 7)
 
--   **Phase 6**: Shop Items Management (Frontend) - Begin `ShopItemsView.vue` and item form components
+-   **Phase 7**: Price Comparison & Analysis - Begin `PriceComparisonView.vue` and market analysis components
 
 ### 🔄 **PENDING** (Phases 7-8)
 

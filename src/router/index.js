@@ -112,6 +112,15 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/shop-items',
+			name: 'shop-items',
+			component: () => import('../views/ShopItemsView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Shop Items - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/updates',
 			name: 'updates',
 			component: () => import('../views/UpdatesView.vue'),

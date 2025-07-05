@@ -88,6 +88,33 @@ const { user, userProfile } = useAdmin()
 					</p>
 				</RouterLink>
 
+				<!-- Shop Items Management -->
+				<RouterLink
+					to="/shop-items"
+					class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-purple-300">
+					<div class="flex items-center mb-4">
+						<div
+							class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+							<svg
+								class="w-6 h-6 text-purple-600"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+							</svg>
+						</div>
+						<h3 class="text-lg font-semibold text-gray-900 ml-3">Shop Items</h3>
+					</div>
+					<p class="text-gray-600 text-sm">
+						Manage your shop inventory with buy/sell prices, stock tracking, and price
+						history.
+					</p>
+				</RouterLink>
+
 				<!-- Coming Soon: Price Comparison -->
 				<div class="bg-gray-50 rounded-lg shadow-md p-6 border border-gray-200 opacity-60">
 					<div class="flex items-center mb-4">

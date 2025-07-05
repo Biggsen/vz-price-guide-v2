@@ -374,6 +374,11 @@ function getServerName(serverId) {
 							</div>
 
 							<div class="flex gap-2 ml-4">
+								<router-link
+									:to="{ path: '/shop-items', query: { shop: shop.id } }"
+									class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+									Manage Items
+								</router-link>
 								<button
 									@click="showEditShopForm(shop)"
 									class="text-blue-600 hover:text-blue-800 text-sm font-medium">

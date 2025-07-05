@@ -42,5 +42,8 @@ const activeMainNav = inject('activeMainNav')
 			Servers
 		</RouterLink>
 		<RouterLink class="hover:underline" active-class="underline" to="/shops">Shops</RouterLink>
+		<RouterLink class="hover:underline" active-class="underline" to="/shop-items">
+			Shop Items
+		</RouterLink>
 	</nav>
 </template>
