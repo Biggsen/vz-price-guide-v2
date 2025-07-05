@@ -121,6 +121,15 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/market-overview',
+			name: 'market-overview',
+			component: () => import('../views/MarketOverviewView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Market Overview - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/updates',
 			name: 'updates',
 			component: () => import('../views/UpdatesView.vue'),

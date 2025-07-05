@@ -372,6 +372,32 @@ export function useShopItem(itemId) {
 	return { item }
 }
 
+// Composable to use shop items from all shops on a server
+export function useServerShopItems(serverId, shopIds) {
+	const db = useFirestore()
+
+	// Create a computed query that updates when serverId or shopIds changes
+	const itemsQuery = computed(() => {
+		const sid = unref(serverId) // Unwrap the ref/computed to get the actual value
+		const sids = unref(shopIds) // Unwrap the ref/computed to get the actual value
+
+		if (!sid || !sids || sids.length === 0) {
+			return null
+		}
+
+		return query(
+			collection(db, 'shop_items'),
+			where('shop_id', 'in', sids),
+			orderBy('last_updated', 'desc')
+		)
+	})
+
+	// Use the computed query with useCollection
+	const items = useCollection(itemsQuery)
+
+	return { items }
+}
+
 // Composable for price comparison across multiple items
 export function usePriceComparison(itemIds) {
 	const db = useFirestore()

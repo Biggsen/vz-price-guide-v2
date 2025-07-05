@@ -9,6 +9,14 @@ const props = defineProps({
 	server: {
 		type: Object,
 		required: true
+	},
+	showShopNames: {
+		type: Boolean,
+		default: false
+	},
+	readOnly: {
+		type: Boolean,
+		default: false
 	}
 })
 
@@ -166,6 +174,34 @@ function formatStock(quantity, isFull) {
 	return isFull ? `${quantity} (Full)` : quantity.toString()
 }
 
+function calculateMargin(item) {
+	// Only calculate margin if both buy and sell prices exist
+	if (!item.buy_price || !item.sell_price || item.buy_price === 0) {
+		return null
+	}
+
+	// Calculate profit margin: (revenue - cost) / revenue * 100
+	const profit = item.buy_price - item.sell_price
+	const margin = (profit / item.buy_price) * 100
+	return margin
+}
+
+function formatMargin(margin) {
+	if (margin === null || margin === undefined) return '-'
+
+	const formattedMargin = margin.toFixed(1) + '%'
+	return formattedMargin
+}
+
+function getMarginColor(margin) {
+	if (margin === null || margin === undefined) return 'bg-gray-100 text-gray-700'
+	// Higher margins are better for shop profitability
+	if (margin > 70) return 'bg-green-100 text-green-800' // Excellent margin
+	if (margin > 40) return 'bg-yellow-100 text-yellow-800' // Good margin
+	if (margin > 0) return 'bg-orange-100 text-orange-800' // Low margin
+	return 'bg-red-100 text-red-800' // Losing money
+}
+
 function hasPriceHistory(item) {
 	return item.previous_buy_price !== null || item.previous_sell_price !== null
 }
@@ -221,12 +257,10 @@ function handleQuantityInput(event) {
 <template>
 	<div class="bg-white rounded-lg shadow-md overflow-hidden">
 		<!-- Bulk actions toolbar -->
-		<div v-if="hasSelected" class="bg-blue-50 border-b border-blue-200 px-4 py-3">
+		<div v-if="hasSelected && !readOnly" class="bg-blue-50 border-b border-blue-200 px-4 py-3">
 			<div class="flex items-center justify-between">
 				<span class="text-sm text-blue-700">
-					{{ selectedItems.length }} item{{
-						selectedItems.length !== 1 ? 's' : ''
-					}}
+					{{ selectedItems.length }} item{{ selectedItems.length !== 1 ? 's' : '' }}
 					selected
 				</span>
 				<div class="space-x-2">
@@ -249,7 +283,7 @@ function handleQuantityInput(event) {
 			<table class="w-full">
 				<thead class="bg-gray-50">
 					<tr>
-						<th class="px-4 py-3 text-left">
+						<th v-if="!readOnly" class="px-4 py-3 text-left">
 							<input
 								type="checkbox"
 								:checked="allSelected"
@@ -262,6 +296,11 @@ function handleQuantityInput(event) {
 							Item
 						</th>
 						<th
+							v-if="showShopNames"
+							class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+							Shop
+						</th>
+						<th
 							@click="setSortField('buy_price')"
 							class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
 							Buy Price {{ getSortIcon('buy_price') }}
@@ -270,6 +309,10 @@ function handleQuantityInput(event) {
 							@click="setSortField('sell_price')"
 							class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
 							Sell Price {{ getSortIcon('sell_price') }}
+						</th>
+						<th
+							class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+							Profit Margin
 						</th>
 						<th
 							@click="setSortField('stock_quantity')"
@@ -282,6 +325,7 @@ function handleQuantityInput(event) {
 							Last Updated {{ getSortIcon('last_updated') }}
 						</th>
 						<th
+							v-if="!readOnly"
 							class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 							Actions
 						</th>
@@ -291,9 +335,9 @@ function handleQuantityInput(event) {
 					<tr
 						v-for="item in sortedItems"
 						:key="item.id"
-						:class="{ 'bg-blue-50': isSelected(item.id) }">
+						:class="{ 'bg-blue-50': isSelected(item.id) && !readOnly }">
 						<!-- Selection checkbox -->
-						<td class="px-4 py-4">
+						<td v-if="!readOnly" class="px-4 py-4">
 							<input
 								type="checkbox"
 								:checked="isSelected(item.id)"
@@ -326,9 +370,19 @@ function handleQuantityInput(event) {
 							</div>
 						</td>
 
+						<!-- Shop name (only when showing shop names) -->
+						<td v-if="showShopNames" class="px-4 py-4">
+							<div class="text-sm text-gray-900">
+								{{ item.shopData?.name || 'Unknown Shop' }}
+							</div>
+							<div v-if="item.shopData?.location" class="text-xs text-gray-500">
+								📍 {{ item.shopData.location }}
+							</div>
+						</td>
+
 						<!-- Buy price -->
 						<td class="px-4 py-4">
-							<div v-if="editingItemId === item.id">
+							<div v-if="editingItemId === item.id && !readOnly">
 								<input
 									:value="editingValues.buy_price"
 									@input="handlePriceInput('buy_price', $event)"
@@ -354,7 +408,7 @@ function handleQuantityInput(event) {
 
 						<!-- Sell price -->
 						<td class="px-4 py-4">
-							<div v-if="editingItemId === item.id">
+							<div v-if="editingItemId === item.id && !readOnly">
 								<input
 									:value="editingValues.sell_price"
 									@input="handlePriceInput('sell_price', $event)"
@@ -383,9 +437,19 @@ function handleQuantityInput(event) {
 							</div>
 						</td>
 
+						<!-- Profit Margin -->
+						<td class="px-4 py-4">
+							<span
+								v-if="calculateMargin(item) !== null"
+								class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+								:class="getMarginColor(calculateMargin(item))">
+								{{ formatMargin(calculateMargin(item)) }}
+							</span>
+						</td>
+
 						<!-- Stock -->
 						<td class="px-4 py-4">
-							<div v-if="editingItemId === item.id">
+							<div v-if="editingItemId === item.id && !readOnly">
 								<div class="space-y-1">
 									<input
 										:value="editingValues.stock_quantity"
@@ -423,7 +487,7 @@ function handleQuantityInput(event) {
 						</td>
 
 						<!-- Actions -->
-						<td class="px-4 py-4">
+						<td v-if="!readOnly" class="px-4 py-4">
 							<div v-if="editingItemId === item.id" class="flex space-x-2">
 								<button
 									@click="saveEdit"
