@@ -31,22 +31,25 @@ export async function shopExists(shopId) {
 
 // Create shop
 export async function createShop(userId, shopData) {
+	// Validation
 	if (!userId) throw new Error('User ID is required')
-	if (!shopData.name) throw new Error('Shop name is required')
-	if (!shopData.server_id) throw new Error('Server ID is required')
+	if (!shopData.name?.trim()) throw new Error('Shop name is required')
+	if (!shopData.server_id?.trim()) throw new Error('Server ID is required')
+	if (typeof shopData.is_own_shop !== 'boolean') {
+		shopData.is_own_shop = false // Default to competitor
+	}
 
 	try {
 		const db = getFirestore()
 		const shop = {
-			name: shopData.name,
+			name: shopData.name.trim(),
 			server_id: shopData.server_id,
 			owner_id: userId,
-			is_own_shop: shopData.is_own_shop ?? true,
-			location: shopData.location || '',
-			description: shopData.description || '',
+			is_own_shop: shopData.is_own_shop,
+			location: shopData.location?.trim() || '',
+			description: shopData.description?.trim() || '',
 			created_at: new Date().toISOString(),
-			updated_at: new Date().toISOString(),
-			...shopData
+			updated_at: new Date().toISOString()
 		}
 
 		const docRef = await addDoc(collection(db, 'shops'), shop)
@@ -59,7 +62,11 @@ export async function createShop(userId, shopData) {
 
 // Update shop
 export async function updateShop(shopId, updates) {
+	// Validation
 	if (!shopId) throw new Error('Shop ID is required')
+	if (updates.name !== undefined && !updates.name?.trim()) {
+		throw new Error('Shop name cannot be empty')
+	}
 
 	try {
 		const db = getFirestore()
@@ -67,6 +74,11 @@ export async function updateShop(shopId, updates) {
 			...updates,
 			updated_at: new Date().toISOString()
 		}
+
+		// Clean up string fields
+		if (updatedData.name) updatedData.name = updatedData.name.trim()
+		if (updatedData.location) updatedData.location = updatedData.location.trim()
+		if (updatedData.description) updatedData.description = updatedData.description.trim()
 
 		const docRef = doc(db, 'shops', shopId)
 		await updateDoc(docRef, updatedData)

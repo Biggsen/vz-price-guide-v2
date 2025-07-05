@@ -130,26 +130,26 @@ Shop_Prices Collection (🔄 PENDING)
     -   [x] `useServerShops(serverId)` - Server's shops
     -   [x] `useShop(shopId)` - Single shop
 
-### Phase 4: Shops Collection (Frontend)
+### Phase 4: Shops Collection (Frontend) ✅ COMPLETED
 
--   [ ] **Task 4.1**: Create `ShopsView.vue`
+-   [x] **Task 4.1**: Create `ShopsView.vue`
 
-    -   [ ] List user's shops by server
-    -   [ ] Create new shop form
-    -   [ ] Edit existing shops
-    -   [ ] Delete shops
+    -   [x] List user's shops by server
+    -   [x] Create new shop form
+    -   [x] Edit existing shops
+    -   [x] Delete shops
 
--   [ ] **Task 4.2**: Create `ShopForm.vue` component
+-   [x] **Task 4.2**: Integrate shop form within `ShopsView.vue`
 
-    -   [ ] Shop name input
-    -   [ ] Server selection dropdown
-    -   [ ] Location input (optional)
-    -   [ ] Description textarea
-    -   [ ] "Is own shop" checkbox
+    -   [x] Shop name input
+    -   [x] Server selection dropdown
+    -   [x] Location input (optional)
+    -   [x] Description textarea
+    -   [x] "Is own shop" checkbox
 
--   [ ] **Task 4.3**: Add navigation
-    -   [ ] Add "Shops" link to main nav
-    -   [ ] Update router with shops routes
+-   [x] **Task 4.3**: Add navigation
+    -   [x] Add "Shops" link to shop manager dashboard
+    -   [x] Update router with shops routes
 
 ### Phase 5: Shop Prices Collection (Backend)
 
@@ -280,33 +280,33 @@ Shop_Prices Collection (🔄 PENDING)
 
 ---
 
-**Status**: 37% Complete - Phases 1, 2 & 3 implemented, ready for Phase 4
+**Status**: 50% Complete - Phases 1, 2, 3 & 4 implemented, ready for Phase 5
 **Priority**: High
 **Estimated Timeline**: 6-8 weeks (phased approach)
 **Dependencies**: Items collection (✅ exists)
 
 ## Implementation Status Summary
 
-### ✅ **COMPLETED** (37% - 3/8 phases)
+### ✅ **COMPLETED** (50% - 4/8 phases)
 
 -   **Phase 1**: Servers Collection (Backend) - Full `serverProfile.js` utility with CRUD operations
 -   **Phase 2**: Servers Collection (Frontend) - Complete `ServersView.vue` with form handling
 -   **Phase 3**: Shops Collection (Backend) - Complete `shopProfile.js` utility with CRUD operations and composables
+-   **Phase 4**: Shops Collection (Frontend) - Complete `ShopsView.vue` with shop management
 
 **Additional Infrastructure Built:**
 
--   `ShopManagerView.vue` - Main dashboard with navigation cards
+-   `ShopManagerView.vue` - Main dashboard with navigation cards for servers and shops
 -   Firestore security rules for servers and shops collections
 -   Firestore indexes for optimal server and shop queries
--   Router integration and navigation structure
+-   Router integration and navigation structure for both servers and shops
 
-### 🔄 **NEXT UP** (Phase 4)
+### 🔄 **NEXT UP** (Phase 5)
 
--   **Phase 4**: Shops Collection (Frontend) - Begin `ShopsView.vue` implementation
+-   **Phase 5**: Shop Prices Collection (Backend) - Begin `shopPrices.js` utility implementation
 
-### 🔄 **PENDING** (Phases 5-8)
+### 🔄 **PENDING** (Phases 6-8)
 
--   **Phase 5**: Shop Prices Collection (Backend)
 -   **Phase 6**: Price Management (Frontend)
 -   **Phase 7**: Price Comparison & Analysis
 -   **Phase 8**: Integration & Polish

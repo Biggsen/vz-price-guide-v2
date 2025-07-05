@@ -103,6 +103,15 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/shops',
+			name: 'shops',
+			component: () => import('../views/ShopsView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "My Shops - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/updates',
 			name: 'updates',
 			component: () => import('../views/UpdatesView.vue'),

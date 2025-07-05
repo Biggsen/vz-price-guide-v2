@@ -61,7 +61,34 @@ const { user, userProfile } = useAdmin()
 					</p>
 				</RouterLink>
 
-				<!-- Coming Soon: Shop Analytics -->
+				<!-- My Shops -->
+				<RouterLink
+					to="/shops"
+					class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-blue-300">
+					<div class="flex items-center mb-4">
+						<div
+							class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+							<svg
+								class="w-6 h-6 text-green-600"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+							</svg>
+						</div>
+						<h3 class="text-lg font-semibold text-gray-900 ml-3">My Shops</h3>
+					</div>
+					<p class="text-gray-600 text-sm">
+						Manage your own shops and track competitor shops for price comparison and
+						market analysis.
+					</p>
+				</RouterLink>
+
+				<!-- Coming Soon: Price Comparison -->
 				<div class="bg-gray-50 rounded-lg shadow-md p-6 border border-gray-200 opacity-60">
 					<div class="flex items-center mb-4">
 						<div
@@ -79,45 +106,15 @@ const { user, userProfile } = useAdmin()
 							</svg>
 						</div>
 						<div class="ml-3">
-							<h3 class="text-lg font-semibold text-gray-500">Shop Analytics</h3>
+							<h3 class="text-lg font-semibold text-gray-500">Price Comparison</h3>
 							<span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
 								Coming Soon
 							</span>
 						</div>
 					</div>
 					<p class="text-gray-500 text-sm">
-						Track your server's economy performance with detailed analytics and pricing
-						insights.
-					</p>
-				</div>
-
-				<!-- Coming Soon: Linked Shops -->
-				<div class="bg-gray-50 rounded-lg shadow-md p-6 border border-gray-200 opacity-60">
-					<div class="flex items-center mb-4">
-						<div
-							class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-							<svg
-								class="w-6 h-6 text-gray-400"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-							</svg>
-						</div>
-						<div class="ml-3">
-							<h3 class="text-lg font-semibold text-gray-500">Linked Shops</h3>
-							<span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
-								Coming Soon
-							</span>
-						</div>
-					</div>
-					<p class="text-gray-500 text-sm">
-						Connect and synchronize your in-game shops with the price guide for
-						automated pricing updates.
+						Compare prices across shops and analyze market trends for better pricing
+						decisions.
 					</p>
 				</div>
 			</div>

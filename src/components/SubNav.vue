@@ -12,11 +12,21 @@ const activeMainNav = inject('activeMainNav')
 	<nav
 		v-if="activeMainNav === 'admin' && isAdmin"
 		class="bg-gray-700 text-white px-4 py-2 flex gap-4 items-center border-t border-gray-600">
-		<RouterLink v-if="canViewMissingItems" class="hover:underline" to="/missing-items">
+		<RouterLink
+			v-if="canViewMissingItems"
+			class="hover:underline"
+			active-class="underline"
+			to="/missing-items">
 			Missing Items
 		</RouterLink>
-		<RouterLink v-if="canAddItems" class="hover:underline" to="/add">Add Item</RouterLink>
-		<RouterLink v-if="canBulkUpdate" class="hover:underline" to="/bulk-update">
+		<RouterLink v-if="canAddItems" class="hover:underline" active-class="underline" to="/add">
+			Add Item
+		</RouterLink>
+		<RouterLink
+			v-if="canBulkUpdate"
+			class="hover:underline"
+			active-class="underline"
+			to="/bulk-update">
 			Bulk Update
 		</RouterLink>
 		<div class="ml-auto">
@@ -28,6 +38,9 @@ const activeMainNav = inject('activeMainNav')
 	<nav
 		v-if="activeMainNav === 'shop-manager' && user?.email"
 		class="bg-gray-700 text-white px-4 py-2 flex gap-4 items-center border-t border-gray-600">
-		<RouterLink class="hover:underline" to="/servers">My Servers</RouterLink>
+		<RouterLink class="hover:underline" active-class="underline" to="/servers">
+			Servers
+		</RouterLink>
+		<RouterLink class="hover:underline" active-class="underline" to="/shops">Shops</RouterLink>
 	</nav>
 </template>
