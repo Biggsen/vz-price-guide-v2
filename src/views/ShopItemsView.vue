@@ -26,6 +26,7 @@ const showAddForm = ref(false)
 const editingItem = ref(null)
 const loading = ref(false)
 const error = ref(null)
+const shopItemForm = ref(null)
 
 // Get user's shops and servers
 const { shops } = useShops(computed(() => user.value?.uid))
@@ -171,6 +172,13 @@ function showAddItemForm() {
 	}
 	showAddForm.value = true
 	editingItem.value = null
+
+	// Focus search input after form is shown
+	setTimeout(() => {
+		if (shopItemForm.value) {
+			shopItemForm.value.focusSearchInput()
+		}
+	}, 100)
 }
 
 function showEditItemForm(shopItem) {
@@ -354,6 +362,7 @@ function getServerName(serverId) {
 			<!-- Add/Edit item form -->
 			<ShopItemForm
 				v-if="showAddForm"
+				ref="shopItemForm"
 				:available-items="availableItemsForAdding"
 				:editing-item="editingItem"
 				:server="selectedServer"

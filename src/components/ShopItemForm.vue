@@ -32,6 +32,16 @@ const formData = ref({
 const error = ref(null)
 const searchQuery = ref('')
 const showMoreFields = ref(false)
+const highlightedIndex = ref(-1)
+const searchInput = ref(null)
+const dropdownContainer = ref(null)
+
+// Auto-focus search input when form is shown for adding new items
+function focusSearchInput() {
+	if (searchInput.value) {
+		searchInput.value.focus()
+	}
+}
 
 // Reset form data
 function resetForm() {
@@ -45,6 +55,7 @@ function resetForm() {
 	}
 	searchQuery.value = ''
 	error.value = null
+	highlightedIndex.value = -1
 }
 
 // Initialize form when editing
@@ -60,6 +71,10 @@ onMounted(() => {
 		}
 	} else {
 		resetForm()
+		// Focus search input for new items
+		setTimeout(() => {
+			focusSearchInput()
+		}, 100)
 	}
 })
 
@@ -78,6 +93,10 @@ watch(
 			}
 		} else {
 			resetForm()
+			// Focus search input when switching to add mode
+			setTimeout(() => {
+				focusSearchInput()
+			}, 100)
 		}
 	}
 )
@@ -115,6 +134,21 @@ const itemsByCategory = computed(() => {
 	})
 
 	return grouped
+})
+
+// Flattened items list for keyboard navigation - matches visual order
+const flattenedItems = computed(() => {
+	const flattened = []
+	const grouped = itemsByCategory.value
+
+	// Flatten items in the same order they appear visually (by category)
+	Object.keys(grouped).forEach((category) => {
+		grouped[category].forEach((item) => {
+			flattened.push(item)
+		})
+	})
+
+	return flattened
 })
 
 // Form validation
@@ -159,16 +193,123 @@ function handleCancel() {
 	emit('cancel')
 }
 
+// Keyboard navigation handlers
+function handleKeyDown(event) {
+	if (!flattenedItems.value.length) return
+
+	const oldIndex = highlightedIndex.value
+
+	switch (event.key) {
+		case 'ArrowDown':
+			event.preventDefault()
+			if (highlightedIndex.value < 0) {
+				highlightedIndex.value = 0
+			} else {
+				highlightedIndex.value = Math.min(
+					highlightedIndex.value + 1,
+					flattenedItems.value.length - 1
+				)
+			}
+			break
+		case 'ArrowUp':
+			event.preventDefault()
+			if (highlightedIndex.value <= 0) {
+				highlightedIndex.value = -1
+			} else {
+				highlightedIndex.value = Math.max(highlightedIndex.value - 1, 0)
+			}
+			break
+		case 'Enter':
+			event.preventDefault()
+			if (
+				highlightedIndex.value >= 0 &&
+				highlightedIndex.value < flattenedItems.value.length
+			) {
+				selectItem(flattenedItems.value[highlightedIndex.value])
+			}
+			break
+		case 'Escape':
+			highlightedIndex.value = -1
+			break
+	}
+
+	// Scroll highlighted item into view if index changed
+	if (oldIndex !== highlightedIndex.value) {
+		scrollToHighlightedItem()
+	}
+}
+
+// Scroll highlighted item into view
+function scrollToHighlightedItem() {
+	if (!dropdownContainer.value || highlightedIndex.value < 0) return
+
+	setTimeout(() => {
+		const highlightedElement = dropdownContainer.value.querySelector('.bg-blue-100')
+		if (highlightedElement) {
+			highlightedElement.scrollIntoView({
+				behavior: 'smooth',
+				block: 'nearest'
+			})
+		}
+	}, 0)
+}
+
+// Reset highlighted index when search changes
+function handleSearchInput() {
+	highlightedIndex.value = -1
+}
+
+// Form submission on Enter key
+function handleFormKeyDown(event) {
+	if (event.key === 'Enter' && !event.shiftKey) {
+		// Don't submit if we're in the search input and dropdown is open
+		if (
+			event.target.id === 'item-search' &&
+			searchQuery.value &&
+			filteredItems.value.length > 0
+		) {
+			return
+		}
+
+		// Don't submit if in textarea
+		if (event.target.tagName === 'TEXTAREA') {
+			return
+		}
+
+		event.preventDefault()
+		if (isFormValid.value) {
+			handleSubmit()
+		}
+	}
+}
+
 // Select item handler
 function selectItem(item) {
 	formData.value.item_id = item.id
 	searchQuery.value = '' // Clear search query when item is selected
+	highlightedIndex.value = -1 // Reset highlight
 }
 
 // Clear selected item
 function clearSelectedItem() {
 	formData.value.item_id = ''
 	searchQuery.value = ''
+	highlightedIndex.value = -1
+}
+
+// Get visual index of an item in the dropdown (accounting for category grouping)
+function getItemVisualIndex(targetCategory, targetCategoryIndex) {
+	let visualIndex = 0
+	const grouped = itemsByCategory.value
+
+	for (const [category, categoryItems] of Object.entries(grouped)) {
+		if (category === targetCategory) {
+			return visualIndex + targetCategoryIndex
+		}
+		visualIndex += categoryItems.length
+	}
+
+	return -1
 }
 
 // Number input helpers
@@ -191,6 +332,11 @@ function handleQuantityInput(event) {
 		formData.value.stock_quantity = isNaN(numValue) ? null : numValue
 	}
 }
+
+// Expose focus function for parent component
+defineExpose({
+	focusSearchInput
+})
 </script>
 
 <template>
@@ -204,7 +350,7 @@ function handleQuantityInput(event) {
 			{{ error }}
 		</div>
 
-		<form @submit.prevent="handleSubmit" class="space-y-4">
+		<form @submit.prevent="handleSubmit" @keydown="handleFormKeyDown" class="space-y-4">
 			<!-- Item selection -->
 			<div v-if="!editingItem">
 				<!-- Show search input when no item is selected -->
@@ -214,7 +360,10 @@ function handleQuantityInput(event) {
 					</label>
 					<input
 						id="item-search"
+						ref="searchInput"
 						v-model="searchQuery"
+						@input="handleSearchInput"
+						@keydown="handleKeyDown"
 						type="text"
 						placeholder="Search items by name, material ID, or category..."
 						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2" />
@@ -222,17 +371,28 @@ function handleQuantityInput(event) {
 					<!-- Item selection dropdown -->
 					<div
 						v-if="searchQuery && filteredItems.length > 0"
+						ref="dropdownContainer"
 						class="max-h-64 overflow-y-auto border border-gray-300 rounded-md bg-white">
-						<div v-for="(categoryItems, category) in itemsByCategory" :key="category">
+						<template
+							v-for="(categoryItems, category) in itemsByCategory"
+							:key="category">
 							<div
 								class="px-3 py-2 bg-gray-100 text-sm font-medium text-gray-700 border-b">
 								{{ category }}
 							</div>
 							<div
-								v-for="item in categoryItems"
+								v-for="(item, categoryIndex) in categoryItems"
 								:key="item.id"
 								@click="selectItem(item)"
-								class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 flex items-center justify-between">
+								@mouseenter="
+									highlightedIndex = getItemVisualIndex(category, categoryIndex)
+								"
+								:class="[
+									'px-3 py-2 cursor-pointer border-b border-gray-100 flex items-center justify-between',
+									getItemVisualIndex(category, categoryIndex) === highlightedIndex
+										? 'bg-blue-100 text-blue-900'
+										: 'hover:bg-blue-50'
+								]">
 								<div>
 									<div class="font-medium">{{ item.name }}</div>
 									<div class="text-sm text-gray-500">{{ item.material_id }}</div>
@@ -244,7 +404,7 @@ function handleQuantityInput(event) {
 										class="w-full h-full object-contain" />
 								</div>
 							</div>
-						</div>
+						</template>
 					</div>
 				</div>
 
