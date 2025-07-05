@@ -109,6 +109,48 @@
 					"order": "DESCENDING"
 				}
 			]
+		},
+		{
+			"collectionGroup": "shop_prices",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "shop_id",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "last_updated",
+					"order": "DESCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "shop_prices",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "item_id",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "last_updated",
+					"order": "DESCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "shop_prices",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "shop_id",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "item_id",
+					"order": "ASCENDING"
+				}
+			]
 		}
 	],
 	"fieldOverrides": []

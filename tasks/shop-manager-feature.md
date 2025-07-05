@@ -179,27 +179,27 @@ The `stock_full` boolean field handles a common Minecraft shop scenario:
     -   [x] Add "Shops" link to shop manager dashboard
     -   [x] Update router with shops routes
 
-### Phase 5: Shop Prices Collection (Backend)
+### Phase 5: Shop Prices Collection (Backend) ✅ COMPLETED
 
--   [ ] **Task 5.1**: Create `shopPrices.js` utility
+-   [x] **Task 5.1**: Create `shopPrices.js` utility
 
-    -   [ ] `addShopPrice(shopId, itemId, priceData)`
-    -   [ ] `updateShopPrice(priceId, updates)`
-    -   [ ] `deleteShopPrice(priceId)`
-    -   [ ] `getShopPrices(shopId)`
-    -   [ ] `getItemPrices(itemId)` - across shops
-    -   [ ] `bulkUpdatePrices(shopId, pricesArray)`
+    -   [x] `addShopPrice(shopId, itemId, priceData)`
+    -   [x] `updateShopPrice(priceId, updates)`
+    -   [x] `deleteShopPrice(priceId)`
+    -   [x] `getShopPrices(shopId)`
+    -   [x] `getItemPrices(itemId)` - across shops
+    -   [x] `bulkUpdatePrices(shopId, pricesArray)`
 
--   [ ] **Task 5.2**: Update Firestore security rules
+-   [x] **Task 5.2**: Update Firestore security rules
 
-    -   [ ] Allow users to read/write prices for own shops
-    -   [ ] Allow reading public shop prices
-    -   [ ] Add price validation rules
+    -   [x] Allow users to read/write prices for own shops
+    -   [x] Allow reading public shop prices
+    -   [x] Add price validation rules
 
--   [ ] **Task 5.3**: Create price management composables
-    -   [ ] `useShopPrices(shopId)` - Shop's prices
-    -   [ ] `useItemPrices(itemId)` - Item across shops
-    -   [ ] `usePriceComparison(itemIds)` - Multi-item comparison
+-   [x] **Task 5.3**: Create price management composables
+    -   [x] `useShopPrices(shopId)` - Shop's prices
+    -   [x] `useItemPrices(itemId)` - Item across shops
+    -   [x] `usePriceComparison(itemIds)` - Multi-item comparison
 
 ### Phase 6: Price Management (Frontend)
 
@@ -308,33 +308,35 @@ The `stock_full` boolean field handles a common Minecraft shop scenario:
 
 ---
 
-**Status**: 50% Complete - Phases 1, 2, 3 & 4 implemented, ready for Phase 5
+**Status**: 62.5% Complete - Phases 1, 2, 3, 4 & 5 implemented, ready for Phase 6
 **Priority**: High
 **Estimated Timeline**: 6-8 weeks (phased approach)
 **Dependencies**: Items collection (✅ exists)
 
 ## Implementation Status Summary
 
-### ✅ **COMPLETED** (50% - 4/8 phases)
+### ✅ **COMPLETED** (62.5% - 5/8 phases)
 
 -   **Phase 1**: Servers Collection (Backend) - Full `serverProfile.js` utility with CRUD operations
 -   **Phase 2**: Servers Collection (Frontend) - Complete `ServersView.vue` with form handling
 -   **Phase 3**: Shops Collection (Backend) - Complete `shopProfile.js` utility with CRUD operations and composables
 -   **Phase 4**: Shops Collection (Frontend) - Complete `ShopsView.vue` with shop management
+-   **Phase 5**: Shop Prices Collection (Backend) - Complete `shopPrices.js` utility with price history logic
 
 **Additional Infrastructure Built:**
 
 -   `ShopManagerView.vue` - Main dashboard with navigation cards for servers and shops
--   Firestore security rules for servers and shops collections
--   Firestore indexes for optimal server and shop queries
+-   Firestore security rules for servers, shops, and shop_prices collections
+-   Firestore indexes for optimal server, shop, and price queries
 -   Router integration and navigation structure for both servers and shops
+-   Price history logic with automatic previous price tracking
+-   Vue composables for reactive price data management
 
-### 🔄 **NEXT UP** (Phase 5)
+### 🔄 **NEXT UP** (Phase 6)
 
--   **Phase 5**: Shop Prices Collection (Backend) - Begin `shopPrices.js` utility implementation
+-   **Phase 6**: Price Management (Frontend) - Begin `ShopPricesView.vue` and price form components
 
-### 🔄 **PENDING** (Phases 6-8)
+### 🔄 **PENDING** (Phases 7-8)
 
--   **Phase 6**: Price Management (Frontend)
 -   **Phase 7**: Price Comparison & Analysis
 -   **Phase 8**: Integration & Polish
