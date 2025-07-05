@@ -31,7 +31,7 @@ Shops Collection (🔄 PENDING)
 ├── created_at
 └── updated_at
 
-Shop_Prices Collection (🔄 PENDING)
+Shop_Items Collection (✅ IMPLEMENTED)
 ├── shop_id (shop reference)
 ├── item_id (reference to items collection)
 ├── buy_price (nullable)
@@ -47,7 +47,7 @@ Shop_Prices Collection (🔄 PENDING)
 
 ### Simple Price History Logic
 
-When updating prices in the `shopPrices.js` utility:
+When updating prices in the `shopItems.js` utility:
 
 1. **Before updating**: Save current `buy_price` → `previous_buy_price`, `sell_price` → `previous_sell_price`
 2. **Store timing**: Save current `last_updated` → `previous_price_date`
@@ -179,38 +179,38 @@ The `stock_full` boolean field handles a common Minecraft shop scenario:
     -   [x] Add "Shops" link to shop manager dashboard
     -   [x] Update router with shops routes
 
-### Phase 5: Shop Prices Collection (Backend) ✅ COMPLETED
+### Phase 5: Shop Items Collection (Backend) ✅ COMPLETED
 
--   [x] **Task 5.1**: Create `shopPrices.js` utility
+-   [x] **Task 5.1**: Create `shopItems.js` utility
 
-    -   [x] `addShopPrice(shopId, itemId, priceData)`
-    -   [x] `updateShopPrice(priceId, updates)`
-    -   [x] `deleteShopPrice(priceId)`
-    -   [x] `getShopPrices(shopId)`
-    -   [x] `getItemPrices(itemId)` - across shops
-    -   [x] `bulkUpdatePrices(shopId, pricesArray)`
+    -   [x] `addShopItem(shopId, itemId, itemData)`
+    -   [x] `updateShopItem(itemId, updates)`
+    -   [x] `deleteShopItem(itemId)`
+    -   [x] `getShopItems(shopId)`
+    -   [x] `getItemAcrossShops(itemId)` - across shops
+    -   [x] `bulkUpdateShopItems(shopId, itemsArray)`
 
 -   [x] **Task 5.2**: Update Firestore security rules
 
-    -   [x] Allow users to read/write prices for own shops
-    -   [x] Allow reading public shop prices
-    -   [x] Add price validation rules
+    -   [x] Allow users to read/write items for own shops
+    -   [x] Allow reading public shop items
+    -   [x] Add item validation rules
 
--   [x] **Task 5.3**: Create price management composables
-    -   [x] `useShopPrices(shopId)` - Shop's prices
-    -   [x] `useItemPrices(itemId)` - Item across shops
+-   [x] **Task 5.3**: Create item management composables
+    -   [x] `useShopItems(shopId)` - Shop's items
+    -   [x] `useItemAcrossShops(itemId)` - Item across shops
     -   [x] `usePriceComparison(itemIds)` - Multi-item comparison
 
-### Phase 6: Price Management (Frontend)
+### Phase 6: Shop Items Management (Frontend)
 
--   [ ] **Task 6.1**: Create `ShopPricesView.vue`
+-   [ ] **Task 6.1**: Create `ShopItemsView.vue`
 
-    -   [ ] List shop's item prices
-    -   [ ] Add new item prices
-    -   [ ] Edit existing prices
+    -   [ ] List shop's items with prices
+    -   [ ] Add new items with prices
+    -   [ ] Edit existing items
     -   [ ] Bulk import/export
 
--   [ ] **Task 6.2**: Create `PriceForm.vue` component
+-   [ ] **Task 6.2**: Create `ShopItemForm.vue` component
 
     -   [ ] Item selection (filtered by server version)
     -   [ ] Buy price input
@@ -218,7 +218,7 @@ The `stock_full` boolean field handles a common Minecraft shop scenario:
     -   [ ] Stock quantity input
     -   [ ] Notes textarea
 
--   [ ] **Task 6.3**: Create `ItemPriceTable.vue` component
+-   [ ] **Task 6.3**: Create `ShopItemTable.vue` component
     -   [ ] Sortable table of items and prices
     -   [ ] Edit inline functionality
     -   [ ] Delete confirmation
@@ -321,20 +321,20 @@ The `stock_full` boolean field handles a common Minecraft shop scenario:
 -   **Phase 2**: Servers Collection (Frontend) - Complete `ServersView.vue` with form handling
 -   **Phase 3**: Shops Collection (Backend) - Complete `shopProfile.js` utility with CRUD operations and composables
 -   **Phase 4**: Shops Collection (Frontend) - Complete `ShopsView.vue` with shop management
--   **Phase 5**: Shop Prices Collection (Backend) - Complete `shopPrices.js` utility with price history logic
+-   **Phase 5**: Shop Items Collection (Backend) - Complete `shopItems.js` utility with price history logic
 
 **Additional Infrastructure Built:**
 
 -   `ShopManagerView.vue` - Main dashboard with navigation cards for servers and shops
--   Firestore security rules for servers, shops, and shop_prices collections
--   Firestore indexes for optimal server, shop, and price queries
+-   Firestore security rules for servers, shops, and shop_items collections
+-   Firestore indexes for optimal server, shop, and item queries
 -   Router integration and navigation structure for both servers and shops
 -   Price history logic with automatic previous price tracking
 -   Vue composables for reactive price data management
 
 ### 🔄 **NEXT UP** (Phase 6)
 
--   **Phase 6**: Price Management (Frontend) - Begin `ShopPricesView.vue` and price form components
+-   **Phase 6**: Shop Items Management (Frontend) - Begin `ShopItemsView.vue` and item form components
 
 ### 🔄 **PENDING** (Phases 7-8)
 

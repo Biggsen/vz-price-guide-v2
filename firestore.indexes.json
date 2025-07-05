@@ -111,7 +111,7 @@
 			]
 		},
 		{
-			"collectionGroup": "shop_prices",
+			"collectionGroup": "shop_items",
 			"queryScope": "COLLECTION",
 			"fields": [
 				{
@@ -125,7 +125,7 @@
 			]
 		},
 		{
-			"collectionGroup": "shop_prices",
+			"collectionGroup": "shop_items",
 			"queryScope": "COLLECTION",
 			"fields": [
 				{
@@ -139,7 +139,7 @@
 			]
 		},
 		{
-			"collectionGroup": "shop_prices",
+			"collectionGroup": "shop_items",
 			"queryScope": "COLLECTION",
 			"fields": [
 				{
