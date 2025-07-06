@@ -325,8 +325,45 @@ export function useShopItems(shopId) {
 		)
 	})
 
-	// Use the computed query with useCollection
-	const items = useCollection(itemsQuery)
+	// Use VueFire's useCollection but transform the data to ensure IDs
+	const rawItems = useCollection(itemsQuery)
+
+	const items = computed(() => {
+		if (!rawItems.value) return []
+
+		console.log('useShopItems: Raw items from VueFire:', rawItems.value)
+		console.log(
+			'useShopItems: First item keys:',
+			rawItems.value[0] ? Object.keys(rawItems.value[0]) : 'No items'
+		)
+
+		// Transform items to ensure they have proper document IDs
+		const itemsWithIds = rawItems.value.map((item, index) => {
+			let docId = item.id
+
+			// Log the item structure for debugging
+			console.log(`useShopItems: Item ${index}:`, {
+				hasId: !!item.id,
+				itemId: item.id,
+				keys: Object.keys(item),
+				item: item
+			})
+
+			// If no ID, this is a problem with VueFire setup
+			if (!docId) {
+				console.error('useShopItems: VueFire item missing ID:', item)
+				docId = `missing-${index}-${Date.now()}`
+			}
+
+			return {
+				...item,
+				id: docId
+			}
+		})
+
+		console.log('useShopItems: Final processed items:', itemsWithIds)
+		return itemsWithIds
+	})
 
 	return { items }
 }

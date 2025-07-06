@@ -82,6 +82,7 @@ onMounted(() => {
 watch(
 	() => props.editingItem,
 	(newEditingItem) => {
+		console.log('ShopItemForm: editingItem changed, isEditing:', !!newEditingItem)
 		if (newEditingItem) {
 			formData.value = {
 				item_id: newEditingItem.item_id,
@@ -153,15 +154,36 @@ const flattenedItems = computed(() => {
 
 // Form validation
 const isFormValid = computed(() => {
-	if (!formData.value.item_id) return false
-	if (!formData.value.buy_price && !formData.value.sell_price) return false
+	const hasItemId = !!formData.value.item_id
+	const hasBuyPrice =
+		formData.value.buy_price !== null &&
+		formData.value.buy_price !== undefined &&
+		formData.value.buy_price !== ''
+	const hasSellPrice =
+		formData.value.sell_price !== null &&
+		formData.value.sell_price !== undefined &&
+		formData.value.sell_price !== ''
+	const hasAtLeastOnePrice = hasBuyPrice || hasSellPrice
 
-	// Validate price values
-	if (formData.value.buy_price !== null && formData.value.buy_price !== undefined) {
-		if (isNaN(formData.value.buy_price) || formData.value.buy_price < 0) return false
+	if (!hasItemId) {
+		console.log('ShopItemForm: Validation failed - missing item_id')
+		return false
 	}
-	if (formData.value.sell_price !== null && formData.value.sell_price !== undefined) {
-		if (isNaN(formData.value.sell_price) || formData.value.sell_price < 0) return false
+
+	if (!hasAtLeastOnePrice) {
+		console.log('ShopItemForm: Validation failed - no prices set')
+		return false
+	}
+
+	// Validate price values if they exist
+	if (hasBuyPrice && (isNaN(formData.value.buy_price) || formData.value.buy_price < 0)) {
+		console.log('ShopItemForm: Validation failed - invalid buy_price')
+		return false
+	}
+
+	if (hasSellPrice && (isNaN(formData.value.sell_price) || formData.value.sell_price < 0)) {
+		console.log('ShopItemForm: Validation failed - invalid sell_price')
+		return false
 	}
 
 	return true
@@ -171,7 +193,25 @@ const isFormValid = computed(() => {
 function handleSubmit() {
 	error.value = null
 
+	console.log('=== FORM SUBMIT DEBUG ===')
+	console.log('EditingItem prop:', props.editingItem)
+	console.log('Form data:', formData.value)
+	console.log('Form valid:', isFormValid.value)
+
+	if (!formData.value.item_id) {
+		console.log('ERROR: item_id is missing')
+		error.value = 'Item ID is required'
+		return
+	}
+
+	if (!formData.value.buy_price && !formData.value.sell_price) {
+		console.log('ERROR: both prices are missing')
+		error.value = 'At least one price (buy or sell) is required'
+		return
+	}
+
 	if (!isFormValid.value) {
+		console.log('ERROR: form validation failed')
 		error.value = 'Please fill in all required fields with valid values'
 		return
 	}
@@ -185,6 +225,7 @@ function handleSubmit() {
 		notes: formData.value.notes?.trim() || ''
 	}
 
+	console.log('Submitting cleaned data:', submitData)
 	emit('submit', submitData)
 }
 

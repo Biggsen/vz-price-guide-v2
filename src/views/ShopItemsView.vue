@@ -45,7 +45,9 @@ const shopItemsResult = useShopItems(safeShopId)
 const shopItems = computed(() => {
 	// Return empty array if there's an error or no data
 	try {
-		return shopItemsResult.items.value || []
+		const items = shopItemsResult.items.value || []
+		console.log('Final shop items in view:', items)
+		return items
 	} catch (error) {
 		console.warn('Error loading shop items:', error)
 		return []
@@ -182,6 +184,16 @@ function showAddItemForm() {
 }
 
 function showEditItemForm(shopItem) {
+	console.log('ShopItemsView: Opening edit form for item:', shopItem.id)
+	console.log('ShopItemsView: Full item data:', shopItem)
+
+	// Ensure the item has a proper document ID
+	if (!shopItem.id) {
+		console.error('ShopItemsView: Cannot edit item without document ID')
+		error.value = 'Cannot edit item: missing document ID'
+		return
+	}
+
 	editingItem.value = shopItem
 	showAddForm.value = true
 }
@@ -194,6 +206,9 @@ function cancelForm() {
 
 // CRUD operations
 async function handleItemSubmit(itemData) {
+	console.log('ShopItemsView: handleItemSubmit called')
+	console.log('Is editing:', !!editingItem.value)
+
 	if (!user.value?.uid || !selectedShopId.value) return
 
 	loading.value = true
@@ -202,9 +217,17 @@ async function handleItemSubmit(itemData) {
 	try {
 		if (editingItem.value) {
 			// Update existing shop item
+			console.log('ShopItemsView: Updating existing item with ID:', editingItem.value.id)
+
+			// Validate that we have a document ID
+			if (!editingItem.value.id) {
+				throw new Error('Cannot update item: missing document ID')
+			}
+
 			await updateShopItem(editingItem.value.id, itemData)
 		} else {
 			// Add new shop item
+			console.log('ShopItemsView: Adding new item')
 			await addShopItem(selectedShopId.value, itemData.item_id, itemData)
 		}
 
@@ -252,6 +275,43 @@ async function handleBulkUpdate(itemsArray) {
 	} catch (err) {
 		console.error('Error bulk updating shop items:', err)
 		error.value = err.message || 'Failed to bulk update shop items. Please try again.'
+	} finally {
+		loading.value = false
+	}
+}
+
+// Handle quick edit from table
+async function handleQuickEdit(updatedItem) {
+	console.log('ShopItemsView: handleQuickEdit called for item:', updatedItem.id)
+	console.log('ShopItemsView: Full updated item data:', updatedItem)
+
+	// Validate that we have a document ID
+	if (!updatedItem.id) {
+		console.error('ShopItemsView: Cannot quick edit item without document ID')
+		error.value = 'Cannot update item: missing document ID'
+		return
+	}
+
+	if (!user.value?.uid || !selectedShopId.value) return
+
+	loading.value = true
+	error.value = null
+
+	try {
+		// Extract the data to update (excluding the full item object)
+		const updateData = {
+			buy_price: updatedItem.buy_price,
+			sell_price: updatedItem.sell_price,
+			stock_quantity: updatedItem.stock_quantity,
+			stock_full: updatedItem.stock_full,
+			notes: updatedItem.notes
+		}
+
+		console.log('ShopItemsView: Updating item ID:', updatedItem.id, 'with data:', updateData)
+		await updateShopItem(updatedItem.id, updateData)
+	} catch (err) {
+		console.error('Error updating shop item:', err)
+		error.value = err.message || 'Failed to update shop item. Please try again.'
 	} finally {
 		loading.value = false
 	}
@@ -396,7 +456,8 @@ function getServerName(serverId) {
 							:shop="selectedShop"
 							@edit="showEditItemForm"
 							@delete="handleItemDelete"
-							@bulk-update="handleBulkUpdate" />
+							@bulk-update="handleBulkUpdate"
+							@quick-edit="handleQuickEdit" />
 					</div>
 				</div>
 			</div>

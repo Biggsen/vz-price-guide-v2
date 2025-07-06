@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 const props = defineProps({
@@ -25,7 +25,7 @@ const props = defineProps({
 	}
 })
 
-const emit = defineEmits(['edit', 'delete', 'bulk-update'])
+const emit = defineEmits(['edit', 'delete', 'bulk-update', 'quick-edit'])
 
 // Router setup
 const router = useRouter()
@@ -148,6 +148,13 @@ function isSelected(itemId) {
 
 // Inline editing methods
 function startEdit(item) {
+	// Cancel any existing edit first
+	cancelEdit()
+
+	// Debug logging
+	console.log('ShopItemTable: Starting edit for item ID:', item.id)
+
+	// Set the new editing item
 	editingItemId.value = item.id
 	editingValues.value = {
 		buy_price: item.buy_price,
@@ -159,11 +166,13 @@ function startEdit(item) {
 }
 
 function cancelEdit() {
+	console.log('ShopItemTable: Canceling edit')
 	editingItemId.value = null
 	editingValues.value = {}
 }
 
 function saveEdit() {
+	console.log('ShopItemTable: Saving edit for item ID:', editingItemId.value)
 	if (editingItemId.value) {
 		const item = props.items.find((i) => i.id === editingItemId.value)
 		if (item) {
@@ -171,11 +180,34 @@ function saveEdit() {
 				...item,
 				...editingValues.value
 			}
-			emit('edit', updatedItem)
+			emit('quick-edit', updatedItem)
 		}
 	}
 	cancelEdit()
 }
+
+// Helper function to check if an item is currently being edited
+function isEditing(itemId) {
+	return editingItemId.value === itemId
+}
+
+// Watch for items changes
+watch(
+	() => props.items,
+	(newItems) => {
+		if (newItems && newItems.length > 0) {
+			console.log('ShopItemTable: Items loaded, count:', newItems.length)
+
+			// Check for missing IDs
+			const missingIds = newItems.filter((item) => !item.id)
+			if (missingIds.length > 0) {
+				console.warn('ShopItemTable: Items missing IDs:', missingIds.length)
+				console.log('First missing ID item:', missingIds[0])
+			}
+		}
+	},
+	{ immediate: true }
+)
 
 // Utility methods
 function formatPrice(price) {
@@ -437,7 +469,7 @@ function navigateToShopItems(shopId) {
 
 						<!-- Buy price -->
 						<td class="px-3 py-2">
-							<div v-if="editingItemId === item.id && !readOnly">
+							<div v-if="isEditing(item.id) && !readOnly">
 								<input
 									:value="editingValues.buy_price"
 									@input="handlePriceInput('buy_price', $event)"
@@ -463,7 +495,7 @@ function navigateToShopItems(shopId) {
 
 						<!-- Sell price -->
 						<td class="px-3 py-2">
-							<div v-if="editingItemId === item.id && !readOnly">
+							<div v-if="isEditing(item.id) && !readOnly">
 								<input
 									:value="editingValues.sell_price"
 									@input="handlePriceInput('sell_price', $event)"
@@ -514,7 +546,7 @@ function navigateToShopItems(shopId) {
 
 						<!-- Stock -->
 						<td class="px-3 py-2">
-							<div v-if="editingItemId === item.id && !readOnly">
+							<div v-if="isEditing(item.id) && !readOnly">
 								<div class="space-y-1">
 									<input
 										:value="editingValues.stock_quantity"
@@ -553,7 +585,7 @@ function navigateToShopItems(shopId) {
 
 						<!-- Actions -->
 						<td v-if="!readOnly" class="px-3 py-2">
-							<div v-if="editingItemId === item.id" class="flex space-x-2">
+							<div v-if="isEditing(item.id)" class="flex space-x-2">
 								<button
 									@click="saveEdit"
 									class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
