@@ -253,7 +253,22 @@ const filteredGroupedItems = computed(() => {
 	return enabledCategories.reduce((acc, cat) => {
 		const items = groupedItems.value[cat] || []
 		acc[cat] = query
-			? items.filter((item) => item.name && item.name.toLowerCase().includes(query))
+			? items.filter((item) => {
+					if (!item.name) return false
+					const itemName = item.name.toLowerCase()
+
+					// Split search query by commas and/or spaces, then trim and filter out empty strings
+					const searchTerms = query
+						.split(/[,\s]+/)
+						.map((term) => term.trim())
+						.filter((term) => term.length > 0)
+
+					// If no valid search terms, return all items
+					if (searchTerms.length === 0) return true
+
+					// Check if item name contains any of the search terms (OR logic)
+					return searchTerms.some((term) => itemName.includes(term))
+			  })
 			: items
 		return acc
 	}, {})
@@ -266,7 +281,22 @@ const filteredUncategorizedItemsByVersion = computed(() => {
 
 	Object.entries(uncategorizedItemsByVersion.value).forEach(([version, items]) => {
 		result[version] = query
-			? items.filter((item) => item.name && item.name.toLowerCase().includes(query))
+			? items.filter((item) => {
+					if (!item.name) return false
+					const itemName = item.name.toLowerCase()
+
+					// Split search query by commas and/or spaces, then trim and filter out empty strings
+					const searchTerms = query
+						.split(/[,\s]+/)
+						.map((term) => term.trim())
+						.filter((term) => term.length > 0)
+
+					// If no valid search terms, return all items
+					if (searchTerms.length === 0) return true
+
+					// Check if item name contains any of the search terms (OR logic)
+					return searchTerms.some((term) => itemName.includes(term))
+			  })
 			: items
 	})
 
@@ -289,7 +319,22 @@ const filteredUncategorizedItems = computed(() => {
 	const query = searchQuery.value.trim().toLowerCase()
 	const items = uncategorizedItems.value
 	return query
-		? items.filter((item) => item.name && item.name.toLowerCase().includes(query))
+		? items.filter((item) => {
+				if (!item.name) return false
+				const itemName = item.name.toLowerCase()
+
+				// Split search query by commas and/or spaces, then trim and filter out empty strings
+				const searchTerms = query
+					.split(/[,\s]+/)
+					.map((term) => term.trim())
+					.filter((term) => term.length > 0)
+
+				// If no valid search terms, return all items
+				if (searchTerms.length === 0) return true
+
+				// Check if item name contains any of the search terms (OR logic)
+				return searchTerms.some((term) => itemName.includes(term))
+		  })
 		: items
 })
 
@@ -526,15 +571,20 @@ watch(
 
 	<main>
 		<div class="my-4 flex flex-col sm:flex-row sm:gap-4">
-			<input
-				type="text"
-				v-model="searchQuery"
-				placeholder="Search for an item..."
-				class="border-2 border-gray-asparagus rounded px-3 py-2 w-full sm:max-w-md mb-2 sm:mb-0" />
+			<div class="flex-1 sm:max-w-md">
+				<input
+					type="text"
+					v-model="searchQuery"
+					placeholder="Search for items..."
+					class="border-2 border-gray-asparagus rounded px-3 py-2 w-full mb-1 h-10" />
+				<p class="text-xs text-gray-500 mb-2 sm:mb-0">
+					Tip: Use commas or spaces to search for multiple items
+				</p>
+			</div>
 			<div class="flex gap-2 sm:gap-0 sm:ml-2">
 				<button
 					@click="resetCategories"
-					class="bg-laurel text-white border-2 border-gray-asparagus rounded px-3 py-2 transition flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2">
+					class="bg-laurel text-white border-2 border-gray-asparagus rounded px-3 py-2 transition flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2 h-10">
 					Reset
 				</button>
 				<button
@@ -543,7 +593,7 @@ watch(
 						allVisible
 							? 'bg-norway text-heavy-metal border-2 border-gray-asparagus'
 							: 'bg-gray-asparagus text-white border-2 border-gray-asparagus',
-						'rounded px-3 py-2 transition flex-1 sm:flex-none text-sm sm:text-base sm:whitespace-nowrap'
+						'rounded px-3 py-2 transition flex-1 sm:flex-none text-sm sm:text-base sm:whitespace-nowrap h-10'
 					]">
 					{{ allVisible ? 'Hide all categories' : 'Show all categories' }}
 				</button>

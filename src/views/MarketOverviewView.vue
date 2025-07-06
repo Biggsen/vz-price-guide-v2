@@ -125,9 +125,22 @@ const filteredShopItemsByCategory = computed(() => {
 	const filtered = {}
 
 	Object.entries(shopItemsByCategory.value).forEach(([category, items]) => {
-		const filteredItems = items.filter(
-			(item) => item.itemData?.name && item.itemData.name.toLowerCase().includes(query)
-		)
+		const filteredItems = items.filter((item) => {
+			if (!item.itemData?.name) return false
+			const itemName = item.itemData.name.toLowerCase()
+
+			// Split search query by commas and/or spaces, then trim and filter out empty strings
+			const searchTerms = query
+				.split(/[,\s]+/)
+				.map((term) => term.trim())
+				.filter((term) => term.length > 0)
+
+			// If no valid search terms, return all items
+			if (searchTerms.length === 0) return true
+
+			// Check if item name contains any of the search terms (OR logic)
+			return searchTerms.some((term) => itemName.includes(term))
+		})
 
 		if (filteredItems.length > 0) {
 			filtered[category] = filteredItems
@@ -316,8 +329,11 @@ const priceAnalysis = computed(() => {
 					id="item-search"
 					type="text"
 					v-model="searchQuery"
-					placeholder="Search for an item..."
+					placeholder="Search for items..."
 					class="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+				<p class="text-xs text-gray-500 mt-1">
+					Tip: Use commas or spaces to search for multiple items
+				</p>
 				<div v-if="searchQuery" class="mt-2 text-sm text-gray-600">
 					Showing {{ marketStats?.totalItems || 0 }} item{{
 						marketStats?.totalItems === 1 ? '' : 's'
