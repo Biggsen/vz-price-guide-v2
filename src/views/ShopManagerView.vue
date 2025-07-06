@@ -115,13 +115,15 @@ const { user, userProfile } = useAdmin()
 					</p>
 				</RouterLink>
 
-				<!-- Coming Soon: Price Comparison -->
-				<div class="bg-gray-50 rounded-lg shadow-md p-6 border border-gray-200 opacity-60">
+				<!-- Market Overview -->
+				<RouterLink
+					to="/market-overview"
+					class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-orange-300">
 					<div class="flex items-center mb-4">
 						<div
-							class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+							class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
 							<svg
-								class="w-6 h-6 text-gray-400"
+								class="w-6 h-6 text-orange-600"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24">
@@ -132,18 +134,13 @@ const { user, userProfile } = useAdmin()
 									d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
 							</svg>
 						</div>
-						<div class="ml-3">
-							<h3 class="text-lg font-semibold text-gray-500">Price Comparison</h3>
-							<span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
-								Coming Soon
-							</span>
-						</div>
+						<h3 class="text-lg font-semibold text-gray-900 ml-3">Market Overview</h3>
 					</div>
-					<p class="text-gray-500 text-sm">
-						Compare prices across shops and analyze market trends for better pricing
-						decisions.
+					<p class="text-gray-600 text-sm">
+						View comprehensive market analysis with price comparisons, trading
+						opportunities, and competitor insights across all your servers.
 					</p>
-				</div>
+				</RouterLink>
 			</div>
 
 			<!-- User Profile Section -->
@@ -184,6 +181,22 @@ const { user, userProfile } = useAdmin()
 								d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
 						</svg>
 						Edit Profile
+					</RouterLink>
+					<RouterLink
+						to="/market-overview"
+						class="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+						<svg
+							class="w-4 h-4 mr-2"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24">
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+						</svg>
+						Market Overview
 					</RouterLink>
 					<RouterLink
 						to="/"
