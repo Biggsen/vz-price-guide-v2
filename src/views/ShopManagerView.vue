@@ -1,8 +1,27 @@
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAdmin } from '../utils/admin.js'
+import { useShops } from '../utils/shopProfile.js'
+import { useServers } from '../utils/serverProfile.js'
 
 const { user, userProfile } = useAdmin()
+
+// Get user's shops and servers
+const { shops } = useShops(computed(() => user.value?.uid))
+const { servers } = useServers(computed(() => user.value?.uid))
+
+// Find the user's own shop (marked with is_own_shop flag)
+const ownShop = computed(() => {
+	if (!shops.value) return null
+	return shops.value.find((shop) => shop.is_own_shop === true)
+})
+
+// Get the server info for the own shop
+const ownShopServer = computed(() => {
+	if (!ownShop.value || !servers.value) return null
+	return servers.value.find((server) => server.id === ownShop.value.server_id)
+})
 </script>
 
 <template>
@@ -29,6 +48,106 @@ const { user, userProfile } = useAdmin()
 						<p class="text-gray-600">
 							Manage your Minecraft economy servers and track pricing data.
 						</p>
+					</div>
+				</div>
+			</div>
+
+			<!-- Quick Shop Link for Own Shop -->
+			<div v-if="ownShop" class="mb-8">
+				<div
+					class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+					<div class="flex items-center justify-between">
+						<div class="flex-1">
+							<div class="flex items-center mb-3">
+								<div
+									class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-4">
+									<svg
+										class="w-6 h-6 text-white"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M13 10V3L4 14h7v7l9-11h-7z" />
+									</svg>
+								</div>
+								<div>
+									<h3 class="text-xl font-bold">Quick Shop Access</h3>
+									<p class="text-blue-100 text-sm">
+										Manage your shop items instantly
+									</p>
+								</div>
+							</div>
+							<div class="text-white text-opacity-90">
+								<div class="flex items-center mb-2">
+									<svg
+										class="w-4 h-4 mr-2"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+									</svg>
+									<span class="font-semibold">{{ ownShop.name }}</span>
+								</div>
+								<div class="flex items-center mb-2">
+									<svg
+										class="w-4 h-4 mr-2"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+									</svg>
+									<span>{{ ownShopServer?.name || 'Server' }}</span>
+								</div>
+								<div v-if="ownShop.location" class="flex items-center">
+									<svg
+										class="w-4 h-4 mr-2"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+									</svg>
+									<span>{{ ownShop.location }}</span>
+								</div>
+							</div>
+						</div>
+						<div class="ml-6">
+							<RouterLink
+								:to="`/shop-items?shop=${ownShop.id}`"
+								class="inline-flex items-center px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors shadow-md">
+								<svg
+									class="w-5 h-5 mr-2"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24">
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+								</svg>
+								Manage Items
+							</RouterLink>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -166,6 +285,25 @@ const { user, userProfile } = useAdmin()
 			<div class="mt-8 bg-white rounded-lg shadow-md p-6">
 				<h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
 				<div class="flex flex-wrap gap-3">
+					<!-- Quick Shop Access Button (if user has own shop) -->
+					<RouterLink
+						v-if="ownShop"
+						:to="`/shop-items?shop=${ownShop.id}`"
+						class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md">
+						<svg
+							class="w-4 h-4 mr-2"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24">
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M13 10V3L4 14h7v7l9-11h-7z" />
+						</svg>
+						{{ ownShop.name }} Items
+					</RouterLink>
+
 					<RouterLink
 						to="/profile"
 						class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
