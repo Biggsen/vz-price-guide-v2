@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = defineProps({
 	items: {
@@ -25,6 +26,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['edit', 'delete', 'bulk-update'])
+
+// Router setup
+const router = useRouter()
 
 // Table state
 const sortField = ref('')
@@ -290,6 +294,14 @@ function hasInsufficientFunds(item) {
 	}
 	return shopData.owner_funds < item.sell_price
 }
+
+// Navigation methods
+function navigateToShopItems(shopId) {
+	router.push({
+		path: '/shop-items',
+		query: { shop: shopId }
+	})
+}
 </script>
 
 <template>
@@ -413,7 +425,9 @@ function hasInsufficientFunds(item) {
 
 						<!-- Shop name (only when showing shop names) -->
 						<td v-if="showShopNames" class="px-3 py-2">
-							<div class="text-sm text-gray-900">
+							<div
+								@click="navigateToShopItems(item.shopData?.id)"
+								class="text-sm text-gray-900 cursor-pointer hover:text-blue-600 transition-colors">
 								{{ item.shopData?.name || 'Unknown Shop' }}
 							</div>
 							<div v-if="item.shopData?.location" class="text-xs text-gray-500">
