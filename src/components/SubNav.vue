@@ -38,15 +38,18 @@ const activeMainNav = inject('activeMainNav')
 	<nav
 		v-if="activeMainNav === 'shop-manager' && user?.email"
 		class="bg-gray-700 text-white px-4 py-2 flex gap-4 items-center border-t border-gray-600">
-		<RouterLink class="hover:underline" active-class="underline" to="/servers">
-			Servers
-		</RouterLink>
-		<RouterLink class="hover:underline" active-class="underline" to="/shops">Shops</RouterLink>
-		<RouterLink class="hover:underline" active-class="underline" to="/shop-items">
-			Shop Items
+		<RouterLink class="hover:underline" active-class="underline" to="/shop-manager">
+			Dashboard
 		</RouterLink>
 		<RouterLink class="hover:underline" active-class="underline" to="/market-overview">
 			Market Overview
+		</RouterLink>
+		<RouterLink class="hover:underline" active-class="underline" to="/shop-items">
+			Shop Items
+		</RouterLink>
+		<RouterLink class="hover:underline" active-class="underline" to="/shops">Shops</RouterLink>
+		<RouterLink class="hover:underline" active-class="underline" to="/servers">
+			Servers
 		</RouterLink>
 	</nav>
 </template>
