@@ -203,9 +203,16 @@ const priceAnalysis = computed(() => {
 
 	const itemPrices = {}
 
-	// Group items by item_id to analyze prices
+	// Group items by item_id to analyze prices (excluding own shops)
 	shopItems.value.forEach((shopItem) => {
 		const itemId = shopItem.item_id
+		const shop = serverShops.value?.find((s) => s.id === shopItem.shop_id)
+
+		// Skip own shops for trading opportunities
+		if (shop?.is_own_shop) {
+			return
+		}
+
 		if (!itemPrices[itemId]) {
 			itemPrices[itemId] = {
 				buyPrices: [],
@@ -218,8 +225,7 @@ const priceAnalysis = computed(() => {
 			itemPrices[itemId].buyPrices.push({
 				price: shopItem.buy_price,
 				shopId: shopItem.shop_id,
-				shopName:
-					serverShops.value?.find((s) => s.id === shopItem.shop_id)?.name || 'Unknown'
+				shopName: shop?.name || 'Unknown'
 			})
 		}
 
@@ -227,8 +233,7 @@ const priceAnalysis = computed(() => {
 			itemPrices[itemId].sellPrices.push({
 				price: shopItem.sell_price,
 				shopId: shopItem.shop_id,
-				shopName:
-					serverShops.value?.find((s) => s.id === shopItem.shop_id)?.name || 'Unknown'
+				shopName: shop?.name || 'Unknown'
 			})
 		}
 	})
@@ -239,7 +244,21 @@ const priceAnalysis = computed(() => {
 	Object.entries(itemPrices).forEach(([itemId, data]) => {
 		if (data.buyPrices.length > 0 && data.sellPrices.length > 0) {
 			const lowestBuy = Math.min(...data.buyPrices.map((p) => p.price))
-			const highestSell = Math.max(...data.sellPrices.map((p) => p.price))
+
+			// Filter out sell prices from shops that don't have enough funds
+			const affordableSellPrices = data.sellPrices.filter((sellPrice) => {
+				const shop = serverShops.value?.find((s) => s.id === sellPrice.shopId)
+				if (!shop || shop.owner_funds === null || shop.owner_funds === undefined) {
+					return true // Include if funds data is not available
+				}
+				return shop.owner_funds >= sellPrice.price
+			})
+
+			if (affordableSellPrices.length === 0) {
+				return // Skip this item if no shops can afford to buy it
+			}
+
+			const highestSell = Math.max(...affordableSellPrices.map((p) => p.price))
 
 			if (highestSell > lowestBuy) {
 				const profit = highestSell - lowestBuy
@@ -247,7 +266,7 @@ const priceAnalysis = computed(() => {
 
 				const itemData = availableItems.value?.find((item) => item.id === itemId)
 				const buyShop = data.buyPrices.find((p) => p.price === lowestBuy)
-				const sellShop = data.sellPrices.find((p) => p.price === highestSell)
+				const sellShop = affordableSellPrices.find((p) => p.price === highestSell)
 
 				opportunities.push({
 					itemId,
