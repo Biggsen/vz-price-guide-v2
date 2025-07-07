@@ -12,6 +12,9 @@ const activeMainNav = inject('activeMainNav')
 	<nav
 		v-if="activeMainNav === 'admin' && isAdmin"
 		class="bg-gray-700 text-white px-4 py-2 flex gap-4 items-center border-t border-gray-600">
+		<RouterLink class="hover:underline" active-class="underline" to="/admin">
+			Dashboard
+		</RouterLink>
 		<RouterLink
 			v-if="canViewMissingItems"
 			class="hover:underline"
