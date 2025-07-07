@@ -18,6 +18,9 @@ const loading = ref(false)
 const error = ref(null)
 const searchQuery = ref('')
 
+// View mode state
+const viewMode = ref('categories') // 'categories' or 'list'
+
 // Get user's shops and servers
 const { shops } = useShops(computed(() => user.value?.uid))
 const { servers } = useServers(computed(() => user.value?.uid))
@@ -148,6 +151,23 @@ const filteredShopItemsByCategory = computed(() => {
 	})
 
 	return filtered
+})
+
+// Flat list view combining all visible items
+const allVisibleItems = computed(() => {
+	if (!filteredShopItemsByCategory.value) return []
+
+	const items = []
+	Object.values(filteredShopItemsByCategory.value).forEach((categoryItems) => {
+		items.push(...categoryItems)
+	})
+
+	// Sort alphabetically by item name
+	return items.sort((a, b) => {
+		const nameA = a.itemData?.name?.toLowerCase() || ''
+		const nameB = b.itemData?.name?.toLowerCase() || ''
+		return nameA.localeCompare(nameB)
+	})
 })
 
 // Watch for user changes - redirect if not logged in
@@ -361,6 +381,37 @@ const priceAnalysis = computed(() => {
 				</div>
 			</div>
 
+			<!-- View Mode Toggle -->
+			<div v-if="selectedServerId" class="mb-6">
+				<div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+					<div>
+						<span class="text-sm font-medium text-gray-700 mb-2 block">View as:</span>
+						<div class="inline-flex border-2 border-gray-300 rounded overflow-hidden">
+							<button
+								@click="viewMode = 'categories'"
+								:class="[
+									viewMode === 'categories'
+										? 'bg-blue-600 text-white'
+										: 'bg-white text-gray-700 hover:bg-gray-50',
+									'px-4 py-2 text-sm font-medium transition border-r border-gray-300 last:border-r-0'
+								]">
+								Categories
+							</button>
+							<button
+								@click="viewMode = 'list'"
+								:class="[
+									viewMode === 'list'
+										? 'bg-blue-600 text-white'
+										: 'bg-white text-gray-700 hover:bg-gray-50',
+									'px-4 py-2 text-sm font-medium transition'
+								]">
+								List
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
 			<!-- Market stats -->
 			<div v-if="selectedServer && marketStats" class="mb-6">
 				<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
@@ -474,8 +525,8 @@ const priceAnalysis = computed(() => {
 					</router-link>
 				</div>
 
-				<!-- Items grouped by category -->
-				<div v-else class="space-y-6">
+				<!-- Categories View -->
+				<template v-else-if="viewMode === 'categories'">
 					<div
 						v-if="searchQuery && Object.keys(filteredShopItemsByCategory).length === 0"
 						class="text-center py-12 bg-gray-50 rounded-lg">
@@ -486,20 +537,49 @@ const priceAnalysis = computed(() => {
 							Try searching for a different item name
 						</div>
 					</div>
+					<div v-else class="space-y-6">
+						<div
+							v-for="(categoryItems, category) in filteredShopItemsByCategory"
+							:key="category">
+							<h3
+								class="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
+								{{ category }}
+							</h3>
+							<ShopItemTable
+								:items="categoryItems"
+								:server="selectedServer"
+								:show-shop-names="true"
+								:read-only="true" />
+						</div>
+					</div>
+				</template>
+
+				<!-- List View -->
+				<template v-else-if="viewMode === 'list'">
 					<div
-						v-for="(categoryItems, category) in filteredShopItemsByCategory"
-						:key="category">
+						v-if="allVisibleItems.length === 0"
+						class="text-center py-12 bg-gray-50 rounded-lg">
+						<div class="text-gray-500 text-lg mb-2">No items found</div>
+						<div class="text-sm text-gray-400">
+							{{
+								searchQuery
+									? 'Try searching for a different item name'
+									: 'No items available in shops on this server'
+							}}
+						</div>
+					</div>
+					<div v-else>
 						<h3
 							class="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
-							{{ category }}
+							All Items
 						</h3>
 						<ShopItemTable
-							:items="categoryItems"
+							:items="allVisibleItems"
 							:server="selectedServer"
 							:show-shop-names="true"
 							:read-only="true" />
 					</div>
-				</div>
+				</template>
 			</div>
 		</div>
 	</div>
