@@ -107,14 +107,20 @@ const selectedItem = computed(
 	() => props.availableItems.find((item) => item.id === formData.value.item_id) || null
 )
 
-// Filter items based on search query
+// Filter items based on search query and exclude zero-priced items
 const filteredItems = computed(() => {
 	if (!props.availableItems) return []
 
-	const query = searchQuery.value.toLowerCase().trim()
-	if (!query) return props.availableItems
+	// First filter out items with zero prices
+	const nonZeroItems = props.availableItems.filter((item) => {
+		const hasNonZeroPrice = item.price > 0
+		return hasNonZeroPrice
+	})
 
-	return props.availableItems.filter(
+	const query = searchQuery.value.toLowerCase().trim()
+	if (!query) return nonZeroItems
+
+	return nonZeroItems.filter(
 		(item) =>
 			item.name?.toLowerCase().includes(query) ||
 			item.material_id?.toLowerCase().includes(query) ||
