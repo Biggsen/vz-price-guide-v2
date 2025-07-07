@@ -432,7 +432,7 @@ function navigateToShopItems(shopId) {
 
 						<!-- Item info -->
 						<td class="px-3 py-2">
-							<div v-if="isFirstOccurrence(item, index)" class="flex items-center">
+							<div class="flex items-center">
 								<div v-if="item.itemData?.image" class="w-8 h-8 mr-3 flex-shrink-0">
 									<img
 										:src="item.itemData.image"
@@ -446,11 +446,6 @@ function navigateToShopItems(shopId) {
 									<div v-if="item.notes" class="text-xs text-gray-400 mt-1">
 										📝 {{ item.notes }}
 									</div>
-								</div>
-							</div>
-							<div v-else class="pl-11">
-								<div v-if="item.notes" class="text-xs text-gray-400">
-									📝 {{ item.notes }}
 								</div>
 							</div>
 						</td>
