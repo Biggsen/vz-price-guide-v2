@@ -22,6 +22,16 @@ const props = defineProps({
 	readOnly: {
 		type: Boolean,
 		default: false
+	},
+	viewMode: {
+		type: String,
+		default: 'categories',
+		validator: (value) => ['categories', 'list'].includes(value)
+	},
+	layout: {
+		type: String,
+		default: 'comfortable',
+		validator: (value) => ['comfortable', 'condensed'].includes(value)
 	}
 })
 
@@ -101,6 +111,18 @@ const firstOccurrenceMap = computed(() => {
 		}
 	})
 	return map
+})
+
+// Layout classes based on layout prop
+const layoutClasses = computed(() => {
+	return {
+		cellPadding: props.layout === 'condensed' ? 'px-2 py-1' : 'px-3 py-2',
+		headerPadding: props.layout === 'condensed' ? 'px-2 py-2' : 'px-4 py-3',
+		bulkToolbarPadding: props.layout === 'condensed' ? 'px-3 py-2' : 'px-4 py-3',
+		imageSize: props.layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8',
+		inputSize:
+			props.layout === 'condensed' ? 'w-16 px-1 py-0.5 text-xs' : 'w-20 px-2 py-1 text-sm'
+	}
 })
 
 // Check if this is the first occurrence of an item
@@ -339,7 +361,9 @@ function navigateToShopItems(shopId) {
 <template>
 	<div class="bg-white rounded-lg shadow-md overflow-hidden">
 		<!-- Bulk actions toolbar -->
-		<div v-if="hasSelected && !readOnly" class="bg-blue-50 border-b border-blue-200 px-4 py-3">
+		<div
+			v-if="hasSelected && !readOnly"
+			:class="['bg-blue-50 border-b border-blue-200', layoutClasses.bulkToolbarPadding]">
 			<div class="flex items-center justify-between">
 				<span class="text-sm text-blue-700">
 					{{ selectedItems.length }} item{{ selectedItems.length !== 1 ? 's' : '' }}
@@ -365,7 +389,7 @@ function navigateToShopItems(shopId) {
 			<table class="w-full">
 				<thead class="bg-gray-50">
 					<tr>
-						<th v-if="!readOnly" class="px-4 py-3 text-left">
+						<th v-if="!readOnly" :class="[layoutClasses.headerPadding, 'text-left']">
 							<input
 								type="checkbox"
 								:checked="allSelected"
@@ -374,41 +398,65 @@ function navigateToShopItems(shopId) {
 								class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
 						</th>
 						<th
-							class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+							:class="[
+								layoutClasses.headerPadding,
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+							]">
 							Item
 						</th>
 						<th
 							v-if="showShopNames"
-							class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+							:class="[
+								layoutClasses.headerPadding,
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+							]">
 							Shop
 						</th>
 						<th
 							@click="setSortField('buy_price')"
-							class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+							:class="[
+								layoutClasses.headerPadding,
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+							]">
 							Buy Price {{ getSortIcon('buy_price') }}
 						</th>
 						<th
 							@click="setSortField('sell_price')"
-							class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+							:class="[
+								layoutClasses.headerPadding,
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+							]">
 							Sell Price {{ getSortIcon('sell_price') }}
 						</th>
 						<th
-							class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+							:class="[
+								layoutClasses.headerPadding,
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+							]">
 							Profit Margin
 						</th>
 						<th
 							@click="setSortField('stock_quantity')"
-							class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+							:class="[
+								layoutClasses.headerPadding,
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+							]">
 							Stock {{ getSortIcon('stock_quantity') }}
 						</th>
 						<th
 							@click="setSortField('last_updated')"
-							class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+							:class="[
+								layoutClasses.headerPadding,
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+							]">
 							Last Updated {{ getSortIcon('last_updated') }}
 						</th>
 						<th
 							v-if="!readOnly"
-							class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+							:class="[
+								layoutClasses.headerPadding,
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+							]">
 							Actions
 						</th>
 					</tr>
@@ -422,7 +470,7 @@ function navigateToShopItems(shopId) {
 							'bg-green-50': item.shopData?.is_own_shop && !isSelected(item.id)
 						}">
 						<!-- Selection checkbox -->
-						<td v-if="!readOnly" class="px-3 py-2">
+						<td v-if="!readOnly" :class="layoutClasses.cellPadding">
 							<input
 								type="checkbox"
 								:checked="isSelected(item.id)"
@@ -431,9 +479,11 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Item info -->
-						<td class="px-3 py-2">
+						<td :class="layoutClasses.cellPadding">
 							<div class="flex items-center">
-								<div v-if="item.itemData?.image" class="w-8 h-8 mr-3 flex-shrink-0">
+								<div
+									v-if="item.itemData?.image"
+									:class="[layoutClasses.imageSize, 'mr-3 flex-shrink-0']">
 									<img
 										:src="item.itemData.image"
 										:alt="item.itemData.name"
@@ -451,7 +501,7 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Shop name (only when showing shop names) -->
-						<td v-if="showShopNames" class="px-3 py-2">
+						<td v-if="showShopNames" :class="layoutClasses.cellPadding">
 							<div
 								@click="navigateToShopItems(item.shopData?.id)"
 								class="text-sm text-gray-900 cursor-pointer hover:text-blue-600 transition-colors">
@@ -463,7 +513,7 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Buy price -->
-						<td class="px-3 py-2">
+						<td :class="layoutClasses.cellPadding">
 							<div v-if="isEditing(item.id) && !readOnly">
 								<input
 									:value="editingValues.buy_price"
@@ -471,7 +521,10 @@ function navigateToShopItems(shopId) {
 									type="number"
 									step="0.01"
 									min="0"
-									class="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" />
+									:class="[
+										layoutClasses.inputSize,
+										'border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
+									]" />
 							</div>
 							<div v-else>
 								<div class="text-sm text-gray-900">
@@ -489,7 +542,7 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Sell price -->
-						<td class="px-3 py-2">
+						<td :class="layoutClasses.cellPadding">
 							<div v-if="isEditing(item.id) && !readOnly">
 								<input
 									:value="editingValues.sell_price"
@@ -497,7 +550,10 @@ function navigateToShopItems(shopId) {
 									type="number"
 									step="0.01"
 									min="0"
-									class="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" />
+									:class="[
+										layoutClasses.inputSize,
+										'border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
+									]" />
 							</div>
 							<div v-else>
 								<div
@@ -530,7 +586,7 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Profit Margin -->
-						<td class="px-3 py-2">
+						<td :class="layoutClasses.cellPadding">
 							<span
 								v-if="calculateMargin(item) !== null"
 								class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
@@ -540,7 +596,7 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Stock -->
-						<td class="px-3 py-2">
+						<td :class="layoutClasses.cellPadding">
 							<div v-if="isEditing(item.id) && !readOnly">
 								<div class="space-y-1">
 									<input
@@ -548,7 +604,10 @@ function navigateToShopItems(shopId) {
 										@input="handleQuantityInput"
 										type="number"
 										min="0"
-										class="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" />
+										:class="[
+											layoutClasses.inputSize,
+											'border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
+										]" />
 									<label class="flex items-center">
 										<input
 											v-model="editingValues.stock_full"
@@ -569,7 +628,7 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Last updated -->
-						<td class="px-3 py-2">
+						<td :class="layoutClasses.cellPadding">
 							<div class="text-sm text-gray-900">
 								{{ formatDate(item.last_updated) }}
 							</div>
@@ -579,7 +638,7 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Actions -->
-						<td v-if="!readOnly" class="px-3 py-2">
+						<td v-if="!readOnly" :class="layoutClasses.cellPadding">
 							<div v-if="isEditing(item.id)" class="flex space-x-2">
 								<button
 									@click="saveEdit"

@@ -20,6 +20,7 @@ const searchQuery = ref('')
 
 // View mode state
 const viewMode = ref('categories') // 'categories' or 'list'
+const layout = ref('comfortable') // 'comfortable' or 'condensed'
 
 // Get user's shops and servers
 const { shops } = useShops(computed(() => user.value?.uid))
@@ -190,6 +191,47 @@ watch(servers, (newServers) => {
 		}
 	}
 })
+
+// Load view settings on mount
+onMounted(() => {
+	loadViewSettings()
+})
+
+// Save view settings when they change
+watch(
+	[viewMode, layout],
+	() => {
+		saveViewSettings()
+	},
+	{ deep: true }
+)
+
+// Load and save view settings from localStorage
+function loadViewSettings() {
+	try {
+		const savedViewMode = localStorage.getItem('marketOverviewViewMode')
+		const savedLayout = localStorage.getItem('marketOverviewLayout')
+
+		if (savedViewMode && ['categories', 'list'].includes(savedViewMode)) {
+			viewMode.value = savedViewMode
+		}
+
+		if (savedLayout && ['comfortable', 'condensed'].includes(savedLayout)) {
+			layout.value = savedLayout
+		}
+	} catch (error) {
+		console.warn('Error loading view settings:', error)
+	}
+}
+
+function saveViewSettings() {
+	try {
+		localStorage.setItem('marketOverviewViewMode', viewMode.value)
+		localStorage.setItem('marketOverviewLayout', layout.value)
+	} catch (error) {
+		console.warn('Error saving view settings:', error)
+	}
+}
 
 // Helper functions
 function getServerName(serverId) {
@@ -381,9 +423,10 @@ const priceAnalysis = computed(() => {
 				</div>
 			</div>
 
-			<!-- View Mode Toggle -->
+			<!-- View Mode and Layout Toggle -->
 			<div v-if="selectedServerId" class="mb-6">
-				<div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-8">
+					<!-- View Mode -->
 					<div>
 						<span class="text-sm font-medium text-gray-700 mb-2 block">View as:</span>
 						<div class="inline-flex border-2 border-gray-300 rounded overflow-hidden">
@@ -393,7 +436,7 @@ const priceAnalysis = computed(() => {
 									viewMode === 'categories'
 										? 'bg-blue-600 text-white'
 										: 'bg-white text-gray-700 hover:bg-gray-50',
-									'px-4 py-2 text-sm font-medium transition border-r border-gray-300 last:border-r-0'
+									'px-3 py-1 text-sm font-medium transition border-r border-gray-300 last:border-r-0'
 								]">
 								Categories
 							</button>
@@ -403,9 +446,36 @@ const priceAnalysis = computed(() => {
 									viewMode === 'list'
 										? 'bg-blue-600 text-white'
 										: 'bg-white text-gray-700 hover:bg-gray-50',
-									'px-4 py-2 text-sm font-medium transition'
+									'px-3 py-1 text-sm font-medium transition'
 								]">
 								List
+							</button>
+						</div>
+					</div>
+
+					<!-- Layout -->
+					<div>
+						<span class="text-sm font-medium text-gray-700 mb-2 block">Layout:</span>
+						<div class="inline-flex border-2 border-gray-300 rounded overflow-hidden">
+							<button
+								@click="layout = 'comfortable'"
+								:class="[
+									layout === 'comfortable'
+										? 'bg-blue-600 text-white'
+										: 'bg-white text-gray-700 hover:bg-gray-50',
+									'px-3 py-1 text-sm font-medium transition border-r border-gray-300 last:border-r-0'
+								]">
+								Comfortable
+							</button>
+							<button
+								@click="layout = 'condensed'"
+								:class="[
+									layout === 'condensed'
+										? 'bg-blue-600 text-white'
+										: 'bg-white text-gray-700 hover:bg-gray-50',
+									'px-3 py-1 text-sm font-medium transition'
+								]">
+								Condensed
 							</button>
 						</div>
 					</div>
@@ -549,7 +619,9 @@ const priceAnalysis = computed(() => {
 								:items="categoryItems"
 								:server="selectedServer"
 								:show-shop-names="true"
-								:read-only="true" />
+								:read-only="true"
+								:view-mode="viewMode"
+								:layout="layout" />
 						</div>
 					</div>
 				</template>
@@ -577,7 +649,9 @@ const priceAnalysis = computed(() => {
 							:items="allVisibleItems"
 							:server="selectedServer"
 							:show-shop-names="true"
-							:read-only="true" />
+							:read-only="true"
+							:view-mode="viewMode"
+							:layout="layout" />
 					</div>
 				</template>
 			</div>

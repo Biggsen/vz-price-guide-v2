@@ -28,6 +28,10 @@ const loading = ref(false)
 const error = ref(null)
 const shopItemForm = ref(null)
 
+// View mode settings
+const viewMode = ref('categories') // 'categories' or 'list'
+const layout = ref('comfortable') // 'comfortable' or 'condensed'
+
 // Get user's shops and servers
 const { shops } = useShops(computed(() => user.value?.uid))
 const { servers } = useServers(computed(() => user.value?.uid))
@@ -117,12 +121,63 @@ const shopItemsByCategory = computed(() => {
 	return grouped
 })
 
+// Flat list view combining all shop items
+const allVisibleShopItems = computed(() => {
+	if (!shopItems.value || !availableItems.value) return []
+
+	return shopItems.value
+		.map((shopItem) => {
+			// Find the corresponding item data from the main items collection
+			const itemData = availableItems.value.find((item) => item.id === shopItem.item_id)
+			return {
+				...shopItem,
+				itemData
+			}
+		})
+		.sort((a, b) => {
+			// Sort alphabetically by name
+			const nameA = a.itemData?.name?.toLowerCase() || ''
+			const nameB = b.itemData?.name?.toLowerCase() || ''
+			return nameA.localeCompare(nameB)
+		})
+})
+
+// Load and save view settings from localStorage
+function loadViewSettings() {
+	try {
+		const savedViewMode = localStorage.getItem('shopItemsViewMode')
+		const savedLayout = localStorage.getItem('shopItemsLayout')
+
+		if (savedViewMode && ['categories', 'list'].includes(savedViewMode)) {
+			viewMode.value = savedViewMode
+		}
+
+		if (savedLayout && ['comfortable', 'condensed'].includes(savedLayout)) {
+			layout.value = savedLayout
+		}
+	} catch (error) {
+		console.warn('Error loading view settings:', error)
+	}
+}
+
+function saveViewSettings() {
+	try {
+		localStorage.setItem('shopItemsViewMode', viewMode.value)
+		localStorage.setItem('shopItemsLayout', layout.value)
+	} catch (error) {
+		console.warn('Error saving view settings:', error)
+	}
+}
+
 // Initialize from URL parameters
 onMounted(() => {
 	const shopId = route.params.shopId || route.query.shop
 	if (shopId) {
 		selectedShopId.value = shopId
 	}
+
+	// Load view settings
+	loadViewSettings()
 })
 
 // Watch for user changes - redirect if not logged in
@@ -165,6 +220,15 @@ watch(selectedShopId, (newShopId) => {
 		router.replace({ query: { ...route.query, shop: newShopId } })
 	}
 })
+
+// Save view settings when they change
+watch(
+	[viewMode, layout],
+	() => {
+		saveViewSettings()
+	},
+	{ deep: true }
+)
 
 // Form handlers
 function showAddItemForm() {
@@ -419,6 +483,65 @@ function getServerName(serverId) {
 				</div>
 			</div>
 
+			<!-- View Mode and Layout Toggle -->
+			<div v-if="selectedShopId && shopItems.length > 0" class="mb-6">
+				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-8">
+					<!-- View Mode -->
+					<div>
+						<span class="text-sm font-medium text-gray-700 mb-2 block">View as:</span>
+						<div class="inline-flex border-2 border-gray-300 rounded overflow-hidden">
+							<button
+								@click="viewMode = 'categories'"
+								:class="[
+									viewMode === 'categories'
+										? 'bg-blue-600 text-white'
+										: 'bg-white text-gray-700 hover:bg-gray-100',
+									'px-3 py-1 text-sm font-medium transition border-r border-gray-300 last:border-r-0'
+								]">
+								Categories
+							</button>
+							<button
+								@click="viewMode = 'list'"
+								:class="[
+									viewMode === 'list'
+										? 'bg-blue-600 text-white'
+										: 'bg-white text-gray-700 hover:bg-gray-100',
+									'px-3 py-1 text-sm font-medium transition'
+								]">
+								List
+							</button>
+						</div>
+					</div>
+
+					<!-- Layout -->
+					<div>
+						<span class="text-sm font-medium text-gray-700 mb-2 block">Layout:</span>
+						<div class="inline-flex border-2 border-gray-300 rounded overflow-hidden">
+							<button
+								@click="layout = 'comfortable'"
+								:class="[
+									layout === 'comfortable'
+										? 'bg-blue-600 text-white'
+										: 'bg-white text-gray-700 hover:bg-gray-100',
+									'px-3 py-1 text-sm font-medium transition border-r border-gray-300 last:border-r-0'
+								]">
+								Comfortable
+							</button>
+							<button
+								@click="layout = 'condensed'"
+								:class="[
+									layout === 'condensed'
+										? 'bg-blue-600 text-white'
+										: 'bg-white text-gray-700 hover:bg-gray-100',
+									'px-3 py-1 text-sm font-medium transition'
+								]">
+								Condensed
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
 			<!-- Add/Edit item form -->
 			<ShopItemForm
 				v-if="showAddForm"
@@ -443,23 +566,48 @@ function getServerName(serverId) {
 					</button>
 				</div>
 
-				<!-- Items grouped by category -->
-				<div v-else class="space-y-6">
-					<div v-for="(categoryItems, category) in shopItemsByCategory" :key="category">
-						<h3
-							class="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
-							{{ category }}
-						</h3>
-						<ShopItemTable
-							:items="categoryItems"
-							:server="selectedServer"
-							:shop="selectedShop"
-							@edit="showEditItemForm"
-							@delete="handleItemDelete"
-							@bulk-update="handleBulkUpdate"
-							@quick-edit="handleQuickEdit" />
+				<!-- Categories View -->
+				<template v-else-if="viewMode === 'categories'">
+					<div class="space-y-6">
+						<div
+							v-for="(categoryItems, category) in shopItemsByCategory"
+							:key="category">
+							<h3
+								class="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
+								{{ category }}
+							</h3>
+							<ShopItemTable
+								:items="categoryItems"
+								:server="selectedServer"
+								:shop="selectedShop"
+								:view-mode="viewMode"
+								:layout="layout"
+								@edit="showEditItemForm"
+								@delete="handleItemDelete"
+								@bulk-update="handleBulkUpdate"
+								@quick-edit="handleQuickEdit" />
+						</div>
 					</div>
-				</div>
+				</template>
+
+				<!-- List View -->
+				<template v-else-if="viewMode === 'list'">
+					<div class="mb-4 text-sm text-gray-600">
+						Showing {{ allVisibleShopItems.length }} item{{
+							allVisibleShopItems.length === 1 ? '' : 's'
+						}}
+					</div>
+					<ShopItemTable
+						:items="allVisibleShopItems"
+						:server="selectedServer"
+						:shop="selectedShop"
+						:view-mode="viewMode"
+						:layout="layout"
+						@edit="showEditItemForm"
+						@delete="handleItemDelete"
+						@bulk-update="handleBulkUpdate"
+						@quick-edit="handleQuickEdit" />
+				</template>
 			</div>
 		</div>
 	</div>
