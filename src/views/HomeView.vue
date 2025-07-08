@@ -584,7 +584,7 @@ watch(
 			<div class="flex gap-2 sm:gap-0 sm:ml-2">
 				<button
 					@click="resetCategories"
-					class="bg-laurel text-white border-2 border-gray-asparagus rounded px-3 py-2 transition flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2 h-10">
+					class="bg-laurel text-white border-2 border-gray-asparagus rounded px-3 py-2 transition flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2 h-10 flex items-center justify-center">
 					Reset
 				</button>
 				<button
@@ -593,7 +593,7 @@ watch(
 						allVisible
 							? 'bg-norway text-heavy-metal border-2 border-gray-asparagus'
 							: 'bg-gray-asparagus text-white border-2 border-gray-asparagus',
-						'rounded px-3 py-2 transition flex-1 sm:flex-none text-sm sm:text-base sm:whitespace-nowrap h-10'
+						'rounded px-3 py-2 transition flex-1 sm:flex-none text-sm sm:text-base sm:whitespace-nowrap h-10 flex items-center justify-center'
 					]">
 					{{ allVisible ? 'Hide all categories' : 'Show all categories' }}
 				</button>
