@@ -310,7 +310,7 @@ const priceAnalysis = computed(() => {
 </script>
 
 <template>
-	<div class="container mx-auto px-4 py-8">
+	<div class="p-4 pt-8">
 		<div class="mb-6">
 			<h1 class="text-3xl font-bold text-gray-900 mb-2">Market Overview</h1>
 			<p class="text-gray-600">Browse and analyze items across all shops on your server.</p>
