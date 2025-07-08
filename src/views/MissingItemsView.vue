@@ -10,7 +10,7 @@ const { user, canViewMissingItems } = useAdmin()
 const itemsJson = ref([])
 const dbItems = ref([])
 const loading = ref(true)
-const showOnlyMissing = ref(false)
+const showOnlyMissing = ref(true)
 const selectedVersion = ref('1.16')
 
 const sortKey = ref('name')
