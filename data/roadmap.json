@@ -1,16 +1,46 @@
 [
 	{
 		"id": 2,
-		"title": "Add all 1.17 items",
-		"status": "In Progress",
-		"description": "Add all new items introduced in Minecraft 1.17 (Caves & Cliffs Update) including copper, amethyst, deepslate, and other new blocks and items",
+		"title": "Add all 1.19 items",
+		"status": "Pending",
+		"description": "Add all new items introduced in Minecraft 1.19 (The Wild Update) including bamboo wood, cherry wood, mangrove wood, sculk blocks, mud blocks, frogs, and archaeology items",
 		"features": [
-			{ "name": "Copper blocks & variants (32 items)", "completed": false },
-			{ "name": "Deepslate blocks & ores (28 items)", "completed": false },
-			{ "name": "Candles - all colors (17 items)", "completed": true },
-			{ "name": "Azalea & Lush Cave items (10 items)", "completed": false },
-			{ "name": "New utility items (6 items)", "completed": true },
-			{ "name": "Amethyst & stone variants (8 items)", "completed": true }
+			{
+				"name": "Bamboo wood set (planks, stairs, slabs, doors, signs, boats, etc.) (22 items)",
+				"completed": false
+			},
+			{
+				"name": "Cherry wood set (logs, planks, stairs, slabs, doors, signs, boats, etc.) (18 items)",
+				"completed": false
+			},
+			{
+				"name": "Mangrove wood set (logs, planks, stairs, slabs, doors, signs, boats, etc.) (20 items)",
+				"completed": false
+			},
+			{ "name": "Hanging signs for all wood types (9 items)", "completed": false },
+			{ "name": "Boats with chests for all wood types (7 items)", "completed": false },
+			{
+				"name": "Sculk blocks (sculk, sculk catalyst, sculk shrieker, sculk vein) (4 items)",
+				"completed": false
+			},
+			{ "name": "Mud and mud brick blocks (6 items)", "completed": false },
+			{
+				"name": "Frog-related items (froglights, frogspawn, tadpole bucket) (6 items)",
+				"completed": false
+			},
+			{ "name": "Armor trim smithing templates (16 items)", "completed": false },
+			{
+				"name": "Archaeology items (brush, pottery shards, decorated pot, suspicious sand) (7 items)",
+				"completed": false
+			},
+			{
+				"name": "New spawn eggs (allay, camel, frog, sniffer, tadpole, warden, etc.) (10 items)",
+				"completed": false
+			},
+			{
+				"name": "Miscellaneous new items (recovery compass, goat horn, echo shard, music disc, etc.) (8 items)",
+				"completed": false
+			}
 		]
 	},
 	{

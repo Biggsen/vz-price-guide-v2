@@ -1,8 +1,20 @@
 [
 	{
+		"id": 13,
+		"title": "All 1.17 Items Complete + 1.18 Ready! 🎉",
+		"date": "2025-07-08",
+		"type": "Content",
+		"description": "All Minecraft 1.17 items have now been added to the price guide. Additionally, 1.18 support is now complete as it only required adding 1 new disc item.",
+		"changes": [
+			"Completed all 1.17 items including copper blocks, deepslate, candles, azalea items, and amethyst variants",
+			"Added comprehensive pricing for all 1.17 content (101 total items)",
+			"1.18 version support is now complete with the addition of Music Disc 'otherside'"
+		]
+	},
+	{
 		"id": 12,
 		"title": "All 1.16 Items Complete (Except Brewing) - Major Milestone! 🎉",
-		"date": "2025-01-15",
+		"date": "2025-07-03",
 		"type": "Content",
 		"description": "🎉 Another major milestone achieved! All Minecraft 1.16 items have now been categorized and priced, with the exception of the upcoming brewing category. This represents hundreds of items across all categories.",
 		"changes": [

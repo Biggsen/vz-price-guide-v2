@@ -14,7 +14,7 @@ const router = useRouter()
 const { user, canEditItems } = useAdmin()
 
 // Define which versions are currently available for regular users
-const baseEnabledVersions = ['1.16', '1.17']
+const baseEnabledVersions = ['1.16', '1.17', '1.18']
 
 // Ensure versions array is available as fallback
 const fallbackVersions = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
