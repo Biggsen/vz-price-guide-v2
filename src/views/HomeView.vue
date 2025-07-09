@@ -166,7 +166,8 @@ const sellMarginPercentage = computed({
 const economyConfig = computed(() => ({
 	priceMultiplier: priceMultiplier.value,
 	sellMargin: sellMargin.value,
-	roundToWhole: roundToWhole.value
+	roundToWhole: roundToWhole.value,
+	version: selectedVersion.value
 }))
 
 // Load config from localStorage

@@ -52,3 +52,200 @@ export function buyStackPrice(price, stack, priceMultiplier, roundToWhole = fals
 export function sellStackPrice(price, stack, priceMultiplier, sellMargin, roundToWhole = false) {
 	return formatCurrency(price * stack * priceMultiplier * sellMargin, roundToWhole)
 }
+
+/**
+ * Get the effective price for an item with version inheritance support
+ * @param {Object} item - The item object
+ * @param {string} version - Version key (e.g., "1_16")
+ * @returns {number} - The effective price
+ */
+export function getEffectivePrice(item, version = '1_16') {
+	// For dynamic pricing items, always prefer prices_by_version with inheritance
+	if (item.pricing_type === 'dynamic' && item.prices_by_version) {
+		// First try the requested version
+		if (item.prices_by_version[version] !== undefined) {
+			return item.prices_by_version[version]
+		}
+
+		// If not found, try earlier versions in descending order
+		const availableVersions = Object.keys(item.prices_by_version)
+		const sortedVersions = availableVersions.sort((a, b) => {
+			// Convert version keys like "1_16" to comparable format
+			const aVersion = a.replace('_', '.')
+			const bVersion = b.replace('_', '.')
+			const [aMajor, aMinor] = aVersion.split('.').map(Number)
+			const [bMajor, bMinor] = bVersion.split('.').map(Number)
+
+			// Sort in descending order (newest first)
+			if (aMajor !== bMajor) return bMajor - aMajor
+			return bMinor - aMinor
+		})
+
+		// Find the latest version that's not newer than the requested version
+		const requestedVersion = version.replace('_', '.')
+		const [reqMajor, reqMinor] = requestedVersion.split('.').map(Number)
+
+		for (const availableVersion of sortedVersions) {
+			const availableVersionFormatted = availableVersion.replace('_', '.')
+			const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
+
+			// Use this version if it's not newer than requested
+			if (avMajor < reqMajor || (avMajor === reqMajor && avMinor <= reqMinor)) {
+				return item.prices_by_version[availableVersion]
+			}
+		}
+	}
+
+	// For static items or if no version-specific price exists, check prices_by_version first
+	if (item.prices_by_version && item.prices_by_version[version] !== undefined) {
+		return item.prices_by_version[version]
+	}
+
+	// Final fallback to legacy price field
+	return item.price || 0
+}
+
+/**
+ * Calculate the price of an item based on its recipe ingredients
+ * @param {Object} item - The item with recipe data
+ * @param {Array} allItems - Array of all items for ingredient lookup
+ * @param {string} version - Version key (e.g., "1_16")
+ * @param {Set} visited - Set to track visited items (prevents infinite recursion)
+ * @returns {Object} - { price: number|null, error: string|null, chain: string[] }
+ */
+export function calculateRecipePrice(item, allItems, version = '1_16', visited = new Set()) {
+	// Prevent infinite recursion
+	if (visited.has(item.material_id)) {
+		return {
+			price: null,
+			error: `Circular dependency detected for ${item.material_id}`,
+			chain: Array.from(visited)
+		}
+	}
+
+	// Check if item has a recipe for this version
+	const recipe = item.recipes_by_version?.[version]
+	if (!recipe || !Array.isArray(recipe)) {
+		return {
+			price: null,
+			error: `No recipe found for ${item.material_id} in version ${version}`,
+			chain: []
+		}
+	}
+
+	// Add this item to visited set
+	visited.add(item.material_id)
+
+	let totalCost = 0
+	const calculationChain = []
+
+	// Calculate cost for each ingredient
+	for (const ingredient of recipe) {
+		const ingredientItem = allItems.find((i) => i.material_id === ingredient.material_id)
+
+		if (!ingredientItem) {
+			visited.delete(item.material_id)
+			return {
+				price: null,
+				error: `Ingredient ${ingredient.material_id} not found in database`,
+				chain: []
+			}
+		}
+
+		let ingredientPrice = null
+
+		// If ingredient also has dynamic pricing, calculate recursively
+		if (ingredientItem.pricing_type === 'dynamic') {
+			const result = calculateRecipePrice(ingredientItem, allItems, version, new Set(visited))
+			if (result.price !== null) {
+				ingredientPrice = result.price
+				calculationChain.push(`${ingredient.material_id}: ${ingredientPrice} (calculated)`)
+			} else {
+				// Recipe calculation failed, fall back to existing price
+				ingredientPrice = getEffectivePrice(ingredientItem, version)
+				calculationChain.push(`${ingredient.material_id}: ${ingredientPrice} (fallback)`)
+			}
+		} else {
+			// Use existing price
+			ingredientPrice = getEffectivePrice(ingredientItem, version)
+			calculationChain.push(`${ingredient.material_id}: ${ingredientPrice} (static)`)
+		}
+
+		if (ingredientPrice === null || ingredientPrice === undefined) {
+			visited.delete(item.material_id)
+			return {
+				price: null,
+				error: `Could not determine price for ingredient ${ingredient.material_id}`,
+				chain: calculationChain
+			}
+		}
+
+		totalCost += ingredientPrice * ingredient.quantity
+	}
+
+	// Remove from visited set
+	visited.delete(item.material_id)
+
+	return {
+		price: totalCost,
+		error: null,
+		chain: calculationChain
+	}
+}
+
+/**
+ * Recalculate prices for all items with dynamic pricing for a specific version
+ * @param {Array} allItems - Array of all items
+ * @param {string} version - Version key (e.g., "1_16")
+ * @returns {Object} - { success: Array, failed: Array, summary: Object }
+ */
+export function recalculateDynamicPrices(allItems, version = '1_16') {
+	const results = {
+		success: [],
+		failed: [],
+		summary: {
+			total: 0,
+			calculated: 0,
+			failed: 0,
+			unchanged: 0
+		}
+	}
+
+	// Find all items with dynamic pricing
+	const dynamicItems = allItems.filter((item) => item.pricing_type === 'dynamic')
+	results.summary.total = dynamicItems.length
+
+	for (const item of dynamicItems) {
+		const calculation = calculateRecipePrice(item, allItems, version)
+
+		if (calculation.price !== null) {
+			const oldPrice = getEffectivePrice(item, version)
+			const newPrice = Math.round(calculation.price * 100) / 100 // Round to 2 decimal places
+
+			results.success.push({
+				material_id: item.material_id,
+				name: item.name,
+				oldPrice,
+				newPrice,
+				changed: oldPrice !== newPrice,
+				chain: calculation.chain
+			})
+
+			if (oldPrice !== newPrice) {
+				results.summary.calculated++
+			} else {
+				results.summary.unchanged++
+			}
+		} else {
+			results.failed.push({
+				material_id: item.material_id,
+				name: item.name,
+				error: calculation.error,
+				chain: calculation.chain
+			})
+			results.summary.failed++
+		}
+	}
+
+	return results
+}
