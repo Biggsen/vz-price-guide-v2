@@ -76,6 +76,15 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/recipes',
+			name: 'recipes',
+			component: () => import('../views/RecipeManagementView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Recipe Management - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/updates',
 			name: 'updates',
 			component: () => import('../views/UpdatesView.vue'),
