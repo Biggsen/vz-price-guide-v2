@@ -41,10 +41,16 @@ async function addItem() {
 	<div v-if="canAddItems" class="p-4 pt-8">
 		<h2 class="text-xl font-bold mb-6">Add item</h2>
 		<form @submit.prevent="addItem">
-			<label for="name">Name</label>
-			<input type="text" id="name" v-model="newItem.name" required />
-			<label for="materialId">Material ID</label>
-			<input type="text" id="materialId" v-model="newItem.material_id" required />
+			<div class="flex gap-4">
+				<div class="flex-1">
+					<label for="name">Name</label>
+					<input type="text" id="name" v-model="newItem.name" required />
+				</div>
+				<div class="flex-1">
+					<label for="materialId">Material ID</label>
+					<input type="text" id="materialId" v-model="newItem.material_id" required />
+				</div>
+			</div>
 			<label for="image">Image</label>
 			<input type="text" id="image" v-model="newItem.image" />
 			<label for="url">Url</label>

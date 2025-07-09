@@ -82,10 +82,16 @@ async function updateItem() {
 		<BackButton />
 		<h2 class="text-xl font-bold mb-6">Edit item</h2>
 		<form @submit.prevent="updateItem">
-			<label for="name">Name</label>
-			<input type="text" id="name" v-model="editItem.name" required />
-			<label for="materialId">Material ID</label>
-			<input type="text" id="materialId" v-model="editItem.material_id" required />
+			<div class="flex gap-4">
+				<div class="flex-1">
+					<label for="name">Name</label>
+					<input type="text" id="name" v-model="editItem.name" required />
+				</div>
+				<div class="flex-1">
+					<label for="materialId">Material ID</label>
+					<input type="text" id="materialId" v-model="editItem.material_id" required />
+				</div>
+			</div>
 			<label for="image">Image</label>
 			<input type="text" id="image" v-model="editItem.image" />
 			<label for="url">Url</label>
