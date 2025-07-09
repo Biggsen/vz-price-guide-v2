@@ -107,10 +107,25 @@ export async function updateShopItem(itemId, updates) {
 		const currentData = docSnap.data()
 		const updatedData = { ...updates }
 
-		// Implement price history logic
+		// Implement price history logic - only save if prices actually changed
 		if (updates.buy_price !== undefined || updates.sell_price !== undefined) {
-			// Save current prices as previous before updating
-			if (currentData.buy_price !== null || currentData.sell_price !== null) {
+			let pricesChanged = false
+
+			// Check if buy price changed
+			if (updates.buy_price !== undefined && updates.buy_price !== currentData.buy_price) {
+				pricesChanged = true
+			}
+
+			// Check if sell price changed
+			if (updates.sell_price !== undefined && updates.sell_price !== currentData.sell_price) {
+				pricesChanged = true
+			}
+
+			// Only save price history if at least one price actually changed
+			if (
+				pricesChanged &&
+				(currentData.buy_price !== null || currentData.sell_price !== null)
+			) {
 				updatedData.previous_buy_price = currentData.buy_price
 				updatedData.previous_sell_price = currentData.sell_price
 				updatedData.previous_price_date = currentData.last_updated
@@ -235,10 +250,31 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 					const currentData = docSnap.data()
 					const updatedData = { ...itemData }
 
-					// Implement price history logic
+					// Implement price history logic - only save if prices actually changed
 					if (itemData.buy_price !== undefined || itemData.sell_price !== undefined) {
-						// Save current prices as previous before updating
-						if (currentData.buy_price !== null || currentData.sell_price !== null) {
+						let pricesChanged = false
+
+						// Check if buy price changed
+						if (
+							itemData.buy_price !== undefined &&
+							itemData.buy_price !== currentData.buy_price
+						) {
+							pricesChanged = true
+						}
+
+						// Check if sell price changed
+						if (
+							itemData.sell_price !== undefined &&
+							itemData.sell_price !== currentData.sell_price
+						) {
+							pricesChanged = true
+						}
+
+						// Only save price history if at least one price actually changed
+						if (
+							pricesChanged &&
+							(currentData.buy_price !== null || currentData.sell_price !== null)
+						) {
 							updatedData.previous_buy_price = currentData.buy_price
 							updatedData.previous_sell_price = currentData.sell_price
 							updatedData.previous_price_date = currentData.last_updated

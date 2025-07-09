@@ -67,10 +67,6 @@ const sortedItems = computed(() => {
 				valueA = a.sell_price || 0
 				valueB = b.sell_price || 0
 				break
-			case 'stock_quantity':
-				valueA = a.stock_quantity || 0
-				valueB = b.stock_quantity || 0
-				break
 			case 'last_updated':
 				valueA = new Date(a.last_updated || 0).getTime()
 				valueB = new Date(b.last_updated || 0).getTime()
@@ -181,8 +177,8 @@ function startEdit(item) {
 	editingValues.value = {
 		buy_price: item.buy_price,
 		sell_price: item.sell_price,
-		stock_quantity: item.stock_quantity,
 		stock_full: item.stock_full || false,
+		shop_owner_broke: hasInsufficientFunds(item),
 		notes: item.notes || ''
 	}
 }
@@ -202,7 +198,34 @@ function saveEdit() {
 				...item,
 				...editingValues.value
 			}
-			emit('quick-edit', updatedItem)
+
+			// Include shop update information if needed
+			if (editingValues.value._resetOwnerFunds) {
+				updatedItem._resetOwnerFunds = true
+				updatedItem._shopId = editingValues.value._shopId
+			}
+			if (editingValues.value._setOwnerFunds !== undefined) {
+				updatedItem._setOwnerFunds = editingValues.value._setOwnerFunds
+				updatedItem._shopId = editingValues.value._shopId
+			}
+
+			// Clean up internal flags from the updated item
+			delete updatedItem._resetOwnerFunds
+			delete updatedItem._shopId
+			delete updatedItem._setOwnerFunds
+
+			// But keep the flags for the emit
+			const emitData = { ...updatedItem }
+			if (editingValues.value._resetOwnerFunds) {
+				emitData._resetOwnerFunds = true
+				emitData._shopId = editingValues.value._shopId
+			}
+			if (editingValues.value._setOwnerFunds !== undefined) {
+				emitData._setOwnerFunds = editingValues.value._setOwnerFunds
+				emitData._shopId = editingValues.value._shopId
+			}
+
+			emit('quick-edit', emitData)
 		}
 	}
 	cancelEdit()
@@ -239,19 +262,22 @@ function formatPrice(price) {
 
 function formatDate(dateString) {
 	if (!dateString) return '-'
-	const date = new Date(dateString)
-	return (
-		date.toLocaleDateString() +
-		' ' +
-		date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-	)
-}
 
-function formatStock(quantity, isFull) {
-	if (quantity === null || quantity === undefined) {
-		return isFull ? 'Full' : '-'
+	const date = new Date(dateString)
+	const now = new Date()
+	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+	const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+	const diffTime = today.getTime() - itemDate.getTime()
+	const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+	if (diffDays === 0) {
+		return 'Today'
+	} else if (diffDays === 1) {
+		return 'Yesterday'
+	} else {
+		return `${diffDays} days ago`
 	}
-	return isFull ? `${quantity} (Full)` : quantity.toString()
 }
 
 function calculateMargin(item) {
@@ -284,6 +310,13 @@ function getMarginColor(margin) {
 
 function hasPriceHistory(item) {
 	return item.previous_buy_price !== null || item.previous_sell_price !== null
+}
+
+function hasPriceChanged(current, previous) {
+	if (previous === null || previous === undefined) return false
+	if (current === null || current === undefined) return false
+
+	return current !== previous
 }
 
 function getPriceChangeIcon(current, previous) {
@@ -323,13 +356,23 @@ function handlePriceInput(field, event) {
 	}
 }
 
-function handleQuantityInput(event) {
-	const value = event.target.value
-	if (value === '' || value === null) {
-		editingValues.value.stock_quantity = null
-	} else {
-		const numValue = parseInt(value)
-		editingValues.value.stock_quantity = isNaN(numValue) ? null : numValue
+function handleBrokeCheckboxChange(checked) {
+	editingValues.value.shop_owner_broke = checked
+
+	// Find the current item being edited to get shop data
+	const currentItem = props.items.find((i) => i.id === editingItemId.value)
+	if (currentItem) {
+		const shopData = props.shop || currentItem.shopData
+		if (shopData) {
+			if (checked) {
+				// Set owner_funds to 0 to mark as broke
+				editingValues.value._setOwnerFunds = 0
+			} else {
+				// Set owner_funds to null to allow automatic calculation
+				editingValues.value._setOwnerFunds = null
+			}
+			editingValues.value._shopId = shopData.id
+		}
 	}
 }
 
@@ -436,14 +479,6 @@ function navigateToShopItems(shopId) {
 							Profit Margin
 						</th>
 						<th
-							@click="setSortField('stock_quantity')"
-							:class="[
-								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
-							]">
-							Stock {{ getSortIcon('stock_quantity') }}
-						</th>
-						<th
 							@click="setSortField('last_updated')"
 							:class="[
 								layoutClasses.headerPadding,
@@ -466,8 +501,12 @@ function navigateToShopItems(shopId) {
 						v-for="(item, index) in sortedItems"
 						:key="item.id"
 						:class="{
-							'bg-blue-50': isSelected(item.id) && !readOnly,
-							'bg-green-50': item.shopData?.is_own_shop && !isSelected(item.id)
+							'bg-yellow-50 border-yellow-200': isEditing(item.id) && !readOnly,
+							'bg-blue-50': isSelected(item.id) && !readOnly && !isEditing(item.id),
+							'bg-green-50':
+								item.shopData?.is_own_shop &&
+								!isSelected(item.id) &&
+								!isEditing(item.id)
 						}">
 						<!-- Selection checkbox -->
 						<td v-if="!readOnly" :class="layoutClasses.cellPadding">
@@ -521,17 +560,14 @@ function navigateToShopItems(shopId) {
 									type="number"
 									step="0.01"
 									min="0"
-									:class="[
-										layoutClasses.inputSize,
-										'border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
-									]" />
+									class="w-20 px-2 py-1.5 text-base border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" />
 							</div>
 							<div v-else>
 								<div class="text-sm text-gray-900">
 									{{ formatPrice(item.buy_price) }}
 								</div>
 								<div
-									v-if="hasPriceHistory(item) && item.previous_buy_price !== null"
+									v-if="hasPriceChanged(item.buy_price, item.previous_buy_price)"
 									class="text-xs text-gray-500">
 									{{
 										getPriceChangeIcon(item.buy_price, item.previous_buy_price)
@@ -544,34 +580,63 @@ function navigateToShopItems(shopId) {
 						<!-- Sell price -->
 						<td :class="layoutClasses.cellPadding">
 							<div v-if="isEditing(item.id) && !readOnly">
-								<input
-									:value="editingValues.sell_price"
-									@input="handlePriceInput('sell_price', $event)"
-									type="number"
-									step="0.01"
-									min="0"
-									:class="[
-										layoutClasses.inputSize,
-										'border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
-									]" />
+								<div class="flex items-start gap-2">
+									<input
+										:value="editingValues.sell_price"
+										@input="handlePriceInput('sell_price', $event)"
+										type="number"
+										step="0.01"
+										min="0"
+										class="w-20 px-2 py-1.5 text-base border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" />
+									<div class="space-y-1">
+										<label class="flex items-center">
+											<input
+												v-model="editingValues.stock_full"
+												type="checkbox"
+												class="text-blue-600 rounded text-xs" />
+											<span class="ml-1 text-xs text-gray-600">Full</span>
+										</label>
+										<label class="flex items-center">
+											<input
+												:checked="editingValues.shop_owner_broke"
+												type="checkbox"
+												@change="
+													handleBrokeCheckboxChange($event.target.checked)
+												"
+												class="text-blue-600 rounded text-xs" />
+											<span class="ml-1 text-xs text-gray-600">Broke</span>
+										</label>
+									</div>
+								</div>
 							</div>
 							<div v-else>
-								<div
-									class="text-sm"
-									:class="
-										hasInsufficientFunds(item)
-											? 'text-gray-400 line-through'
-											: 'text-gray-900'
-									"
-									:title="hasInsufficientFunds(item) ? 'Owner is broke' : ''">
-									{{ formatPrice(item.sell_price) }}
+								<div class="flex items-center gap-1">
+									<span
+										class="text-sm"
+										:class="
+											hasInsufficientFunds(item) || item.stock_full
+												? 'text-gray-400 line-through'
+												: 'text-gray-900'
+										">
+										{{ formatPrice(item.sell_price) }}
+									</span>
+									<span
+										v-if="hasInsufficientFunds(item)"
+										class="text-xs text-red-500">
+										broke
+									</span>
+									<span
+										v-else-if="item.stock_full"
+										class="text-xs text-orange-500">
+										full
+									</span>
 								</div>
 
 								<div
 									v-if="
 										!hasInsufficientFunds(item) &&
-										hasPriceHistory(item) &&
-										item.previous_sell_price !== null
+										!item.stock_full &&
+										hasPriceChanged(item.sell_price, item.previous_sell_price)
 									"
 									class="text-xs text-gray-500">
 									{{
@@ -595,45 +660,10 @@ function navigateToShopItems(shopId) {
 							</span>
 						</td>
 
-						<!-- Stock -->
-						<td :class="layoutClasses.cellPadding">
-							<div v-if="isEditing(item.id) && !readOnly">
-								<div class="space-y-1">
-									<input
-										:value="editingValues.stock_quantity"
-										@input="handleQuantityInput"
-										type="number"
-										min="0"
-										:class="[
-											layoutClasses.inputSize,
-											'border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
-										]" />
-									<label class="flex items-center">
-										<input
-											v-model="editingValues.stock_full"
-											type="checkbox"
-											class="text-blue-600 rounded text-xs" />
-										<span class="ml-1 text-xs text-gray-600">Full</span>
-									</label>
-								</div>
-							</div>
-							<div v-else>
-								<div class="text-sm text-gray-900">
-									{{ formatStock(item.stock_quantity, item.stock_full) }}
-								</div>
-								<div v-if="item.stock_full" class="text-xs text-red-600">
-									⚠️ Stock Full
-								</div>
-							</div>
-						</td>
-
 						<!-- Last updated -->
 						<td :class="layoutClasses.cellPadding">
 							<div class="text-sm text-gray-900">
 								{{ formatDate(item.last_updated) }}
-							</div>
-							<div v-if="item.previous_price_date" class="text-xs text-gray-500">
-								Price history: {{ formatDate(item.previous_price_date) }}
 							</div>
 						</td>
 

@@ -373,6 +373,20 @@ async function handleQuickEdit(updatedItem) {
 
 		console.log('ShopItemsView: Updating item ID:', updatedItem.id, 'with data:', updateData)
 		await updateShopItem(updatedItem.id, updateData)
+
+		// Handle shop owner_funds update if needed
+		if (updatedItem._setOwnerFunds !== undefined && updatedItem._shopId) {
+			console.log(
+				'ShopItemsView: Setting owner_funds to',
+				updatedItem._setOwnerFunds,
+				'for shop:',
+				updatedItem._shopId
+			)
+
+			// Import shop utilities if needed
+			const { updateShop } = await import('../utils/shopProfile.js')
+			await updateShop(updatedItem._shopId, { owner_funds: updatedItem._setOwnerFunds })
+		}
 	} catch (err) {
 		console.error('Error updating shop item:', err)
 		error.value = err.message || 'Failed to update shop item. Please try again.'
