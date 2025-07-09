@@ -73,5 +73,54 @@
 			{ "name": "User profile pages", "completed": false },
 			{ "name": "Community feedback and feature suggestions", "completed": false }
 		]
+	},
+	{
+		"id": 5,
+		"title": "Shop Manager - Your Ultimate Minecraft Trading Hub",
+		"status": "Pending",
+		"description": "Transform your Minecraft trading experience with our powerful Shop Manager! Track your competitors, maximize profits, and never miss a great deal again. Whether you're running multiple shops across different servers or just want to find the best prices, this feature puts you in control of your trading empire.",
+		"features": [
+			{
+				"name": "🏪 Manage multiple shops across different Minecraft servers",
+				"completed": false
+			},
+			{
+				"name": "📊 Compare prices instantly - see who's offering the best deals",
+				"completed": false
+			},
+			{
+				"name": "🎯 Smart filtering by Minecraft version - only see relevant items",
+				"completed": false
+			},
+			{
+				"name": "📦 Stock status tracking - mark when chests are full or empty",
+				"completed": false
+			},
+			{
+				"name": "🔍 Market overview - spot profitable opportunities at a glance",
+				"completed": false
+			},
+			{
+				"name": "⚡ Quick price updates - keep your shop competitive in seconds",
+				"completed": false
+			},
+			{
+				"name": "🏆 Competitor tracking - monitor what other successful shops are doing",
+				"completed": false
+			},
+			{
+				"name": "🎮 Multi-server support - manage shops on Hypixel, your SMP, and more",
+				"completed": false
+			},
+			{ "name": "📱 Easy-to-use interface - no spreadsheets needed!", "completed": false },
+			{
+				"name": "🎯 Advanced search and filtering - find exactly what you need",
+				"completed": false
+			},
+			{
+				"name": "📋 Bulk operations - update hundreds of prices at once",
+				"completed": false
+			}
+		]
 	}
 ]
