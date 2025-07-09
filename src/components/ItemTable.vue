@@ -6,6 +6,7 @@ import { buyUnitPrice, sellUnitPrice, buyStackPrice, sellStackPrice } from '../u
 import { getEffectivePrice } from '../utils/pricing.js'
 import { useAdmin } from '../utils/admin.js'
 import { computed, ref, watch } from 'vue'
+import { Squares2X2Icon } from '@heroicons/vue/16/solid'
 
 const { user, canEditItems } = useAdmin()
 const db = useFirestore()
@@ -198,9 +199,9 @@ function getItemEffectivePrice(item) {
 						</a>
 						<span
 							v-if="item.pricing_type === 'dynamic'"
-							class="text-blue-600 text-xs cursor-help"
+							class="text-gray-asparagus text-xs cursor-help ml-auto"
 							title="Dynamic pricing - calculated from recipe ingredients">
-							⚙️
+							<Squares2X2Icon class="w-4 h-4" />
 						</span>
 					</div>
 				</th>
