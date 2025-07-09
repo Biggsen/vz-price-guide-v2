@@ -32,6 +32,13 @@ const activeMainNav = inject('activeMainNav')
 			to="/bulk-update">
 			Bulk Update
 		</RouterLink>
+		<RouterLink
+			v-if="canBulkUpdate"
+			class="hover:underline"
+			active-class="underline"
+			to="/recipes">
+			Recipes
+		</RouterLink>
 		<div class="ml-auto">
 			<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
 		</div>
