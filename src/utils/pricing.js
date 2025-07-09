@@ -125,10 +125,22 @@ export function calculateRecipePrice(item, allItems, version = '1_16', visited =
 
 	// Check if item has a recipe for this version
 	const recipe = item.recipes_by_version?.[version]
-	if (!recipe || !Array.isArray(recipe)) {
+	if (!recipe) {
 		return {
 			price: null,
 			error: `No recipe found for ${item.material_id} in version ${version}`,
+			chain: []
+		}
+	}
+
+	// Handle both old format (array) and new format (object)
+	const ingredients = Array.isArray(recipe) ? recipe : recipe.ingredients
+	const outputCount = Array.isArray(recipe) ? 1 : recipe.output_count || 1
+
+	if (!ingredients || !Array.isArray(ingredients)) {
+		return {
+			price: null,
+			error: `Invalid recipe format for ${item.material_id} in version ${version}`,
 			chain: []
 		}
 	}
@@ -140,7 +152,7 @@ export function calculateRecipePrice(item, allItems, version = '1_16', visited =
 	const calculationChain = []
 
 	// Calculate cost for each ingredient
-	for (const ingredient of recipe) {
+	for (const ingredient of ingredients) {
 		const ingredientItem = allItems.find((i) => i.material_id === ingredient.material_id)
 
 		if (!ingredientItem) {
@@ -186,10 +198,16 @@ export function calculateRecipePrice(item, allItems, version = '1_16', visited =
 	// Remove from visited set
 	visited.delete(item.material_id)
 
+	// Calculate price per unit by dividing total cost by output count
+	const pricePerUnit = totalCost / outputCount
+
 	return {
-		price: totalCost,
+		price: pricePerUnit,
 		error: null,
-		chain: calculationChain
+		chain: [
+			...calculationChain,
+			`Total cost: ${totalCost} ÷ ${outputCount} units = ${pricePerUnit} per unit`
+		]
 	}
 }
 
@@ -220,7 +238,7 @@ export function recalculateDynamicPrices(allItems, version = '1_16') {
 
 		if (calculation.price !== null) {
 			const oldPrice = getEffectivePrice(item, version)
-			const newPrice = Math.round(calculation.price * 100) / 100 // Round to 2 decimal places
+			const newPrice = Math.ceil(calculation.price) // Always round up to whole numbers
 
 			results.success.push({
 				material_id: item.material_id,

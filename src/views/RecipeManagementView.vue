@@ -23,7 +23,7 @@ const selectedVersion = ref('1.16')
 const currentMode = ref('import') // 'import', 'manage', or 'pricing'
 
 // Import section state
-const importProgress = ref({ current: 0, total: 0, completed: 0, skipped: 0 })
+const importProgress = ref({ current: 0, total: 0, completed: 0, overwritten: 0, skipped: 0 })
 const currentRecipe = ref(null)
 const allRecipes = ref([])
 const filteredRecipes = ref([]) // New: filtered recipes based on ingredient selection
@@ -57,12 +57,19 @@ async function loadExistingRecipes() {
 	const versionKey = selectedVersion.value.replace('.', '_')
 	existingRecipes.value = dbItems.value
 		.filter((item) => item.recipes_by_version && item.recipes_by_version[versionKey])
-		.map((item) => ({
-			material_id: item.material_id,
-			ingredients: item.recipes_by_version[versionKey],
-			isValid: true, // Assume imported recipes are valid
-			type: 'crafting'
-		}))
+		.map((item) => {
+			const recipe = item.recipes_by_version[versionKey]
+			// Handle both old format (array) and new format (object)
+			const ingredients = Array.isArray(recipe) ? recipe : recipe.ingredients
+			const outputCount = Array.isArray(recipe) ? 1 : recipe.output_count
+
+			return {
+				material_id: item.material_id,
+				ingredients: ingredients,
+				output_count: outputCount,
+				isValid: true // Assume imported recipes are valid
+			}
+		})
 }
 
 // Initialize on mount
@@ -94,6 +101,7 @@ function filterRecipesByIngredient() {
 		current: 0,
 		total: filteredRecipes.value.length,
 		completed: 0,
+		overwritten: 0,
 		skipped: 0
 	}
 }
@@ -136,6 +144,7 @@ async function startImport() {
 			current: 0,
 			total: filteredRecipes.value.length,
 			completed: 0,
+			overwritten: 0,
 			skipped: 0
 		}
 	} catch (error) {
@@ -144,10 +153,21 @@ async function startImport() {
 	}
 }
 
+// Check if recipe already exists for this item
+function checkRecipeExists(recipe) {
+	if (!recipe || !recipe.outputItem) return false
+
+	const materialId = recipe.outputItem.material_id
+	return existingRecipes.value.some((existing) => existing.material_id === materialId)
+}
+
 // Modified: Work with filtered recipes
 function showNextRecipe() {
 	if (importProgress.value.current < filteredRecipes.value.length) {
 		currentRecipe.value = filteredRecipes.value[importProgress.value.current]
+
+		// Check if recipe already exists
+		currentRecipe.value.alreadyExists = checkRecipeExists(currentRecipe.value)
 
 		// Validate ingredients
 		if (currentRecipe.value.ingredients.length > 0) {
@@ -176,18 +196,31 @@ async function importCurrentRecipe() {
 				const itemRef = doc(db, 'items', itemQuery.id)
 				const versionKey = selectedVersion.value.replace('.', '_')
 				await updateDoc(itemRef, {
-					[`recipes_by_version.${versionKey}`]: internalRecipe.ingredients,
+					[`recipes_by_version.${versionKey}`]: {
+						ingredients: internalRecipe.ingredients,
+						output_count: internalRecipe.output_count
+					},
 					pricing_type: 'dynamic'
 				})
 
-				importProgress.value.completed++
-				importResults.value.push({
-					recipe: currentRecipe.value,
-					status: 'imported',
-					timestamp: new Date().toISOString()
-				})
+				if (currentRecipe.value.alreadyExists) {
+					importProgress.value.overwritten++
+					importResults.value.push({
+						recipe: currentRecipe.value,
+						status: 'overwritten',
+						timestamp: new Date().toISOString()
+					})
+				} else {
+					importProgress.value.completed++
+					importResults.value.push({
+						recipe: currentRecipe.value,
+						status: 'imported',
+						timestamp: new Date().toISOString()
+					})
+				}
 
-				// Refresh existing recipes to show the newly imported recipe
+				// Refresh database items and existing recipes to show the newly imported recipe
+				await loadDbItems()
 				await loadExistingRecipes()
 			}
 		}
@@ -251,12 +284,18 @@ function setSort(key) {
 
 function getValidationClass(recipe) {
 	if (!recipe.isValid) return 'border-red-500 bg-red-50'
+	if (recipe.alreadyExists) return 'border-orange-500 bg-orange-50'
 	if (recipe.warnings && recipe.warnings.length > 0) return 'border-yellow-500 bg-yellow-50'
 	return 'border-green-500 bg-green-50'
 }
 
 function getIngredientDisplay(ingredients) {
 	return ingredients.map((ing) => `${ing.quantity}x ${ing.material_id}`).join(', ')
+}
+
+function getOutputDisplay(recipe) {
+	const outputCount = recipe.output_count || 1
+	return outputCount > 1 ? `${outputCount}x ${recipe.material_id}` : recipe.material_id
 }
 
 // Price recalculation functions
@@ -420,8 +459,8 @@ function clearPriceRecalculationResults() {
 							Progress: {{ importProgress.current }} / {{ importProgress.total }}
 						</span>
 						<span>
-							Completed: {{ importProgress.completed }} | Skipped:
-							{{ importProgress.skipped }}
+							Completed: {{ importProgress.completed }} | Overwritten:
+							{{ importProgress.overwritten }} | Skipped: {{ importProgress.skipped }}
 						</span>
 					</div>
 					<div class="w-full bg-gray-200 rounded-full h-2">
@@ -445,14 +484,27 @@ function clearPriceRecalculationResults() {
 									Produces: {{ currentRecipe.outputItem?.count || 1 }}x
 									{{ currentRecipe.outputItem?.material_id }}
 								</p>
+								<p class="text-xs text-blue-600 font-medium">
+									Recipe yields {{ currentRecipe.outputItem?.count || 1 }} items
+								</p>
 							</div>
 							<div class="text-right">
 								<span
 									class="text-sm font-medium"
 									:class="
-										currentRecipe.isValid ? 'text-green-600' : 'text-red-600'
+										currentRecipe.alreadyExists
+											? 'text-orange-600'
+											: currentRecipe.isValid
+											? 'text-green-600'
+											: 'text-red-600'
 									">
-									{{ currentRecipe.isValid ? 'Valid' : 'Invalid' }}
+									{{
+										currentRecipe.alreadyExists
+											? 'Already Exists'
+											: currentRecipe.isValid
+											? 'Valid'
+											: 'Invalid'
+									}}
 								</span>
 							</div>
 						</div>
@@ -477,6 +529,19 @@ function clearPriceRecalculationResults() {
 										⚠️ Missing
 									</span>
 								</div>
+							</div>
+						</div>
+
+						<!-- Recipe already exists warning -->
+						<div v-if="currentRecipe.alreadyExists" class="mb-4">
+							<div
+								class="bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded">
+								<strong class="font-bold">⚠️ Recipe Already Exists!</strong>
+								<span class="block sm:inline">
+									This item already has a recipe for version
+									{{ selectedVersion }}. Importing will overwrite the existing
+									recipe.
+								</span>
 							</div>
 						</div>
 
@@ -524,8 +589,17 @@ function clearPriceRecalculationResults() {
 							<button
 								@click="importCurrentRecipe"
 								:disabled="!currentRecipe.isValid"
-								class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50">
-								Apply recipe to item
+								:class="
+									currentRecipe.alreadyExists
+										? 'bg-orange-600 hover:bg-orange-700'
+										: 'bg-green-600 hover:bg-green-700'
+								"
+								class="px-4 py-2 text-white rounded disabled:opacity-50">
+								{{
+									currentRecipe.alreadyExists
+										? 'Overwrite existing recipe'
+										: 'Apply recipe to item'
+								}}
 							</button>
 							<button
 								@click="skipCurrentRecipe"
@@ -542,8 +616,8 @@ function clearPriceRecalculationResults() {
 					class="text-center p-6 bg-green-50 rounded">
 					<h3 class="text-lg font-semibold text-green-600 mb-2">Import Complete!</h3>
 					<p>
-						Completed: {{ importProgress.completed }} | Skipped:
-						{{ importProgress.skipped }}
+						Completed: {{ importProgress.completed }} | Overwritten:
+						{{ importProgress.overwritten }} | Skipped: {{ importProgress.skipped }}
 					</p>
 				</div>
 			</div>
@@ -582,8 +656,8 @@ function clearPriceRecalculationResults() {
 										{{ sortAsc ? '▲' : '▼' }}
 									</span>
 								</th>
+								<th>Output</th>
 								<th>Ingredients</th>
-								<th>Type</th>
 								<th>Status</th>
 								<th>Actions</th>
 							</tr>
@@ -592,9 +666,11 @@ function clearPriceRecalculationResults() {
 							<tr v-for="recipe in filteredExistingRecipes" :key="recipe.id">
 								<td class="font-medium">{{ recipe.material_id }}</td>
 								<td class="text-sm">
+									{{ getOutputDisplay(recipe) }}
+								</td>
+								<td class="text-sm">
 									{{ getIngredientDisplay(recipe.ingredients) }}
 								</td>
-								<td>{{ recipe.recipe_type }}</td>
 								<td>
 									<span
 										:class="recipe.isValid ? 'text-green-600' : 'text-red-600'">
