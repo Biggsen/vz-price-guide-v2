@@ -40,6 +40,24 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/admin',
+			name: 'admin',
+			component: () => import('../views/AdminView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Admin Dashboard - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/shop-manager',
+			name: 'shop-manager',
+			component: () => import('../views/ShopManagerView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Shop Manager - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/add',
 			name: 'add',
 			component: () => import('../views/AddItemView.vue'),
@@ -73,6 +91,42 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				title: "Bulk Update - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/servers',
+			name: 'servers',
+			component: () => import('../views/ServersView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "My Servers - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/shops',
+			name: 'shops',
+			component: () => import('../views/ShopsView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "My Shops - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/shop-items',
+			name: 'shop-items',
+			component: () => import('../views/ShopItemsView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Shop Items - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/market-overview',
+			name: 'market-overview',
+			component: () => import('../views/MarketOverviewView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Market Overview - verzion's economy price guide for Minecraft"
 			}
 		},
 		{

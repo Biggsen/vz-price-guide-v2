@@ -1,0 +1,175 @@
+{
+	"indexes": [
+		{
+			"collectionGroup": "items",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "category",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "name",
+					"order": "ASCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "items",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "category",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "subcategory",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "name",
+					"order": "ASCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "items",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "category",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "subcategory",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "price",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "name",
+					"order": "ASCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "items",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "subcategory",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "name",
+					"order": "ASCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "items",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "version",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "category",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "name",
+					"order": "ASCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "servers",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "owner_id",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "created_at",
+					"order": "DESCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "shops",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "owner_id",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "created_at",
+					"order": "DESCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "shops",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "server_id",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "created_at",
+					"order": "DESCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "shop_items",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "shop_id",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "last_updated",
+					"order": "DESCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "shop_items",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "item_id",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "last_updated",
+					"order": "DESCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "shop_items",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "shop_id",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "item_id",
+					"order": "ASCENDING"
+				}
+			]
+		}
+	],
+	"fieldOverrides": []
+}
