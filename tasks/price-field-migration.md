@@ -133,9 +133,16 @@ Currently, the system uses a hybrid approach:
 
 #### Task 2.2: Update Backend Functions ⏳
 
--   [ ] **Update Firestore queries** to work with `prices_by_version` structure
--   [ ] **Update admin scripts** to handle new pricing structure
--   [ ] **Verify recipe calculation integration** works with new pricing format
+-   [x] **Update Firestore queries** to work with `prices_by_version` structure
+    -   [x] Removed legacy `price` field from Firestore indexes
+    -   [x] Updated frontend filtering logic in `HomeView.vue` to use `getEffectivePrice()`
+    -   [x] Added proper imports for pricing utilities
+-   [x] **Update admin scripts** to handle new pricing structure
+    -   [x] Added `getEffectivePrice()` utility to admin scripts
+    -   [x] Ensured all versions (1_16 through 1_21) are updated consistently
+-   [x] **Verify recipe calculation integration** works with new pricing format
+    -   [x] Recipe calculations already use `getEffectivePrice()` function
+    -   [x] Dynamic pricing system fully compatible with new structure
 
 ### Phase 3: Frontend Updates 🎨
 

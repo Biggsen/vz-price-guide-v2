@@ -7,6 +7,7 @@ import { useRoute, useRouter } from 'vue-router'
 import ItemTable from '../components/ItemTable.vue'
 import { categories, enabledCategories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
+import { getEffectivePrice } from '../utils/pricing.js'
 
 const db = useFirestore()
 const route = useRoute()
@@ -97,7 +98,8 @@ const groupedItems = computed(() => {
 		// Skip items not available in selected version
 		if (!shouldShowItemForVersion(item, selectedVersion.value)) return acc
 		// Skip zero-priced items unless admin has enabled showing them
-		if (!showZeroPricedItems.value && (!item.price || item.price === 0)) return acc
+		const effectivePrice = getEffectivePrice(item, selectedVersion.value.replace('.', '_'))
+		if (!showZeroPricedItems.value && (!effectivePrice || effectivePrice === 0)) return acc
 
 		if (!acc[item.category]) acc[item.category] = []
 		acc[item.category].push(item)
@@ -114,7 +116,8 @@ const uncategorizedItemsByVersion = computed(() => {
 		const isUncat = !item.category || !categories.includes(item.category)
 		const hasImage = item.image && item.image.trim() !== ''
 		const isAvailableInVersion = shouldShowItemForVersion(item, selectedVersion.value)
-		const hasValidPrice = showZeroPricedItems.value || (item.price && item.price !== 0)
+		const effectivePrice = getEffectivePrice(item, selectedVersion.value.replace('.', '_'))
+		const hasValidPrice = showZeroPricedItems.value || (effectivePrice && effectivePrice !== 0)
 
 		if (
 			isUncat &&
