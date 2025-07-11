@@ -73,7 +73,7 @@ export function getEffectivePrice(item, version = '1_16') {
 	if (Object.keys(normalizedPrices).length > 0) {
 		// First try the requested version
 		if (normalizedPrices[version] !== undefined) {
-			return normalizedPrices[version]
+			return extractPriceValue(normalizedPrices[version])
 		}
 
 		// If not found, try earlier versions in descending order
@@ -100,13 +100,38 @@ export function getEffectivePrice(item, version = '1_16') {
 
 			// Use this version if it's not newer than requested
 			if (avMajor < reqMajor || (avMajor === reqMajor && avMinor <= reqMinor)) {
-				return normalizedPrices[availableVersion]
+				return extractPriceValue(normalizedPrices[availableVersion])
 			}
 		}
 	}
 
 	// Final fallback to legacy price field
 	return item.price || 0
+}
+
+/**
+ * Extract the actual price value from a prices_by_version entry
+ * @param {*} priceData - The price data (could be a number or structured object)
+ * @returns {number} - The extracted price value
+ */
+function extractPriceValue(priceData) {
+	// Handle simple numeric values (preferred format)
+	if (typeof priceData === 'number') {
+		return priceData
+	}
+
+	// Handle legacy structured pricing data (backward compatibility)
+	if (typeof priceData === 'object' && priceData !== null) {
+		if (priceData.type === 'static') {
+			return priceData.value || 0
+		} else if (priceData.type === 'dynamic') {
+			// For dynamic pricing, prefer calculated_value, fallback to 0
+			return priceData.calculated_value || 0
+		}
+	}
+
+	// Fallback for any other format
+	return 0
 }
 
 /**
