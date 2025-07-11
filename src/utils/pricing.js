@@ -60,15 +60,24 @@ export function sellStackPrice(price, stack, priceMultiplier, sellMargin, roundT
  * @returns {number} - The effective price
  */
 export function getEffectivePrice(item, version = '1_16') {
-	// For dynamic pricing items, always prefer prices_by_version with inheritance
-	if (item.pricing_type === 'dynamic' && item.prices_by_version) {
+	// Normalize prices_by_version to handle mixed version key formats
+	const normalizedPrices = {}
+	if (item.prices_by_version) {
+		Object.entries(item.prices_by_version).forEach(([key, value]) => {
+			const normalizedKey = key.replace('.', '_')
+			normalizedPrices[normalizedKey] = value
+		})
+	}
+
+	// Apply price inheritance for all items (both static and dynamic)
+	if (Object.keys(normalizedPrices).length > 0) {
 		// First try the requested version
-		if (item.prices_by_version[version] !== undefined) {
-			return item.prices_by_version[version]
+		if (normalizedPrices[version] !== undefined) {
+			return normalizedPrices[version]
 		}
 
 		// If not found, try earlier versions in descending order
-		const availableVersions = Object.keys(item.prices_by_version)
+		const availableVersions = Object.keys(normalizedPrices)
 		const sortedVersions = availableVersions.sort((a, b) => {
 			// Convert version keys like "1_16" to comparable format
 			const aVersion = a.replace('_', '.')
@@ -91,14 +100,9 @@ export function getEffectivePrice(item, version = '1_16') {
 
 			// Use this version if it's not newer than requested
 			if (avMajor < reqMajor || (avMajor === reqMajor && avMinor <= reqMinor)) {
-				return item.prices_by_version[availableVersion]
+				return normalizedPrices[availableVersion]
 			}
 		}
-	}
-
-	// For static items or if no version-specific price exists, check prices_by_version first
-	if (item.prices_by_version && item.prices_by_version[version] !== undefined) {
-		return item.prices_by_version[version]
 	}
 
 	// Final fallback to legacy price field
