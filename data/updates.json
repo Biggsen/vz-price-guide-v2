@@ -1,5 +1,18 @@
 [
 	{
+		"id": 14,
+		"title": "Roadmap Improvements",
+		"date": "2025-07-11",
+		"type": "Enhancement",
+		"description": "Improved the roadmap display with better organization and status clarity.",
+		"changes": [
+			"Sorted roadmap entries by status priority",
+			"Added dependency tracking between features",
+			"Completed items are now hidden by default",
+			"Added new roadmap entry for Version-Aware Pricing and Recipe Integration"
+		]
+	},
+	{
 		"id": 13,
 		"title": "All 1.17 Items Complete + 1.18 Ready! 🎉",
 		"date": "2025-07-08",

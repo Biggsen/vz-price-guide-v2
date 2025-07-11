@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import updatesData from '../../data/updates.json'
 import roadmapData from '../../data/roadmap.json'
+import { roadmapStatusLegend } from '../constants.js'
 
 // Load data from JSON files and convert date strings to Date objects
 const updates = ref(
@@ -13,6 +14,52 @@ const updates = ref(
 
 const roadmap = ref(roadmapData)
 const showAllUpdates = ref(false)
+const showCompletedRoadmap = ref(false)
+
+// Sort roadmap by status priority
+const statusOrder = {
+	'In Progress': 1,
+	'In Development': 2,
+	Pending: 3,
+	Completed: 4
+}
+
+const sortedRoadmap = computed(() => {
+	return [...roadmap.value].sort((a, b) => {
+		const priorityA = statusOrder[a.status] || 999
+		const priorityB = statusOrder[b.status] || 999
+
+		// Primary sort by status priority
+		if (priorityA !== priorityB) {
+			return priorityA - priorityB
+		}
+
+		// Secondary sort by ID
+		return a.id - b.id
+	})
+})
+
+// Filter roadmap to show/hide completed items
+const displayedRoadmap = computed(() => {
+	if (showCompletedRoadmap.value) {
+		return sortedRoadmap.value
+	}
+	return sortedRoadmap.value.filter((item) => item.status !== 'Completed')
+})
+
+// Count completed items for the toggle button
+const completedRoadmapCount = computed(() => {
+	return roadmap.value.filter((item) => item.status === 'Completed').length
+})
+
+// Sort status legend in the same order
+const sortedStatusLegend = computed(() => {
+	return Object.entries(roadmapStatusLegend).sort((a, b) => {
+		const priorityA = statusOrder[a[0]] || 999
+		const priorityB = statusOrder[b[0]] || 999
+		return priorityA - priorityB
+	})
+})
 
 // Computed property to control displayed updates
 const displayedUpdates = computed(() => {
@@ -24,6 +71,10 @@ const displayedUpdates = computed(() => {
 
 function toggleShowAllUpdates() {
 	showAllUpdates.value = !showAllUpdates.value
+}
+
+function toggleShowCompletedRoadmap() {
+	showCompletedRoadmap.value = !showCompletedRoadmap.value
 }
 
 function formatDate(date) {
@@ -73,6 +124,16 @@ function getStatusClass(status) {
 	return classes[status] || 'bg-gray-100 text-gray-800'
 }
 
+function getStatusStyle(status) {
+	const statusInfo = roadmapStatusLegend[status]
+	if (!statusInfo) return { backgroundColor: '#6B7280', color: 'white' }
+
+	return {
+		backgroundColor: statusInfo.color,
+		color: 'white'
+	}
+}
+
 function calculateProgress(phase) {
 	if (!phase.features || phase.features.length === 0) {
 		return 0
@@ -82,6 +143,15 @@ function calculateProgress(phase) {
 	const totalFeatures = phase.features.length
 
 	return Math.round((completedFeatures / totalFeatures) * 100)
+}
+
+function getDependencyTitles(dependencies) {
+	if (!dependencies || dependencies.length === 0) return []
+
+	return dependencies.map((depId) => {
+		const depItem = roadmap.value.find((item) => item.id === depId)
+		return depItem ? depItem.title : `Unknown (ID: ${depId})`
+	})
 }
 </script>
 
@@ -147,17 +217,36 @@ function calculateProgress(phase) {
 					Roadmap
 				</h2>
 
+				<!-- Status Legend -->
+				<details class="mb-6">
+					<summary
+						class="cursor-pointer text-sm font-semibold text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded">
+						Status Legend
+					</summary>
+					<div class="mt-3">
+						<ul class="space-y-1 text-sm">
+							<li v-for="[status, statusInfo] in sortedStatusLegend" :key="status">
+								<span
+									:style="getStatusStyle(status)"
+									class="inline-block w-3 h-3 rounded-full mr-2"></span>
+								<strong>{{ status }}:</strong>
+								{{ statusInfo.description }}
+							</li>
+						</ul>
+					</div>
+				</details>
+
 				<div class="space-y-8">
 					<div
-						v-for="phase in roadmap"
+						v-for="phase in displayedRoadmap"
 						:key="phase.id"
 						class="bg-gray-100 border border-gray-300 p-6">
 						<div class="flex items-center justify-between mb-4">
 							<h3 class="text-lg font-semibold text-gray-800">{{ phase.title }}</h3>
 							<div class="flex items-center gap-2">
 								<span
-									:class="getStatusClass(phase.status)"
-									class="px-3 py-1 rounded-full text-xs font-medium bg-white">
+									:style="getStatusStyle(phase.status)"
+									class="px-3 py-1 rounded-full text-xs font-medium">
 									{{ phase.status }}
 								</span>
 								<span v-if="phase.timeline" class="text-sm text-gray-500">
@@ -167,6 +256,28 @@ function calculateProgress(phase) {
 						</div>
 
 						<p class="text-gray-700 mb-4">{{ phase.description }}</p>
+
+						<!-- Dependencies -->
+						<div v-if="phase.dependencies && phase.dependencies.length" class="mb-4">
+							<h4 class="text-sm font-semibold text-gray-600 mb-1">Dependencies</h4>
+							<p class="text-sm text-gray-600">
+								This feature depends on:
+								<span
+									v-for="(depTitle, index) in getDependencyTitles(
+										phase.dependencies
+									)"
+									:key="index">
+									<strong>{{ depTitle }}</strong>
+									<span
+										v-if="
+											index <
+											getDependencyTitles(phase.dependencies).length - 1
+										">
+										,
+									</span>
+								</span>
+							</p>
+						</div>
 
 						<div v-if="phase.features && phase.features.length" class="mb-4">
 							<h4 class="text-sm font-semibold text-gray-600 mb-2">Planned:</h4>
@@ -205,6 +316,19 @@ function calculateProgress(phase) {
 							</div>
 						</div>
 					</div>
+				</div>
+
+				<!-- Show All Completed Toggle -->
+				<div v-if="completedRoadmapCount > 0" class="mt-6 text-center">
+					<button
+						@click="toggleShowCompletedRoadmap"
+						class="text-laurel hover:text-gray-asparagus font-medium underline transition-colors duration-200">
+						{{
+							showCompletedRoadmap
+								? 'Hide completed'
+								: `Show all ${completedRoadmapCount} completed`
+						}}
+					</button>
 				</div>
 			</section>
 		</div>
