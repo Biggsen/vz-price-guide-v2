@@ -139,6 +139,15 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/edit-recipe/:id',
+			name: 'edit-recipe',
+			component: () => import('../views/EditRecipeView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Edit Recipe - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/updates',
 			name: 'updates',
 			component: () => import('../views/UpdatesView.vue'),

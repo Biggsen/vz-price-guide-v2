@@ -115,6 +115,7 @@ async function loadExistingRecipes() {
 			const outputCount = Array.isArray(recipe) ? 1 : recipe.output_count
 
 			return {
+				id: item.id, // Include item ID for editing
 				material_id: item.material_id,
 				ingredients: ingredients,
 				output_count: outputCount,
@@ -849,10 +850,11 @@ const recipesLeftToImport = computed(
 								</td>
 								<td>
 									<div class="flex gap-2">
-										<button
+										<RouterLink
+											:to="`/edit-recipe/${recipe.id}`"
 											class="px-2 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
 											Edit
-										</button>
+										</RouterLink>
 										<button
 											class="px-2 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">
 											Delete
