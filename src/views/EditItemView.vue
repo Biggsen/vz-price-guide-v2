@@ -66,6 +66,7 @@ const editItem = ref({
 const recalculationStatus = ref({})
 const showPricingTypeConfirmation = ref(false)
 const pendingPricingType = ref('')
+const previousPricingType = ref('static')
 
 // Initialize pricing data when item loads
 watch(itemSource, (itemSource) => {
@@ -100,6 +101,7 @@ watch(itemSource, (itemSource) => {
 		) {
 			editItem.value.pricing_type = 'static'
 		}
+		previousPricingType.value = editItem.value.pricing_type
 	}
 })
 
@@ -206,13 +208,18 @@ function removeVersionPrice(versionKey) {
 	delete editItem.value.prices_by_version[versionKey]
 }
 
-function confirmPricingTypeChange(newType) {
-	pendingPricingType.value = newType
-	showPricingTypeConfirmation.value = true
+function onPricingTypeChange(newType) {
+	if (editItem.value.pricing_type !== previousPricingType.value) {
+		pendingPricingType.value = newType
+		showPricingTypeConfirmation.value = true
+		// Revert the v-model immediately
+		editItem.value.pricing_type = previousPricingType.value
+	}
 }
 
 function applyPricingTypeChange() {
 	editItem.value.pricing_type = pendingPricingType.value
+	previousPricingType.value = pendingPricingType.value
 	showPricingTypeConfirmation.value = false
 
 	// If switching to dynamic, mark all versions for recalculation
@@ -227,6 +234,7 @@ function applyPricingTypeChange() {
 function cancelPricingTypeChange() {
 	showPricingTypeConfirmation.value = false
 	pendingPricingType.value = ''
+	// No need to revert, already reverted
 }
 
 async function recalculatePrice(versionKey) {
@@ -428,31 +436,23 @@ function isBaseVersion(versionKey) {
 					<label class="block text-base font-medium leading-6 text-gray-900 mb-3">
 						Pricing Type
 					</label>
-					<div class="flex gap-6">
+					<div class="flex flex-col gap-2">
 						<label class="flex items-center cursor-pointer">
 							<input
 								type="radio"
 								value="static"
-								:checked="editItem.pricing_type === 'static'"
-								@change="
-									editItem.pricing_type === 'static'
-										? null
-										: confirmPricingTypeChange('static')
-								"
-								class="mr-2" />
+								v-model="editItem.pricing_type"
+								@change="onPricingTypeChange('static')"
+								class="mr-2 w-5 h-5" />
 							<span>Static - Fixed prices set manually</span>
 						</label>
 						<label class="flex items-center cursor-pointer">
 							<input
 								type="radio"
 								value="dynamic"
-								:checked="editItem.pricing_type === 'dynamic'"
-								@change="
-									editItem.pricing_type === 'dynamic'
-										? null
-										: confirmPricingTypeChange('dynamic')
-								"
-								class="mr-2" />
+								v-model="editItem.pricing_type"
+								@change="onPricingTypeChange('dynamic')"
+								class="mr-2 w-5 h-5" />
 							<span>Dynamic - Calculated from recipes</span>
 						</label>
 					</div>
@@ -469,7 +469,7 @@ function isBaseVersion(versionKey) {
 				<!-- Pricing Table for Static Pricing (already refactored) -->
 				<div v-if="editItem.pricing_type === 'static'" class="mb-6">
 					<h3 class="text-base font-medium text-gray-900 mb-2">Pricing by Version</h3>
-					<table class="min-w-full bg-white rounded shadow text-sm">
+					<table class="text-md">
 						<thead>
 							<tr>
 								<th class="px-3 py-2 text-left">Version</th>
@@ -532,6 +532,50 @@ function isBaseVersion(versionKey) {
 							</tr>
 						</tbody>
 					</table>
+				</div>
+				<!-- Dynamic pricing table for dynamic pricing type -->
+				<div v-if="editItem.pricing_type === 'dynamic'" class="mb-6">
+					<h3 class="text-base font-medium text-gray-900 mb-2">
+						Calculated Prices by Version
+					</h3>
+					<table class="text-md">
+						<thead>
+							<tr>
+								<th class="px-3 py-2 text-left">Version</th>
+								<th class="px-3 py-2 text-left">Price</th>
+								<th class="px-3 py-2 text-left">Status</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr
+								v-for="versionPrice in versionPrices"
+								:key="versionPrice.versionKey">
+								<td class="px-3 py-2">{{ versionPrice.version }}</td>
+								<td class="px-3 py-2">
+									<span>{{ versionPrice.price }}</span>
+								</td>
+								<td class="px-3 py-2">
+									<span>
+										{{ getRecalculationStatusText(versionPrice.versionKey) }}
+									</span>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<!-- Recalculate button -->
+					<div
+						v-if="
+							versionPrices.some(
+								(v) =>
+									getRecalculationStatusText(v.versionKey) ===
+									'Needs recalculation'
+							)
+						"
+						class="mt-4">
+						<button type="button" @click="recalculateAllPrices" class="btn">
+							Recalculate
+						</button>
+					</div>
 				</div>
 				<!-- Dynamic pricing and inherited pricing UI remain unchanged -->
 				<!-- No Pricing Notice -->
