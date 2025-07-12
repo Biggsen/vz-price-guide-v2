@@ -12,6 +12,7 @@ import {
 	toInternalFormat
 } from '../utils/recipes.js'
 import { recalculateDynamicPrices, getEffectivePrice } from '../utils/pricing.js'
+import { ArrowPathIcon, DocumentArrowDownIcon } from '@heroicons/vue/24/outline'
 
 const db = useFirestore()
 const { user, canBulkUpdate } = useAdmin()
@@ -31,6 +32,8 @@ const selectedIngredient = ref('') // New: selected ingredient for filtering
 const availableIngredients = ref([]) // New: list of available ingredients
 const idToMaterialMap = ref({})
 const importResults = ref([])
+const allRecipesAlreadyExist = ref(false)
+const allFilteredRecipesAlreadyExist = ref(false)
 
 // Management section state
 const existingRecipes = ref([])
@@ -45,6 +48,54 @@ const priceRecalculation = ref({
 	results: null,
 	error: null
 })
+
+// Add local state for sorting the recalculation results table
+const priceResultsSortKey = ref('item')
+const priceResultsSortAsc = ref(true)
+
+const sortedPriceResults = computed(() => {
+	if (!priceRecalculation.value.results || !priceRecalculation.value.results.success) return []
+	const arr = [...priceRecalculation.value.results.success]
+	const key = priceResultsSortKey.value
+	const asc = priceResultsSortAsc.value
+	arr.sort((a, b) => {
+		let aVal, bVal
+		switch (key) {
+			case 'item':
+				aVal = (a.name || a.material_id || '').toLowerCase()
+				bVal = (b.name || b.material_id || '').toLowerCase()
+				break
+			case 'oldPrice':
+				aVal = a.oldPrice || 0
+				bVal = b.oldPrice || 0
+				break
+			case 'newPrice':
+				aVal = a.newPrice || 0
+				bVal = b.newPrice || 0
+				break
+			case 'status':
+				aVal = a.changed ? 1 : 0
+				bVal = b.changed ? 1 : 0
+				break
+			default:
+				aVal = ''
+				bVal = ''
+		}
+		if (aVal < bVal) return asc ? -1 : 1
+		if (aVal > bVal) return asc ? 1 : -1
+		return 0
+	})
+	return arr
+})
+
+function setPriceResultsSort(key) {
+	if (priceResultsSortKey.value === key) {
+		priceResultsSortAsc.value = !priceResultsSortAsc.value
+	} else {
+		priceResultsSortKey.value = key
+		priceResultsSortAsc.value = true
+	}
+}
 
 // Load database items
 async function loadDbItems() {
@@ -96,6 +147,11 @@ function filterRecipesByIngredient() {
 		)
 	}
 
+	// Check if all filtered recipes already exist
+	allFilteredRecipesAlreadyExist.value =
+		filteredRecipes.value.length > 0 &&
+		filteredRecipes.value.every((recipe) => checkRecipeExists(recipe))
+
 	// Reset import progress for filtered recipes
 	importProgress.value = {
 		current: 0,
@@ -116,12 +172,22 @@ function extractAvailableIngredients() {
 		})
 	})
 
-	availableIngredients.value = Array.from(ingredientSet).sort()
+	// Only include ingredients where at least one recipe for that ingredient is not yet imported
+	const filtered = Array.from(ingredientSet).filter((ingredientId) => {
+		const recipesForIngredient = allRecipes.value.filter((recipe) =>
+			recipe.ingredients.some((ing) => ing.material_id === ingredientId)
+		)
+		return recipesForIngredient.some((recipe) => !checkRecipeExists(recipe))
+	})
+
+	availableIngredients.value = filtered.sort()
 }
 
 // Modified: Start import with filtering
 async function startImport() {
 	try {
+		// Reset ingredient filter to default
+		selectedIngredient.value = ''
 		// Load JSON files
 		const recipesResponse = await fetch('/resource/recipes_1_16.json')
 		const recipesJson = await recipesResponse.json()
@@ -138,6 +204,10 @@ async function startImport() {
 
 		// Initially show all recipes
 		filteredRecipes.value = [...allRecipes.value]
+
+		// Pre-check: are all recipes already imported?
+		const allExist = allRecipes.value.every((recipe) => checkRecipeExists(recipe))
+		allRecipesAlreadyExist.value = allExist
 
 		// Set up import progress
 		importProgress.value = {
@@ -339,6 +409,30 @@ function clearPriceRecalculationResults() {
 	priceRecalculation.value.results = null
 	priceRecalculation.value.error = null
 }
+
+const showCompletedIngredients = ref(false)
+const completedIngredients = computed(() => {
+	if (!allRecipes.value || allRecipes.value.length === 0) return []
+	const ingredientSet = new Set()
+	allRecipes.value.forEach((recipe) => {
+		recipe.ingredients.forEach((ingredient) => {
+			ingredientSet.add(ingredient.material_id)
+		})
+	})
+	return Array.from(ingredientSet)
+		.filter((ingredientId) => {
+			const recipesForIngredient = allRecipes.value.filter((recipe) =>
+				recipe.ingredients.some((ing) => ing.material_id === ingredientId)
+			)
+			return recipesForIngredient.every((recipe) => checkRecipeExists(recipe))
+		})
+		.sort()
+})
+
+// Add a computed property for the number of recipes left to import
+const recipesLeftToImport = computed(
+	() => filteredRecipes.value.filter((r) => !checkRecipeExists(r)).length
+)
 </script>
 
 <template>
@@ -389,16 +483,40 @@ function clearPriceRecalculationResults() {
 			<div v-if="currentMode === 'import'">
 				<h3 class="text-lg font-semibold mb-4">Import Recipes from JSON</h3>
 
+				<!-- Show message if all recipes already exist -->
+				<div
+					v-if="allRecipesAlreadyExist && allRecipes.length > 0"
+					class="mb-6 bg-green-50 border border-green-200 rounded p-4 text-green-800 text-center">
+					<strong>All recipes for this version are already imported.</strong>
+					<p class="mt-2">No new recipes to import for version {{ selectedVersion }}.</p>
+				</div>
+
 				<!-- Start import button -->
-				<div v-if="!currentRecipe && allRecipes.length === 0" class="mb-4">
+				<div
+					v-if="!currentRecipe && allRecipes.length === 0 && !allRecipesAlreadyExist"
+					class="mb-4">
 					<button
 						@click="startImport"
-						class="px-6 py-3 bg-green-600 text-white rounded hover:bg-green-700">
+						class="px-6 py-3 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2">
+						<DocumentArrowDownIcon class="w-5 h-5" />
 						Load Recipes
 					</button>
 					<p class="text-gray-600 mt-2">
 						This will load recipes from /resource/recipes_1_16.json and allow you to
 						filter and import them.
+					</p>
+				</div>
+
+				<!-- Reload recipes button -->
+				<div v-if="allRecipes.length > 0 && !currentRecipe" class="mb-4">
+					<button
+						@click="startImport"
+						class="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2">
+						<ArrowPathIcon class="w-5 h-5" />
+						Reload Recipes
+					</button>
+					<p class="text-gray-600 mt-2">
+						Reload recipes from /resource/recipes_1_16.json to refresh the data.
 					</p>
 				</div>
 
@@ -412,7 +530,7 @@ function clearPriceRecalculationResults() {
 								v-model="selectedIngredient"
 								@change="filterRecipesByIngredient"
 								class="w-full border-2 border-gray-300 rounded px-3 py-2">
-								<option value="">All recipes ({{ allRecipes.length }})</option>
+								<option value="">All recipes ({{ recipesLeftToImport }})</option>
 								<option
 									v-for="ingredient in availableIngredients"
 									:key="ingredient"
@@ -425,9 +543,11 @@ function clearPriceRecalculationResults() {
 						<div class="flex gap-2">
 							<button
 								@click="showNextRecipe"
-								:disabled="filteredRecipes.length === 0"
+								:disabled="
+									filteredRecipes.length === 0 || allFilteredRecipesAlreadyExist
+								"
 								class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
-								Start Import ({{ filteredRecipes.length }} recipes)
+								Start Import
 							</button>
 
 							<!-- prettier-ignore -->
@@ -440,6 +560,24 @@ function clearPriceRecalculationResults() {
 						</div>
 					</div>
 
+					<!-- Show completed ingredients toggle -->
+					<div class="mb-2">
+						<a
+							href="#"
+							@click.prevent="showCompletedIngredients = !showCompletedIngredients"
+							class="text-blue-600 hover:underline text-sm">
+							{{ showCompletedIngredients ? 'Hide' : 'Show' }} completed ingredients
+							({{ completedIngredients?.length || 0 }})
+						</a>
+					</div>
+					<ul
+						v-if="showCompletedIngredients"
+						class="mb-4 text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded p-2 max-h-40 overflow-y-auto">
+						<li v-for="ingredient in completedIngredients" :key="ingredient">
+							{{ ingredient }}
+						</li>
+					</ul>
+
 					<div
 						v-if="selectedIngredient"
 						class="bg-blue-50 p-3 rounded border border-blue-200">
@@ -450,10 +588,29 @@ function clearPriceRecalculationResults() {
 							(out of {{ allRecipes.length }} total recipes)
 						</p>
 					</div>
+
+					<!-- Show message if all filtered recipes already exist for this ingredient -->
+					<div
+						v-if="allFilteredRecipesAlreadyExist && selectedIngredient"
+						class="mt-4 bg-green-50 border border-green-200 rounded p-3 text-green-800 text-center">
+						<strong>All recipes for this ingredient are already imported.</strong>
+						<p class="mt-1">
+							No new recipes to import for ingredient {{ selectedIngredient }} in
+							version {{ selectedVersion }}.
+						</p>
+					</div>
 				</div>
 
 				<!-- Progress indicator -->
-				<div v-if="importProgress.total > 0" class="mb-4">
+				<div
+					v-if="
+						importProgress.total > 0 &&
+						(importProgress.current > 0 ||
+							importProgress.completed > 0 ||
+							importProgress.overwritten > 0 ||
+							importProgress.skipped > 0)
+					"
+					class="mb-4">
 					<div class="flex justify-between text-sm text-gray-600 mb-2">
 						<span>
 							Progress: {{ importProgress.current }} / {{ importProgress.total }}
@@ -470,6 +627,23 @@ function clearPriceRecalculationResults() {
 								width: `${(importProgress.current / importProgress.total) * 100}%`
 							}"></div>
 					</div>
+				</div>
+
+				<!-- Import completed -->
+				<div
+					v-if="
+						importProgress.total > 0 &&
+						!currentRecipe &&
+						(importProgress.completed > 0 ||
+							importProgress.overwritten > 0 ||
+							importProgress.skipped > 0)
+					"
+					class="text-center p-6 bg-green-50 rounded">
+					<h3 class="text-lg font-semibold text-green-600 mb-2">Import Complete!</h3>
+					<p>
+						Completed: {{ importProgress.completed }} | Overwritten:
+						{{ importProgress.overwritten }} | Skipped: {{ importProgress.skipped }}
+					</p>
 				</div>
 
 				<!-- Current recipe preview -->
@@ -609,16 +783,12 @@ function clearPriceRecalculationResults() {
 						</div>
 					</div>
 				</div>
-
-				<!-- Import completed -->
-				<div
-					v-if="importProgress.total > 0 && !currentRecipe"
-					class="text-center p-6 bg-green-50 rounded">
-					<h3 class="text-lg font-semibold text-green-600 mb-2">Import Complete!</h3>
-					<p>
-						Completed: {{ importProgress.completed }} | Overwritten:
-						{{ importProgress.overwritten }} | Skipped: {{ importProgress.skipped }}
-					</p>
+				<!-- prettier-ignore -->
+				<div v-if="currentRecipe && selectedIngredient" class="mb-4">
+					<!-- prettier-ignore -->
+					<button @click="selectedIngredient = ''; currentRecipe = null; filterRecipesByIngredient()" class="px-3 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+						Choose a different ingredient
+					</button>
 				</div>
 			</div>
 
@@ -800,16 +970,42 @@ function clearPriceRecalculationResults() {
 							<table class="table-auto w-full bg-white rounded border">
 								<thead>
 									<tr class="bg-gray-50">
-										<th class="text-left p-2">Item</th>
-										<th class="text-left p-2">Old Price</th>
-										<th class="text-left p-2">New Price</th>
-										<th class="text-left p-2">Status</th>
+										<th
+											class="text-left p-2 cursor-pointer select-none"
+											@click="setPriceResultsSort('item')">
+											Item
+											<span v-if="priceResultsSortKey === 'item'">
+												{{ priceResultsSortAsc ? '▲' : '▼' }}
+											</span>
+										</th>
+										<th
+											class="text-left p-2 cursor-pointer select-none"
+											@click="setPriceResultsSort('oldPrice')">
+											Old Price
+											<span v-if="priceResultsSortKey === 'oldPrice'">
+												{{ priceResultsSortAsc ? '▲' : '▼' }}
+											</span>
+										</th>
+										<th
+											class="text-left p-2 cursor-pointer select-none"
+											@click="setPriceResultsSort('newPrice')">
+											New Price
+											<span v-if="priceResultsSortKey === 'newPrice'">
+												{{ priceResultsSortAsc ? '▲' : '▼' }}
+											</span>
+										</th>
+										<th
+											class="text-left p-2 cursor-pointer select-none"
+											@click="setPriceResultsSort('status')">
+											Status
+											<span v-if="priceResultsSortKey === 'status'">
+												{{ priceResultsSortAsc ? '▲' : '▼' }}
+											</span>
+										</th>
 									</tr>
 								</thead>
 								<tbody>
-									<tr
-										v-for="item in priceRecalculation.results.success"
-										:key="item.material_id">
+									<tr v-for="item in sortedPriceResults" :key="item.material_id">
 										<td class="p-2 font-medium">
 											{{ item.name || item.material_id }}
 										</td>
