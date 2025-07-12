@@ -629,7 +629,15 @@ function isBaseVersion(versionKey) {
 				</div>
 			</fieldset>
 
-			<button type="submit" class="btn">Update item</button>
+			<div class="flex gap-4">
+				<button type="submit" class="btn">Update item</button>
+				<button
+					type="button"
+					@click="router.push({ path: '/', query: homeQuery })"
+					class="px-3 py-2 mb-6 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+					Cancel
+				</button>
+			</div>
 		</form>
 	</div>
 	<div v-else-if="user?.email" class="p-4 pt-8">
