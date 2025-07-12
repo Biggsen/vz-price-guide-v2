@@ -240,6 +240,14 @@ export function calculateRecipePrice(item, allItems, version = '1_16', visited =
 	}
 }
 
+function customRoundPrice(price) {
+	if (price < 5) {
+		return Math.ceil(price * 10) / 10
+	} else {
+		return Math.ceil(price)
+	}
+}
+
 /**
  * Recalculate prices for all items with dynamic pricing for a specific version
  * @param {Array} allItems - Array of all items
@@ -267,7 +275,7 @@ export function recalculateDynamicPrices(allItems, version = '1_16') {
 
 		if (calculation.price !== null) {
 			const oldPrice = getEffectivePrice(item, version)
-			const newPrice = Math.ceil(calculation.price) // Always round up to whole numbers
+			const newPrice = customRoundPrice(calculation.price)
 
 			results.success.push({
 				material_id: item.material_id,
