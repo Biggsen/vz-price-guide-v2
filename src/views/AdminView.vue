@@ -93,7 +93,7 @@ const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAd
 					<h3 class="text-lg font-semibold text-gray-900 ml-3">Recipes</h3>
 				</div>
 				<p class="text-gray-600 text-sm">
-					Manage crafting recipes and configure dynamic pricing calculations for items.
+					Import, manage, and configure dynamic pricing for crafting recipes.
 				</p>
 			</RouterLink>
 		</div>

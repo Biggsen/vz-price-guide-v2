@@ -132,10 +132,33 @@ const router = createRouter({
 		{
 			path: '/recipes',
 			name: 'recipes',
-			component: () => import('../views/RecipeManagementView.vue'),
+			redirect: '/recipes/import'
+		},
+		{
+			path: '/recipes/import',
+			name: 'recipes-import',
+			component: () => import('../views/recipes/RecipeImportView.vue'),
 			meta: {
 				requiresAuth: true,
-				title: "Recipe Management - verzion's economy price guide for Minecraft"
+				title: "Import Recipes - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/recipes/manage',
+			name: 'recipes-manage',
+			component: () => import('../views/recipes/RecipeManageView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Manage Recipes - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/recipes/recalculate',
+			name: 'recipes-recalculate',
+			component: () => import('../views/recipes/RecipeRecalculateView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Recalculate Prices - verzion's economy price guide for Minecraft"
 			}
 		},
 		{
