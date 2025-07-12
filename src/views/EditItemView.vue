@@ -1,8 +1,8 @@
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue'
 import { RouterLink, useRouter, useRoute } from 'vue-router'
-import { useFirestore, useDocument } from 'vuefire'
-import { doc, updateDoc } from 'firebase/firestore'
+import { useFirestore, useDocument, useCollection } from 'vuefire'
+import { doc, updateDoc, query, collection, orderBy } from 'firebase/firestore'
 import { categories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { calculateRecipePrice, getEffectivePrice } from '../utils/pricing.js'
@@ -14,6 +14,15 @@ const router = useRouter()
 const route = useRoute()
 const { user, canEditItems } = useAdmin()
 const docRef = doc(db, 'items', route.params.id)
+
+// Fetch all items for recipe calculations
+const allItemsQuery = query(
+	collection(db, 'items'),
+	orderBy('category', 'asc'),
+	orderBy('subcategory', 'asc'),
+	orderBy('name', 'asc')
+)
+const allItemsCollection = useCollection(allItemsQuery)
 
 // Store the home page query parameters to restore them after editing
 const homeQuery = ref({})
@@ -64,9 +73,8 @@ const editItem = ref({
 
 // Reactive state for pricing management
 const recalculationStatus = ref({})
-const showPricingTypeConfirmation = ref(false)
-const pendingPricingType = ref('')
-const previousPricingType = ref('static')
+const pendingPricingTypeChange = ref(null)
+const originalPricingType = ref('static')
 
 // Initialize pricing data when item loads
 watch(itemSource, (itemSource) => {
@@ -101,7 +109,11 @@ watch(itemSource, (itemSource) => {
 		) {
 			editItem.value.pricing_type = 'static'
 		}
-		previousPricingType.value = editItem.value.pricing_type
+
+		// Store original values for comparison
+		originalPricingType.value = editItem.value.pricing_type
+		pendingPricingTypeChange.value = null
+		recalculationStatus.value = {}
 	}
 })
 
@@ -209,54 +221,73 @@ function removeVersionPrice(versionKey) {
 }
 
 function onPricingTypeChange(newType) {
-	if (editItem.value.pricing_type !== previousPricingType.value) {
-		pendingPricingType.value = newType
-		showPricingTypeConfirmation.value = true
-		// Revert the v-model immediately
-		editItem.value.pricing_type = previousPricingType.value
+	if (newType !== originalPricingType.value) {
+		pendingPricingTypeChange.value = newType
+		editItem.value.pricing_type = newType
+
+		// If switching to dynamic, mark all versions for recalculation
+		if (newType === 'dynamic') {
+			availableVersions.value.forEach((version) => {
+				const versionKey = version.replace('.', '_')
+				recalculationStatus.value[versionKey] = 'needs_recalculation'
+			})
+		}
+	} else {
+		pendingPricingTypeChange.value = null
 	}
-}
-
-function applyPricingTypeChange() {
-	editItem.value.pricing_type = pendingPricingType.value
-	previousPricingType.value = pendingPricingType.value
-	showPricingTypeConfirmation.value = false
-
-	// If switching to dynamic, mark all versions for recalculation
-	if (pendingPricingType.value === 'dynamic') {
-		availableVersions.value.forEach((version) => {
-			const versionKey = version.replace('.', '_')
-			recalculationStatus.value[versionKey] = 'needs_recalculation'
-		})
-	}
-}
-
-function cancelPricingTypeChange() {
-	showPricingTypeConfirmation.value = false
-	pendingPricingType.value = ''
-	// No need to revert, already reverted
 }
 
 async function recalculatePrice(versionKey) {
 	recalculationStatus.value[versionKey] = 'calculating'
 
 	try {
-		// This would need to be implemented with access to all items
-		// For now, just simulate the recalculation
-		await new Promise((resolve) => setTimeout(resolve, 1000))
+		const allItems = allItemsCollection.value || []
 
-		// In a real implementation, this would call calculateRecipePrice
-		// const result = calculateRecipePrice(editItem.value, allItems, versionKey)
-		// if (result.price !== null) {
-		//   editItem.value.prices_by_version[versionKey] = result.price
-		//   recalculationStatus.value[versionKey] = 'success'
-		// } else {
-		//   recalculationStatus.value[versionKey] = 'error'
-		// }
+		// Find the nearest previous version with a recipe
+		let recipeVersionKey = versionKey
+		let foundRecipe = false
+		const item = editItem.value
+		const versionIndex = versions.findIndex((v) => v.replace('.', '_') === versionKey)
+		for (let i = versionIndex; i >= 0; i--) {
+			const checkVersionKey = versions[i].replace('.', '_')
+			if (item.recipes_by_version && item.recipes_by_version[checkVersionKey]) {
+				recipeVersionKey = checkVersionKey
+				foundRecipe = true
+				break
+			}
+		}
 
-		recalculationStatus.value[versionKey] = 'success'
+		if (!foundRecipe) {
+			recalculationStatus.value[versionKey] = 'error'
+			console.error(
+				'No recipe found for',
+				item.material_id,
+				'in',
+				versionKey,
+				'or any previous version'
+			)
+			return
+		}
+
+		const result = calculateRecipePrice(item, allItems, recipeVersionKey)
+		console.log(
+			'Recalculation result for',
+			versionKey,
+			'using recipe from',
+			recipeVersionKey,
+			result
+		)
+		if (result.price !== null) {
+			const newPrice = Math.ceil(result.price)
+			editItem.value.prices_by_version[versionKey] = newPrice
+			recalculationStatus.value[versionKey] = 'success'
+		} else {
+			recalculationStatus.value[versionKey] = 'error'
+			console.error('Recipe calculation failed:', result.error)
+		}
 	} catch (error) {
 		recalculationStatus.value[versionKey] = 'error'
+		console.error('Error during recalculation:', error)
 	}
 }
 
@@ -300,6 +331,26 @@ function getStatusIndicatorClass(versionKey) {
 }
 
 async function updateItem() {
+	// Check if there's a pending pricing type change that needs confirmation
+	if (
+		pendingPricingTypeChange.value &&
+		pendingPricingTypeChange.value !== originalPricingType.value
+	) {
+		const confirmed = confirm(
+			`Are you sure you want to change the pricing type from "${originalPricingType.value}" to "${pendingPricingTypeChange.value}"? This will affect how prices are calculated for this item.`
+		)
+		if (!confirmed) {
+			// Revert the pricing type change
+			editItem.value.pricing_type = originalPricingType.value
+			pendingPricingTypeChange.value = null
+			// Clear recalculation status if reverting from dynamic
+			if (originalPricingType.value === 'static') {
+				recalculationStatus.value = {}
+			}
+			return
+		}
+	}
+
 	await updateDoc(docRef, {
 		...editItem.value
 	})
@@ -563,15 +614,7 @@ function isBaseVersion(versionKey) {
 						</tbody>
 					</table>
 					<!-- Recalculate button -->
-					<div
-						v-if="
-							versionPrices.some(
-								(v) =>
-									getRecalculationStatusText(v.versionKey) ===
-									'Needs recalculation'
-							)
-						"
-						class="mt-4">
+					<div class="mt-4">
 						<button type="button" @click="recalculateAllPrices" class="btn">
 							Recalculate
 						</button>
@@ -588,39 +631,6 @@ function isBaseVersion(versionKey) {
 
 			<button type="submit" class="btn">Update item</button>
 		</form>
-
-		<!-- Pricing Type Confirmation Modal -->
-		<div
-			v-if="showPricingTypeConfirmation"
-			class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div class="bg-white p-6 rounded-lg max-w-md mx-4">
-				<h3 class="text-lg font-bold mb-4">Confirm Pricing Type Change</h3>
-				<p class="text-gray-600 mb-6">
-					<span v-if="pendingPricingType === 'dynamic'">
-						Switching to dynamic pricing will calculate prices based on recipes. Current
-						fixed prices will be replaced with calculated values.
-					</span>
-					<span v-else>
-						Switching to static pricing will convert all calculated prices to fixed
-						values that can be manually edited.
-					</span>
-				</p>
-				<div class="flex gap-3 justify-end">
-					<button
-						type="button"
-						@click="cancelPricingTypeChange"
-						class="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50">
-						Cancel
-					</button>
-					<button
-						type="button"
-						@click="applyPricingTypeChange"
-						class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-						Confirm
-					</button>
-				</div>
-			</div>
-		</div>
 	</div>
 	<div v-else-if="user?.email" class="p-4 pt-8">
 		<div class="text-center">
