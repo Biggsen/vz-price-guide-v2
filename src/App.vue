@@ -31,7 +31,7 @@ function updateActiveMainNav() {
 		'/market-overview'
 	]
 
-	if (adminRoutes.includes(route.path) || route.path.startsWith('/edit/')) {
+	if (adminRoutes.includes(route.path)) {
 		activeMainNav.value = 'admin'
 	} else if (shopManagerRoutes.includes(route.path)) {
 		activeMainNav.value = 'shop-manager'
@@ -94,7 +94,7 @@ watch(
 				@click="setActiveMainNav(null)"
 				:class="[
 					'px-3 py-2 rounded transition-colors',
-					route.path === '/'
+					route.path === '/' || route.path.startsWith('/edit/')
 						? 'bg-gray-700 text-white'
 						: 'hover:bg-gray-700 hover:text-white'
 				]">
