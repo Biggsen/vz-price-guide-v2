@@ -6,7 +6,7 @@ import { doc, updateDoc, getDoc, collection, getDocs } from 'firebase/firestore'
 import { versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { validateIngredientsInDatabase } from '../utils/recipes.js'
-import { calculateRecipePrice, getEffectivePrice } from '../utils/pricing.js'
+import { calculateRecipePrice, getEffectivePrice, customRoundPrice } from '../utils/pricing.js'
 import BackButton from '../components/BackButton.vue'
 import { TrashIcon, PlusIcon } from '@heroicons/vue/24/outline'
 
@@ -91,6 +91,8 @@ function loadRecipeForVersion() {
 			output_count: 1
 		}
 	}
+	// Trigger validation and price preview after loading recipe
+	validateRecipe()
 }
 
 // Load available items for ingredient selection
@@ -107,6 +109,8 @@ async function loadAvailableItems() {
 	} catch (err) {
 		console.error('Error loading available items:', err)
 	}
+	// Trigger validation and price preview after loading items
+	validateRecipe()
 }
 
 // Filter available items based on search query
@@ -188,8 +192,8 @@ function validateRecipe() {
 		return
 	}
 
-	// Validate ingredients exist in database
-	const validation = validateIngredientsInDatabase(recipe.value.ingredients, [item.value])
+	// Validate ingredients exist in database (use all items, not just current)
+	const validation = validateIngredientsInDatabase(recipe.value.ingredients, availableItems.value)
 
 	if (validation.missingIngredients.length > 0) {
 		priceCalculationStatus.value = 'error'
@@ -220,19 +224,35 @@ async function calculatePricePreview() {
 
 		const result = calculateRecipePrice(
 			tempItem,
-			[item.value],
+			availableItems.value,
 			selectedVersion.value.replace('.', '_')
 		)
 
+		function formatNum(n) {
+			return typeof n === 'number' ? n.toFixed(2).replace(/\.00$/, '') : n
+		}
+
+		// Format calculation chain numbers
+		const formattedChain = result.chain.map((step) =>
+			step.replace(/([0-9]+\.[0-9]+)/g, (m) => formatNum(Number(m)))
+		)
+
 		if (result.price !== null) {
+			let displayPrice
+			if (result.price < 5) {
+				displayPrice = Number(result.price.toFixed(1))
+			} else {
+				displayPrice = Math.round(result.price)
+			}
 			pricePreview.value = {
-				calculatedPrice: Math.ceil(result.price),
-				calculationChain: result.chain
+				calculatedPrice: displayPrice,
+				calculationChain: formattedChain
 			}
 			priceCalculationStatus.value = 'success'
 		} else {
 			pricePreview.value = {
-				error: result.error
+				error: result.error,
+				calculationChain: formattedChain
 			}
 			priceCalculationStatus.value = 'error'
 		}
@@ -275,7 +295,7 @@ async function saveRecipe() {
 
 		// Redirect back to recipe management after a short delay
 		setTimeout(() => {
-			router.push('/recipes')
+			router.push('/recipes/manage')
 		}, 1500)
 	} catch (err) {
 		console.error('Error saving recipe:', err)
@@ -321,7 +341,7 @@ async function deleteRecipe() {
 
 		// Redirect back to recipe management after a short delay
 		setTimeout(() => {
-			router.push('/recipes')
+			router.push('/recipes/manage')
 		}, 1500)
 	} catch (err) {
 		console.error('Error deleting recipe:', err)
@@ -336,15 +356,27 @@ watch(selectedVersion, () => {
 	loadRecipeForVersion()
 })
 
+// Add a watcher for recipe.output_count to update price preview on change
+watch(
+	() => recipe.value.output_count,
+	() => {
+		validateRecipe()
+	}
+)
+
 // Initialize on mount
 onMounted(() => {
+	// If a version is provided in the query, use it
+	if (route.query.version) {
+		selectedVersion.value = route.query.version
+	}
 	loadItem()
 })
 </script>
 
 <template>
 	<div v-if="canBulkUpdate" class="p-4 pt-8">
-		<BackButton />
+		<BackButton @click="router.push('/recipes/manage')" />
 
 		<div v-if="loading" class="text-center py-8">
 			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -394,7 +426,7 @@ onMounted(() => {
 			</div>
 
 			<!-- Recipe form -->
-			<div class="bg-white rounded-lg border border-gray-200 p-6">
+			<div>
 				<!-- Output count -->
 				<div class="mb-6">
 					<label class="block text-sm font-medium text-gray-700 mb-2">
@@ -562,7 +594,7 @@ onMounted(() => {
 					</button>
 
 					<RouterLink
-						to="/recipes"
+						to="/recipes/manage"
 						class="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
 						Cancel
 					</RouterLink>
