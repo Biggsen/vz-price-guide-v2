@@ -36,7 +36,7 @@ function updateActiveMainNav() {
 		activeMainNav.value = 'admin'
 	} else if (shopManagerRoutes.includes(route.path)) {
 		activeMainNav.value = 'shop-manager'
-	} else if (recipeRoutes.includes(route.path)) {
+	} else if (recipeRoutes.includes(route.path) || route.path.startsWith('/edit-recipe/')) {
 		activeMainNav.value = 'recipes'
 	} else {
 		activeMainNav.value = null
