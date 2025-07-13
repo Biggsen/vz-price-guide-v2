@@ -152,12 +152,33 @@ export function calculateRecipePrice(item, allItems, version = '1_16', visited =
 		}
 	}
 
-	// Check if item has a recipe for this version
-	const recipe = item.recipes_by_version?.[version]
+	// Fallback logic: find the nearest previous version with a recipe
+	let recipe = item.recipes_by_version?.[version]
+	if (!recipe && item.recipes_by_version) {
+		const availableVersions = Object.keys(item.recipes_by_version)
+		const sortedVersions = availableVersions.sort((a, b) => {
+			const aVersion = a.replace('_', '.')
+			const bVersion = b.replace('_', '.')
+			const [aMajor, aMinor] = aVersion.split('.').map(Number)
+			const [bMajor, bMinor] = bVersion.split('.').map(Number)
+			if (aMajor !== bMajor) return bMajor - aMajor
+			return bMinor - aMinor
+		})
+		const requestedVersion = version.replace('_', '.')
+		const [reqMajor, reqMinor] = requestedVersion.split('.').map(Number)
+		for (const availableVersion of sortedVersions) {
+			const availableVersionFormatted = availableVersion.replace('_', '.')
+			const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
+			if (avMajor < reqMajor || (avMajor === reqMajor && avMinor <= reqMinor)) {
+				recipe = item.recipes_by_version[availableVersion]
+				break
+			}
+		}
+	}
 	if (!recipe) {
 		return {
 			price: null,
-			error: `No recipe found for ${item.material_id} in version ${version}`,
+			error: `No recipe found for ${item.material_id} in version ${version} or any previous version`,
 			chain: []
 		}
 	}
@@ -266,8 +287,39 @@ export function recalculateDynamicPrices(allItems, version = '1_16') {
 		}
 	}
 
-	// Find all items with dynamic pricing
-	const dynamicItems = allItems.filter((item) => item.pricing_type === 'dynamic')
+	// Helper function to check if item should be shown for selected version
+	function shouldShowItemForVersion(item, selectedVersion) {
+		// Item must have a version and be <= selected version
+		if (!item.version || !isVersionLessOrEqual(item.version, selectedVersion)) {
+			return false
+		}
+
+		// If item has version_removed and it's <= selected version, don't show it
+		if (item.version_removed && isVersionLessOrEqual(item.version_removed, selectedVersion)) {
+			return false
+		}
+
+		return true
+	}
+
+	// Helper function to compare version strings (e.g., "1.16" vs "1.17")
+	function isVersionLessOrEqual(itemVersion, targetVersion) {
+		if (!itemVersion || !targetVersion) return false
+
+		const [itemMajor, itemMinor] = itemVersion.split('.').map(Number)
+		const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+
+		if (itemMajor < targetMajor) return true
+		if (itemMajor > targetMajor) return false
+		return itemMinor <= targetMinor
+	}
+
+	// Find all items with dynamic pricing that are available in the selected version
+	const dynamicItems = allItems.filter(
+		(item) =>
+			item.pricing_type === 'dynamic' &&
+			shouldShowItemForVersion(item, version.replace('_', '.'))
+	)
 	results.summary.total = dynamicItems.length
 
 	for (const item of dynamicItems) {
