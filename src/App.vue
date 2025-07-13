@@ -22,7 +22,7 @@ const activeMainNav = ref(null)
 
 // Determine active main nav based on current route
 function updateActiveMainNav() {
-	const adminRoutes = ['/admin', '/missing-items', '/add', '/bulk-update']
+	const adminRoutes = ['/admin', '/missing-items', '/add', '/bulk-update', '/styleguide']
 	const shopManagerRoutes = [
 		'/shop-manager',
 		'/servers',
