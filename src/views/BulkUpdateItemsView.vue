@@ -16,13 +16,11 @@ const updating = ref(false)
 const updateResult = ref(null)
 const newCategory = ref('')
 const newSubcategory = ref('')
-const newPrice = ref('')
 const newImage = ref('')
 const sortKey = ref('name')
 const sortAsc = ref(true)
 const showOnlyNoCategory = ref(false)
 const showCategoryColumns = ref(true)
-const showPriceColumn = ref(false)
 const showImageColumn = ref(false)
 
 async function loadDbItems() {
@@ -139,35 +137,6 @@ async function clearSelectedCategories() {
 	selectedItems.value = []
 }
 
-async function updateSelectedPrices() {
-	if (
-		newPrice.value === '' ||
-		newPrice.value === null ||
-		newPrice.value === undefined ||
-		!anySelected.value
-	)
-		return
-	updating.value = true
-	updateResult.value = null
-	let updated = 0,
-		failed = 0
-	for (const id of selectedItems.value) {
-		try {
-			await updateDoc(doc(db, 'items', id), {
-				price: parseFloat(newPrice.value)
-			})
-			updated++
-		} catch (e) {
-			failed++
-		}
-	}
-	updateResult.value = `Price updated: ${updated}, Failed: ${failed}`
-	await loadDbItems()
-	updating.value = false
-	selectedItems.value = []
-	newPrice.value = ''
-}
-
 async function updateSelectedImages() {
 	if (!newImage.value || !anySelected.value) return
 	updating.value = true
@@ -262,43 +231,6 @@ async function updateSelectedImages() {
 				</label>
 			</div>
 
-			<!-- Price section -->
-			<div class="mb-4">
-				<h3 class="text-lg font-semibold mb-2">Price</h3>
-				<div class="flex gap-4 items-center">
-					<input
-						type="number"
-						v-model="newPrice"
-						placeholder="New price"
-						step="0.01"
-						min="0"
-						class="border-2 border-gray-asparagus rounded px-3 py-1 w-32" />
-					<button
-						@click="updateSelectedPrices"
-						:disabled="
-							!anySelected ||
-							newPrice === '' ||
-							newPrice === null ||
-							newPrice === undefined ||
-							updating
-						"
-						class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
-						Update Price
-					</button>
-				</div>
-
-				<!-- Column visibility checkbox -->
-				<div class="mt-2">
-					<label class="inline-flex items-center">
-						<input
-							type="checkbox"
-							v-model="showPriceColumn"
-							class="mr-2 align-middle" />
-						Show price column
-					</label>
-				</div>
-			</div>
-
 			<!-- Image section -->
 			<div class="mb-4">
 				<h3 class="text-lg font-semibold mb-2">Image</h3>
@@ -356,13 +288,7 @@ async function updateSelectedImages() {
 							Subcategory
 							<span v-if="sortKey === 'subcategory'">{{ sortAsc ? '▲' : '▼' }}</span>
 						</th>
-						<th
-							v-if="showPriceColumn"
-							@click="setSort('price')"
-							class="cursor-pointer select-none">
-							Price
-							<span v-if="sortKey === 'price'">{{ sortAsc ? '▲' : '▼' }}</span>
-						</th>
+
 						<th
 							v-if="showImageColumn"
 							@click="setSort('image')"
@@ -384,7 +310,6 @@ async function updateSelectedImages() {
 						<td>{{ item.name }}</td>
 						<td v-if="showCategoryColumns">{{ item.category }}</td>
 						<td v-if="showCategoryColumns">{{ item.subcategory }}</td>
-						<td v-if="showPriceColumn">{{ item.price || 0 }}</td>
 						<td v-if="showImageColumn" class="image-cell" :title="item.image || ''">
 							{{ item.image || '' }}
 						</td>
