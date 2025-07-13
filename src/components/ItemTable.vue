@@ -199,7 +199,7 @@ function getItemEffectivePrice(item) {
 						</a>
 						<span
 							v-if="item.pricing_type === 'dynamic'"
-							class="text-gray-asparagus text-xs cursor-help ml-auto"
+							class="text-laurel text-xs cursor-help ml-auto"
 							title="Dynamic pricing - calculated from recipe ingredients">
 							<Squares2X2Icon class="w-4 h-4" />
 						</span>
