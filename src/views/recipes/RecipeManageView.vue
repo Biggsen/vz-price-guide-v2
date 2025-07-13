@@ -41,6 +41,7 @@ async function loadExistingRecipes() {
 			return {
 				id: item.id, // Include item ID for editing
 				material_id: item.material_id,
+				name: item.name || '',
 				ingredients: ingredients,
 				output_count: outputCount,
 				isValid: true // Assume imported recipes are valid
@@ -96,13 +97,24 @@ function setSort(key) {
 	}
 }
 
+// Update getIngredientDisplay to return an array of strings
 function getIngredientDisplay(ingredients) {
-	return ingredients.map((ing) => `${ing.quantity}x ${ing.material_id}`).join(', ')
+	return ingredients.map((ing) => `${ing.quantity}x ${ing.material_id}`)
 }
 
 function getOutputDisplay(recipe) {
 	const outputCount = recipe.output_count || 1
 	return outputCount > 1 ? `${outputCount}x ${recipe.material_id}` : recipe.material_id
+}
+
+// Add a method to highlight search matches
+function highlightMatch(text) {
+	const query = searchQuery.value.trim()
+	if (!query) return text
+	// Escape regex special characters in query
+	const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+	const regex = new RegExp(safeQuery, 'gi')
+	return text.replace(regex, (match) => `<mark class='bg-yellow-200'>${match}</mark>`)
 }
 </script>
 
@@ -127,14 +139,14 @@ function getOutputDisplay(recipe) {
 			</div>
 
 			<!-- Search and filters -->
-			<div class="mb-4">
+			<div class="mb-4 flex flex-col items-start">
 				<input
 					type="text"
 					v-model="searchQuery"
 					placeholder="Search recipes by item name or ingredient..."
 					class="border-2 border-gray-asparagus rounded px-3 py-1 w-full max-w-md mb-2" />
 
-				<label class="inline-flex items-center">
+				<label class="inline-flex items-center mt-2">
 					<input type="checkbox" v-model="showOnlyInvalid" class="mr-2 align-middle" />
 					Show only invalid recipes
 				</label>
@@ -159,12 +171,24 @@ function getOutputDisplay(recipe) {
 					</thead>
 					<tbody>
 						<tr v-for="recipe in filteredExistingRecipes" :key="recipe.id">
-							<td class="font-medium">{{ recipe.material_id }}</td>
+							<td class="font-medium">
+								<span
+									v-html="
+										highlightMatch(recipe.name || recipe.material_id)
+									"></span>
+								<span
+									class="block text-xs text-gray-500 -mt-1"
+									v-html="highlightMatch(recipe.material_id)"></span>
+							</td>
 							<td class="text-sm">
 								{{ getOutputDisplay(recipe) }}
 							</td>
 							<td class="text-sm">
-								{{ getIngredientDisplay(recipe.ingredients) }}
+								<span
+									v-for="(ing, idx) in getIngredientDisplay(recipe.ingredients)"
+									:key="idx"
+									class="block"
+									v-html="highlightMatch(ing)"></span>
 							</td>
 							<td>
 								<span :class="recipe.isValid ? 'text-green-600' : 'text-red-600'">
