@@ -7,6 +7,9 @@ import { useRoute, useRouter } from 'vue-router'
 import ItemTable from '../components/ItemTable.vue'
 import { categories, enabledCategories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
+import { getEffectivePrice } from '../utils/pricing.js'
+import { RocketLaunchIcon } from '@heroicons/vue/24/outline'
+import { Squares2X2Icon } from '@heroicons/vue/16/solid'
 
 const db = useFirestore()
 const route = useRoute()
@@ -48,7 +51,7 @@ const showAlert = ref(true)
 
 function dismissAlert() {
 	showAlert.value = false
-	localStorage.setItem('homeAlertDismissed', 'true')
+	localStorage.setItem('recipePricingAlertDismissed', 'true')
 }
 
 // Category filters visibility state
@@ -97,7 +100,8 @@ const groupedItems = computed(() => {
 		// Skip items not available in selected version
 		if (!shouldShowItemForVersion(item, selectedVersion.value)) return acc
 		// Skip zero-priced items unless admin has enabled showing them
-		if (!showZeroPricedItems.value && (!item.price || item.price === 0)) return acc
+		const effectivePrice = getEffectivePrice(item, selectedVersion.value.replace('.', '_'))
+		if (!showZeroPricedItems.value && (!effectivePrice || effectivePrice === 0)) return acc
 
 		if (!acc[item.category]) acc[item.category] = []
 		acc[item.category].push(item)
@@ -114,7 +118,8 @@ const uncategorizedItemsByVersion = computed(() => {
 		const isUncat = !item.category || !categories.includes(item.category)
 		const hasImage = item.image && item.image.trim() !== ''
 		const isAvailableInVersion = shouldShowItemForVersion(item, selectedVersion.value)
-		const hasValidPrice = showZeroPricedItems.value || (item.price && item.price !== 0)
+		const effectivePrice = getEffectivePrice(item, selectedVersion.value.replace('.', '_'))
+		const hasValidPrice = showZeroPricedItems.value || (effectivePrice && effectivePrice !== 0)
 
 		if (
 			isUncat &&
@@ -166,7 +171,8 @@ const sellMarginPercentage = computed({
 const economyConfig = computed(() => ({
 	priceMultiplier: priceMultiplier.value,
 	sellMargin: sellMargin.value,
-	roundToWhole: roundToWhole.value
+	roundToWhole: roundToWhole.value,
+	version: selectedVersion.value
 }))
 
 // Load config from localStorage
@@ -465,7 +471,7 @@ onMounted(() => {
 	initializeFromQuery()
 
 	// Check if alert was previously dismissed
-	const dismissed = localStorage.getItem('homeAlertDismissed')
+	const dismissed = localStorage.getItem('recipePricingAlertDismissed')
 	if (dismissed === 'true') {
 		showAlert.value = false
 	}
@@ -540,19 +546,15 @@ watch(
 		class="bg-norway bg-opacity-20 border-l-4 border-laurel text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
-				<svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-					<path
-						fill-rule="evenodd"
-						d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-						clip-rule="evenodd"></path>
-				</svg>
+				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2" />
 				<span class="text-sm sm:text-base">
-					🚀 New: Multi-version support is live! Switch between Minecraft versions below.
-					More versions coming soon! Check
+					Recipe-based dynamic pricing is here! Items with recipes
+					<Squares2X2Icon class="w-4 h-4 inline" />
+					now automatically calculate prices from their ingredients. Check
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
 						<span>Updates</span>
 					</router-link>
-					for details.
+					for more details.
 				</span>
 			</div>
 			<button

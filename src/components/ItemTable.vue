@@ -3,8 +3,10 @@ import { useFirestore } from 'vuefire'
 import { useRoute, RouterLink } from 'vue-router'
 import { doc, deleteDoc } from 'firebase/firestore'
 import { buyUnitPrice, sellUnitPrice, buyStackPrice, sellStackPrice } from '../utils/pricing.js'
+import { getEffectivePrice } from '../utils/pricing.js'
 import { useAdmin } from '../utils/admin.js'
 import { computed, ref, watch } from 'vue'
+import { Squares2X2Icon } from '@heroicons/vue/16/solid'
 
 const { user, canEditItems } = useAdmin()
 const db = useFirestore()
@@ -41,6 +43,7 @@ const props = defineProps({
 const priceMultiplier = computed(() => props.economyConfig.priceMultiplier)
 const sellMargin = computed(() => props.economyConfig.sellMargin)
 const roundToWhole = computed(() => props.economyConfig.roundToWhole)
+const currentVersion = computed(() => props.economyConfig.version || '1.18')
 
 // Check if sorting is enabled (only in list view)
 const sortingEnabled = computed(() => props.viewMode === 'list')
@@ -62,9 +65,10 @@ const sortedCollection = computed(() => {
 		}
 
 		if (sortField.value === 'buy') {
-			// Calculate buy prices for comparison
-			valueA = (a.price || 0) * (priceMultiplier.value || 1)
-			valueB = (b.price || 0) * (priceMultiplier.value || 1)
+			// Calculate buy prices for comparison using effective price
+			const versionKey = currentVersion.value.replace('.', '_')
+			valueA = getEffectivePrice(a, versionKey) * (priceMultiplier.value || 1)
+			valueB = getEffectivePrice(b, versionKey) * (priceMultiplier.value || 1)
 			const comparison = valueA - valueB
 			return sortDirection.value === 'asc' ? comparison : -comparison
 		}
@@ -115,6 +119,12 @@ async function deleteItem(itemId) {
 	if (confirm('Are you sure you want to delete this item?')) {
 		await deleteDoc(doc(db, 'items', itemId))
 	}
+}
+
+// Helper function to get effective price for template use
+function getItemEffectivePrice(item) {
+	const versionKey = currentVersion.value.replace('.', '_')
+	return getEffectivePrice(item, versionKey)
 }
 </script>
 
@@ -176,16 +186,24 @@ async function deleteItem(itemId) {
 			<tr v-for="item in sortedCollection" :key="item.id">
 				<td class="hidden">{{ item.material_id }}</td>
 				<th width="50%" class="text-left">
-					<a
-						:href="
-							item.url && item.url.trim() !== ''
-								? item.url
-								: `https://minecraft.fandom.com/wiki/${item.material_id}`
-						"
-						target="_blank"
-						class="font-normal hover:text-gray-asparagus hover:underline">
-						{{ item.name }}
-					</a>
+					<div class="flex items-center gap-1">
+						<a
+							:href="
+								item.url && item.url.trim() !== ''
+									? item.url
+									: `https://minecraft.fandom.com/wiki/${item.material_id}`
+							"
+							target="_blank"
+							class="font-normal hover:text-gray-asparagus hover:underline">
+							{{ item.name }}
+						</a>
+						<span
+							v-if="item.pricing_type === 'dynamic'"
+							class="text-laurel text-xs cursor-help ml-auto"
+							title="Dynamic pricing - calculated from recipe ingredients">
+							<Squares2X2Icon class="w-4 h-4" />
+						</span>
+					</div>
 				</th>
 				<td width="5%">
 					<img
@@ -198,20 +216,34 @@ async function deleteItem(itemId) {
 						" />
 				</td>
 				<td class="text-center">
-					{{ buyUnitPrice(item.price, priceMultiplier, roundToWhole) }}
+					{{ buyUnitPrice(getItemEffectivePrice(item), priceMultiplier, roundToWhole) }}
 				</td>
 
 				<td class="text-center">
-					{{ sellUnitPrice(item.price, priceMultiplier, sellMargin, roundToWhole) }}
+					{{
+						sellUnitPrice(
+							getItemEffectivePrice(item),
+							priceMultiplier,
+							sellMargin,
+							roundToWhole
+						)
+					}}
 				</td>
 
 				<td class="text-center">
-					{{ buyStackPrice(item.price, item.stack, priceMultiplier, roundToWhole) }}
+					{{
+						buyStackPrice(
+							getItemEffectivePrice(item),
+							item.stack,
+							priceMultiplier,
+							roundToWhole
+						)
+					}}
 				</td>
 				<td class="text-center">
 					{{
 						sellStackPrice(
-							item.price,
+							getItemEffectivePrice(item),
 							item.stack,
 							priceMultiplier,
 							sellMargin,

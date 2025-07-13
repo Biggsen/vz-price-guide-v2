@@ -1,5 +1,20 @@
 [
 	{
+		"id": 15,
+		"title": "Smart Pricing System - Now Live! 🎉",
+		"date": "2025-07-14",
+		"type": "Feature",
+		"description": "🎉 The price guide just got a whole lot smarter! We've completely upgraded our pricing system to calculate item prices based on their crafting recipes. This means prices are now much more accurate and realistic across all Minecraft versions.",
+		"changes": [
+			"Recipe-based price calculations - items are priced based on their ingredients",
+			"Version-aware pricing - different prices for different Minecraft versions",
+			"Easy price updates - when ingredient prices change, we can easily recalculate everything",
+			"Recipe database - 639 crafting recipes now power our pricing system",
+			"Batch recalculations - update hundreds of prices at once with a single click",
+			"More accurate prices - no more guessing, everything is based on actual crafting costs"
+		]
+	},
+	{
 		"id": 14,
 		"title": "Roadmap Improvements",
 		"date": "2025-07-11",

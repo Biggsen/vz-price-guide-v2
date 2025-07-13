@@ -2,61 +2,62 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  	// Allow users to read/write their own profile
+    // Users: Allow user to read/write their own profile, allow admins to read all
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        request.auth.token.admin == true
+      );
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
     // Items: Anyone can read, only admins can write
     match /items/{itemId} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.token.admin == true;
     }
-    
-    // Servers: Users can read/write their own servers
+    // Servers: Allow owner to read/write, allow admins to read all
     match /servers/{serverId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.owner_id;
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.owner_id ||
+        request.auth.token.admin == true
+      );
+      allow write: if request.auth != null && request.auth.uid == resource.data.owner_id;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.owner_id;
     }
-    
-    // Shops: Users can read/write their own shops, read public shops for comparison
+    // Shops: Allow owner to read/write, allow admins to read all
     match /shops/{shopId} {
-      allow read: if request.auth != null; // Allow reading all shops for comparison
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.owner_id ||
+        request.auth.token.admin == true
+      );
       allow write: if request.auth != null && request.auth.uid == resource.data.owner_id &&
-        // Validate owner_funds if provided
         (request.resource.data.owner_funds == null || 
          (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0));
       allow create: if request.auth != null && request.auth.uid == request.resource.data.owner_id &&
-        // Validate required fields
         request.resource.data.keys().hasAll(['name', 'server_id', 'owner_id', 'is_own_shop']) &&
         request.resource.data.name is string &&
         request.resource.data.server_id is string &&
         request.resource.data.owner_id is string &&
         request.resource.data.is_own_shop is bool &&
-        // Validate owner_funds if provided
         (request.resource.data.owner_funds == null || 
          (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0));
     }
-    
-    // Shop Items: Users can read/write items for their own shops, read public shop items for comparison
+    // Shop Items: Allow authenticated users to read, only shop owner can write
     match /shop_items/{itemId} {
-      allow read, list: if request.auth != null; // Allow reading and listing all shop items for authenticated users
+      allow read, list: if request.auth != null;
       allow write: if request.auth != null && 
         request.auth.uid == get(/databases/$(database)/documents/shops/$(resource.data.shop_id)).data.owner_id;
       allow create: if request.auth != null && 
         request.auth.uid == get(/databases/$(database)/documents/shops/$(request.resource.data.shop_id)).data.owner_id &&
-        // Validate required fields
         request.resource.data.keys().hasAll(['shop_id', 'item_id', 'last_updated']) &&
         request.resource.data.shop_id is string &&
         request.resource.data.item_id is string &&
         request.resource.data.last_updated is string &&
-        // Validate price values are null or positive numbers
         (request.resource.data.buy_price == null || 
          (request.resource.data.buy_price is number && request.resource.data.buy_price >= 0)) &&
         (request.resource.data.sell_price == null || 
          (request.resource.data.sell_price is number && request.resource.data.sell_price >= 0)) &&
-        // Validate at least one price is provided
         (request.resource.data.buy_price != null || request.resource.data.sell_price != null) &&
-        // Validate boolean fields
         request.resource.data.stock_full is bool;
     }
   }

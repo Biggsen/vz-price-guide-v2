@@ -32,6 +32,27 @@ const activeMainNav = inject('activeMainNav')
 			to="/bulk-update">
 			Bulk Update
 		</RouterLink>
+		<RouterLink class="hover:underline" active-class="underline" to="/styleguide">
+			Styleguide
+		</RouterLink>
+		<div class="ml-auto">
+			<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
+		</div>
+	</nav>
+
+	<!-- Recipes Subnav -->
+	<nav
+		v-if="activeMainNav === 'recipes' && isAdmin"
+		class="bg-gray-700 text-white px-4 py-2 flex gap-4 items-center border-t border-gray-600">
+		<RouterLink class="hover:underline" active-class="underline" to="/recipes/import">
+			Import
+		</RouterLink>
+		<RouterLink class="hover:underline" active-class="underline" to="/recipes/manage">
+			Manage
+		</RouterLink>
+		<RouterLink class="hover:underline" active-class="underline" to="/recipes/recalculate">
+			Recalculate Prices
+		</RouterLink>
 		<div class="ml-auto">
 			<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
 		</div>

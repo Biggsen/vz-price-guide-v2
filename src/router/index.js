@@ -130,6 +130,47 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/recipes',
+			name: 'recipes',
+			redirect: '/recipes/import'
+		},
+		{
+			path: '/recipes/import',
+			name: 'recipes-import',
+			component: () => import('../views/recipes/RecipeImportView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Import Recipes - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/recipes/manage',
+			name: 'recipes-manage',
+			component: () => import('../views/recipes/RecipeManageView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Manage Recipes - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/recipes/recalculate',
+			name: 'recipes-recalculate',
+			component: () => import('../views/recipes/RecipeRecalculateView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Recalculate Prices - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/edit-recipe/:id',
+			name: 'edit-recipe',
+			component: () => import('../views/EditRecipeView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Edit Recipe - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/updates',
 			name: 'updates',
 			component: () => import('../views/UpdatesView.vue'),
@@ -152,6 +193,15 @@ const router = createRouter({
 			name: 'terms-of-use',
 			component: () => import('../views/TermsOfUseView.vue'),
 			meta: { title: "Terms of Use - verzion's economy price guide for Minecraft" }
+		},
+		{
+			path: '/styleguide',
+			name: 'styleguide',
+			component: () => import('../views/StyleguideView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Design System & Styleguide - verzion's economy price guide for Minecraft"
+			}
 		}
 	]
 })

@@ -97,7 +97,10 @@ async function addAllMissing() {
 				stack: item.stackSize,
 				image: '',
 				url: '',
-				price: 1,
+				prices_by_version: {
+					[selectedVersion.value.replace('.', '_')]: 1
+				},
+				pricing_type: 'static',
 				category: '',
 				subcategory: '',
 				version: selectedVersion.value
@@ -122,7 +125,10 @@ async function addSingleItem(item) {
 			stack: item.stackSize,
 			image: '',
 			url: '',
-			price: 1,
+			prices_by_version: {
+				[selectedVersion.value.replace('.', '_')]: 1
+			},
+			pricing_type: 'static',
 			category: '',
 			subcategory: '',
 			version: selectedVersion.value
@@ -183,7 +189,10 @@ async function addSelectedMissing() {
 				stack: item.stackSize,
 				image: '',
 				url: '',
-				price: 1,
+				prices_by_version: {
+					[selectedVersion.value.replace('.', '_')]: 1
+				},
+				pricing_type: 'static',
 				category: '',
 				subcategory: '',
 				version: selectedVersion.value

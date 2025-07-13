@@ -22,7 +22,7 @@ const activeMainNav = ref(null)
 
 // Determine active main nav based on current route
 function updateActiveMainNav() {
-	const adminRoutes = ['/admin', '/missing-items', '/add', '/bulk-update']
+	const adminRoutes = ['/admin', '/missing-items', '/add', '/bulk-update', '/styleguide']
 	const shopManagerRoutes = [
 		'/shop-manager',
 		'/servers',
@@ -30,11 +30,14 @@ function updateActiveMainNav() {
 		'/shop-items',
 		'/market-overview'
 	]
+	const recipeRoutes = ['/recipes', '/recipes/import', '/recipes/manage', '/recipes/recalculate']
 
-	if (adminRoutes.includes(route.path) || route.path.startsWith('/edit/')) {
+	if (adminRoutes.includes(route.path)) {
 		activeMainNav.value = 'admin'
 	} else if (shopManagerRoutes.includes(route.path)) {
 		activeMainNav.value = 'shop-manager'
+	} else if (recipeRoutes.includes(route.path) || route.path.startsWith('/edit-recipe/')) {
+		activeMainNav.value = 'recipes'
 	} else {
 		activeMainNav.value = null
 	}
@@ -94,7 +97,7 @@ watch(
 				@click="setActiveMainNav(null)"
 				:class="[
 					'px-3 py-2 rounded transition-colors',
-					route.path === '/'
+					route.path === '/' || route.path.startsWith('/edit/')
 						? 'bg-gray-700 text-white'
 						: 'hover:bg-gray-700 hover:text-white'
 				]">
@@ -123,6 +126,19 @@ watch(
 						: 'hover:bg-gray-700 hover:text-white'
 				]">
 				Admin
+			</RouterLink>
+
+			<!-- Recipes section (only for admins) -->
+			<RouterLink
+				v-if="isAdmin"
+				to="/recipes"
+				:class="[
+					'px-3 py-2 rounded transition-colors',
+					activeMainNav === 'recipes'
+						? 'bg-gray-700 text-white'
+						: 'hover:bg-gray-700 hover:text-white'
+				]">
+				Recipes
 			</RouterLink>
 
 			<!-- Shop Manager section (for logged in users) -->

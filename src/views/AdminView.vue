@@ -1,8 +1,21 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import { useAdmin } from '../utils/admin.js'
+import { useStats } from '../utils/stats.js'
+import {
+	ShieldCheckIcon,
+	ExclamationTriangleIcon,
+	PlusIcon,
+	ArrowPathIcon,
+	ChartBarIcon,
+	UsersIcon,
+	ServerIcon,
+	ShoppingBagIcon,
+	ClockIcon
+} from '@heroicons/vue/24/outline'
 
 const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAdmin()
+const { stats, loading, error, refresh } = useStats()
 </script>
 
 <template>
@@ -10,17 +23,7 @@ const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAd
 		<div class="mb-8">
 			<div class="flex items-center mb-4">
 				<div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
-					<svg
-						class="w-6 h-6 text-red-600"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-					</svg>
+					<ShieldCheckIcon class="w-6 h-6 text-red-600" />
 				</div>
 				<div>
 					<h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -29,6 +32,192 @@ const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAd
 					</p>
 				</div>
 			</div>
+		</div>
+
+		<!-- Statistics Dashboard -->
+		<div class="mb-8">
+			<div class="flex items-center justify-between mb-6">
+				<h2 class="text-2xl font-bold text-gray-900">System Statistics</h2>
+				<button
+					@click="refresh"
+					:disabled="loading"
+					class="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50">
+					<ArrowPathIcon :class="['w-4 h-4', { 'animate-spin': loading }]" />
+					{{ loading ? 'Loading...' : 'Refresh' }}
+				</button>
+			</div>
+
+			<div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+				<p class="text-red-700 text-sm">Error loading statistics: {{ error.message }}</p>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+				<!-- Items Count -->
+				<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+					<div class="flex items-center">
+						<div
+							class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+							<ChartBarIcon class="w-6 h-6 text-blue-600" />
+						</div>
+						<div class="ml-4">
+							<p class="text-sm font-medium text-gray-600">Total Items</p>
+							<p class="text-2xl font-bold text-gray-900">
+								{{ stats.itemsCount.toLocaleString() }}
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Recipes Count -->
+				<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+					<div class="flex items-center">
+						<div
+							class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+							<PlusIcon class="w-6 h-6 text-green-600" />
+						</div>
+						<div class="ml-4">
+							<p class="text-sm font-medium text-gray-600">Items with Recipes</p>
+							<p class="text-2xl font-bold text-gray-900">
+								{{ stats.recipesCount.toLocaleString() }}
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Users Count -->
+				<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+					<div class="flex items-center">
+						<div
+							class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+							<UsersIcon class="w-6 h-6 text-purple-600" />
+						</div>
+						<div class="ml-4">
+							<p class="text-sm font-medium text-gray-600">Registered Users</p>
+							<p class="text-2xl font-bold text-gray-900">
+								{{ stats.usersCount.toLocaleString() }}
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Recent Activity -->
+				<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+					<div class="flex items-center">
+						<div
+							class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+							<ClockIcon class="w-6 h-6 text-yellow-600" />
+						</div>
+						<div class="ml-4">
+							<p class="text-sm font-medium text-gray-600">Recent Activity</p>
+							<p class="text-2xl font-bold text-gray-900">
+								{{ stats.recentActivityCount.toLocaleString() }}
+							</p>
+							<p class="text-xs text-gray-500">Last 7 days</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Shop Manager Stats -->
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+				<!-- Servers Count -->
+				<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+					<div class="flex items-center">
+						<div
+							class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+							<ServerIcon class="w-6 h-6 text-indigo-600" />
+						</div>
+						<div class="ml-4">
+							<p class="text-sm font-medium text-gray-600">Minecraft Servers</p>
+							<p class="text-2xl font-bold text-gray-900">
+								{{ stats.serversCount.toLocaleString() }}
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Shops Count -->
+				<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+					<div class="flex items-center">
+						<div
+							class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
+							<ShoppingBagIcon class="w-6 h-6 text-pink-600" />
+						</div>
+						<div class="ml-4">
+							<p class="text-sm font-medium text-gray-600">Total Shops</p>
+							<p class="text-2xl font-bold text-gray-900">
+								{{ stats.shopsCount.toLocaleString() }}
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Shop Items Count -->
+				<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+					<div class="flex items-center">
+						<div
+							class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+							<ChartBarIcon class="w-6 h-6 text-orange-600" />
+						</div>
+						<div class="ml-4">
+							<p class="text-sm font-medium text-gray-600">Shop Items</p>
+							<p class="text-2xl font-bold text-gray-900">
+								{{ stats.shopItemsCount.toLocaleString() }}
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Detailed Stats -->
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				<!-- Items by Category -->
+				<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+					<h3 class="text-lg font-semibold text-gray-900 mb-4">Items by Category</h3>
+					<div class="space-y-3">
+						<div
+							v-for="(count, category) in stats.itemsByCategory"
+							:key="category"
+							class="flex justify-between items-center">
+							<span class="text-sm font-medium text-gray-700 capitalize">
+								{{ category }}
+							</span>
+							<span class="text-sm text-gray-500">{{ count.toLocaleString() }}</span>
+						</div>
+						<div
+							v-if="Object.keys(stats.itemsByCategory).length === 0"
+							class="text-sm text-gray-500">
+							No category data available
+						</div>
+					</div>
+				</div>
+
+				<!-- Items by Version -->
+				<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+					<h3 class="text-lg font-semibold text-gray-900 mb-4">Items by Version</h3>
+					<div class="space-y-3">
+						<div
+							v-for="(count, version) in stats.itemsByVersion"
+							:key="version"
+							class="flex justify-between items-center">
+							<span class="text-sm font-medium text-gray-700">
+								Minecraft {{ version }}
+							</span>
+							<span class="text-sm text-gray-500">{{ count.toLocaleString() }}</span>
+						</div>
+						<div
+							v-if="Object.keys(stats.itemsByVersion).length === 0"
+							class="text-sm text-gray-500">
+							No version data available
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Admin Actions -->
+		<div class="mb-8">
+			<h2 class="text-2xl font-bold text-gray-900 mb-6">Admin Actions</h2>
 		</div>
 
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -40,17 +229,7 @@ const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAd
 				<div class="flex items-center mb-4">
 					<div
 						class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-						<svg
-							class="w-6 h-6 text-yellow-600"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-						</svg>
+						<ExclamationTriangleIcon class="w-6 h-6 text-yellow-600" />
 					</div>
 					<h3 class="text-lg font-semibold text-gray-900 ml-3">Missing Items</h3>
 				</div>
@@ -67,17 +246,7 @@ const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAd
 				class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-green-300">
 				<div class="flex items-center mb-4">
 					<div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-						<svg
-							class="w-6 h-6 text-green-600"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-						</svg>
+						<PlusIcon class="w-6 h-6 text-green-600" />
 					</div>
 					<h3 class="text-lg font-semibold text-gray-900 ml-3">Add Item</h3>
 				</div>
@@ -95,17 +264,7 @@ const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAd
 				<div class="flex items-center mb-4">
 					<div
 						class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-						<svg
-							class="w-6 h-6 text-purple-600"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-						</svg>
+						<ArrowPathIcon class="w-6 h-6 text-purple-600" />
 					</div>
 					<h3 class="text-lg font-semibold text-gray-900 ml-3">Bulk Update</h3>
 				</div>

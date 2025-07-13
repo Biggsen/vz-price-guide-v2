@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { getEffectivePrice } from '../utils/pricing.js'
 
 const props = defineProps({
 	availableItems: {
@@ -111,10 +112,10 @@ const selectedItem = computed(
 const filteredItems = computed(() => {
 	if (!props.availableItems) return []
 
-	// First filter out items with zero prices
+	// First filter out items with zero prices using effective pricing
 	const nonZeroItems = props.availableItems.filter((item) => {
-		const hasNonZeroPrice = item.price > 0
-		return hasNonZeroPrice
+		const effectivePrice = getEffectivePrice(item, '1_16')
+		return effectivePrice > 0
 	})
 
 	const query = searchQuery.value.toLowerCase().trim()
