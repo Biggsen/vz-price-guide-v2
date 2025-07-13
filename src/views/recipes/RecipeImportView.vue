@@ -32,6 +32,21 @@ const importResults = ref([])
 const allRecipesAlreadyExist = ref(false)
 const allFilteredRecipesAlreadyExist = ref(false)
 
+// Define interchangeable plank material_ids
+const PLANKS_SET = new Set([
+	'oak_planks',
+	'spruce_planks',
+	'birch_planks',
+	'jungle_planks',
+	'acacia_planks',
+	'dark_oak_planks',
+	'mangrove_planks',
+	'cherry_planks',
+	'bamboo_planks',
+	'crimson_planks',
+	'warped_planks'
+])
+
 // Load database items
 async function loadDbItems() {
 	const snapshot = await getDocs(collection(db, 'items'))
@@ -81,13 +96,51 @@ function extractAvailableIngredients() {
 		})
 	})
 
-	// Only include ingredients where at least one recipe for that ingredient is not yet imported
 	const filtered = Array.from(ingredientSet).filter((ingredientId) => {
 		const recipesForIngredient = allRecipes.value.filter((recipe) =>
 			recipe.ingredients.some((ing) => ing.material_id === ingredientId)
 		)
-		return recipesForIngredient.some((recipe) => !checkRecipeExists(recipe))
+		// Only include if at least one output item using this ingredient does NOT already have any recipe in a previous version
+		const hasMissing = recipesForIngredient.some((recipe) => {
+			const materialId = recipe.outputItem?.material_id
+			const targetVersionKey = selectedVersion.value.replace('.', '_')
+			const item = dbItems.value.find((item) => item.material_id === materialId)
+			if (!item || !item.recipes_by_version) return true
+			const availableVersions = Object.keys(item.recipes_by_version)
+			const sortedVersions = availableVersions.sort((a, b) => {
+				const aVersion = a.replace('_', '.')
+				const bVersion = b.replace('_', '.')
+				const [aMajor, aMinor] = aVersion.split('.').map(Number)
+				const [bMajor, bMinor] = bVersion.split('.').map(Number)
+				if (aMajor !== bMajor) return bMajor - aMajor
+				return bMinor - aMinor
+			})
+			const targetVersion = targetVersionKey.replace('_', '.')
+			const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+			for (const availableVersion of sortedVersions) {
+				const availableVersionFormatted = availableVersion.replace('_', '.')
+				const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
+				if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
+					return false // recipe exists for this output item in a previous version
+				}
+			}
+			return true // no recipe exists for this output item in any previous version
+		})
+		if (ingredientId === 'acacia_log') {
+			console.debug(
+				'[Ingredient Filter] acacia_log: hasMissing =',
+				hasMissing,
+				recipesForIngredient
+			)
+		}
+		return hasMissing
 	})
+
+	if (filtered.includes('acacia_log')) {
+		console.debug('[Ingredient Filter] acacia_log is included in dropdown')
+	} else {
+		console.debug('[Ingredient Filter] acacia_log is NOT included in dropdown')
+	}
 
 	availableIngredients.value = filtered.sort()
 }
@@ -118,6 +171,18 @@ async function startImport() {
 		// Pre-check: are all recipes already imported?
 		const allExist = allRecipes.value.every((recipe) => checkRecipeExists(recipe))
 		allRecipesAlreadyExist.value = allExist
+		console.log('allRecipesAlreadyExist:', allRecipesAlreadyExist.value)
+		if (!allExist) {
+			const notImported = allRecipes.value.filter((r) => !checkRecipeExists(r))
+			console.log(
+				'Recipes not considered imported:',
+				notImported.map((r) => ({
+					material_id: r.outputItem?.material_id,
+					outputItem: r.outputItem,
+					ingredients: r.ingredients
+				}))
+			)
+		}
 
 		// Set up import progress
 		importProgress.value = {
@@ -173,14 +238,7 @@ function checkRecipeExists(recipe) {
 
 		// Use this version if it's not newer than target
 		if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
-			const existingRecipe = item.recipes_by_version[availableVersion]
-
-			// Compare recipe content to see if they're the same
-			if (areRecipesIdentical(recipe, existingRecipe)) {
-				return true // Recipe exists and is identical, no need to import
-			}
-			// If recipes are different, we should import the new one
-			break
+			return true // Any recipe exists for this output item in this or earlier version
 		}
 	}
 
@@ -197,15 +255,23 @@ function areRecipesIdentical(newRecipe, existingRecipe) {
 		? existingRecipe
 		: existingRecipe.ingredients
 
-	const newOutputCount = Array.isArray(newRecipe) ? 1 : newRecipe.output_count || 1
+	const newOutputCount = Array.isArray(newRecipe)
+		? 1
+		: newRecipe.output_count ?? newRecipe.outputItem?.count ?? 1
 	const existingOutputCount = Array.isArray(existingRecipe) ? 1 : existingRecipe.output_count || 1
 
 	// Check output count
-	if (newOutputCount !== existingOutputCount) return false
+	if (Number(newOutputCount) !== Number(existingOutputCount)) {
+		return false
+	}
 
 	// Check ingredients
-	if (!newIngredients || !existingIngredients) return false
-	if (newIngredients.length !== existingIngredients.length) return false
+	if (!newIngredients || !existingIngredients) {
+		return false
+	}
+	if (newIngredients.length !== existingIngredients.length) {
+		return false
+	}
 
 	// Sort ingredients by material_id for comparison
 	const sortedNewIngredients = [...newIngredients].sort((a, b) =>
@@ -215,15 +281,18 @@ function areRecipesIdentical(newRecipe, existingRecipe) {
 		a.material_id.localeCompare(b.material_id)
 	)
 
-	// Compare each ingredient
+	// Compare each ingredient, treating planks as equivalent
 	for (let i = 0; i < sortedNewIngredients.length; i++) {
 		const newIngredient = sortedNewIngredients[i]
 		const existingIngredient = sortedExistingIngredients[i]
 
-		if (
-			newIngredient.material_id !== existingIngredient.material_id ||
-			newIngredient.quantity !== existingIngredient.quantity
-		) {
+		const bothPlanks =
+			PLANKS_SET.has(newIngredient.material_id) &&
+			PLANKS_SET.has(existingIngredient.material_id)
+		if (!bothPlanks && newIngredient.material_id !== existingIngredient.material_id) {
+			return false
+		}
+		if (newIngredient.quantity !== existingIngredient.quantity) {
 			return false
 		}
 	}
@@ -236,8 +305,33 @@ function showNextRecipe() {
 	if (importProgress.value.current < filteredRecipes.value.length) {
 		currentRecipe.value = filteredRecipes.value[importProgress.value.current]
 
-		// Check if recipe already exists
-		currentRecipe.value.alreadyExists = checkRecipeExists(currentRecipe.value)
+		// Check if recipe already exists (in any previous version)
+		const materialId = currentRecipe.value.outputItem?.material_id
+		const targetVersionKey = selectedVersion.value.replace('.', '_')
+		const item = dbItems.value.find((item) => item.material_id === materialId)
+		let exists = false
+		if (item && item.recipes_by_version) {
+			const availableVersions = Object.keys(item.recipes_by_version)
+			const sortedVersions = availableVersions.sort((a, b) => {
+				const aVersion = a.replace('_', '.')
+				const bVersion = b.replace('_', '.')
+				const [aMajor, aMinor] = aVersion.split('.').map(Number)
+				const [bMajor, bMinor] = bVersion.split('.').map(Number)
+				if (aMajor !== bMajor) return bMajor - aMajor
+				return bMinor - aMinor
+			})
+			const targetVersion = targetVersionKey.replace('_', '.')
+			const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+			for (const availableVersion of sortedVersions) {
+				const availableVersionFormatted = availableVersion.replace('_', '.')
+				const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
+				if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
+					exists = true
+					break
+				}
+			}
+		}
+		currentRecipe.value.alreadyExists = exists
 
 		// Validate ingredients
 		if (currentRecipe.value.ingredients.length > 0) {
@@ -345,6 +439,78 @@ const completedIngredients = computed(() => {
 const recipesLeftToImport = computed(
 	() => filteredRecipes.value.filter((r) => !checkRecipeExists(r)).length
 )
+
+const previousRecipeVersion = computed(() => {
+	if (!currentRecipe.value || !currentRecipe.value.outputItem) return null
+	const materialId = currentRecipe.value.outputItem.material_id
+	const targetVersionKey = selectedVersion.value.replace('.', '_')
+	const item = dbItems.value.find((item) => item.material_id === materialId)
+	if (!item || !item.recipes_by_version) return null
+	const availableVersions = Object.keys(item.recipes_by_version)
+	const sortedVersions = availableVersions.sort((a, b) => {
+		const aVersion = a.replace('_', '.')
+		const bVersion = b.replace('_', '.')
+		const [aMajor, aMinor] = aVersion.split('.').map(Number)
+		const [bMajor, bMinor] = bVersion.split('.').map(Number)
+		if (aMajor !== bMajor) return bMajor - aMajor
+		return bMinor - aMinor
+	})
+	const targetVersion = targetVersionKey.replace('_', '.')
+	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+	for (const availableVersion of sortedVersions) {
+		const availableVersionFormatted = availableVersion.replace('_', '.')
+		const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
+		if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
+			return availableVersionFormatted
+		}
+	}
+	return null
+})
+
+// Add a computed property to check if a different recipe exists in a previous version
+const previousRecipeInfo = computed(() => {
+	if (!currentRecipe.value || !currentRecipe.value.outputItem) return null
+	const materialId = currentRecipe.value.outputItem.material_id
+	const targetVersionKey = selectedVersion.value.replace('.', '_')
+	const item = dbItems.value.find((item) => item.material_id === materialId)
+	if (!item || !item.recipes_by_version) return null
+	const availableVersions = Object.keys(item.recipes_by_version)
+	const sortedVersions = availableVersions.sort((a, b) => {
+		const aVersion = a.replace('_', '.')
+		const bVersion = b.replace('_', '.')
+		const [aMajor, aMinor] = aVersion.split('.').map(Number)
+		const [bMajor, bMinor] = bVersion.split('.').map(Number)
+		if (aMajor !== bMajor) return bMajor - aMajor
+		return bMinor - aMinor
+	})
+	const targetVersion = targetVersionKey.replace('_', '.')
+	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+	for (const availableVersion of sortedVersions) {
+		const availableVersionFormatted = availableVersion.replace('_', '.')
+		const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
+		if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
+			const existingRecipe = item.recipes_by_version[availableVersion]
+			const identical = areRecipesIdentical(currentRecipe.value, existingRecipe)
+			return {
+				version: availableVersionFormatted,
+				identical,
+				existingRecipe
+			}
+		}
+	}
+	return null
+})
+
+watch(selectedVersion, () => {
+	currentRecipe.value = null
+	filteredRecipes.value = []
+	availableIngredients.value = []
+	selectedIngredient.value = ''
+	importProgress.value = { current: 0, total: 0, completed: 0, overwritten: 0, skipped: 0 }
+	allRecipesAlreadyExist.value = false
+	allFilteredRecipesAlreadyExist.value = false
+	allRecipes.value = []
+})
 </script>
 
 <template>
@@ -388,7 +554,9 @@ const recipesLeftToImport = computed(
 			</div>
 
 			<!-- Reload recipes button -->
-			<div v-if="allRecipes.length > 0 && !currentRecipe" class="mb-4">
+			<div
+				v-if="allRecipes.length > 0 && !currentRecipe && !allRecipesAlreadyExist"
+				class="mb-4">
 				<button
 					@click="startImport"
 					class="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2">
@@ -398,7 +566,9 @@ const recipesLeftToImport = computed(
 			</div>
 
 			<!-- Ingredient Filter Section -->
-			<div v-if="allRecipes.length > 0 && !currentRecipe" class="mb-6">
+			<div
+				v-if="allRecipes.length > 0 && !currentRecipe && !allRecipesAlreadyExist"
+				class="mb-6">
 				<h4 class="text-md font-semibold mb-3">Filter Recipes by Ingredient</h4>
 
 				<div class="flex flex-wrap gap-4 items-center mb-4">
@@ -588,8 +758,24 @@ const recipesLeftToImport = computed(
 							class="bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded">
 							<strong class="font-bold">⚠️ Recipe Already Exists!</strong>
 							<span class="block sm:inline">
-								This item already has a recipe for version
-								{{ selectedVersion }}. Importing will overwrite the existing recipe.
+								<template v-if="previousRecipeInfo && previousRecipeInfo.identical">
+									This item already has an identical recipe in version
+									{{ previousRecipeInfo.version }} (inherited for
+									{{ selectedVersion }}). Importing will overwrite the inherited
+									recipe.
+								</template>
+								<template
+									v-else-if="previousRecipeInfo && !previousRecipeInfo.identical">
+									This item already has a different recipe in version
+									{{ previousRecipeInfo.version }} (inherited for
+									{{ selectedVersion }}). Importing will overwrite the previous
+									recipe with the new one shown above.
+								</template>
+								<template v-else>
+									This item already has a recipe for version
+									{{ selectedVersion }}. Importing will overwrite the existing
+									recipe.
+								</template>
 							</span>
 						</div>
 					</div>
