@@ -44,7 +44,8 @@ async function loadExistingRecipes() {
 				name: item.name || '',
 				ingredients: ingredients,
 				output_count: outputCount,
-				isValid: true // Assume imported recipes are valid
+				isValid: true, // Assume imported recipes are valid
+				pricing_type: item.pricing_type || 'static'
 			}
 		})
 }
@@ -64,21 +65,61 @@ watch(selectedVersion, async () => {
 // Management functionality
 const filteredExistingRecipes = computed(() => {
 	const query = searchQuery.value.trim().toLowerCase()
-	let recipes = existingRecipes.value.filter(
-		(recipe) =>
-			recipe.material_id.toLowerCase().includes(query) ||
-			recipe.ingredients.some((ing) => ing.material_id.toLowerCase().includes(query))
-	)
+	let recipes = existingRecipes.value
+
+	if (query) {
+		if (query.includes(',')) {
+			// Comma-separated: OR logic
+			const searchTerms = query
+				.split(',')
+				.map((term) => term.trim())
+				.filter((term) => term.length > 0)
+
+			if (searchTerms.length > 0) {
+				recipes = recipes.filter((recipe) =>
+					searchTerms.some(
+						(term) =>
+							recipe.material_id.toLowerCase().includes(term) ||
+							recipe.ingredients.some((ing) =>
+								ing.material_id.toLowerCase().includes(term)
+							)
+					)
+				)
+			}
+		} else {
+			// No comma: exact phrase match, treat spaces as underscores
+			const normalizedQuery = query.replace(/\s+/g, '_')
+			recipes = recipes.filter(
+				(recipe) =>
+					recipe.material_id.toLowerCase().includes(normalizedQuery) ||
+					recipe.ingredients.some((ing) =>
+						ing.material_id.toLowerCase().includes(normalizedQuery)
+					)
+			)
+		}
+	}
 
 	if (showOnlyInvalid.value) {
 		recipes = recipes.filter((recipe) => !recipe.isValid)
 	}
 
-	// Sort recipes
+	// Only sort if a sortKey is selected (not null/empty)
 	if (sortKey.value) {
 		recipes = [...recipes].sort((a, b) => {
-			let aVal = a[sortKey.value]?.toString().toLowerCase() || ''
-			let bVal = b[sortKey.value]?.toString().toLowerCase() || ''
+			let aVal, bVal
+			if (sortKey.value === 'ingredients') {
+				aVal = a.ingredients
+					.map((ing) => ing.material_id)
+					.join(',')
+					.toLowerCase()
+				bVal = b.ingredients
+					.map((ing) => ing.material_id)
+					.join(',')
+					.toLowerCase()
+			} else {
+				aVal = a[sortKey.value]?.toString().toLowerCase() || ''
+				bVal = b[sortKey.value]?.toString().toLowerCase() || ''
+			}
 			if (aVal < bVal) return sortAsc.value ? -1 : 1
 			if (aVal > bVal) return sortAsc.value ? 1 : -1
 			return 0
@@ -104,7 +145,7 @@ function getIngredientDisplay(ingredients) {
 
 function getOutputDisplay(recipe) {
 	const outputCount = recipe.output_count || 1
-	return outputCount > 1 ? `${outputCount}x ${recipe.material_id}` : recipe.material_id
+	return `${outputCount}x`
 }
 
 // Add a method to highlight search matches
@@ -140,12 +181,24 @@ function highlightMatch(text) {
 
 			<!-- Search and filters -->
 			<div class="mb-4 flex flex-col items-start">
-				<input
-					type="text"
-					v-model="searchQuery"
-					placeholder="Search recipes by item name or ingredient..."
-					class="border-2 border-gray-asparagus rounded px-3 py-1 w-full max-w-md mb-2" />
-
+				<div class="flex gap-2 w-full max-w-md mb-2">
+					<input
+						type="text"
+						v-model="searchQuery"
+						placeholder="Search recipes by item name or ingredient..."
+						class="border-2 border-gray-asparagus rounded px-3 py-1 flex-1" />
+					<button
+						type="button"
+						@click="
+							() => {
+								searchQuery = ''
+								showOnlyInvalid = false
+							}
+						"
+						class="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 border border-gray-300">
+						Reset
+					</button>
+				</div>
 				<label class="inline-flex items-center mt-2">
 					<input type="checkbox" v-model="showOnlyInvalid" class="mr-2 align-middle" />
 					Show only invalid recipes
@@ -163,8 +216,24 @@ function highlightMatch(text) {
 									{{ sortAsc ? '▲' : '▼' }}
 								</span>
 							</th>
-							<th>Output</th>
-							<th>Ingredients</th>
+							<th @click="setSort('output_count')" class="cursor-pointer select-none">
+								Output
+								<span v-if="sortKey === 'output_count'">
+									{{ sortAsc ? '▲' : '▼' }}
+								</span>
+							</th>
+							<th @click="setSort('pricing_type')" class="cursor-pointer select-none">
+								Price Type
+								<span v-if="sortKey === 'pricing_type'">
+									{{ sortAsc ? '▲' : '▼' }}
+								</span>
+							</th>
+							<th @click="setSort('ingredients')" class="cursor-pointer select-none">
+								Ingredients
+								<span v-if="sortKey === 'ingredients'">
+									{{ sortAsc ? '▲' : '▼' }}
+								</span>
+							</th>
 							<th>Status</th>
 							<th>Actions</th>
 						</tr>
@@ -184,6 +253,9 @@ function highlightMatch(text) {
 								{{ getOutputDisplay(recipe) }}
 							</td>
 							<td class="text-sm">
+								{{ recipe.pricing_type }}
+							</td>
+							<td class="text-sm">
 								<span
 									v-for="(ing, idx) in getIngredientDisplay(recipe.ingredients)"
 									:key="idx"
@@ -198,7 +270,10 @@ function highlightMatch(text) {
 							<td>
 								<div class="flex gap-2">
 									<RouterLink
-										:to="`/edit-recipe/${recipe.id}`"
+										:to="{
+											path: `/edit-recipe/${recipe.id}`,
+											query: { version: selectedVersion }
+										}"
 										class="px-2 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
 										Edit
 									</RouterLink>

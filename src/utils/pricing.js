@@ -261,7 +261,7 @@ export function calculateRecipePrice(item, allItems, version = '1_16', visited =
 	}
 }
 
-function customRoundPrice(price) {
+export function customRoundPrice(price) {
 	if (price < 5) {
 		return Math.ceil(price * 10) / 10
 	} else {
