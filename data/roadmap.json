@@ -3,6 +3,7 @@
 		"id": 1,
 		"title": "Complete 1.16 catalog (pricing and images)",
 		"status": "Completed",
+		"completedDate": "2025-06-27",
 		"description": "Set prices and correct images for all items. Still a lot of price of 1, I'm getting through it slowly!",
 		"features": [
 			{ "name": "ores", "completed": true },
@@ -28,24 +29,25 @@
 	},
 	{
 		"id": 2,
-		"title": "Add rest of 1.16 items",
+		"title": "Add remaining 1.16 items",
 		"status": "Completed",
-		"description": "There's still around 150 items uncategorized which need to be added to the catalog",
+		"completedDate": "2025-07-03",
+		"description": "Add remaining Minecraft 1.16 items",
 		"features": [
-			{ "name": "150 to go", "completed": true },
-			{ "name": "130 to go", "completed": true },
-			{ "name": "110 to go", "completed": true },
-			{ "name": "90 to go", "completed": true },
-			{ "name": "70 to go", "completed": true },
-			{ "name": "50 to go", "completed": true },
-			{ "name": "30 to go", "completed": true },
-			{ "name": "10 to go!!", "completed": true }
+			{ "name": "Redstone & Mechanical items (10 items)", "completed": true },
+			{ "name": "Nether-related items (5 items)", "completed": true },
+			{ "name": "Bee & Honey items (4 items)", "completed": true },
+			{ "name": "Transportation items (5 items)", "completed": true },
+			{ "name": "Potions & Consumables (9 items)", "completed": true },
+			{ "name": "Ocean & Sea items (6 items)", "completed": true },
+			{ "name": "Decorative & Utility items (11 items)", "completed": true }
 		]
 	},
 	{
 		"id": 3,
 		"title": "Add all 1.16 enchanted books",
 		"status": "Completed",
+		"completedDate": "2025-06-28",
 		"description": "Add all the enchanted books with levels and prices",
 		"features": [
 			{ "name": "Armor enchantments", "completed": true },
@@ -183,10 +185,11 @@
 		]
 	},
 	{
-		"id": 7,
+		"id": 9,
 		"title": "Version-Aware Pricing and Recipe Integration",
 		"status": "Completed",
-		"description": "🎉 COMPLETE! The price guide now supports version-aware pricing and dynamic recipe-based price calculations. This revolutionary update transforms how prices are calculated and managed across different Minecraft versions, providing unprecedented accuracy and automation. All 2,000+ recipes have been imported and validated, with 100% of items migrated to the new pricing structure.",
+		"completedDate": "2025-07-14",
+		"description": "Currently, the price guide shows the same static prices for all Minecraft versions, but prices can vary between versions as well as recipes. One good example is how the 1.18 world generation update affected the rarity of basic items and therefore their prices. This update addresses two key issues: Allowing different prices for each Minecraft version, and integrating crafting recipes for items so that price adjustments can be calculated and applied to the whole price guide. This feature is currently being developed and tested.",
 		"features": [
 			{
 				"name": "Version-specific pricing - different prices for each Minecraft version where items or recipes differ",
@@ -224,6 +227,20 @@
 				"name": "Import all item recipes",
 				"completed": true
 			}
+		]
+	},
+	{
+		"id": 10,
+		"title": "Add all 1.17 items",
+		"status": "Completed",
+		"completedDate": "2025-07-08",
+		"description": "Add all new items introduced in Minecraft 1.17 (Caves & Cliffs Update) including copper, amethyst, deepslate, and other new blocks and items",
+		"features": [
+			{ "name": "Copper blocks and variants", "completed": true },
+			{ "name": "Amethyst items and blocks", "completed": true },
+			{ "name": "Deepslate blocks and variants", "completed": true },
+			{ "name": "New items (spyglass, bundle, etc.)", "completed": true },
+			{ "name": "Pricing and categorization", "completed": true }
 		]
 	}
 ]

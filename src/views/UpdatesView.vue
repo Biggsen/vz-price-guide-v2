@@ -34,7 +34,14 @@ const sortedRoadmap = computed(() => {
 			return priorityA - priorityB
 		}
 
-		// Secondary sort by ID
+		// For completed items, sort by completion date (newest first)
+		if (a.status === 'Completed' && b.status === 'Completed') {
+			const dateA = new Date(a.completedDate || 0)
+			const dateB = new Date(b.completedDate || 0)
+			return dateB - dateA // Newest first
+		}
+
+		// Secondary sort by ID for non-completed items
 		return a.id - b.id
 	})
 })
@@ -153,6 +160,16 @@ function getDependencyTitles(dependencies) {
 		return depItem ? depItem.title : `Unknown (ID: ${depId})`
 	})
 }
+
+function formatCompletionDate(dateString) {
+	if (!dateString) return ''
+	const date = new Date(dateString)
+	return date.toLocaleDateString('en-US', {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric'
+	})
+}
 </script>
 
 <template>
@@ -257,6 +274,16 @@ function getDependencyTitles(dependencies) {
 
 						<p class="text-gray-700 mb-4">{{ phase.description }}</p>
 
+						<!-- Completion Date -->
+						<div
+							v-if="phase.status === 'Completed' && phase.completedDate"
+							class="mb-4">
+							<h4 class="text-sm font-semibold text-gray-600 mb-1">Released</h4>
+							<p class="text-sm text-gray-600">
+								{{ formatCompletionDate(phase.completedDate) }}
+							</p>
+						</div>
+
 						<!-- Dependencies -->
 						<div v-if="phase.dependencies && phase.dependencies.length" class="mb-4">
 							<h4 class="text-sm font-semibold text-gray-600 mb-1">Dependencies</h4>
@@ -280,7 +307,9 @@ function getDependencyTitles(dependencies) {
 						</div>
 
 						<div v-if="phase.features && phase.features.length" class="mb-4">
-							<h4 class="text-sm font-semibold text-gray-600 mb-2">Planned:</h4>
+							<h4 class="text-sm font-semibold text-gray-600 mb-2">
+								{{ phase.status === 'Completed' ? 'Delivered:' : 'Planned:' }}
+							</h4>
 							<ul class="space-y-2">
 								<li
 									v-for="feature in phase.features"
