@@ -59,6 +59,10 @@ const sortedItems = computed(() => {
 				valueA = a.itemData?.name?.toLowerCase() || ''
 				valueB = b.itemData?.name?.toLowerCase() || ''
 				break
+			case 'shop_name':
+				valueA = a.shopData?.name?.toLowerCase() || ''
+				valueB = b.shopData?.name?.toLowerCase() || ''
+				break
 			case 'buy_price':
 				valueA = a.buy_price || 0
 				valueB = b.buy_price || 0
@@ -66,6 +70,10 @@ const sortedItems = computed(() => {
 			case 'sell_price':
 				valueA = a.sell_price || 0
 				valueB = b.sell_price || 0
+				break
+			case 'profit_margin':
+				valueA = calculateMargin(a) || 0
+				valueB = calculateMargin(b) || 0
 				break
 			case 'last_updated':
 				valueA = new Date(a.last_updated || 0).getTime()
@@ -441,50 +449,77 @@ function navigateToShopItems(shopId) {
 								class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
 						</th>
 						<th
+							@click="setSortField('name')"
 							:class="[
 								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors',
+								sortField.value === 'name' ? 'bg-blue-50' : ''
 							]">
-							Item
+							<div class="flex items-center gap-1">
+								<span>Item</span>
+								<span class="text-xs">{{ getSortIcon('name') }}</span>
+							</div>
 						</th>
 						<th
 							v-if="showShopNames"
+							@click="setSortField('shop_name')"
 							:class="[
 								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors',
+								sortField.value === 'shop_name' ? 'bg-blue-50' : ''
 							]">
-							Shop
+							<div class="flex items-center gap-1">
+								<span>Shop</span>
+								<span class="text-xs">{{ getSortIcon('shop_name') }}</span>
+							</div>
 						</th>
 						<th
 							@click="setSortField('buy_price')"
 							:class="[
 								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors',
+								sortField.value === 'buy_price' ? 'bg-blue-50' : ''
 							]">
-							Buy Price {{ getSortIcon('buy_price') }}
+							<div class="flex items-center gap-1">
+								<span>Buy Price</span>
+								<span class="text-xs">{{ getSortIcon('buy_price') }}</span>
+							</div>
 						</th>
 						<th
 							@click="setSortField('sell_price')"
 							:class="[
 								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors',
+								sortField.value === 'sell_price' ? 'bg-blue-50' : ''
 							]">
-							Sell Price {{ getSortIcon('sell_price') }}
+							<div class="flex items-center gap-1">
+								<span>Sell Price</span>
+								<span class="text-xs">{{ getSortIcon('sell_price') }}</span>
+							</div>
 						</th>
 						<th
+							@click="setSortField('profit_margin')"
 							:class="[
 								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors',
+								sortField.value === 'profit_margin' ? 'bg-blue-50' : ''
 							]">
-							Profit Margin
+							<div class="flex items-center gap-1">
+								<span>Profit Margin</span>
+								<span class="text-xs">{{ getSortIcon('profit_margin') }}</span>
+							</div>
 						</th>
 						<th
 							@click="setSortField('last_updated')"
 							:class="[
 								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors',
+								sortField.value === 'last_updated' ? 'bg-blue-50' : ''
 							]">
-							Last Updated {{ getSortIcon('last_updated') }}
+							<div class="flex items-center gap-1">
+								<span>Last Updated</span>
+								<span class="text-xs">{{ getSortIcon('last_updated') }}</span>
+							</div>
 						</th>
 						<th
 							v-if="!readOnly"
