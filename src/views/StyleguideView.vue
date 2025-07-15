@@ -68,6 +68,32 @@ const searchQuery = ref('')
 								<div class="text-xs text-gray-400">Dark text color</div>
 							</div>
 						</div>
+						<div class="flex items-center space-x-3">
+							<div class="w-16 h-16 bg-goldenrod rounded-lg shadow-md"></div>
+							<div>
+								<div class="font-medium text-gray-900">Goldenrod</div>
+								<div class="text-sm text-gray-500">#d4a42d</div>
+								<div class="text-xs text-gray-400">Brand accent color</div>
+							</div>
+						</div>
+						<div class="flex items-center space-x-3">
+							<div class="w-16 h-16 bg-flame rounded-lg shadow-md"></div>
+							<div>
+								<div class="font-medium text-gray-900">Flame</div>
+								<div class="text-sm text-gray-500">#cb6843</div>
+								<div class="text-xs text-gray-400">Brand accent color</div>
+							</div>
+						</div>
+						<div class="flex items-center space-x-3">
+							<div class="w-16 h-16 bg-saltpan rounded-lg shadow-md"></div>
+							<div>
+								<div class="font-medium text-gray-900">Saltpan</div>
+								<div class="text-sm text-gray-500">#f8faf3</div>
+								<div class="text-xs text-gray-400">
+									Background/neutral brand color
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 
@@ -76,35 +102,74 @@ const searchQuery = ref('')
 					<h3 class="text-lg font-semibold text-gray-800">Semantic Colors</h3>
 					<div class="space-y-3">
 						<div class="flex items-center space-x-3">
-							<div class="w-16 h-16 bg-green-600 rounded-lg shadow-md"></div>
+							<div class="w-16 h-16 bg-semantic-success rounded-lg shadow-md"></div>
 							<div>
-								<div class="font-medium text-gray-900">Success</div>
-								<div class="text-sm text-gray-500">bg-green-600</div>
+								<div class="font-medium text-gray-900">Success (Sea Green)</div>
+								<div class="text-sm text-gray-500">bg-semantic-success</div>
 								<div class="text-xs text-gray-400">Positive actions</div>
 							</div>
 						</div>
 						<div class="flex items-center space-x-3">
-							<div class="w-16 h-16 bg-red-600 rounded-lg shadow-md"></div>
+							<div class="w-16 h-16 bg-semantic-danger rounded-lg shadow-md"></div>
 							<div>
-								<div class="font-medium text-gray-900">Danger</div>
-								<div class="text-sm text-gray-500">bg-red-600</div>
+								<div class="font-medium text-gray-900">Danger (Chestnut)</div>
+								<div class="text-sm text-gray-500">bg-semantic-danger</div>
 								<div class="text-xs text-gray-400">Destructive actions</div>
 							</div>
 						</div>
 						<div class="flex items-center space-x-3">
-							<div class="w-16 h-16 bg-blue-600 rounded-lg shadow-md"></div>
+							<div class="w-16 h-16 bg-semantic-info rounded-lg shadow-md"></div>
 							<div>
-								<div class="font-medium text-gray-900">Info</div>
-								<div class="text-sm text-gray-500">bg-blue-600</div>
+								<div class="font-medium text-gray-900">Info (Horizon)</div>
+								<div class="text-sm text-gray-500">bg-semantic-info</div>
 								<div class="text-xs text-gray-400">Information & links</div>
 							</div>
 						</div>
 						<div class="flex items-center space-x-3">
-							<div class="w-16 h-16 bg-yellow-600 rounded-lg shadow-md"></div>
+							<div class="w-16 h-16 bg-semantic-warning rounded-lg shadow-md"></div>
 							<div>
-								<div class="font-medium text-gray-900">Warning</div>
-								<div class="text-sm text-gray-500">bg-yellow-600</div>
+								<div class="font-medium text-gray-900">Warning (Alpine)</div>
+								<div class="text-sm text-gray-500">bg-semantic-warning</div>
 								<div class="text-xs text-gray-400">Cautions & alerts</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Root Colors -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Root Colors</h3>
+					<div class="space-y-3">
+						<div class="flex items-center space-x-3">
+							<div class="w-16 h-16 bg-sea-green rounded-lg shadow-md"></div>
+							<div>
+								<div class="font-medium text-gray-900">Sea Green</div>
+								<div class="text-sm text-gray-500">#5E8D64</div>
+								<div class="text-xs text-gray-400">Root color for success</div>
+							</div>
+						</div>
+						<div class="flex items-center space-x-3">
+							<div class="w-16 h-16 bg-chestnut rounded-lg shadow-md"></div>
+							<div>
+								<div class="font-medium text-gray-900">Chestnut</div>
+								<div class="text-sm text-gray-500">#b85745</div>
+								<div class="text-xs text-gray-400">Root color for danger</div>
+							</div>
+						</div>
+						<div class="flex items-center space-x-3">
+							<div class="w-16 h-16 bg-horizon rounded-lg shadow-md"></div>
+							<div>
+								<div class="font-medium text-gray-900">Horizon</div>
+								<div class="text-sm text-gray-500">#5b7d98</div>
+								<div class="text-xs text-gray-400">Root color for info</div>
+							</div>
+						</div>
+						<div class="flex items-center space-x-3">
+							<div class="w-16 h-16 bg-alpine rounded-lg shadow-md"></div>
+							<div>
+								<div class="font-medium text-gray-900">Alpine</div>
+								<div class="text-sm text-gray-500">#b99130</div>
+								<div class="text-xs text-gray-400">Root color for warning</div>
 							</div>
 						</div>
 					</div>
