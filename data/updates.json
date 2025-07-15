@@ -1,15 +1,22 @@
 [
 	{
+		"id": 16,
+		"title": "Spruced Up Header with Minecraft Vibes",
+		"date": "2025-07-15",
+		"type": "Enhancement",
+		"description": "The site header needed a bit of a facelift, so I spruced it up with a more Minecraft-inspired style and visuals. Think I'll be working on the designs now and then to try and make improvements."
+	},
+	{
 		"id": 15,
 		"title": "Smart Pricing System - Now Live! 🎉",
 		"date": "2025-07-14",
 		"type": "Feature",
-		"description": "🎉 The price guide just got a whole lot smarter! We've completely upgraded our pricing system to calculate item prices based on their crafting recipes. This means prices are now much more accurate and realistic across all Minecraft versions.",
+		"description": "🎉 The price guide just got a whole lot smarter! I've completely upgraded the pricing system to calculate item prices based on their crafting recipes. This means prices are now much more accurate and realistic across all Minecraft versions.",
 		"changes": [
 			"Recipe-based price calculations - items are priced based on their ingredients",
 			"Version-aware pricing - different prices for different Minecraft versions",
-			"Easy price updates - when ingredient prices change, we can easily recalculate everything",
-			"Recipe database - 639 crafting recipes now power our pricing system",
+			"Easy price updates - when ingredient prices change, I can easily recalculate everything",
+			"Recipe database - 639 crafting recipes now power the pricing system",
 			"Batch recalculations - update hundreds of prices at once with a single click",
 			"More accurate prices - no more guessing, everything is based on actual crafting costs"
 		]
@@ -68,7 +75,7 @@
 		"title": "Multi-Version Support Now Live! 🚀",
 		"date": "2025-07-01",
 		"type": "Feature",
-		"description": "Major infrastructure update! The price guide now supports multiple Minecraft versions. You can switch between 1.16 and 1.17 versions, with more versions being added progressively. Note there's only a handful of 1.17 items at this point. This foundation enables us to expand to all Minecraft versions over time.",
+		"description": "Major infrastructure update! The price guide now supports multiple Minecraft versions. You can switch between 1.16 and 1.17 versions, with more versions being added progressively. Note there's only a handful of 1.17 items at this point. This foundation enables me to expand to all Minecraft versions over time.",
 		"changes": [
 			"Added version selector on homepage - switch between Minecraft versions",
 			"Currently supporting 1.16 and 1.17 versions",
@@ -123,7 +130,7 @@
 		"title": "Catalog update: Armor, End, Ice and Dyed prices added + updated images. Books category removed.",
 		"date": "2025-06-25",
 		"type": "Content",
-		"description": "Added prices to all the items within the Armor, End, Ice and Dyed categories. Fixed incorrect images as well. Moved Book, Book and Quill and Bookshelf into the Utility category. Removed the Books category all together. Will be making an 'Enchantments' category later instead."
+		"description": "Added prices to all the items within the Armor, End, Ice and Dyed categories. Fixed incorrect images as well. Moved Book, Book and Quill and Bookshelf into the Utility category. Removed the Books category all together. I'll be making an 'Enchantments' category later instead."
 	},
 	{
 		"id": 1,

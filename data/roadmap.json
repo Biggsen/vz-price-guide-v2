@@ -135,7 +135,7 @@
 		"id": 8,
 		"title": "Shop Manager - Your Ultimate Minecraft Trading Hub",
 		"status": "In Development",
-		"description": "Transform your Minecraft trading experience with our powerful Shop Manager! Track your competitors, maximize profits, and never miss a great deal again. Whether you're running multiple shops across different servers or just want to find the best prices, this feature puts you in control of your trading empire.",
+		"description": "Transform your Minecraft trading experience with a powerful Shop Manager! Track your competitors, maximize profits, and never miss a great deal again. Whether you're running multiple shops across different servers or just want to find the best prices, this feature puts you in control of your trading empire.",
 		"dependencies": [6],
 		"features": [
 			{
