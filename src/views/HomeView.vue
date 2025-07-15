@@ -572,243 +572,265 @@ watch(
 	</div>
 
 	<main>
-		<div class="my-4 flex flex-col sm:flex-row sm:gap-4">
-			<div class="flex-1 sm:max-w-md">
-				<input
-					type="text"
-					v-model="searchQuery"
-					placeholder="Search for items..."
-					class="border-2 border-gray-asparagus rounded px-3 py-2 w-full mb-1 h-10" />
-				<p class="text-xs text-gray-500 mb-2 sm:mb-0">
-					Tip: Use commas or spaces to search for multiple items
+		<div class="px-2">
+			<div class="my-4 flex flex-col sm:flex-row sm:gap-4">
+				<div class="flex-1 sm:max-w-md">
+					<input
+						type="text"
+						v-model="searchQuery"
+						placeholder="Search for items..."
+						class="border-2 border-gray-asparagus rounded px-3 py-2 w-full mb-1 h-10" />
+					<p class="text-xs text-gray-500 mb-2 sm:mb-0">
+						Tip: Use commas or spaces to search for multiple items
+					</p>
+				</div>
+				<div class="flex gap-2 sm:gap-0 sm:ml-2">
+					<button
+						@click="resetCategories"
+						class="bg-laurel text-white border-2 border-gray-asparagus rounded px-3 py-2 transition flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2 h-10 flex items-center justify-center">
+						Reset
+					</button>
+					<button
+						@click="toggleAllCategories"
+						:class="[
+							allVisible
+								? 'bg-norway text-heavy-metal border-2 border-gray-asparagus'
+								: 'bg-gray-asparagus text-white border-2 border-gray-asparagus',
+							'rounded px-3 py-2 transition flex-1 sm:flex-none text-sm sm:text-base sm:whitespace-nowrap h-10 flex items-center justify-center'
+						]">
+						{{ allVisible ? 'Hide all categories' : 'Show all categories' }}
+					</button>
+				</div>
+			</div>
+
+			<!-- Version Filters -->
+			<div v-if="enabledVersions && enabledVersions.length > 0" class="mb-4">
+				<span class="text-sm font-medium text-heavy-metal mb-2 block">
+					Minecraft Version:
+				</span>
+				<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+					<button
+						v-for="version in versions"
+						:key="version"
+						@click="selectVersion(version)"
+						:disabled="!enabledVersions.includes(version)"
+						:class="[
+							selectedVersion === version
+								? 'bg-gray-asparagus text-white'
+								: enabledVersions.includes(version)
+								? 'bg-norway text-heavy-metal hover:bg-gray-100'
+								: 'bg-gray-200 text-gray-400 cursor-not-allowed',
+							'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0',
+							!enabledVersions.includes(version) ? 'opacity-60' : ''
+						]">
+						{{ version }}
+					</button>
+				</div>
+				<p class="text-xs text-gray-500 mt-1">
+					<span v-if="user?.email && canEditItems">
+						All versions available for admin users
+					</span>
+					<span v-else>Grayed out versions will be available soon</span>
 				</p>
 			</div>
-			<div class="flex gap-2 sm:gap-0 sm:ml-2">
+
+			<!-- Customisation Section -->
+			<div class="mb-4">
 				<button
-					@click="resetCategories"
-					class="bg-laurel text-white border-2 border-gray-asparagus rounded px-3 py-2 transition flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2 h-10 flex items-center justify-center">
-					Reset
-				</button>
-				<button
-					@click="toggleAllCategories"
-					:class="[
-						allVisible
-							? 'bg-norway text-heavy-metal border-2 border-gray-asparagus'
-							: 'bg-gray-asparagus text-white border-2 border-gray-asparagus',
-						'rounded px-3 py-2 transition flex-1 sm:flex-none text-sm sm:text-base sm:whitespace-nowrap h-10 flex items-center justify-center'
-					]">
-					{{ allVisible ? 'Hide all categories' : 'Show all categories' }}
-				</button>
-			</div>
-		</div>
-
-		<!-- Version Filters -->
-		<div v-if="enabledVersions && enabledVersions.length > 0" class="mb-4">
-			<span class="text-sm font-medium text-heavy-metal mb-2 block">Minecraft Version:</span>
-			<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-				<button
-					v-for="version in versions"
-					:key="version"
-					@click="selectVersion(version)"
-					:disabled="!enabledVersions.includes(version)"
-					:class="[
-						selectedVersion === version
-							? 'bg-gray-asparagus text-white'
-							: enabledVersions.includes(version)
-							? 'bg-norway text-heavy-metal hover:bg-gray-100'
-							: 'bg-gray-200 text-gray-400 cursor-not-allowed',
-						'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0',
-						!enabledVersions.includes(version) ? 'opacity-60' : ''
-					]">
-					{{ version }}
-				</button>
-			</div>
-			<p class="text-xs text-gray-500 mt-1">
-				<span v-if="user?.email && canEditItems">
-					All versions available for admin users
-				</span>
-				<span v-else>Grayed out versions will be available soon</span>
-			</p>
-		</div>
-
-		<!-- Customisation Section -->
-		<div class="mb-4">
-			<button
-				@click="toggleEconomySettings"
-				class="text-gray-asparagus hover:text-heavy-metal underline text-sm">
-				{{ showEconomySettings ? 'Hide customisation' : 'Show customisation' }}
-			</button>
-		</div>
-
-		<!-- Economy Configuration (Collapsible) -->
-		<div
-			v-if="showEconomySettings"
-			class="bg-norway bg-opacity-20 border border-gray-300 rounded p-3 mb-4">
-			<h4 class="text-base font-semibold text-heavy-metal mb-3">Prices</h4>
-			<div class="flex flex-wrap items-center gap-4 mb-3">
-				<!-- Price Multiplier -->
-				<div class="flex items-center gap-2">
-					<label
-						for="priceMultiplier"
-						class="text-sm font-medium text-heavy-metal whitespace-nowrap">
-						Buy ×
-					</label>
-					<input
-						id="priceMultiplier"
-						v-model.number="priceMultiplier"
-						type="number"
-						min="0.1"
-						max="10"
-						step="0.1"
-						class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
-				</div>
-
-				<!-- Sell Margin -->
-				<div class="flex items-center gap-2">
-					<label
-						for="sellMargin"
-						class="text-sm font-medium text-heavy-metal whitespace-nowrap">
-						Sell %
-					</label>
-					<input
-						id="sellMargin"
-						v-model.number="sellMarginPercentage"
-						type="number"
-						min="1"
-						max="100"
-						step="1"
-						class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
-				</div>
-
-				<!-- Reset Button -->
-				<button
-					@click="resetEconomyConfig"
-					class="bg-laurel text-white border-2 border-gray-asparagus rounded px-2 py-1 text-sm transition hover:bg-opacity-90">
-					Reset
+					@click="toggleEconomySettings"
+					class="text-gray-asparagus hover:text-heavy-metal underline text-sm">
+					{{ showEconomySettings ? 'Hide customisation' : 'Show customisation' }}
 				</button>
 			</div>
 
-			<!-- Round to Whole (separate line) -->
-			<div class="flex items-center gap-2">
-				<input id="roundToWhole" v-model="roundToWhole" type="checkbox" class="w-4 h-4" />
-				<label for="roundToWhole" class="text-sm text-heavy-metal">Round to whole</label>
-			</div>
-
-			<!-- Show Zero Priced Items (admin only) -->
-			<div v-if="canEditItems" class="flex items-center gap-2 mt-2">
-				<input
-					id="showZeroPricedItems"
-					v-model="showZeroPricedItems"
-					type="checkbox"
-					class="w-4 h-4" />
-				<label for="showZeroPricedItems" class="text-sm text-heavy-metal">
-					Show zero priced items
-				</label>
-			</div>
-		</div>
-
-		<!-- Category filters toggle -->
-		<div class="block mb-3">
-			<button
-				@click="toggleCategoryFilters"
-				class="text-gray-asparagus hover:text-heavy-metal underline text-sm">
-				{{ showCategoryFilters ? 'Hide category filters' : 'Show category filters' }}
-			</button>
-		</div>
-
-		<div :class="['flex flex-wrap gap-2 mb-4 justify-start', { hidden: !showCategoryFilters }]">
-			<button
-				v-for="cat in enabledCategories"
-				:key="cat"
-				@click="toggleCategory(cat)"
-				:class="[
-					visibleCategories.includes(cat)
-						? 'bg-gray-asparagus text-white'
-						: 'bg-norway text-heavy-metal',
-					'border-2 border-gray-asparagus rounded px-3 py-1 transition text-sm',
-					!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0
-						? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
-						: ''
-				]"
-				:disabled="!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0">
-				{{ cat.charAt(0).toUpperCase() + cat.slice(1) }} ({{
-					filteredGroupedItems[cat]?.length || 0
-				}})
-			</button>
-			<button
-				v-if="user?.email"
-				@click="toggleUncategorised"
-				:class="[
-					showUncategorised
-						? 'bg-gray-asparagus text-white'
-						: 'bg-norway text-heavy-metal',
-					'border-2 border-gray-asparagus rounded px-3 py-1 transition text-sm',
-					filteredUncategorizedItems.length === 0
-						? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
-						: ''
-				]"
-				:disabled="filteredUncategorizedItems.length === 0">
-				Uncategorised ({{ filteredUncategorizedItems.length }})
-			</button>
-		</div>
-		<div class="mb-4 text-sm text-gray-asparagus">
-			Showing {{ allVisibleItems.length }} item{{ allVisibleItems.length === 1 ? '' : 's' }}
-		</div>
-
-		<!-- View Mode and Layout Toggle -->
-		<div class="mb-4">
-			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-8">
-				<!-- View Mode -->
-				<div>
-					<span class="text-sm font-medium text-heavy-metal mb-2 block">View as:</span>
-					<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-						<button
-							@click="viewMode = 'categories'"
-							:class="[
-								viewMode === 'categories'
-									? 'bg-gray-asparagus text-white'
-									: 'bg-norway text-heavy-metal hover:bg-gray-100',
-								'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
-							]">
-							Categories
-						</button>
-						<button
-							@click="viewMode = 'list'"
-							:class="[
-								viewMode === 'list'
-									? 'bg-gray-asparagus text-white'
-									: 'bg-norway text-heavy-metal hover:bg-gray-100',
-								'px-3 py-1 text-sm font-medium transition'
-							]">
-							List
-						</button>
+			<!-- Economy Configuration (Collapsible) -->
+			<div
+				v-if="showEconomySettings"
+				class="bg-norway bg-opacity-20 border border-gray-300 rounded p-3 mb-4">
+				<h4 class="text-base font-semibold text-heavy-metal mb-3">Prices</h4>
+				<div class="flex flex-wrap items-center gap-4 mb-3">
+					<!-- Price Multiplier -->
+					<div class="flex items-center gap-2">
+						<label
+							for="priceMultiplier"
+							class="text-sm font-medium text-heavy-metal whitespace-nowrap">
+							Buy ×
+						</label>
+						<input
+							id="priceMultiplier"
+							v-model.number="priceMultiplier"
+							type="number"
+							min="0.1"
+							max="10"
+							step="0.1"
+							class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
 					</div>
+
+					<!-- Sell Margin -->
+					<div class="flex items-center gap-2">
+						<label
+							for="sellMargin"
+							class="text-sm font-medium text-heavy-metal whitespace-nowrap">
+							Sell %
+						</label>
+						<input
+							id="sellMargin"
+							v-model.number="sellMarginPercentage"
+							type="number"
+							min="1"
+							max="100"
+							step="1"
+							class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
+					</div>
+
+					<!-- Reset Button -->
+					<button
+						@click="resetEconomyConfig"
+						class="bg-laurel text-white border-2 border-gray-asparagus rounded px-2 py-1 text-sm transition hover:bg-opacity-90">
+						Reset
+					</button>
 				</div>
 
-				<!-- Layout -->
-				<div>
-					<span class="text-sm font-medium text-heavy-metal mb-2 block">Layout:</span>
-					<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-						<button
-							@click="layout = 'comfortable'"
-							:class="[
-								layout === 'comfortable'
-									? 'bg-gray-asparagus text-white'
-									: 'bg-norway text-heavy-metal hover:bg-gray-100',
-								'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
-							]">
-							Comfortable
-						</button>
-						<button
-							@click="layout = 'condensed'"
-							:class="[
-								layout === 'condensed'
-									? 'bg-gray-asparagus text-white'
-									: 'bg-norway text-heavy-metal hover:bg-gray-100',
-								'px-3 py-1 text-sm font-medium transition'
-							]">
-							Condensed
-						</button>
+				<!-- Round to Whole (separate line) -->
+				<div class="flex items-center gap-2">
+					<input
+						id="roundToWhole"
+						v-model="roundToWhole"
+						type="checkbox"
+						class="w-4 h-4" />
+					<label for="roundToWhole" class="text-sm text-heavy-metal">
+						Round to whole
+					</label>
+				</div>
+
+				<!-- Show Zero Priced Items (admin only) -->
+				<div v-if="canEditItems" class="flex items-center gap-2 mt-2">
+					<input
+						id="showZeroPricedItems"
+						v-model="showZeroPricedItems"
+						type="checkbox"
+						class="w-4 h-4" />
+					<label for="showZeroPricedItems" class="text-sm text-heavy-metal">
+						Show zero priced items
+					</label>
+				</div>
+			</div>
+
+			<!-- Category filters toggle -->
+			<div class="block mb-3">
+				<button
+					@click="toggleCategoryFilters"
+					class="text-gray-asparagus hover:text-heavy-metal underline text-sm">
+					{{ showCategoryFilters ? 'Hide category filters' : 'Show category filters' }}
+				</button>
+			</div>
+
+			<div
+				:class="[
+					'flex flex-wrap gap-2 mb-4 justify-start',
+					{ hidden: !showCategoryFilters }
+				]">
+				<button
+					v-for="cat in enabledCategories"
+					:key="cat"
+					@click="toggleCategory(cat)"
+					:class="[
+						visibleCategories.includes(cat)
+							? 'bg-gray-asparagus text-white'
+							: 'bg-norway text-heavy-metal',
+						'border-2 border-gray-asparagus rounded px-3 py-1 transition text-sm',
+						!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0
+							? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
+							: ''
+					]"
+					:disabled="
+						!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0
+					">
+					{{ cat.charAt(0).toUpperCase() + cat.slice(1) }} ({{
+						filteredGroupedItems[cat]?.length || 0
+					}})
+				</button>
+				<button
+					v-if="user?.email"
+					@click="toggleUncategorised"
+					:class="[
+						showUncategorised
+							? 'bg-gray-asparagus text-white'
+							: 'bg-norway text-heavy-metal',
+						'border-2 border-gray-asparagus rounded px-3 py-1 transition text-sm',
+						filteredUncategorizedItems.length === 0
+							? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
+							: ''
+					]"
+					:disabled="filteredUncategorizedItems.length === 0">
+					Uncategorised ({{ filteredUncategorizedItems.length }})
+				</button>
+			</div>
+			<div class="mb-4 text-sm text-gray-asparagus">
+				Showing {{ allVisibleItems.length }} item{{
+					allVisibleItems.length === 1 ? '' : 's'
+				}}
+			</div>
+
+			<!-- View Mode and Layout Toggle -->
+			<div class="mb-4">
+				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-8">
+					<!-- View Mode -->
+					<div>
+						<span class="text-sm font-medium text-heavy-metal mb-2 block">
+							View as:
+						</span>
+						<div
+							class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+							<button
+								@click="viewMode = 'categories'"
+								:class="[
+									viewMode === 'categories'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-gray-100',
+									'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+								]">
+								Categories
+							</button>
+							<button
+								@click="viewMode = 'list'"
+								:class="[
+									viewMode === 'list'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-gray-100',
+									'px-3 py-1 text-sm font-medium transition'
+								]">
+								List
+							</button>
+						</div>
+					</div>
+
+					<!-- Layout -->
+					<div>
+						<span class="text-sm font-medium text-heavy-metal mb-2 block">Layout:</span>
+						<div
+							class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+							<button
+								@click="layout = 'comfortable'"
+								:class="[
+									layout === 'comfortable'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-gray-100',
+									'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+								]">
+								Comfortable
+							</button>
+							<button
+								@click="layout = 'condensed'"
+								:class="[
+									layout === 'condensed'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-gray-100',
+									'px-3 py-1 text-sm font-medium transition'
+								]">
+								Condensed
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
