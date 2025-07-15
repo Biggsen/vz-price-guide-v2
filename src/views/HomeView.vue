@@ -92,6 +92,18 @@ function shouldShowItemForVersion(item, selectedVersion) {
 	return true
 }
 
+// Helper function to check if item should be hidden when using diamond currency
+function shouldHideInDiamondCurrency(item) {
+	if (currencyType.value !== 'diamond') {
+		return false
+	}
+
+	// Hide diamond-related items when using diamond currency
+	const diamondItems = ['diamond', 'diamond_block', 'diamond_ore', 'deepslate_diamond_ore']
+
+	return diamondItems.includes(item.material_id)
+}
+
 const groupedItems = computed(() => {
 	if (!allItemsCollection.value) return {}
 	return allItemsCollection.value.reduce((acc, item) => {
@@ -102,6 +114,8 @@ const groupedItems = computed(() => {
 		// Skip zero-priced items unless admin has enabled showing them
 		const effectivePrice = getEffectivePrice(item, selectedVersion.value.replace('.', '_'))
 		if (!showZeroPricedItems.value && (!effectivePrice || effectivePrice === 0)) return acc
+		// Skip diamond items when using diamond currency
+		if (shouldHideInDiamondCurrency(item)) return acc
 
 		if (!acc[item.category]) acc[item.category] = []
 		acc[item.category].push(item)
@@ -126,7 +140,8 @@ const uncategorizedItemsByVersion = computed(() => {
 			(user.value?.email || hasImage) &&
 			isAvailableInVersion &&
 			hasValidPrice &&
-			item.version
+			item.version &&
+			!shouldHideInDiamondCurrency(item)
 		) {
 			if (!uncatByVersion[item.version]) {
 				uncatByVersion[item.version] = []
@@ -157,6 +172,13 @@ const roundToWhole = ref(false)
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
 
+// Currency configuration
+const currencyType = ref('money') // 'money' or 'diamond'
+const diamondConversionRatio = ref(32)
+
+// Table display options
+const hideSellColumns = ref(false)
+
 // Admin-only option to show zero-priced items
 const showZeroPricedItems = ref(false)
 
@@ -172,7 +194,10 @@ const economyConfig = computed(() => ({
 	priceMultiplier: priceMultiplier.value,
 	sellMargin: sellMargin.value,
 	roundToWhole: roundToWhole.value,
-	version: selectedVersion.value
+	version: selectedVersion.value,
+	currencyType: currencyType.value,
+	diamondConversionRatio: diamondConversionRatio.value,
+	hideSellColumns: hideSellColumns.value
 }))
 
 // Load config from localStorage
@@ -185,6 +210,9 @@ function loadEconomyConfig() {
 	const savedLayout = localStorage.getItem('layout')
 	const savedSelectedVersion = localStorage.getItem('selectedVersion')
 	const savedShowZeroPricedItems = localStorage.getItem('showZeroPricedItems')
+	const savedCurrencyType = localStorage.getItem('currencyType')
+	const savedDiamondConversionRatio = localStorage.getItem('diamondConversionRatio')
+	const savedHideSellColumns = localStorage.getItem('hideSellColumns')
 
 	if (savedPriceMultiplier !== null) {
 		priceMultiplier.value = parseFloat(savedPriceMultiplier)
@@ -197,6 +225,18 @@ function loadEconomyConfig() {
 	}
 	if (savedRoundToWhole !== null) {
 		roundToWhole.value = savedRoundToWhole === 'true'
+	}
+	if (savedCurrencyType !== null) {
+		currencyType.value = savedCurrencyType
+	}
+	if (savedDiamondConversionRatio !== null) {
+		diamondConversionRatio.value = parseFloat(savedDiamondConversionRatio)
+	}
+	if (savedHideSellColumns !== null) {
+		hideSellColumns.value = savedHideSellColumns === 'true'
+	} else {
+		// Default to false (show sell prices) for new users
+		hideSellColumns.value = false
 	}
 	if (savedViewMode !== null) {
 		viewMode.value = savedViewMode
@@ -222,6 +262,9 @@ function saveEconomyConfig() {
 	localStorage.setItem('layout', layout.value)
 	localStorage.setItem('selectedVersion', selectedVersion.value)
 	localStorage.setItem('showZeroPricedItems', showZeroPricedItems.value.toString())
+	localStorage.setItem('currencyType', currencyType.value)
+	localStorage.setItem('diamondConversionRatio', diamondConversionRatio.value.toString())
+	localStorage.setItem('hideSellColumns', hideSellColumns.value.toString())
 }
 
 // Watch for changes and save to localStorage
@@ -234,7 +277,10 @@ watch(
 		viewMode,
 		layout,
 		selectedVersion,
-		showZeroPricedItems
+		showZeroPricedItems,
+		currencyType,
+		diamondConversionRatio,
+		hideSellColumns
 	],
 	() => {
 		saveEconomyConfig()
@@ -247,6 +293,9 @@ function resetEconomyConfig() {
 	priceMultiplier.value = 1
 	sellMargin.value = 0.3
 	roundToWhole.value = false
+	currencyType.value = 'money'
+	diamondConversionRatio.value = 32
+	hideSellColumns.value = false
 }
 
 function toggleEconomySettings() {
@@ -648,6 +697,52 @@ watch(
 				v-if="showEconomySettings"
 				class="bg-norway bg-opacity-20 border border-gray-300 rounded p-3 mb-4">
 				<h4 class="text-base font-semibold text-heavy-metal mb-3">Prices</h4>
+
+				<!-- Currency Type Toggle -->
+				<div class="flex items-center gap-4 mb-3">
+					<span class="text-sm font-medium text-heavy-metal">Currency:</span>
+					<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+						<button
+							@click="currencyType = 'money'"
+							:class="[
+								currencyType === 'money'
+									? 'bg-gray-asparagus text-white'
+									: 'bg-norway text-heavy-metal hover:bg-gray-100',
+								'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+							]">
+							Money
+						</button>
+						<button
+							@click="currencyType = 'diamond'"
+							:class="[
+								currencyType === 'diamond'
+									? 'bg-gray-asparagus text-white'
+									: 'bg-norway text-heavy-metal hover:bg-gray-100',
+								'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+							]">
+							Diamond
+						</button>
+					</div>
+
+					<!-- Diamond Conversion Ratio (only show when diamond currency is selected) -->
+					<div v-if="currencyType === 'diamond'" class="flex items-center gap-2">
+						<label
+							for="diamondConversionRatio"
+							class="text-sm font-medium text-heavy-metal whitespace-nowrap">
+							Ratio:
+						</label>
+						<input
+							id="diamondConversionRatio"
+							v-model.number="diamondConversionRatio"
+							type="number"
+							min="1"
+							max="100"
+							step="1"
+							class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
+						<span class="text-xs text-gray-600">money:diamond</span>
+					</div>
+				</div>
+
 				<div class="flex flex-wrap items-center gap-4 mb-3">
 					<!-- Price Multiplier -->
 					<div class="flex items-center gap-2">
@@ -712,6 +807,18 @@ watch(
 						class="w-4 h-4" />
 					<label for="showZeroPricedItems" class="text-sm text-heavy-metal">
 						Show zero priced items
+					</label>
+				</div>
+
+				<!-- Hide Sell Prices -->
+				<div class="flex items-center gap-2 mt-2">
+					<input
+						id="hideSellColumns"
+						v-model="hideSellColumns"
+						type="checkbox"
+						class="w-4 h-4" />
+					<label for="hideSellColumns" class="text-sm text-heavy-metal">
+						Hide sell prices
 					</label>
 				</div>
 			</div>

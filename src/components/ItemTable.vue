@@ -2,8 +2,17 @@
 import { useFirestore } from 'vuefire'
 import { useRoute, RouterLink } from 'vue-router'
 import { doc, deleteDoc } from 'firebase/firestore'
-import { buyUnitPrice, sellUnitPrice, buyStackPrice, sellStackPrice } from '../utils/pricing.js'
-import { getEffectivePrice } from '../utils/pricing.js'
+import {
+	buyUnitPrice,
+	sellUnitPrice,
+	buyStackPrice,
+	sellStackPrice,
+	buyUnitPriceWithCurrency,
+	sellUnitPriceWithCurrency,
+	buyStackPriceWithCurrency,
+	sellStackPriceWithCurrency,
+	getEffectivePrice
+} from '../utils/pricing.js'
 import { useAdmin } from '../utils/admin.js'
 import { computed, ref, watch } from 'vue'
 import { Squares2X2Icon } from '@heroicons/vue/16/solid'
@@ -44,6 +53,9 @@ const priceMultiplier = computed(() => props.economyConfig.priceMultiplier)
 const sellMargin = computed(() => props.economyConfig.sellMargin)
 const roundToWhole = computed(() => props.economyConfig.roundToWhole)
 const currentVersion = computed(() => props.economyConfig.version || '1.18')
+const currencyType = computed(() => props.economyConfig.currencyType || 'money')
+const diamondConversionRatio = computed(() => props.economyConfig.diamondConversionRatio || 32)
+const showSellColumns = computed(() => !props.economyConfig.hideSellColumns) // Show sell columns when not hidden
 
 // Check if sorting is enabled (only in list view)
 const sortingEnabled = computed(() => props.viewMode === 'list')
@@ -65,7 +77,7 @@ const sortedCollection = computed(() => {
 		}
 
 		if (sortField.value === 'buy') {
-			// Calculate buy prices for comparison using effective price
+			// Calculate buy prices for comparison using effective price in money
 			const versionKey = currentVersion.value.replace('.', '_')
 			valueA = getEffectivePrice(a, versionKey) * (priceMultiplier.value || 1)
 			valueB = getEffectivePrice(b, versionKey) * (priceMultiplier.value || 1)
@@ -157,8 +169,8 @@ function getItemEffectivePrice(item) {
 					<span v-else>Item/Block Name</span>
 				</th>
 				<th rowspan="2"></th>
-				<th colspan="2">Unit Price</th>
-				<th colspan="2">Stack Price</th>
+				<th :colspan="showSellColumns ? 2 : 1">Unit Price</th>
+				<th :colspan="showSellColumns ? 2 : 1">Stack Price</th>
 				<th rowspan="2" v-if="canEditItems">Actions</th>
 			</tr>
 			<tr>
@@ -177,9 +189,9 @@ function getItemEffectivePrice(item) {
 					</div>
 					<span v-else>Buy</span>
 				</th>
-				<th>Sell</th>
+				<th v-if="showSellColumns">Sell</th>
 				<th>Buy</th>
-				<th>Sell</th>
+				<th v-if="showSellColumns">Sell</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -216,15 +228,23 @@ function getItemEffectivePrice(item) {
 						" />
 				</td>
 				<td class="text-center">
-					{{ buyUnitPrice(getItemEffectivePrice(item), priceMultiplier, roundToWhole) }}
+					{{
+						buyUnitPriceWithCurrency(
+							getItemEffectivePrice(item),
+							priceMultiplier,
+							currencyType,
+							roundToWhole
+						)
+					}}
 				</td>
 
-				<td class="text-center">
+				<td v-if="showSellColumns" class="text-center">
 					{{
-						sellUnitPrice(
+						sellUnitPriceWithCurrency(
 							getItemEffectivePrice(item),
 							priceMultiplier,
 							sellMargin,
+							currencyType,
 							roundToWhole
 						)
 					}}
@@ -232,21 +252,23 @@ function getItemEffectivePrice(item) {
 
 				<td class="text-center">
 					{{
-						buyStackPrice(
+						buyStackPriceWithCurrency(
 							getItemEffectivePrice(item),
 							item.stack,
 							priceMultiplier,
+							currencyType,
 							roundToWhole
 						)
 					}}
 				</td>
-				<td class="text-center">
+				<td v-if="showSellColumns" class="text-center">
 					{{
-						sellStackPrice(
+						sellStackPriceWithCurrency(
 							getItemEffectivePrice(item),
 							item.stack,
 							priceMultiplier,
 							sellMargin,
+							currencyType,
 							roundToWhole
 						)
 					}}
