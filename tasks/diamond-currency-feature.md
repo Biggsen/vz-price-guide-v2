@@ -52,14 +52,15 @@ EconomyConfig {
 #### Shop/Server Currency Support
 
 ```ts
-Shop {
-  // ... existing fields
-  currency_type: 'money' | 'diamond';  // NEW
-}
-
 Server {
   // ... existing fields
-  currency_type: 'money' | 'diamond';  // NEW
+  currency_type: 'money' | 'diamond';  // NEW (default: 'money')
+  diamond_conversion_ratio: number;    // NEW (default: 32)
+}
+
+Shop {
+  // ... existing fields
+  currency_type: 'money' | 'diamond';  // NEW (inherits from server)
 }
 ```
 
@@ -74,7 +75,7 @@ function convertToDiamondPrice(moneyPrice: number, ratio: number = 32): number
 // Convert diamond price to money price
 function convertToMoneyPrice(diamondPrice: number, ratio: number = 32): number
 
-// Format diamond price (e.g., "3 diamond blocks + 2 diamonds")
+// Format diamond price as either diamonds or diamond blocks (e.g., "5 diamonds" or "3 diamond blocks")
 function formatDiamondPrice(diamondPrice: number): string
 
 // Get effective price in current currency
@@ -118,9 +119,9 @@ function getEffectivePriceInCurrency(
 #### Task 1.2: Create Diamond Currency Utilities
 
 -   [ ] **Extend `src/utils/pricing.js`**
-    -   Add `convertToDiamondPrice()` function
-    -   Add `convertToMoneyPrice()` function
-    -   Add `formatDiamondPrice()` function
+    -   Add `convertToDiamondPrice()` function (money → diamonds)
+    -   Add `convertToMoneyPrice()` function (diamonds → money)
+    -   Add `formatDiamondPrice()` function (diamonds → diamonds or diamond blocks based on amount)
     -   Add `getEffectivePriceInCurrency()` function
     -   Update existing price functions to handle currency type
 
@@ -138,16 +139,16 @@ function getEffectivePriceInCurrency(
 
 -   [ ] **Update `src/components/ItemTable.vue`**
     -   Modify price display logic to use `getEffectivePriceInCurrency()`
-    -   Add diamond formatting for diamond currency mode
-    -   Update sorting logic to handle diamond prices
+    -   Add diamond formatting for diamond currency mode (diamonds or diamond blocks)
+-   Update sorting logic to handle diamond prices
     -   Ensure all price columns show correct currency
 
 #### Task 2.2: Update Shop Management
 
 -   [ ] **Update `src/components/ShopItemTable.vue`**
     -   Add currency type detection from shop/server
-    -   Update price display and formatting
-    -   Modify price input handling for diamond entry
+    -   Update price display and formatting (diamonds or diamond blocks)
+-   Modify price input handling for diamond entry
     -   Update price history display
 
 #### Task 2.3: Update Price Input Forms
@@ -155,18 +156,24 @@ function getEffectivePriceInCurrency(
 -   [ ] **Update `src/components/ShopItemForm.vue`**
     -   Add currency type detection
     -   Update price input validation for diamonds
-    -   Add diamond formatting in price previews
+-   Add diamond formatting in price previews (diamonds or diamond blocks)
     -   Handle currency conversion in form submission
 
 ### Phase 3: Shop Manager Integration
 
 #### Task 3.1: Add Currency Support to Data Models
 
--   [ ] **Update shop and server data structures**
-    -   Add `currency_type` field to shops collection
-    -   Add `currency_type` field to servers collection
+-   [ ] **Update server data structure**
+
+    -   Add `currency_type` field to servers collection (default: 'money')
+    -   Add `diamond_conversion_ratio` field to servers collection (default: 32)
+    -   Update Firestore rules to allow currency type fields
+    -   Update `src/utils/serverProfile.js` to handle new fields
+
+-   [ ] **Update shop data structure**
+    -   Add `currency_type` field to shops collection (inherits from server)
     -   Update Firestore rules to allow currency type
-    -   Create migration script for existing shops
+    -   Create migration script for existing servers and shops
 
 #### Task 3.2: Update Shop Management Views
 
@@ -177,13 +184,16 @@ function getEffectivePriceInCurrency(
     -   Add currency type filtering
 
 -   [ ] **Update `src/views/ServersView.vue`**
-    -   Add currency type selection in server creation/editing
-    -   Display currency type in server list
+    -   Add currency type selection in server creation/editing form
+    -   Add diamond conversion ratio input (when currency type is 'diamond')
+    -   Display currency type in server list table
+    -   Update form validation to handle new fields
+    -   Update `serverForm` data structure to include currency fields
 
 #### Task 3.3: Update Market Overview
 
 -   [ ] **Update `src/views/MarketOverviewView.vue`**
-    -   Handle mixed currency types across shops
+    -   Handle currency type detection from shops/servers
     -   Display currency type indicators
     -   Update trading opportunity calculations for diamond currency
 
@@ -195,25 +205,27 @@ function getEffectivePriceInCurrency(
 
     -   Add currency type selection
     -   Update price input handling
-    -   Add diamond price preview
+    -   Add diamond price preview (diamonds or diamond blocks)
 
 -   [ ] **Update `src/views/EditItemView.vue`**
     -   Add currency type selection
     -   Update price input handling
-    -   Add diamond price preview
+    -   Add diamond price preview (diamonds or diamond blocks)
 
 #### Task 4.2: Create Currency Migration Tools
 
 -   [ ] **Create `scripts/migrateToDiamondCurrency.js`**
 
     -   Bulk convert existing prices to diamond format
-    -   Update shop/server currency types
+    -   Update server currency types and conversion ratios
+    -   Update shop currency types (inherit from servers)
     -   Provide rollback functionality
 
 -   [ ] **Create `scripts/auditCurrencyTypes.js`**
-    -   Audit current currency usage across shops
-    -   Identify mixed currency scenarios
+    -   Audit current currency usage across servers and shops
+    -   Identify currency type consistency issues
     -   Generate migration recommendations
+    -   Validate server-shop currency relationships
 
 ### Phase 5: Testing and Polish
 
@@ -223,7 +235,7 @@ function getEffectivePriceInCurrency(
 
     -   Verify 32:1 ratio works correctly
     -   Test edge cases (zero prices, very large prices)
-    -   Test diamond block formatting
+    -   Test diamond formatting and unit selection
 
 -   [ ] **Test UI interactions**
 
@@ -261,15 +273,19 @@ function getEffectivePriceInCurrency(
 
 ### Diamond Price Formatting
 
--   **Diamond blocks**: Show as "3 diamond blocks" (≥ 9 diamonds)
--   **Mixed format**: "1 diamond block + 2 diamonds" (11 diamonds)
--   **Small amounts**: "5 diamonds" (< 9 diamonds)
+-   **Single unit display**: Display as either diamonds OR diamond blocks, not mixed
+-   **Diamond blocks**: For larger amounts (e.g., "3 diamond blocks" for 27+ diamonds)
+-   **Individual diamonds**: For smaller amounts (e.g., "5 diamonds" for < 9 diamonds)
+-   **Threshold-based**: Choose display unit based on price size (e.g., ≥ 9 diamonds = blocks, < 9 = diamonds)
+-   **Consistent format**: "3 diamond blocks" or "5 diamonds" (never mixed)
 
 ### Price Input Handling
 
--   **Diamond input**: Allow whole numbers only
+-   **Diamond input**: Allow whole numbers only (1, 2, 3 diamonds or diamond blocks)
+-   **Unit selection**: Choose input unit (diamonds or diamond blocks)
 -   **Conversion preview**: Show both currencies when switching
 -   **Validation**: Prevent negative or decimal diamond prices
+-   **Auto-formatting**: Display in appropriate unit based on amount
 
 ---
 
@@ -289,8 +305,9 @@ function getEffectivePriceInCurrency(
 
 ### Compatibility
 
--   **Backward compatibility**: Existing money-based shops continue working
--   **Mixed currency**: Handle shops with different currency types
+-   **Backward compatibility**: Existing money-based servers and shops continue working
+-   **Server-level currency**: All shops on a server inherit the server's currency type
+-   **Currency consistency**: Shops automatically use their server's currency settings
 -   **Migration path**: Clear upgrade path for existing users
 
 ---
@@ -314,7 +331,7 @@ function getEffectivePriceInCurrency(
 
 ### Enhanced Formatting
 
--   **Compact diamond display**: "3db + 2d" shorthand
+-   **Compact diamond display**: "3d" or "3db" shorthand
 -   **Price ranges**: Show min/max diamond prices
 -   **Trend indicators**: Diamond price change arrows
 
