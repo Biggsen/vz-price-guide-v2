@@ -1,5 +1,18 @@
 [
 	{
+		"id": 17,
+		"title": "Homepage Filtering Cleanup",
+		"date": "2025-07-16",
+		"type": "Enhancement",
+		"description": "Made some UX improvements that I hope make the homepage a bit easier to use. Cleaned up the filtering and controls, and made use of icons here and there.",
+		"changes": [
+			"Less cluttered filtering controls",
+			"Settings and filters should be easier to spot",
+			"A few more icons to help guide you",
+			"Filtering should feel better on mobile too"
+		]
+	},
+	{
 		"id": 16,
 		"title": "Spruced Up Header with Minecraft Vibes",
 		"date": "2025-07-15",

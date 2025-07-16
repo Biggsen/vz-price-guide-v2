@@ -8,8 +8,14 @@ import ItemTable from '../components/ItemTable.vue'
 import { categories, enabledCategories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { getEffectivePrice } from '../utils/pricing.js'
-import { RocketLaunchIcon } from '@heroicons/vue/24/outline'
-import { Squares2X2Icon } from '@heroicons/vue/16/solid'
+import {
+	RocketLaunchIcon,
+	EyeIcon,
+	EyeSlashIcon,
+	ArrowPathIcon,
+	Cog6ToothIcon
+} from '@heroicons/vue/24/outline'
+import { Squares2X2Icon, Cog6ToothIcon as Cog6ToothIconSolid } from '@heroicons/vue/16/solid'
 
 const db = useFirestore()
 const route = useRoute()
@@ -52,14 +58,6 @@ const showAlert = ref(true)
 function dismissAlert() {
 	showAlert.value = false
 	localStorage.setItem('recipePricingAlertDismissed', 'true')
-}
-
-// Category filters visibility state
-const showCategoryFilters = ref(true)
-
-function toggleCategoryFilters() {
-	showCategoryFilters.value = !showCategoryFilters.value
-	localStorage.setItem('showCategoryFilters', showCategoryFilters.value.toString())
 }
 
 // Version filtering state
@@ -476,12 +474,6 @@ onMounted(() => {
 		showAlert.value = false
 	}
 
-	// Initialize category filters visibility from localStorage
-	const categoryFiltersState = localStorage.getItem('showCategoryFilters')
-	if (categoryFiltersState !== null) {
-		showCategoryFilters.value = categoryFiltersState === 'true'
-	}
-
 	// Initialize economy config from localStorage
 	loadEconomyConfig()
 })
@@ -519,7 +511,6 @@ function toggleAllCategories() {
 function resetCategories() {
 	visibleCategories.value = [...enabledCategories]
 	showUncategorised.value = true
-	selectedVersion.value = enabledVersions.value[enabledVersions.value.length - 1]
 	searchQuery.value = ''
 }
 
@@ -573,7 +564,7 @@ watch(
 
 	<main>
 		<div class="px-2">
-			<div class="my-4 flex flex-col sm:flex-row sm:gap-4">
+			<div class="my-4 flex flex-row gap-2">
 				<div class="flex-1 sm:max-w-md">
 					<input
 						type="text"
@@ -587,59 +578,70 @@ watch(
 				<div class="flex gap-2 sm:gap-0 sm:ml-2">
 					<button
 						@click="resetCategories"
-						class="bg-laurel text-white border-2 border-gray-asparagus rounded px-3 py-2 transition flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2 h-10 flex items-center justify-center">
-						Reset
-					</button>
-					<button
-						@click="toggleAllCategories"
-						:class="[
-							allVisible
-								? 'bg-norway text-heavy-metal border-2 border-gray-asparagus'
-								: 'bg-gray-asparagus text-white border-2 border-gray-asparagus',
-							'rounded px-3 py-2 transition flex-1 sm:flex-none text-sm sm:text-base sm:whitespace-nowrap h-10 flex items-center justify-center'
-						]">
-						{{ allVisible ? 'Hide all categories' : 'Show all categories' }}
+						class="bg-laurel text-white border-2 border-gray-asparagus rounded px-3 py-2 transition flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2 h-10 flex items-center justify-center gap-1">
+						<ArrowPathIcon class="w-4 h-4" />
+						<span class="hidden sm:inline">Reset</span>
 					</button>
 				</div>
 			</div>
 
-			<!-- Version Filters -->
-			<div v-if="enabledVersions && enabledVersions.length > 0" class="mb-4">
-				<span class="text-sm font-medium text-heavy-metal mb-2 block">
-					Minecraft Version:
-				</span>
-				<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-					<button
-						v-for="version in versions"
-						:key="version"
-						@click="selectVersion(version)"
-						:disabled="!enabledVersions.includes(version)"
-						:class="[
-							selectedVersion === version
-								? 'bg-gray-asparagus text-white'
-								: enabledVersions.includes(version)
-								? 'bg-norway text-heavy-metal hover:bg-gray-100'
-								: 'bg-gray-200 text-gray-400 cursor-not-allowed',
-							'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0',
-							!enabledVersions.includes(version) ? 'opacity-60' : ''
-						]">
-						{{ version }}
-					</button>
-				</div>
-				<p class="text-xs text-gray-500 mt-1">
-					<span v-if="user?.email && canEditItems">
-						All versions available for admin users
-					</span>
-					<span v-else>Grayed out versions will be available soon</span>
-				</p>
+			<div class="flex flex-wrap gap-2 mb-4 justify-start">
+				<button
+					v-for="cat in enabledCategories"
+					:key="cat"
+					@click="toggleCategory(cat)"
+					:class="[
+						visibleCategories.includes(cat)
+							? 'bg-gray-asparagus text-white'
+							: 'bg-norway text-heavy-metal',
+						'border border-gray-asparagus rounded px-2 py-1 sm:px-3 sm:py-2 transition text-xs sm:text-sm',
+						!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0
+							? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
+							: ''
+					]"
+					:disabled="
+						!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0
+					">
+					{{ cat.charAt(0).toUpperCase() + cat.slice(1) }} ({{
+						filteredGroupedItems[cat]?.length || 0
+					}})
+				</button>
+				<button
+					v-if="user?.email"
+					@click="toggleUncategorised"
+					:class="[
+						showUncategorised
+							? 'bg-gray-asparagus text-white'
+							: 'bg-norway text-heavy-metal',
+						'border border-gray-asparagus rounded px-2 py-1 sm:px-3 sm:py-2 transition text-xs sm:text-sm',
+						filteredUncategorizedItems.length === 0
+							? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
+							: ''
+					]"
+					:disabled="filteredUncategorizedItems.length === 0">
+					Uncategorised ({{ filteredUncategorizedItems.length }})
+				</button>
+			</div>
+
+			<!-- Toggle All Categories Link -->
+			<div class="mb-4">
+				<button
+					@click="toggleAllCategories"
+					class="text-gray-asparagus hover:text-heavy-metal underline text-sm flex items-center gap-1">
+					<EyeSlashIcon v-if="allVisible" class="w-4 h-4" />
+					<EyeIcon v-else class="w-4 h-4" />
+					{{ allVisible ? 'Unselect all categories' : 'Select all categories' }}
+				</button>
 			</div>
 
 			<!-- Customisation Section -->
 			<div class="mb-4">
 				<button
 					@click="toggleEconomySettings"
-					class="text-gray-asparagus hover:text-heavy-metal underline text-sm">
-					{{ showEconomySettings ? 'Hide customisation' : 'Show customisation' }}
+					class="text-gray-asparagus hover:text-heavy-metal underline text-sm flex items-center gap-1">
+					<Cog6ToothIconSolid v-if="showEconomySettings" class="w-4 h-4" />
+					<Cog6ToothIcon v-else class="w-4 h-4" />
+					Settings
 				</button>
 			</div>
 
@@ -647,7 +649,53 @@ watch(
 			<div
 				v-if="showEconomySettings"
 				class="bg-norway bg-opacity-20 border border-gray-300 rounded p-3 mb-4">
-				<h4 class="text-base font-semibold text-heavy-metal mb-3">Prices</h4>
+				<!-- Version Filters -->
+				<div v-if="enabledVersions && enabledVersions.length > 0" class="mb-4">
+					<span class="text-sm font-medium text-heavy-metal mb-2 block">
+						Minecraft Version:
+					</span>
+					<!-- Mobile dropdown -->
+					<select
+						v-model="selectedVersion"
+						class="sm:hidden w-full border-2 border-gray-asparagus rounded px-3 py-2 text-sm">
+						<option
+							v-for="version in versions"
+							:key="version"
+							:value="version"
+							:disabled="!enabledVersions.includes(version)">
+							{{ version
+							}}{{ !enabledVersions.includes(version) ? ' (Coming Soon)' : '' }}
+						</option>
+					</select>
+					<!-- Desktop pills -->
+					<div
+						class="hidden sm:inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+						<button
+							v-for="version in versions"
+							:key="version"
+							@click="selectVersion(version)"
+							:disabled="!enabledVersions.includes(version)"
+							:class="[
+								selectedVersion === version
+									? 'bg-gray-asparagus text-white'
+									: enabledVersions.includes(version)
+									? 'bg-norway text-heavy-metal hover:bg-gray-100'
+									: 'bg-gray-200 text-gray-400 cursor-not-allowed',
+								'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0',
+								!enabledVersions.includes(version) ? 'opacity-60' : ''
+							]">
+							{{ version }}
+						</button>
+					</div>
+					<p class="text-xs text-gray-500 mt-1">
+						<span v-if="user?.email && canEditItems">
+							All versions available for admin users
+						</span>
+						<span v-else>Grayed out versions will be available soon</span>
+					</p>
+				</div>
+
+				<span class="text-sm font-medium text-heavy-metal mb-2 block">Prices:</span>
 				<div class="flex flex-wrap items-center gap-4 mb-3">
 					<!-- Price Multiplier -->
 					<div class="flex items-center gap-2">
@@ -716,57 +764,7 @@ watch(
 				</div>
 			</div>
 
-			<!-- Category filters toggle -->
-			<div class="block mb-3">
-				<button
-					@click="toggleCategoryFilters"
-					class="text-gray-asparagus hover:text-heavy-metal underline text-sm">
-					{{ showCategoryFilters ? 'Hide category filters' : 'Show category filters' }}
-				</button>
-			</div>
-
-			<div
-				:class="[
-					'flex flex-wrap gap-2 mb-4 justify-start',
-					{ hidden: !showCategoryFilters }
-				]">
-				<button
-					v-for="cat in enabledCategories"
-					:key="cat"
-					@click="toggleCategory(cat)"
-					:class="[
-						visibleCategories.includes(cat)
-							? 'bg-gray-asparagus text-white'
-							: 'bg-norway text-heavy-metal',
-						'border-2 border-gray-asparagus rounded px-3 py-1 transition text-sm',
-						!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0
-							? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
-							: ''
-					]"
-					:disabled="
-						!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0
-					">
-					{{ cat.charAt(0).toUpperCase() + cat.slice(1) }} ({{
-						filteredGroupedItems[cat]?.length || 0
-					}})
-				</button>
-				<button
-					v-if="user?.email"
-					@click="toggleUncategorised"
-					:class="[
-						showUncategorised
-							? 'bg-gray-asparagus text-white'
-							: 'bg-norway text-heavy-metal',
-						'border-2 border-gray-asparagus rounded px-3 py-1 transition text-sm',
-						filteredUncategorizedItems.length === 0
-							? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
-							: ''
-					]"
-					:disabled="filteredUncategorizedItems.length === 0">
-					Uncategorised ({{ filteredUncategorizedItems.length }})
-				</button>
-			</div>
-			<div class="mb-4 text-sm text-gray-asparagus">
+			<div class="mb-4 text-sm text-gray-asparagus font-medium">
 				Showing {{ allVisibleItems.length }} item{{
 					allVisibleItems.length === 1 ? '' : 's'
 				}}
@@ -776,10 +774,8 @@ watch(
 			<div class="mb-4">
 				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-8">
 					<!-- View Mode -->
-					<div>
-						<span class="text-sm font-medium text-heavy-metal mb-2 block">
-							View as:
-						</span>
+					<div class="flex items-center gap-2">
+						<span class="text-sm font-medium text-heavy-metal">View as:</span>
 						<div
 							class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
 							<button
@@ -806,8 +802,8 @@ watch(
 					</div>
 
 					<!-- Layout -->
-					<div>
-						<span class="text-sm font-medium text-heavy-metal mb-2 block">Layout:</span>
+					<div class="flex items-center gap-2">
+						<span class="text-sm font-medium text-heavy-metal">Layout:</span>
 						<div
 							class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
 							<button
