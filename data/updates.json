@@ -1,5 +1,19 @@
 [
 	{
+		"id": 18,
+		"title": "All 1.19 Items Complete + New Categories! 🎉",
+		"date": "2025-07-16",
+		"type": "Content",
+		"description": "🎉 All Minecraft 1.19 items have now been added to the price guide! The Wild Update content is now fully integrated with comprehensive pricing. I've also created two new categories to better organize the growing item collection.",
+		"changes": [
+			"Completed all 1.19 items including mangrove wood, sculk blocks, mud blocks, and frog-related items",
+			"Added comprehensive pricing for all 1.19 content",
+			"Added all crafting recipes for 1.19 items to the recipe database",
+			"Created new 'Light' category for lighting-related items",
+			"Created new 'Deep Dark' category for sculk and deep dark specific items"
+		]
+	},
+	{
 		"id": 17,
 		"title": "Homepage Filtering Cleanup",
 		"date": "2025-07-16",

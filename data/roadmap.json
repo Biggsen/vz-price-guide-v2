@@ -59,44 +59,28 @@
 	{
 		"id": 4,
 		"title": "Add all 1.19 items",
-		"status": "Pending",
-		"description": "Add all new items introduced in Minecraft 1.19 (The Wild Update) including bamboo wood, cherry wood, mangrove wood, sculk blocks, mud blocks, frogs, and archaeology items",
+		"status": "Completed",
+		"completedDate": "2025-07-16",
+		"description": "Add all new items introduced in Minecraft 1.19 (The Wild Update) including mangrove wood, sculk blocks, mud blocks, frog-related items, and miscellaneous new items",
 		"features": [
 			{
-				"name": "Bamboo wood set (planks, stairs, slabs, doors, signs, boats, etc.) (22 items)",
-				"completed": false
-			},
-			{
-				"name": "Cherry wood set (logs, planks, stairs, slabs, doors, signs, boats, etc.) (18 items)",
-				"completed": false
-			},
-			{
 				"name": "Mangrove wood set (logs, planks, stairs, slabs, doors, signs, boats, etc.) (20 items)",
-				"completed": false
+				"completed": true
 			},
-			{ "name": "Hanging signs for all wood types (9 items)", "completed": false },
-			{ "name": "Boats with chests for all wood types (7 items)", "completed": false },
+
+			{ "name": "Boats with chests for all wood types (6 items)", "completed": true },
 			{
 				"name": "Sculk blocks (sculk, sculk catalyst, sculk shrieker, sculk vein) (4 items)",
-				"completed": false
+				"completed": true
 			},
-			{ "name": "Mud and mud brick blocks (6 items)", "completed": false },
+			{ "name": "Mud and mud brick blocks (6 items)", "completed": true },
 			{
-				"name": "Frog-related items (froglights, frogspawn, tadpole bucket) (6 items)",
-				"completed": false
-			},
-			{ "name": "Armor trim smithing templates (16 items)", "completed": false },
-			{
-				"name": "Archaeology items (brush, pottery shards, decorated pot, suspicious sand) (7 items)",
-				"completed": false
-			},
-			{
-				"name": "New spawn eggs (allay, camel, frog, sniffer, tadpole, warden, etc.) (10 items)",
-				"completed": false
+				"name": "Frog-related items (froglights, tadpole bucket) (6 items)",
+				"completed": true
 			},
 			{
 				"name": "Miscellaneous new items (recovery compass, goat horn, echo shard, music disc, etc.) (8 items)",
-				"completed": false
+				"completed": true
 			}
 		]
 	},
