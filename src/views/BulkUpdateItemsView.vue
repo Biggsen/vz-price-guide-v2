@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
-import { enabledCategories } from '../constants.js'
+import { categories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 
 const db = useFirestore()
@@ -17,11 +17,14 @@ const updateResult = ref(null)
 const newCategory = ref('')
 const newSubcategory = ref('')
 const newImage = ref('')
+const newUrl = ref('')
+const newVersion = ref('')
 const sortKey = ref('name')
 const sortAsc = ref(true)
 const showOnlyNoCategory = ref(false)
 const showCategoryColumns = ref(true)
 const showImageColumn = ref(false)
+const selectedVersion = ref('all')
 
 async function loadDbItems() {
 	const snapshot = await getDocs(collection(db, 'items'))
@@ -36,6 +39,15 @@ onMounted(async () => {
 const filteredItems = computed(() => {
 	const query = searchQuery.value.trim().toLowerCase()
 	let items = dbItems.value.filter((item) => item.name && item.name.toLowerCase().includes(query))
+
+	// Filter by version
+	if (selectedVersion.value !== 'all') {
+		items = items.filter((item) => {
+			// Check if the item's version matches the selected version
+			return item.version === selectedVersion.value
+		})
+	}
+
 	if (showOnlyNoCategory.value) {
 		items = items.filter((item) => !item.category || item.category === '')
 	}
@@ -159,6 +171,52 @@ async function updateSelectedImages() {
 	selectedItems.value = []
 	newImage.value = ''
 }
+
+async function updateSelectedVersions() {
+	if (!newVersion.value || !anySelected.value) return
+	updating.value = true
+	updateResult.value = null
+	let updated = 0,
+		failed = 0
+	for (const id of selectedItems.value) {
+		try {
+			await updateDoc(doc(db, 'items', id), {
+				version: newVersion.value
+			})
+			updated++
+		} catch (e) {
+			failed++
+		}
+	}
+	updateResult.value = `Version updated: ${updated}, Failed: ${failed}`
+	await loadDbItems()
+	updating.value = false
+	selectedItems.value = []
+	newVersion.value = ''
+}
+
+async function updateSelectedUrls() {
+	if (!newUrl.value || !anySelected.value) return
+	updating.value = true
+	updateResult.value = null
+	let updated = 0,
+		failed = 0
+	for (const id of selectedItems.value) {
+		try {
+			await updateDoc(doc(db, 'items', id), {
+				url: newUrl.value
+			})
+			updated++
+		} catch (e) {
+			failed++
+		}
+	}
+	updateResult.value = `URL updated: ${updated}, Failed: ${failed}`
+	await loadDbItems()
+	updating.value = false
+	selectedItems.value = []
+	newUrl.value = ''
+}
 </script>
 
 <template>
@@ -175,6 +233,27 @@ async function updateSelectedImages() {
 					class="border-2 border-gray-asparagus rounded px-3 py-1 w-full max-w-md" />
 			</div>
 
+			<!-- Version filter -->
+			<div class="mb-4">
+				<label class="block text-sm font-medium mb-2">Filter by version:</label>
+				<select
+					v-model="selectedVersion"
+					class="border-2 border-gray-asparagus rounded px-3 py-1">
+					<option value="all">All items</option>
+					<option v-for="version in versions" :key="version" :value="version">
+						Minecraft {{ version }}
+					</option>
+				</select>
+			</div>
+
+			<!-- Status notifications -->
+			<div v-if="updating || updateResult" class="mb-4 p-3 bg-gray-100 rounded border">
+				<span v-if="updating" class="text-blue-600 font-medium">Updating...</span>
+				<span v-if="updateResult" class="text-green-600 font-medium">
+					{{ updateResult }}
+				</span>
+			</div>
+
 			<!-- Categories section -->
 			<div class="mb-4">
 				<h3 class="text-lg font-semibold mb-2">Categories</h3>
@@ -183,7 +262,7 @@ async function updateSelectedImages() {
 						v-model="newCategory"
 						class="border-2 border-gray-asparagus rounded px-3 py-1">
 						<option value="">Set category...</option>
-						<option v-for="cat in enabledCategories" :key="cat" :value="cat">
+						<option v-for="cat in categories" :key="cat" :value="cat">
 							{{ cat }}
 						</option>
 					</select>
@@ -208,8 +287,6 @@ async function updateSelectedImages() {
 						class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50">
 						Clear Category
 					</button>
-					<span v-if="updating" class="ml-2">Updating...</span>
-					<span v-if="updateResult" class="ml-2">{{ updateResult }}</span>
 				</div>
 
 				<!-- Column visibility checkbox -->
@@ -229,6 +306,27 @@ async function updateSelectedImages() {
 					<input type="checkbox" v-model="showOnlyNoCategory" class="mr-2 align-middle" />
 					Show only items without a category
 				</label>
+			</div>
+
+			<!-- Version section -->
+			<div class="mb-4">
+				<h3 class="text-lg font-semibold mb-2">Version</h3>
+				<div class="flex gap-4 items-center">
+					<select
+						v-model="newVersion"
+						class="border-2 border-gray-asparagus rounded px-3 py-1">
+						<option value="">Set version...</option>
+						<option v-for="version in versions" :key="version" :value="version">
+							Minecraft {{ version }}
+						</option>
+					</select>
+					<button
+						@click="updateSelectedVersions"
+						:disabled="!anySelected || !newVersion || updating"
+						class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
+						Update Version
+					</button>
+				</div>
 			</div>
 
 			<!-- Image section -->
@@ -259,6 +357,24 @@ async function updateSelectedImages() {
 					</label>
 				</div>
 			</div>
+
+			<!-- URL section -->
+			<div class="mb-4">
+				<h3 class="text-lg font-semibold mb-2">URL</h3>
+				<div class="flex gap-4 items-center">
+					<input
+						type="text"
+						v-model="newUrl"
+						placeholder="URL"
+						class="border-2 border-gray-asparagus rounded px-3 py-1 w-80" />
+					<button
+						@click="updateSelectedUrls"
+						:disabled="!anySelected || !newUrl || updating"
+						class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50">
+						Update URL
+					</button>
+				</div>
+			</div>
 			<table class="table-auto w-full">
 				<thead>
 					<tr>
@@ -269,7 +385,10 @@ async function updateSelectedImages() {
 								@change="toggleSelectAll($event.target.checked)"
 								:disabled="filteredItems.length === 0" />
 						</th>
-						<th>Material ID</th>
+						<th @click="setSort('material_id')" class="cursor-pointer select-none">
+							Material ID
+							<span v-if="sortKey === 'material_id'">{{ sortAsc ? '▲' : '▼' }}</span>
+						</th>
 						<th @click="setSort('name')" class="cursor-pointer select-none">
 							Name
 							<span v-if="sortKey === 'name'">{{ sortAsc ? '▲' : '▼' }}</span>
