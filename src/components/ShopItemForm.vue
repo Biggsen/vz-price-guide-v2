@@ -113,8 +113,10 @@ const filteredItems = computed(() => {
 	if (!props.availableItems) return []
 
 	// First filter out items with zero prices using effective pricing
+	// Use the server's Minecraft version for price checking
+	const serverVersion = props.server?.minecraft_version?.replace('.', '_') || '1_16'
 	const nonZeroItems = props.availableItems.filter((item) => {
-		const effectivePrice = getEffectivePrice(item, '1_16')
+		const effectivePrice = getEffectivePrice(item, serverVersion)
 		return effectivePrice > 0
 	})
 
