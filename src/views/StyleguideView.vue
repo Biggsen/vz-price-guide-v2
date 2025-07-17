@@ -370,23 +370,53 @@ const searchQuery = ref('')
 				<!-- Action Buttons -->
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold text-gray-800">Action Buttons</h3>
-					<div class="flex flex-wrap gap-4">
-						<button
-							class="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
-							Save
-						</button>
-						<button
-							class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
-							Edit
-						</button>
-						<button
-							class="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
-							Delete
-						</button>
-						<button
-							class="px-3 py-1 text-sm bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors">
-							Warning
-						</button>
+
+					<!-- Small Action Buttons -->
+					<div class="space-y-2">
+						<h4 class="text-md font-medium text-gray-700">Small (px-3 py-1 text-sm)</h4>
+						<div class="flex flex-wrap gap-4">
+							<button
+								class="px-3 py-1 text-sm bg-semantic-success text-white rounded hover:bg-green-700 transition-colors">
+								Save
+							</button>
+							<button
+								class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-blue-700 transition-colors">
+								Edit
+							</button>
+							<button
+								class="px-3 py-1 text-sm bg-semantic-danger text-white rounded hover:bg-red-700 transition-colors">
+								Delete
+							</button>
+							<button
+								class="px-3 py-1 text-sm bg-semantic-warning text-white rounded hover:bg-yellow-700 transition-colors">
+								Warning
+							</button>
+						</div>
+					</div>
+
+					<!-- Large Action Buttons -->
+					<div class="space-y-2">
+						<h4 class="text-md font-medium text-gray-700">
+							Large (px-4 py-2 text-base)
+						</h4>
+						<div class="flex flex-wrap gap-4">
+							<button
+								class="px-4 py-2 text-base bg-semantic-success text-white rounded hover:bg-green-700 transition-colors">
+								Save
+							</button>
+							<button
+								class="px-4 py-2 text-base bg-semantic-info text-white rounded hover:bg-blue-700 transition-colors">
+								Edit
+							</button>
+							<button
+								class="px-4 py-2 text-base bg-semantic-danger text-white rounded hover:bg-red-700 transition-colors">
+								Delete
+							</button>
+							<button
+								class="px-4 py-2 text-base bg-semantic-warning text-white rounded hover:bg-yellow-700 transition-colors">
+								Warning
+							</button>
+						</div>
 					</div>
 				</div>
 
