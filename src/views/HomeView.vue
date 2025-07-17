@@ -23,7 +23,7 @@ const router = useRouter()
 const { user, canEditItems } = useAdmin()
 
 // Define which versions are currently available for regular users
-const baseEnabledVersions = ['1.16', '1.17', '1.18', '1.19']
+const baseEnabledVersions = ['1.16', '1.17', '1.18', '1.19', '1.20']
 
 // Ensure versions array is available as fallback
 const fallbackVersions = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
@@ -57,7 +57,7 @@ const showAlert = ref(true)
 
 function dismissAlert() {
 	showAlert.value = false
-	localStorage.setItem('v119ItemsAlertDismissed', 'true')
+	localStorage.setItem('v120ItemsAlertDismissed', 'true')
 }
 
 // Version filtering state
@@ -469,7 +469,7 @@ onMounted(() => {
 	initializeFromQuery()
 
 	// Check if alert was previously dismissed
-	const dismissed = localStorage.getItem('v119ItemsAlertDismissed')
+	const dismissed = localStorage.getItem('v120ItemsAlertDismissed')
 	if (dismissed === 'true') {
 		showAlert.value = false
 	}
@@ -539,8 +539,8 @@ watch(
 			<div class="flex items-center">
 				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2" />
 				<span class="text-sm sm:text-base">
-					All Minecraft 1.19 items are now live! Plus, I've added new 'Light' and 'Deep
-					Dark' categories for better organization. Check
+					More items! I've added all the items for 1.20 now and adjusted prices where
+					required. Check
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
 						<span>Updates</span>
 					</router-link>

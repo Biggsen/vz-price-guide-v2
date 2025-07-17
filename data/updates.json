@@ -1,7 +1,22 @@
 [
 	{
+		"id": 19,
+		"title": "Minecraft 1.20 Trails & Tales - Complete!",
+		"date": "2025-07-17",
+		"type": "Content",
+		"description": "🎉 The Trails & Tales Update is now fully integrated! Added all 1.20 items with smart pricing and crafting recipes. The catalog now features over 1240 items including the new archaeology category.",
+		"changes": [
+			"Completed all 1.20 items including bamboo & cherry wood sets, hanging signs, and pottery sherds",
+			"Added comprehensive pricing for all 1.20 content",
+			"Added all crafting recipes for 1.20 items to the recipe database",
+			"Added all armor trim smithing templates",
+			"Created new 'Archaeology' category for pottery sherds and related items",
+			"Recalculated Netherite item prices with the Netherite Upgrade Smithing Template in mind"
+		]
+	},
+	{
 		"id": 18,
-		"title": "All 1.19 Items Complete + New Categories! 🎉",
+		"title": "All 1.19 Items Complete + New Categories!",
 		"date": "2025-07-16",
 		"type": "Content",
 		"description": "🎉 All Minecraft 1.19 items have now been added to the price guide! The Wild Update content is now fully integrated with comprehensive pricing. I've also created two new categories to better organize the growing item collection.",

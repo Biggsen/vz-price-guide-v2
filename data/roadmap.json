@@ -230,7 +230,8 @@
 	{
 		"id": 11,
 		"title": "Add all 1.20 items and recipes",
-		"status": "In Progress",
+		"status": "Completed",
+		"completedDate": "2025-07-17",
 		"description": "Add all new items introduced in Minecraft 1.20 (Trails & Tales Update) including bamboo wood set, cherry wood set, hanging signs, pottery sherds, smithing templates, and other new items, along with their crafting recipes",
 		"features": [
 			{
@@ -263,11 +264,11 @@
 			},
 			{
 				"name": "Update all images",
-				"completed": false
+				"completed": true
 			},
 			{
 				"name": "Pricing and categorization",
-				"completed": false
+				"completed": true
 			}
 		]
 	}
