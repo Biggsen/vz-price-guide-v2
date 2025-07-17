@@ -38,14 +38,20 @@ async function loadExistingRecipes() {
 			const ingredients = Array.isArray(recipe) ? recipe : recipe.ingredients
 			const outputCount = Array.isArray(recipe) ? 1 : recipe.output_count
 
+			// Check for self-referencing recipes
+			const selfReferencing = ingredients.some(
+				(ingredient) => ingredient.material_id === item.material_id
+			)
+
 			return {
 				id: item.id, // Include item ID for editing
 				material_id: item.material_id,
 				name: item.name || '',
 				ingredients: ingredients,
 				output_count: outputCount,
-				isValid: true, // Assume imported recipes are valid
-				pricing_type: item.pricing_type || 'static'
+				isValid: !selfReferencing, // Mark as invalid if self-referencing
+				pricing_type: item.pricing_type || 'static',
+				selfReferencing: selfReferencing // Add flag for UI display
 			}
 		})
 }
@@ -264,7 +270,13 @@ function highlightMatch(text) {
 							</td>
 							<td>
 								<span :class="recipe.isValid ? 'text-green-600' : 'text-red-600'">
-									{{ recipe.isValid ? 'Valid' : 'Invalid' }}
+									{{
+										recipe.isValid
+											? 'Valid'
+											: recipe.selfReferencing
+											? 'Self-referencing'
+											: 'Invalid'
+									}}
 								</span>
 							</td>
 							<td>

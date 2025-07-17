@@ -192,6 +192,18 @@ function validateRecipe() {
 		return
 	}
 
+	// Check for self-referencing recipes
+	const selfReferencing = recipe.value.ingredients.some(
+		(ingredient) => ingredient.material_id === item.value.material_id
+	)
+	if (selfReferencing) {
+		priceCalculationStatus.value = 'error'
+		pricePreview.value = {
+			error: `Recipe references itself as an ingredient (${item.value.material_id}). This creates a circular dependency and makes the recipe impossible to craft.`
+		}
+		return
+	}
+
 	// Validate ingredients exist in database (use all items, not just current)
 	const validation = validateIngredientsInDatabase(recipe.value.ingredients, availableItems.value)
 
