@@ -12,7 +12,7 @@ const { user, canBulkUpdate } = useAdmin()
 // State management
 const loading = ref(true)
 const dbItems = ref([])
-const selectedVersion = ref('1.16')
+const selectedVersion = ref('all') // Changed from '1.16' to 'all'
 
 // Management section state
 const existingRecipes = ref([])
@@ -29,31 +29,65 @@ async function loadDbItems() {
 
 // Load existing recipes
 async function loadExistingRecipes() {
-	const versionKey = selectedVersion.value.replace('.', '_')
-	existingRecipes.value = dbItems.value
-		.filter((item) => item.recipes_by_version && item.recipes_by_version[versionKey])
-		.map((item) => {
-			const recipe = item.recipes_by_version[versionKey]
-			// Handle both old format (array) and new format (object)
-			const ingredients = Array.isArray(recipe) ? recipe : recipe.ingredients
-			const outputCount = Array.isArray(recipe) ? 1 : recipe.output_count
-
-			// Check for self-referencing recipes
-			const selfReferencing = ingredients.some(
-				(ingredient) => ingredient.material_id === item.material_id
+	if (selectedVersion.value === 'all') {
+		// Load recipes from all versions
+		existingRecipes.value = dbItems.value
+			.filter(
+				(item) => item.recipes_by_version && Object.keys(item.recipes_by_version).length > 0
 			)
+			.flatMap((item) => {
+				return Object.entries(item.recipes_by_version).map(([versionKey, recipe]) => {
+					// Handle both old format (array) and new format (object)
+					const ingredients = Array.isArray(recipe) ? recipe : recipe.ingredients
+					const outputCount = Array.isArray(recipe) ? 1 : recipe.output_count
 
-			return {
-				id: item.id, // Include item ID for editing
-				material_id: item.material_id,
-				name: item.name || '',
-				ingredients: ingredients,
-				output_count: outputCount,
-				isValid: !selfReferencing, // Mark as invalid if self-referencing
-				pricing_type: item.pricing_type || 'static',
-				selfReferencing: selfReferencing // Add flag for UI display
-			}
-		})
+					// Check for self-referencing recipes
+					const selfReferencing = ingredients.some(
+						(ingredient) => ingredient.material_id === item.material_id
+					)
+
+					return {
+						id: item.id, // Include item ID for editing
+						material_id: item.material_id,
+						name: item.name || '',
+						ingredients: ingredients,
+						output_count: outputCount,
+						isValid: !selfReferencing, // Mark as invalid if self-referencing
+						pricing_type: item.pricing_type || 'static',
+						selfReferencing: selfReferencing, // Add flag for UI display
+						version: versionKey.replace('_', '.') // Add version for display
+					}
+				})
+			})
+	} else {
+		// Load recipes from specific version
+		const versionKey = selectedVersion.value.replace('.', '_')
+		existingRecipes.value = dbItems.value
+			.filter((item) => item.recipes_by_version && item.recipes_by_version[versionKey])
+			.map((item) => {
+				const recipe = item.recipes_by_version[versionKey]
+				// Handle both old format (array) and new format (object)
+				const ingredients = Array.isArray(recipe) ? recipe : recipe.ingredients
+				const outputCount = Array.isArray(recipe) ? 1 : recipe.output_count
+
+				// Check for self-referencing recipes
+				const selfReferencing = ingredients.some(
+					(ingredient) => ingredient.material_id === item.material_id
+				)
+
+				return {
+					id: item.id, // Include item ID for editing
+					material_id: item.material_id,
+					name: item.name || '',
+					ingredients: ingredients,
+					output_count: outputCount,
+					isValid: !selfReferencing, // Mark as invalid if self-referencing
+					pricing_type: item.pricing_type || 'static',
+					selfReferencing: selfReferencing, // Add flag for UI display
+					version: selectedVersion.value // Add version for display
+				}
+			})
+	}
 }
 
 // Initialize on mount
@@ -171,20 +205,6 @@ function highlightMatch(text) {
 
 		<div v-if="loading">Loading...</div>
 		<div v-else>
-			<!-- Version selector -->
-			<div class="mb-6">
-				<div class="flex gap-4 items-center">
-					<label class="font-semibold">Version:</label>
-					<select
-						v-model="selectedVersion"
-						class="border-2 border-gray-asparagus rounded px-3 py-1">
-						<option v-for="version in versions" :key="version" :value="version">
-							{{ version }}
-						</option>
-					</select>
-				</div>
-			</div>
-
 			<!-- Search and filters -->
 			<div class="mb-4 flex flex-col items-start">
 				<div class="flex gap-2 w-full max-w-md mb-2">
@@ -205,7 +225,35 @@ function highlightMatch(text) {
 						Reset
 					</button>
 				</div>
-				<label class="inline-flex items-center mt-2">
+			</div>
+
+			<!-- Version filter -->
+			<div class="mb-6">
+				<div class="flex flex-wrap gap-2">
+					<button
+						@click="selectedVersion = 'all'"
+						:class="[
+							'px-3 py-1 rounded-full text-sm font-medium transition-colors',
+							selectedVersion === 'all'
+								? 'bg-blue-600 text-white'
+								: 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+						]">
+						All recipes
+					</button>
+					<button
+						v-for="version in versions"
+						:key="version"
+						@click="selectedVersion = version"
+						:class="[
+							'px-3 py-1 rounded-full text-sm font-medium transition-colors',
+							selectedVersion === version
+								? 'bg-blue-600 text-white'
+								: 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+						]">
+						{{ version }}
+					</button>
+				</div>
+				<label class="inline-flex items-center mt-3">
 					<input type="checkbox" v-model="showOnlyInvalid" class="mr-2 align-middle" />
 					Show only invalid recipes
 				</label>
@@ -216,36 +264,48 @@ function highlightMatch(text) {
 				<table class="table-auto w-full">
 					<thead>
 						<tr>
-							<th @click="setSort('material_id')" class="cursor-pointer select-none">
+							<th
+								@click="setSort('material_id')"
+								class="cursor-pointer select-none text-sm">
 								Item
 								<span v-if="sortKey === 'material_id'">
 									{{ sortAsc ? '▲' : '▼' }}
 								</span>
 							</th>
-							<th @click="setSort('output_count')" class="cursor-pointer select-none">
-								Output
+							<th
+								v-if="selectedVersion === 'all'"
+								@click="setSort('version')"
+								class="cursor-pointer select-none text-sm">
+								Version
+								<span v-if="sortKey === 'version'">
+									{{ sortAsc ? '▲' : '▼' }}
+								</span>
+							</th>
+							<th
+								@click="setSort('output_count')"
+								class="cursor-pointer select-none text-sm">
+								Out
 								<span v-if="sortKey === 'output_count'">
 									{{ sortAsc ? '▲' : '▼' }}
 								</span>
 							</th>
-							<th @click="setSort('pricing_type')" class="cursor-pointer select-none">
-								Price Type
-								<span v-if="sortKey === 'pricing_type'">
-									{{ sortAsc ? '▲' : '▼' }}
-								</span>
-							</th>
-							<th @click="setSort('ingredients')" class="cursor-pointer select-none">
+
+							<th
+								@click="setSort('ingredients')"
+								class="cursor-pointer select-none text-sm">
 								Ingredients
 								<span v-if="sortKey === 'ingredients'">
 									{{ sortAsc ? '▲' : '▼' }}
 								</span>
 							</th>
-							<th>Status</th>
-							<th>Actions</th>
+							<th class="text-sm">Status</th>
+							<th class="text-sm w-30">Actions</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="recipe in filteredExistingRecipes" :key="recipe.id">
+						<tr
+							v-for="recipe in filteredExistingRecipes"
+							:key="`${recipe.id}-${recipe.version}`">
 							<td class="font-medium">
 								<span
 									v-html="
@@ -255,36 +315,32 @@ function highlightMatch(text) {
 									class="block text-xs text-gray-500 -mt-1"
 									v-html="highlightMatch(recipe.material_id)"></span>
 							</td>
-							<td class="text-sm">
-								{{ getOutputDisplay(recipe) }}
+							<td v-if="selectedVersion === 'all'" class="text-sm">
+								{{ recipe.version }}
 							</td>
 							<td class="text-sm">
-								{{ recipe.pricing_type }}
+								{{ getOutputDisplay(recipe) }}
 							</td>
 							<td class="text-sm">
 								<span
 									v-for="(ing, idx) in getIngredientDisplay(recipe.ingredients)"
 									:key="idx"
-									class="block"
+									class="block text-sm break-all"
 									v-html="highlightMatch(ing)"></span>
 							</td>
 							<td>
-								<span :class="recipe.isValid ? 'text-green-600' : 'text-red-600'">
-									{{
-										recipe.isValid
-											? 'Valid'
-											: recipe.selfReferencing
-											? 'Self-referencing'
-											: 'Invalid'
-									}}
+								<span
+									:class="recipe.isValid ? 'text-green-600' : 'text-red-600'"
+									:title="recipe.selfReferencing ? 'self-referencing' : ''">
+									{{ recipe.isValid ? 'Valid' : 'Invalid' }}
 								</span>
 							</td>
-							<td>
+							<td class="w-30">
 								<div class="flex gap-2">
 									<RouterLink
 										:to="{
 											path: `/edit-recipe/${recipe.id}`,
-											query: { version: selectedVersion }
+											query: { version: recipe.version }
 										}"
 										class="px-2 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
 										Edit
