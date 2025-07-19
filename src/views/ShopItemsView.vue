@@ -489,7 +489,7 @@ function getServerName(serverId) {
 						<div class="mt-4 md:mt-0">
 							<button
 								@click="showAddItemForm"
-								class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors font-medium">
+								class="bg-semantic-info text-white px-4 py-2 rounded hover:bg-opacity-80 transition-colors font-medium">
 								+ Add Item
 							</button>
 						</div>
@@ -575,7 +575,7 @@ function getServerName(serverId) {
 					</div>
 					<button
 						@click="showAddItemForm"
-						class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition-colors font-medium">
+						class="bg-semantic-info text-white px-6 py-3 rounded hover:bg-opacity-80 transition-colors font-medium">
 						+ Add Your First Item
 					</button>
 				</div>

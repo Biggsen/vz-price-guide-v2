@@ -543,10 +543,7 @@ defineExpose({
 			<!-- Stock Full checkbox -->
 			<div>
 				<label class="flex items-center">
-					<input
-						v-model="formData.stock_full"
-						type="checkbox"
-						class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
+					<input v-model="formData.stock_full" type="checkbox" class="checkbox-input" />
 					<span class="ml-2 text-sm text-gray-700">Stock Full</span>
 				</label>
 				<p class="text-xs text-gray-500 mt-1">Check if chest is full (can't buy more)</p>
@@ -601,7 +598,7 @@ defineExpose({
 				<button
 					type="button"
 					@click="handleCancel"
-					class="px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-gray-300 transition-colors">
+					class="px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-opacity-80 transition-colors">
 					Cancel
 				</button>
 				<button
@@ -610,7 +607,7 @@ defineExpose({
 					:class="[
 						'px-4 py-2 rounded transition-colors font-medium',
 						isFormValid
-							? 'bg-blue-600 text-white hover:bg-blue-700'
+							? 'bg-semantic-info text-white hover:bg-opacity-80'
 							: 'bg-gray-300 text-gray-500 cursor-not-allowed'
 					]">
 					{{ editingItem ? 'Update Item' : 'Add Item' }}
@@ -619,3 +616,10 @@ defineExpose({
 		</form>
 	</div>
 </template>
+
+<style scoped>
+.checkbox-input {
+	@apply w-4 h-4 rounded;
+	accent-color: theme('colors.gray-asparagus');
+}
+</style>

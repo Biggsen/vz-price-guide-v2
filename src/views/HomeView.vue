@@ -744,7 +744,7 @@ watch(
 						id="roundToWhole"
 						v-model="roundToWhole"
 						type="checkbox"
-						class="w-4 h-4" />
+						class="checkbox-input" />
 					<label for="roundToWhole" class="text-sm text-heavy-metal">
 						Round to whole
 					</label>
@@ -756,7 +756,7 @@ watch(
 						id="showZeroPricedItems"
 						v-model="showZeroPricedItems"
 						type="checkbox"
-						class="w-4 h-4" />
+						class="checkbox-input" />
 					<label for="showZeroPricedItems" class="text-sm text-heavy-metal">
 						Show zero priced items
 					</label>
@@ -888,3 +888,10 @@ watch(
 		</template>
 	</main>
 </template>
+
+<style scoped>
+.checkbox-input {
+	@apply w-4 h-4 rounded;
+	accent-color: theme('colors.gray-asparagus');
+}
+</style>

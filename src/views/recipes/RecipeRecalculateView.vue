@@ -5,6 +5,7 @@ import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
 import { versions } from '../../constants.js'
 import { useAdmin } from '../../utils/admin.js'
 import { recalculateDynamicPrices } from '../../utils/pricing.js'
+import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
 
 const db = useFirestore()
 const { user, canBulkUpdate } = useAdmin()
@@ -69,6 +70,11 @@ function setPriceResultsSort(key) {
 	}
 }
 
+function getSortIcon(field) {
+	if (priceResultsSortKey.value !== field) return null
+	return priceResultsSortAsc.value ? 'up' : 'down'
+}
+
 // Load database items
 async function loadDbItems() {
 	const snapshot = await getDocs(collection(db, 'items'))
@@ -126,7 +132,7 @@ function clearPriceRecalculationResults() {
 
 <template>
 	<div v-if="canBulkUpdate" class="p-4 pt-8">
-		<h2 class="text-xl font-bold mb-6">Recalculate Dynamic Prices</h2>
+		<h1 class="text-3xl font-bold text-gray-900 mb-6">Recalculate Dynamic Prices</h1>
 
 		<div v-if="loading">Loading...</div>
 		<div v-else>
@@ -174,7 +180,7 @@ function clearPriceRecalculationResults() {
 				<button
 					@click="runPriceRecalculation"
 					:disabled="priceRecalculation.isRunning"
-					class="px-6 py-3 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50">
+					class="inline-flex items-center px-4 py-2 bg-semantic-success text-white text-sm font-medium rounded-md hover:bg-semantic-success/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-semantic-success disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
 					{{
 						priceRecalculation.isRunning
 							? 'Recalculating...'
@@ -185,7 +191,7 @@ function clearPriceRecalculationResults() {
 				<button
 					v-if="priceRecalculation.results"
 					@click="clearPriceRecalculationResults"
-					class="ml-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+					class="ml-4 inline-flex items-center px-4 py-2 bg-semantic-danger text-white text-sm font-medium rounded-md hover:bg-semantic-danger/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-semantic-danger transition-colors duration-200">
 					Clear Results
 				</button>
 			</div>
@@ -233,85 +239,131 @@ function clearPriceRecalculationResults() {
 				<!-- Successful calculations -->
 				<div v-if="priceRecalculation.results.success.length > 0" class="mb-4">
 					<h4 class="font-semibold mb-2">Successfully Calculated:</h4>
-					<div class="overflow-x-auto">
-						<table class="table-auto w-full bg-white rounded border">
-							<thead>
-								<tr class="bg-gray-50">
-									<th
-										class="text-left p-2 cursor-pointer select-none"
-										@click="setPriceResultsSort('item')">
-										Item
-										<span v-if="priceResultsSortKey === 'item'">
-											{{ priceResultsSortAsc ? '▲' : '▼' }}
-										</span>
-									</th>
-									<th
-										class="text-left p-2 cursor-pointer select-none"
-										@click="setPriceResultsSort('oldPrice')">
-										Old Price
-										<span v-if="priceResultsSortKey === 'oldPrice'">
-											{{ priceResultsSortAsc ? '▲' : '▼' }}
-										</span>
-									</th>
-									<th
-										class="text-left p-2 cursor-pointer select-none"
-										@click="setPriceResultsSort('newPrice')">
-										New Price
-										<span v-if="priceResultsSortKey === 'newPrice'">
-											{{ priceResultsSortAsc ? '▲' : '▼' }}
-										</span>
-									</th>
-									<th
-										class="text-left p-2 cursor-pointer select-none"
-										@click="setPriceResultsSort('status')">
-										Status
-										<span v-if="priceResultsSortKey === 'status'">
-											{{ priceResultsSortAsc ? '▲' : '▼' }}
-										</span>
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr v-for="item in sortedPriceResults" :key="item.material_id">
-									<td class="p-2 font-medium">
-										{{ item.name || item.material_id }}
-									</td>
-									<td class="p-2">{{ item.oldPrice || 0 }}</td>
-									<td class="p-2">{{ item.newPrice }}</td>
-									<td class="p-2">
-										<span v-if="item.changed" class="text-green-600">
-											Updated
-										</span>
-										<span v-else class="text-gray-600">No change</span>
-									</td>
-								</tr>
-							</tbody>
-						</table>
+					<div class="bg-white rounded-lg shadow-md overflow-hidden">
+						<div class="overflow-x-auto">
+							<table
+								class="min-w-full divide-y divide-gray-200 border border-gray-200">
+								<thead class="bg-gray-50">
+									<tr>
+										<th
+											@click="setPriceResultsSort('item')"
+											class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+											<div class="flex items-center gap-1">
+												Item
+												<ArrowUpIcon
+													v-if="getSortIcon('item') === 'up'"
+													class="w-4 h-4 text-gray-700" />
+												<ArrowDownIcon
+													v-else-if="getSortIcon('item') === 'down'"
+													class="w-4 h-4 text-gray-700" />
+											</div>
+										</th>
+										<th
+											@click="setPriceResultsSort('oldPrice')"
+											class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+											<div class="flex items-center gap-1">
+												Old Price
+												<ArrowUpIcon
+													v-if="getSortIcon('oldPrice') === 'up'"
+													class="w-4 h-4 text-gray-700" />
+												<ArrowDownIcon
+													v-else-if="getSortIcon('oldPrice') === 'down'"
+													class="w-4 h-4 text-gray-700" />
+											</div>
+										</th>
+										<th
+											@click="setPriceResultsSort('newPrice')"
+											class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+											<div class="flex items-center gap-1">
+												New Price
+												<ArrowUpIcon
+													v-if="getSortIcon('newPrice') === 'up'"
+													class="w-4 h-4 text-gray-700" />
+												<ArrowDownIcon
+													v-else-if="getSortIcon('newPrice') === 'down'"
+													class="w-4 h-4 text-gray-700" />
+											</div>
+										</th>
+										<th
+											@click="setPriceResultsSort('status')"
+											class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
+											<div class="flex items-center gap-1">
+												Status
+												<ArrowUpIcon
+													v-if="getSortIcon('status') === 'up'"
+													class="w-4 h-4 text-gray-700" />
+												<ArrowDownIcon
+													v-else-if="getSortIcon('status') === 'down'"
+													class="w-4 h-4 text-gray-700" />
+											</div>
+										</th>
+									</tr>
+								</thead>
+								<tbody class="bg-white divide-y divide-gray-200">
+									<tr v-for="item in sortedPriceResults" :key="item.material_id">
+										<td class="px-4 py-3 border-r border-gray-200">
+											<div class="font-medium text-gray-900">
+												{{ item.name || item.material_id }}
+											</div>
+										</td>
+										<td
+											class="px-4 py-3 border-r border-gray-200 text-gray-900">
+											{{ item.oldPrice || 0 }}
+										</td>
+										<td
+											class="px-4 py-3 border-r border-gray-200 text-gray-900">
+											{{ item.newPrice }}
+										</td>
+										<td class="px-4 py-3">
+											<span
+												v-if="item.changed"
+												class="text-semantic-success font-medium">
+												Updated
+											</span>
+											<span v-else class="text-gray-500">No change</span>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
 					</div>
 				</div>
 
 				<!-- Failed calculations -->
 				<div v-if="priceRecalculation.results.failed.length > 0" class="mb-4">
 					<h4 class="font-semibold mb-2 text-red-600">Failed Calculations:</h4>
-					<div class="overflow-x-auto">
-						<table class="table-auto w-full bg-white rounded border">
-							<thead>
-								<tr class="bg-gray-50">
-									<th class="text-left p-2">Item</th>
-									<th class="text-left p-2">Error</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr
-									v-for="item in priceRecalculation.results.failed"
-									:key="item.material_id">
-									<td class="p-2 font-medium">
-										{{ item.name || item.material_id }}
-									</td>
-									<td class="p-2 text-red-600 text-sm">{{ item.error }}</td>
-								</tr>
-							</tbody>
-						</table>
+					<div class="bg-white rounded-lg shadow-md overflow-hidden">
+						<div class="overflow-x-auto">
+							<table
+								class="min-w-full divide-y divide-gray-200 border border-gray-200">
+								<thead class="bg-gray-50">
+									<tr>
+										<th
+											class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+											Item
+										</th>
+										<th
+											class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+											Error
+										</th>
+									</tr>
+								</thead>
+								<tbody class="bg-white divide-y divide-gray-200">
+									<tr
+										v-for="item in priceRecalculation.results.failed"
+										:key="item.material_id">
+										<td class="px-4 py-3 border-r border-gray-200">
+											<div class="font-medium text-gray-900">
+												{{ item.name || item.material_id }}
+											</div>
+										</td>
+										<td class="px-4 py-3 text-semantic-danger">
+											{{ item.error }}
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -330,18 +382,3 @@ function clearPriceRecalculationResults() {
 		<RouterLink to="/login">Login to view this page</RouterLink>
 	</div>
 </template>
-
-<style scoped>
-table {
-	border-collapse: collapse;
-}
-th,
-td {
-	border: 1px solid #ccc;
-	padding: 0.5rem;
-}
-th {
-	background-color: #f9f9f9;
-	font-weight: bold;
-}
-</style>

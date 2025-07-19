@@ -245,7 +245,7 @@ function signOutOfFirebase() {
 								type="checkbox"
 								id="use_minecraft_username_initial"
 								v-model="useMinecraftUsername"
-								class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+								class="checkbox-input" />
 							<label
 								for="use_minecraft_username_initial"
 								class="text-sm font-medium text-gray-700">
@@ -328,7 +328,7 @@ function signOutOfFirebase() {
 								type="checkbox"
 								id="use_minecraft_username"
 								v-model="useMinecraftUsername"
-								class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+								class="checkbox-input" />
 							<label
 								for="use_minecraft_username"
 								class="text-sm font-medium text-gray-700">
@@ -478,5 +478,10 @@ input {
 
 input:focus {
 	@apply border-blue-500 outline-none ring-2 ring-blue-500 ring-opacity-50;
+}
+
+.checkbox-input {
+	@apply w-4 h-4 rounded;
+	accent-color: theme('colors.gray-asparagus');
 }
 </style>

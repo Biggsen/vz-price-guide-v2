@@ -590,7 +590,7 @@ const priceAnalysis = computed(() => {
 					</div>
 					<router-link
 						to="/shop-items"
-						class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition-colors font-medium inline-block">
+						class="bg-semantic-info text-white px-6 py-3 rounded hover:bg-opacity-80 transition-colors font-medium inline-block">
 						Manage Your Shop Items
 					</router-link>
 				</div>

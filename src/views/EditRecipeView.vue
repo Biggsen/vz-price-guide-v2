@@ -415,7 +415,7 @@ onMounted(() => {
 
 		<div v-else>
 			<div class="mb-6">
-				<h2 class="text-xl font-bold">Edit Recipe</h2>
+				<h1 class="text-3xl font-bold text-gray-900">Edit Recipe</h1>
 				<p class="text-gray-600 mt-2">
 					Editing recipe for
 					<strong>{{ item?.name }}</strong>
@@ -430,7 +430,7 @@ onMounted(() => {
 				</label>
 				<select
 					v-model="selectedVersion"
-					class="border-2 border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+					class="border-2 border-gray-asparagus rounded px-3 py-1 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus">
 					<option v-for="version in versions" :key="version" :value="version">
 						{{ version }}
 					</option>
@@ -449,7 +449,7 @@ onMounted(() => {
 						v-model.number="recipe.output_count"
 						min="1"
 						max="64"
-						class="border-2 border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-24" />
+						class="border-2 border-gray-asparagus rounded px-3 py-1 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus w-24" />
 				</div>
 
 				<!-- Ingredients section -->
@@ -472,7 +472,7 @@ onMounted(() => {
 											setTimeout(() => (showIngredientDropdown = false), 200)
 										"
 										placeholder="Enter material ID (e.g., iron_ingot)"
-										class="border-2 border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full" />
+										class="border-2 border-gray-asparagus rounded px-3 py-1 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus w-full" />
 
 									<!-- Dropdown for available items -->
 									<div
@@ -502,7 +502,7 @@ onMounted(() => {
 									v-model.number="newIngredient.quantity"
 									min="1"
 									max="64"
-									class="border-2 border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full" />
+									class="border-2 border-gray-asparagus rounded px-3 py-1 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus w-full" />
 							</div>
 
 							<button
@@ -510,7 +510,7 @@ onMounted(() => {
 								:disabled="
 									!newIngredient.material_id || newIngredient.quantity <= 0
 								"
-								class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+								class="inline-flex items-center px-4 py-2 bg-semantic-success text-white text-sm font-medium rounded-md hover:bg-semantic-success/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-semantic-success disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 gap-2">
 								<PlusIcon class="w-4 h-4" />
 								Add
 							</button>
@@ -538,7 +538,7 @@ onMounted(() => {
 									"
 									min="1"
 									max="64"
-									class="border border-gray-300 rounded px-2 py-1 w-16 text-center" />
+									class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-center focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
 								<span class="text-gray-600">x</span>
 							</div>
 							<button
@@ -593,7 +593,7 @@ onMounted(() => {
 					<button
 						@click="saveRecipe"
 						:disabled="saving || recipe.ingredients.length === 0"
-						class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+						class="inline-flex items-center px-4 py-2 bg-semantic-success text-white text-sm font-medium rounded-md hover:bg-semantic-success/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-semantic-success disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
 						{{ saving ? 'Saving...' : 'Save Recipe' }}
 					</button>
 
@@ -601,13 +601,13 @@ onMounted(() => {
 						v-if="item?.recipes_by_version?.[selectedVersion.replace('.', '_')]"
 						@click="deleteRecipe"
 						:disabled="saving"
-						class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+						class="inline-flex items-center px-4 py-2 bg-semantic-danger text-white text-sm font-medium rounded-md hover:bg-semantic-danger/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-semantic-danger disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
 						{{ saving ? 'Deleting...' : 'Delete Recipe' }}
 					</button>
 
 					<RouterLink
 						to="/recipes/manage"
-						class="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+						class="inline-flex items-center px-4 py-2 bg-white text-gray-700 border-2 border-gray-300 text-sm font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-colors duration-200">
 						Cancel
 					</RouterLink>
 				</div>

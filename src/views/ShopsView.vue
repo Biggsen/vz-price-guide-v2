@@ -307,7 +307,7 @@ function handleFundsInput(event) {
 								v-model="shopForm.is_own_shop"
 								:value="false"
 								type="radio"
-								class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
+								class="radio-input" />
 							<label for="competitor-shop" class="ml-2 block text-sm text-gray-700">
 								Competitor
 							</label>
@@ -318,7 +318,7 @@ function handleFundsInput(event) {
 								v-model="shopForm.is_own_shop"
 								:value="true"
 								type="radio"
-								class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
+								class="radio-input" />
 							<label for="my-shop" class="ml-2 block text-sm text-gray-700">
 								My Shop
 							</label>
@@ -331,7 +331,7 @@ function handleFundsInput(event) {
 					<button
 						type="submit"
 						:disabled="!isFormValid || loading"
-						class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+						class="bg-semantic-info text-white px-4 py-2 rounded hover:bg-opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
 						{{ editingShop ? 'Update Shop' : 'Create Shop' }}
 					</button>
 					<button
@@ -365,7 +365,7 @@ function handleFundsInput(event) {
 						</div>
 						<button
 							@click="showCreateShopForm(serverGroup.server.id)"
-							class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 transition-colors font-medium">
+							class="bg-semantic-info text-white px-3 py-1.5 rounded text-sm hover:bg-opacity-80 transition-colors font-medium">
 							+ Add Shop
 						</button>
 					</div>
@@ -437,3 +437,10 @@ function handleFundsInput(event) {
 		</div>
 	</div>
 </template>
+
+<style scoped>
+.radio-input {
+	@apply w-5 h-5;
+	accent-color: theme('colors.gray-asparagus');
+}
+</style>

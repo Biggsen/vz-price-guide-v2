@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, addDoc } from 'firebase/firestore'
 import { useAdmin } from '../utils/admin.js'
+import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
 
 const db = useFirestore()
 const { user, canViewMissingItems } = useAdmin()
@@ -212,18 +213,20 @@ async function addSelectedMissing() {
 
 <template>
 	<div v-if="canViewMissingItems" class="p-4 pt-8">
-		<h2 class="text-xl font-bold mb-6">Missing Items Checker</h2>
+		<h1 class="text-3xl font-bold text-gray-900 mb-6">Missing Items Checker</h1>
 
 		<!-- Version Selector -->
 		<div class="mb-6">
-			<label class="block text-sm font-medium mb-2">Minecraft Version:</label>
-			<select
-				v-model="selectedVersion"
-				class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-				<option v-for="version in availableVersions" :key="version" :value="version">
-					{{ version }}
-				</option>
-			</select>
+			<div class="flex items-center gap-2">
+				<label class="font-semibold">Version:</label>
+				<select
+					v-model="selectedVersion"
+					class="px-3 py-1 border-2 border-gray-asparagus rounded focus:outline-none focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus">
+					<option v-for="version in availableVersions" :key="version" :value="version">
+						{{ version }}
+					</option>
+				</select>
+			</div>
 		</div>
 
 		<div v-if="loading">Loading...</div>
@@ -233,87 +236,133 @@ async function addSelectedMissing() {
 					v-if="anySelected"
 					@click="addSelectedMissing"
 					:disabled="adding || selectedItems.length === 0"
-					class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800">
+					class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 					Add Selected Missing Items
 				</button>
 				<button
 					v-else
 					@click="addAllMissing"
 					:disabled="adding"
-					class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800">
+					class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 					Add All Missing Items
 				</button>
 				<span v-if="adding" class="ml-2">Adding...</span>
 				<span v-if="addResult" class="ml-2">{{ addResult }}</span>
 			</div>
 			<label class="block mb-4">
-				<input type="checkbox" v-model="showOnlyMissing" class="mr-2 align-middle" />
+				<input type="checkbox" v-model="showOnlyMissing" class="mr-2 checkbox-input" />
 				Show only missing items
 			</label>
-			<table class="table-auto w-full">
-				<thead>
-					<tr>
-						<th>
-							<input
-								type="checkbox"
-								:checked="allMissingSelected"
-								@change="toggleSelectAllMissing($event.target.checked)"
-								:disabled="
-									filteredItems.filter((item) => !isInDb(item.name)).length === 0
-								" />
-						</th>
-						<th @click="setSort('name')" class="cursor-pointer select-none">
-							Name
-							<span v-if="sortKey === 'name'">{{ sortAsc ? '▲' : '▼' }}</span>
-						</th>
-						<th @click="setSort('displayName')" class="cursor-pointer select-none">
-							Display Name
-							<span v-if="sortKey === 'displayName'">{{ sortAsc ? '▲' : '▼' }}</span>
-						</th>
-						<th>Stack Size</th>
-						<th>In DB</th>
-						<th>Add</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="item in filteredItems" :key="item.name">
-						<td>
-							<input
-								v-if="!isInDb(item.name)"
-								type="checkbox"
-								:checked="isSelected(item.name)"
-								@change="toggleSelectItem(item.name)" />
-						</td>
-						<td>{{ item.name }}</td>
-						<td>{{ item.displayName }}</td>
-						<td>{{ item.stackSize }}</td>
-						<td>
-							<span v-if="isInDb(item.name)" class="text-green-600 font-bold">
-								Yes
-							</span>
-							<span v-else class="text-red-600 font-bold">No</span>
-						</td>
-						<td>
-							<button
-								v-if="!isInDb(item.name) && addingItem !== item.name"
-								@click="addSingleItem(item)"
-								class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
-								Add
-							</button>
-							<span v-else-if="addingItem === item.name">Adding...</span>
-							<template v-else-if="isInDb(item.name)">
-								<a
-									v-if="getDbItemId(item.name)"
-									:href="`/edit/${getDbItemId(item.name)}`"
-									class="text-white bg-gray-asparagus px-4 py-2 rounded hover:bg-heavy-metal">
-									Edit
-								</a>
-								<span v-else class="text-green-600">✔</span>
-							</template>
-						</td>
-					</tr>
-				</tbody>
-			</table>
+			<div class="bg-white rounded-lg shadow-md overflow-hidden">
+				<div class="overflow-x-auto">
+					<table class="min-w-full divide-y divide-gray-200">
+						<thead class="bg-gray-50">
+							<tr>
+								<th
+									class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+									<input
+										type="checkbox"
+										:checked="allMissingSelected"
+										@change="toggleSelectAllMissing($event.target.checked)"
+										:disabled="
+											filteredItems.filter((item) => !isInDb(item.name))
+												.length === 0
+										"
+										class="checkbox-input" />
+								</th>
+								<th
+									@click="setSort('name')"
+									class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
+									<div class="flex items-center gap-1">
+										Name
+										<ArrowUpIcon
+											v-if="sortKey === 'name' && sortAsc"
+											class="w-4 h-4 text-gray-700" />
+										<ArrowDownIcon
+											v-else-if="sortKey === 'name' && !sortAsc"
+											class="w-4 h-4 text-gray-700" />
+									</div>
+								</th>
+								<th
+									@click="setSort('displayName')"
+									class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
+									<div class="flex items-center gap-1">
+										Display Name
+										<ArrowUpIcon
+											v-if="sortKey === 'displayName' && sortAsc"
+											class="w-4 h-4 text-gray-700" />
+										<ArrowDownIcon
+											v-else-if="sortKey === 'displayName' && !sortAsc"
+											class="w-4 h-4 text-gray-700" />
+									</div>
+								</th>
+								<th
+									class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+									Stack Size
+								</th>
+								<th
+									class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+									In DB
+								</th>
+								<th
+									class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+									Action
+								</th>
+							</tr>
+						</thead>
+						<tbody class="bg-white divide-y divide-gray-200">
+							<tr
+								v-for="item in filteredItems"
+								:key="item.name"
+								:class="{
+									'bg-green-50': isSelected(item.name)
+								}">
+								<td class="px-4 py-3">
+									<input
+										v-if="!isInDb(item.name)"
+										type="checkbox"
+										:checked="isSelected(item.name)"
+										@change="toggleSelectItem(item.name)"
+										class="checkbox-input" />
+								</td>
+								<td class="px-4 py-3">
+									<div class="font-medium text-gray-900">{{ item.name }}</div>
+								</td>
+								<td class="px-4 py-3 text-gray-900">{{ item.displayName }}</td>
+								<td class="px-4 py-3 text-gray-900">{{ item.stackSize }}</td>
+								<td class="px-4 py-3">
+									<span v-if="isInDb(item.name)" class="text-green-600 font-bold">
+										Yes
+									</span>
+									<span v-else class="text-red-600 font-bold">No</span>
+								</td>
+								<td class="px-4 py-3">
+									<button
+										v-if="!isInDb(item.name) && addingItem !== item.name"
+										@click="addSingleItem(item)"
+										class="rounded bg-semantic-success px-3 py-1 text-sm text-white hover:bg-opacity-80 transition-colors">
+										Add
+									</button>
+									<span
+										v-else-if="addingItem === item.name"
+										class="text-gray-500">
+										Adding...
+									</span>
+									<template v-else-if="isInDb(item.name)">
+										<a
+											v-if="getDbItemId(item.name)"
+											:href="`/edit/${getDbItemId(item.name)}`"
+											class="rounded bg-semantic-info px-3 py-1 text-sm text-white hover:bg-opacity-80 transition-colors">
+											Edit
+										</a>
+										<span v-else class="text-green-600">✔</span>
+									</template>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
 		</div>
 	</div>
 	<div v-else-if="user?.email" class="p-4 pt-8">
@@ -329,15 +378,8 @@ async function addSelectedMissing() {
 </template>
 
 <style scoped>
-table {
-	border-collapse: collapse;
-}
-th,
-td {
-	border: 1px solid #ccc;
-	padding: 0.5rem;
-}
-th.cursor-pointer {
-	user-select: none;
+.checkbox-input {
+	@apply w-4 h-4 rounded;
+	accent-color: theme('colors.gray-asparagus');
 }
 </style>

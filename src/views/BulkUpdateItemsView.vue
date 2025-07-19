@@ -5,7 +5,7 @@ import { useFirestore } from 'vuefire'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
 import { categories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
-import { NoSymbolIcon } from '@heroicons/vue/24/outline'
+import { NoSymbolIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
 
 const db = useFirestore()
 const { user, canBulkUpdate } = useAdmin()
@@ -92,6 +92,11 @@ function setSort(key) {
 		sortKey.value = key
 		sortAsc.value = true
 	}
+}
+
+function getSortIcon(field) {
+	if (sortKey.value !== field) return null
+	return sortAsc.value ? 'up' : 'down'
 }
 
 function isSelected(itemId) {
@@ -274,7 +279,7 @@ async function updateSelectedPrices() {
 
 <template>
 	<div v-if="canBulkUpdate" class="p-4 pt-8">
-		<h2 class="text-xl font-bold mb-6">Bulk update items</h2>
+		<h1 class="text-3xl font-bold text-gray-900 mb-6">Bulk update items</h1>
 		<div v-if="loading">Loading...</div>
 		<div v-else>
 			<!-- Status notifications -->
@@ -409,7 +414,7 @@ async function updateSelectedPrices() {
 						<button
 							@click="updateSelectedCategories"
 							:disabled="!anySelected || !newCategory || updating"
-							class="px-4 py-2 text-base bg-semantic-success text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50">
+							class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50">
 							Update Category
 						</button>
 					</div>
@@ -419,7 +424,7 @@ async function updateSelectedPrices() {
 						<button
 							@click="clearSelectedCategories"
 							:disabled="!anySelected || updating"
-							class="px-4 py-2 text-base bg-semantic-danger text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2">
+							class="rounded-md bg-semantic-danger px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 flex items-center gap-2">
 							<NoSymbolIcon class="w-4 h-4" />
 							Clear Category
 						</button>
@@ -432,7 +437,7 @@ async function updateSelectedPrices() {
 						<input
 							type="checkbox"
 							v-model="showOnlyNoCategory"
-							class="mr-2 align-middle" />
+							class="mr-2 checkbox-input" />
 						Show only items without a category
 					</label>
 				</div>
@@ -452,7 +457,7 @@ async function updateSelectedPrices() {
 						<button
 							@click="updateSelectedVersions"
 							:disabled="!anySelected || !newVersion || updating"
-							class="px-4 py-2 text-base bg-semantic-success text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50">
+							class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50">
 							Update Version
 						</button>
 					</div>
@@ -470,7 +475,7 @@ async function updateSelectedPrices() {
 						<button
 							@click="updateSelectedImages"
 							:disabled="!anySelected || !newImage || updating"
-							class="px-4 py-2 text-base bg-semantic-success text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50">
+							class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50">
 							Update Image
 						</button>
 					</div>
@@ -488,7 +493,7 @@ async function updateSelectedPrices() {
 						<button
 							@click="updateSelectedUrls"
 							:disabled="!anySelected || !newUrl || updating"
-							class="px-4 py-2 text-base bg-semantic-success text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50">
+							class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50">
 							Update URL
 						</button>
 					</div>
@@ -516,7 +521,7 @@ async function updateSelectedPrices() {
 						<button
 							@click="updateSelectedPrices"
 							:disabled="!anySelected || newPrice === '' || updating"
-							class="px-4 py-2 text-base bg-semantic-success text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50">
+							class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50">
 							Update Price
 						</button>
 					</div>
@@ -533,7 +538,7 @@ async function updateSelectedPrices() {
 							<input
 								type="checkbox"
 								v-model="showDocumentIdColumn"
-								class="mr-2 align-middle" />
+								class="mr-2 checkbox-input" />
 							Show Document ID column
 						</label>
 					</div>
@@ -543,7 +548,7 @@ async function updateSelectedPrices() {
 							<input
 								type="checkbox"
 								v-model="showMaterialIdColumn"
-								class="mr-2 align-middle" />
+								class="mr-2 checkbox-input" />
 							Show Material ID column
 						</label>
 					</div>
@@ -553,7 +558,7 @@ async function updateSelectedPrices() {
 							<input
 								type="checkbox"
 								v-model="showNameColumn"
-								class="mr-2 align-middle" />
+								class="mr-2 checkbox-input" />
 							Show Name column
 						</label>
 					</div>
@@ -563,7 +568,7 @@ async function updateSelectedPrices() {
 							<input
 								type="checkbox"
 								v-model="showVersionColumn"
-								class="mr-2 align-middle" />
+								class="mr-2 checkbox-input" />
 							Show Version column
 						</label>
 					</div>
@@ -573,7 +578,7 @@ async function updateSelectedPrices() {
 							<input
 								type="checkbox"
 								v-model="showCategoryColumns"
-								class="mr-2 align-middle" />
+								class="mr-2 checkbox-input" />
 							Show Categories columns
 						</label>
 					</div>
@@ -583,7 +588,7 @@ async function updateSelectedPrices() {
 							<input
 								type="checkbox"
 								v-model="showImageColumn"
-								class="mr-2 align-middle" />
+								class="mr-2 checkbox-input" />
 							Show Image column
 						</label>
 					</div>
@@ -593,7 +598,7 @@ async function updateSelectedPrices() {
 							<input
 								type="checkbox"
 								v-model="showUrlColumn"
-								class="mr-2 align-middle" />
+								class="mr-2 checkbox-input" />
 							Show URL column
 						</label>
 					</div>
@@ -603,7 +608,7 @@ async function updateSelectedPrices() {
 							<input
 								type="checkbox"
 								v-model="showPriceColumn"
-								class="mr-2 align-middle" />
+								class="mr-2 checkbox-input" />
 							Show Price column
 						</label>
 					</div>
@@ -611,129 +616,224 @@ async function updateSelectedPrices() {
 			</div>
 
 			<div class="mt-10">
-				<table class="table-auto w-full">
-					<thead>
-						<tr>
-							<th>
-								<input
-									type="checkbox"
-									:checked="allSelected"
-									@change="toggleSelectAll($event.target.checked)"
-									:disabled="filteredItems.length === 0" />
-							</th>
-							<th
-								v-if="showDocumentIdColumn"
-								@click="setSort('id')"
-								class="cursor-pointer select-none">
-								Document ID
-								<span v-if="sortKey === 'id'">
-									{{ sortAsc ? '▲' : '▼' }}
-								</span>
-							</th>
-							<th
-								v-if="showMaterialIdColumn"
-								@click="setSort('material_id')"
-								class="cursor-pointer select-none">
-								Material ID
-								<span v-if="sortKey === 'material_id'">
-									{{ sortAsc ? '▲' : '▼' }}
-								</span>
-							</th>
-							<th
-								v-if="showNameColumn"
-								@click="setSort('name')"
-								class="cursor-pointer select-none">
-								Name
-								<span v-if="sortKey === 'name'">{{ sortAsc ? '▲' : '▼' }}</span>
-							</th>
-							<th
-								v-if="showVersionColumn"
-								@click="setSort('version')"
-								class="cursor-pointer select-none">
-								Version
-								<span v-if="sortKey === 'version'">{{ sortAsc ? '▲' : '▼' }}</span>
-							</th>
-							<th
-								v-if="showCategoryColumns"
-								@click="setSort('category')"
-								class="cursor-pointer select-none">
-								Category
-								<span v-if="sortKey === 'category'">{{ sortAsc ? '▲' : '▼' }}</span>
-							</th>
-							<th
-								v-if="showCategoryColumns"
-								@click="setSort('subcategory')"
-								class="cursor-pointer select-none">
-								Subcategory
-								<span v-if="sortKey === 'subcategory'">
-									{{ sortAsc ? '▲' : '▼' }}
-								</span>
-							</th>
-							<th
-								v-if="showImageColumn"
-								@click="setSort('image')"
-								class="cursor-pointer select-none">
-								Image
-								<span v-if="sortKey === 'image'">{{ sortAsc ? '▲' : '▼' }}</span>
-							</th>
-							<th
-								v-if="showUrlColumn"
-								@click="setSort('url')"
-								class="cursor-pointer select-none">
-								URL
-								<span v-if="sortKey === 'url'">{{ sortAsc ? '▲' : '▼' }}</span>
-							</th>
-							<th
-								v-if="showPriceColumn"
-								@click="setSort('price')"
-								class="cursor-pointer select-none">
-								Price {{ selectedVersion !== 'all' ? `(${selectedVersion})` : '' }}
-								<span v-if="sortKey === 'price'">{{ sortAsc ? '▲' : '▼' }}</span>
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="item in filteredItems" :key="item.id">
-							<td>
-								<input
-									type="checkbox"
-									:checked="isSelected(item.id)"
-									@change="toggleSelectItem(item.id)" />
-							</td>
-							<td
-								v-if="showDocumentIdColumn"
-								class="document-id-cell"
-								:title="item.id">
-								{{ item.id }}
-							</td>
-							<td
-								v-if="showMaterialIdColumn"
-								class="material-id-cell"
-								:title="item.material_id">
-								{{ item.material_id }}
-							</td>
-							<td v-if="showNameColumn" class="name-cell" :title="item.name">
-								{{ item.name }}
-							</td>
-							<td v-if="showVersionColumn">{{ item.version }}</td>
-							<td v-if="showCategoryColumns">{{ item.category }}</td>
-							<td v-if="showCategoryColumns">{{ item.subcategory }}</td>
-							<td v-if="showImageColumn" class="image-cell" :title="item.image || ''">
-								{{ item.image || '' }}
-							</td>
-							<td v-if="showUrlColumn" class="url-cell" :title="item.url || ''">
-								{{ item.url || '' }}
-							</td>
-							<td v-if="showPriceColumn" class="price-cell">
-								{{
-									getPriceForVersion(item, selectedVersion) !== null
-										? getPriceForVersion(item, selectedVersion)
-										: ''
-								}}
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<div class="bg-white rounded-lg shadow-md overflow-hidden">
+					<div class="overflow-x-auto">
+						<table class="min-w-full divide-y divide-gray-200 border border-gray-200">
+							<thead class="bg-gray-50">
+								<tr>
+									<th
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+										<input
+											type="checkbox"
+											:checked="allSelected"
+											@change="toggleSelectAll($event.target.checked)"
+											:disabled="filteredItems.length === 0"
+											class="checkbox-input" />
+									</th>
+									<th
+										v-if="showDocumentIdColumn"
+										@click="setSort('id')"
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										<div class="flex items-center gap-1">
+											Document ID
+											<ArrowUpIcon
+												v-if="getSortIcon('id') === 'up'"
+												class="w-4 h-4 text-gray-700" />
+											<ArrowDownIcon
+												v-else-if="getSortIcon('id') === 'down'"
+												class="w-4 h-4 text-gray-700" />
+										</div>
+									</th>
+									<th
+										v-if="showMaterialIdColumn"
+										@click="setSort('material_id')"
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										<div class="flex items-center gap-1">
+											Material ID
+											<ArrowUpIcon
+												v-if="getSortIcon('material_id') === 'up'"
+												class="w-4 h-4 text-gray-700" />
+											<ArrowDownIcon
+												v-else-if="getSortIcon('material_id') === 'down'"
+												class="w-4 h-4 text-gray-700" />
+										</div>
+									</th>
+									<th
+										v-if="showNameColumn"
+										@click="setSort('name')"
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										<div class="flex items-center gap-1">
+											Name
+											<ArrowUpIcon
+												v-if="getSortIcon('name') === 'up'"
+												class="w-4 h-4 text-gray-700" />
+											<ArrowDownIcon
+												v-else-if="getSortIcon('name') === 'down'"
+												class="w-4 h-4 text-gray-700" />
+										</div>
+									</th>
+									<th
+										v-if="showVersionColumn"
+										@click="setSort('version')"
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										<div class="flex items-center gap-1">
+											Version
+											<ArrowUpIcon
+												v-if="getSortIcon('version') === 'up'"
+												class="w-4 h-4 text-gray-700" />
+											<ArrowDownIcon
+												v-else-if="getSortIcon('version') === 'down'"
+												class="w-4 h-4 text-gray-700" />
+										</div>
+									</th>
+									<th
+										v-if="showCategoryColumns"
+										@click="setSort('category')"
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										<div class="flex items-center gap-1">
+											Category
+											<ArrowUpIcon
+												v-if="getSortIcon('category') === 'up'"
+												class="w-4 h-4 text-gray-700" />
+											<ArrowDownIcon
+												v-else-if="getSortIcon('category') === 'down'"
+												class="w-4 h-4 text-gray-700" />
+										</div>
+									</th>
+									<th
+										v-if="showCategoryColumns"
+										@click="setSort('subcategory')"
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										<div class="flex items-center gap-1">
+											Subcategory
+											<ArrowUpIcon
+												v-if="getSortIcon('subcategory') === 'up'"
+												class="w-4 h-4 text-gray-700" />
+											<ArrowDownIcon
+												v-else-if="getSortIcon('subcategory') === 'down'"
+												class="w-4 h-4 text-gray-700" />
+										</div>
+									</th>
+									<th
+										v-if="showImageColumn"
+										@click="setSort('image')"
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										<div class="flex items-center gap-1">
+											Image
+											<ArrowUpIcon
+												v-if="getSortIcon('image') === 'up'"
+												class="w-4 h-4 text-gray-700" />
+											<ArrowDownIcon
+												v-else-if="getSortIcon('image') === 'down'"
+												class="w-4 h-4 text-gray-700" />
+										</div>
+									</th>
+									<th
+										v-if="showUrlColumn"
+										@click="setSort('url')"
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										<div class="flex items-center gap-1">
+											URL
+											<ArrowUpIcon
+												v-if="getSortIcon('url') === 'up'"
+												class="w-4 h-4 text-gray-700" />
+											<ArrowDownIcon
+												v-else-if="getSortIcon('url') === 'down'"
+												class="w-4 h-4 text-gray-700" />
+										</div>
+									</th>
+									<th
+										v-if="showPriceColumn"
+										@click="setSort('price')"
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
+										<div class="flex items-center gap-1">
+											Price
+											{{
+												selectedVersion !== 'all'
+													? `(${selectedVersion})`
+													: ''
+											}}
+											<ArrowUpIcon
+												v-if="getSortIcon('price') === 'up'"
+												class="w-4 h-4 text-gray-700" />
+											<ArrowDownIcon
+												v-else-if="getSortIcon('price') === 'down'"
+												class="w-4 h-4 text-gray-700" />
+										</div>
+									</th>
+								</tr>
+							</thead>
+							<tbody class="bg-white divide-y divide-gray-200">
+								<tr
+									v-for="item in filteredItems"
+									:key="item.id"
+									:class="{
+										'bg-green-50': isSelected(item.id)
+									}">
+									<td class="px-4 py-3 border-r border-gray-200">
+										<input
+											type="checkbox"
+											:checked="isSelected(item.id)"
+											@change="toggleSelectItem(item.id)"
+											class="checkbox-input" />
+									</td>
+									<td
+										v-if="showDocumentIdColumn"
+										class="px-4 py-3 text-gray-900 border-r border-gray-200"
+										:title="item.id">
+										<div class="font-mono text-sm">{{ item.id }}</div>
+									</td>
+									<td
+										v-if="showMaterialIdColumn"
+										class="px-4 py-3 text-gray-900 border-r border-gray-200"
+										:title="item.material_id">
+										<div class="font-medium">{{ item.material_id }}</div>
+									</td>
+									<td
+										v-if="showNameColumn"
+										class="px-4 py-3 text-gray-900 border-r border-gray-200"
+										:title="item.name">
+										<div class="font-medium">{{ item.name }}</div>
+									</td>
+									<td
+										v-if="showVersionColumn"
+										class="px-4 py-3 text-gray-900 border-r border-gray-200">
+										{{ item.version }}
+									</td>
+									<td
+										v-if="showCategoryColumns"
+										class="px-4 py-3 text-gray-500 border-r border-gray-200">
+										{{ item.category }}
+									</td>
+									<td
+										v-if="showCategoryColumns"
+										class="px-4 py-3 text-gray-500 border-r border-gray-200">
+										{{ item.subcategory }}
+									</td>
+									<td
+										v-if="showImageColumn"
+										class="px-4 py-3 text-gray-500 border-r border-gray-200"
+										:title="item.image || ''">
+										<div class="truncate max-w-xs">{{ item.image || '' }}</div>
+									</td>
+									<td
+										v-if="showUrlColumn"
+										class="px-4 py-3 text-gray-500 border-r border-gray-200"
+										:title="item.url || ''">
+										<div class="truncate max-w-xs">{{ item.url || '' }}</div>
+									</td>
+									<td v-if="showPriceColumn" class="px-4 py-3 text-gray-900">
+										{{
+											getPriceForVersion(item, selectedVersion) !== null
+												? getPriceForVersion(item, selectedVersion)
+												: ''
+										}}
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -750,49 +850,10 @@ async function updateSelectedPrices() {
 </template>
 
 <style scoped>
-table {
-	border-collapse: collapse;
-}
-th,
-td {
-	border: 1px solid #ccc;
-	padding: 0.5rem;
-}
-th {
-	background-color: #f9f9f9;
-	font-weight: bold;
-}
-.image-cell,
-.url-cell {
-	max-width: 200px;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	text-align: right;
-	direction: rtl;
-}
+/* Table is now styled using Tailwind classes from the styleguide */
 
-.price-cell {
-	text-align: right;
-}
-
-.name-cell {
-	white-space: normal;
-	word-wrap: break-word;
-	max-width: 150px;
-}
-
-.material-id-cell {
-	white-space: normal;
-	word-wrap: break-word;
-	max-width: 150px;
-}
-
-.document-id-cell {
-	white-space: normal;
-	word-wrap: break-word;
-	max-width: 150px;
-	font-family: monospace;
-	font-size: 0.875rem;
+.checkbox-input {
+	@apply w-4 h-4 rounded;
+	accent-color: theme('colors.gray-asparagus');
 }
 </style>
