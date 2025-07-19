@@ -174,7 +174,7 @@ function formatCompletionDate(dateString) {
 </script>
 
 <template>
-	<main class="container px-4 py-6">
+	<main class="px-4 py-6">
 		<div class="max-w-4xl">
 			<h1 class="text-3xl font-bold mb-6 text-gray-800">Updates & Roadmap</h1>
 

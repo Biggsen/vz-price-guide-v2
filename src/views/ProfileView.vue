@@ -204,282 +204,290 @@ function signOutOfFirebase() {
 </script>
 
 <template>
-	<div v-if="user?.email" class="p-4 pt-8 max-w-2xl mx-auto">
-		<h1 class="text-3xl font-bold mb-6">Profile</h1>
+	<main class="p-4 pt-8">
+		<div class="max-w-4xl">
+			<div v-if="user?.email">
+				<h1 class="text-3xl font-bold mb-6">Profile</h1>
 
-		<!-- Loading state -->
-		<div v-if="checkingProfile" class="text-center py-8">
-			<p class="text-gray-600">Loading profile...</p>
-		</div>
+				<!-- Loading state -->
+				<div v-if="checkingProfile" class="text-center py-8">
+					<p class="text-gray-600">Loading profile...</p>
+				</div>
 
-		<!-- Profile setup (first time) -->
-		<div
-			v-else-if="!profileExists"
-			class="bg-blue-50 border border-blue-200 p-6 mb-6 rounded-lg">
-			<h2 class="text-xl font-semibold mb-4 text-blue-800">Complete Your Profile</h2>
-			<p class="text-blue-700 mb-4">
-				Please add your Minecraft username to get started with the Shop Manager.
-			</p>
+				<!-- Profile setup (first time) -->
+				<div v-else-if="!profileExists" class="mb-8">
+					<h2
+						class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
+						Create Your Profile
+					</h2>
 
-			<form @submit.prevent="createProfile" class="space-y-6">
-				<div>
-					<h3 class="text-lg font-semibold text-blue-800 mb-3">Site Profile</h3>
-					<div class="space-y-3">
+					<form @submit.prevent="createProfile" class="space-y-6">
 						<div>
-							<label
-								for="display_name"
-								class="block text-sm font-medium text-gray-700">
-								Display Name (optional)
-							</label>
-							<input
-								type="text"
-								id="display_name"
-								v-model="profileForm.display_name"
-								:disabled="useMinecraftUsername"
-								placeholder="How others will see your name on the site"
-								class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500" />
+							<div class="space-y-3">
+								<div>
+									<label
+										for="display_name"
+										class="block text-base font-medium leading-6 text-gray-900">
+										Display Name (optional)
+									</label>
+									<input
+										type="text"
+										id="display_name"
+										v-model="profileForm.display_name"
+										:disabled="useMinecraftUsername"
+										placeholder="How others will see your name on the site"
+										class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus disabled:bg-gray-100 disabled:text-gray-500" />
+								</div>
+
+								<div class="flex items-center space-x-2">
+									<input
+										type="checkbox"
+										id="use_minecraft_username_initial"
+										v-model="useMinecraftUsername"
+										class="checkbox-input" />
+									<label
+										for="use_minecraft_username_initial"
+										class="text-base font-medium leading-6 text-gray-900">
+										Use Minecraft Username
+									</label>
+								</div>
+							</div>
 						</div>
 
-						<div class="flex items-center space-x-2">
-							<input
-								type="checkbox"
-								id="use_minecraft_username_initial"
-								v-model="useMinecraftUsername"
-								class="checkbox-input" />
-							<label
-								for="use_minecraft_username_initial"
-								class="text-sm font-medium text-gray-700">
-								Use Minecraft Username
-							</label>
-						</div>
-					</div>
-				</div>
-
-				<div>
-					<h3 class="text-lg font-semibold text-blue-800 mb-3">Minecraft Profile</h3>
-					<div>
-						<label
-							for="minecraft_username"
-							class="block text-sm font-medium text-gray-700">
-							Minecraft Username *
-						</label>
-						<input
-							type="text"
-							id="minecraft_username"
-							v-model="profileForm.minecraft_username"
-							required
-							placeholder="Your Minecraft username"
-							class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
-					</div>
-				</div>
-
-				<button
-					type="submit"
-					class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-					Create Profile
-				</button>
-			</form>
-		</div>
-
-		<!-- Existing profile -->
-		<div v-else class="space-y-6">
-			<!-- Site Profile Section -->
-			<div class="bg-gray-100 border border-gray-300 p-6 rounded-lg">
-				<div class="flex items-center justify-between mb-4">
-					<h2 class="text-xl font-semibold">Site Profile</h2>
-					<button
-						v-if="!editingSiteProfile"
-						@click="editingSiteProfile = true"
-						class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded text-sm">
-						Edit
-					</button>
-				</div>
-
-				<!-- Display Mode -->
-				<div v-if="!editingSiteProfile" class="space-y-3">
-					<div>
-						<label class="block text-sm font-medium text-gray-700">Display Name</label>
-						<p class="text-gray-900">
-							{{ userProfile?.display_name || 'Not set' }}
-						</p>
-					</div>
-				</div>
-
-				<!-- Edit Mode -->
-				<div v-else>
-					<form @submit.prevent="updateSiteProfile" class="space-y-4">
 						<div>
-							<label
-								for="edit_display_name"
-								class="block text-sm font-medium text-gray-700">
-								Display Name
-							</label>
-							<input
-								type="text"
-								id="edit_display_name"
-								v-model="profileForm.display_name"
-								:disabled="useMinecraftUsername"
-								placeholder="How others will see your name"
-								class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500" />
+							<div>
+								<label
+									for="minecraft_username"
+									class="block text-base font-medium leading-6 text-gray-900">
+									Minecraft Username *
+								</label>
+								<input
+									type="text"
+									id="minecraft_username"
+									v-model="profileForm.minecraft_username"
+									required
+									placeholder="Your Minecraft username"
+									class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
+							</div>
 						</div>
 
-						<div class="flex items-center space-x-2">
-							<input
-								type="checkbox"
-								id="use_minecraft_username"
-								v-model="useMinecraftUsername"
-								class="checkbox-input" />
-							<label
-								for="use_minecraft_username"
-								class="text-sm font-medium text-gray-700">
-								Use Minecraft Username
-							</label>
-						</div>
-
-						<div class="flex space-x-3">
-							<button
-								type="submit"
-								class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-								Save Changes
-							</button>
-							<button
-								type="button"
-								@click="cancelEditSiteProfile"
-								class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-								Cancel
-							</button>
-						</div>
+						<button
+							type="submit"
+							class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+							Create Profile
+						</button>
 					</form>
 				</div>
-			</div>
 
-			<!-- Minecraft Profile Section -->
-			<div class="bg-gray-100 border border-gray-300 p-6 rounded-lg">
-				<div class="flex items-center justify-between mb-4">
-					<h2 class="text-xl font-semibold">Minecraft Profile</h2>
-					<button
-						v-if="!editingMinecraftProfile"
-						@click="editingMinecraftProfile = true"
-						class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded text-sm">
-						Edit
-					</button>
-				</div>
+				<!-- Existing profile -->
+				<div v-else class="space-y-12">
+					<!-- Site Profile Section -->
+					<div class="mb-8">
+						<h2
+							class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
+							Site Profile
+						</h2>
 
-				<!-- Display Mode -->
-				<div v-if="!editingMinecraftProfile">
-					<div class="flex items-center space-x-4">
-						<img
-							v-if="userProfile?.minecraft_avatar_url"
-							:src="userProfile.minecraft_avatar_url"
-							:alt="userProfile.minecraft_username"
-							class="w-16 h-16 rounded"
-							@error="$event.target.style.display = 'none'" />
-						<div>
-							<label class="block text-sm font-medium text-gray-700">
-								Minecraft Username
-							</label>
-							<p class="text-gray-900 font-mono">
-								{{ userProfile?.minecraft_username || 'Not set' }}
-							</p>
-						</div>
-					</div>
-				</div>
-
-				<!-- Edit Mode -->
-				<div v-else>
-					<form @submit.prevent="updateMinecraftProfile" class="space-y-4">
-						<div>
-							<label
-								for="edit_minecraft_username"
-								class="block text-sm font-medium text-gray-700">
-								Minecraft Username *
-							</label>
-							<input
-								type="text"
-								id="edit_minecraft_username"
-								v-model="profileForm.minecraft_username"
-								required
-								placeholder="Your Minecraft username"
-								class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+						<!-- Display Mode -->
+						<div v-if="!editingSiteProfile" class="space-y-3">
+							<div class="flex items-center justify-between">
+								<div>
+									<label
+										class="block text-base font-medium leading-6 text-gray-900">
+										Display Name
+									</label>
+									<p class="text-gray-900">
+										{{ userProfile?.display_name || 'Not set' }}
+									</p>
+								</div>
+								<button
+									@click="editingSiteProfile = true"
+									class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-opacity-80 transition-colors">
+									Edit
+								</button>
+							</div>
 						</div>
 
-						<div class="flex space-x-3">
-							<button
-								type="submit"
-								class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-								Save Changes
-							</button>
-							<button
-								type="button"
-								@click="cancelEditMinecraftProfile"
-								class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-								Cancel
-							</button>
+						<!-- Edit Mode -->
+						<div v-else>
+							<form @submit.prevent="updateSiteProfile" class="space-y-4">
+								<div>
+									<label
+										for="edit_display_name"
+										class="block text-base font-medium leading-6 text-gray-900">
+										Display Name
+									</label>
+									<input
+										type="text"
+										id="edit_display_name"
+										v-model="profileForm.display_name"
+										:disabled="useMinecraftUsername"
+										placeholder="How others will see your name"
+										class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus disabled:bg-gray-100 disabled:text-gray-500" />
+								</div>
+
+								<div class="flex items-center space-x-2">
+									<input
+										type="checkbox"
+										id="use_minecraft_username"
+										v-model="useMinecraftUsername"
+										class="checkbox-input" />
+									<label
+										for="use_minecraft_username"
+										class="text-base font-medium leading-6 text-gray-900">
+										Use Minecraft Username
+									</label>
+								</div>
+
+								<div class="flex space-x-3">
+									<button
+										type="submit"
+										class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+										Save Changes
+									</button>
+									<button
+										type="button"
+										@click="cancelEditSiteProfile"
+										class="rounded-md bg-gray-200 text-gray-800 px-4 py-2 text-sm font-medium hover:bg-gray-300 transition">
+										Cancel
+									</button>
+								</div>
+							</form>
 						</div>
-					</form>
-				</div>
-			</div>
+					</div>
 
-			<!-- Account Information -->
-			<div class="bg-gray-100 border border-gray-300 p-6 rounded-lg">
-				<h2 class="text-xl font-semibold mb-4">Account Information</h2>
-				<div class="space-y-3">
-					<div>
-						<label class="block text-sm font-medium text-gray-700">Email</label>
-						<p class="text-gray-900">{{ user.email }}</p>
+					<!-- Minecraft Profile Section -->
+					<div class="mb-8">
+						<h2
+							class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
+							Minecraft Profile
+						</h2>
+
+						<!-- Display Mode -->
+						<div v-if="!editingMinecraftProfile">
+							<div class="flex items-center justify-between">
+								<div class="flex items-center space-x-4">
+									<img
+										v-if="userProfile?.minecraft_avatar_url"
+										:src="userProfile.minecraft_avatar_url"
+										:alt="userProfile.minecraft_username"
+										class="w-16 h-16 rounded"
+										@error="$event.target.style.display = 'none'" />
+									<div>
+										<label
+											class="block text-base font-medium leading-6 text-gray-900">
+											Minecraft Username
+										</label>
+										<p class="text-gray-900 font-mono">
+											{{ userProfile?.minecraft_username || 'Not set' }}
+										</p>
+									</div>
+								</div>
+								<button
+									@click="editingMinecraftProfile = true"
+									class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-opacity-80 transition-colors">
+									Edit
+								</button>
+							</div>
+						</div>
+
+						<!-- Edit Mode -->
+						<div v-else>
+							<form @submit.prevent="updateMinecraftProfile" class="space-y-4">
+								<div>
+									<label
+										for="edit_minecraft_username"
+										class="block text-base font-medium leading-6 text-gray-900">
+										Minecraft Username *
+									</label>
+									<input
+										type="text"
+										id="edit_minecraft_username"
+										v-model="profileForm.minecraft_username"
+										required
+										placeholder="Your Minecraft username"
+										class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
+								</div>
+
+								<div class="flex space-x-3">
+									<button
+										type="submit"
+										class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+										Save Changes
+									</button>
+									<button
+										type="button"
+										@click="cancelEditMinecraftProfile"
+										class="rounded-md bg-gray-200 text-gray-800 px-4 py-2 text-sm font-medium hover:bg-gray-300 transition">
+										Cancel
+									</button>
+								</div>
+							</form>
+						</div>
 					</div>
-					<div>
-						<label class="block text-sm font-medium text-gray-700">Account Type</label>
-						<p v-if="isAdmin" class="text-green-600 text-sm font-bold">
-							✓ ADMIN ACCESS
-						</p>
-						<p v-else class="text-gray-500 text-sm">Regular User</p>
+
+					<!-- Account Information -->
+					<div class="mb-8">
+						<h2
+							class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
+							Account Information
+						</h2>
+						<div class="space-y-3">
+							<div>
+								<label class="block text-base font-medium leading-6 text-gray-900">
+									Email
+								</label>
+								<p class="text-gray-900">{{ user.email }}</p>
+							</div>
+							<div>
+								<label class="block text-base font-medium leading-6 text-gray-900">
+									Account Type
+								</label>
+								<p v-if="isAdmin" class="text-green-600 text-sm font-bold">
+									✓ ADMIN ACCESS
+								</p>
+								<p v-else class="text-gray-500 text-sm">Regular User</p>
+							</div>
+							<div>
+								<label class="block text-base font-medium leading-6 text-gray-900">
+									Account Created
+								</label>
+								<p class="text-gray-500 text-sm">
+									{{ new Date(user.metadata.creationTime).toLocaleDateString() }}
+								</p>
+							</div>
+							<div>
+								<label class="block text-base font-medium leading-6 text-gray-900">
+									Last Sign In
+								</label>
+								<p class="text-gray-500 text-sm">
+									{{
+										new Date(user.metadata.lastSignInTime).toLocaleDateString()
+									}}
+								</p>
+							</div>
+						</div>
 					</div>
-					<div>
-						<label class="block text-sm font-medium text-gray-700">
-							Account Created
-						</label>
-						<p class="text-gray-500 text-sm">
-							{{ new Date(user.metadata.creationTime).toLocaleDateString() }}
-						</p>
-					</div>
-					<div>
-						<label class="block text-sm font-medium text-gray-700">Last Sign In</label>
-						<p class="text-gray-500 text-sm">
-							{{ new Date(user.metadata.lastSignInTime).toLocaleDateString() }}
-						</p>
+
+					<!-- Account Actions -->
+					<div class="mb-8">
+						<h2
+							class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
+							Account Actions
+						</h2>
+						<button
+							@click="signOutOfFirebase"
+							class="rounded-md bg-semantic-danger px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+							Sign Out
+						</button>
 					</div>
 				</div>
-			</div>
-
-			<!-- Account Actions -->
-			<div class="bg-gray-100 border border-gray-300 p-6 rounded-lg">
-				<h2 class="text-xl font-semibold mb-4">Account Actions</h2>
-				<button
-					@click="signOutOfFirebase"
-					class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors">
-					Sign Out
-				</button>
 			</div>
 		</div>
-	</div>
-
-	<div v-else class="p-4 pt-8 max-w-2xl mx-auto">
-		<h1 class="text-3xl font-bold mb-6">Profile</h1>
-		<p class="text-gray-600">You need to be logged in to view your profile.</p>
-		<router-link to="/login" class="text-blue-600 hover:underline">Login here</router-link>
-	</div>
+	</main>
 </template>
 
 <style scoped>
-input {
-	@apply border-2 border-gray-300 rounded px-3 py-2;
-}
-
-input:focus {
-	@apply border-blue-500 outline-none ring-2 ring-blue-500 ring-opacity-50;
-}
-
 .checkbox-input {
 	@apply w-4 h-4 rounded;
 	accent-color: theme('colors.gray-asparagus');
