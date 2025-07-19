@@ -60,6 +60,7 @@ Future enhancement for collaborative market intelligence, including:
 -   🔄 **PENDING** - Not yet started
 -   🚧 **IN PROGRESS** - Currently being worked on
 -   ⏳ **PLANNED** - Ready to begin, waiting for capacity
+-   💡 **IDEA** - Concept stage, not yet planned for implementation
 -   ❌ **BLOCKED** - Waiting on dependencies
 
 ## Current Status

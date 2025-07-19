@@ -271,5 +271,34 @@
 				"completed": true
 			}
 		]
+	},
+	{
+		"id": 12,
+		"title": "Custom Price Guides - Create Your Own Price References",
+		"status": "Idea",
+		"description": "Create your own price guides with custom prices and notes. Set prices for any item from the main guide, add personal notes, and choose between static or recipe-based pricing. Perfect for documenting server-specific prices or building your own price reference.",
+		"dependencies": [6],
+		"features": [
+			{
+				"name": "📝 Create multiple price guides - name them and optionally link to servers",
+				"completed": false
+			},
+			{
+				"name": "💰 Set custom prices for any item from the main guide",
+				"completed": false
+			},
+			{
+				"name": "📝 Add personal notes to document your pricing decisions",
+				"completed": false
+			},
+			{
+				"name": "🔧 Choose static or recipe-based pricing for each item",
+				"completed": false
+			},
+			{
+				"name": "⚡ Bulk import items and recalculate recipe-based prices",
+				"completed": false
+			}
+		]
 	}
 ]

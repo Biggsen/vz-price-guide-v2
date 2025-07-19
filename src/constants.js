@@ -32,6 +32,10 @@ export const enabledCategories = categories.filter((cat) => !disabledCategories.
 export const versions = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
 
 export const roadmapStatusLegend = {
+	Idea: {
+		description: 'Concept stage - not yet planned for implementation',
+		color: '#8B5CF6'
+	},
 	Pending: {
 		description: 'Not yet started',
 		color: '#6B7280'

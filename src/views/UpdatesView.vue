@@ -21,7 +21,8 @@ const statusOrder = {
 	'In Progress': 1,
 	'In Development': 2,
 	Pending: 3,
-	Completed: 4
+	Idea: 4,
+	Completed: 5
 }
 
 const sortedRoadmap = computed(() => {
