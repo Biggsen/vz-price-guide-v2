@@ -557,40 +557,41 @@ function isSelected(index) {
 				<!-- Text Inputs -->
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold text-gray-800">Text Inputs</h3>
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div class="space-y-4">
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">
+							<label class="block text-base font-medium leading-6 text-gray-900">
 								Standard Input
 							</label>
 							<input
 								type="text"
 								placeholder="Enter text..."
-								class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
+								class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
 						</div>
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">
+							<label class="block text-base font-medium leading-6 text-gray-900">
 								Search Input
 							</label>
 							<input
 								type="text"
 								v-model="searchQuery"
 								placeholder="Search for items..."
-								class="border-2 border-gray-asparagus rounded px-3 py-2 w-full" />
+								class="border-2 border-gray-asparagus rounded px-3 py-2 w-80 mt-2 mb-2" />
 						</div>
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">
+							<label class="block text-base font-medium leading-6 text-gray-900">
 								Number Input
 							</label>
 							<input
 								type="number"
 								placeholder="0"
-								class="w-20 px-3 py-1 border-2 border-gray-asparagus rounded text-sm focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
+								class="w-20 px-3 py-1 border-2 border-gray-asparagus rounded text-sm mt-2 mb-2 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
 						</div>
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">
+							<label class="block text-base font-medium leading-6 text-gray-900">
 								Select Dropdown
 							</label>
-							<select class="border-2 border-gray-asparagus rounded px-3 py-1">
+							<select
+								class="border-2 border-gray-asparagus rounded px-3 py-1 mt-2 mb-2 w-80">
 								<option>Option 1</option>
 								<option>Option 2</option>
 								<option>Option 3</option>
@@ -603,32 +604,32 @@ function isSelected(index) {
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold text-gray-800">Checkboxes</h3>
 					<div class="flex flex-wrap gap-6">
-						<div class="flex items-center">
-							<input type="checkbox" class="checkbox-input" />
-							<label class="ml-2 text-sm text-gray-700">Checkbox</label>
-						</div>
+						<label class="flex items-center cursor-pointer">
+							<input type="checkbox" class="mr-2 checkbox-input" />
+							<span>Checkbox</span>
+						</label>
 					</div>
 				</div>
 
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold text-gray-800">Radio Buttons</h3>
 					<div class="space-y-2">
-						<div class="flex items-center">
+						<label class="flex items-center cursor-pointer">
 							<input
 								type="radio"
 								name="example"
 								value="option1"
-								class="radio-input" />
-							<label class="ml-2 text-sm text-gray-700">Option 1</label>
-						</div>
-						<div class="flex items-center">
+								class="mr-2 radio-input" />
+							<span>Option 1</span>
+						</label>
+						<label class="flex items-center cursor-pointer">
 							<input
 								type="radio"
 								name="example"
 								value="option2"
-								class="radio-input" />
-							<label class="ml-2 text-sm text-gray-700">Option 2</label>
-						</div>
+								class="mr-2 radio-input" />
+							<span>Option 2</span>
+						</label>
 					</div>
 				</div>
 			</div>
