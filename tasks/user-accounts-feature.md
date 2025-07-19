@@ -72,7 +72,13 @@ Implement a complete user account system with registration, authentication, pass
 -   [ ] Add `/register` route to router
 -   [ ] Form fields: email, password, confirm password
 -   [ ] Terms of service acceptance checkbox
--   [ ] Password strength validation
+-   [ ] Password strength validation matching Firebase policy:
+    -   Minimum 8 characters
+    -   Maximum 4096 characters
+    -   At least one uppercase character
+    -   At least one lowercase character
+    -   At least one numeric character
+-   [ ] Real-time password strength indicator
 -   [ ] Email format validation
 -   [ ] Error handling and user feedback
 -   [ ] Redirect to email verification after successful registration
@@ -114,7 +120,13 @@ Implement a complete user account system with registration, authentication, pass
 -   [ ] Add password change section to ProfileView
 -   [ ] Current password verification
 -   [ ] New password with confirmation
--   [ ] Password strength requirements
+-   [ ] Password strength requirements matching Firebase policy:
+    -   Minimum 8 characters
+    -   Maximum 4096 characters
+    -   At least one uppercase character
+    -   At least one lowercase character
+    -   At least one numeric character
+-   [ ] Real-time password strength indicator
 -   [ ] Email notification of password change
 -   [ ] Success/error feedback
 
@@ -156,20 +168,40 @@ Implement a complete user account system with registration, authentication, pass
 
 #### Task 4.1: Email Template System
 
--   [ ] Design consistent email template styling
--   [ ] Configure Firebase Auth email templates
--   [ ] Create templates for:
-    -   Welcome email
-    -   Email verification
-    -   Password reset
-    -   Password change notification
-    -   Account security alerts
--   [ ] Test all email templates
+**Current Firebase Templates:**
+
+-   ✅ **Email address verification**: Configured with default template
+-   ✅ **Password reset**: Available in Firebase console
+-   ✅ **Email address change**: Available in Firebase console
+-   ✅ **Multi-factor enrollment notification**: Available in Firebase console
+
+**Customization Tasks:**
+
+-   [ ] Update sender name from "not provided" to "VZ Price Guide"
+-   [ ] Customize email verification template:
+    -   Update subject line to be more specific
+    -   Improve message content and branding
+    -   Add VZ Price Guide logo/styling
+-   [ ] Customize password reset template:
+    -   Update subject and message content
+    -   Add branding and clear instructions
+-   [ ] Test all email templates for deliverability
+-   [ ] Verify action URLs work with our routing structure
 
 #### Task 4.2: Email Service Integration
 
--   [ ] Configure Firebase Auth email settings
--   [ ] Set up custom email domain (if needed)
+**Current Configuration:**
+
+-   ✅ **From address**: noreply@vz-price-guide.firebaseapp.com
+-   ✅ **Reply to**: noreply
+-   ❌ **Sender name**: "not provided" (needs updating)
+
+**Configuration Tasks:**
+
+-   [ ] Update sender name to "VZ Price Guide"
+-   [ ] Verify action URLs work with our app routing:
+    -   Current: `https://vz-price-guide.firebaseapp.com/__/auth/action?mode=action&oobCode=code`
+    -   Ensure our `/verify-email` and `/reset-password` routes handle these properly
 -   [ ] Monitor email delivery rates
 -   [ ] Handle email bounces and failures
 -   [ ] Email analytics tracking
@@ -199,7 +231,7 @@ Implement a complete user account system with registration, authentication, pass
     notifications: boolean,
     marketing: boolean
   },
-  registration_method: string, // 'email' | 'google' | etc.
+  registration_method: string, // 'email' (for now, expandable to 'google', 'github', etc.)
   last_password_change: timestamp
 }
 ```
@@ -211,6 +243,35 @@ Implement a complete user account system with registration, authentication, pass
 -   Configure custom email templates
 -   Set up email action URLs
 -   Configure account deletion
+
+#### Sign-in Providers
+
+**Current Configuration:**
+
+-   **Email/Password**: ✅ Enabled (primary authentication method)
+
+**Future Enhancements:**
+
+-   Google OAuth
+-   GitHub OAuth
+-   Microsoft OAuth
+-   Other social providers
+
+#### Password Policy Configuration
+
+**Enforcement Mode:**
+
+-   **Require enforcement**: Sign-up attempts fail until users comply with password policy
+
+**Password Requirements:**
+
+-   **Minimum length**: 8 characters
+-   **Maximum length**: 4096 characters
+-   **Require uppercase character**: ✅ Enabled
+-   **Require lowercase character**: ✅ Enabled
+-   **Require numeric character**: ✅ Enabled
+-   **Require special character**: ❌ Disabled
+-   **Force upgrade on sign-in**: ❌ Disabled
 
 ### Security Rules Updates
 
@@ -257,10 +318,10 @@ match /users/{userId} {
 
 ### External Dependencies
 
--   Firebase Auth email verification
--   Firebase Auth password reset
--   Firebase Auth custom email templates
--   Email delivery service (Firebase Auth handles this)
+-   Firebase Auth email verification ✅ (configured)
+-   Firebase Auth password reset ✅ (available)
+-   Firebase Auth custom email templates ✅ (configured)
+-   Email delivery service (Firebase Auth handles this) ✅ (noreply@vz-price-guide.firebaseapp.com)
 
 ### Internal Dependencies
 
