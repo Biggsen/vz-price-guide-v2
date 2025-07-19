@@ -356,6 +356,70 @@ function isSelected(index) {
 			</div>
 		</section>
 
+		<!-- Section Headings -->
+		<section class="mb-12">
+			<h2 class="text-2xl font-bold text-gray-900 mb-6">Section Headings</h2>
+			<div class="space-y-8">
+				<!-- Fieldset Section Headers -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Fieldset Section Headers</h3>
+					<p class="text-sm text-gray-600 mb-4">
+						Used for grouping form sections with a heading and bottom border line.
+					</p>
+
+					<!-- Example fieldset with section heading -->
+					<fieldset class="mb-10 border-0">
+						<legend
+							class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
+							Basic Information
+						</legend>
+					</fieldset>
+
+					<!-- Code example -->
+					<div class="space-y-2">
+						<h4 class="text-md font-medium text-gray-700">HTML Structure</h4>
+						<div class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto">
+							<pre><code>&lt;fieldset class="mb-10"&gt;
+  &lt;legend class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6"&gt;
+    Section Title
+  &lt;/legend&gt;
+  &lt;!-- Form content --&gt;
+&lt;/fieldset&gt;</code></pre>
+						</div>
+					</div>
+				</div>
+
+				<!-- General Section Headers -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">General Section Headers</h3>
+					<p class="text-sm text-gray-600 mb-4">
+						Used for any content section that needs a heading with a bottom border line.
+					</p>
+
+					<!-- Example general section heading -->
+					<div class="mb-8">
+						<h3
+							class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
+							Content Section
+						</h3>
+					</div>
+
+					<!-- Code example -->
+					<div class="space-y-2">
+						<h4 class="text-md font-medium text-gray-700">HTML Structure</h4>
+						<div class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto">
+							<pre><code>&lt;div class="mb-8"&gt;
+  &lt;h3 class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6"&gt;
+    Section Title
+  &lt;/h3&gt;
+  &lt;!-- Section content --&gt;
+&lt;/div&gt;</code></pre>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
 		<!-- Buttons -->
 		<section class="mb-12">
 			<h2 class="text-2xl font-bold text-gray-900 mb-6">Buttons</h2>
