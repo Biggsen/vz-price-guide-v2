@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { ArrowDownIcon } from '@heroicons/vue/24/outline'
 
 defineOptions({
 	name: 'StyleguideView'
@@ -15,6 +16,36 @@ const sampleItems = ref([
 const viewMode = ref('categories')
 const layout = ref('comfortable')
 const searchQuery = ref('')
+
+// Grid table selection state
+const selectedItems = ref([])
+const allSelected = ref(false)
+
+// Selection methods
+function toggleSelectAll() {
+	if (allSelected.value) {
+		selectedItems.value = []
+		allSelected.value = false
+	} else {
+		selectedItems.value = sampleItems.value.map((item, index) => index)
+		allSelected.value = true
+	}
+}
+
+function toggleSelectItem(index) {
+	const itemIndex = selectedItems.value.indexOf(index)
+	if (itemIndex > -1) {
+		selectedItems.value.splice(itemIndex, 1)
+		allSelected.value = false
+	} else {
+		selectedItems.value.push(index)
+		allSelected.value = selectedItems.value.length === sampleItems.value.length
+	}
+}
+
+function isSelected(index) {
+	return selectedItems.value.includes(index)
+}
 </script>
 
 <template>
@@ -376,19 +407,19 @@ const searchQuery = ref('')
 						<h4 class="text-md font-medium text-gray-700">Small (px-3 py-1 text-sm)</h4>
 						<div class="flex flex-wrap gap-4">
 							<button
-								class="px-3 py-1 text-sm bg-semantic-success text-white rounded hover:bg-green-700 transition-colors">
+								class="px-3 py-1 text-sm bg-semantic-success text-white rounded hover:bg-opacity-80 transition-colors">
 								Save
 							</button>
 							<button
-								class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-blue-700 transition-colors">
+								class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-opacity-80 transition-colors">
 								Edit
 							</button>
 							<button
-								class="px-3 py-1 text-sm bg-semantic-danger text-white rounded hover:bg-red-700 transition-colors">
+								class="px-3 py-1 text-sm bg-semantic-danger text-white rounded hover:bg-opacity-80 transition-colors">
 								Delete
 							</button>
 							<button
-								class="px-3 py-1 text-sm bg-semantic-warning text-white rounded hover:bg-yellow-700 transition-colors">
+								class="px-3 py-1 text-sm bg-semantic-warning text-white rounded hover:bg-opacity-80 transition-colors">
 								Warning
 							</button>
 						</div>
@@ -397,23 +428,23 @@ const searchQuery = ref('')
 					<!-- Large Action Buttons -->
 					<div class="space-y-2">
 						<h4 class="text-md font-medium text-gray-700">
-							Large (px-4 py-2 text-base)
+							Large (px-4 py-2 text-sm font-semibold)
 						</h4>
 						<div class="flex flex-wrap gap-4">
 							<button
-								class="px-4 py-2 text-base bg-semantic-success text-white rounded hover:bg-green-700 transition-colors">
+								class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 								Save
 							</button>
 							<button
-								class="px-4 py-2 text-base bg-semantic-info text-white rounded hover:bg-blue-700 transition-colors">
+								class="rounded-md bg-semantic-info px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 								Edit
 							</button>
 							<button
-								class="px-4 py-2 text-base bg-semantic-danger text-white rounded hover:bg-red-700 transition-colors">
+								class="rounded-md bg-semantic-danger px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 								Delete
 							</button>
 							<button
-								class="px-4 py-2 text-base bg-semantic-warning text-white rounded hover:bg-yellow-700 transition-colors">
+								class="rounded-md bg-semantic-warning px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 								Warning
 							</button>
 						</div>
@@ -568,10 +599,8 @@ const searchQuery = ref('')
 			<h2 class="text-2xl font-bold text-gray-900 mb-6">Tables</h2>
 			<div class="space-y-6">
 				<!-- Standard Table -->
+				<h3 class="text-lg font-semibold text-gray-900">Standard Table</h3>
 				<div class="bg-white rounded-lg shadow-md overflow-hidden">
-					<div class="px-4 py-3 border-b border-gray-200">
-						<h3 class="text-lg font-semibold text-gray-900">Standard Table</h3>
-					</div>
 					<div class="overflow-x-auto">
 						<table class="min-w-full divide-y divide-gray-200">
 							<thead class="bg-gray-50">
@@ -581,8 +610,11 @@ const searchQuery = ref('')
 										Item
 									</th>
 									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Price
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
+										<div class="flex items-center gap-1">
+											Price
+											<ArrowDownIcon class="w-4 h-4 text-gray-700" />
+										</div>
 									</th>
 									<th
 										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -604,10 +636,8 @@ const searchQuery = ref('')
 				</div>
 
 				<!-- Condensed Table -->
+				<h3 class="text-lg font-semibold text-gray-900">Condensed Table</h3>
 				<div class="bg-white rounded-lg shadow-md overflow-hidden">
-					<div class="px-3 py-2 border-b border-gray-200">
-						<h3 class="text-lg font-semibold text-gray-900">Condensed Table</h3>
-					</div>
 					<div class="overflow-x-auto">
 						<table class="min-w-full divide-y divide-gray-200">
 							<thead class="bg-gray-50">
@@ -637,6 +667,67 @@ const searchQuery = ref('')
 										{{ item.price }}
 									</td>
 									<td class="px-2 py-1 text-gray-500 text-sm">
+										{{ item.category }}
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+				<!-- Grid Table -->
+				<h3 class="text-lg font-semibold text-gray-900">Grid Table</h3>
+				<div class="bg-white rounded-lg shadow-md overflow-hidden">
+					<div class="overflow-x-auto">
+						<table class="min-w-full divide-y divide-gray-200 border border-gray-200">
+							<thead class="bg-gray-50">
+								<tr>
+									<th
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+										<input
+											type="checkbox"
+											:checked="allSelected"
+											@change="toggleSelectAll"
+											class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
+									</th>
+									<th
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+										Item
+									</th>
+									<th
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 cursor-pointer hover:bg-gray-100 select-none">
+										<div class="flex items-center gap-1">
+											Price
+											<ArrowDownIcon class="w-4 h-4 text-gray-700" />
+										</div>
+									</th>
+									<th
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										Category
+									</th>
+								</tr>
+							</thead>
+							<tbody class="bg-white divide-y divide-gray-200">
+								<tr
+									v-for="(item, index) in sampleItems"
+									:key="item.name"
+									:class="{
+										'bg-green-50': isSelected(index)
+									}">
+									<td class="px-4 py-3 border-r border-gray-200">
+										<input
+											type="checkbox"
+											:checked="isSelected(index)"
+											@change="toggleSelectItem(index)"
+											class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
+									</td>
+									<td class="px-4 py-3 border-r border-gray-200">
+										<div class="font-medium text-gray-900">{{ item.name }}</div>
+									</td>
+									<td class="px-4 py-3 border-r border-gray-200 text-gray-900">
+										{{ item.price }}
+									</td>
+									<td class="px-4 py-3 text-gray-500">
 										{{ item.category }}
 									</td>
 								</tr>
