@@ -501,7 +501,7 @@ function isSelected(index) {
 							<input
 								type="text"
 								placeholder="Enter text..."
-								class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6" />
+								class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
 						</div>
 						<div>
 							<label class="block text-sm font-medium text-gray-700 mb-2">
@@ -520,7 +520,7 @@ function isSelected(index) {
 							<input
 								type="number"
 								placeholder="0"
-								class="w-20 px-2 py-1 border rounded text-sm" />
+								class="w-20 px-3 py-1 border-2 border-gray-asparagus rounded text-sm focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
 						</div>
 						<div>
 							<label class="block text-sm font-medium text-gray-700 mb-2">
@@ -537,19 +537,33 @@ function isSelected(index) {
 
 				<!-- Checkboxes and Radio Buttons -->
 				<div class="space-y-4">
-					<h3 class="text-lg font-semibold text-gray-800">Checkboxes & Radio Buttons</h3>
+					<h3 class="text-lg font-semibold text-gray-800">Checkboxes</h3>
 					<div class="flex flex-wrap gap-6">
 						<div class="flex items-center">
-							<input
-								type="checkbox"
-								class="w-4 h-4 rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
+							<input type="checkbox" class="checkbox-input" />
 							<label class="ml-2 text-sm text-gray-700">Checkbox</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Radio Buttons</h3>
+					<div class="space-y-2">
+						<div class="flex items-center">
+							<input
+								type="radio"
+								name="example"
+								value="option1"
+								class="radio-input" />
+							<label class="ml-2 text-sm text-gray-700">Option 1</label>
 						</div>
 						<div class="flex items-center">
 							<input
 								type="radio"
-								class="w-4 h-4 border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
-							<label class="ml-2 text-sm text-gray-700">Radio Button</label>
+								name="example"
+								value="option2"
+								class="radio-input" />
+							<label class="ml-2 text-sm text-gray-700">Option 2</label>
 						</div>
 					</div>
 				</div>
@@ -688,7 +702,7 @@ function isSelected(index) {
 											type="checkbox"
 											:checked="allSelected"
 											@change="toggleSelectAll"
-											class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
+											class="checkbox-input" />
 									</th>
 									<th
 										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
@@ -719,7 +733,7 @@ function isSelected(index) {
 											type="checkbox"
 											:checked="isSelected(index)"
 											@change="toggleSelectItem(index)"
-											class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
+											class="checkbox-input" />
 									</td>
 									<td class="px-4 py-3 border-r border-gray-200">
 										<div class="font-medium text-gray-900">{{ item.name }}</div>
@@ -1047,5 +1061,15 @@ pre {
 
 code {
 	font-family: 'Courier New', Courier, monospace;
+}
+
+.radio-input {
+	@apply w-5 h-5;
+	accent-color: theme('colors.gray-asparagus');
+}
+
+.checkbox-input {
+	@apply w-4 h-4 rounded;
+	accent-color: theme('colors.gray-asparagus');
 }
 </style>
