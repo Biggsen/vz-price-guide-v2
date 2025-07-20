@@ -2,7 +2,8 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useFirebaseAuth } from 'vuefire'
 import { signOut } from '@firebase/auth'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
+import { ArrowLeftStartOnRectangleIcon } from '@heroicons/vue/24/outline'
 import { useAdmin } from '../utils/admin.js'
 import {
 	useUserProfile,
@@ -15,12 +16,21 @@ import { getFirestore, doc, getDoc } from 'firebase/firestore'
 const { user, isAdmin } = useAdmin()
 const auth = useFirebaseAuth()
 const router = useRouter()
+const route = useRoute()
 
 // User profile state
 const userProfile = ref(null)
 const checkingProfile = ref(true)
 const editingSiteProfile = ref(false)
 const editingMinecraftProfile = ref(false)
+const successMessage = ref('')
+
+// Check for success message from query parameter
+if (route.query.message === 'password-updated') {
+	successMessage.value = 'Password updated successfully.'
+	// Clear the query parameter
+	router.replace({ path: '/profile', query: {} })
+}
 
 // Profile form data
 const profileForm = ref({
@@ -208,6 +218,40 @@ function signOutOfFirebase() {
 		<div class="max-w-4xl">
 			<div v-if="user?.email">
 				<h1 class="text-3xl font-bold mb-6">Profile</h1>
+
+				<!-- Success Message -->
+				<div
+					v-if="successMessage"
+					class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+					<div class="flex">
+						<div class="flex-shrink-0">
+							<svg
+								class="h-5 w-5 text-green-400"
+								viewBox="0 0 20 20"
+								fill="currentColor">
+								<path
+									fill-rule="evenodd"
+									d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+									clip-rule="evenodd" />
+							</svg>
+						</div>
+						<div class="ml-3">
+							<p class="text-sm font-medium text-green-800">{{ successMessage }}</p>
+						</div>
+						<div class="ml-auto pl-3">
+							<button
+								@click="successMessage = ''"
+								class="text-green-400 hover:text-green-600">
+								<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+									<path
+										fill-rule="evenodd"
+										d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+										clip-rule="evenodd" />
+								</svg>
+							</button>
+						</div>
+					</div>
+				</div>
 
 				<!-- Loading state -->
 				<div v-if="checkingProfile" class="text-center py-8">
@@ -475,11 +519,19 @@ function signOutOfFirebase() {
 							class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
 							Account Actions
 						</h2>
-						<button
-							@click="signOutOfFirebase"
-							class="rounded-md bg-semantic-danger px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-							Sign Out
-						</button>
+						<div class="flex space-x-3">
+							<RouterLink
+								to="/change-password"
+								class="rounded-md bg-semantic-info px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+								Change Password
+							</RouterLink>
+							<button
+								@click="signOutOfFirebase"
+								class="rounded-md bg-semantic-danger px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 flex items-center">
+								<ArrowLeftStartOnRectangleIcon class="w-4 h-4 inline mr-1" />
+								Sign Out
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
