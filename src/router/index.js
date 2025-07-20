@@ -47,9 +47,23 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/verify-email-success',
+			name: 'verify-email-success',
+			component: () => import('../views/VerifyEmailSuccessView.vue'),
+			meta: {
+				title: "Email Verified - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/reset-password',
 			name: 'reset-password',
 			component: () => import('../views/ResetPasswordView.vue'),
+			meta: { title: "Reset Password - verzion's economy price guide for Minecraft" }
+		},
+		{
+			path: '/reset-password-confirm',
+			name: 'reset-password-confirm',
+			component: () => import('../views/ResetPasswordConfirmView.vue'),
 			meta: { title: "Reset Password - verzion's economy price guide for Minecraft" }
 		},
 		{
