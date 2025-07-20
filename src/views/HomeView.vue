@@ -373,6 +373,11 @@ const visibleCategories = ref([...enabledCategories])
 const showUncategorised = ref(true)
 const showCategoryFilters = ref(false) // Hidden by default on mobile
 
+// Computed property to show category filters on desktop
+const shouldShowCategoryFilters = computed(() => {
+	return showCategoryFilters.value || window.innerWidth >= 640
+})
+
 // Version filter functions
 function selectVersion(version) {
 	// Only allow selecting enabled versions
@@ -600,7 +605,7 @@ watch(
 				</button>
 			</div>
 
-			<div v-show="showCategoryFilters" class="flex flex-wrap gap-2 mb-4 justify-start">
+			<div v-show="shouldShowCategoryFilters" class="flex flex-wrap gap-2 mb-4 justify-start">
 				<button
 					v-for="cat in enabledCategories"
 					:key="cat"
@@ -639,7 +644,7 @@ watch(
 			</div>
 
 			<!-- Toggle All Categories Link (Inside category filters section) -->
-			<div v-show="showCategoryFilters" class="mb-4">
+			<div v-show="shouldShowCategoryFilters" class="mb-4">
 				<button
 					@click="toggleAllCategories"
 					class="text-gray-asparagus hover:text-heavy-metal underline text-sm flex items-center gap-1">
