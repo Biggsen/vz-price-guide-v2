@@ -70,10 +70,11 @@ Implement a complete user account system with registration, authentication, pass
 
 **1. Email Template Customization**
 
--   No custom email templates configured
--   Sender name still "not provided"
--   No branded email content
--   No welcome email implementation
+-   ✅ Email verification template customized with branding
+-   ✅ Password reset template customized with branding
+-   ✅ Sender name updated to "VZ Price Guide"
+-   [ ] Test email deliverability and action URLs
+-   [ ] Welcome email implementation (optional enhancement)
 
 **2. Account Management Features**
 
@@ -130,6 +131,8 @@ Implement a complete user account system with registration, authentication, pass
 -   ✅ Add `/reset-password` route
 -   ✅ Email input form with validation
 -   ✅ Send reset email functionality
+-   ✅ Create `ResetPasswordConfirmView.vue` component
+-   ✅ Add `/reset-password-confirm` route
 -   ✅ Password reset form with token validation
 -   ✅ Success confirmation page
 -   ✅ Error handling for invalid/expired tokens
@@ -162,10 +165,11 @@ Implement a complete user account system with registration, authentication, pass
 #### Task 2.4: Custom Password Reset Page and Action URL
 
 -   ✅ Create a custom password reset page on your domain (`/reset-password`)
+-   ✅ Create a custom password reset confirmation page (`/reset-password-confirm`)
 -   ✅ Add a form for users to enter a new password (with validation)
 -   ✅ Handle the Firebase password reset action code (oobCode) from the URL
 -   ✅ Show success and error messages
--   [ ] Update Firebase Auth settings to use your custom reset page as the action URL
+-   [ ] Update Firebase Auth settings to use your custom reset confirmation page as the action URL
 -   [ ] Test the full reset flow end-to-end
 
 ### Phase 3: Account Security & Settings
@@ -201,50 +205,78 @@ Implement a complete user account system with registration, authentication, pass
 
 **Current Firebase Templates:**
 
--   ✅ **Email address verification**: Configured with default template
--   ✅ **Password reset**: Available in Firebase console
+-   ✅ **Email address verification**: Customized with branding
+-   ✅ **Password reset**: Customized with branding
 -   ✅ **Email address change**: Available in Firebase console
 -   ✅ **Multi-factor enrollment notification**: Available in Firebase console
 
 **Customization Tasks:**
 
--   [ ] Update sender name from "not provided" to "VZ Price Guide"
--   [ ] Customize email verification template:
+-   ✅ Update sender name from "not provided" to "VZ Price Guide"
+-   ✅ Customize email verification template:
     -   Update subject line to be more specific
     -   Improve message content and branding
     -   Add VZ Price Guide logo/styling
--   [ ] Customize password reset template:
+-   ✅ Customize password reset template:
     -   Update subject and message content
     -   Add branding and clear instructions
 -   [ ] Test all email templates for deliverability
 -   [ ] Verify action URLs work with our routing structure
 
-#### Task 4.3: Custom Email Verification Success Page (Optional)
+#### Task 4.2: UX Review and Polish
+
+**Pages Requiring UX Review:**
+
+-   [ ] **SignUpView.vue**: Review form layout, validation feedback, and user flow
+-   [ ] **SignInView.vue**: Review form design, error handling, and success messages
+-   [ ] **VerifyEmailView.vue**: Review messaging clarity and resend functionality
+-   [ ] **VerifyEmailSuccessView.vue**: Review success states and navigation options
+-   [ ] **ResetPasswordView.vue**: Review form design and user feedback
+-   [ ] **ChangePasswordView.vue**: Review form layout and validation
+-   [ ] **ProfileView.vue**: Review profile management interface and success states
+
+**UX Improvements to Consider:**
+
+-   [ ] **Consistent Design Language**: Ensure all forms follow the same design patterns
+-   [ ] **Loading States**: Add proper loading indicators for all async operations
+-   [ ] **Error Handling**: Improve error message clarity and user guidance
+-   [ ] **Success Feedback**: Enhance success message presentation and next steps
+-   [ ] **Form Validation**: Review real-time validation feedback and styling
+-   [ ] **Mobile Responsiveness**: Ensure all pages work well on mobile devices
+-   [ ] **Accessibility**: Review keyboard navigation, screen reader support, and ARIA labels
+-   [ ] **Micro-interactions**: Add subtle animations and transitions for better UX
+-   [ ] **Copy Review**: Review all text content for clarity and consistency
+-   [ ] **Navigation Flow**: Ensure logical progression between pages
+
+**Technical UX Considerations:**
+
+-   [ ] **Form Auto-focus**: Ensure proper focus management on form fields
+-   [ ] **Password Visibility**: Review password show/hide functionality
+-   [ ] **Auto-complete**: Ensure proper autocomplete attributes on forms
+-   [ ] **Browser Back Button**: Test navigation behavior with browser back/forward
+-   [ ] **Deep Linking**: Ensure direct URL access works correctly
+-   [ ] **Error Recovery**: Test error scenarios and recovery paths
+-   [ ] **Performance**: Review loading times and optimize where needed
+
+#### Task 4.3: Custom Email Verification Success Page
 
 **Current State:**
 
--   Firebase provides default email verification success page
--   Generic styling without app branding
--   Users see "Your email has been verified" message
-
-**Customization Tasks:**
-
--   [ ] Create custom email verification success page (`/verify-email-success`)
--   [ ] Add route to router with proper meta tags
--   [ ] Design page with app branding and consistent styling
--   [ ] Handle verification token validation
--   [ ] Show success message with app-specific content
--   [ ] Add navigation options (sign in, go to profile, etc.)
+-   ✅ Custom email verification success page implemented (`/verify-email-success`)
+-   ✅ App branding and consistent styling applied
+-   ✅ Verification token validation handled
+-   ✅ Success message with app-specific content
+-   ✅ Navigation options (sign in, go to profile, etc.)
+-   ✅ Proper error handling for invalid/expired tokens
 -   [ ] Configure Firebase Auth to use custom action URL
 -   [ ] Test verification flow end-to-end
--   [ ] Ensure proper error handling for invalid/expired tokens
 
 **Benefits:**
 
--   Consistent branding with app design
--   Better user experience and flow control
--   Integration with existing navigation
--   Professional appearance matching app standards
+-   ✅ Consistent branding with app design
+-   ✅ Better user experience and flow control
+-   ✅ Integration with existing navigation
+-   ✅ Professional appearance matching app standards
 
 #### Task 4.2: Email Service Integration
 
@@ -252,14 +284,14 @@ Implement a complete user account system with registration, authentication, pass
 
 -   ✅ **From address**: noreply@minecraft-economy-price-guide.net
 -   ✅ **Reply to**: noreply
--   ❌ **Sender name**: "not provided" (needs updating)
+-   ✅ **Sender name**: "VZ Price Guide"
 
 **Configuration Tasks:**
 
--   [ ] Update sender name to "VZ Price Guide"
+-   ✅ Update sender name to "VZ Price Guide"
 -   [ ] Verify action URLs work with our app routing:
     -   Current: `https://minecraft-economy-price-guide.net/__/auth/action?mode=action&oobCode=code`
-    -   Ensure our `/verify-email` and `/reset-password` routes handle these properly
+    -   Ensure our `/verify-email-success` and `/reset-password-confirm` routes handle these properly
 -   [ ] Monitor email delivery rates
 -   [ ] Handle email bounces and failures
 -   [ ] Email analytics tracking
@@ -366,10 +398,10 @@ match /users/{userId} {
 
 ### Email Deliverability
 
--   [ ] Welcome emails delivered successfully
+-   [ ] Welcome emails delivered successfully (optional enhancement)
 -   ✅ Verification emails reach users
--   [ ] Password reset emails work reliably
--   [ ] Email templates are professional and clear
+-   ✅ Password reset emails work reliably
+-   ✅ Email templates are professional and clear
 
 ---
 
@@ -417,7 +449,7 @@ match /users/{userId} {
 -   ✅ Reset link works with valid token
 -   ✅ Reset fails with invalid/expired token
 -   ✅ Password change in profile works
--   [ ] Password change notification is sent
+-   [ ] Password change notification is sent (optional enhancement)
 
 ### Account Management
 
