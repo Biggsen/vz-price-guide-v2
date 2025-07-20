@@ -205,13 +205,13 @@ function clearError() {
 						</div>
 
 						<!-- Password Reset Link -->
-						<div class="text-left">
+						<!-- <div class="text-left">
 							<RouterLink
 								to="/reset-password"
 								class="text-sm text-semantic-info hover:text-opacity-80">
 								<span class="underline">Forgot your password?</span>
 							</RouterLink>
-						</div>
+						</div> -->
 					</div>
 
 					<!-- Submit Button -->
@@ -243,7 +243,7 @@ function clearError() {
 					</div>
 
 					<!-- Sign Up Link -->
-					<div class="text-left pt-4">
+					<!-- <div class="text-left pt-4">
 						<p class="text-sm text-gray-500">
 							Don't have an account?
 							<RouterLink
@@ -252,7 +252,7 @@ function clearError() {
 								<span class="underline">Sign up</span>
 							</RouterLink>
 						</p>
-					</div>
+					</div> -->
 				</form>
 			</div>
 
