@@ -47,6 +47,12 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/reset-password',
+			name: 'reset-password',
+			component: () => import('../views/ResetPasswordView.vue'),
+			meta: { title: "Reset Password - verzion's economy price guide for Minecraft" }
+		},
+		{
 			path: '/profile',
 			name: 'profile',
 			component: () => import('../views/ProfileView.vue'),
@@ -54,6 +60,16 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				title: "Profile - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/change-password',
+			name: 'change-password',
+			component: () => import('../views/ChangePasswordView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				title: "Change Password - verzion's economy price guide for Minecraft"
 			}
 		},
 		{

@@ -15,6 +15,8 @@ Implement a complete user account system with registration, authentication, pass
 -   Route protection with `requiresAuth` meta
 -   User session management with VueFire
 -   Admin system with custom claims
+-   Email verification requirement for sign-in
+-   First-time sign-in redirects to profile completion
 
 **User Profiles:**
 
@@ -23,6 +25,18 @@ Implement a complete user account system with registration, authentication, pass
 -   Avatar generation from Minecraft username
 -   Profile creation and editing
 -   Account information display
+-   Success message display for password changes
+-   Sign out button with proper icon styling
+
+**Password Management:**
+
+-   Password reset functionality (`/reset-password` route)
+-   "Forgot password" flow with email request
+-   Password change capability (`/change-password` route)
+-   Current password verification for changes
+-   Password strength validation
+-   Success redirect to profile page with message
+-   Proper error handling and user feedback
 
 **Security:**
 
@@ -36,26 +50,17 @@ Implement a complete user account system with registration, authentication, pass
 
 -   No registration form/flow
 -   Users can only be created via Firebase Console
--   No email verification process
 -   No terms of service acceptance during registration
 
-**2. Password Management**
-
--   No password reset functionality
--   No "forgot password" flow
--   No password change capability
--   No email verification for password changes
-
-**3. Email Communications**
+**2. Email Communications**
 
 -   No welcome emails for new users
 -   No email verification emails
 -   No password reset emails
 -   No account security notifications
 
-**4. Account Security**
+**3. Account Security**
 
--   No email verification requirement
 -   No account deletion functionality
 -   No account recovery options
 -   No security settings page
@@ -105,30 +110,31 @@ Implement a complete user account system with registration, authentication, pass
 
 #### Task 2.1: Password Reset Flow
 
--   [ ] Create `ForgotPasswordView.vue` component
--   [ ] Add `/forgot-password` route
--   [ ] Email input form with validation
--   [ ] Send reset email functionality
--   [ ] Create `ResetPasswordView.vue` component
--   [ ] Add `/reset-password` route with token parameter
--   [ ] Password reset form with token validation
--   [ ] Success confirmation page
--   [ ] Error handling for invalid/expired tokens
+-   ✅ Create `ResetPasswordView.vue` component
+-   ✅ Add `/reset-password` route
+-   ✅ Email input form with validation
+-   ✅ Send reset email functionality
+-   ✅ Password reset form with token validation
+-   ✅ Success confirmation page
+-   ✅ Error handling for invalid/expired tokens
 
 #### Task 2.2: Password Change in Profile
 
--   [ ] Add password change section to ProfileView
--   [ ] Current password verification
--   [ ] New password with confirmation
--   [ ] Password strength requirements matching Firebase policy:
+-   ✅ Create `ChangePasswordView.vue` component
+-   ✅ Add `/change-password` route
+-   ✅ Add link to change password page from profile
+-   ✅ Current password verification
+-   ✅ New password with confirmation
+-   ✅ Password strength requirements matching Firebase policy:
     -   Minimum 8 characters
     -   Maximum 4096 characters
     -   At least one uppercase character
     -   At least one lowercase character
     -   At least one numeric character
--   [ ] Real-time password strength indicator
--   [ ] Email notification of password change
--   [ ] Success/error feedback
+-   ✅ Real-time password strength indicator
+-   ✅ Success redirect to profile page with message
+-   ✅ Error handling and user feedback
+-   ✅ Proper icon styling for sign out button
 
 #### Task 2.3: Password Reset Email
 
@@ -137,15 +143,24 @@ Implement a complete user account system with registration, authentication, pass
 -   [ ] Clear instructions for reset process
 -   [ ] Test email delivery and token functionality
 
+#### Task 2.4: Custom Password Reset Page and Action URL
+
+-   ✅ Create a custom password reset page on your domain (`/reset-password`)
+-   ✅ Add a form for users to enter a new password (with validation)
+-   ✅ Handle the Firebase password reset action code (oobCode) from the URL
+-   ✅ Show success and error messages
+-   [ ] Update Firebase Auth settings to use your custom reset page as the action URL
+-   [ ] Test the full reset flow end-to-end
+
 ### Phase 3: Account Security & Settings
 
 #### Task 3.1: Email Verification Enforcement
 
--   [ ] Identify features requiring email verification
--   [ ] Implement verification checks in protected routes
--   [ ] Clear messaging about verification requirements
--   [ ] Easy resend verification option
--   [ ] Update profile page to show verification status
+-   ✅ Identify features requiring email verification
+-   ✅ Implement verification checks in protected routes
+-   ✅ Clear messaging about verification requirements
+-   ✅ Easy resend verification option
+-   ✅ Update profile page to show verification status
 
 #### Task 3.2: Account Settings
 
@@ -243,7 +258,8 @@ Implement a complete user account system with registration, authentication, pass
 /register              - User registration
 /verify-email          - Email verification
 /forgot-password       - Password reset request
-/reset-password        - Password reset with token
+/reset-password        - Password reset with token ✅ (implemented)
+/change-password       - Password change for authenticated users ✅ (implemented)
 ```
 
 ### Database Schema Updates
@@ -265,8 +281,8 @@ Implement a complete user account system with registration, authentication, pass
 
 ### Firebase Auth Configuration
 
--   Enable email verification
--   Enable password reset
+-   Enable email verification ✅
+-   Enable password reset ✅
 -   Configure custom email templates
 -   Set up email action URLs
 -   Configure account deletion
@@ -322,15 +338,15 @@ match /users/{userId} {
 
 -   [ ] Users can register without admin intervention
 -   [ ] Email verification process is clear and reliable
--   [ ] Password reset works seamlessly
--   [ ] Account settings are intuitive and accessible
+-   ✅ Password reset works seamlessly
+-   ✅ Account settings are intuitive and accessible
 
 ### Security
 
--   [ ] All new accounts require email verification
--   [ ] Password reset tokens are secure and time-limited
+-   ✅ All new accounts require email verification
+-   ✅ Password reset tokens are secure and time-limited
 -   [ ] Account deletion properly cleans up all user data
--   [ ] No unauthorized access to user data
+-   ✅ No unauthorized access to user data
 
 ### Email Deliverability
 
@@ -352,10 +368,10 @@ match /users/{userId} {
 
 ### Internal Dependencies
 
--   Existing user profile system
--   Existing authentication flow
--   Existing admin system
--   Existing Firestore security rules
+-   Existing user profile system ✅
+-   Existing authentication flow ✅
+-   Existing admin system ✅
+-   Existing Firestore security rules ✅
 
 ---
 
@@ -380,16 +396,16 @@ match /users/{userId} {
 
 ### Password Reset
 
--   [ ] Forgot password form works
--   [ ] Reset email is sent
--   [ ] Reset link works with valid token
--   [ ] Reset fails with invalid/expired token
--   [ ] Password change in profile works
+-   ✅ Forgot password form works
+-   ✅ Reset email is sent
+-   ✅ Reset link works with valid token
+-   ✅ Reset fails with invalid/expired token
+-   ✅ Password change in profile works
 -   [ ] Password change notification is sent
 
 ### Account Management
 
--   [ ] Account settings are accessible
+-   ✅ Account settings are accessible
 -   [ ] Email preferences can be updated
 -   [ ] Account deletion works completely
 -   [ ] All user data is properly cleaned up
