@@ -353,6 +353,19 @@ function isSelected(index) {
 						<p class="font-normal text-gray-900">Normal (font-normal)</p>
 					</div>
 				</div>
+
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Links</h3>
+					<div class="space-y-2">
+						<p class="text-gray-900">
+							This is a paragraph with a
+							<a href="#" class="font-medium hover:text-horizon">
+								<span class="underline">link using font-medium</span>
+							</a>
+							class for proper styling.
+						</p>
+					</div>
+				</div>
 			</div>
 		</section>
 
