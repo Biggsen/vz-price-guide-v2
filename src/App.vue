@@ -50,14 +50,17 @@ function setActiveMainNav(section) {
 </script>
 
 <template>
-	<header>
-		<HeaderBanner />
-		<Nav :activeMainNav="activeMainNav" @setActiveMainNav="setActiveMainNav" />
-		<SubNav />
-	</header>
+	<div class="min-h-screen flex flex-col">
+		<header>
+			<HeaderBanner />
+			<Nav :activeMainNav="activeMainNav" @setActiveMainNav="setActiveMainNav" />
+			<SubNav />
+		</header>
 
-	<div class="sm:pt-0 pt-16">
-		<RouterView />
+		<main class="flex-1 sm:pt-0 pt-16">
+			<RouterView />
+		</main>
+
+		<Footer />
 	</div>
-	<Footer />
 </template>
