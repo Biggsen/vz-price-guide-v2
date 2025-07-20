@@ -259,8 +259,11 @@ function formatCompletionDate(dateString) {
 						v-for="phase in displayedRoadmap"
 						:key="phase.id"
 						class="bg-gray-100 border border-gray-300 p-6">
-						<div class="flex items-center justify-between mb-4">
-							<h3 class="text-lg font-semibold text-gray-800">{{ phase.title }}</h3>
+						<div
+							class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+							<h3 class="text-lg font-semibold text-gray-800 mb-2 sm:mb-0">
+								{{ phase.title }}
+							</h3>
 							<div class="flex items-center gap-2">
 								<span
 									:style="getStatusStyle(phase.status)"

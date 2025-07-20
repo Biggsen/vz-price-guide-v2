@@ -1,5 +1,19 @@
 [
 	{
+		"id": 20,
+		"title": "Mobile Navigation & UI Improvements",
+		"date": "2025-07-20",
+		"type": "Enhancement",
+		"description": "🎉 Mobile users, this one's for you! Completely redesigned the mobile navigation with a proper hamburger menu and smart sticky behavior. Also cleaned up the homepage to be less cluttered on mobile by hiding category filters by default.",
+		"changes": [
+			"Slim mobile header with just the logo and menu button",
+			"Smart sticky navigation that hides when scrolling down and reappears when scrolling up",
+			"Category filters are now hidden by default on mobile to save screen space",
+			"Easy toggle to show/hide category filters when needed",
+			"Logo now scrolls to top when clicked on homepage"
+		]
+	},
+	{
 		"id": 19,
 		"title": "Minecraft 1.20 Trails & Tales - Complete!",
 		"date": "2025-07-17",
