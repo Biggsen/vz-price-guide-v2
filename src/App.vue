@@ -3,7 +3,7 @@ import { ref, watch, provide } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 
 import HeaderBanner from './components/HeaderBanner.vue'
-import MobileNav from './components/MobileNav.vue'
+import Nav from './components/Nav.vue'
 import SubNav from './components/SubNav.vue'
 import Footer from './components/Footer.vue'
 import { useAdmin } from './utils/admin.js'
@@ -52,7 +52,7 @@ function setActiveMainNav(section) {
 <template>
 	<header>
 		<HeaderBanner />
-		<MobileNav :activeMainNav="activeMainNav" @setActiveMainNav="setActiveMainNav" />
+		<Nav :activeMainNav="activeMainNav" @setActiveMainNav="setActiveMainNav" />
 		<SubNav />
 	</header>
 
