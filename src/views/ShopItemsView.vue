@@ -185,7 +185,7 @@ watch(
 	user,
 	(newUser) => {
 		if (newUser === null) {
-			router.push('/login')
+			router.push('/signin')
 		}
 	},
 	{ immediate: true }

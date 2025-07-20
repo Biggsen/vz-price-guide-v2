@@ -372,9 +372,6 @@ async function addSelectedMissing() {
 			<RouterLink to="/" class="text-blue-600 hover:underline">Return to Home</RouterLink>
 		</div>
 	</div>
-	<div v-else class="p-4 pt-8">
-		<RouterLink to="/login">Login to view this page</RouterLink>
-	</div>
 </template>
 
 <style scoped>

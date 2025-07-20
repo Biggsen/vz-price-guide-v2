@@ -25,10 +25,10 @@ const router = createRouter({
 		},
 
 		{
-			path: '/login',
-			name: 'login',
-			component: () => import('../views/LoginView.vue'),
-			meta: { title: "Login - verzion's economy price guide for Minecraft" }
+			path: '/signin',
+			name: 'signin',
+			component: () => import('../views/SignInView.vue'),
+			meta: { title: "Sign In - verzion's economy price guide for Minecraft" }
 		},
 		{
 			path: '/profile',
@@ -216,7 +216,7 @@ router.beforeEach(async (to, from, next) => {
 	if (to.meta.requiresAuth) {
 		const user = await getCurrentUser()
 		if (!user) {
-			return next({ path: '/login', query: { redirect: to.fullPath } })
+			return next({ path: '/signin', query: { redirect: to.fullPath } })
 		}
 	}
 	next()

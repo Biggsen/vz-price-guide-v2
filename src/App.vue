@@ -154,9 +154,9 @@ watch(
 				Shop Manager
 			</RouterLink>
 
-			<!-- Login button (when not logged in) -->
-			<RouterLink v-if="!user?.email" class="hover:underline ml-auto" to="/login">
-				Login
+			<!-- Sign In button (when not logged in) -->
+			<RouterLink v-if="!user?.email" class="hover:underline ml-auto" to="/signin">
+				Sign In
 			</RouterLink>
 
 			<!-- User profile display (when logged in) -->
