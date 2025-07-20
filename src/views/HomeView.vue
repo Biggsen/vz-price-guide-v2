@@ -799,7 +799,7 @@ watch(
 									viewMode === 'categories'
 										? 'bg-gray-asparagus text-white'
 										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
 								]">
 								Categories
 							</button>
@@ -809,7 +809,7 @@ watch(
 									viewMode === 'list'
 										? 'bg-gray-asparagus text-white'
 										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-3 py-1 text-sm font-medium transition'
+									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
 								]">
 								List
 							</button>
@@ -827,7 +827,7 @@ watch(
 									layout === 'comfortable'
 										? 'bg-gray-asparagus text-white'
 										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
 								]">
 								Comfortable
 							</button>
@@ -837,9 +837,9 @@ watch(
 									layout === 'condensed'
 										? 'bg-gray-asparagus text-white'
 										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-3 py-1 text-sm font-medium transition'
+									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
 								]">
-								Condensed
+								Compact
 							</button>
 						</div>
 					</div>
