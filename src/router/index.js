@@ -202,6 +202,12 @@ const router = createRouter({
 				requiresAuth: true,
 				title: "Design System & Styleguide - verzion's economy price guide for Minecraft"
 			}
+		},
+		{
+			path: '/:pathMatch(.*)*',
+			name: 'not-found',
+			component: () => import('../views/NotFoundView.vue'),
+			meta: { title: "Page Not Found - verzion's economy price guide for Minecraft" }
 		}
 	]
 })
