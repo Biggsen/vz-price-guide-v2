@@ -188,11 +188,38 @@ Implement a complete user account system with registration, authentication, pass
 -   [ ] Test all email templates for deliverability
 -   [ ] Verify action URLs work with our routing structure
 
+#### Task 4.3: Custom Email Verification Success Page (Optional)
+
+**Current State:**
+
+-   Firebase provides default email verification success page
+-   Generic styling without app branding
+-   Users see "Your email has been verified" message
+
+**Customization Tasks:**
+
+-   [ ] Create custom email verification success page (`/verify-email-success`)
+-   [ ] Add route to router with proper meta tags
+-   [ ] Design page with app branding and consistent styling
+-   [ ] Handle verification token validation
+-   [ ] Show success message with app-specific content
+-   [ ] Add navigation options (sign in, go to profile, etc.)
+-   [ ] Configure Firebase Auth to use custom action URL
+-   [ ] Test verification flow end-to-end
+-   [ ] Ensure proper error handling for invalid/expired tokens
+
+**Benefits:**
+
+-   Consistent branding with app design
+-   Better user experience and flow control
+-   Integration with existing navigation
+-   Professional appearance matching app standards
+
 #### Task 4.2: Email Service Integration
 
 **Current Configuration:**
 
--   ✅ **From address**: noreply@vz-price-guide.firebaseapp.com
+-   ✅ **From address**: noreply@minecraft-economy-price-guide.net
 -   ✅ **Reply to**: noreply
 -   ❌ **Sender name**: "not provided" (needs updating)
 
@@ -200,7 +227,7 @@ Implement a complete user account system with registration, authentication, pass
 
 -   [ ] Update sender name to "VZ Price Guide"
 -   [ ] Verify action URLs work with our app routing:
-    -   Current: `https://vz-price-guide.firebaseapp.com/__/auth/action?mode=action&oobCode=code`
+    -   Current: `https://minecraft-economy-price-guide.net/__/auth/action?mode=action&oobCode=code`
     -   Ensure our `/verify-email` and `/reset-password` routes handle these properly
 -   [ ] Monitor email delivery rates
 -   [ ] Handle email bounces and failures
@@ -321,7 +348,7 @@ match /users/{userId} {
 -   Firebase Auth email verification ✅ (configured)
 -   Firebase Auth password reset ✅ (available)
 -   Firebase Auth custom email templates ✅ (configured)
--   Email delivery service (Firebase Auth handles this) ✅ (noreply@vz-price-guide.firebaseapp.com)
+-   Email delivery service (Firebase Auth handles this) ✅ (noreply@minecraft-economy-price-guide.net)
 
 ### Internal Dependencies
 

@@ -52,6 +52,7 @@ const router = createRouter({
 			component: () => import('../views/ProfileView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Profile - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -61,6 +62,7 @@ const router = createRouter({
 			component: () => import('../views/AdminView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Admin Dashboard - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -70,6 +72,7 @@ const router = createRouter({
 			component: () => import('../views/ShopManagerView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Shop Manager - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -79,6 +82,7 @@ const router = createRouter({
 			component: () => import('../views/AddItemView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Add Item - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -88,6 +92,7 @@ const router = createRouter({
 			component: () => import('../views/EditItemView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Edit Item - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -97,6 +102,7 @@ const router = createRouter({
 			component: () => import('../views/MissingItemsView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Missing Items - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -106,6 +112,7 @@ const router = createRouter({
 			component: () => import('../views/BulkUpdateItemsView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Bulk Update - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -115,6 +122,7 @@ const router = createRouter({
 			component: () => import('../views/ServersView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "My Servers - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -124,6 +132,7 @@ const router = createRouter({
 			component: () => import('../views/ShopsView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "My Shops - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -133,6 +142,7 @@ const router = createRouter({
 			component: () => import('../views/ShopItemsView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Shop Items - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -142,6 +152,7 @@ const router = createRouter({
 			component: () => import('../views/MarketOverviewView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Market Overview - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -156,6 +167,7 @@ const router = createRouter({
 			component: () => import('../views/recipes/RecipeImportView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Import Recipes - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -165,6 +177,7 @@ const router = createRouter({
 			component: () => import('../views/recipes/RecipeManageView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Manage Recipes - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -174,6 +187,7 @@ const router = createRouter({
 			component: () => import('../views/recipes/RecipeRecalculateView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Recalculate Prices - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -183,6 +197,7 @@ const router = createRouter({
 			component: () => import('../views/EditRecipeView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Edit Recipe - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -216,6 +231,7 @@ const router = createRouter({
 			component: () => import('../views/StyleguideView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Design System & Styleguide - verzion's economy price guide for Minecraft"
 			}
 		}

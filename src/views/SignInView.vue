@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useFirebaseAuth, useCurrentUser } from 'vuefire'
 import { useRouter, useRoute } from 'vue-router'
 import { signInWithEmailAndPassword, signOut } from '@firebase/auth'
+import { userProfileExists } from '../utils/userProfile.js'
 
 const userInput = ref({
 	email: '',
@@ -35,9 +36,32 @@ async function signInToFirebase() {
 	errorMessage.value = ''
 
 	try {
-		await signInWithEmailAndPassword(auth, userInput.value.email, userInput.value.password)
-		// Signed in successfully - redirect to home
-		router.push('/')
+		const userCredential = await signInWithEmailAndPassword(
+			auth,
+			userInput.value.email,
+			userInput.value.password
+		)
+
+		// Check if email is verified
+		if (!userCredential.user.emailVerified) {
+			// Sign out the user since they're not verified
+			await signOut(auth)
+			errorMessage.value =
+				'Please verify your email address before signing in. Check your email for a verification link.'
+			return
+		}
+
+		// Check if user has a profile
+		const hasProfile = await userProfileExists(userCredential.user.uid)
+
+		// Redirect based on profile status
+		if (hasProfile) {
+			// User has profile - redirect to home
+			router.push('/')
+		} else {
+			// First time user - redirect to profile to complete setup
+			router.push('/profile')
+		}
 	} catch (error) {
 		console.error('Sign in error:', error.code, error.message)
 
@@ -87,7 +111,7 @@ function clearError() {
 <template>
 	<div class="p-4 py-8 max-w-4xl">
 		<!-- Sign In Form -->
-		<div v-if="!currentUser?.email">
+		<div v-if="!currentUser?.email || !currentUser?.emailVerified">
 			<!-- Header -->
 			<div class="mb-8">
 				<h1 class="text-3xl font-bold text-gray-900 mb-2">Sign In</h1>
@@ -143,7 +167,7 @@ function clearError() {
 							required
 							v-model="userInput.email"
 							@input="clearError"
-							class="block w-full sm:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus"
+							class="block w-full sm:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
 							placeholder="Enter your email address"
 							:disabled="isLoading" />
 					</div>
@@ -164,7 +188,7 @@ function clearError() {
 								required
 								v-model="userInput.password"
 								@input="clearError"
-								class="block w-full sm:w-80 rounded border-2 border-gray-asparagus px-3 py-1 pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus"
+								class="block w-full sm:w-80 rounded border-2 border-gray-asparagus px-3 py-1 pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
 								placeholder="Enter your password"
 								:disabled="isLoading" />
 							<button

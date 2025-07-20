@@ -60,7 +60,7 @@ const activeMainNav = inject('activeMainNav')
 
 	<!-- Shop Manager Subnav -->
 	<nav
-		v-if="activeMainNav === 'shop-manager' && user?.email"
+		v-if="activeMainNav === 'shop-manager' && user?.email && user?.emailVerified"
 		class="bg-gray-700 text-white px-4 py-2 flex gap-4 items-center border-t border-gray-600">
 		<RouterLink class="hover:underline" active-class="underline" to="/shop-manager">
 			Dashboard
