@@ -31,6 +31,22 @@ const router = createRouter({
 			meta: { title: "Sign In - verzion's economy price guide for Minecraft" }
 		},
 		{
+			path: '/signup',
+			name: 'signup',
+			component: () => import('../views/SignUpView.vue'),
+			meta: { title: "Create Account - verzion's economy price guide for Minecraft" }
+		},
+		{
+			path: '/verify-email',
+			name: 'verify-email',
+			component: () => import('../views/VerifyEmailView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: false,
+				title: "Verify Email - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/profile',
 			name: 'profile',
 			component: () => import('../views/ProfileView.vue'),
@@ -217,6 +233,11 @@ router.beforeEach(async (to, from, next) => {
 		const user = await getCurrentUser()
 		if (!user) {
 			return next({ path: '/signin', query: { redirect: to.fullPath } })
+		}
+
+		// Check email verification for routes that require it
+		if (to.meta.requiresVerification !== false && !user.emailVerified) {
+			return next({ path: '/verify-email' })
 		}
 	}
 	next()
