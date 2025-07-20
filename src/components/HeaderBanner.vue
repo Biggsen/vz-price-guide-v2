@@ -3,7 +3,7 @@ import { CubeIcon } from '@heroicons/vue/24/solid'
 </script>
 
 <template>
-	<div class="bg-gray-asparagus p-4 sm:p-8 pt-3 sm:pt-7 pattern">
+	<div class="bg-gray-asparagus p-4 sm:p-8 pt-3 sm:pt-7 pattern hidden sm:block">
 		<h1
 			class="flex items-center gap-2 text-lg sm:text-2xl text-white font-bold [text-shadow:_2px_2px_2px_#000]">
 			<CubeIcon
