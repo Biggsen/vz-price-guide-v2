@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { useFirebaseAuth, useCurrentUser } from 'vuefire'
 import { useRouter } from 'vue-router'
 import { createUserWithEmailAndPassword, sendEmailVerification } from '@firebase/auth'
-import { ExclamationCircleIcon, CheckCircleIcon } from '@heroicons/vue/24/solid'
+import { ExclamationCircleIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 
 const userInput = ref({
@@ -241,7 +241,7 @@ function clearError() {
 						<div
 							v-if="userInput.password && !passwordValid"
 							class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-							<ExclamationCircleIcon class="w-4 h-4" />
+							<XCircleIcon class="w-5 h-5" />
 							Password is invalid
 						</div>
 					</div>
@@ -302,7 +302,7 @@ function clearError() {
 									Passwords match
 								</template>
 								<template v-else>
-									<ExclamationCircleIcon class="w-5 h-5" />
+									<XCircleIcon class="w-5 h-5" />
 									Passwords do not match
 								</template>
 							</span>

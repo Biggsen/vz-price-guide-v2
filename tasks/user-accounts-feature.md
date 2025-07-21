@@ -227,38 +227,38 @@ Implement a complete user account system with registration, authentication, pass
 
 **Pages Requiring UX Review:**
 
--   [ ] **SignUpView.vue**
+-   [x] **SignUpView.vue**
 
-    -   [ ] Review field labels, placeholders, and instructions for clarity
-    -   [ ] Check input validation and error messages
-    -   [ ] Test password visibility toggle (if present)
-    -   [ ] Confirm accessibility (labels, tab order, screen reader)
-    -   [ ] Verify mobile responsiveness
-    -   [ ] Review loading and success states
-    -   [ ] Check navigation to sign in and other relevant screens
+    -   [x] Review field labels, placeholders, and instructions for clarity
+    -   [x] Check input validation and error messages
+    -   [x] Test password visibility toggle (if present)
+    -   [x] Confirm accessibility (labels, tab order, screen reader)
+    -   [x] Verify mobile responsiveness
+    -   [x] Review loading and success states
+    -   [x] Check navigation to sign in and other relevant screens
 
--   [ ] **SignInView.vue**
+-   [x] **SignInView.vue**
 
-    -   [ ] Review field labels and instructions
-    -   [ ] Test error messages for invalid credentials
-    -   [ ] Confirm “Forgot password?” link is visible and works
-    -   [ ] Check accessibility and keyboard navigation
-    -   [ ] Verify mobile responsiveness
-    -   [ ] Review loading and success states
+    -   [x] Review field labels and instructions
+    -   [x] Test error messages for invalid credentials
+    -   [x] Confirm “Forgot password?” link is visible and works
+    -   [x] Check accessibility and keyboard navigation
+    -   [x] Verify mobile responsiveness
+    -   [x] Review loading and success states
 
--   [ ] **ResetPasswordView.vue** (Password Reset Request)
+-   [x] **ResetPasswordView.vue** (Password Reset Request)
 
-    -   [ ] Review instructions for requesting a reset
-    -   [ ] Test error/success messages for valid/invalid emails
-    -   [ ] Confirm accessibility and tab order
-    -   [ ] Verify mobile responsiveness
+    -   [x] Review instructions for requesting a reset
+    -   [x] Test error/success messages for valid/invalid emails
+    -   [x] Confirm accessibility and tab order
+    -   [x] Verify mobile responsiveness
 
--   [ ] **ResetPasswordConfirmView.vue** (Password Reset Confirm)
+-   [x] **ResetPasswordConfirmView.vue** (Password Reset Confirm)
 
-    -   [ ] Review instructions for setting a new password
-    -   [ ] Test validation and error messages
-    -   [ ] Confirm accessibility and tab order
-    -   [ ] Verify mobile responsiveness
+    -   [x] Review instructions for setting a new password
+    -   [x] Test validation and error messages
+    -   [x] Confirm accessibility and tab order
+    -   [x] Verify mobile responsiveness
 
 -   [ ] **VerifyEmailView.vue**
 
