@@ -227,13 +227,63 @@ Implement a complete user account system with registration, authentication, pass
 
 **Pages Requiring UX Review:**
 
--   [ ] **SignUpView.vue**: Review form layout, validation feedback, and user flow
--   [ ] **SignInView.vue**: Review form design, error handling, and success messages
--   [ ] **VerifyEmailView.vue**: Review messaging clarity and resend functionality
--   [ ] **VerifyEmailSuccessView.vue**: Review success states and navigation options
--   [ ] **ResetPasswordView.vue**: Review form design and user feedback
--   [ ] **ChangePasswordView.vue**: Review form layout and validation
--   [ ] **ProfileView.vue**: Review profile management interface and success states
+-   [ ] **SignUpView.vue**
+
+    -   [ ] Review field labels, placeholders, and instructions for clarity
+    -   [ ] Check input validation and error messages
+    -   [ ] Test password visibility toggle (if present)
+    -   [ ] Confirm accessibility (labels, tab order, screen reader)
+    -   [ ] Verify mobile responsiveness
+    -   [ ] Review loading and success states
+    -   [ ] Check navigation to sign in and other relevant screens
+
+-   [ ] **SignInView.vue**
+
+    -   [ ] Review field labels and instructions
+    -   [ ] Test error messages for invalid credentials
+    -   [ ] Confirm “Forgot password?” link is visible and works
+    -   [ ] Check accessibility and keyboard navigation
+    -   [ ] Verify mobile responsiveness
+    -   [ ] Review loading and success states
+
+-   [ ] **ResetPasswordView.vue** (Password Reset Request)
+
+    -   [ ] Review instructions for requesting a reset
+    -   [ ] Test error/success messages for valid/invalid emails
+    -   [ ] Confirm accessibility and tab order
+    -   [ ] Verify mobile responsiveness
+
+-   [ ] **ResetPasswordConfirmView.vue** (Password Reset Confirm)
+
+    -   [ ] Review instructions for setting a new password
+    -   [ ] Test validation and error messages
+    -   [ ] Confirm accessibility and tab order
+    -   [ ] Verify mobile responsiveness
+
+-   [ ] **VerifyEmailView.vue**
+
+    -   [ ] Review messaging clarity and resend functionality
+    -   [ ] Confirm accessibility and tab order
+    -   [ ] Verify mobile responsiveness
+
+-   [ ] **VerifyEmailSuccessView.vue**
+
+    -   [ ] Review success states and navigation options
+    -   [ ] Confirm accessibility and tab order
+    -   [ ] Verify mobile responsiveness
+
+-   [ ] **ChangePasswordView.vue**
+
+    -   [ ] Review form layout and validation
+    -   [ ] Test error/success messages
+    -   [ ] Confirm accessibility and tab order
+    -   [ ] Verify mobile responsiveness
+
+-   [ ] **ProfileView.vue**
+    -   [ ] Review profile management interface and success states
+    -   [ ] Check edit and save flows
+    -   [ ] Confirm accessibility and tab order
+    -   [ ] Verify mobile responsiveness
 
 **UX Improvements to Consider:**
 
