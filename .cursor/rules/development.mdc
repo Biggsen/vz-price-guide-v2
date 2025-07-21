@@ -1,0 +1,46 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+# Development Rules
+
+## Naming Conventions
+
+-   Use underscores (e.g., `1_16`) for version keys and filenames, not dots (e.g., `1.16`).
+-   Prefer domain-driven names like 'items' or 'products' over generic terms like 'shop prices'.
+-   Follow the established naming pattern for resource files: `items_X_Y.json` and `recipes_X_Y.json` for each Minecraft version.
+
+## Styling
+
+-   Use Tailwind CSS utility classes for UI styling instead of inline styles.
+-   Always use Heroicons for icons; do not use inline SVGs.
+-   Ensure consistent use of design tokens and spacing throughout components.
+
+## Data Management
+
+-   Treat files in `/resource/` as static reference data only; do not use them as the application's live data source.
+-   Live data (items, prices) must come from Firestore collections, not resource files.
+
+## Versioning
+
+-   When adding support for a new Minecraft version, create new resource files following the established naming convention.
+-   Do not duplicate recipes for new versions; fallback to the previous version's recipe if one does not exist.
+
+## Code Quality
+
+-   Use clear, descriptive commit messages.
+-   Write modular, reusable components.
+-   Ensure all user-facing forms have proper validation and error handling.
+-   Prioritize accessibility (labels, keyboard navigation, ARIA attributes).
+
+## Documentation
+
+-   Update relevant documentation in `/docs/` and `/tasks/` when making significant changes.
+-   Keep roadmap and update logs current in `/data/roadmap.json` and `/data/updates.json`.
+
+## Security
+
+-   Enforce authentication and authorization for all protected routes.
+-   Never expose sensitive data in the frontend or public files.
