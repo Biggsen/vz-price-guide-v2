@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import { useFirebaseAuth, useCurrentUser } from 'vuefire'
 import { useRouter } from 'vue-router'
 import { createUserWithEmailAndPassword, sendEmailVerification } from '@firebase/auth'
+import { ExclamationCircleIcon, CheckCircleIcon } from '@heroicons/vue/24/solid'
+import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 
 const userInput = ref({
 	email: '',
@@ -47,17 +49,21 @@ const passwordStrength = computed(() => {
 })
 
 // Computed properties
+const passwordValid = computed(() => {
+	const pw = userInput.value.password
+	return pw.length >= 8 && /[A-Z]/.test(pw) && /[a-z]/.test(pw) && /\d/.test(pw)
+})
+
 const isFormValid = computed(() => {
 	const emailValid =
 		userInput.value.email.trim() !== '' &&
 		/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userInput.value.email)
-	const passwordValid = userInput.value.password.length >= 8 && passwordStrength.value.score >= 3
 	const passwordsMatch = userInput.value.password === userInput.value.confirmPassword
 	const confirmPasswordFilled = userInput.value.confirmPassword.length > 0
 
 	return (
 		emailValid &&
-		passwordValid &&
+		passwordValid.value &&
 		passwordsMatch &&
 		confirmPasswordFilled &&
 		termsAccepted.value
@@ -210,6 +216,7 @@ function clearError() {
 								required
 								v-model="userInput.password"
 								@input="clearError"
+								minlength="8"
 								class="block w-full sm:w-80 rounded border-2 border-gray-asparagus px-3 py-1 pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
 								placeholder="Create a password"
 								:disabled="isLoading" />
@@ -218,59 +225,24 @@ function clearError() {
 								@click="togglePasswordVisibility"
 								class="absolute inset-y-0 right-0 pr-3 flex items-center"
 								:disabled="isLoading">
-								<svg
-									v-if="showPassword"
-									class="h-5 w-5 text-gray-400"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-								</svg>
-								<svg
-									v-else
-									class="h-5 w-5 text-gray-400"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.639 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.639 0-8.573-3.007-9.963-7.178z" />
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-								</svg>
+								<EyeSlashIcon v-if="showPassword" class="h-5 w-5 text-gray-400" />
+								<EyeIcon v-else class="h-5 w-5 text-gray-400" />
+								<span class="sr-only">
+									{{ showPassword ? 'Hide password' : 'Show password' }}
+								</span>
 							</button>
 						</div>
 
 						<!-- Password Strength Indicator -->
-						<div v-if="userInput.password" class="mt-2">
-							<div class="flex items-center space-x-2">
-								<div class="flex space-x-1">
-									<div
-										v-for="i in 4"
-										:key="i"
-										class="h-2 w-8 rounded"
-										:class="{
-											'bg-red-500': passwordStrength.score >= i,
-											'bg-gray-200': passwordStrength.score < i
-										}"></div>
-								</div>
-								<span :class="passwordStrength.color" class="text-sm font-medium">
-									{{ passwordStrength.label }}
-								</span>
-							</div>
-							<div class="mt-1 text-xs text-gray-500">
-								Password must be at least 8 characters with uppercase, lowercase,
-								and number
-							</div>
+						<div class="mt-1 text-xs text-gray-500">
+							Password must be at least 8 characters with uppercase, lowercase, and
+							number
+						</div>
+						<div
+							v-if="userInput.password && !passwordValid"
+							class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+							<ExclamationCircleIcon class="w-4 h-4" />
+							Password is invalid
 						</div>
 					</div>
 
@@ -306,52 +278,33 @@ function clearError() {
 								@click="toggleConfirmPasswordVisibility"
 								class="absolute inset-y-0 right-0 pr-3 flex items-center"
 								:disabled="isLoading">
-								<svg
+								<EyeSlashIcon
 									v-if="showConfirmPassword"
-									class="h-5 w-5 text-gray-400"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-								</svg>
-								<svg
-									v-else
-									class="h-5 w-5 text-gray-400"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.639 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.639 0-8.573-3.007-9.963-7.178z" />
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-								</svg>
+									class="h-5 w-5 text-gray-400" />
+								<EyeIcon v-else class="h-5 w-5 text-gray-400" />
+								<span class="sr-only">
+									{{ showConfirmPassword ? 'Hide password' : 'Show password' }}
+								</span>
 							</button>
 						</div>
 
 						<!-- Password Match Indicator -->
 						<div v-if="userInput.confirmPassword" class="mt-1">
 							<span
-								class="text-xs"
+								class="text-sm font-semibold flex items-center gap-1"
 								:class="
 									userInput.confirmPassword === userInput.password
 										? 'text-green-600'
 										: 'text-red-600'
 								">
-								{{
-									userInput.confirmPassword === userInput.password
-										? '✓ Passwords match'
-										: '✗ Passwords do not match'
-								}}
+								<template v-if="userInput.confirmPassword === userInput.password">
+									<CheckCircleIcon class="w-5 h-5" />
+									Passwords match
+								</template>
+								<template v-else>
+									<ExclamationCircleIcon class="w-5 h-5" />
+									Passwords do not match
+								</template>
 							</span>
 						</div>
 					</div>
@@ -359,26 +312,28 @@ function clearError() {
 					<!-- Terms Acceptance -->
 					<div>
 						<div class="flex items-start space-x-3">
-							<input
-								id="terms"
-								type="checkbox"
-								v-model="termsAccepted"
-								required
-								class="mt-1 h-4 w-4 rounded border-gray-300 text-gray-asparagus focus:ring-gray-asparagus"
-								:disabled="isLoading" />
-							<label for="terms" class="text-sm text-gray-700">
-								I agree to the
-								<RouterLink
-									to="/terms-of-use"
-									class="text-semantic-info hover:text-opacity-80 underline">
-									Terms of Use
-								</RouterLink>
-								and
-								<RouterLink
-									to="/privacy-policy"
-									class="text-semantic-info hover:text-opacity-80 underline">
-									Privacy Policy
-								</RouterLink>
+							<label class="flex items-center cursor-pointer">
+								<input
+									id="terms"
+									type="checkbox"
+									v-model="termsAccepted"
+									required
+									class="checkbox-input mr-2"
+									:disabled="isLoading" />
+								<span class="text-sm text-gray-700">
+									I agree to the
+									<RouterLink
+										to="/terms-of-use"
+										class="text-gray-700 hover:text-opacity-80 underline">
+										<span>Terms of Use</span>
+									</RouterLink>
+									and
+									<RouterLink
+										to="/privacy-policy"
+										class="text-gray-700hover:text-opacity-80 underline">
+										<span>Privacy Policy</span>
+									</RouterLink>
+								</span>
 							</label>
 						</div>
 					</div>
@@ -387,7 +342,6 @@ function clearError() {
 					<div class="pt-2">
 						<button
 							type="submit"
-							:disabled="!isFormValid || isLoading"
 							class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
 							<svg
 								v-if="isLoading"
@@ -415,33 +369,21 @@ function clearError() {
 					<div class="text-left pt-4">
 						<p class="text-sm text-gray-500">
 							Already have an account?
-							<RouterLink
-								to="/signin"
-								class="text-semantic-info hover:text-opacity-80">
+							<RouterLink to="/signin" class="text-gray-700 hover:text-opacity-80">
 								<span class="underline">Sign in</span>
 							</RouterLink>
 						</p>
 					</div>
 				</form>
 			</div>
-
-			<!-- Additional Info -->
-			<div class="border-t border-gray-200 pt-6">
-				<p class="text-sm text-gray-500">
-					By creating an account, you agree to our
-					<RouterLink to="/terms-of-use" class="text-gray-700 hover:text-gray-900">
-						<span class="underline">Terms of Use</span>
-					</RouterLink>
-					and
-					<RouterLink to="/privacy-policy" class="text-gray-700 hover:text-gray-900">
-						<span class="underline">Privacy Policy</span>
-					</RouterLink>
-				</p>
-			</div>
 		</div>
 	</div>
 </template>
 
 <style lang="scss" scoped>
+.checkbox-input {
+	@apply w-4 h-4 rounded;
+	accent-color: theme('colors.gray-asparagus');
+}
 // Additional custom styles if needed
 </style>

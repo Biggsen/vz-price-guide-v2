@@ -163,8 +163,7 @@ function clearSuccess() {
 				<div class="pt-2">
 					<button
 						type="submit"
-						:disabled="!isFormValid || isLoading"
-						class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
+						class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
 						<svg
 							v-if="isLoading"
 							class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline"
@@ -191,7 +190,7 @@ function clearSuccess() {
 				<div class="text-left pt-4">
 					<p class="text-sm text-gray-500">
 						Remember your password?
-						<RouterLink to="/signin" class="text-semantic-info hover:text-opacity-80">
+						<RouterLink to="/signin" class="text-gray-700 hover:text-opacity-80">
 							<span class="underline">Sign in</span>
 						</RouterLink>
 					</p>
