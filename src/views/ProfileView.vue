@@ -321,6 +321,12 @@ function signOutOfFirebase() {
 							Create Profile
 						</button>
 					</form>
+					<button
+						@click="signOutOfFirebase"
+						class="mt-6 rounded-md bg-semantic-danger px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 flex items-center">
+						<ArrowLeftStartOnRectangleIcon class="w-4 h-4 inline mr-1" />
+						Sign Out
+					</button>
 				</div>
 
 				<!-- Existing profile -->
