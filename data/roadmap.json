@@ -105,14 +105,13 @@
 	},
 	{
 		"id": 6,
-		"title": "User accounts and community features",
-		"status": "Pending",
-		"description": "Enable users to create accounts, provide feedback and suggest new features for the price guide",
+		"title": "User Account Fundamentals",
+		"status": "In Development",
+		"description": "Complete the user account system with registration, email verification, password management, and account security. This provides the foundation needed for community features and enhanced user experience.",
 		"features": [
-			{ "name": "User registration system", "completed": false },
-			{ "name": "User authentication/login", "completed": false },
-			{ "name": "User profile pages", "completed": false },
-			{ "name": "Community feedback and feature suggestions", "completed": false }
+			{ "name": "User registration with email verification", "completed": true },
+			{ "name": "Password reset and account recovery", "completed": true },
+			{ "name": "UX review and testing", "completed": false }
 		]
 	},
 	{

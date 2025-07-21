@@ -371,6 +371,12 @@ const allVisibleItems = computed(() => {
 
 const visibleCategories = ref([...enabledCategories])
 const showUncategorised = ref(true)
+const showCategoryFilters = ref(false) // Hidden by default on mobile
+
+// Computed property to show category filters on desktop
+const shouldShowCategoryFilters = computed(() => {
+	return showCategoryFilters.value || window.innerWidth >= 640
+})
 
 // Version filter functions
 function selectVersion(version) {
@@ -492,6 +498,10 @@ function toggleUncategorised() {
 	showUncategorised.value = !showUncategorised.value
 }
 
+function toggleCategoryFilters() {
+	showCategoryFilters.value = !showCategoryFilters.value
+}
+
 function showAllCategories() {
 	visibleCategories.value = [...enabledCategories]
 	showUncategorised.value = true
@@ -570,7 +580,7 @@ watch(
 						v-model="searchQuery"
 						placeholder="Search for items..."
 						class="border-2 border-gray-asparagus rounded px-3 py-2 w-full mb-1 h-10" />
-					<p class="text-xs text-gray-500 mb-2 sm:mb-0">
+					<p class="text-xs text-gray-500 mb-2 sm:mb-0 hidden sm:block">
 						Tip: Use commas or spaces to search for multiple items
 					</p>
 				</div>
@@ -584,7 +594,18 @@ watch(
 				</div>
 			</div>
 
-			<div class="flex flex-wrap gap-2 mb-4 justify-start">
+			<!-- Hide Category Filters Toggle (Mobile Only) -->
+			<div class="sm:hidden mb-4">
+				<button
+					@click="toggleCategoryFilters"
+					class="text-gray-asparagus hover:text-heavy-metal underline text-sm flex items-center gap-1">
+					<EyeSlashIcon v-if="showCategoryFilters" class="w-4 h-4" />
+					<EyeIcon v-else class="w-4 h-4" />
+					{{ showCategoryFilters ? 'Hide category filters' : 'Show category filters' }}
+				</button>
+			</div>
+
+			<div v-show="shouldShowCategoryFilters" class="flex flex-wrap gap-2 mb-4 justify-start">
 				<button
 					v-for="cat in enabledCategories"
 					:key="cat"
@@ -622,8 +643,8 @@ watch(
 				</button>
 			</div>
 
-			<!-- Toggle All Categories Link -->
-			<div class="mb-4">
+			<!-- Toggle All Categories Link (Inside category filters section) -->
+			<div v-show="shouldShowCategoryFilters" class="mb-4">
 				<button
 					@click="toggleAllCategories"
 					class="text-gray-asparagus hover:text-heavy-metal underline text-sm flex items-center gap-1">
@@ -783,7 +804,7 @@ watch(
 									viewMode === 'categories'
 										? 'bg-gray-asparagus text-white'
 										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
 								]">
 								Categories
 							</button>
@@ -793,7 +814,7 @@ watch(
 									viewMode === 'list'
 										? 'bg-gray-asparagus text-white'
 										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-3 py-1 text-sm font-medium transition'
+									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
 								]">
 								List
 							</button>
@@ -811,7 +832,7 @@ watch(
 									layout === 'comfortable'
 										? 'bg-gray-asparagus text-white'
 										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
 								]">
 								Comfortable
 							</button>
@@ -821,9 +842,9 @@ watch(
 									layout === 'condensed'
 										? 'bg-gray-asparagus text-white'
 										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-3 py-1 text-sm font-medium transition'
+									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
 								]">
-								Condensed
+								Compact
 							</button>
 						</div>
 					</div>
