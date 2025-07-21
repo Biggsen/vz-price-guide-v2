@@ -47,6 +47,21 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/auth-action',
+			name: 'auth-action',
+			beforeEnter: (to, from, next) => {
+				const mode = to.query.mode
+				if (mode === 'resetPassword') {
+					next({ path: '/reset-password-confirm', query: to.query })
+				} else if (mode === 'verifyEmail') {
+					next({ path: '/verify-email-success', query: to.query })
+				} else {
+					next({ path: '/' })
+				}
+			},
+			meta: { title: "Account Action - verzion's economy price guide for Minecraft" }
+		},
+		{
 			path: '/verify-email-success',
 			name: 'verify-email-success',
 			component: () => import('../views/VerifyEmailSuccessView.vue'),
