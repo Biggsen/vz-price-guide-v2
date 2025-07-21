@@ -336,7 +336,7 @@ onUnmounted(() => {
 
 			<!-- User Actions -->
 			<RouterLink
-				v-if="!user?.email"
+				v-if="!user?.email || !user?.emailVerified"
 				to="/signin"
 				@click="closeMenu"
 				class="block px-3 py-2 transition-colors hover:bg-gray-700 hover:text-white">
