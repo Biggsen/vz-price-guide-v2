@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useFirebaseAuth, useCurrentUser } from 'vuefire'
 import { applyActionCode } from '@firebase/auth'
+import { CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid'
 
 const router = useRouter()
 const route = useRoute()
@@ -84,122 +85,80 @@ onMounted(() => {
 </script>
 
 <template>
-	<div class="p-4 py-8 max-w-4xl">
-		<div class="max-w-md mx-auto">
-			<!-- Loading State -->
-			<div v-if="isLoading" class="text-center">
-				<div
-					class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
-					<svg
-						class="animate-spin h-6 w-6 text-blue-600"
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24">
-						<circle
-							class="opacity-25"
-							cx="12"
-							cy="12"
-							r="10"
-							stroke="currentColor"
-							stroke-width="4"></circle>
-						<path
-							class="opacity-75"
-							fill="currentColor"
-							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-					</svg>
-				</div>
-				<h1 class="text-3xl font-bold text-gray-900 mb-2">Verifying Your Email</h1>
-				<p class="text-gray-600">Please wait while we verify your email address...</p>
+	<div class="p-4 py-8 max-w-xl">
+		<!-- Loading State -->
+		<div v-if="isLoading" class="text-center">
+			<div
+				class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+				<svg
+					class="animate-spin h-6 w-6 text-blue-600"
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24">
+					<circle
+						class="opacity-25"
+						cx="12"
+						cy="12"
+						r="10"
+						stroke="currentColor"
+						stroke-width="4"></circle>
+					<path
+						class="opacity-75"
+						fill="currentColor"
+						d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
 			</div>
+			<h1 class="text-3xl font-bold text-gray-900 mb-2">Verifying Your Email</h1>
+			<p class="text-gray-600">Please wait while we verify your email address...</p>
+		</div>
 
-			<!-- Success State -->
-			<div v-else-if="isSuccess" class="text-center">
-				<div
-					class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-					<svg
-						class="h-6 w-6 text-green-600"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M5 13l4 4L19 7" />
-					</svg>
-				</div>
-				<h1 class="text-3xl font-bold text-gray-900 mb-2">Email Verified!</h1>
-				<p class="text-gray-600 mb-6">
-					Your email address has been successfully verified. You can now sign in to your
-					account.
-				</p>
-
-				<!-- Redirecting Message -->
-				<div v-if="isRedirecting" class="mb-6">
-					<p class="text-sm text-gray-500">Redirecting you to sign in...</p>
-				</div>
-
-				<!-- Action Buttons -->
-				<div v-else class="space-y-3">
-					<button
-						@click="goToSignIn"
-						class="w-full rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
-						Sign In to Your Account
-					</button>
-
-					<button
-						@click="goToHome"
-						class="w-full rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
-						Go to Homepage
-					</button>
-				</div>
+		<!-- Success State -->
+		<div v-else-if="isSuccess" class="max-w-xl">
+			<div class="mb-4 flex items-center gap-3">
+				<h1 class="text-3xl font-bold text-gray-900">Email Verified!</h1>
+				<CheckCircleIcon class="w-8 h-8 text-semantic-success" />
 			</div>
-
-			<!-- Error State -->
-			<div v-else class="text-center">
-				<div
-					class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-					<svg
-						class="h-6 w-6 text-red-600"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M6 18L18 6M6 6l12 12" />
-					</svg>
-				</div>
-				<h1 class="text-3xl font-bold text-gray-900 mb-2">Verification Failed</h1>
-				<p class="text-gray-600 mb-6">{{ errorMessage }}</p>
-
-				<!-- Action Buttons -->
-				<div class="space-y-3">
-					<button
-						@click="requestNewVerification"
-						class="w-full rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
-						Request New Verification Email
-					</button>
-
-					<button
-						@click="goToSignIn"
-						class="w-full rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
-						Go to Sign In
-					</button>
-				</div>
+			<p class="text-gray-600 mb-6">
+				Your email address has been successfully verified. You can now sign in to your
+				account.
+			</p>
+			<!-- Redirecting Message -->
+			<div v-if="isRedirecting" class="mb-6">
+				<p class="text-sm text-gray-500">Redirecting you to sign in...</p>
 			</div>
-
-			<!-- Additional Info -->
-			<div class="text-center mt-8">
-				<p class="text-sm text-gray-500">
-					Need help? Contact us at
-					<a
-						href="mailto:support@minecraft-economy-price-guide.net"
-						class="text-semantic-info hover:text-opacity-80 underline">
-						support@minecraft-economy-price-guide.net
-					</a>
-				</p>
+			<!-- Action Buttons -->
+			<div v-else class="flex flex-col items-start gap-3 mb-4">
+				<button
+					@click="goToSignIn"
+					class="inline-flex items-center justify-center rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
+					Sign In to Your Account
+				</button>
+				<button
+					@click="goToHome"
+					class="inline-flex items-center justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
+					Go to Homepage
+				</button>
+			</div>
+		</div>
+		<!-- Error State -->
+		<div v-else class="max-w-xl">
+			<div class="mb-4 flex items-center gap-3">
+				<h1 class="text-3xl font-bold text-gray-900">Verification Failed</h1>
+				<XCircleIcon class="w-8 h-8 text-semantic-danger" />
+			</div>
+			<p class="text-gray-600 mb-6">{{ errorMessage }}</p>
+			<!-- Action Buttons -->
+			<div class="flex flex-col items-start gap-3 mb-4">
+				<button
+					@click="requestNewVerification"
+					class="inline-flex items-center justify-center rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
+					Request New Verification Email
+				</button>
+				<button
+					@click="goToSignIn"
+					class="inline-flex items-center justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
+					Go to Sign In
+				</button>
 			</div>
 		</div>
 	</div>
