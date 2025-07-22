@@ -182,6 +182,21 @@ Implement a complete user account system with registration, authentication, pass
 -   ✅ Easy resend verification option
 -   ✅ Update profile page to show verification status
 
+#### Task 3.4: Profile Creation Flow Update
+
+**Manual Profile Creation for Verified Users**
+
+-   Profile creation is no longer a forced first step upon accessing the profile page.
+-   Only users with verified emails can create a profile.
+-   The profile page is always accessible from the navigation, showing the user's email and verification status.
+-   Unverified users see a minimal profile view:
+    -   Their email address
+    -   A clear message that their email is unverified
+    -   Option to resend verification email
+    -   All profile creation/editing actions are hidden or disabled
+-   Verified users see the full profile management UI, including the option to create or edit their profile.
+-   All write actions to the database (profile creation, editing) are blocked for unverified users, both in the UI and via backend security rules.
+
 #### Task 3.2: Account Settings
 
 -   [ ] Add account settings section to ProfileView
