@@ -87,7 +87,7 @@ const router = createRouter({
 			component: () => import('../views/ProfileView.vue'),
 			meta: {
 				requiresAuth: true,
-				requiresVerification: true,
+				requiresVerification: false,
 				title: "Profile - verzion's economy price guide for Minecraft"
 			}
 		},

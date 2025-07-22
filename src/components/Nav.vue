@@ -336,16 +336,16 @@ onUnmounted(() => {
 
 			<!-- User Actions -->
 			<RouterLink
-				v-if="!user?.email || !user?.emailVerified"
+				v-if="!user?.email"
 				to="/signin"
 				@click="closeMenu"
 				class="block px-3 py-2 transition-colors hover:bg-gray-700 hover:text-white">
 				Sign In
 			</RouterLink>
 
-			<!-- User profile display (when logged in and verified) -->
+			<!-- User profile display (when logged in, regardless of verification) -->
 			<RouterLink
-				v-if="user?.email && user?.emailVerified"
+				v-if="user?.email"
 				to="/profile"
 				@click="closeMenu"
 				class="flex items-center gap-3 px-3 py-2 transition-colors hover:bg-gray-700 hover:text-white">
@@ -438,17 +438,14 @@ onUnmounted(() => {
 			Shop Manager
 		</RouterLink>
 
-		<!-- Sign In button (when not logged in or not verified) -->
-		<RouterLink
-			v-if="!user?.email || !user?.emailVerified"
-			class="hover:underline ml-auto"
-			to="/signin">
+		<!-- Sign In button (when not logged in) -->
+		<RouterLink v-if="!user?.email" class="hover:underline ml-auto" to="/signin">
 			Sign In
 		</RouterLink>
 
-		<!-- User profile display (when logged in and verified) -->
+		<!-- User profile display (when logged in, regardless of verification) -->
 		<RouterLink
-			v-if="user?.email && user?.emailVerified"
+			v-if="user?.email"
 			class="flex items-center gap-2 hover:bg-gray-700 px-2 py-1 rounded transition-colors ml-auto"
 			to="/profile"
 			@click="setActiveMainNav(null)">
