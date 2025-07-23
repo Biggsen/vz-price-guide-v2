@@ -205,6 +205,19 @@ onUnmounted(() => {
 				Updates
 			</RouterLink>
 
+			<RouterLink
+				to="/suggestions"
+				@click="setActiveMainNav(null)"
+				:class="[
+					'block px-3 py-2 transition-colors',
+					route.path === '/suggestions'
+						? 'bg-gray-700 text-white'
+						: 'hover:bg-gray-700 hover:text-white'
+				]"
+				v-if="user?.email">
+				Suggestions
+			</RouterLink>
+
 			<!-- Admin section (only for admins) -->
 			<div v-if="isAdmin">
 				<button
@@ -396,6 +409,18 @@ onUnmounted(() => {
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
 			Updates
+		</RouterLink>
+
+		<RouterLink
+			to="/suggestions"
+			:class="[
+				'px-3 py-2 rounded transition-colors',
+				route.path === '/suggestions'
+					? 'bg-gray-700 text-white'
+					: 'hover:bg-gray-700 hover:text-white'
+			]"
+			v-if="user?.email">
+			Suggestions
 		</RouterLink>
 
 		<!-- Admin section (only for admins) -->

@@ -307,6 +307,25 @@ const router = createRouter({
 			meta: { title: "Restricted Access - verzion's economy price guide for Minecraft" }
 		},
 		{
+			path: '/suggestions',
+			name: 'suggestions',
+			component: () => import('../views/SuggestionsView.vue'),
+			meta: {
+				requiresAuth: true,
+				title: "Suggestions - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/suggestions/all',
+			name: 'suggestions-all',
+			component: () => import('../views/SuggestionsAdminView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresAdmin: true,
+				title: "All Suggestions - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/:pathMatch(.*)*',
 			name: 'not-found',
 			component: () => import('../views/NotFoundView.vue'),
