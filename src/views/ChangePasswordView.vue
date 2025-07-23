@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useFirebaseAuth, useCurrentUser } from 'vuefire'
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from '@firebase/auth'
 import { useRouter } from 'vue-router'
+import { CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid'
 
 const auth = useFirebaseAuth()
 const currentUser = useCurrentUser()
@@ -20,14 +21,17 @@ const showCurrent = ref(false)
 const showNew = ref(false)
 const showConfirm = ref(false)
 
+const passwordValid = computed(() => {
+	const pw = form.value.newPassword
+	return pw.length >= 8 && /[A-Z]/.test(pw) && /[a-z]/.test(pw) && /\d/.test(pw)
+})
+
 const isFormValid = computed(() => {
 	return (
 		form.value.currentPassword.length >= 6 &&
-		form.value.newPassword.length >= 8 &&
-		/[A-Z]/.test(form.value.newPassword) &&
-		/[a-z]/.test(form.value.newPassword) &&
-		/\d/.test(form.value.newPassword) &&
-		form.value.newPassword === form.value.confirmPassword
+		passwordValid.value &&
+		form.value.newPassword === form.value.confirmPassword &&
+		form.value.confirmPassword.length > 0
 	)
 })
 
@@ -54,7 +58,7 @@ async function handleChangePassword() {
 				errorMessage.value = 'Current password is incorrect.'
 				break
 			case 'auth/weak-password':
-				errorMessage.value = 'New password is too weak.'
+				errorMessage.value = 'Password is too weak. Please choose a stronger password.'
 				break
 			case 'auth/too-many-requests':
 				errorMessage.value = 'Too many attempts. Please try again later.'
@@ -164,6 +168,9 @@ function clearError() {
 									stroke-width="2"
 									d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
 							</svg>
+							<span class="sr-only">
+								{{ showCurrent ? 'Hide password' : 'Show password' }}
+							</span>
 						</button>
 					</div>
 				</div>
@@ -218,7 +225,19 @@ function clearError() {
 									stroke-width="2"
 									d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
 							</svg>
+							<span class="sr-only">
+								{{ showNew ? 'Hide password' : 'Show password' }}
+							</span>
 						</button>
+					</div>
+					<div class="mt-1 text-xs text-gray-500">
+						Password must be at least 8 characters with uppercase, lowercase, and number
+					</div>
+					<div
+						v-if="form.newPassword && !passwordValid"
+						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+						<XCircleIcon class="w-5 h-5" />
+						Password is invalid
 					</div>
 				</div>
 				<div>
@@ -235,7 +254,15 @@ function clearError() {
 							v-model="form.confirmPassword"
 							@input="clearError"
 							required
-							class="block w-full sm:w-80 rounded border-2 border-gray-asparagus px-3 py-1 pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
+							class="block w-full sm:w-80 rounded border-2 px-3 py-1 pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
+							:class="{
+								'border-gray-asparagus':
+									form.confirmPassword === form.newPassword ||
+									form.confirmPassword === '',
+								'border-red-500':
+									form.confirmPassword !== '' &&
+									form.confirmPassword !== form.newPassword
+							}"
 							placeholder="Confirm your new password"
 							:disabled="isLoading" />
 						<button
@@ -272,13 +299,34 @@ function clearError() {
 									stroke-width="2"
 									d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
 							</svg>
+							<span class="sr-only">
+								{{ showConfirm ? 'Hide password' : 'Show password' }}
+							</span>
 						</button>
 					</div>
+					<div v-if="form.confirmPassword" class="mt-1">
+						<span
+							class="text-sm font-semibold flex items-center gap-1"
+							:class="
+								form.confirmPassword === form.newPassword
+									? 'text-green-600'
+									: 'text-red-600'
+							">
+							<template v-if="form.confirmPassword === form.newPassword">
+								<CheckCircleIcon class="w-5 h-5" />
+								Passwords match
+							</template>
+							<template v-else>
+								<XCircleIcon class="w-5 h-5" />
+								Passwords do not match
+							</template>
+						</span>
+					</div>
 				</div>
-				<div class="pt-2">
+				<div class="pt-2 flex gap-3">
 					<button
 						type="submit"
-						:disabled="!isFormValid || isLoading"
+						:disabled="isLoading"
 						class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
 						<svg
 							v-if="isLoading"
@@ -300,21 +348,15 @@ function clearError() {
 						</svg>
 						{{ buttonText }}
 					</button>
-				</div>
-				<div class="text-left pt-4">
-					<p class="text-sm text-gray-500">
-						<RouterLink to="/account" class="text-semantic-info hover:text-opacity-80">
-							<span class="underline">Back to Account</span>
-						</RouterLink>
-					</p>
+					<button
+						type="button"
+						@click="router.push('/account')"
+						:disabled="isLoading"
+						class="rounded-md bg-gray-200 text-gray-800 px-4 py-2 text-sm font-medium hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed">
+						Cancel
+					</button>
 				</div>
 			</form>
-		</div>
-		<div class="border-t border-gray-200 pt-6">
-			<p class="text-sm text-gray-500">
-				Passwords must be at least 8 characters and include an uppercase letter, a lowercase
-				letter, and a number.
-			</p>
 		</div>
 	</div>
 </template>
