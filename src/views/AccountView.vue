@@ -31,6 +31,14 @@ if (route.query.message === 'password-updated') {
 	// Clear the query parameter
 	router.replace({ path: '/account', query: {} })
 }
+// Reload user if just verified email
+if (route.query.message === 'email-verified' && auth.currentUser) {
+	auth.currentUser.reload().then(() => {
+		successMessage.value = 'Email verified successfully.'
+		// Clear the query parameter
+		router.replace({ path: '/account', query: {} })
+	})
+}
 
 // Profile form data
 const profileForm = ref({
@@ -40,6 +48,9 @@ const profileForm = ref({
 
 // Checkbox state for using minecraft username as display name
 const useMinecraftUsername = ref(false)
+
+// State for showing create profile form
+const showCreateProfileForm = ref(false)
 
 // Computed property for profile exists
 const profileExists = computed(() => {
@@ -136,6 +147,7 @@ async function createProfile() {
 		// Update local state
 		editingProfile.value = false
 		editingMinecraftProfile.value = false
+		showCreateProfileForm.value = false // Hide the form after successful creation
 
 		// Update local profile data immediately
 		userProfile.value = { ...newProfile }
@@ -339,75 +351,153 @@ function signOutOfFirebase() {
 					<p class="text-gray-600">Loading profile...</p>
 				</div>
 
-				<!-- Account setup (first time) -->
+				<!-- Profile Section for Verified Users without a profile -->
 				<div v-else-if="!profileExists" class="mb-8">
-					<h2
-						class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
-						Create Your Profile
-					</h2>
+					<!-- Account Information section -->
+					<div class="mb-8">
+						<h2
+							class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
+							Account Information
+						</h2>
+						<div class="space-y-3">
+							<div>
+								<label class="block text-base font-medium leading-6 text-gray-900">
+									Email
+								</label>
+								<p class="text-gray-900">{{ user.email }}</p>
+							</div>
+							<div>
+								<label class="block text-base font-medium leading-6 text-gray-900">
+									Account Type
+								</label>
+								<p v-if="isAdmin" class="text-green-600 text-sm font-bold">
+									✓ ADMIN ACCESS
+								</p>
+								<p v-else class="text-gray-500 text-sm">Regular User</p>
+							</div>
+							<div>
+								<label class="block text-base font-medium leading-6 text-gray-900">
+									Account Created
+								</label>
+								<p class="text-gray-500 text-sm">
+									{{ new Date(user.metadata.creationTime).toLocaleDateString() }}
+								</p>
+							</div>
+							<div>
+								<label class="block text-base font-medium leading-6 text-gray-900">
+									Last Sign In
+								</label>
+								<p class="text-gray-500 text-sm">
+									{{
+										new Date(user.metadata.lastSignInTime).toLocaleDateString()
+									}}
+								</p>
+							</div>
+						</div>
+					</div>
 
-					<form @submit.prevent="createProfile" class="space-y-6">
-						<div>
-							<div class="space-y-3">
+					<!-- Profile section -->
+					<div class="mb-8">
+						<h2
+							class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
+							Profile
+						</h2>
+						<div v-if="!showCreateProfileForm">
+							<p class="text-gray-700 text-base mb-4">
+								You have not created a profile yet.
+							</p>
+							<button
+								@click="showCreateProfileForm = true"
+								class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+								Create Profile
+							</button>
+						</div>
+						<form v-else @submit.prevent="createProfile" class="space-y-6">
+							<div>
+								<div class="space-y-3">
+									<div>
+										<label
+											for="display_name"
+											class="block text-base font-medium leading-6 text-gray-900">
+											Display Name (optional)
+										</label>
+										<input
+											type="text"
+											id="display_name"
+											v-model="profileForm.display_name"
+											:disabled="useMinecraftUsername"
+											placeholder="How others will see your name on the site"
+											class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus disabled:bg-gray-100 disabled:text-gray-500" />
+									</div>
+
+									<div class="flex items-center space-x-2">
+										<input
+											type="checkbox"
+											id="use_minecraft_username_initial"
+											v-model="useMinecraftUsername"
+											class="checkbox-input" />
+										<label
+											for="use_minecraft_username_initial"
+											class="text-base font-medium leading-6 text-gray-900">
+											Use Minecraft Username
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div>
 								<div>
 									<label
-										for="display_name"
+										for="minecraft_username"
 										class="block text-base font-medium leading-6 text-gray-900">
-										Display Name (optional)
+										Minecraft Username *
 									</label>
 									<input
 										type="text"
-										id="display_name"
-										v-model="profileForm.display_name"
-										:disabled="useMinecraftUsername"
-										placeholder="How others will see your name on the site"
-										class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus disabled:bg-gray-100 disabled:text-gray-500" />
-								</div>
-
-								<div class="flex items-center space-x-2">
-									<input
-										type="checkbox"
-										id="use_minecraft_username_initial"
-										v-model="useMinecraftUsername"
-										class="checkbox-input" />
-									<label
-										for="use_minecraft_username_initial"
-										class="text-base font-medium leading-6 text-gray-900">
-										Use Minecraft Username
-									</label>
+										id="minecraft_username"
+										v-model="profileForm.minecraft_username"
+										required
+										placeholder="Your Minecraft username"
+										class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
 								</div>
 							</div>
-						</div>
 
-						<div>
-							<div>
-								<label
-									for="minecraft_username"
-									class="block text-base font-medium leading-6 text-gray-900">
-									Minecraft Username *
-								</label>
-								<input
-									type="text"
-									id="minecraft_username"
-									v-model="profileForm.minecraft_username"
-									required
-									placeholder="Your Minecraft username"
-									class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
+							<div class="flex space-x-3">
+								<button
+									type="submit"
+									class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+									Create Profile
+								</button>
+								<button
+									type="button"
+									@click="showCreateProfileForm = false"
+									class="rounded-md bg-gray-200 text-gray-800 px-4 py-2 text-sm font-medium hover:bg-gray-300 transition">
+									Cancel
+								</button>
 							</div>
-						</div>
+						</form>
+					</div>
 
-						<button
-							type="submit"
-							class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-							Create Profile
-						</button>
-					</form>
-					<button
-						@click="signOutOfFirebase"
-						class="mt-6 rounded-md bg-semantic-danger px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 flex items-center">
-						<ArrowLeftStartOnRectangleIcon class="w-4 h-4 inline mr-1" />
-						Sign Out
-					</button>
+					<!-- Account Actions section -->
+					<div class="mb-8">
+						<h2
+							class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
+							Account Actions
+						</h2>
+						<div class="flex space-x-3">
+							<RouterLink
+								to="/change-password"
+								class="rounded-md bg-semantic-info px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+								Change Password
+							</RouterLink>
+							<button
+								@click="signOutOfFirebase"
+								class="rounded-md bg-semantic-danger px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 flex items-center">
+								<ArrowLeftStartOnRectangleIcon class="w-4 h-4 inline mr-1" />
+								Sign Out
+							</button>
+						</div>
+					</div>
 				</div>
 
 				<!-- Existing account -->
