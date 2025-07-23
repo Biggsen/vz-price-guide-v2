@@ -188,7 +188,7 @@ onUnmounted(() => {
 		</div>
 
 		<!-- Mobile Menu -->
-		<div v-show="isMenuOpen" class="pb-4">
+		<div v-show="isMenuOpen" class="pb-2">
 			<!-- Main Navigation Links -->
 			<RouterLink
 				to="/"
@@ -202,6 +202,18 @@ onUnmounted(() => {
 				Home
 			</RouterLink>
 
+			<button
+				@click="handleSuggestionsClick"
+				:class="[
+					'block px-3 py-2 transition-colors w-full text-left',
+					route.path === '/suggestions' || route.path === '/suggestions/all'
+						? 'bg-gray-700 text-white'
+						: 'hover:bg-gray-700 hover:text-white'
+				]"
+				v-if="user?.email">
+				Suggestions
+			</button>
+
 			<RouterLink
 				to="/updates"
 				@click="setActiveMainNav(null)"
@@ -213,18 +225,6 @@ onUnmounted(() => {
 				]">
 				Updates
 			</RouterLink>
-
-			<button
-				@click="handleSuggestionsClick"
-				:class="[
-					'block px-3 py-2 transition-colors',
-					route.path === '/suggestions' || route.path === '/suggestions/all'
-						? 'bg-gray-700 text-white'
-						: 'hover:bg-gray-700 hover:text-white'
-				]"
-				v-if="user?.email">
-				Suggestions
-			</button>
 
 			<!-- Admin section (only for admins) -->
 			<div v-if="isAdmin">
@@ -355,6 +355,7 @@ onUnmounted(() => {
 			<div v-if="user?.email" class="border-t border-gray-700 my-2"></div>
 
 			<!-- User Actions -->
+			<div v-if="!user?.email" class="border-t border-gray-700 my-2"></div>
 			<RouterLink
 				v-if="!user?.email"
 				to="/signin"
@@ -407,18 +408,6 @@ onUnmounted(() => {
 			]">
 			Home
 		</RouterLink>
-		<RouterLink
-			to="/updates"
-			@click="setActiveMainNav(null)"
-			:class="[
-				'px-3 py-2 rounded transition-colors',
-				route.path === '/updates'
-					? 'bg-gray-700 text-white'
-					: 'hover:bg-gray-700 hover:text-white'
-			]">
-			Updates
-		</RouterLink>
-
 		<button
 			@click="handleSuggestionsClick"
 			:class="[
@@ -430,6 +419,17 @@ onUnmounted(() => {
 			v-if="user?.email">
 			Suggestions
 		</button>
+		<RouterLink
+			to="/updates"
+			@click="setActiveMainNav(null)"
+			:class="[
+				'px-3 py-2 rounded transition-colors',
+				route.path === '/updates'
+					? 'bg-gray-700 text-white'
+					: 'hover:bg-gray-700 hover:text-white'
+			]">
+			Updates
+		</RouterLink>
 
 		<!-- Admin section (only for admins) -->
 		<RouterLink
