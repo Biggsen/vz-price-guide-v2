@@ -15,5 +15,8 @@
 				<span class="hidden sm:inline">Terms of Use</span>
 			</router-link>
 		</div>
+		<p class="text-gray-500 text-sm mt-2">
+			Need help? support@minecraft-economy-price-guide.net
+		</p>
 	</footer>
 </template>

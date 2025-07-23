@@ -1,5 +1,5 @@
 <template>
-	<div class="p-4 py-8 max-w-4xl mx-auto">
+	<div class="p-4 py-8 max-w-4xl">
 		<h1 class="text-2xl font-bold mb-6">All Suggestions</h1>
 		<div class="mb-6 flex gap-2">
 			<button
