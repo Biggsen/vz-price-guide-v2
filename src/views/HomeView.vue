@@ -15,7 +15,7 @@ import {
 	ArrowPathIcon,
 	Cog6ToothIcon
 } from '@heroicons/vue/24/outline'
-import { Squares2X2Icon, Cog6ToothIcon as Cog6ToothIconSolid } from '@heroicons/vue/16/solid'
+import { Cog6ToothIcon as Cog6ToothIconSolid, UsersIcon } from '@heroicons/vue/16/solid'
 
 const db = useFirestore()
 const route = useRoute()
@@ -57,7 +57,7 @@ const showAlert = ref(true)
 
 function dismissAlert() {
 	showAlert.value = false
-	localStorage.setItem('v120ItemsAlertDismissed', 'true')
+	localStorage.setItem('userAccountsAlertDismissed', 'true')
 }
 
 // Version filtering state
@@ -475,7 +475,7 @@ onMounted(() => {
 	initializeFromQuery()
 
 	// Check if alert was previously dismissed
-	const dismissed = localStorage.getItem('v120ItemsAlertDismissed')
+	const dismissed = localStorage.getItem('userAccountsAlertDismissed')
 	if (dismissed === 'true') {
 		showAlert.value = false
 	}
@@ -547,10 +547,12 @@ watch(
 		class="bg-norway bg-opacity-20 border-l-4 border-laurel text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
-				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2" />
+				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					More items! I've added all the items for 1.20 now and adjusted prices where
-					required. Check
+					<UsersIcon class="w-4 h-4 inline" />
+					User accounts are now live! You can register, sign in, and manage your profile.
+					Plus, you can now submit suggestions and feedback for the site using the new
+					Suggestions feature. Check
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
 						<span>Updates</span>
 					</router-link>
