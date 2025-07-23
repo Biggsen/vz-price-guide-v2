@@ -1,5 +1,14 @@
 import { useFirestore, useDocument } from 'vuefire'
-import { doc, setDoc, getDoc, getFirestore } from 'firebase/firestore'
+import {
+	doc,
+	setDoc,
+	getDoc,
+	getFirestore,
+	collection,
+	query,
+	where,
+	getDocs
+} from 'firebase/firestore'
 import { ref } from 'vue'
 
 // Generate Minecraft avatar URL
@@ -79,4 +88,25 @@ export function useUserProfile(userId) {
 	const userProfile = useDocument(docRef)
 
 	return { userProfile }
+}
+
+// Check if a Minecraft username is already taken by another user
+export async function isMinecraftUsernameTaken(minecraftUsername, excludeUserId = null) {
+	if (!minecraftUsername) return false
+
+	try {
+		const db = getFirestore()
+		const usersRef = collection(db, 'users')
+		const q = query(usersRef, where('minecraft_username', '==', minecraftUsername))
+		const querySnapshot = await getDocs(q)
+		for (const docSnap of querySnapshot.docs) {
+			if (!excludeUserId || docSnap.id !== excludeUserId) {
+				return true
+			}
+		}
+		return false
+	} catch (error) {
+		console.error('Error checking Minecraft username uniqueness:', error)
+		return false
+	}
 }

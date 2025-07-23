@@ -9,7 +9,8 @@ import {
 	useUserProfile,
 	createUserProfile,
 	updateUserProfile,
-	userProfileExists
+	userProfileExists,
+	isMinecraftUsernameTaken
 } from '../utils/userProfile.js'
 import { getFirestore, doc, getDoc } from 'firebase/firestore'
 import { CheckCircleIcon, XMarkIcon } from '@heroicons/vue/24/solid'
@@ -25,6 +26,7 @@ const checkingProfile = ref(true)
 const editingProfile = ref(false)
 const editingMinecraftProfile = ref(false)
 const successMessage = ref('')
+const minecraftUsernameError = ref('')
 
 // Check for success message from query parameter
 if (route.query.message === 'password-updated') {
@@ -138,11 +140,18 @@ watch(
 async function createProfile() {
 	if (!user.value?.uid || !profileForm.value.minecraft_username.trim()) return
 
+	minecraftUsernameError.value = ''
+	const username = profileForm.value.minecraft_username.trim()
+	const taken = await isMinecraftUsernameTaken(username)
+	if (taken) {
+		minecraftUsernameError.value = 'That Minecraft username is already in use.'
+		return
+	}
+
 	try {
 		const newProfile = await createUserProfile(user.value.uid, {
-			minecraft_username: profileForm.value.minecraft_username.trim(),
-			display_name:
-				profileForm.value.display_name.trim() || profileForm.value.minecraft_username.trim()
+			minecraft_username: username,
+			display_name: profileForm.value.display_name.trim() || username
 		})
 
 		// Update local state
@@ -182,9 +191,17 @@ async function updateProfile() {
 async function updateMinecraftProfile() {
 	if (!user.value?.uid || !profileForm.value.minecraft_username.trim()) return
 
+	minecraftUsernameError.value = ''
+	const username = profileForm.value.minecraft_username.trim()
+	const taken = await isMinecraftUsernameTaken(username, user.value.uid)
+	if (taken) {
+		minecraftUsernameError.value = 'That Minecraft username is already in use.'
+		return
+	}
+
 	try {
 		const updatedProfile = await updateUserProfile(user.value.uid, {
-			minecraft_username: profileForm.value.minecraft_username.trim()
+			minecraft_username: username
 		})
 
 		editingMinecraftProfile.value = false
@@ -415,7 +432,7 @@ function signOutOfFirebase() {
 											v-model="profileForm.display_name"
 											:disabled="useMinecraftUsername"
 											placeholder="How others will see your name on the site"
-											class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus disabled:bg-gray-100 disabled:text-gray-500" />
+											class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus disabled:bg-gray-100 disabled:text-gray-500" />
 									</div>
 
 									<div class="flex items-center space-x-2">
@@ -446,7 +463,12 @@ function signOutOfFirebase() {
 										v-model="profileForm.minecraft_username"
 										required
 										placeholder="Your Minecraft username"
-										class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
+										class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
+									<p
+										v-if="minecraftUsernameError"
+										class="text-red-500 text-sm mt-1">
+										{{ minecraftUsernameError }}
+									</p>
 								</div>
 							</div>
 
@@ -554,7 +576,8 @@ function signOutOfFirebase() {
 									</div>
 									<button
 										@click="editingProfile = true"
-										class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-opacity-80 transition-colors">
+										:disabled="editingProfile || editingMinecraftProfile"
+										class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-opacity-80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 										Edit
 									</button>
 								</div>
@@ -575,7 +598,7 @@ function signOutOfFirebase() {
 											v-model="profileForm.display_name"
 											:disabled="useMinecraftUsername"
 											placeholder="How others will see your name"
-											class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus disabled:bg-gray-100 disabled:text-gray-500" />
+											class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus disabled:bg-gray-100 disabled:text-gray-500" />
 									</div>
 
 									<div class="flex items-center space-x-2">
@@ -631,7 +654,8 @@ function signOutOfFirebase() {
 									</div>
 									<button
 										@click="editingMinecraftProfile = true"
-										class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-opacity-80 transition-colors">
+										:disabled="editingProfile || editingMinecraftProfile"
+										class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-opacity-80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 										Edit
 									</button>
 								</div>
@@ -652,7 +676,12 @@ function signOutOfFirebase() {
 											v-model="profileForm.minecraft_username"
 											required
 											placeholder="Your Minecraft username"
-											class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
+											class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
+										<p
+											v-if="minecraftUsernameError"
+											class="text-red-500 text-sm mt-1">
+											{{ minecraftUsernameError }}
+										</p>
 									</div>
 
 									<div class="flex space-x-3">
