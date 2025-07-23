@@ -4,6 +4,7 @@ import { useFirebaseAuth, useCurrentUser } from 'vuefire'
 import { useRouter } from 'vue-router'
 import { sendEmailVerification } from '@firebase/auth'
 import { EnvelopeIcon } from '@heroicons/vue/24/outline'
+import { CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid'
 
 const auth = useFirebaseAuth()
 const currentUser = useCurrentUser()
@@ -31,7 +32,12 @@ async function resendVerificationEmail() {
 		resendSuccess.value = true
 	} catch (error) {
 		console.error('Resend verification error:', error)
-		resendError.value = 'Failed to send verification email. Please try again.'
+		if (error.code === 'auth/too-many-requests') {
+			resendError.value =
+				'You have requested verification emails too many times. Please wait a while before trying again.'
+		} else {
+			resendError.value = 'Failed to send verification email. Please try again.'
+		}
 	} finally {
 		isLoading.value = false
 	}
@@ -75,12 +81,7 @@ function goToSignIn() {
 			<div class="flex">
 				<div class="flex-shrink-0">
 					<!-- Use Heroicon for check -->
-					<svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-						<path
-							fill-rule="evenodd"
-							d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-							clip-rule="evenodd" />
-					</svg>
+					<CheckCircleIcon class="h-5 w-5 text-green-400" />
 				</div>
 				<div class="ml-3">
 					<p class="text-sm font-medium text-green-800">
@@ -95,12 +96,7 @@ function goToSignIn() {
 			<div class="flex">
 				<div class="flex-shrink-0">
 					<!-- Use Heroicon for error -->
-					<svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-						<path
-							fill-rule="evenodd"
-							d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-							clip-rule="evenodd" />
-					</svg>
+					<XCircleIcon class="h-5 w-5 text-red-400" />
 				</div>
 				<div class="ml-3">
 					<p class="text-sm font-medium text-red-800">{{ resendError }}</p>
