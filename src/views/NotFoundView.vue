@@ -1,7 +1,7 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { HomeIcon, ArrowLeftIcon } from '@heroicons/vue/24/outline'
-import { CubeTransparentIcon } from '@heroicons/vue/24/outline'
+import { ArrowLeftIcon, CubeTransparentIcon } from '@heroicons/vue/24/outline'
+import { HomeIcon } from '@heroicons/vue/24/solid'
 </script>
 
 <template>
@@ -10,7 +10,7 @@ import { CubeTransparentIcon } from '@heroicons/vue/24/outline'
 		<div class="mb-8">
 			<div class="flex items-center gap-4 mb-4">
 				<h1 class="text-3xl font-bold text-gray-900">Page Not Found</h1>
-				<CubeTransparentIcon class="w-16 h-16 text-gray-400" />
+				<CubeTransparentIcon class="w-10 h-10 text-gray-400" />
 			</div>
 			<p class="text-lg text-gray-600 mb-2">
 				Oops! It looks like this page got lost in the Nether.
