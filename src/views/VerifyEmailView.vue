@@ -133,16 +133,6 @@ function goToSignIn() {
 			</svg>
 			{{ buttonText }}
 		</button>
-
-		<!-- Sign In Link -->
-		<div>
-			<p class="text-sm text-gray-500">
-				Already verified your email?
-				<button @click="goToSignIn" class="text-gray-700 hover:text-opacity-80 underline">
-					Sign in to your account
-				</button>
-			</p>
-		</div>
 	</div>
 </template>
 

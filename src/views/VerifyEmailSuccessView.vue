@@ -34,9 +34,9 @@ async function handleEmailVerification() {
 		// Wait a moment to show success message, then redirect
 		setTimeout(() => {
 			isRedirecting.value = true
-			// Redirect to sign in page with success message
+			// Redirect to account page with success message
 			router.push({
-				path: '/signin',
+				path: '/account',
 				query: {
 					message: 'email-verified',
 					email: currentUser.value?.email || route.query.email
@@ -118,20 +118,17 @@ onMounted(() => {
 				<h1 class="text-3xl font-bold text-gray-900">Email Verified!</h1>
 				<CheckCircleIcon class="w-8 h-8 text-semantic-success" />
 			</div>
-			<p class="text-gray-600 mb-6">
-				Your email address has been successfully verified. You can now sign in to your
-				account.
-			</p>
+			<p class="text-gray-600 mb-6">Your email address has been successfully verified.</p>
 			<!-- Redirecting Message -->
 			<div v-if="isRedirecting" class="mb-6">
-				<p class="text-sm text-gray-500">Redirecting you to sign in...</p>
+				<p class="text-sm text-gray-500">Redirecting you to your account...</p>
 			</div>
 			<!-- Action Buttons -->
 			<div v-else class="flex flex-col items-start gap-3 mb-4">
 				<button
-					@click="goToSignIn"
+					@click="() => router.push('/account')"
 					class="inline-flex items-center justify-center rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
-					Sign In to Your Account
+					Go to Your Account
 				</button>
 				<button
 					@click="goToHome"
