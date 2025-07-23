@@ -312,6 +312,7 @@ const router = createRouter({
 			component: () => import('../views/SuggestionsView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: false,
 				title: "Suggestions - verzion's economy price guide for Minecraft"
 			}
 		},

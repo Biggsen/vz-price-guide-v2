@@ -6,7 +6,16 @@
 			or feedback to make this site better, I'd love to hear from you.
 			<span class="block mt-2">- verzion</span>
 		</p>
-		<form @submit.prevent="submitSuggestion" class="space-y-6 mb-8">
+		<div
+			v-if="!isVerified"
+			class="mb-6 flex items-center gap-3 bg-yellow-100 border-2 border-yellow-400 text-yellow-800 rounded p-4 text-base font-medium">
+			<ExclamationTriangleIcon class="w-6 h-6 flex-shrink-0 text-yellow-500" />
+			<span>You must verify your email before you can submit suggestions.</span>
+		</div>
+		<form
+			@submit.prevent="submitSuggestion"
+			class="space-y-6 mb-8"
+			:class="{ 'opacity-50 pointer-events-none': !isVerified }">
 			<div>
 				<label for="title" class="block text-base font-medium leading-6 text-gray-900">
 					Title *
@@ -17,7 +26,8 @@
 					required
 					maxlength="80"
 					class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus"
-					placeholder="Suggestion title" />
+					placeholder="Suggestion title"
+					:disabled="!isVerified" />
 			</div>
 			<div>
 				<label for="body" class="block text-base font-medium leading-6 text-gray-900">
@@ -28,18 +38,19 @@
 					v-model="form.body"
 					required
 					maxlength="1000"
-					class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus min-h-[100px]"
-					placeholder="Describe your suggestion..."></textarea>
+					class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus min-h-[140px]"
+					placeholder="Describe your suggestion..."
+					:disabled="!isVerified"></textarea>
 			</div>
 			<div v-if="error" class="text-red-600 text-sm">{{ error }}</div>
 			<button
 				type="submit"
-				:disabled="loading"
+				:disabled="loading || !isVerified"
 				class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80">
 				Submit Suggestion
 			</button>
 		</form>
-		<div>
+		<div v-if="isVerified">
 			<h2 class="text-lg font-semibold mb-4">Previous Suggestions</h2>
 			<div v-if="suggestions.length === 0" class="text-gray-500">No suggestions yet.</div>
 			<ul v-else class="space-y-4">
@@ -177,6 +188,7 @@ const userName = computed(
 const deleteConfirmId = ref(null)
 const editingId = ref(null)
 const editForm = ref({ title: '', body: '' })
+const isVerified = computed(() => auth.currentUser?.emailVerified)
 
 async function fetchSuggestions() {
 	if (!auth.currentUser) return
@@ -192,6 +204,10 @@ async function fetchSuggestions() {
 
 async function submitSuggestion() {
 	error.value = ''
+	if (!isVerified.value) {
+		error.value = 'You must verify your email before submitting suggestions.'
+		return
+	}
 	if (!form.value.title.trim() || !form.value.body.trim()) {
 		error.value = 'Title and details are required.'
 		return
