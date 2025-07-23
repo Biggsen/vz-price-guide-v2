@@ -39,9 +39,9 @@ Implement a complete user account system with registration, authentication, pass
 -   Clear messaging about verification requirements
 -   Router guard enforces verification for routes with `requiresVerification: true`
 
-**User Profiles:**
+**User Profiles (Account Management):**
 
--   Complete account management system (`/account` route)
+-   Complete account management system (`/account` route, implemented as `AccountView.vue`)
 -   Minecraft username and display name
 -   Avatar generation from Minecraft username
 -   Profile creation and editing
@@ -53,7 +53,7 @@ Implement a complete user account system with registration, authentication, pass
 
 -   Password reset functionality (`/reset-password` route)
 -   "Forgot password" flow with email request
--   Password change capability (`/change-password` route)
+-   Password change capability (`/change-password` route, implemented as `ChangePasswordView.vue`)
 -   Current password verification for changes
 -   Password strength validation
 -   Success redirect to account page with message
@@ -180,16 +180,16 @@ Implement a complete user account system with registration, authentication, pass
 -   ✅ Implement verification checks in protected routes
 -   ✅ Clear messaging about verification requirements
 -   ✅ Easy resend verification option
--   ✅ Update profile page to show verification status
+-   ✅ Update account page to show verification status
 
 #### Task 3.4: Profile Creation Flow Update
 
 **Manual Profile Creation for Verified Users**
 
--   Profile creation is no longer a forced first step upon accessing the profile page.
+-   Profile creation is no longer a forced first step upon accessing the account page.
 -   Only users with verified emails can create a profile.
--   The profile page is always accessible from the navigation, showing the user's email and verification status.
--   Unverified users see a minimal profile view:
+-   The account page is always accessible from the navigation, showing the user's email and verification status.
+-   Unverified users see a minimal account view:
     -   Their email address
     -   A clear message that their email is unverified
     -   Option to resend verification email
@@ -199,7 +199,7 @@ Implement a complete user account system with registration, authentication, pass
 
 #### Task 3.2: Account Settings
 
--   [ ] Add account settings section to ProfileView
+-   [ ] Add account settings section to AccountView
 -   [ ] Email preferences (notifications, marketing)
 -   [ ] Account deletion option with confirmation
 -   [ ] Security settings (session management)
@@ -243,62 +243,13 @@ Implement a complete user account system with registration, authentication, pass
 **Pages Requiring UX Review:**
 
 -   [x] **SignUpView.vue**
-
-    -   [x] Review field labels, placeholders, and instructions for clarity
-    -   [x] Check input validation and error messages
-    -   [x] Test password visibility toggle (if present)
-    -   [x] Confirm accessibility (labels, tab order, screen reader)
-    -   [x] Verify mobile responsiveness
-    -   [x] Review loading and success states
-    -   [x] Check navigation to sign in and other relevant screens
-
 -   [x] **SignInView.vue**
-
-    -   [x] Review field labels and instructions
-    -   [x] Test error messages for invalid credentials
-    -   [x] Confirm “Forgot password?” link is visible and works
-    -   [x] Check accessibility and keyboard navigation
-    -   [x] Verify mobile responsiveness
-    -   [x] Review loading and success states
-
 -   [x] **ResetPasswordView.vue** (Password Reset Request)
-
-    -   [x] Review instructions for requesting a reset
-    -   [x] Test error/success messages for valid/invalid emails
-    -   [x] Confirm accessibility and tab order
-    -   [x] Verify mobile responsiveness
-
 -   [x] **ResetPasswordConfirmView.vue** (Password Reset Confirm)
-
-    -   [x] Review instructions for setting a new password
-    -   [x] Test validation and error messages
-    -   [x] Confirm accessibility and tab order
-    -   [x] Verify mobile responsiveness
-
 -   [x] **VerifyEmailView.vue**
-
-    -   [x] Review messaging clarity and resend functionality
-    -   [x] Confirm accessibility and tab order
-    -   [x] Verify mobile responsiveness
-
 -   [x] **VerifyEmailSuccessView.vue**
-
-    -   [x] Review success states and navigation options
-    -   [x] Confirm accessibility and tab order
-    -   [x] Verify mobile responsiveness
-
--   [ ] **ChangePasswordView.vue**
-
-    -   [ ] Review form layout and validation
-    -   [ ] Test error/success messages
-    -   [ ] Confirm accessibility and tab order
-    -   [ ] Verify mobile responsiveness
-
--   [ ] **ProfileView.vue**
-    -   [ ] Review profile management interface and success states
-    -   [ ] Check edit and save flows
-    -   [ ] Confirm accessibility and tab order
-    -   [ ] Verify mobile responsiveness
+-   [x] **ChangePasswordView.vue**
+-   [x] **AccountView.vue** (Account/Profile Management)
 
 **UX Improvements to Consider:**
 
@@ -331,7 +282,7 @@ Implement a complete user account system with registration, authentication, pass
 -   ✅ App branding and consistent styling applied
 -   ✅ Verification token validation handled
 -   ✅ Success message with app-specific content
--   ✅ Navigation options (sign in, go to profile, etc.)
+-   ✅ Navigation options (sign in, go to account, etc.)
 -   ✅ Proper error handling for invalid/expired tokens
 -   [ ] Configure Firebase Auth to use custom action URL
 -   [ ] Test verification flow end-to-end
@@ -373,6 +324,7 @@ Implement a complete user account system with registration, authentication, pass
 /forgot-password       - Password reset request
 /reset-password        - Password reset with token ✅ (implemented)
 /change-password       - Password change for authenticated users ✅ (implemented)
+/account               - User account/profile management ✅ (implemented as AccountView.vue)
 ```
 
 ### Database Schema Updates
@@ -513,7 +465,7 @@ match /users/{userId} {
 -   ✅ Reset email is sent
 -   ✅ Reset link works with valid token
 -   ✅ Reset fails with invalid/expired token
--   ✅ Password change in profile works
+-   ✅ Password change in account works
 -   [ ] Password change notification is sent (optional enhancement)
 
 ### Account Management
@@ -534,7 +486,7 @@ The user accounts system fundamentals are **production-ready** with all core fea
 -   **Registration**: Complete with validation and email verification
 -   **Authentication**: Full sign-in/sign-out with email verification enforcement
 -   **Password Management**: Reset and change functionality working
--   **Profile Management**: Complete user profile system
+-   **Account Management**: Complete user account/profile system (`AccountView.vue`)
 -   **Security**: Route protection and proper access controls
 
 **🔄 REMAINING ENHANCEMENTS**
