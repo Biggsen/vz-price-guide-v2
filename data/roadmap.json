@@ -106,12 +106,13 @@
 	{
 		"id": 6,
 		"title": "User Account Fundamentals",
-		"status": "In Development",
+		"status": "Completed",
+		"completedDate": "2025-07-23",
 		"description": "Complete the user account system with registration, email verification, password management, and account security. This provides the foundation needed for community features and enhanced user experience.",
 		"features": [
 			{ "name": "User registration with email verification", "completed": true },
 			{ "name": "Password reset and account recovery", "completed": true },
-			{ "name": "UX review and testing", "completed": false }
+			{ "name": "UX review and testing", "completed": true }
 		]
 	},
 	{

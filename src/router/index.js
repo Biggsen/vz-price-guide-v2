@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import { getCurrentUser } from 'vuefire'
+import { isAdmin } from '../constants'
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,12 +32,74 @@ const router = createRouter({
 			meta: { title: "Sign In - verzion's economy price guide for Minecraft" }
 		},
 		{
-			path: '/profile',
-			name: 'profile',
-			component: () => import('../views/ProfileView.vue'),
+			path: '/signup',
+			name: 'signup',
+			component: () => import('../views/SignUpView.vue'),
+			meta: { title: "Create Account - verzion's economy price guide for Minecraft" }
+		},
+		{
+			path: '/verify-email',
+			name: 'verify-email',
+			component: () => import('../views/VerifyEmailView.vue'),
 			meta: {
 				requiresAuth: true,
-				title: "Profile - verzion's economy price guide for Minecraft"
+				requiresVerification: false,
+				title: "Verify Email - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/auth-action',
+			name: 'auth-action',
+			beforeEnter: (to, from, next) => {
+				const mode = to.query.mode
+				if (mode === 'resetPassword') {
+					next({ path: '/reset-password-confirm', query: to.query })
+				} else if (mode === 'verifyEmail') {
+					next({ path: '/verify-email-success', query: to.query })
+				} else {
+					next({ path: '/' })
+				}
+			},
+			meta: { title: "Account Action - verzion's economy price guide for Minecraft" }
+		},
+		{
+			path: '/verify-email-success',
+			name: 'verify-email-success',
+			component: () => import('../views/VerifyEmailSuccessView.vue'),
+			meta: {
+				title: "Email Verified - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/reset-password',
+			name: 'reset-password',
+			component: () => import('../views/ResetPasswordView.vue'),
+			meta: { title: "Reset Password - verzion's economy price guide for Minecraft" }
+		},
+		{
+			path: '/reset-password-confirm',
+			name: 'reset-password-confirm',
+			component: () => import('../views/ResetPasswordConfirmView.vue'),
+			meta: { title: "Reset Password - verzion's economy price guide for Minecraft" }
+		},
+		{
+			path: '/account',
+			name: 'account',
+			component: () => import('../views/AccountView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: false,
+				title: "Account - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/change-password',
+			name: 'change-password',
+			component: () => import('../views/ChangePasswordView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: false,
+				title: "Change Password - verzion's economy price guide for Minecraft"
 			}
 		},
 		{
@@ -45,6 +108,8 @@ const router = createRouter({
 			component: () => import('../views/AdminView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "Admin Dashboard - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -54,6 +119,8 @@ const router = createRouter({
 			component: () => import('../views/ShopManagerView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "Shop Manager - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -63,6 +130,8 @@ const router = createRouter({
 			component: () => import('../views/AddItemView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "Add Item - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -72,6 +141,8 @@ const router = createRouter({
 			component: () => import('../views/EditItemView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "Edit Item - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -81,6 +152,8 @@ const router = createRouter({
 			component: () => import('../views/MissingItemsView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "Missing Items - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -90,6 +163,8 @@ const router = createRouter({
 			component: () => import('../views/BulkUpdateItemsView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "Bulk Update - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -99,6 +174,8 @@ const router = createRouter({
 			component: () => import('../views/ServersView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "My Servers - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -108,6 +185,8 @@ const router = createRouter({
 			component: () => import('../views/ShopsView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "My Shops - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -117,6 +196,8 @@ const router = createRouter({
 			component: () => import('../views/ShopItemsView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "Shop Items - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -126,13 +207,20 @@ const router = createRouter({
 			component: () => import('../views/MarketOverviewView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "Market Overview - verzion's economy price guide for Minecraft"
 			}
 		},
 		{
 			path: '/recipes',
 			name: 'recipes',
-			redirect: '/recipes/import'
+			redirect: '/recipes/import',
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true
+			}
 		},
 		{
 			path: '/recipes/import',
@@ -140,6 +228,8 @@ const router = createRouter({
 			component: () => import('../views/recipes/RecipeImportView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "Import Recipes - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -149,6 +239,8 @@ const router = createRouter({
 			component: () => import('../views/recipes/RecipeManageView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "Manage Recipes - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -158,6 +250,7 @@ const router = createRouter({
 			component: () => import('../views/recipes/RecipeRecalculateView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				title: "Recalculate Prices - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -167,6 +260,8 @@ const router = createRouter({
 			component: () => import('../views/EditRecipeView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "Edit Recipe - verzion's economy price guide for Minecraft"
 			}
 		},
@@ -200,7 +295,35 @@ const router = createRouter({
 			component: () => import('../views/StyleguideView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "Design System & Styleguide - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/restricted',
+			name: 'RestrictedAccess',
+			component: () => import('../views/RestrictedAccessView.vue'),
+			meta: { title: "Restricted Access - verzion's economy price guide for Minecraft" }
+		},
+		{
+			path: '/suggestions',
+			name: 'suggestions',
+			component: () => import('../views/SuggestionsView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: false,
+				title: "Suggestions - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/suggestions/all',
+			name: 'suggestions-all',
+			component: () => import('../views/SuggestionsAdminView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresAdmin: true,
+				title: "All Suggestions - verzion's economy price guide for Minecraft"
 			}
 		},
 		{
@@ -218,11 +341,31 @@ router.beforeEach(async (to, from, next) => {
 		document.title = to.meta.title
 	}
 
+	const authPages = ['signin', 'signup', 'reset-password']
+	const user = await getCurrentUser()
+
+	// Redirect signed-in users away from auth pages
+	if (user && authPages.includes(to.name)) {
+		return next({ path: '/account' })
+	}
+
 	// Check authentication
 	if (to.meta.requiresAuth) {
-		const user = await getCurrentUser()
 		if (!user) {
 			return next({ path: '/signin', query: { redirect: to.fullPath } })
+		}
+
+		// Check email verification for routes that require it
+		if (to.meta.requiresVerification !== false && !user.emailVerified) {
+			return next({ path: '/verify-email' })
+		}
+
+		// Admin route protection
+		if (to.meta.requiresAdmin) {
+			const admin = await isAdmin(user)
+			if (!admin) {
+				return next({ path: '/restricted' })
+			}
 		}
 	}
 	next()

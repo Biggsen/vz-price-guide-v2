@@ -109,6 +109,15 @@ function isSubnavExpanded(section) {
 	return expandedSections.value.has(section)
 }
 
+function handleSuggestionsClick() {
+	if (isAdmin.value) {
+		router.push('/suggestions/all')
+	} else {
+		router.push('/suggestions')
+	}
+	closeMenu()
+}
+
 // Scroll detection for auto-hiding header
 function handleScroll() {
 	const currentScrollY = window.scrollY
@@ -179,7 +188,7 @@ onUnmounted(() => {
 		</div>
 
 		<!-- Mobile Menu -->
-		<div v-show="isMenuOpen" class="pb-4">
+		<div v-show="isMenuOpen" class="pb-2">
 			<!-- Main Navigation Links -->
 			<RouterLink
 				to="/"
@@ -192,6 +201,18 @@ onUnmounted(() => {
 				]">
 				Home
 			</RouterLink>
+
+			<button
+				@click="handleSuggestionsClick"
+				:class="[
+					'block px-3 py-2 transition-colors w-full text-left',
+					route.path === '/suggestions' || route.path === '/suggestions/all'
+						? 'bg-gray-700 text-white'
+						: 'hover:bg-gray-700 hover:text-white'
+				]"
+				v-if="user?.email">
+				Suggestions
+			</button>
 
 			<RouterLink
 				to="/updates"
@@ -286,7 +307,7 @@ onUnmounted(() => {
 				</div>
 			</div>
 
-			<!-- Shop Manager section (only for admins) -->
+			<!-- Shop Manager section (for admins only) -->
 			<div v-if="isAdmin">
 				<button
 					@click="toggleSubnav('shop-manager')"
@@ -295,7 +316,6 @@ onUnmounted(() => {
 					<ChevronRightIcon v-if="!isSubnavExpanded('shop-manager')" class="w-4 h-4" />
 					<ChevronDownIcon v-else class="w-4 h-4" />
 				</button>
-
 				<!-- Shop Manager Subnav -->
 				<div v-show="isSubnavExpanded('shop-manager')" class="ml-4 space-y-0.5">
 					<RouterLink
@@ -335,6 +355,7 @@ onUnmounted(() => {
 			<div v-if="user?.email" class="border-t border-gray-700 my-2"></div>
 
 			<!-- User Actions -->
+			<div v-if="!user?.email" class="border-t border-gray-700 my-2"></div>
 			<RouterLink
 				v-if="!user?.email"
 				to="/signin"
@@ -343,10 +364,10 @@ onUnmounted(() => {
 				Sign In
 			</RouterLink>
 
-			<!-- User profile display (when logged in) -->
+			<!-- User profile display (when logged in, regardless of verification) -->
 			<RouterLink
 				v-if="user?.email"
-				to="/profile"
+				to="/account"
 				@click="closeMenu"
 				class="flex items-center gap-3 px-3 py-2 transition-colors hover:bg-gray-700 hover:text-white">
 				<!-- Profile Avatar -->
@@ -368,7 +389,7 @@ onUnmounted(() => {
 					<div class="font-medium">
 						{{ userProfile?.display_name || user.email || 'User' }}
 					</div>
-					<div class="text-xs text-gray-300">View Profile</div>
+					<div class="text-xs text-gray-300">View Account</div>
 				</div>
 			</RouterLink>
 		</div>
@@ -387,6 +408,17 @@ onUnmounted(() => {
 			]">
 			Home
 		</RouterLink>
+		<button
+			@click="handleSuggestionsClick"
+			:class="[
+				'px-3 py-2 rounded transition-colors',
+				route.path === '/suggestions' || route.path === '/suggestions/all'
+					? 'bg-gray-700 text-white'
+					: 'hover:bg-gray-700 hover:text-white'
+			]"
+			v-if="user?.email">
+			Suggestions
+		</button>
 		<RouterLink
 			to="/updates"
 			@click="setActiveMainNav(null)"
@@ -425,7 +457,7 @@ onUnmounted(() => {
 			Recipes
 		</RouterLink>
 
-		<!-- Shop Manager section (only for admins) -->
+		<!-- Shop Manager section (for admins only) -->
 		<RouterLink
 			v-if="isAdmin"
 			to="/shop-manager"
@@ -443,11 +475,11 @@ onUnmounted(() => {
 			Sign In
 		</RouterLink>
 
-		<!-- User profile display (when logged in) -->
+		<!-- User profile display (when logged in, regardless of verification) -->
 		<RouterLink
 			v-if="user?.email"
 			class="flex items-center gap-2 hover:bg-gray-700 px-2 py-1 rounded transition-colors ml-auto"
-			to="/profile"
+			to="/account"
 			@click="setActiveMainNav(null)">
 			<!-- Display Name or Email -->
 			<span class="text-sm font-medium">
