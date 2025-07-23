@@ -59,5 +59,15 @@ service cloud.firestore {
         (request.resource.data.buy_price != null || request.resource.data.sell_price != null) &&
         request.resource.data.stock_full is bool;
     }
+    // Suggestions: Users can read/write their own, admins can read/update all
+    match /suggestions/{suggestionId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read, update: if request.auth != null && request.auth.token.admin == true;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['userId', 'userDisplayName', 'createdAt', 'status', 'title', 'body']) &&
+        request.resource.data.title is string &&
+        request.resource.data.body is string &&
+        request.resource.data.status in ['open', 'in progress', 'closed', 'rejected'];
+    }
   }
 }
