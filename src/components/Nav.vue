@@ -286,8 +286,8 @@ onUnmounted(() => {
 				</div>
 			</div>
 
-			<!-- Shop Manager section (for verified users only) -->
-			<div v-if="user?.email && user?.emailVerified">
+			<!-- Shop Manager section (for admins only) -->
+			<div v-if="isAdmin">
 				<button
 					@click="toggleSubnav('shop-manager')"
 					class="w-full text-left px-3 py-2 flex items-center justify-between">
@@ -295,7 +295,6 @@ onUnmounted(() => {
 					<ChevronRightIcon v-if="!isSubnavExpanded('shop-manager')" class="w-4 h-4" />
 					<ChevronDownIcon v-else class="w-4 h-4" />
 				</button>
-
 				<!-- Shop Manager Subnav -->
 				<div v-show="isSubnavExpanded('shop-manager')" class="ml-4 space-y-0.5">
 					<RouterLink
@@ -425,9 +424,9 @@ onUnmounted(() => {
 			Recipes
 		</RouterLink>
 
-		<!-- Shop Manager section (for verified users only) -->
+		<!-- Shop Manager section (for admins only) -->
 		<RouterLink
-			v-if="user?.email && user?.emailVerified"
+			v-if="isAdmin"
 			to="/shop-manager"
 			:class="[
 				'px-3 py-2 rounded transition-colors',
