@@ -2,105 +2,94 @@
 
 ## Overview
 
-The Suggestions feature allows authenticated users to submit feedback, feature requests, or tweaks to the site owners. Users can view and reply to admin comments on their suggestions. Admins can view all suggestions, comment, and update their status.
+The Suggestions feature allows authenticated and verified users to submit feedback, feature requests, or tweaks to the site owners. Admins can view all suggestions and update their status. The current implementation is a simpler system than originally specified.
 
 ---
 
-## User Stories
+## Current Implementation (as of July 2025)
 
 ### Users
 
--   Can submit new suggestions (title, body).
+-   Can submit new suggestions (title, body) if their email is verified.
 -   Can view a list of their own previous suggestions.
--   Can see admin comments on their suggestions.
--   Can reply to admin comments (threaded conversation per suggestion).
--   Can submit multiple suggestions.
+-   Can edit or soft-delete their own suggestions (if status is 'open').
+-   Cannot comment or reply to admin (no threaded conversation).
+-   Cannot see admin comments (no comment system implemented).
+-   Can see the status of their suggestions (open, in progress, closed, rejected).
 
 ### Admins
 
 -   Can view all suggestions from all users.
--   Can filter/search suggestions by status, user, or keyword.
--   Can comment on any suggestion (threaded conversation).
+-   Can filter by active/deleted suggestions.
 -   Can update the status of a suggestion (open, in progress, closed, rejected).
--   Can see user info for each suggestion.
+-   Can hard-delete suggestions.
+-   Can see user info for each suggestion (display name, Minecraft username, email).
+-   Cannot comment or reply to suggestions (no comment system implemented).
 
----
-
-## Data Model (Firestore)
+### Data Model (Firestore)
 
 -   **Collection:** `suggestions`
     -   **Fields:**
         -   `userId`: string
         -   `userDisplayName`: string
         -   `createdAt`: timestamp
-        -   `updatedAt`: timestamp
         -   `status`: string (open, in progress, closed, rejected)
         -   `title`: string
         -   `body`: string
-    -   **Subcollection:** `comments`
-        -   Each comment document:
-            -   `authorId`: string
-            -   `authorDisplayName`: string
-            -   `role`: string (user/admin)
-            -   `body`: string
-            -   `createdAt`: timestamp
-            -   `parentId`: string|null (for replies, null for top-level)
+        -   `deleted`: boolean (soft delete)
+    -   **No subcollection for comments** (not implemented)
 
----
+### UI/UX
 
-## UI/UX
+-   User page (`/suggestions`):
+    -   Form to submit a new suggestion (title, body).
+    -   List of user's suggestions, with edit/delete if open.
+    -   No comment threads or replies.
+-   Admin page (`/suggestions/all`):
+    -   List of all suggestions, filterable by status/deleted.
+    -   Status update buttons.
+    -   No comment threads or replies.
+-   No suggestion detail or threaded view.
 
-### User Page (`/suggestions`)
+### Routing
 
--   Form to submit a new suggestion (title, body).
--   List of user's suggestions, expandable to show comment threads.
--   Reply box under each admin comment.
-
-### Admin Page (`/suggestions/all`)
-
--   Table/list of all suggestions, sortable and filterable.
--   Click to view suggestion details and comment thread.
--   Status update dropdown.
--   Reply box for admin comments.
-
-### Suggestion Detail (`/suggestions/:id`)
-
--   Threaded view of suggestion and all comments.
--   Reply functionality for both user and admin (with permissions).
-
----
-
-## Routing
-
--   `/suggestions` – User's suggestions page (requiresAuth)
+-   `/suggestions` – User's suggestions page (requiresAuth, requiresVerification)
 -   `/suggestions/all` – Admin view (requiresAuth, requiresAdmin)
--   `/suggestions/:id` – Detail view (both user and admin, with permissions)
+-   No `/suggestions/:id` detail route.
 
----
-
-## Validation
+### Validation
 
 -   Title and body required for suggestions (length limits enforced).
--   Comments required, with length limits.
+-   No comments, so no comment validation.
 
----
+### Security
 
-## Security
-
--   Only authenticated users can submit/view their suggestions.
+-   Only authenticated and verified users can submit/view their suggestions.
 -   Only admins can view all suggestions and update status.
--   Users can only reply to their own suggestions.
+-   Users can only edit/delete their own suggestions.
 -   Proper Firestore security rules to enforce access control.
 
----
+### Accessibility
 
-## Accessibility
-
--   All forms and threads accessible, keyboard navigable, with ARIA labels.
+-   All forms and lists accessible, keyboard navigable, with ARIA labels.
 
 ---
 
-## Optional Enhancements
+## Outstanding/Not Implemented
 
--   Email or in-app notification when admin comments or status changes.
--   Status badges and filtering for user suggestions list.
+-   **Commenting system:** No admin/user comments or threaded conversations.
+-   **Suggestion detail view:** No `/suggestions/:id` route or threaded view.
+-   **Reply functionality:** Not available for either user or admin.
+-   **Admin search/filter by keyword or user:** Only basic filtering by status/deleted.
+-   **Notifications:** No email or in-app notifications for status changes.
+-   **Status badges/filtering for user list:** Only basic status shown.
+
+---
+
+## Optional Enhancements (Future)
+
+-   Add comment threads and replies (with subcollection in Firestore).
+-   Add suggestion detail view and threaded UI.
+-   Add notifications for status changes or admin comments.
+-   Add advanced filtering/search for admins.
+-   Add status badges and improved filtering for users.
