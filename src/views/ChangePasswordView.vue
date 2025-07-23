@@ -46,8 +46,8 @@ async function handleChangePassword() {
 		await reauthenticateWithCredential(currentUser.value, credential)
 		// Update password
 		await updatePassword(currentUser.value, form.value.newPassword)
-		// Redirect to profile page with success message
-		router.push({ path: '/profile', query: { message: 'password-updated' } })
+		// Redirect to account page with success message
+		router.push({ path: '/account', query: { message: 'password-updated' } })
 	} catch (error) {
 		switch (error.code) {
 			case 'auth/wrong-password':
@@ -303,8 +303,8 @@ function clearError() {
 				</div>
 				<div class="text-left pt-4">
 					<p class="text-sm text-gray-500">
-						<RouterLink to="/profile" class="text-semantic-info hover:text-opacity-80">
-							<span class="underline">Back to Profile</span>
+						<RouterLink to="/account" class="text-semantic-info hover:text-opacity-80">
+							<span class="underline">Back to Account</span>
 						</RouterLink>
 					</p>
 				</div>

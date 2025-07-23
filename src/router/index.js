@@ -82,13 +82,13 @@ const router = createRouter({
 			meta: { title: "Reset Password - verzion's economy price guide for Minecraft" }
 		},
 		{
-			path: '/profile',
-			name: 'profile',
-			component: () => import('../views/ProfileView.vue'),
+			path: '/account',
+			name: 'account',
+			component: () => import('../views/AccountView.vue'),
 			meta: {
 				requiresAuth: true,
 				requiresVerification: false,
-				title: "Profile - verzion's economy price guide for Minecraft"
+				title: "Account - verzion's economy price guide for Minecraft"
 			}
 		},
 		{

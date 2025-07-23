@@ -41,7 +41,7 @@ Implement a complete user account system with registration, authentication, pass
 
 **User Profiles:**
 
--   Complete profile management system (`/profile` route)
+-   Complete account management system (`/account` route)
 -   Minecraft username and display name
 -   Avatar generation from Minecraft username
 -   Profile creation and editing
@@ -56,7 +56,7 @@ Implement a complete user account system with registration, authentication, pass
 -   Password change capability (`/change-password` route)
 -   Current password verification for changes
 -   Password strength validation
--   Success redirect to profile page with message
+-   Success redirect to account page with message
 -   Proper error handling and user feedback
 
 **Security:**
@@ -137,11 +137,11 @@ Implement a complete user account system with registration, authentication, pass
 -   ✅ Success confirmation page
 -   ✅ Error handling for invalid/expired tokens
 
-#### Task 2.2: Password Change in Profile
+#### Task 2.2: Password Change in Account
 
 -   ✅ Create `ChangePasswordView.vue` component
 -   ✅ Add `/change-password` route
--   ✅ Add link to change password page from profile
+-   ✅ Add link to change password page from account
 -   ✅ Current password verification
 -   ✅ New password with confirmation
 -   ✅ Password strength requirements matching Firebase policy:
@@ -151,7 +151,7 @@ Implement a complete user account system with registration, authentication, pass
     -   At least one lowercase character
     -   At least one numeric character
 -   ✅ Real-time password strength indicator
--   ✅ Success redirect to profile page with message
+-   ✅ Success redirect to account page with message
 -   ✅ Error handling and user feedback
 -   ✅ Proper icon styling for sign out button
 

@@ -57,15 +57,6 @@ async function signInToFirebase() {
 			userInput.value.password
 		)
 
-		// Check if email is verified
-		if (!userCredential.user.emailVerified) {
-			// Sign out the user since they're not verified
-			await signOut(auth)
-			errorMessage.value =
-				'Please verify your email address before signing in. Check your email for a verification link.'
-			return
-		}
-
 		// Check if user has a profile
 		const hasProfile = await userProfileExists(userCredential.user.uid)
 
@@ -74,8 +65,8 @@ async function signInToFirebase() {
 			// User has profile - redirect to home
 			router.push('/')
 		} else {
-			// First time user - redirect to profile to complete setup
-			router.push('/profile')
+			// First time user - redirect to account to complete setup
+			router.push('/account')
 		}
 	} catch (error) {
 		console.error('Sign in error:', error.code, error.message)

@@ -346,7 +346,7 @@ onUnmounted(() => {
 			<!-- User profile display (when logged in, regardless of verification) -->
 			<RouterLink
 				v-if="user?.email"
-				to="/profile"
+				to="/account"
 				@click="closeMenu"
 				class="flex items-center gap-3 px-3 py-2 transition-colors hover:bg-gray-700 hover:text-white">
 				<!-- Profile Avatar -->
@@ -368,7 +368,7 @@ onUnmounted(() => {
 					<div class="font-medium">
 						{{ userProfile?.display_name || user.email || 'User' }}
 					</div>
-					<div class="text-xs text-gray-300">View Profile</div>
+					<div class="text-xs text-gray-300">View Account</div>
 				</div>
 			</RouterLink>
 		</div>
@@ -447,7 +447,7 @@ onUnmounted(() => {
 		<RouterLink
 			v-if="user?.email"
 			class="flex items-center gap-2 hover:bg-gray-700 px-2 py-1 rounded transition-colors ml-auto"
-			to="/profile"
+			to="/account"
 			@click="setActiveMainNav(null)">
 			<!-- Display Name or Email -->
 			<span class="text-sm font-medium">
