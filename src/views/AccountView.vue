@@ -46,7 +46,8 @@ if (route.query.message === 'email-verified' && auth.currentUser) {
 // Profile form data
 const profileForm = ref({
 	minecraft_username: '',
-	display_name: ''
+	display_name: '',
+	bio: '' // Optional bio field
 })
 
 // Checkbox state for using minecraft username as display name
@@ -77,7 +78,8 @@ async function loadUserProfile(userId) {
 				// Update form with profile data
 				profileForm.value = {
 					minecraft_username: profileData.minecraft_username || '',
-					display_name: profileData.display_name || ''
+					display_name: profileData.display_name || '',
+					bio: profileData.bio || ''
 				}
 			}
 		}
@@ -110,7 +112,8 @@ watch(
 		if (newProfile) {
 			profileForm.value = {
 				minecraft_username: newProfile.minecraft_username || '',
-				display_name: newProfile.display_name || ''
+				display_name: newProfile.display_name || '',
+				bio: newProfile.bio || ''
 			}
 			// Update checkbox state
 			useMinecraftUsername.value = newProfile.display_name === newProfile.minecraft_username
@@ -151,7 +154,8 @@ async function createProfile() {
 	try {
 		const newProfile = await createUserProfile(user.value.uid, {
 			minecraft_username: username,
-			display_name: profileForm.value.display_name.trim() || username
+			display_name: profileForm.value.display_name.trim() || username,
+			bio: profileForm.value.bio.trim() || ''
 		})
 
 		// Update local state
@@ -169,12 +173,23 @@ async function createProfile() {
 
 // Update profile
 async function updateProfile() {
-	if (!user.value?.uid) return
+	if (!user.value?.uid || !profileForm.value.minecraft_username.trim()) return
+
+	minecraftUsernameError.value = ''
+	const username = profileForm.value.minecraft_username.trim()
+	const taken = await isMinecraftUsernameTaken(username, user.value.uid)
+	if (taken) {
+		minecraftUsernameError.value = 'That Minecraft username is already in use.'
+		return
+	}
 
 	try {
 		const updatedProfile = await updateUserProfile(user.value.uid, {
 			display_name:
-				profileForm.value.display_name.trim() || profileForm.value.minecraft_username.trim()
+				profileForm.value.display_name.trim() ||
+				profileForm.value.minecraft_username.trim(),
+			bio: profileForm.value.bio.trim() || '',
+			minecraft_username: username
 		})
 
 		editingProfile.value = false
@@ -419,59 +434,61 @@ function signOutOfFirebase() {
 						</div>
 						<form v-else @submit.prevent="createProfile" class="space-y-6">
 							<div>
-								<div class="space-y-3">
-									<div>
-										<label
-											for="display_name"
-											class="block text-base font-medium leading-6 text-gray-900">
-											Display Name (optional)
-										</label>
-										<input
-											type="text"
-											id="display_name"
-											v-model="profileForm.display_name"
-											:disabled="useMinecraftUsername"
-											placeholder="How others will see your name on the site"
-											class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus disabled:bg-gray-100 disabled:text-gray-500" />
-									</div>
-
-									<div class="flex items-center space-x-2">
-										<input
-											type="checkbox"
-											id="use_minecraft_username_initial"
-											v-model="useMinecraftUsername"
-											class="checkbox-input" />
-										<label
-											for="use_minecraft_username_initial"
-											class="text-base font-medium leading-6 text-gray-900">
-											Use Minecraft Username
-										</label>
-									</div>
-								</div>
+								<label
+									for="minecraft_username"
+									class="block text-base font-medium leading-6 text-gray-900">
+									Minecraft Username *
+								</label>
+								<input
+									type="text"
+									id="minecraft_username"
+									v-model="profileForm.minecraft_username"
+									required
+									placeholder="Your Minecraft username"
+									class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
+								<p v-if="minecraftUsernameError" class="text-red-500 text-sm mt-1">
+									{{ minecraftUsernameError }}
+								</p>
 							</div>
-
 							<div>
-								<div>
-									<label
-										for="minecraft_username"
-										class="block text-base font-medium leading-6 text-gray-900">
-										Minecraft Username *
-									</label>
-									<input
-										type="text"
-										id="minecraft_username"
-										v-model="profileForm.minecraft_username"
-										required
-										placeholder="Your Minecraft username"
-										class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
-									<p
-										v-if="minecraftUsernameError"
-										class="text-red-500 text-sm mt-1">
-										{{ minecraftUsernameError }}
-									</p>
-								</div>
+								<label
+									for="display_name"
+									class="block text-base font-medium leading-6 text-gray-900">
+									Display Name *
+								</label>
+								<input
+									type="text"
+									id="display_name"
+									v-model="profileForm.display_name"
+									required
+									:disabled="useMinecraftUsername"
+									placeholder="How others will see your name on the site"
+									class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus disabled:bg-gray-100 disabled:text-gray-500" />
 							</div>
-
+							<div class="flex items-center space-x-2">
+								<input
+									type="checkbox"
+									id="use_minecraft_username_initial"
+									v-model="useMinecraftUsername"
+									class="checkbox-input" />
+								<label
+									for="use_minecraft_username_initial"
+									class="text-base font-medium leading-6 text-gray-900">
+									Use Minecraft Username as Display Name
+								</label>
+							</div>
+							<div>
+								<label
+									for="bio"
+									class="block text-base font-medium leading-6 text-gray-900">
+									Bio (optional)
+								</label>
+								<textarea
+									id="bio"
+									v-model="profileForm.bio"
+									placeholder="Tell us a little about yourself..."
+									class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus min-h-[120px]" />
+							</div>
 							<div class="flex space-x-3">
 								<button
 									type="submit"
@@ -563,78 +580,8 @@ function signOutOfFirebase() {
 						</h2>
 						<div class="space-y-3">
 							<!-- Display Mode -->
-							<div v-if="!editingProfile" class="space-y-3">
-								<div class="flex items-center justify-between">
-									<div>
-										<label
-											class="block text-base font-medium leading-6 text-gray-900">
-											Display Name
-										</label>
-										<p class="text-gray-900">
-											{{ userProfile?.display_name || 'Not set' }}
-										</p>
-									</div>
-									<button
-										@click="editingProfile = true"
-										:disabled="editingProfile || editingMinecraftProfile"
-										class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-opacity-80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-										Edit
-									</button>
-								</div>
-							</div>
-
-							<!-- Edit Mode -->
-							<div v-else>
-								<form @submit.prevent="updateProfile" class="space-y-4">
-									<div>
-										<label
-											for="edit_display_name"
-											class="block text-base font-medium leading-6 text-gray-900">
-											Display Name
-										</label>
-										<input
-											type="text"
-											id="edit_display_name"
-											v-model="profileForm.display_name"
-											:disabled="useMinecraftUsername"
-											placeholder="How others will see your name"
-											class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus disabled:bg-gray-100 disabled:text-gray-500" />
-									</div>
-
-									<div class="flex items-center space-x-2">
-										<input
-											type="checkbox"
-											id="use_minecraft_username"
-											v-model="useMinecraftUsername"
-											class="checkbox-input" />
-										<label
-											for="use_minecraft_username"
-											class="text-base font-medium leading-6 text-gray-900">
-											Use Minecraft Username
-										</label>
-									</div>
-
-									<div class="flex space-x-3">
-										<button
-											type="submit"
-											class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-											Save Changes
-										</button>
-										<button
-											type="button"
-											@click="cancelEditProfile"
-											class="rounded-md bg-gray-200 text-gray-800 px-4 py-2 text-sm font-medium hover:bg-gray-300 transition">
-											Cancel
-										</button>
-									</div>
-								</form>
-							</div>
-
-							<!-- Minecraft Account Section -->
-
-							<!-- Display Mode -->
-							<div v-if="!editingMinecraftProfile">
-								<div class="flex items-center justify-between">
+							<div v-if="!editingProfile">
+								<div class="space-y-3">
 									<div class="flex items-center space-x-4">
 										<img
 											v-if="userProfile?.minecraft_avatar_url"
@@ -652,18 +599,36 @@ function signOutOfFirebase() {
 											</p>
 										</div>
 									</div>
-									<button
-										@click="editingMinecraftProfile = true"
-										:disabled="editingProfile || editingMinecraftProfile"
-										class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-opacity-80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-										Edit
-									</button>
+									<div>
+										<label
+											class="block text-base font-medium leading-6 text-gray-900">
+											Display Name
+										</label>
+										<p class="text-gray-900">
+											{{ userProfile?.display_name || 'Not set' }}
+										</p>
+									</div>
+									<div class="mt-2 mb-8">
+										<label
+											class="block text-base font-medium leading-6 text-gray-900">
+											Bio
+										</label>
+										<p class="text-gray-700 whitespace-pre-line">
+											{{ userProfile?.bio ? userProfile.bio : 'No bio' }}
+										</p>
+									</div>
 								</div>
+								<button
+									@click="editingProfile = true"
+									:disabled="editingProfile"
+									class="rounded-md bg-semantic-info px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mt-4">
+									Edit Profile
+								</button>
 							</div>
 
 							<!-- Edit Mode -->
 							<div v-else>
-								<form @submit.prevent="updateMinecraftProfile" class="space-y-4">
+								<form @submit.prevent="updateProfile" class="space-y-4">
 									<div>
 										<label
 											for="edit_minecraft_username"
@@ -683,7 +648,45 @@ function signOutOfFirebase() {
 											{{ minecraftUsernameError }}
 										</p>
 									</div>
-
+									<div>
+										<label
+											for="edit_display_name"
+											class="block text-base font-medium leading-6 text-gray-900">
+											Display Name *
+										</label>
+										<input
+											type="text"
+											id="edit_display_name"
+											v-model="profileForm.display_name"
+											required
+											:disabled="useMinecraftUsername"
+											placeholder="How others will see your name"
+											class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus disabled:bg-gray-100 disabled:text-gray-500" />
+									</div>
+									<div class="flex items-center space-x-2">
+										<input
+											type="checkbox"
+											id="use_minecraft_username"
+											v-model="useMinecraftUsername"
+											class="checkbox-input" />
+										<label
+											for="use_minecraft_username"
+											class="text-base font-medium leading-6 text-gray-900">
+											Use Minecraft Username as Display Name
+										</label>
+									</div>
+									<div>
+										<label
+											for="edit_bio"
+											class="block text-base font-medium leading-6 text-gray-900">
+											Bio (optional)
+										</label>
+										<textarea
+											id="edit_bio"
+											v-model="profileForm.bio"
+											placeholder="Tell us a little about yourself..."
+											class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus min-h-[120px]" />
+									</div>
 									<div class="flex space-x-3">
 										<button
 											type="submit"
@@ -692,7 +695,7 @@ function signOutOfFirebase() {
 										</button>
 										<button
 											type="button"
-											@click="cancelEditMinecraftProfile"
+											@click="cancelEditProfile"
 											class="rounded-md bg-gray-200 text-gray-800 px-4 py-2 text-sm font-medium hover:bg-gray-300 transition">
 											Cancel
 										</button>

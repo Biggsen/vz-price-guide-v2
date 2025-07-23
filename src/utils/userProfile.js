@@ -31,7 +31,11 @@ export async function userProfileExists(userId) {
 	}
 }
 
-// Create user profile
+/**
+ * Create user profile in Firestore. Supports optional fields like bio.
+ * @param {string} userId
+ * @param {Object} profileData - Should include minecraft_username, display_name, and optionally bio
+ */
 export async function createUserProfile(userId, profileData) {
 	if (!userId) throw new Error('User ID is required')
 
