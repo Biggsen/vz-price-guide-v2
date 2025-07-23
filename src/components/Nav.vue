@@ -109,6 +109,15 @@ function isSubnavExpanded(section) {
 	return expandedSections.value.has(section)
 }
 
+function handleSuggestionsClick() {
+	if (isAdmin.value) {
+		router.push('/suggestions/all')
+	} else {
+		router.push('/suggestions')
+	}
+	closeMenu()
+}
+
 // Scroll detection for auto-hiding header
 function handleScroll() {
 	const currentScrollY = window.scrollY
@@ -205,18 +214,17 @@ onUnmounted(() => {
 				Updates
 			</RouterLink>
 
-			<RouterLink
-				to="/suggestions"
-				@click="setActiveMainNav(null)"
+			<button
+				@click="handleSuggestionsClick"
 				:class="[
 					'block px-3 py-2 transition-colors',
-					route.path === '/suggestions'
+					route.path === '/suggestions' || route.path === '/suggestions/all'
 						? 'bg-gray-700 text-white'
 						: 'hover:bg-gray-700 hover:text-white'
 				]"
 				v-if="user?.email">
 				Suggestions
-			</RouterLink>
+			</button>
 
 			<!-- Admin section (only for admins) -->
 			<div v-if="isAdmin">
@@ -411,17 +419,17 @@ onUnmounted(() => {
 			Updates
 		</RouterLink>
 
-		<RouterLink
-			to="/suggestions"
+		<button
+			@click="handleSuggestionsClick"
 			:class="[
 				'px-3 py-2 rounded transition-colors',
-				route.path === '/suggestions'
+				route.path === '/suggestions' || route.path === '/suggestions/all'
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
 			]"
 			v-if="user?.email">
 			Suggestions
-		</RouterLink>
+		</button>
 
 		<!-- Admin section (only for admins) -->
 		<RouterLink
