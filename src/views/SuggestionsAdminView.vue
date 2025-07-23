@@ -63,7 +63,7 @@
 								class="w-6 h-6 rounded" />
 							<div>
 								<div class="text-sm text-gray-800 font-semibold">
-									{{ s.displayName }}
+									{{ s.displayName || s.userDisplayName || s.email }}
 								</div>
 								<div
 									v-if="
