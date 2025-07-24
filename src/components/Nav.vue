@@ -7,7 +7,9 @@ import {
 	Bars3Icon,
 	XMarkIcon,
 	ChevronRightIcon,
-	ChevronDownIcon
+	ChevronDownIcon,
+	UserIcon,
+	ArrowRightEndOnRectangleIcon
 } from '@heroicons/vue/24/solid'
 
 import { useAdmin } from '../utils/admin.js'
@@ -360,8 +362,31 @@ onUnmounted(() => {
 				v-if="!user?.email"
 				to="/signin"
 				@click="closeMenu"
-				class="block px-3 py-2 transition-colors hover:bg-gray-700 hover:text-white">
-				Sign In
+				:class="[
+					'block px-3 py-2 transition-colors',
+					route.path === '/signin'
+						? 'bg-gray-700 text-white'
+						: 'hover:bg-gray-700 hover:text-white'
+				]">
+				<div class="flex items-center gap-2">
+					<ArrowRightEndOnRectangleIcon class="w-4 h-4" />
+					<span>Sign In</span>
+				</div>
+			</RouterLink>
+			<RouterLink
+				v-if="!user?.email"
+				to="/signup"
+				@click="closeMenu"
+				:class="[
+					'block px-3 py-2 transition-colors',
+					route.path === '/signup'
+						? 'bg-gray-700 text-white'
+						: 'hover:bg-gray-700 hover:text-white'
+				]">
+				<div class="flex items-center gap-2">
+					<UserIcon class="w-4 h-4" />
+					<span>Sign Up</span>
+				</div>
 			</RouterLink>
 
 			<!-- User profile display (when logged in, regardless of verification) -->
@@ -470,10 +495,35 @@ onUnmounted(() => {
 			Shop Manager
 		</RouterLink>
 
-		<!-- Sign In button (when not logged in) -->
-		<RouterLink v-if="!user?.email" class="hover:underline ml-auto" to="/signin">
-			Sign In
-		</RouterLink>
+		<!-- Sign In/Sign Up buttons (when not logged in) -->
+		<div v-if="!user?.email" class="flex gap-2 ml-auto">
+			<RouterLink
+				to="/signin"
+				:class="[
+					'px-3 py-2 rounded transition-colors',
+					route.path === '/signin'
+						? 'bg-gray-700 text-white'
+						: 'hover:bg-gray-700 hover:text-white'
+				]">
+				<div class="flex items-center gap-2">
+					<ArrowRightEndOnRectangleIcon class="w-4 h-4" />
+					<span>Sign In</span>
+				</div>
+			</RouterLink>
+			<RouterLink
+				to="/signup"
+				:class="[
+					'px-3 py-2 rounded transition-colors',
+					route.path === '/signup'
+						? 'bg-gray-700 text-white'
+						: 'hover:bg-gray-700 hover:text-white'
+				]">
+				<div class="flex items-center gap-2">
+					<UserIcon class="w-4 h-4" />
+					<span>Sign Up</span>
+				</div>
+			</RouterLink>
+		</div>
 
 		<!-- User profile display (when logged in, regardless of verification) -->
 		<RouterLink
