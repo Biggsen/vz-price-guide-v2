@@ -44,6 +44,30 @@ Comprehensive specification for the Shop Manager feature, including:
 -   Estimated timeline: 8-12 weeks
 -   **Priority**: Should begin after recipes feature is stable (✅ recipes now stable)
 
+### `user-accounts-feature.md`
+
+**🔄 PENDING**: Complete user account system fundamentals, including:
+
+-   User registration and email verification
+-   Password reset and management
+-   Account security and settings
+-   Email communications and templates
+-   4-phase implementation plan with security focus
+-   **Prerequisites**: None - builds on existing Firebase Auth
+-   **Priority**: High - required before community features
+
+### `community-features.md`
+
+**🔄 PENDING**: Community interaction and feedback system, including:
+
+-   Feedback submission and feature request voting
+-   Community price sharing and validation
+-   Discussion forums and moderation
+-   Advanced collaboration features
+-   4-phase implementation plan with user engagement focus
+-   **Prerequisites**: ✅ User Accounts Feature, ✅ Shop Manager Feature
+-   **Priority**: Medium - after user accounts fundamentals
+
 ### `linked-shops-feature.md`
 
 Future enhancement for collaborative market intelligence, including:
@@ -60,32 +84,50 @@ Future enhancement for collaborative market intelligence, including:
 -   🔄 **PENDING** - Not yet started
 -   🚧 **IN PROGRESS** - Currently being worked on
 -   ⏳ **PLANNED** - Ready to begin, waiting for capacity
+-   💡 **IDEA** - Concept stage, not yet planned for implementation
 -   ❌ **BLOCKED** - Waiting on dependencies
 
 ## Current Status
 
 -   **Recipes Feature**: ✅ **IMPLEMENTED** - Technically complete, UX improvements needed for production
 -   **Shop Manager Feature**: ✅ **IMPLEMENTED** - Core functionality complete
+-   **User Accounts Feature**: 🔄 **PENDING** - Fundamentals needed for community features
 -   **Price Field Migration**: ⏳ **READY TO BEGIN** - Recipes feature is now stable
+-   **Community Features**: 🔄 **PENDING** - Requires user accounts fundamentals
 -   **Linked Shops Feature**: 🔄 **PENDING** - Future enhancement
 
 ## Priority Order
 
-1. **Price Field Migration** (⏳ READY TO BEGIN)
+1. **User Accounts Feature** (🔄 PENDING)
+
+    - Complete user registration and authentication fundamentals
+    - Implement password reset and email verification
+    - Add account security and management features
+    - **Prerequisites**: None - builds on existing Firebase Auth
+    - **Priority**: High - required before community features
+
+2. **Price Field Migration** (⏳ READY TO BEGIN)
 
     - Begin now that recipes feature is stable and production-ready
     - Coordinate with existing version-aware pricing system
     - High impact on data consistency and performance
     - **Prerequisites**: ✅ Recipes feature complete
 
-2. **Recipes Feature Enhancements** (🔄 OPTIONAL)
+3. **Community Features** (🔄 PENDING)
+
+    - Implement feedback and feature request systems
+    - Add community price sharing and validation
+    - Build discussion forums and moderation tools
+    - **Prerequisites**: ✅ User Accounts Feature, ✅ Shop Manager Feature
+
+4. **Recipes Feature Enhancements** (🔄 OPTIONAL)
 
     - Individual recipe editing interface
     - Recipe export/import tools
     - Performance optimizations
     - **Status**: Core functionality complete, enhancements optional
 
-3. **Linked Shops Enhancement** (🔄 PENDING)
+5. **Linked Shops Enhancement** (🔄 PENDING)
     - Start after price field migration is complete
     - Builds on existing Shop Manager foundation
     - Advanced collaboration features

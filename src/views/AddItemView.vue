@@ -217,11 +217,11 @@ function getInheritedPriceAndSource(versionKey) {
 
 <template>
 	<div v-if="canAddItems" class="p-4 pt-8">
-		<h2 class="text-xl font-bold mb-6">Add item</h2>
+		<h1 class="text-3xl font-bold text-gray-900 mb-6">Add Item</h1>
 		<form @submit.prevent="addItem">
 			<fieldset class="mb-10">
 				<legend
-					class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 mb-6">
+					class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
 					Basic Information
 				</legend>
 				<div class="flex gap-4">
@@ -252,7 +252,7 @@ function getInheritedPriceAndSource(versionKey) {
 
 			<fieldset class="mb-10">
 				<legend
-					class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 mb-6">
+					class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
 					Availability & Classification
 				</legend>
 				<div class="flex gap-4">
@@ -262,7 +262,7 @@ function getInheritedPriceAndSource(versionKey) {
 							id="version"
 							v-model="newItem.version"
 							required
-							class="block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;">
+							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-6 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus">
 							<option value="">Select a version</option>
 							<option v-for="version in versions" :key="version" :value="version">
 								{{ version }}
@@ -274,7 +274,7 @@ function getInheritedPriceAndSource(versionKey) {
 						<select
 							id="version_removed"
 							v-model="newItem.version_removed"
-							class="block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;">
+							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-6 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus">
 							<option value="">Still available</option>
 							<option
 								v-for="version in versions.slice(
@@ -292,7 +292,7 @@ function getInheritedPriceAndSource(versionKey) {
 							id="stack"
 							v-model="newItem.stack"
 							required
-							class="block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;">
+							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-6 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus">
 							<option :value="1">1</option>
 							<option :value="16">16</option>
 							<option :value="64">64</option>
@@ -305,7 +305,7 @@ function getInheritedPriceAndSource(versionKey) {
 						<select
 							id="category"
 							v-model="newItem.category"
-							class="block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;">
+							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-6 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus">
 							<option v-for="cat in categories" :key="cat" :value="cat">
 								{{ cat }}
 							</option>
@@ -324,7 +324,7 @@ function getInheritedPriceAndSource(versionKey) {
 
 			<fieldset class="mb-10">
 				<legend
-					class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 mb-6">
+					class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
 					Pricing
 				</legend>
 				<!-- Pricing Type Selection -->
@@ -339,7 +339,7 @@ function getInheritedPriceAndSource(versionKey) {
 								value="static"
 								v-model="newItem.pricing_type"
 								@change="onPricingTypeChange('static')"
-								class="mr-2 w-5 h-5" />
+								class="mr-2 radio-input" />
 							<span>Static - Fixed prices set manually</span>
 						</label>
 						<label class="flex items-center cursor-pointer">
@@ -348,7 +348,7 @@ function getInheritedPriceAndSource(versionKey) {
 								value="dynamic"
 								v-model="newItem.pricing_type"
 								@change="onPricingTypeChange('dynamic')"
-								class="mr-2 w-5 h-5" />
+								class="mr-2 radio-input" />
 							<span>Dynamic - Calculated from recipes</span>
 						</label>
 					</div>
@@ -436,7 +436,7 @@ function getInheritedPriceAndSource(versionKey) {
 											!versionPrice.hasExplicitPrice
 										"
 										type="button"
-										class="text-xs bg-green-600 hover:bg-green-700 px-2 py-1 rounded text-white"
+										class="px-3 py-1 text-sm bg-semantic-warning text-white rounded hover:bg-yellow-700 transition-colors"
 										@click="addVersionPrice(versionPrice.versionKey)">
 										Override
 									</button>
@@ -446,7 +446,7 @@ function getInheritedPriceAndSource(versionKey) {
 											versionPrice.hasExplicitPrice
 										"
 										type="button"
-										class="text-xs bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-white"
+										class="px-3 py-1 text-sm bg-semantic-danger text-white rounded hover:bg-red-700 transition-colors"
 										@click="removeVersionPrice(versionPrice.versionKey)">
 										Remove
 									</button>
@@ -485,7 +485,10 @@ function getInheritedPriceAndSource(versionKey) {
 						</tbody>
 					</table>
 					<div class="mt-4">
-						<button type="button" @click="recalculateAllPrices" class="btn">
+						<button
+							type="button"
+							@click="recalculateAllPrices"
+							class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 							Recalculate
 						</button>
 					</div>
@@ -497,7 +500,11 @@ function getInheritedPriceAndSource(versionKey) {
 				</div>
 			</fieldset>
 
-			<button type="submit" class="btn">Add new item</button>
+			<button
+				type="submit"
+				class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+				Add new item
+			</button>
 		</form>
 	</div>
 	<div v-else-if="user?.email" class="p-4 pt-8">
@@ -507,9 +514,6 @@ function getInheritedPriceAndSource(versionKey) {
 			<RouterLink to="/" class="text-blue-600 hover:underline">Return to Home</RouterLink>
 		</div>
 	</div>
-	<div v-else class="p-4 pt-8">
-		<RouterLink to="/login">Login to view this page</RouterLink>
-	</div>
 </template>
 
 <style lang="scss" scoped>
@@ -517,18 +521,23 @@ function getInheritedPriceAndSource(versionKey) {
 	@apply block text-base font-medium leading-6 text-gray-900;
 }
 .input-text {
-	@apply block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;
+	@apply block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-6 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus;
 }
 .input-number {
 	@apply block w-full rounded-md border-0 px-2 py-1.5 mt-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;
 }
 .price-input {
-	@apply w-20 px-2 py-1 border rounded text-sm mb-0;
+	@apply w-20 px-3 py-1 border-2 border-gray-asparagus rounded text-sm mb-0 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus;
 }
 .textarea {
 	@apply block w-full rounded-md border-0 px-2 py-1.5 mt-2 mb-6 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6;
 }
 .btn {
 	@apply rounded-md bg-gray-asparagus px-3 py-2 mb-6 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600;
+}
+
+.radio-input {
+	@apply w-5 h-5;
+	accent-color: theme('colors.gray-asparagus');
 }
 </style>

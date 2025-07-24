@@ -59,44 +59,28 @@
 	{
 		"id": 4,
 		"title": "Add all 1.19 items",
-		"status": "Pending",
-		"description": "Add all new items introduced in Minecraft 1.19 (The Wild Update) including bamboo wood, cherry wood, mangrove wood, sculk blocks, mud blocks, frogs, and archaeology items",
+		"status": "Completed",
+		"completedDate": "2025-07-16",
+		"description": "Add all new items introduced in Minecraft 1.19 (The Wild Update) including mangrove wood, sculk blocks, mud blocks, frog-related items, and miscellaneous new items",
 		"features": [
 			{
-				"name": "Bamboo wood set (planks, stairs, slabs, doors, signs, boats, etc.) (22 items)",
-				"completed": false
-			},
-			{
-				"name": "Cherry wood set (logs, planks, stairs, slabs, doors, signs, boats, etc.) (18 items)",
-				"completed": false
-			},
-			{
 				"name": "Mangrove wood set (logs, planks, stairs, slabs, doors, signs, boats, etc.) (20 items)",
-				"completed": false
+				"completed": true
 			},
-			{ "name": "Hanging signs for all wood types (9 items)", "completed": false },
-			{ "name": "Boats with chests for all wood types (7 items)", "completed": false },
+
+			{ "name": "Boats with chests for all wood types (6 items)", "completed": true },
 			{
 				"name": "Sculk blocks (sculk, sculk catalyst, sculk shrieker, sculk vein) (4 items)",
-				"completed": false
+				"completed": true
 			},
-			{ "name": "Mud and mud brick blocks (6 items)", "completed": false },
+			{ "name": "Mud and mud brick blocks (6 items)", "completed": true },
 			{
-				"name": "Frog-related items (froglights, frogspawn, tadpole bucket) (6 items)",
-				"completed": false
-			},
-			{ "name": "Armor trim smithing templates (16 items)", "completed": false },
-			{
-				"name": "Archaeology items (brush, pottery shards, decorated pot, suspicious sand) (7 items)",
-				"completed": false
-			},
-			{
-				"name": "New spawn eggs (allay, camel, frog, sniffer, tadpole, warden, etc.) (10 items)",
-				"completed": false
+				"name": "Frog-related items (froglights, tadpole bucket) (6 items)",
+				"completed": true
 			},
 			{
 				"name": "Miscellaneous new items (recovery compass, goat horn, echo shard, music disc, etc.) (8 items)",
-				"completed": false
+				"completed": true
 			}
 		]
 	},
@@ -121,14 +105,14 @@
 	},
 	{
 		"id": 6,
-		"title": "User accounts and community features",
-		"status": "Pending",
-		"description": "Enable users to create accounts, provide feedback and suggest new features for the price guide",
+		"title": "User Account Fundamentals",
+		"status": "Completed",
+		"completedDate": "2025-07-23",
+		"description": "Complete the user account system with registration, email verification, password management, and account security. This provides the foundation needed for community features and enhanced user experience.",
 		"features": [
-			{ "name": "User registration system", "completed": false },
-			{ "name": "User authentication/login", "completed": false },
-			{ "name": "User profile pages", "completed": false },
-			{ "name": "Community feedback and feature suggestions", "completed": false }
+			{ "name": "User registration with email verification", "completed": true },
+			{ "name": "Password reset and account recovery", "completed": true },
+			{ "name": "UX review and testing", "completed": true }
 		]
 	},
 	{
@@ -241,6 +225,80 @@
 			{ "name": "Deepslate blocks and variants", "completed": true },
 			{ "name": "New items (spyglass, bundle, etc.)", "completed": true },
 			{ "name": "Pricing and categorization", "completed": true }
+		]
+	},
+	{
+		"id": 11,
+		"title": "Add all 1.20 items and recipes",
+		"status": "Completed",
+		"completedDate": "2025-07-17",
+		"description": "Add all new items introduced in Minecraft 1.20 (Trails & Tales Update) including bamboo wood set, cherry wood set, hanging signs, pottery sherds, smithing templates, and other new items, along with their crafting recipes",
+		"features": [
+			{
+				"name": "Bamboo wood set (logs, planks, stairs, slabs, doors, signs, hanging signs, boats, rafts, blocks) (19 items)",
+				"completed": true
+			},
+			{
+				"name": "Cherry wood set (logs, planks, stairs, slabs, doors, signs, hanging signs, boats, saplings, leaves) (18 items)",
+				"completed": true
+			},
+			{
+				"name": "Hanging signs for all wood types (11 items)",
+				"completed": true
+			},
+			{
+				"name": "Pottery sherds and decorated pots (25 items)",
+				"completed": true
+			},
+			{
+				"name": "Smithing templates and armor trims (20 items)",
+				"completed": true
+			},
+			{
+				"name": "Miscellaneous new items (brush, calibrated sculk sensor, chiseled bookshelf, pitcher plants, torchflowers, etc.) (15 items)",
+				"completed": true
+			},
+			{
+				"name": "Import all recipes",
+				"completed": true
+			},
+			{
+				"name": "Update all images",
+				"completed": true
+			},
+			{
+				"name": "Pricing and categorization",
+				"completed": true
+			}
+		]
+	},
+	{
+		"id": 12,
+		"title": "Custom Price Guides - Create Your Own Price References",
+		"status": "Idea",
+		"description": "Create your own price guides with custom prices and notes. Set prices for any item from the main guide, add personal notes, and choose between static or recipe-based pricing. Perfect for documenting server-specific prices or building your own price reference.",
+		"dependencies": [6],
+		"features": [
+			{
+				"name": "📝 Create multiple price guides - name them and optionally link to servers",
+				"completed": false
+			},
+			{
+				"name": "💰 Set custom prices for any item from the main guide",
+				"completed": false
+			},
+			{
+				"name": "📝 Add personal notes to document your pricing decisions",
+				"completed": false
+			},
+			{
+				"name": "🔧 Choose static or recipe-based pricing for each item",
+				"completed": false
+			},
+			{
+				"name": "⚡ Bulk import items and recalculate recipe-based prices",
+				"completed": false
+			}
 		]
 	}
 ]

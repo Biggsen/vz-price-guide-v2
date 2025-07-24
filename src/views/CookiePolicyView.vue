@@ -3,7 +3,7 @@
 </script>
 
 <template>
-	<div class="prose mt-6">
+	<div class="prose mt-6 px-4">
 		<span
 			style="
 				display: block;

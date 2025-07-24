@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { ArrowDownIcon } from '@heroicons/vue/24/outline'
 
 defineOptions({
 	name: 'StyleguideView'
@@ -15,6 +16,36 @@ const sampleItems = ref([
 const viewMode = ref('categories')
 const layout = ref('comfortable')
 const searchQuery = ref('')
+
+// Grid table selection state
+const selectedItems = ref([])
+const allSelected = ref(false)
+
+// Selection methods
+function toggleSelectAll() {
+	if (allSelected.value) {
+		selectedItems.value = []
+		allSelected.value = false
+	} else {
+		selectedItems.value = sampleItems.value.map((item, index) => index)
+		allSelected.value = true
+	}
+}
+
+function toggleSelectItem(index) {
+	const itemIndex = selectedItems.value.indexOf(index)
+	if (itemIndex > -1) {
+		selectedItems.value.splice(itemIndex, 1)
+		allSelected.value = false
+	} else {
+		selectedItems.value.push(index)
+		allSelected.value = selectedItems.value.length === sampleItems.value.length
+	}
+}
+
+function isSelected(index) {
+	return selectedItems.value.includes(index)
+}
 </script>
 
 <template>
@@ -322,6 +353,83 @@ const searchQuery = ref('')
 						<p class="font-normal text-gray-900">Normal (font-normal)</p>
 					</div>
 				</div>
+
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Links</h3>
+					<div class="space-y-2">
+						<p class="text-gray-900">
+							This is a paragraph with a
+							<a href="#" class="font-medium hover:text-horizon">
+								<span class="underline">link using font-medium</span>
+							</a>
+							class for proper styling.
+						</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Section Headings -->
+		<section class="mb-12">
+			<h2 class="text-2xl font-bold text-gray-900 mb-6">Section Headings</h2>
+			<div class="space-y-8">
+				<!-- Fieldset Section Headers -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Fieldset Section Headers</h3>
+					<p class="text-sm text-gray-600 mb-4">
+						Used for grouping form sections with a heading and bottom border line.
+					</p>
+
+					<!-- Example fieldset with section heading -->
+					<fieldset class="mb-10 border-0">
+						<legend
+							class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
+							Basic Information
+						</legend>
+					</fieldset>
+
+					<!-- Code example -->
+					<div class="space-y-2">
+						<h4 class="text-md font-medium text-gray-700">HTML Structure</h4>
+						<div class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto">
+							<pre><code>&lt;fieldset class="mb-10"&gt;
+  &lt;legend class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6"&gt;
+    Section Title
+  &lt;/legend&gt;
+  &lt;!-- Form content --&gt;
+&lt;/fieldset&gt;</code></pre>
+						</div>
+					</div>
+				</div>
+
+				<!-- General Section Headers -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">General Section Headers</h3>
+					<p class="text-sm text-gray-600 mb-4">
+						Used for any content section that needs a heading with a bottom border line.
+					</p>
+
+					<!-- Example general section heading -->
+					<div class="mb-8">
+						<h3
+							class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
+							Content Section
+						</h3>
+					</div>
+
+					<!-- Code example -->
+					<div class="space-y-2">
+						<h4 class="text-md font-medium text-gray-700">HTML Structure</h4>
+						<div class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto">
+							<pre><code>&lt;div class="mb-8"&gt;
+  &lt;h3 class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6"&gt;
+    Section Title
+  &lt;/h3&gt;
+  &lt;!-- Section content --&gt;
+&lt;/div&gt;</code></pre>
+						</div>
+					</div>
+				</div>
 			</div>
 		</section>
 
@@ -370,23 +478,53 @@ const searchQuery = ref('')
 				<!-- Action Buttons -->
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold text-gray-800">Action Buttons</h3>
-					<div class="flex flex-wrap gap-4">
-						<button
-							class="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
-							Save
-						</button>
-						<button
-							class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
-							Edit
-						</button>
-						<button
-							class="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
-							Delete
-						</button>
-						<button
-							class="px-3 py-1 text-sm bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors">
-							Warning
-						</button>
+
+					<!-- Small Action Buttons -->
+					<div class="space-y-2">
+						<h4 class="text-md font-medium text-gray-700">Small (px-3 py-1 text-sm)</h4>
+						<div class="flex flex-wrap gap-4">
+							<button
+								class="px-3 py-1 text-sm bg-semantic-success text-white rounded hover:bg-opacity-80 transition-colors">
+								Save
+							</button>
+							<button
+								class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-opacity-80 transition-colors">
+								Edit
+							</button>
+							<button
+								class="px-3 py-1 text-sm bg-semantic-danger text-white rounded hover:bg-opacity-80 transition-colors">
+								Delete
+							</button>
+							<button
+								class="px-3 py-1 text-sm bg-semantic-warning text-white rounded hover:bg-opacity-80 transition-colors">
+								Warning
+							</button>
+						</div>
+					</div>
+
+					<!-- Large Action Buttons -->
+					<div class="space-y-2">
+						<h4 class="text-md font-medium text-gray-700">
+							Large (px-4 py-2 text-sm font-semibold)
+						</h4>
+						<div class="flex flex-wrap gap-4">
+							<button
+								class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+								Save
+							</button>
+							<button
+								class="rounded-md bg-semantic-info px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+								Edit
+							</button>
+							<button
+								class="rounded-md bg-semantic-danger px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+								Delete
+							</button>
+							<button
+								class="rounded-md bg-semantic-warning px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+								Warning
+							</button>
+						</div>
 					</div>
 				</div>
 
@@ -432,40 +570,41 @@ const searchQuery = ref('')
 				<!-- Text Inputs -->
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold text-gray-800">Text Inputs</h3>
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div class="space-y-4">
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">
+							<label class="block text-base font-medium leading-6 text-gray-900">
 								Standard Input
 							</label>
 							<input
 								type="text"
 								placeholder="Enter text..."
-								class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6" />
+								class="block w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
 						</div>
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">
+							<label class="block text-base font-medium leading-6 text-gray-900">
 								Search Input
 							</label>
 							<input
 								type="text"
 								v-model="searchQuery"
 								placeholder="Search for items..."
-								class="border-2 border-gray-asparagus rounded px-3 py-2 w-full" />
+								class="border-2 border-gray-asparagus rounded px-3 py-2 w-80 mt-2 mb-2" />
 						</div>
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">
+							<label class="block text-base font-medium leading-6 text-gray-900">
 								Number Input
 							</label>
 							<input
 								type="number"
 								placeholder="0"
-								class="w-20 px-2 py-1 border rounded text-sm" />
+								class="w-20 px-3 py-1 border-2 border-gray-asparagus rounded text-sm mt-2 mb-2 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
 						</div>
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">
+							<label class="block text-base font-medium leading-6 text-gray-900">
 								Select Dropdown
 							</label>
-							<select class="border-2 border-gray-asparagus rounded px-3 py-1">
+							<select
+								class="border-2 border-gray-asparagus rounded px-3 py-1 mt-2 mb-2 w-80">
 								<option>Option 1</option>
 								<option>Option 2</option>
 								<option>Option 3</option>
@@ -476,20 +615,34 @@ const searchQuery = ref('')
 
 				<!-- Checkboxes and Radio Buttons -->
 				<div class="space-y-4">
-					<h3 class="text-lg font-semibold text-gray-800">Checkboxes & Radio Buttons</h3>
+					<h3 class="text-lg font-semibold text-gray-800">Checkboxes</h3>
 					<div class="flex flex-wrap gap-6">
-						<div class="flex items-center">
-							<input
-								type="checkbox"
-								class="w-4 h-4 rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
-							<label class="ml-2 text-sm text-gray-700">Checkbox</label>
-						</div>
-						<div class="flex items-center">
+						<label class="flex items-center cursor-pointer">
+							<input type="checkbox" class="mr-2 checkbox-input" />
+							<span>Checkbox</span>
+						</label>
+					</div>
+				</div>
+
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Radio Buttons</h3>
+					<div class="space-y-2">
+						<label class="flex items-center cursor-pointer">
 							<input
 								type="radio"
-								class="w-4 h-4 border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
-							<label class="ml-2 text-sm text-gray-700">Radio Button</label>
-						</div>
+								name="example"
+								value="option1"
+								class="mr-2 radio-input" />
+							<span>Option 1</span>
+						</label>
+						<label class="flex items-center cursor-pointer">
+							<input
+								type="radio"
+								name="example"
+								value="option2"
+								class="mr-2 radio-input" />
+							<span>Option 2</span>
+						</label>
 					</div>
 				</div>
 			</div>
@@ -538,10 +691,8 @@ const searchQuery = ref('')
 			<h2 class="text-2xl font-bold text-gray-900 mb-6">Tables</h2>
 			<div class="space-y-6">
 				<!-- Standard Table -->
+				<h3 class="text-lg font-semibold text-gray-900">Standard Table</h3>
 				<div class="bg-white rounded-lg shadow-md overflow-hidden">
-					<div class="px-4 py-3 border-b border-gray-200">
-						<h3 class="text-lg font-semibold text-gray-900">Standard Table</h3>
-					</div>
 					<div class="overflow-x-auto">
 						<table class="min-w-full divide-y divide-gray-200">
 							<thead class="bg-gray-50">
@@ -551,8 +702,11 @@ const searchQuery = ref('')
 										Item
 									</th>
 									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Price
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
+										<div class="flex items-center gap-1">
+											Price
+											<ArrowDownIcon class="w-4 h-4 text-gray-700" />
+										</div>
 									</th>
 									<th
 										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -574,10 +728,8 @@ const searchQuery = ref('')
 				</div>
 
 				<!-- Condensed Table -->
+				<h3 class="text-lg font-semibold text-gray-900">Condensed Table</h3>
 				<div class="bg-white rounded-lg shadow-md overflow-hidden">
-					<div class="px-3 py-2 border-b border-gray-200">
-						<h3 class="text-lg font-semibold text-gray-900">Condensed Table</h3>
-					</div>
 					<div class="overflow-x-auto">
 						<table class="min-w-full divide-y divide-gray-200">
 							<thead class="bg-gray-50">
@@ -607,6 +759,67 @@ const searchQuery = ref('')
 										{{ item.price }}
 									</td>
 									<td class="px-2 py-1 text-gray-500 text-sm">
+										{{ item.category }}
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+				<!-- Grid Table -->
+				<h3 class="text-lg font-semibold text-gray-900">Grid Table</h3>
+				<div class="bg-white rounded-lg shadow-md overflow-hidden">
+					<div class="overflow-x-auto">
+						<table class="min-w-full divide-y divide-gray-200 border border-gray-200">
+							<thead class="bg-gray-50">
+								<tr>
+									<th
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+										<input
+											type="checkbox"
+											:checked="allSelected"
+											@change="toggleSelectAll"
+											class="checkbox-input" />
+									</th>
+									<th
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+										Item
+									</th>
+									<th
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 cursor-pointer hover:bg-gray-100 select-none">
+										<div class="flex items-center gap-1">
+											Price
+											<ArrowDownIcon class="w-4 h-4 text-gray-700" />
+										</div>
+									</th>
+									<th
+										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										Category
+									</th>
+								</tr>
+							</thead>
+							<tbody class="bg-white divide-y divide-gray-200">
+								<tr
+									v-for="(item, index) in sampleItems"
+									:key="item.name"
+									:class="{
+										'bg-green-50': isSelected(index)
+									}">
+									<td class="px-4 py-3 border-r border-gray-200">
+										<input
+											type="checkbox"
+											:checked="isSelected(index)"
+											@change="toggleSelectItem(index)"
+											class="checkbox-input" />
+									</td>
+									<td class="px-4 py-3 border-r border-gray-200">
+										<div class="font-medium text-gray-900">{{ item.name }}</div>
+									</td>
+									<td class="px-4 py-3 border-r border-gray-200 text-gray-900">
+										{{ item.price }}
+									</td>
+									<td class="px-4 py-3 text-gray-500">
 										{{ item.category }}
 									</td>
 								</tr>
@@ -926,5 +1139,15 @@ pre {
 
 code {
 	font-family: 'Courier New', Courier, monospace;
+}
+
+.radio-input {
+	@apply w-5 h-5;
+	accent-color: theme('colors.gray-asparagus');
+}
+
+.checkbox-input {
+	@apply w-4 h-4 rounded;
+	accent-color: theme('colors.gray-asparagus');
 }
 </style>

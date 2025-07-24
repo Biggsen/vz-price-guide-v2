@@ -417,7 +417,7 @@ watch(selectedVersion, () => {
 
 <template>
 	<div v-if="canBulkUpdate" class="p-4 pt-8">
-		<h2 class="text-xl font-bold mb-6">Import Recipes</h2>
+		<h1 class="text-3xl font-bold text-gray-900 mb-6">Import Recipes</h1>
 
 		<div v-if="loading">Loading...</div>
 		<div v-else>
@@ -449,7 +449,7 @@ watch(selectedVersion, () => {
 				class="mb-4">
 				<button
 					@click="startImport"
-					class="px-6 py-3 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2">
+					class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 flex items-center gap-2">
 					<DocumentArrowDownIcon class="w-5 h-5" />
 					Load Recipes
 				</button>
@@ -461,7 +461,7 @@ watch(selectedVersion, () => {
 				class="mb-4">
 				<button
 					@click="startImport"
-					class="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2">
+					class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 flex items-center gap-2">
 					<ArrowPathIcon class="w-5 h-5" />
 					Reload Recipes
 				</button>
@@ -495,7 +495,7 @@ watch(selectedVersion, () => {
 							:disabled="
 								filteredRecipes.length === 0 || allFilteredRecipesAlreadyExist
 							"
-							class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
+							class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50">
 							Start Import
 						</button>
 
@@ -503,7 +503,7 @@ watch(selectedVersion, () => {
 						<button
 							v-if="selectedIngredient"
 							@click="selectedIngredient = ''; filterRecipesByIngredient()"
-							class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+							class="rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 							Clear Filter
 						</button>
 					</div>
@@ -728,10 +728,10 @@ watch(selectedVersion, () => {
 							:disabled="!currentRecipe.isValid"
 							:class="
 								currentRecipe.alreadyExists
-									? 'bg-orange-600 hover:bg-orange-700'
-									: 'bg-green-600 hover:bg-green-700'
+									? 'bg-semantic-warning hover:bg-opacity-80'
+									: 'bg-semantic-success hover:bg-opacity-80'
 							"
-							class="px-4 py-2 text-white rounded disabled:opacity-50">
+							class="rounded-md px-4 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50">
 							{{
 								currentRecipe.alreadyExists
 									? 'Overwrite existing recipe'
@@ -740,7 +740,7 @@ watch(selectedVersion, () => {
 						</button>
 						<button
 							@click="skipCurrentRecipe"
-							class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+							class="rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 							Skip Recipe
 						</button>
 					</div>
@@ -749,7 +749,7 @@ watch(selectedVersion, () => {
 			<!-- prettier-ignore -->
 			<div v-if="currentRecipe && selectedIngredient" class="mb-4">
 				<!-- prettier-ignore -->
-				<button @click="selectedIngredient = ''; currentRecipe = null; filterRecipesByIngredient()" class="px-3 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+				<button @click="selectedIngredient = ''; currentRecipe = null; filterRecipesByIngredient()" class="rounded-md bg-gray-200 px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 					Choose a different ingredient
 				</button>
 			</div>
@@ -762,9 +762,5 @@ watch(selectedVersion, () => {
 			<p class="text-gray-600 mb-4">You need admin privileges to manage recipes.</p>
 			<RouterLink to="/" class="text-blue-600 hover:underline">Return to Home</RouterLink>
 		</div>
-	</div>
-
-	<div v-else class="p-4 pt-8">
-		<RouterLink to="/login">Login to view this page</RouterLink>
 	</div>
 </template>

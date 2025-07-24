@@ -85,6 +85,19 @@ export function parseRecipe(recipeJson, idToMaterialMap) {
 			result.errors.push('Recipe has no valid ingredients')
 			result.isValid = false
 		}
+
+		// Check for self-referencing recipes
+		if (result.outputItem && result.ingredients.length > 0) {
+			const selfReferencing = result.ingredients.some(
+				(ingredient) => ingredient.material_id === result.outputItem.material_id
+			)
+			if (selfReferencing) {
+				result.errors.push(
+					`Recipe references itself as an ingredient (${result.outputItem.material_id}). This creates a circular dependency and makes the recipe impossible to craft.`
+				)
+				result.isValid = false
+			}
+		}
 	} catch (error) {
 		result.errors.push(`Parse error: ${error.message}`)
 		result.isValid = false

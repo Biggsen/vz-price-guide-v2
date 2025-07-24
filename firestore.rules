@@ -4,10 +4,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Users: Allow user to read/write their own profile, allow admins to read all
     match /users/{userId} {
-      allow read: if request.auth != null && (
-        request.auth.uid == userId ||
-        request.auth.token.admin == true
-      );
+      // Allow authenticated users to read for username uniqueness checks
+      allow get, list, read: if request.auth != null;
+      // Only allow users to write to their own document
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     // Items: Anyone can read, only admins can write
@@ -59,6 +58,16 @@ service cloud.firestore {
          (request.resource.data.sell_price is number && request.resource.data.sell_price >= 0)) &&
         (request.resource.data.buy_price != null || request.resource.data.sell_price != null) &&
         request.resource.data.stock_full is bool;
+    }
+    // Suggestions: Users can read/write their own, admins can read/update/delete all
+    match /suggestions/{suggestionId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read, update, delete: if request.auth != null && request.auth.token.admin == true;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['userId', 'userDisplayName', 'createdAt', 'status', 'title', 'body']) &&
+        request.resource.data.title is string &&
+        request.resource.data.body is string &&
+        request.resource.data.status in ['open', 'in progress', 'closed', 'rejected'];
     }
   }
 }

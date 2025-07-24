@@ -40,7 +40,7 @@ watch(
 	user,
 	(newUser) => {
 		if (newUser === null) {
-			router.push('/login')
+			router.push('/signin')
 		}
 	},
 	{ immediate: true }
@@ -155,7 +155,7 @@ const isFormValid = computed(() => {
 		<div class="mb-6">
 			<button
 				@click="showCreateServerForm"
-				class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors font-medium">
+				class="bg-semantic-success text-white px-4 py-2 rounded hover:bg-opacity-80 transition-colors font-medium">
 				+ Add New Server
 			</button>
 		</div>
@@ -220,7 +220,7 @@ const isFormValid = computed(() => {
 					<button
 						type="submit"
 						:disabled="!isFormValid || loading"
-						class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+						class="bg-semantic-info text-white px-4 py-2 rounded hover:bg-opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
 						{{ editingServer ? 'Update Server' : 'Create Server' }}
 					</button>
 					<button
@@ -260,12 +260,12 @@ const isFormValid = computed(() => {
 					<div class="flex gap-2 ml-4">
 						<button
 							@click="showEditServerForm(server)"
-							class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+							class="bg-semantic-info text-white px-3 py-1 rounded text-sm hover:bg-opacity-80 transition-colors font-medium">
 							Edit
 						</button>
 						<button
 							@click="handleDelete(server)"
-							class="text-red-600 hover:text-red-800 text-sm font-medium">
+							class="bg-semantic-danger text-white px-3 py-1 rounded text-sm hover:bg-opacity-80 transition-colors font-medium">
 							Delete
 						</button>
 					</div>
@@ -282,7 +282,7 @@ const isFormValid = computed(() => {
 			</p>
 			<button
 				@click="showCreateServerForm"
-				class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors font-medium">
+				class="bg-semantic-success text-white px-6 py-2 rounded hover:bg-opacity-80 transition-colors font-medium">
 				Add Your First Server
 			</button>
 		</div>

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
 	items: {
@@ -146,8 +147,8 @@ function setSortField(field) {
 }
 
 function getSortIcon(field) {
-	if (sortField.value !== field) return ''
-	return sortDirection.value === 'asc' ? '↑' : '↓'
+	if (sortField.value !== field) return null
+	return sortDirection.value === 'asc' ? 'up' : 'down'
 }
 
 // Selection methods
@@ -423,12 +424,12 @@ function navigateToShopItems(shopId) {
 				<div class="space-x-2">
 					<button
 						@click="bulkUpdateSelected"
-						class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+						class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-opacity-80 transition-colors">
 						Bulk Update
 					</button>
 					<button
 						@click="selectedItems = []"
-						class="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
+						class="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-opacity-80 transition-colors">
 						Clear Selection
 					</button>
 				</div>
@@ -446,7 +447,7 @@ function navigateToShopItems(shopId) {
 								:checked="allSelected"
 								:indeterminate="someSelected"
 								@change="toggleSelectAll"
-								class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
+								class="checkbox-input" />
 						</th>
 						<th
 							@click="setSortField('name')"
@@ -457,7 +458,12 @@ function navigateToShopItems(shopId) {
 							]">
 							<div class="flex items-center gap-1">
 								<span>Item</span>
-								<span class="text-xs">{{ getSortIcon('name') }}</span>
+								<ArrowUpIcon
+									v-if="getSortIcon('name') === 'up'"
+									class="w-4 h-4 text-gray-700" />
+								<ArrowDownIcon
+									v-else-if="getSortIcon('name') === 'down'"
+									class="w-4 h-4 text-gray-700" />
 							</div>
 						</th>
 						<th
@@ -470,7 +476,12 @@ function navigateToShopItems(shopId) {
 							]">
 							<div class="flex items-center gap-1">
 								<span>Shop</span>
-								<span class="text-xs">{{ getSortIcon('shop_name') }}</span>
+								<ArrowUpIcon
+									v-if="getSortIcon('shop_name') === 'up'"
+									class="w-4 h-4 text-gray-700" />
+								<ArrowDownIcon
+									v-else-if="getSortIcon('shop_name') === 'down'"
+									class="w-4 h-4 text-gray-700" />
 							</div>
 						</th>
 						<th
@@ -482,7 +493,12 @@ function navigateToShopItems(shopId) {
 							]">
 							<div class="flex items-center gap-1">
 								<span>Buy Price</span>
-								<span class="text-xs">{{ getSortIcon('buy_price') }}</span>
+								<ArrowUpIcon
+									v-if="getSortIcon('buy_price') === 'up'"
+									class="w-4 h-4 text-gray-700" />
+								<ArrowDownIcon
+									v-else-if="getSortIcon('buy_price') === 'down'"
+									class="w-4 h-4 text-gray-700" />
 							</div>
 						</th>
 						<th
@@ -494,7 +510,12 @@ function navigateToShopItems(shopId) {
 							]">
 							<div class="flex items-center gap-1">
 								<span>Sell Price</span>
-								<span class="text-xs">{{ getSortIcon('sell_price') }}</span>
+								<ArrowUpIcon
+									v-if="getSortIcon('sell_price') === 'up'"
+									class="w-4 h-4 text-gray-700" />
+								<ArrowDownIcon
+									v-else-if="getSortIcon('sell_price') === 'down'"
+									class="w-4 h-4 text-gray-700" />
 							</div>
 						</th>
 						<th
@@ -506,7 +527,12 @@ function navigateToShopItems(shopId) {
 							]">
 							<div class="flex items-center gap-1">
 								<span>Profit Margin</span>
-								<span class="text-xs">{{ getSortIcon('profit_margin') }}</span>
+								<ArrowUpIcon
+									v-if="getSortIcon('profit_margin') === 'up'"
+									class="w-4 h-4 text-gray-700" />
+								<ArrowDownIcon
+									v-else-if="getSortIcon('profit_margin') === 'down'"
+									class="w-4 h-4 text-gray-700" />
 							</div>
 						</th>
 						<th
@@ -518,7 +544,12 @@ function navigateToShopItems(shopId) {
 							]">
 							<div class="flex items-center gap-1">
 								<span>Last Updated</span>
-								<span class="text-xs">{{ getSortIcon('last_updated') }}</span>
+								<ArrowUpIcon
+									v-if="getSortIcon('last_updated') === 'up'"
+									class="w-4 h-4 text-gray-700" />
+								<ArrowDownIcon
+									v-else-if="getSortIcon('last_updated') === 'down'"
+									class="w-4 h-4 text-gray-700" />
 							</div>
 						</th>
 						<th
@@ -549,7 +580,7 @@ function navigateToShopItems(shopId) {
 								type="checkbox"
 								:checked="isSelected(item.id)"
 								@change="toggleSelectItem(item.id)"
-								class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
+								class="checkbox-input" />
 						</td>
 
 						<!-- Item info -->
@@ -707,29 +738,29 @@ function navigateToShopItems(shopId) {
 							<div v-if="isEditing(item.id)" class="flex space-x-2">
 								<button
 									@click="saveEdit"
-									class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
+									class="px-2 py-1 text-xs bg-semantic-success text-white rounded hover:bg-opacity-80 transition-colors">
 									Save
 								</button>
 								<button
 									@click="cancelEdit"
-									class="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
+									class="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-opacity-80 transition-colors">
 									Cancel
 								</button>
 							</div>
 							<div v-else class="flex space-x-2">
 								<button
 									@click="startEdit(item)"
-									class="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+									class="px-2 py-1 text-xs bg-semantic-info text-white rounded hover:bg-opacity-80 transition-colors">
 									Quick Edit
 								</button>
 								<button
 									@click="handleEdit(item)"
-									class="px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
+									class="px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-opacity-80 transition-colors">
 									Edit
 								</button>
 								<button
 									@click="handleDelete(item)"
-									class="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+									class="px-2 py-1 text-xs bg-semantic-danger text-white rounded hover:bg-opacity-80 transition-colors">
 									Delete
 								</button>
 							</div>
@@ -758,5 +789,10 @@ input[type='checkbox']:indeterminate {
 	.overflow-x-auto {
 		-webkit-overflow-scrolling: touch;
 	}
+}
+
+.checkbox-input {
+	@apply w-4 h-4 rounded;
+	accent-color: theme('colors.gray-asparagus');
 }
 </style>
