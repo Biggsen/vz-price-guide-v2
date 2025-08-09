@@ -120,6 +120,15 @@ Future enhancement for collaborative market intelligence, including:
 -   **Community Features**: 🔄 **PENDING** - Requires user accounts fundamentals
 -   **Linked Shops Feature**: 🔄 **PENDING** - Future enhancement
 
+### `price-export-feature-spec.md`
+
+**💡 IDEA**: User-requested export feature for JSON, YAML, CSV, and XLSX, including:
+
+-   Version-aware exports keyed by `material_id`
+-   Field selection (unit/stack, buy/sell), category filters
+-   Client-side export MVP with optional Cloud Function for large datasets
+-   Auth-gated access with rate limiting and audit logging
+
 ## Priority Order
 
 1. **User Accounts Feature** (🔄 PENDING)
