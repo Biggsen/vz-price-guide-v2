@@ -62,6 +62,24 @@ Comprehensive specification for the Shop Manager feature, including:
 -   Account deletion with full data cleanup
 -   Email communications (welcome email), action URL finalization, deliverability/analytics
 
+### `completed/suggestions-feature-spec.md`
+
+**✅ COMPLETED**: Suggestions MVP delivered:
+
+-   User submissions and personal list management
+-   Admin list view with status updates and hard delete
+-   Soft delete for users; verified users required
+-   Security rules and accessible forms
+
+### `suggestions-feature-enhancements.md`
+
+**🔄 PENDING**: Remaining suggestions enhancements:
+
+-   Comments/threads and detail view
+-   Reply workflows and (optional) notifications
+-   Admin advanced search/filter
+-   Status badges and improved filtering for users
+
 ### `community-features.md`
 
 **🔄 PENDING**: Community interaction and feedback system, including:
