@@ -1,7 +1,7 @@
 // scripts/downloadImages.js
 // Bulk-download item images to the local public folder and optionally update Firestore paths
 // Usage:
-//   1) Configure the constants below (DRY_RUN, UPDATE_FIRESTORE, OVERWRITE, CONCURRENCY, LIMIT)
+//   1) Configure the constants below (DRY_RUN, UPDATE_FIRESTORE, DOWNLOAD_IMAGES, OVERWRITE, CONCURRENCY, LIMIT)
 //   2) Run: node scripts/downloadImages.js
 
 const fs = require('fs')
@@ -22,7 +22,8 @@ const firestoreDb = admin.firestore()
 // Static configuration (no CLI flags)
 // Set DRY_RUN to false to perform writes
 const DRY_RUN = false
-const UPDATE_FIRESTORE = false
+const UPDATE_FIRESTORE = true
+const DOWNLOAD_IMAGES = false
 const OVERWRITE = false
 const CONCURRENCY = 5
 const LIMIT = Infinity
@@ -86,34 +87,37 @@ async function main() {
 	let skipped = 0
 	let updated = 0
 	let failed = 0
+	let scheduled = 0
 
 	for (const doc of snapshot.docs) {
-		if (processed >= LIMIT) break
 		const item = doc.data()
 		const imageUrl = item.image
 		if (!isHttpUrl(imageUrl)) {
 			skipped++
-			processed++
 			continue
 		}
+
+		if (scheduled >= LIMIT) break
 
 		const filename = buildLocalFilenameForItem(item, imageUrl)
 		const outputPath = path.join(OUTPUT_DIR, filename)
 		const publicPath = `/images/items/${filename}`
 
-		const shouldDownload = OVERWRITE || !fs.existsSync(outputPath)
+		const shouldDownload = DOWNLOAD_IMAGES && (OVERWRITE || !fs.existsSync(outputPath))
 		const task = async () => {
 			try {
-				if (shouldDownload) {
-					if (DRY_RUN) {
-						console.log(`[DRY] Would download ${imageUrl} -> ${publicPath}`)
+				if (DOWNLOAD_IMAGES) {
+					if (shouldDownload) {
+						if (DRY_RUN) {
+							console.log(`[DRY] Would download ${imageUrl} -> ${publicPath}`)
+						} else {
+							await downloadImageToFile(imageUrl, outputPath)
+							downloaded++
+							console.log(`Downloaded ${imageUrl} -> ${publicPath}`)
+						}
 					} else {
-						await downloadImageToFile(imageUrl, outputPath)
-						downloaded++
-						console.log(`Downloaded ${imageUrl} -> ${publicPath}`)
+						skipped++
 					}
-				} else {
-					skipped++
 				}
 
 				if (UPDATE_FIRESTORE) {
@@ -136,6 +140,7 @@ async function main() {
 		}
 
 		tasks.push(task)
+		scheduled++
 	}
 
 	// Run with simple concurrency control
@@ -155,6 +160,7 @@ async function main() {
 
 	console.log('\n[downloadImages] Complete:')
 	console.log(`  Processed:   ${processed}`)
+	console.log(`  Scheduled:   ${scheduled}`)
 	console.log(`  Downloaded:  ${downloaded}`)
 	console.log(`  Skipped:     ${skipped}`)
 	console.log(`  Updated DB:  ${updated}`)
