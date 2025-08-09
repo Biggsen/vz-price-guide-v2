@@ -44,17 +44,23 @@ Comprehensive specification for the Shop Manager feature, including:
 -   Estimated timeline: 8-12 weeks
 -   **Priority**: Should begin after recipes feature is stable (✅ recipes now stable)
 
-### `user-accounts-feature.md`
+### `completed/user-accounts-feature.md`
 
-**🔄 PENDING**: Complete user account system fundamentals, including:
+**✅ COMPLETED**: User account system fundamentals delivered:
 
--   User registration and email verification
--   Password reset and management
--   Account security and settings
--   Email communications and templates
--   4-phase implementation plan with security focus
--   **Prerequisites**: None - builds on existing Firebase Auth
--   **Priority**: High - required before community features
+-   Registration, authentication, and email verification
+-   Password reset and change flows
+-   Account/profile management and security
+-   Branded email templates for verification and reset
+-   UX and accessibility polish across auth/account
+
+### `user-accounts-enhancements.md`
+
+**🔄 PENDING**: Remaining enhancements post-fundamentals:
+
+-   Account settings (email preferences, security/session management), data export
+-   Account deletion with full data cleanup
+-   Email communications (welcome email), action URL finalization, deliverability/analytics
 
 ### `community-features.md`
 
@@ -91,7 +97,7 @@ Future enhancement for collaborative market intelligence, including:
 
 -   **Recipes Feature**: ✅ **IMPLEMENTED** - Technically complete, UX improvements needed for production
 -   **Shop Manager Feature**: ✅ **IMPLEMENTED** - Core functionality complete
--   **User Accounts Feature**: 🔄 **PENDING** - Fundamentals needed for community features
+-   **User Accounts Feature**: ✅ **IMPLEMENTED** - Fundamentals complete; enhancements pending
 -   **Price Field Migration**: ⏳ **READY TO BEGIN** - Recipes feature is now stable
 -   **Community Features**: 🔄 **PENDING** - Requires user accounts fundamentals
 -   **Linked Shops Feature**: 🔄 **PENDING** - Future enhancement
