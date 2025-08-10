@@ -264,10 +264,17 @@ async function seedEmulator() {
 			)
 		}
 
-		// Users
+		// Users (profiles only — never store auth credentials in Firestore)
 		console.log('👥 Seeding users...')
 		for (const user of TEST_DATA.users) {
-			await upsertDoc('users', user.id, user)
+			const profile = {
+				minecraft_username: user.minecraft_username,
+				minecraft_avatar_url: user.minecraft_avatar_url,
+				display_name: user.display_name,
+				created_at: user.created_at,
+				bio: user.bio
+			}
+			await upsertDoc('users', user.id, profile)
 			console.log(`  ✓ ${user.display_name}`)
 		}
 
