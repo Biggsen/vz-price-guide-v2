@@ -11,12 +11,12 @@
 		"cy:open": "cypress open",
 		"cy:run": "cypress run",
 		"test:e2e": "node scripts/run-e2e.js",
-		"emulators": "firebase emulators:start --only firestore,auth --project demo-vz-price-guide --import=./.emulator-data --export-on-exit",
+		"emulators": "firebase emulators:start --only firestore,auth --project demo-vz-price-guide",
 		"test:e2e:emu": "cross-env VITE_FIREBASE_EMULATORS=1 node scripts/run-e2e.js",
-		"test:e2e:emu:exec": "cross-env VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth \"node scripts/run-e2e.js\"",
-		"seed:emu": "cross-env VITE_FIREBASE_EMULATORS=1 node scripts/seed-emulator.js",
-		"seed:emu:exec": "cross-env VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth \"node scripts/seed-emulator.js\"",
-		"test:e2e:emu:seeded": "cross-env VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth \"node scripts/seed-emulator.js && node scripts/run-e2e.js\""
+		"test:e2e:emu:exec": "cross-env GCLOUD_PROJECT=demo-vz-price-guide VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth --project demo-vz-price-guide --import=./.emulator-data \"node scripts/run-e2e.js\"",
+		"seed:emu": "cross-env GCLOUD_PROJECT=demo-vz-price-guide FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 VITE_FIREBASE_EMULATORS=1 node scripts/seed-emulator.js",
+		"seed:emu:exec": "cross-env GCLOUD_PROJECT=demo-vz-price-guide VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth --project demo-vz-price-guide --import=./.emulator-data \"node scripts/seed-emulator.js\"",
+		"test:e2e:emu:seeded": "cross-env GCLOUD_PROJECT=demo-vz-price-guide VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth --project demo-vz-price-guide --import=./.emulator-data \"node scripts/seed-emulator.js && node scripts/run-e2e.js\""
 	},
 	"dependencies": {
 		"@heroicons/vue": "^2.2.0",

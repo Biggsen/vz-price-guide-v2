@@ -18,17 +18,18 @@ const firebaseConfig = {
 export const firebaseApp = initializeApp(firebaseConfig)
 
 // Connect to local emulators during E2E/dev when opted in
-const useEmulators = (import.meta.env.VITE_FIREBASE_EMULATORS || '').toString().toLowerCase() === '1' ||
-  (import.meta.env.VITE_FIREBASE_EMULATORS || '').toString().toLowerCase() === 'true'
+const useEmulators =
+	(import.meta.env.VITE_FIREBASE_EMULATORS || '').toString().toLowerCase() === '1' ||
+	(import.meta.env.VITE_FIREBASE_EMULATORS || '').toString().toLowerCase() === 'true'
 
 export const db = getFirestore(firebaseApp)
 export const auth = getAuth(firebaseApp)
 
 if (useEmulators && typeof window !== 'undefined') {
-  try {
-    connectFirestoreEmulator(db, '127.0.0.1', 8080)
-  } catch {}
-  try {
-    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
-  } catch {}
+	try {
+		connectFirestoreEmulator(db, '127.0.0.1', 8080)
+	} catch {}
+	try {
+		connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
+	} catch {}
 }

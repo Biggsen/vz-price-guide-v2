@@ -12,17 +12,37 @@
 const path = require('path')
 const admin = require('firebase-admin')
 
+function usingEmulators() {
+	const flag = (process.env.VITE_FIREBASE_EMULATORS || '').toString().toLowerCase()
+	return (
+		!!process.env.FIRESTORE_EMULATOR_HOST ||
+		!!process.env.FIREBASE_AUTH_EMULATOR_HOST ||
+		flag === '1' ||
+		flag === 'true'
+	)
+}
+
 function initializeAdminApp() {
+	// When targeting emulators, never read service-account.json. It may carry a prod project_id.
+	if (usingEmulators()) {
+		const projectId =
+			process.env.GCLOUD_PROJECT || process.env.FIREBASE_PROJECT || 'demo-vz-price-guide'
+		admin.initializeApp({ projectId })
+		return
+	}
+
+	// Non-emulator path: use service-account if present, otherwise fall back to env/defaults
 	try {
 		const serviceAccountPath = path.resolve(__dirname, '../service-account.json')
 		// eslint-disable-next-line import/no-dynamic-require, global-require
 		const serviceAccount = require(serviceAccountPath)
-		admin.initializeApp({ credential: admin.credential.cert(serviceAccount) })
+		admin.initializeApp({
+			credential: admin.credential.cert(serviceAccount),
+			projectId: serviceAccount.project_id
+		})
 	} catch (error) {
-		// Fallback: allow initialization without credentials (works with emulators)
-		// Provide a default projectId so Firestore works without a SA during emulation
 		const projectId =
-			process.env.GCLOUD_PROJECT || process.env.FIREBASE_PROJECT || 'demo-vz-price-guide'
+			process.env.GCLOUD_PROJECT || process.env.FIREBASE_PROJECT || 'vz-price-guide'
 		admin.initializeApp({ projectId })
 	}
 }
@@ -31,6 +51,14 @@ initializeAdminApp()
 
 const db = admin.firestore()
 const auth = admin.auth()
+
+// Debug: show where we're seeding
+console.log('[seed] Project ID:', admin.app().options.projectId || process.env.GCLOUD_PROJECT)
+console.log('[seed] FIRESTORE_EMULATOR_HOST:', process.env.FIRESTORE_EMULATOR_HOST || '(not set)')
+console.log(
+	'[seed] FIREBASE_AUTH_EMULATOR_HOST:',
+	process.env.FIREBASE_AUTH_EMULATOR_HOST || '(not set)'
+)
 
 // Centralized helper to create/update a document
 async function upsertDoc(collectionName, docId, data) {
@@ -46,7 +74,7 @@ const TEST_DATA = {
 		{
 			id: 'test-user-1',
 			email: 'user@example.com',
-			password: 'password123',
+			password: 'passWORD123',
 			minecraft_username: 'TestPlayer1',
 			display_name: 'Test Player 1',
 			minecraft_avatar_url: 'https://mc-heads.net/avatar/TestPlayer1/64',
@@ -56,7 +84,7 @@ const TEST_DATA = {
 		{
 			id: 'test-admin-1',
 			email: 'admin@example.com',
-			password: 'password123',
+			password: 'passWORD123',
 			minecraft_username: 'TestAdmin1',
 			display_name: 'Test Admin 1',
 			minecraft_avatar_url: 'https://mc-heads.net/avatar/TestAdmin1/64',
@@ -110,7 +138,7 @@ const TEST_DATA = {
 			stack: 64,
 			category: 'stone',
 			subcategory: '',
-			version: '1_16',
+			version: '1.16',
 			version_removed: null,
 			pricing_type: 'static',
 			prices_by_version: {
@@ -128,7 +156,7 @@ const TEST_DATA = {
 			stack: 64,
 			category: 'ores',
 			subcategory: 'diamond',
-			version: '1_16',
+			version: '1.16',
 			version_removed: null,
 			pricing_type: 'static',
 			prices_by_version: {
@@ -146,7 +174,7 @@ const TEST_DATA = {
 			stack: 64,
 			category: 'wood',
 			subcategory: 'oak',
-			version: '1_16',
+			version: '1.16',
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
@@ -169,7 +197,7 @@ const TEST_DATA = {
 			stack: 64,
 			category: 'wood',
 			subcategory: 'oak',
-			version: '1_16',
+			version: '1.16',
 			version_removed: null,
 			pricing_type: 'static',
 			prices_by_version: {
