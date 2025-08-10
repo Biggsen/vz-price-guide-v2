@@ -69,7 +69,7 @@ const TEST_DATA = {
 			id: 'test-server-1',
 			name: 'Test Server 1',
 			minecraft_version: '1.20',
-			owner_id: 'test-user-1',
+			owner_id: 'test-admin-1',
 			description: 'Test server for E2E testing',
 			created_at: nowIso(),
 			updated_at: nowIso()
@@ -80,7 +80,7 @@ const TEST_DATA = {
 			id: 'test-shop-1',
 			name: "TestPlayer1's Shop",
 			server_id: 'test-server-1',
-			owner_id: 'test-user-1',
+			owner_id: 'test-admin-1',
 			is_own_shop: true,
 			location: 'Spawn',
 			description: 'Test shop for E2E testing',
