@@ -167,7 +167,7 @@ const TEST_DATA = {
 		{
 			id: 'oak_planks',
 			material_id: 'oak_planks',
-			name: 'oak_planks',
+			name: 'oak planks',
 			image: '/images/items/oak_planks.png',
 			url: 'https://minecraft.fandom.com/wiki/Oak_Planks',
 			price: 0.8,
@@ -190,7 +190,7 @@ const TEST_DATA = {
 		{
 			id: 'oak_log',
 			material_id: 'oak_log',
-			name: 'oak_log',
+			name: 'oak log',
 			image: '/images/items/oak_log.png',
 			url: 'https://minecraft.fandom.com/wiki/Oak_Log',
 			price: 3.0,
