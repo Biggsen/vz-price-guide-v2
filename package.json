@@ -13,7 +13,10 @@
 		"test:e2e": "node scripts/run-e2e.js",
 		"emulators": "firebase emulators:start --only firestore,auth --project demo-vz-price-guide --import=./.emulator-data --export-on-exit",
 		"test:e2e:emu": "cross-env VITE_FIREBASE_EMULATORS=1 node scripts/run-e2e.js",
-		"test:e2e:emu:exec": "cross-env VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth \"node scripts/run-e2e.js\""
+		"test:e2e:emu:exec": "cross-env VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth \"node scripts/run-e2e.js\"",
+		"seed:emu": "cross-env VITE_FIREBASE_EMULATORS=1 node scripts/seed-emulator.js",
+		"seed:emu:exec": "cross-env VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth \"node scripts/seed-emulator.js\"",
+		"test:e2e:emu:seeded": "cross-env VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth \"node scripts/seed-emulator.js && node scripts/run-e2e.js\""
 	},
 	"dependencies": {
 		"@heroicons/vue": "^2.2.0",
