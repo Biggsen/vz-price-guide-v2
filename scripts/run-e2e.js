@@ -1,6 +1,7 @@
 const { spawn } = require('child_process')
 const waitOn = require('wait-on')
 const net = require('net')
+const http = require('http')
 
 function checkPortAvailable(port) {
 	return new Promise((resolve) => {
@@ -26,12 +27,13 @@ async function pickPort(preferredPort, fallbacks = []) {
 
 async function run() {
 	const port = await pickPort(5173, [5174, 5175])
-	const url = `http://localhost:${port}`
+	const host = '127.0.0.1'
+	const url = `http://${host}:${port}`
 
 	// Start Vite dev server on the chosen port
 	const server = spawn(
 		process.platform === 'win32' ? 'npx.cmd' : 'npx',
-		['vite', '--port', String(port), '--strictPort'],
+		['vite', '--port', String(port), '--strictPort', '--host', host],
 		{
 			stdio: 'inherit',
 			env: process.env,
@@ -44,8 +46,37 @@ async function run() {
 		serverExited = true
 	})
 
+	// Fallback poller in case wait-on has issues
+	async function waitForHttpReady(targetUrl, timeoutMs = 120_000, intervalMs = 500) {
+		const start = Date.now()
+		return new Promise((resolve, reject) => {
+			const attempt = () => {
+				if (serverExited) return reject(new Error('Dev server exited early'))
+				const req = http.get(targetUrl, (res) => {
+					const statusOk = res.statusCode && res.statusCode >= 200 && res.statusCode < 500
+					res.resume()
+					if (statusOk) return resolve(true)
+					if (Date.now() - start > timeoutMs)
+						return reject(new Error('Timed out waiting for server'))
+					setTimeout(attempt, intervalMs)
+				})
+				req.on('error', () => {
+					if (Date.now() - start > timeoutMs)
+						return reject(new Error('Timed out waiting for server'))
+					setTimeout(attempt, intervalMs)
+				})
+			}
+			attempt()
+		})
+	}
+
 	try {
-		await waitOn({ resources: [`http-get://${url.replace('http://', '')}`], timeout: 120000 })
+		// Try wait-on first; if it hangs on Windows, our fallback will also ensure readiness
+		await Promise.race([
+			waitOn({ resources: [`http-get://${host}:${port}/`], timeout: 120000, interval: 500 }),
+			waitForHttpReady(`${url}/`, 120_000, 500)
+		])
+		console.log(`[e2e] Dev server is up at ${url}`)
 	} catch (err) {
 		console.error('Dev server did not start in time')
 		if (!serverExited) server.kill()
@@ -54,7 +85,8 @@ async function run() {
 
 	// Run Cypress tests with matching baseUrl
 	const cypressEnv = { ...process.env, CYPRESS_baseUrl: url }
-	const cypress = spawn('npm run cy:run', {
+	console.log(`[e2e] Starting Cypress with baseUrl=${url}`)
+	const cypress = spawn(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'cy:run'], {
 		stdio: 'inherit',
 		env: cypressEnv,
 		shell: true
