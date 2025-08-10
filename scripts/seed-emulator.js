@@ -104,22 +104,17 @@ const TEST_DATA = {
 			id: 'stone',
 			material_id: 'stone',
 			name: 'stone',
-			image: 'https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/1a/Stone_JE2_BE2.png',
+			image: '/images/items/stone.png',
 			url: 'https://minecraft.fandom.com/wiki/Stone',
 			price: 1.0,
 			stack: 64,
 			category: 'stone',
-			subcategory: 'natural',
+			subcategory: '',
 			version: '1_16',
 			version_removed: null,
 			pricing_type: 'static',
 			prices_by_version: {
-				'1_16': 1.0,
-				'1_17': 1.0,
-				'1_18': 1.0,
-				'1_19': 1.0,
-				'1_20': 1.0,
-				'1_21': 1.0
+				'1_16': 1.0
 			},
 			recipes_by_version: {}
 		},
@@ -127,22 +122,17 @@ const TEST_DATA = {
 			id: 'diamond',
 			material_id: 'diamond',
 			name: 'diamond',
-			image: 'https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/3d/Diamond_JE3_BE3.png',
+			image: '/images/items/diamond.png',
 			url: 'https://minecraft.fandom.com/wiki/Diamond',
 			price: 100.0,
 			stack: 64,
 			category: 'ores',
-			subcategory: 'gems',
+			subcategory: 'diamond',
 			version: '1_16',
 			version_removed: null,
 			pricing_type: 'static',
 			prices_by_version: {
-				'1_16': 100.0,
-				'1_17': 100.0,
-				'1_18': 100.0,
-				'1_19': 100.0,
-				'1_20': 100.0,
-				'1_21': 100.0
+				'1_16': 100.0
 			},
 			recipes_by_version: {}
 		},
@@ -150,22 +140,40 @@ const TEST_DATA = {
 			id: 'oak_planks',
 			material_id: 'oak_planks',
 			name: 'oak_planks',
-			image: 'https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/8a/Oak_Planks_JE3_BE2.png',
+			image: '/images/items/oak_planks.png',
 			url: 'https://minecraft.fandom.com/wiki/Oak_Planks',
-			price: 2.0,
+			price: 0.8,
 			stack: 64,
 			category: 'wood',
-			subcategory: 'planks',
+			subcategory: 'oak',
+			version: '1_16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 0.8
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'oak_log', quantity: 1 }],
+					output_count: 4
+				}
+			}
+		},
+		{
+			id: 'oak_log',
+			material_id: 'oak_log',
+			name: 'oak_log',
+			image: '/images/items/oak_log.png',
+			url: 'https://minecraft.fandom.com/wiki/Oak_Log',
+			price: 3.0,
+			stack: 64,
+			category: 'wood',
+			subcategory: 'oak',
 			version: '1_16',
 			version_removed: null,
 			pricing_type: 'static',
 			prices_by_version: {
-				'1_16': 2.0,
-				'1_17': 2.0,
-				'1_18': 2.0,
-				'1_19': 2.0,
-				'1_20': 2.0,
-				'1_21': 2.0
+				'1_16': 3.0
 			},
 			recipes_by_version: {}
 		}
