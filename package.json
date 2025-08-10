@@ -10,7 +10,10 @@
 		"format": "prettier --write src/",
 		"cy:open": "cypress open",
 		"cy:run": "cypress run",
-		"test:e2e": "node scripts/run-e2e.js"
+		"test:e2e": "node scripts/run-e2e.js",
+		"emulators": "firebase emulators:start --only firestore,auth --project demo-vz-price-guide --import=./.emulator-data --export-on-exit",
+		"test:e2e:emu": "cross-env VITE_FIREBASE_EMULATORS=1 node scripts/run-e2e.js",
+		"test:e2e:emu:exec": "cross-env VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth \"node scripts/run-e2e.js\""
 	},
 	"dependencies": {
 		"@heroicons/vue": "^2.2.0",
@@ -28,9 +31,11 @@
 		"@vitejs/plugin-vue": "^4.4.0",
 		"@vue/eslint-config-prettier": "^8.0.0",
 		"autoprefixer": "^10.4.16",
+		"cross-env": "^7.0.3",
 		"cypress": "^14.5.4",
 		"eslint": "^8.49.0",
 		"eslint-plugin-vue": "^9.17.0",
+		"firebase-tools": "^14.12.0",
 		"postcss": "^8.4.31",
 		"prettier": "^3.0.3",
 		"sass": "^1.69.4",
