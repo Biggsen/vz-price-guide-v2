@@ -88,9 +88,101 @@ jobs:
 -   Seed a minimal `items` collection subset with predictable prices per version.
 -   Create at least one test user with a known email/password in the Auth emulator.
 
-### Next steps
+## Auth Testing Implementation Tasks
 
-1. Add `scripts/reset-emulator.js` (or equivalent) to clear data between runs/specs if flakiness appears.
-2. Add helpful custom commands in `cypress/support/e2e.js` (e.g., `cy.signIn`, common navigations, `Cypress.on('uncaught:exception', ...)`).
-3. Expand specs beyond smoke: auth flows, CRUD for shop items, suggestions, and recipe recalculation checks.
-4. Commit a CI workflow leveraging the example above.
+### 1. Cookie Banner Handling
+
+-   [x] **Create robust cookie banner commands** in `cypress/support/e2e.js`:
+    -   `cy.acceptCookies()` - handles `data-tid="banner-accept"`
+    -   `cy.declineCookies()` - handles `data-tid="banner-decline"`
+    -   `cy.dismissCookieBanner()` - handles any cookie banner dismissal
+    -   Add retry logic and wait for banner to appear
+    -   Handle cases where banner doesn't appear
+    -   **Status**: ✅ Implemented with error handling and graceful fallbacks
+
+### 2. Auth State Management
+
+-   [x] **Implement proper auth clearing commands**:
+    -   `cy.clearAuth()` - clear all auth state (localStorage, sessionStorage, cookies)
+    -   `cy.signOut()` - properly sign out user from Firebase Auth
+    -   `cy.ensureSignedOut()` - verify user is signed out, sign out if needed
+    -   `cy.ensureSignedIn(email, password)` - verify user is signed in, sign in if needed
+    -   **Status**: ✅ Implemented with comprehensive state verification
+
+### 3. Custom Commands Setup
+
+-   [ ] **Create comprehensive custom commands** in `cypress/support/e2e.js`:
+    -   `cy.signIn(email, password)` - robust sign in with error handling
+    -   `cy.signUp(email, password, confirmPassword)` - user registration
+    -   `cy.requestPasswordReset(email)` - password reset flow
+    -   `cy.verifyEmail()` - email verification handling
+    -   `cy.waitForAuth()` - wait for auth state to stabilize
+
+### 4. Test Data Management
+
+-   [ ] **Improve emulator seeding**:
+    -   Ensure consistent test user creation in `scripts/seed-emulator.js`
+    -   Add multiple test users with different permission levels
+    -   Create predictable test data for auth scenarios
+    -   Add cleanup commands for between-test isolation
+
+### 5. Auth Flow Testing Structure
+
+-   [ ] **Organize auth tests by flow**:
+    -   **Registration Flow**: signup → email verification → first login
+    -   **Login Flow**: signin → redirect handling → session persistence
+    -   **Password Reset Flow**: request reset → email handling → new password
+    -   **Session Management**: auth state persistence, logout, redirects
+    -   **Error Handling**: invalid credentials, network errors, validation
+
+### 6. Page State Verification
+
+-   [ ] **Add auth state verification helpers**:
+    -   `cy.verifySignedIn()` - check if user is properly authenticated
+    -   `cy.verifySignedOut()` - check if user is properly signed out
+    -   `cy.verifyRedirectedToSignIn()` - verify redirect to signin page
+    -   `cy.verifyProtectedRouteAccess()` - test access to protected routes
+
+### 7. Error Handling & Edge Cases
+
+-   [ ] **Handle common auth testing issues**:
+    -   Network timeouts and retries
+    -   Firebase emulator connection issues
+    -   Cookie banner timing issues
+    -   Auth state race conditions
+    -   Form validation errors
+    -   Email verification delays
+
+### 8. Test Isolation & Cleanup
+
+-   [ ] **Implement proper test isolation**:
+    -   Clear auth state between tests
+    -   Reset emulator data when needed
+    -   Handle test user cleanup
+    -   Prevent test interference
+
+### 9. CI/CD Integration
+
+-   [ ] **Ensure reliable CI testing**:
+    -   Emulator startup reliability
+    -   Test data seeding consistency
+    -   Auth state management in headless mode
+    -   Proper error reporting and debugging
+
+### 10. Documentation & Maintenance
+
+-   [ ] **Create testing documentation**:
+    -   Auth testing best practices
+    -   Common troubleshooting steps
+    -   Test data management guide
+    -   CI/CD testing workflow
+
+## Implementation Priority
+
+1. **Phase 1**: Cookie Banner + Auth State Management (Tasks 1-2)
+2. **Phase 2**: Custom Commands + Test Data (Tasks 3-4)
+3. **Phase 3**: Auth Flows + Verification (Tasks 5-6)
+4. **Phase 4**: Error Handling + Isolation (Tasks 7-8)
+5. **Phase 5**: CI/CD + Documentation (Tasks 9-10)
+
+Each phase should be fully tested before moving to the next to ensure robust, reliable auth testing.

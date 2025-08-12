@@ -1,0 +1,86 @@
+describe('Auth Commands - Phase 1 Testing', () => {
+	beforeEach(() => {
+		// Ensure we start with a clean auth state
+		cy.ensureSignedOut()
+	})
+
+	describe('Cookie Banner Commands', () => {
+		it('should handle cookie banner acceptance', () => {
+			cy.visit('/')
+			cy.acceptCookies()
+			// Should not throw errors and should handle banner if present
+		})
+
+		it('should handle cookie banner decline', () => {
+			cy.visit('/')
+			cy.declineCookies()
+			// Should not throw errors and should handle banner if present
+		})
+
+		it('should dismiss cookie banner gracefully', () => {
+			cy.visit('/')
+			cy.dismissCookieBanner()
+			// Should handle any cookie banner scenario
+		})
+
+		it('should handle pages without cookie banners', () => {
+			cy.visit('/signin')
+			cy.acceptCookies()
+			// Should not fail when no banner is present
+		})
+	})
+
+	describe('Auth State Management Commands', () => {
+		it('should clear auth state completely', () => {
+			cy.clearAuth()
+			// Should clear all auth-related data
+		})
+
+		it('should ensure user is signed out', () => {
+			cy.ensureSignedOut()
+			// Should verify user is signed out
+		})
+
+		it('should handle sign out when user is signed in', () => {
+			// First sign in a user
+			cy.signIn('test@example.com', 'Password123')
+			cy.waitForAuth()
+
+			// Then sign out
+			cy.signOut()
+			cy.url().should('include', '/')
+		})
+
+		it('should handle sign out when user is already signed out', () => {
+			cy.signOut()
+			// Should not fail when user is already signed out
+		})
+	})
+
+	describe('Basic Auth Commands', () => {
+		it('should sign in with valid credentials', () => {
+			cy.signIn('test@example.com', 'Password123')
+			cy.url().should('include', '/account')
+		})
+
+		it('should wait for auth state to stabilize', () => {
+			cy.visit('/')
+			cy.waitForAuth()
+			// Should not throw errors
+		})
+	})
+
+	describe('Auth State Verification', () => {
+		it('should verify signed out state', () => {
+			cy.ensureSignedOut()
+			cy.visit('/account')
+			cy.url().should('not.include', '/account')
+		})
+
+		it('should verify signed in state', () => {
+			cy.ensureSignedIn('test@example.com', 'Password123')
+			cy.visit('/account')
+			cy.url().should('include', '/account')
+		})
+	})
+})
