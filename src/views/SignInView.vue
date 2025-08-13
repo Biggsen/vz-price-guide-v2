@@ -57,8 +57,12 @@ async function signInToFirebase() {
 			userInput.value.password
 		)
 
-		// Redirect to home regardless of profile/verification
-		router.push('/')
+		// Redirect to requested path if provided, otherwise home
+		const redirectTo =
+			typeof route.query.redirect === 'string' && route.query.redirect
+				? route.query.redirect
+				: '/'
+		router.push(redirectTo)
 	} catch (error) {
 		console.error('Sign in error:', error.code, error.message)
 
