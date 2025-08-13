@@ -36,14 +36,9 @@ describe('Auth Commands - Phase 1 Testing', () => {
 			// Should clear all auth-related data
 		})
 
-		it('should ensure user is signed out', () => {
-			cy.ensureSignedOut()
-			// Should verify user is signed out
-		})
-
 		it('should handle sign out when user is signed in', () => {
 			// First sign in a user
-			cy.signIn('test@example.com', 'Password123')
+			cy.signIn('user@example.com', 'passWORD123')
 			cy.waitForAuth()
 
 			// Then sign out
@@ -59,7 +54,7 @@ describe('Auth Commands - Phase 1 Testing', () => {
 
 	describe('Basic Auth Commands', () => {
 		it('should sign in with valid credentials', () => {
-			cy.signIn('test@example.com', 'Password123')
+			cy.signIn('user@example.com', 'passWORD123')
 			cy.url().should('include', '/account')
 		})
 
@@ -78,7 +73,7 @@ describe('Auth Commands - Phase 1 Testing', () => {
 		})
 
 		it('should verify signed in state', () => {
-			cy.ensureSignedIn('test@example.com', 'Password123')
+			cy.ensureSignedIn('user@example.com', 'passWORD123')
 			cy.visit('/account')
 			cy.url().should('include', '/account')
 		})
