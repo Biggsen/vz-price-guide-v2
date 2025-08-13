@@ -9,10 +9,8 @@ import {
 	useUserProfile,
 	createUserProfile,
 	updateUserProfile,
-	userProfileExists,
 	isMinecraftUsernameTaken
 } from '../utils/userProfile.js'
-import { getFirestore, doc, getDoc } from 'firebase/firestore'
 import { CheckCircleIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 
 const { user, isAdmin } = useAdmin()
@@ -20,9 +18,10 @@ const auth = useFirebaseAuth()
 const router = useRouter()
 const route = useRoute()
 
+// Use the existing composable for user profile
+const { userProfile } = useUserProfile(user.value?.uid)
+
 // User profile state
-const userProfile = ref(null)
-const checkingProfile = ref(true)
 const editingProfile = ref(false)
 const editingMinecraftProfile = ref(false)
 const successMessage = ref('')
@@ -61,46 +60,12 @@ const profileExists = computed(() => {
 	return userProfile.value != null
 })
 
-// Function to load profile data directly
-async function loadUserProfile(userId) {
-	try {
-		const exists = await userProfileExists(userId)
-		if (exists) {
-			// Load profile data directly from Firestore
-			const db = getFirestore()
-			const docRef = doc(db, 'users', userId)
-			const docSnap = await getDoc(docRef)
-
-			if (docSnap.exists()) {
-				const profileData = docSnap.data()
-				userProfile.value = { ...profileData }
-
-				// Update form with profile data
-				profileForm.value = {
-					minecraft_username: profileData.minecraft_username || '',
-					display_name: profileData.display_name || '',
-					bio: profileData.bio || ''
-				}
-			}
-		}
-	} catch (error) {
-		console.error('Error loading profile:', error)
-	}
-}
-
-// Watch for user changes and load profile
+// Watch for user changes to update the composable
 watch(
 	user,
-	async (newUser) => {
-		if (newUser?.uid) {
-			checkingProfile.value = true
-			await loadUserProfile(newUser.uid)
-			checkingProfile.value = false
-		} else {
-			// Reset when user logs out
-			userProfile.value = null
-			checkingProfile.value = false
-		}
+	(newUser) => {
+		// The useUserProfile composable will automatically handle the profile loading
+		// when the userId changes
 	},
 	{ immediate: true }
 )
@@ -152,7 +117,7 @@ async function createProfile() {
 	}
 
 	try {
-		const newProfile = await createUserProfile(user.value.uid, {
+		await createUserProfile(user.value.uid, {
 			minecraft_username: username,
 			display_name: profileForm.value.display_name.trim() || username,
 			bio: profileForm.value.bio.trim() || ''
@@ -163,8 +128,7 @@ async function createProfile() {
 		editingMinecraftProfile.value = false
 		showCreateProfileForm.value = false // Hide the form after successful creation
 
-		// Update local profile data immediately
-		userProfile.value = { ...newProfile }
+		// The composable will automatically update userProfile.value
 	} catch (error) {
 		console.error('Error creating profile:', error)
 		alert('Failed to create profile. Please try again.')
@@ -184,7 +148,7 @@ async function updateProfile() {
 	}
 
 	try {
-		const updatedProfile = await updateUserProfile(user.value.uid, {
+		await updateUserProfile(user.value.uid, {
 			display_name:
 				profileForm.value.display_name.trim() ||
 				profileForm.value.minecraft_username.trim(),
@@ -194,8 +158,7 @@ async function updateProfile() {
 
 		editingProfile.value = false
 
-		// Update local profile data immediately
-		userProfile.value = { ...userProfile.value, ...updatedProfile }
+		// The composable will automatically update userProfile.value
 	} catch (error) {
 		console.error('Error updating profile:', error)
 		alert('Failed to update profile. Please try again.')
@@ -215,14 +178,13 @@ async function updateMinecraftProfile() {
 	}
 
 	try {
-		const updatedProfile = await updateUserProfile(user.value.uid, {
+		await updateUserProfile(user.value.uid, {
 			minecraft_username: username
 		})
 
 		editingMinecraftProfile.value = false
 
-		// Update local profile data immediately
-		userProfile.value = { ...userProfile.value, ...updatedProfile }
+		// The composable will automatically update userProfile.value
 	} catch (error) {
 		console.error('Error updating minecraft profile:', error)
 		alert('Failed to update minecraft profile. Please try again.')
@@ -366,8 +328,8 @@ function signOutOfFirebase() {
 					</div>
 				</div>
 
-				<!-- Loading state -->
-				<div v-if="checkingProfile" class="text-center py-8">
+				<!-- Loading state (only while Firestore doc is being fetched) -->
+				<div v-if="userProfile === undefined && user?.uid" class="text-center py-8">
 					<p class="text-gray-600">Loading profile...</p>
 				</div>
 
