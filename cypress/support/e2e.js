@@ -121,9 +121,13 @@ Cypress.Commands.add('clearAuth', () => {
 Cypress.Commands.add('signOut', () => {
 	cy.log('Signing out user...')
 
-	// Try to visit account page to trigger sign out
-	cy.visit('/account')
-	cy.acceptCookies()
+	// If not already on an auth-related page, navigate once to /account
+	cy.location('pathname').then((p) => {
+		if (!['/account', '/signin', '/signup'].includes(p)) {
+			cy.visit('/account')
+			cy.acceptCookies()
+		}
+	})
 
 	// Wait for router to settle on either account or auth page
 	cy.location('pathname', { timeout: 10000 }).should((p) => {

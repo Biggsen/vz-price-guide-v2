@@ -69,7 +69,10 @@ describe('Auth Commands - Phase 1 Testing', () => {
 		it('should verify signed out state', () => {
 			cy.ensureSignedOut()
 			cy.visit('/account')
-			cy.url().should('not.include', '/account')
+			// Redirects to auth page; query may include "/account" as redirect param
+			cy.location('pathname').should((p) => {
+				expect(['/signin', '/signup']).to.include(p)
+			})
 		})
 
 		it('should verify signed in state', () => {
