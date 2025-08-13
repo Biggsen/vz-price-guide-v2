@@ -55,7 +55,7 @@ describe('Auth Commands - Phase 1 Testing', () => {
 	describe('Basic Auth Commands', () => {
 		it('should sign in with valid credentials', () => {
 			cy.signIn('user@example.com', 'passWORD123')
-			cy.url().should('include', '/account')
+			cy.location('pathname').should('eq', '/')
 		})
 
 		it('should wait for auth state to stabilize', () => {
