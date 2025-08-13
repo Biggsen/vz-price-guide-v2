@@ -3,7 +3,6 @@ import { ref, computed } from 'vue'
 import { useFirebaseAuth, useCurrentUser } from 'vuefire'
 import { useRouter, useRoute } from 'vue-router'
 import { signInWithEmailAndPassword, signOut } from '@firebase/auth'
-import { userProfileExists } from '../utils/userProfile.js'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 import { CheckCircleIcon, XCircleIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 
@@ -58,17 +57,8 @@ async function signInToFirebase() {
 			userInput.value.password
 		)
 
-		// Check if user has a profile
-		const hasProfile = await userProfileExists(userCredential.user.uid)
-
-		// Redirect based on profile status
-		if (hasProfile) {
-			// User has profile - redirect to home
-			router.push('/')
-		} else {
-			// First time user - redirect to account to complete setup
-			router.push('/account')
-		}
+		// Redirect to home regardless of profile/verification
+		router.push('/')
 	} catch (error) {
 		console.error('Sign in error:', error.code, error.message)
 
