@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useFirebaseAuth } from 'vuefire'
 import { signOut } from '@firebase/auth'
 import { useRouter, useRoute } from 'vue-router'
@@ -23,7 +23,6 @@ const { userProfile } = useUserProfile(user.value?.uid)
 
 // User profile state
 const editingProfile = ref(false)
-const editingMinecraftProfile = ref(false)
 const successMessage = ref('')
 const minecraftUsernameError = ref('')
 
@@ -104,90 +103,52 @@ watch(
 	}
 )
 
-// Create user profile
-async function createProfile() {
-	if (!user.value?.uid || !profileForm.value.minecraft_username.trim()) return
-
-	minecraftUsernameError.value = ''
+// Build trimmed payload from form
+function buildProfilePayload() {
 	const username = profileForm.value.minecraft_username.trim()
-	const taken = await isMinecraftUsernameTaken(username)
-	if (taken) {
-		minecraftUsernameError.value = 'That Minecraft username is already in use.'
-		return
-	}
-
-	try {
-		await createUserProfile(user.value.uid, {
-			minecraft_username: username,
-			display_name: profileForm.value.display_name.trim() || username,
-			bio: profileForm.value.bio.trim() || ''
-		})
-
-		// Update local state
-		editingProfile.value = false
-		editingMinecraftProfile.value = false
-		showCreateProfileForm.value = false // Hide the form after successful creation
-
-		// The composable will automatically update userProfile.value
-	} catch (error) {
-		console.error('Error creating profile:', error)
-		alert('Failed to create profile. Please try again.')
-	}
+	const displayName =
+		profileForm.value.display_name.trim() || profileForm.value.minecraft_username.trim()
+	const bio = profileForm.value.bio.trim() || ''
+	return { username, displayName, bio }
 }
 
-// Update profile
-async function updateProfile() {
+// Create or update profile with shared validation
+async function saveProfile() {
 	if (!user.value?.uid || !profileForm.value.minecraft_username.trim()) return
 
 	minecraftUsernameError.value = ''
-	const username = profileForm.value.minecraft_username.trim()
-	const taken = await isMinecraftUsernameTaken(username, user.value.uid)
+	const { username, displayName, bio } = buildProfilePayload()
+
+	const taken = await isMinecraftUsernameTaken(
+		username,
+		profileExists.value ? user.value.uid : null
+	)
 	if (taken) {
 		minecraftUsernameError.value = 'That Minecraft username is already in use.'
 		return
 	}
 
 	try {
-		await updateUserProfile(user.value.uid, {
-			display_name:
-				profileForm.value.display_name.trim() ||
-				profileForm.value.minecraft_username.trim(),
-			bio: profileForm.value.bio.trim() || '',
-			minecraft_username: username
-		})
-
-		editingProfile.value = false
-
+		if (profileExists.value) {
+			await updateUserProfile(user.value.uid, {
+				display_name: displayName,
+				bio,
+				minecraft_username: username
+			})
+			editingProfile.value = false
+		} else {
+			await createUserProfile(user.value.uid, {
+				minecraft_username: username,
+				display_name: displayName,
+				bio
+			})
+			editingProfile.value = false
+			showCreateProfileForm.value = false
+		}
 		// The composable will automatically update userProfile.value
 	} catch (error) {
-		console.error('Error updating profile:', error)
-		alert('Failed to update profile. Please try again.')
-	}
-}
-
-// Update minecraft profile
-async function updateMinecraftProfile() {
-	if (!user.value?.uid || !profileForm.value.minecraft_username.trim()) return
-
-	minecraftUsernameError.value = ''
-	const username = profileForm.value.minecraft_username.trim()
-	const taken = await isMinecraftUsernameTaken(username, user.value.uid)
-	if (taken) {
-		minecraftUsernameError.value = 'That Minecraft username is already in use.'
-		return
-	}
-
-	try {
-		await updateUserProfile(user.value.uid, {
-			minecraft_username: username
-		})
-
-		editingMinecraftProfile.value = false
-
-		// The composable will automatically update userProfile.value
-	} catch (error) {
-		console.error('Error updating minecraft profile:', error)
-		alert('Failed to update minecraft profile. Please try again.')
+		console.error('Error saving profile:', error)
+		alert('Failed to save profile. Please try again.')
 	}
 }
 
@@ -201,13 +162,7 @@ function cancelEditProfile() {
 	}
 }
 
-// Cancel editing minecraft profile
-function cancelEditMinecraftProfile() {
-	editingMinecraftProfile.value = false
-	if (userProfile.value) {
-		profileForm.value.minecraft_username = userProfile.value.minecraft_username || ''
-	}
-}
+// Removed separate Minecraft edit canceler; unified in save/cancel handlers
 
 function signOutOfFirebase() {
 	signOut(auth)
@@ -394,7 +349,7 @@ function signOutOfFirebase() {
 								Create Profile
 							</button>
 						</div>
-						<form v-else @submit.prevent="createProfile" class="space-y-6">
+						<form v-else @submit.prevent="saveProfile" class="space-y-6">
 							<div>
 								<label
 									for="minecraft_username"
@@ -590,7 +545,7 @@ function signOutOfFirebase() {
 
 							<!-- Edit Mode -->
 							<div v-else>
-								<form @submit.prevent="updateProfile" class="space-y-4">
+								<form @submit.prevent="saveProfile" class="space-y-4">
 									<div>
 										<label
 											for="edit_minecraft_username"
