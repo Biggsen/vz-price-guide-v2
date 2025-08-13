@@ -90,6 +90,16 @@ const TEST_DATA = {
 			minecraft_avatar_url: 'https://mc-heads.net/avatar/TestAdmin1/64',
 			created_at: nowIso(),
 			bio: 'Test admin user for E2E testing'
+		},
+		{
+			id: 'test-user-unverified',
+			email: 'unverified@example.com',
+			password: 'passWORD123'
+		},
+		{
+			id: 'test-user-verified-no-profile',
+			email: 'verified-noprofile@example.com',
+			password: 'passWORD123'
 		}
 	],
 	servers: [
@@ -274,18 +284,22 @@ async function seedEmulator() {
 			try {
 				existing = await auth.getUser(user.id)
 			} catch {}
+
+			// Set emailVerified based on user ID
+			const emailVerified = user.id !== 'test-user-unverified'
+
 			if (!existing) {
 				await auth.createUser({
 					uid: user.id,
 					email: user.email,
-					emailVerified: true,
+					emailVerified: emailVerified,
 					password: user.password,
 					disabled: false
 				})
 			} else {
 				await auth.updateUser(user.id, {
 					email: user.email,
-					emailVerified: true,
+					emailVerified: emailVerified,
 					password: user.password,
 					disabled: false
 				})
@@ -296,13 +310,22 @@ async function seedEmulator() {
 				await auth.setCustomUserClaims(user.id, { admin: false })
 			}
 			console.log(
-				`  ✓ Auth user ready: ${user.email}${user.id === 'test-admin-1' ? ' (admin)' : ''}`
+				`  ✓ Auth user ready: ${user.email}${user.id === 'test-admin-1' ? ' (admin)' : ''}${
+					user.id === 'test-user-unverified' ? ' (unverified)' : ''
+				}${user.id === 'test-user-verified-no-profile' ? ' (verified, no profile)' : ''}`
 			)
 		}
 
 		// Users (profiles only — never store auth credentials in Firestore)
 		console.log('👥 Seeding users...')
 		for (const user of TEST_DATA.users) {
+			// Skip creating profile for unverified user and verified user without profile
+			if (user.id === 'test-user-unverified' || user.id === 'test-user-verified-no-profile') {
+				const reason = user.id === 'test-user-unverified' ? 'unverified' : 'no profile'
+				console.log(`  ⏭️  Skipping profile for ${user.email} (${reason})`)
+				continue
+			}
+
 			const profile = {
 				minecraft_username: user.minecraft_username,
 				minecraft_avatar_url: user.minecraft_avatar_url,
