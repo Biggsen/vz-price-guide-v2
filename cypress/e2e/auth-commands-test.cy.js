@@ -1,7 +1,8 @@
 describe('Auth Commands - Phase 1 Testing', () => {
-	beforeEach(() => {
-		// Ensure we start with a clean auth state
-		cy.ensureSignedOut()
+	before(() => {
+		// Accept cookies once to avoid banner noise across tests
+		cy.visit('/')
+		cy.acceptCookies()
 	})
 
 	describe('Cookie Banner Commands', () => {

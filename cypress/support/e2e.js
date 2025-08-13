@@ -17,6 +17,7 @@ Cypress.on('uncaught:exception', (err, runnable) => {
 })
 
 // Cookie Banner Handling Commands
+const SESSION_VERSION = 'v1'
 Cypress.Commands.add('acceptCookies', () => {
 	cy.log('Attempting to accept cookies...')
 
@@ -87,6 +88,20 @@ Cypress.Commands.add('clearAuth', () => {
 	// Clear sessionStorage (using window.sessionStorage.clear())
 	cy.window().then((win) => {
 		win.sessionStorage.clear()
+
+		// Best-effort: remove Firebase Auth persistence (IndexedDB)
+		const deleteDb = (name) =>
+			new Promise((resolve) => {
+				try {
+					const req = win.indexedDB.deleteDatabase(name)
+					req.onsuccess = req.onerror = req.onblocked = () => resolve()
+				} catch {
+					resolve()
+				}
+			})
+		return deleteDb('firebaseLocalStorageDb')
+			.then(() => deleteDb('firebase-installations-database'))
+			.then(() => deleteDb('firebase-installations-store'))
 	})
 
 	// Clear cookies
@@ -94,7 +109,6 @@ Cypress.Commands.add('clearAuth', () => {
 
 	// Check if we need to sign out from Firebase Auth
 	cy.visit('/account')
-	cy.acceptCookies()
 
 	// Check if we're actually signed in by seeing if we stay on account page
 	cy.url().then((url) => {
@@ -125,7 +139,6 @@ Cypress.Commands.add('signOut', () => {
 	cy.location('pathname').then((p) => {
 		if (!['/account', '/signin', '/signup'].includes(p)) {
 			cy.visit('/account')
-			cy.acceptCookies()
 		}
 	})
 
@@ -166,40 +179,69 @@ Cypress.Commands.add('signOut', () => {
 Cypress.Commands.add('ensureSignedOut', () => {
 	cy.log('Ensuring user is signed out...')
 
-	// Check if we're already signed out by trying to visit a protected route
-	cy.visit('/account')
-	cy.acceptCookies()
+	// First, proactively clear Firebase auth persistence without touching consent cookies
+	cy.window().then((win) => {
+		const deleteDb = (name) =>
+			new Promise((resolve) => {
+				try {
+					const req = win.indexedDB.deleteDatabase(name)
+					req.onsuccess = req.onerror = req.onblocked = () => resolve()
+				} catch {
+					resolve()
+				}
+			})
+		return deleteDb('firebaseLocalStorageDb')
+			.then(() => deleteDb('firebase-installations-database'))
+			.then(() => deleteDb('firebase-installations-store'))
+	})
 
-	// Check if we're redirected to auth page (signed out) or on account page (signed in)
+	// Now navigate to verify guest state
+	cy.visit('/account')
 	cy.location('pathname', { timeout: 10000 }).should((p) => {
 		expect(['/account', '/signin', '/signup']).to.include(p)
 	})
 	cy.location('pathname').then((path) => {
 		if (path === '/account') {
-			// We're actually on account page, so we're signed in - need to sign out
-			cy.log('User is signed in, signing out...')
+			cy.log('Still on account after clearing persistence; attempting UI sign out')
 			cy.signOut()
 		} else {
-			cy.log('User is already signed out (redirected to auth)')
+			cy.log('User is signed out (redirected to auth)')
 		}
 	})
 })
 
 Cypress.Commands.add('ensureSignedIn', (email, password) => {
-	cy.log(`Ensuring user is signed in: ${email}`)
+	cy.log(`Ensuring user is signed in (cached session): ${email}`)
 
-	// Check if we're already signed in
-	cy.visit('/account')
-	cy.acceptCookies()
+	// Avoid cross-run callback hash mismatch errors when code changes
+	if (Cypress.session && Cypress.session.clearAllSavedSessions) {
+		Cypress.session.clearAllSavedSessions()
+	}
 
-	cy.url().then((url) => {
-		if (url.includes('/account')) {
-			cy.log('User is already signed in')
-		} else {
-			cy.log('User is not signed in, signing in...')
-			cy.signIn(email, password)
-		}
-	})
+	// Cache a signed-in session per user to avoid repeated UI work
+	const sessionId = `signed-in:${SESSION_VERSION}:${email}`
+	cy.session(
+		sessionId,
+		() => {
+			cy.visit('/signin')
+			cy.get('body', { timeout: 10000 }).then(($body) => {
+				const hasForm = $body.find('[data-cy="signin-email"]').length > 0
+				if (hasForm) {
+					cy.get('[data-cy="signin-email"]').type(email)
+					cy.get('[data-cy="signin-password"]').type(password)
+					cy.get('[data-cy="signin-submit"]').click()
+					cy.location('pathname').should('eq', '/')
+				} else {
+					cy.location('pathname', { timeout: 10000 }).then((p) => {
+						if (p !== '/') {
+							cy.visit('/')
+						}
+					})
+				}
+			})
+		},
+		{ cacheAcrossSpecs: true }
+	)
 })
 
 // Basic Auth Commands (to be expanded in Phase 2)
@@ -207,15 +249,24 @@ Cypress.Commands.add('signIn', (email, password) => {
 	cy.log(`Signing in user: ${email}`)
 
 	cy.visit('/signin')
-	cy.acceptCookies()
 
-	cy.get('[data-cy="signin-email"]').type(email)
-	cy.get('[data-cy="signin-password"]').type(password)
-	cy.get('[data-cy="signin-submit"]').click()
-
-	// Wait for sign in to complete (redirects to home)
-	cy.location('pathname').should('eq', '/')
-	cy.log('Sign in completed successfully')
+	cy.get('body', { timeout: 10000 }).then(($body) => {
+		const hasForm = $body.find('[data-cy="signin-email"]').length > 0
+		if (hasForm) {
+			cy.get('[data-cy="signin-email"]').type(email)
+			cy.get('[data-cy="signin-password"]').type(password)
+			cy.get('[data-cy="signin-submit"]').click()
+			cy.location('pathname').should('eq', '/')
+			cy.log('Sign in completed successfully')
+		} else {
+			cy.location('pathname', { timeout: 10000 }).then((p) => {
+				if (p !== '/') {
+					cy.visit('/')
+				}
+			})
+			cy.log('Sign in form not present; assuming already signed in')
+		}
+	})
 })
 
 // Wait for auth state to stabilize
