@@ -197,6 +197,11 @@ Cypress.Commands.add('ensureSignedOut', () => {
 
 	// Now navigate to verify guest state
 	cy.visit('/account')
+
+	// Wait for auth state to stabilize after clearing persistence
+	cy.waitForAuth()
+
+	// Check if we're still on account page or have been redirected
 	cy.location('pathname', { timeout: 10000 }).should((p) => {
 		expect(['/account', '/signin', '/signup']).to.include(p)
 	})
