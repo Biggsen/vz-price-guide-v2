@@ -255,6 +255,8 @@ Cypress.Commands.add('signIn', (email, password) => {
 
 	cy.visit('/signin')
 
+	cy.waitForAuth()
+
 	cy.get('body', { timeout: 10000 }).then(($body) => {
 		const hasForm = $body.find('[data-cy="signin-email"]').length > 0
 		if (hasForm) {

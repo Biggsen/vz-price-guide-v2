@@ -32,15 +32,15 @@ describe('Auth Flow', () => {
 	})
 
 	it('admin can access admin route', () => {
-		cy.ensureSignedIn('admin@example.com', 'passWORD123')
-		cy.waitForAuth()
+		cy.ensureSignedOut()
+		cy.signIn('admin@example.com', 'passWORD123')
 		cy.visit('/admin')
 		cy.location('pathname').should('eq', '/admin')
 	})
 
 	it('unverified user is redirected to verify-email for routes requiring verification', () => {
-		cy.ensureSignedIn('unverified@example.com', 'passWORD123')
-		cy.waitForAuth()
+		cy.ensureSignedOut()
+		cy.signIn('unverified@example.com', 'passWORD123')
 		cy.visit('/recipes/import')
 		cy.location('pathname').should('eq', '/verify-email')
 	})
