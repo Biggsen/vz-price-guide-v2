@@ -8,7 +8,7 @@
  * @returns {string} The processed image URL
  */
 export function getImageUrl(imageUrl, options = {}) {
-	const { width = 64, format = 'webp', quality = 70 } = options
+	const { width = 64, format = 'webp', quality = 90 } = options
 
 	if (process.env.NODE_ENV === 'production') {
 		return `/.netlify/images?url=${imageUrl}&w=${width}&fm=${format}&q=${quality}`
