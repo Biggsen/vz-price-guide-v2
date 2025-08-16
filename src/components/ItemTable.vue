@@ -5,6 +5,7 @@ import { doc, deleteDoc } from 'firebase/firestore'
 import { buyUnitPrice, sellUnitPrice, buyStackPrice, sellStackPrice } from '../utils/pricing.js'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { useAdmin } from '../utils/admin.js'
+import { getImageUrl } from '../utils/image.js'
 import { computed, ref, watch } from 'vue'
 import { Squares2X2Icon } from '@heroicons/vue/16/solid'
 
@@ -207,8 +208,11 @@ function getItemEffectivePrice(item) {
 				</th>
 				<td width="5%">
 					<img
-						:src="item.image"
-						alt=""
+						:src="getImageUrl(item.image)"
+						:alt="item.name"
+						loading="lazy"
+						decoding="async"
+						fetchpriority="low"
 						:class="
 							layout === 'condensed'
 								? 'max-w-[20px] lg:max-w-[30px]'
