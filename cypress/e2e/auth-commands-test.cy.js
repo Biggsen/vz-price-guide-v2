@@ -93,4 +93,15 @@ describe('Auth Commands - Phase 1 Testing', () => {
 			cy.location('pathname').should('eq', '/verify-email')
 		})
 	})
+
+	describe('Password Reset Commands', () => {
+		it('should request password reset and show success message', () => {
+			cy.ensureSignedOut()
+			cy.requestPasswordReset('user@example.com')
+			// Should show success message after password reset request
+			cy.contains('Password reset email sent! Check your inbox for instructions.').should(
+				'be.visible'
+			)
+		})
+	})
 })

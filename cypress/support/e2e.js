@@ -298,6 +298,25 @@ Cypress.Commands.add('signUp', (email, password, confirmPassword) => {
 	})
 })
 
+Cypress.Commands.add('requestPasswordReset', (email) => {
+	cy.log(`Requesting password reset for: ${email}`)
+
+	cy.visit('/reset-password')
+
+	cy.waitForAuth()
+
+	cy.get('body', { timeout: 10000 }).then(($body) => {
+		const hasForm = $body.find('[data-cy="reset-email"]').length > 0
+		if (hasForm) {
+			cy.get('[data-cy="reset-email"]').type(email)
+			cy.get('[data-cy="reset-submit"]').click()
+			cy.log('Password reset request completed successfully')
+		} else {
+			cy.log('Password reset form not present; assuming already on different page')
+		}
+	})
+})
+
 // Wait for auth state to stabilize
 Cypress.Commands.add('waitForAuth', () => {
 	cy.log('Waiting for auth state to stabilize...')
