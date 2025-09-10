@@ -317,6 +317,31 @@ Cypress.Commands.add('requestPasswordReset', (email) => {
 	})
 })
 
+Cypress.Commands.add('verifyEmail', (email) => {
+	cy.log(`Verifying email for: ${email}`)
+
+	// Use Firebase Admin SDK task to mark user as verified
+	cy.task('verifyUserEmail', email).then((result) => {
+		cy.log(`Email verified successfully for: ${result.email}`)
+	})
+})
+
+Cypress.Commands.add('simulateEmailVerification', (email) => {
+	cy.log(`Simulating email verification flow for: ${email}`)
+
+	// First verify the email via Admin SDK
+	cy.verifyEmail(email)
+
+	// Then simulate the complete verification flow
+	cy.visit('/verify-email-success?oobCode=test-verification')
+
+	// The page should show success since user is already verified
+	cy.contains('Email Verified!').should('be.visible')
+
+	// Wait for redirect to account page
+	cy.location('pathname', { timeout: 10000 }).should('eq', '/account')
+})
+
 // Wait for auth state to stabilize
 Cypress.Commands.add('waitForAuth', () => {
 	cy.log('Waiting for auth state to stabilize...')

@@ -230,7 +230,12 @@ function signOutOfFirebase() {
 					<div>
 						<label class="block text-base font-medium leading-6 text-gray-900">
 							Email
-							<span v-if="!isVerified" class="text-yellow-700">(unverified)</span>
+							<span
+								v-if="!isVerified"
+								data-cy="email-unverified"
+								class="text-yellow-700">
+								(unverified)
+							</span>
 						</label>
 						<p class="text-gray-900">{{ user.email }}</p>
 						<button

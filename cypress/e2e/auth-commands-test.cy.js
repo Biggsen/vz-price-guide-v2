@@ -92,6 +92,25 @@ describe('Auth Commands - Phase 1 Testing', () => {
 			// After signup, user should be redirected to email verification page
 			cy.location('pathname').should('eq', '/verify-email')
 		})
+
+		it('should verify email and complete verification flow', () => {
+			cy.ensureSignedOut()
+			const timestamp = Date.now()
+			const uniqueEmail = `verifieduser${timestamp}@example.com`
+
+			// Sign up user
+			cy.signUp(uniqueEmail, 'Password123', 'Password123')
+			cy.location('pathname').should('eq', '/verify-email')
+
+			// Simulate complete email verification flow
+			cy.simulateEmailVerification(uniqueEmail)
+
+			// Verify that the "(unverified)" text is not displayed
+			cy.get('[data-cy="email-unverified"]').should('not.exist')
+
+			// Verify that the "Resend Verification Email" button is not displayed
+			cy.contains('Resend Verification Email').should('not.exist')
+		})
 	})
 
 	describe('Password Reset Commands', () => {
