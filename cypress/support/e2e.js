@@ -276,6 +276,28 @@ Cypress.Commands.add('signIn', (email, password) => {
 	})
 })
 
+Cypress.Commands.add('signUp', (email, password, confirmPassword) => {
+	cy.log(`Signing up user: ${email}`)
+
+	cy.visit('/signup')
+
+	cy.waitForAuth()
+
+	cy.get('body', { timeout: 10000 }).then(($body) => {
+		const hasForm = $body.find('[data-cy="signup-email"]').length > 0
+		if (hasForm) {
+			cy.get('[data-cy="signup-email"]').type(email)
+			cy.get('[data-cy="signup-password"]').type(password)
+			cy.get('[data-cy="signup-confirm-password"]').type(confirmPassword)
+			cy.get('[data-cy="signup-terms"]').check()
+			cy.get('[data-cy="signup-submit"]').click()
+			cy.log('Sign up completed successfully')
+		} else {
+			cy.log('Sign up form not present; assuming already signed in or on different page')
+		}
+	})
+})
+
 // Wait for auth state to stabilize
 Cypress.Commands.add('waitForAuth', () => {
 	cy.log('Waiting for auth state to stabilize...')

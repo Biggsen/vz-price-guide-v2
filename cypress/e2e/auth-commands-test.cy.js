@@ -82,4 +82,13 @@ describe('Auth Commands - Phase 1 Testing', () => {
 			cy.url().should('include', '/account')
 		})
 	})
+
+	describe('Registration Commands', () => {
+		it('should sign up a new user', () => {
+			cy.ensureSignedOut()
+			cy.signUp('newuser@example.com', 'Password123', 'Password123')
+			// After signup, user should be redirected to email verification page
+			cy.location('pathname').should('eq', '/verify-email')
+		})
+	})
 })
