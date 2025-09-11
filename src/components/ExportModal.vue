@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { ArrowDownTrayIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import { categories, versions } from '../constants.js'
+import { ref, computed } from 'vue'
+import { ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
+import { categories } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { getEffectivePrice } from '../utils/pricing.js'
+import BaseModal from './BaseModal.vue'
 
 const props = defineProps({
 	isOpen: {
@@ -65,7 +66,6 @@ const priceFields = [
 // Computed properties
 const priceMultiplier = computed(() => props.economyConfig.priceMultiplier || 1)
 const sellMargin = computed(() => props.economyConfig.sellMargin || 0.3)
-const roundToWhole = computed(() => props.economyConfig.roundToWhole || false)
 
 // Helper function to compare version strings (e.g., "1.16" vs "1.17")
 function isVersionLessOrEqual(itemVersion, targetVersion) {
@@ -211,28 +211,6 @@ function closeModal() {
 	emit('close')
 }
 
-// Lock/unlock body scroll when modal opens/closes
-function lockBodyScroll() {
-	document.body.style.overflow = 'hidden'
-}
-
-function unlockBodyScroll() {
-	document.body.style.overflow = ''
-}
-
-// Watch for modal open/close state changes
-watch(
-	() => props.isOpen,
-	(isOpen) => {
-		if (isOpen) {
-			lockBodyScroll()
-		} else {
-			unlockBodyScroll()
-		}
-	},
-	{ immediate: true }
-)
-
 function toggleCategory(category) {
 	const index = selectedCategories.value.indexOf(category)
 	if (index > -1) {
@@ -264,128 +242,103 @@ function selectVersion(version) {
 </script>
 
 <template>
-	<!-- Modal backdrop -->
-	<div
-		v-if="isOpen"
-		class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4"
-		@click="closeModal">
-		<!-- Modal content -->
-		<div
-			class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
-			@click.stop>
-			<!-- Header -->
-			<div
-				class="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
-				<h2 class="text-xl font-semibold text-gray-900">Export Price List</h2>
+	<BaseModal :isOpen="isOpen" title="Export Price List" @close="closeModal">
+		<!-- Version Selection -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-2">Minecraft Version:</label>
+			<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
 				<button
-					@click="closeModal"
-					class="text-gray-400 hover:text-gray-600 transition-colors">
-					<XMarkIcon class="w-6 h-6" />
+					v-for="version in enabledVersions"
+					:key="version"
+					@click="selectVersion(version)"
+					:class="[
+						selectedVersion === version
+							? 'bg-gray-asparagus text-white'
+							: 'bg-norway text-heavy-metal hover:bg-gray-100',
+						'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+					]">
+					{{ version }}
 				</button>
 			</div>
+		</div>
 
-			<!-- Content -->
-			<div class="p-4 sm:p-6 space-y-6 overflow-y-auto flex-1">
-				<!-- Version Selection -->
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">
-						Minecraft Version:
-					</label>
-					<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-						<button
-							v-for="version in enabledVersions"
-							:key="version"
-							@click="selectVersion(version)"
-							:class="[
-								selectedVersion === version
-									? 'bg-gray-asparagus text-white'
-									: 'bg-norway text-heavy-metal hover:bg-gray-100',
-								'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
-							]">
-							{{ version }}
-						</button>
-					</div>
-				</div>
-
-				<!-- Categories Selection -->
-				<div>
-					<div class="flex items-center justify-between mb-2">
-						<label class="block text-sm font-medium text-gray-700">
-							Categories (leave empty to include all)
-						</label>
-						<button
-							@click="resetCategories"
-							class="text-xs text-gray-500 hover:text-gray-700 underline">
-							Reset
-						</button>
-					</div>
-					<div
-						class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded-md p-2">
-						<label
-							v-for="category in categories"
-							:key="category"
-							class="flex items-center space-x-2 text-sm">
-							<input
-								type="checkbox"
-								:checked="selectedCategories.includes(category)"
-								@change="toggleCategory(category)"
-								class="checkbox-input" />
-							<span class="capitalize">{{ category }}</span>
-						</label>
-					</div>
-				</div>
-
-				<!-- Price Fields Selection -->
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Price Fields</label>
-					<div class="space-y-2">
-						<label
-							v-for="field in priceFields"
-							:key="field.key"
-							class="flex items-center space-x-2">
-							<input
-								type="checkbox"
-								:checked="selectedPriceFields.includes(field.key)"
-								@change="togglePriceField(field.key)"
-								class="checkbox-input" />
-							<span class="text-sm">{{ field.label }}</span>
-						</label>
-					</div>
-				</div>
-
-				<!-- Advanced Options -->
-				<div class="space-y-4">
-					<h3 class="text-sm font-medium text-gray-700">Advanced Options</h3>
-
-					<!-- Include Metadata -->
-					<label class="flex items-center space-x-2">
-						<input type="checkbox" v-model="includeMetadata" class="checkbox-input" />
-						<span class="text-sm">Include metadata (name, category, stack size)</span>
-					</label>
-				</div>
-
-				<!-- Preview -->
-				<div v-if="Object.keys(previewData).length > 0">
-					<h3 class="text-sm font-medium text-gray-700 mb-2">
-						Preview ({{ Object.keys(previewData).length }} items)
-					</h3>
-					<div
-						class="bg-gray-50 rounded-md p-3 max-h-32 overflow-y-auto text-xs font-mono">
-						<pre>{{
-							JSON.stringify(
-								Object.fromEntries(Object.entries(previewData).slice(0, 3)),
-								null,
-								2
-							)
-						}}</pre>
-						<span v-if="Object.keys(previewData).length > 3" class="text-gray-500">
-							... and {{ Object.keys(previewData).length - 3 }} more items
-						</span>
-					</div>
-				</div>
+		<!-- Categories Selection -->
+		<div>
+			<div class="flex items-center justify-between mb-2">
+				<label class="block text-sm font-medium text-gray-700">
+					Categories (leave empty to include all)
+				</label>
+				<button
+					@click="resetCategories"
+					class="text-xs text-gray-500 hover:text-gray-700 underline">
+					Reset
+				</button>
 			</div>
+			<div
+				class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded-md p-2">
+				<label
+					v-for="category in categories"
+					:key="category"
+					class="flex items-center space-x-2 text-sm">
+					<input
+						type="checkbox"
+						:checked="selectedCategories.includes(category)"
+						@change="toggleCategory(category)"
+						class="checkbox-input" />
+					<span class="capitalize">{{ category }}</span>
+				</label>
+			</div>
+		</div>
 
-			<!-- Footer -->
+		<!-- Price Fields Selection -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-2">Price Fields</label>
+			<div class="space-y-2">
+				<label
+					v-for="field in priceFields"
+					:key="field.key"
+					class="flex items-center space-x-2">
+					<input
+						type="checkbox"
+						:checked="selectedPriceFields.includes(field.key)"
+						@change="togglePriceField(field.key)"
+						class="checkbox-input" />
+					<span class="text-sm">{{ field.label }}</span>
+				</label>
+			</div>
+		</div>
+
+		<!-- Advanced Options -->
+		<div class="space-y-4">
+			<h3 class="text-sm font-medium text-gray-700">Advanced Options</h3>
+
+			<!-- Include Metadata -->
+			<label class="flex items-center space-x-2">
+				<input type="checkbox" v-model="includeMetadata" class="checkbox-input" />
+				<span class="text-sm">Include metadata (name, category, stack size)</span>
+			</label>
+		</div>
+
+		<!-- Preview -->
+		<div v-if="Object.keys(previewData).length > 0">
+			<h3 class="text-sm font-medium text-gray-700 mb-2">
+				Preview ({{ Object.keys(previewData).length }} items)
+			</h3>
+			<div class="bg-gray-50 rounded-md p-3 max-h-32 overflow-y-auto text-xs font-mono">
+				<pre>{{
+					JSON.stringify(
+						Object.fromEntries(Object.entries(previewData).slice(0, 3)),
+						null,
+						2
+					)
+				}}</pre>
+				<span v-if="Object.keys(previewData).length > 3" class="text-gray-500">
+					... and {{ Object.keys(previewData).length - 3 }} more items
+				</span>
+			</div>
+		</div>
+
+		<template #footer>
 			<div
 				class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
 				<div class="text-sm text-gray-600 text-center sm:text-left">
@@ -413,8 +366,8 @@ function selectVersion(version) {
 					</button>
 				</div>
 			</div>
-		</div>
-	</div>
+		</template>
+	</BaseModal>
 </template>
 
 <style scoped>

@@ -1,11 +1,11 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useAdmin } from '../utils/admin.js'
 import { versions } from '../constants.js'
 import { useRoute } from 'vue-router'
+import BaseModal from './BaseModal.vue'
 
-const props = defineProps({
+defineProps({
 	isOpen: {
 		type: Boolean,
 		default: false
@@ -109,28 +109,6 @@ function selectVersion(version) {
 	}
 }
 
-// Lock/unlock body scroll when modal opens/closes
-function lockBodyScroll() {
-	document.body.style.overflow = 'hidden'
-}
-
-function unlockBodyScroll() {
-	document.body.style.overflow = ''
-}
-
-// Watch for modal open/close state changes
-watch(
-	() => props.isOpen,
-	(isOpen) => {
-		if (isOpen) {
-			lockBodyScroll()
-		} else {
-			unlockBodyScroll()
-		}
-	},
-	{ immediate: true }
-)
-
 function closeModal() {
 	emit('close')
 }
@@ -169,142 +147,115 @@ defineExpose({
 </script>
 
 <template>
-	<!-- Modal backdrop -->
-	<div
-		v-if="isOpen"
-		class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4"
-		@click="closeModal">
-		<!-- Modal content -->
-		<div
-			class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
-			@click.stop>
-			<!-- Header -->
+	<BaseModal :isOpen="isOpen" title="Settings" @close="closeModal">
+		<!-- Version Selection -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-2">Minecraft Version:</label>
+
+			<!-- Desktop: Button Pills -->
 			<div
-				class="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
-				<h2 class="text-xl font-semibold text-gray-900">Settings</h2>
+				class="hidden sm:inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
 				<button
-					@click="handleClose"
-					class="text-gray-400 hover:text-gray-600 transition-colors">
-					<XMarkIcon class="w-6 h-6" />
+					v-for="version in versions"
+					:key="version"
+					@click="selectVersion(version)"
+					:class="[
+						selectedVersion === version
+							? 'bg-gray-asparagus text-white'
+							: enabledVersions.includes(version)
+							? 'bg-norway text-heavy-metal hover:bg-gray-100'
+							: 'bg-gray-200 text-gray-400 cursor-not-allowed',
+						'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0',
+						!enabledVersions.includes(version) ? 'opacity-60' : ''
+					]">
+					{{ version }}
 				</button>
 			</div>
 
-			<!-- Content -->
-			<div class="p-4 sm:p-6 space-y-6 overflow-y-auto flex-1">
-				<!-- Version Selection -->
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">
-						Minecraft Version:
+			<!-- Mobile: Dropdown -->
+			<select
+				v-model="selectedVersion"
+				class="sm:hidden w-full border-2 border-gray-asparagus rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-asparagus focus:border-transparent">
+				<option
+					v-for="version in versions"
+					:key="version"
+					:value="version"
+					:disabled="!enabledVersions.includes(version)">
+					{{ version }}{{ !enabledVersions.includes(version) ? ' (Admin only)' : '' }}
+				</option>
+			</select>
+
+			<div class="text-sm text-gray-600 mt-1">
+				<span v-if="user?.email && canEditItems">
+					All versions available for admin users
+				</span>
+				<span v-else>Grayed out versions will be available soon</span>
+			</div>
+		</div>
+
+		<!-- Price Configuration -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-2">Prices:</label>
+			<div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+				<!-- Price Multiplier -->
+				<div class="flex items-center gap-2">
+					<label
+						for="priceMultiplier"
+						class="text-sm font-medium text-gray-700 whitespace-nowrap">
+						Buy ×
 					</label>
-
-					<!-- Desktop: Button Pills -->
-					<div
-						class="hidden sm:inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-						<button
-							v-for="version in versions"
-							:key="version"
-							@click="selectVersion(version)"
-							:class="[
-								selectedVersion === version
-									? 'bg-gray-asparagus text-white'
-									: enabledVersions.includes(version)
-									? 'bg-norway text-heavy-metal hover:bg-gray-100'
-									: 'bg-gray-200 text-gray-400 cursor-not-allowed',
-								'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0',
-								!enabledVersions.includes(version) ? 'opacity-60' : ''
-							]">
-							{{ version }}
-						</button>
-					</div>
-
-					<!-- Mobile: Dropdown -->
-					<select
-						v-model="selectedVersion"
-						class="sm:hidden w-full border-2 border-gray-asparagus rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-asparagus focus:border-transparent">
-						<option
-							v-for="version in versions"
-							:key="version"
-							:value="version"
-							:disabled="!enabledVersions.includes(version)">
-							{{ version
-							}}{{ !enabledVersions.includes(version) ? ' (Admin only)' : '' }}
-						</option>
-					</select>
-
-					<div class="text-sm text-gray-600 mt-1">
-						<span v-if="user?.email && canEditItems">
-							All versions available for admin users
-						</span>
-						<span v-else>Grayed out versions will be available soon</span>
-					</div>
+					<input
+						id="priceMultiplier"
+						v-model.number="priceMultiplier"
+						type="number"
+						min="0.1"
+						max="10"
+						step="0.1"
+						class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
 				</div>
 
-				<!-- Price Configuration -->
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Prices:</label>
-					<div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
-						<!-- Price Multiplier -->
-						<div class="flex items-center gap-2">
-							<label
-								for="priceMultiplier"
-								class="text-sm font-medium text-gray-700 whitespace-nowrap">
-								Buy ×
-							</label>
-							<input
-								id="priceMultiplier"
-								v-model.number="priceMultiplier"
-								type="number"
-								min="0.1"
-								max="10"
-								step="0.1"
-								class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
-						</div>
-
-						<!-- Sell Margin -->
-						<div class="flex items-center gap-2">
-							<label
-								for="sellMargin"
-								class="text-sm font-medium text-gray-700 whitespace-nowrap">
-								Sell %
-							</label>
-							<input
-								id="sellMargin"
-								v-model.number="sellMarginPercentage"
-								type="number"
-								min="1"
-								max="100"
-								step="1"
-								class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
-						</div>
-					</div>
-
-					<!-- Round to Whole -->
-					<div class="flex items-center gap-2">
-						<input
-							id="roundToWhole"
-							v-model="roundToWhole"
-							type="checkbox"
-							class="checkbox-input" />
-						<label for="roundToWhole" class="text-sm text-gray-700">
-							Round to whole
-						</label>
-					</div>
-
-					<!-- Show Zero Priced Items (admin only) -->
-					<div v-if="canEditItems" class="flex items-center gap-2 mt-2">
-						<input
-							id="showZeroPricedItems"
-							v-model="showZeroPricedItems"
-							type="checkbox"
-							class="checkbox-input" />
-						<label for="showZeroPricedItems" class="text-sm text-gray-700">
-							Show zero priced items
-						</label>
-					</div>
+				<!-- Sell Margin -->
+				<div class="flex items-center gap-2">
+					<label
+						for="sellMargin"
+						class="text-sm font-medium text-gray-700 whitespace-nowrap">
+						Sell %
+					</label>
+					<input
+						id="sellMargin"
+						v-model.number="sellMarginPercentage"
+						type="number"
+						min="1"
+						max="100"
+						step="1"
+						class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
 				</div>
 			</div>
 
-			<!-- Footer -->
+			<!-- Round to Whole -->
+			<div class="flex items-center gap-2">
+				<input
+					id="roundToWhole"
+					v-model="roundToWhole"
+					type="checkbox"
+					class="checkbox-input" />
+				<label for="roundToWhole" class="text-sm text-gray-700">Round to whole</label>
+			</div>
+
+			<!-- Show Zero Priced Items (admin only) -->
+			<div v-if="canEditItems" class="flex items-center gap-2 mt-2">
+				<input
+					id="showZeroPricedItems"
+					v-model="showZeroPricedItems"
+					type="checkbox"
+					class="checkbox-input" />
+				<label for="showZeroPricedItems" class="text-sm text-gray-700">
+					Show zero priced items
+				</label>
+			</div>
+		</div>
+
+		<template #footer>
 			<div
 				class="flex items-center justify-end p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
 				<div class="flex space-x-3">
@@ -320,8 +271,8 @@ defineExpose({
 					</button>
 				</div>
 			</div>
-		</div>
-	</div>
+		</template>
+	</BaseModal>
 </template>
 
 <style scoped>
