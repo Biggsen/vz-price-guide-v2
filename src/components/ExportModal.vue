@@ -1,9 +1,11 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
+import { ArrowDownTrayIcon, UserPlusIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
+import { UserIcon } from '@heroicons/vue/24/solid'
 import { categories } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { getEffectivePrice } from '../utils/pricing.js'
+import { useRouter } from 'vue-router'
 import BaseModal from './BaseModal.vue'
 
 const props = defineProps({
@@ -27,8 +29,20 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'update-version'])
 
+const router = useRouter()
+
 // Admin access
 const { user, canEditItems } = useAdmin()
+
+// Check if user is authenticated and verified
+const isAuthenticated = computed(() => {
+	return user.value?.email && user.value?.emailVerified
+})
+
+// Check if user is signed in but not verified
+const isSignedInButNotVerified = computed(() => {
+	return user.value?.email && !user.value?.emailVerified
+})
 
 // Define which versions are currently available for regular users
 const baseEnabledVersions = ['1.16', '1.17', '1.18', '1.19', '1.20']
@@ -211,6 +225,21 @@ function closeModal() {
 	emit('close')
 }
 
+function goToSignUp() {
+	closeModal()
+	router.push('/signup')
+}
+
+function goToSignIn() {
+	closeModal()
+	router.push('/signin')
+}
+
+function goToVerifyEmail() {
+	closeModal()
+	router.push('/verify-email')
+}
+
 function toggleCategory(category) {
 	const index = selectedCategories.value.indexOf(category)
 	if (index > -1) {
@@ -243,128 +272,193 @@ function selectVersion(version) {
 
 <template>
 	<BaseModal :isOpen="isOpen" title="Export Price List" @close="closeModal">
-		<!-- Version Selection -->
-		<div>
-			<label class="block text-sm font-medium text-gray-700 mb-2">Minecraft Version:</label>
-			<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-				<button
-					v-for="version in enabledVersions"
-					:key="version"
-					@click="selectVersion(version)"
-					:class="[
-						selectedVersion === version
-							? 'bg-gray-asparagus text-white'
-							: 'bg-norway text-heavy-metal hover:bg-gray-100',
-						'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
-					]">
-					{{ version }}
+		<!-- Sign-up content for unauthenticated users -->
+		<div v-if="!user?.email" class="text-left pt-2 pb-12 sm:py-12">
+			<div class="mb-8">
+				<h1 class="text-3xl font-bold text-gray-900 mb-2">Almost there!</h1>
+				<p class="mb-6">You'll need an account to export the price list.</p>
+				<p class="text-sm text-gray-900 mb-2">With an account, you can:</p>
+				<ul class="text-sm text-gray-900 space-y-1 list-disc list-inside">
+					<li>export one or multiple categories</li>
+					<li>export to JSON or YAML</li>
+				</ul>
+			</div>
+
+			<!-- Action buttons -->
+			<div>
+				<button @click="goToSignUp" class="inline-flex items-center btn-primary pl-3">
+					<UserIcon class="w-4 h-4 mr-1.5" />
+					Create Account
 				</button>
+				<div class="text-left pt-4">
+					<p class="text-sm text-gray-500">
+						Already have an account?
+						<button @click="goToSignIn" class="text-gray-700 hover:text-opacity-80">
+							<span class="underline">Sign in</span>
+						</button>
+					</p>
+				</div>
 			</div>
 		</div>
 
-		<!-- Categories Selection -->
-		<div>
-			<div class="flex items-center justify-between mb-2">
-				<label class="block text-sm font-medium text-gray-700">
-					Categories (leave empty to include all)
-				</label>
-				<button
-					@click="resetCategories"
-					class="text-xs text-gray-500 hover:text-gray-700 underline">
-					Reset
+		<!-- Email verification content for signed-in but unverified users -->
+		<div v-else-if="isSignedInButNotVerified" class="text-left pt-2 pb-12 sm:py-12">
+			<div class="mb-8">
+				<h1 class="text-3xl font-bold text-gray-900 mb-2">So close!</h1>
+				<p class="mb-6">Please verify your email address to export the price list.</p>
+				<p class="text-sm text-gray-900 mb-2">Once verified, you can:</p>
+				<ul class="text-sm text-gray-900 space-y-1 list-disc list-inside">
+					<li>export one or multiple categories</li>
+					<li>export to JSON or YAML</li>
+				</ul>
+			</div>
+
+			<!-- Action buttons -->
+			<div>
+				<button @click="goToVerifyEmail" class="inline-flex items-center btn-primary pl-3">
+					<CheckCircleIcon class="w-4 h-4 mr-1.5" />
+					Resend verification email
 				</button>
+				<div class="text-left pt-4">
+					<p class="text-sm text-gray-500">
+						Need to sign in with a different account?
+						<button @click="goToSignIn" class="text-gray-700 hover:text-opacity-80">
+							<span class="underline">Sign in</span>
+						</button>
+					</p>
+				</div>
 			</div>
-			<div
-				class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded-md p-2">
-				<label
-					v-for="category in categories"
-					:key="category"
-					class="flex items-center space-x-2 text-sm">
-					<input
-						type="checkbox"
-						:checked="selectedCategories.includes(category)"
-						@change="toggleCategory(category)"
-						class="checkbox-input" />
-					<span class="capitalize">{{ category }}</span>
+		</div>
+
+		<!-- Regular export content for authenticated users -->
+		<div v-else>
+			<!-- Version Selection -->
+			<div class="mb-6">
+				<label class="block text-sm font-medium text-gray-700 mb-2">
+					Minecraft Version:
+				</label>
+				<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+					<button
+						v-for="version in enabledVersions"
+						:key="version"
+						@click="selectVersion(version)"
+						:class="[
+							selectedVersion === version
+								? 'bg-gray-asparagus text-white'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100',
+							'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+						]">
+						{{ version }}
+					</button>
+				</div>
+			</div>
+
+			<!-- Categories Selection -->
+			<div class="mb-6">
+				<div class="flex items-center justify-between mb-2">
+					<label class="block text-sm font-medium text-gray-700">
+						Categories (leave empty to include all)
+					</label>
+					<button
+						@click="resetCategories"
+						class="text-xs text-gray-500 hover:text-gray-700 underline">
+						Reset
+					</button>
+				</div>
+				<div
+					class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded-md p-2">
+					<label
+						v-for="category in categories"
+						:key="category"
+						class="flex items-center space-x-2 text-sm">
+						<input
+							type="checkbox"
+							:checked="selectedCategories.includes(category)"
+							@change="toggleCategory(category)"
+							class="checkbox-input" />
+						<span class="capitalize">{{ category }}</span>
+					</label>
+				</div>
+			</div>
+
+			<!-- Price Fields Selection -->
+			<div class="mb-6">
+				<label class="block text-sm font-medium text-gray-700 mb-2">Price Fields</label>
+				<div class="space-y-2">
+					<label
+						v-for="field in priceFields"
+						:key="field.key"
+						class="flex items-center space-x-2">
+						<input
+							type="checkbox"
+							:checked="selectedPriceFields.includes(field.key)"
+							@change="togglePriceField(field.key)"
+							class="checkbox-input" />
+						<span class="text-sm">{{ field.label }}</span>
+					</label>
+				</div>
+			</div>
+
+			<!-- Advanced Options -->
+			<div class="mb-6 space-y-4">
+				<h3 class="text-sm font-medium text-gray-700">Advanced Options</h3>
+
+				<!-- Include Metadata -->
+				<label class="flex items-center space-x-2">
+					<input type="checkbox" v-model="includeMetadata" class="checkbox-input" />
+					<span class="text-sm">Include metadata (name, category, stack size)</span>
 				</label>
 			</div>
-		</div>
 
-		<!-- Price Fields Selection -->
-		<div>
-			<label class="block text-sm font-medium text-gray-700 mb-2">Price Fields</label>
-			<div class="space-y-2">
-				<label
-					v-for="field in priceFields"
-					:key="field.key"
-					class="flex items-center space-x-2">
-					<input
-						type="checkbox"
-						:checked="selectedPriceFields.includes(field.key)"
-						@change="togglePriceField(field.key)"
-						class="checkbox-input" />
-					<span class="text-sm">{{ field.label }}</span>
-				</label>
-			</div>
-		</div>
-
-		<!-- Advanced Options -->
-		<div class="space-y-4">
-			<h3 class="text-sm font-medium text-gray-700">Advanced Options</h3>
-
-			<!-- Include Metadata -->
-			<label class="flex items-center space-x-2">
-				<input type="checkbox" v-model="includeMetadata" class="checkbox-input" />
-				<span class="text-sm">Include metadata (name, category, stack size)</span>
-			</label>
-		</div>
-
-		<!-- Preview -->
-		<div v-if="Object.keys(previewData).length > 0">
-			<h3 class="text-sm font-medium text-gray-700 mb-2">
-				Preview ({{ Object.keys(previewData).length }} items)
-			</h3>
-			<div class="bg-gray-50 rounded-md p-3 max-h-32 overflow-y-auto text-xs font-mono">
-				<pre>{{
-					JSON.stringify(
-						Object.fromEntries(Object.entries(previewData).slice(0, 3)),
-						null,
-						2
-					)
-				}}</pre>
-				<span v-if="Object.keys(previewData).length > 3" class="text-gray-500">
-					... and {{ Object.keys(previewData).length - 3 }} more items
-				</span>
+			<!-- Preview -->
+			<div v-if="Object.keys(previewData).length > 0">
+				<h3 class="text-sm font-medium text-gray-700 mb-2">
+					Preview ({{ Object.keys(previewData).length }} items)
+				</h3>
+				<div class="bg-gray-50 rounded-md p-3 max-h-32 overflow-y-auto text-xs font-mono">
+					<pre>{{
+						JSON.stringify(
+							Object.fromEntries(Object.entries(previewData).slice(0, 3)),
+							null,
+							2
+						)
+					}}</pre>
+					<span v-if="Object.keys(previewData).length > 3" class="text-gray-500">
+						... and {{ Object.keys(previewData).length - 3 }} more items
+					</span>
+				</div>
 			</div>
 		</div>
 
 		<template #footer>
 			<div
+				v-if="isAuthenticated"
 				class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
 				<div class="text-sm text-gray-600 text-center sm:text-left">
 					{{ filteredItems.length }} items will be exported
 				</div>
-				<div class="flex space-x-2 sm:space-x-3">
-					<button
-						@click="closeModal"
-						class="px-3 py-2 sm:px-4 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-asparagus focus:border-transparent">
-						Cancel
-					</button>
+				<div class="flex justify-center space-x-2 sm:space-x-3">
+					<button @click="closeModal" class="btn-secondary--outline">Cancel</button>
 					<button
 						@click="exportJSON"
 						:disabled="Object.keys(exportData).length === 0"
-						class="px-3 py-2 sm:px-4 text-sm font-medium text-white bg-gray-asparagus border border-transparent rounded-md hover:bg-laurel focus:outline-none focus:ring-2 focus:ring-gray-asparagus focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 sm:space-x-2">
-						<ArrowDownTrayIcon class="w-4 h-4" />
+						class="inline-flex items-center btn-primary pl-3">
+						<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
 						<span>JSON</span>
 					</button>
 					<button
 						@click="exportYAML"
 						:disabled="Object.keys(exportData).length === 0"
-						class="px-3 py-2 sm:px-4 text-sm font-medium text-white bg-gray-asparagus border border-transparent rounded-md hover:bg-laurel focus:outline-none focus:ring-2 focus:ring-gray-asparagus focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 sm:space-x-2">
-						<ArrowDownTrayIcon class="w-4 h-4" />
+						class="inline-flex items-center btn-primary pl-3">
+						<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
 						<span>YAML</span>
 					</button>
 				</div>
+			</div>
+			<div
+				v-else
+				class="flex justify-center p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+				<button @click="closeModal" class="btn-secondary--outline">Close</button>
 			</div>
 		</template>
 	</BaseModal>
