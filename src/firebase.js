@@ -27,9 +27,12 @@ export const auth = getAuth(firebaseApp)
 
 if (useEmulators && typeof window !== 'undefined') {
 	try {
-		connectFirestoreEmulator(db, '127.0.0.1', 8080)
+		// Use the current hostname to allow network access from mobile devices
+		const hostname = window.location.hostname
+		connectFirestoreEmulator(db, hostname, 8080)
 	} catch {}
 	try {
-		connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
+		const hostname = window.location.hostname
+		connectAuthEmulator(auth, `http://${hostname}:9099`, { disableWarnings: true })
 	} catch {}
 }
