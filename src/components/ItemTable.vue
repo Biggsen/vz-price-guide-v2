@@ -158,8 +158,14 @@ function getItemEffectivePrice(item) {
 					<span v-else>Item/Block Name</span>
 				</th>
 				<th rowspan="2"></th>
-				<th colspan="2">Unit Price</th>
-				<th colspan="2">Stack Price</th>
+				<th colspan="2">
+					<span class="hidden min-[330px]:inline">Unit Price</span>
+					<span class="min-[330px]:hidden">Unit</span>
+				</th>
+				<th colspan="2">
+					<span class="hidden min-[330px]:inline">Stack Price</span>
+					<span class="min-[330px]:hidden">Stack</span>
+				</th>
 				<th rowspan="2" v-if="canEditItems">Actions</th>
 			</tr>
 			<tr>
