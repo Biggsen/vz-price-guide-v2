@@ -278,6 +278,32 @@ const TEST_DATA = {
 				'1_21': 75.0
 			},
 			recipes_by_version: {}
+		},
+		{
+			id: 'brush',
+			material_id: 'brush',
+			name: 'brush',
+			image: '/images/items/brush.png',
+			url: 'https://minecraft.fandom.com/wiki/Brush',
+			stack: 1,
+			category: 'tools',
+			subcategory: 'archaeology',
+			version: '1.20',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_20': 25.0
+			},
+			recipes_by_version: {
+				'1_20': {
+					ingredients: [
+						{ material_id: 'stick', quantity: 1 },
+						{ material_id: 'copper_ingot', quantity: 1 },
+						{ material_id: 'feather', quantity: 1 }
+					],
+					output_count: 1
+				}
+			}
 		}
 	],
 	shop_items: [
