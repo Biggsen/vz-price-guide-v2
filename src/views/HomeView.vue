@@ -699,10 +699,11 @@ watch(
 				<Cog6ToothIcon class="w-4 h-4 mr-1.5" />
 				Settings
 			</button>
-			<button @click="openExportModal" class="inline-flex items-center btn-secondary pl-3">
+			<!-- Temporarily hidden - can be re-enabled later -->
+			<!-- <button @click="openExportModal" class="inline-flex items-center btn-secondary pl-3">
 				<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
 				Export price list
-			</button>
+			</button> -->
 		</div>
 
 		<div class="mb-4 text-sm text-gray-asparagus font-medium">
