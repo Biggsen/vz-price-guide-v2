@@ -55,6 +55,10 @@ const allItemsQuery = query(
 )
 const allItemsCollection = useCollection(allItemsQuery)
 
+// Feature flags
+const showExportFeature = ref(false) // Set to true to enable export functionality
+const disableAlert = ref(true) // Set to true to disable all alerts regardless of showAlert state
+
 // Info alert state
 const showAlert = ref(true)
 
@@ -584,7 +588,7 @@ watch(
 <template>
 	<!-- Dismissible Info Alert -->
 	<div
-		v-if="showAlert"
+		v-if="!disableAlert && showAlert"
 		class="bg-norway bg-opacity-20 border-l-4 border-laurel text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
@@ -699,11 +703,13 @@ watch(
 				<Cog6ToothIcon class="w-4 h-4 mr-1.5" />
 				Settings
 			</button>
-			<!-- Temporarily hidden - can be re-enabled later -->
-			<!-- <button @click="openExportModal" class="inline-flex items-center btn-secondary pl-3">
+			<button
+				v-if="showExportFeature"
+				@click="openExportModal"
+				class="inline-flex items-center btn-secondary pl-3">
 				<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
 				Export price list
-			</button> -->
+			</button>
 		</div>
 
 		<div class="mb-4 text-sm text-gray-asparagus font-medium">
