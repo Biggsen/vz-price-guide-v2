@@ -837,9 +837,7 @@ watch(
 		:isOpen="showExportModal"
 		:items="allItemsCollection"
 		:economyConfig="economyConfig"
-		:selectedVersion="selectedVersion"
-		@close="closeExportModal"
-		@update-version="selectVersion" />
+		@close="closeExportModal" />
 
 	<!-- Settings Modal -->
 	<SettingsModal

@@ -20,14 +20,10 @@ const props = defineProps({
 	economyConfig: {
 		type: Object,
 		default: () => ({})
-	},
-	selectedVersion: {
-		type: String,
-		default: '1.20'
 	}
 })
 
-const emit = defineEmits(['close', 'update-version'])
+const emit = defineEmits(['close'])
 
 const router = useRouter()
 
@@ -64,7 +60,7 @@ const enabledVersions = computed(() => {
 })
 
 // Export configuration
-const selectedVersion = computed(() => props.selectedVersion)
+const selectedVersion = ref('1.20') // Internal version state for export modal
 const selectedCategories = ref([])
 const selectedPriceFields = ref(['unit_buy', 'unit_sell', 'stack_buy', 'stack_sell'])
 const includeMetadata = ref(false)
@@ -275,7 +271,7 @@ function resetCategories() {
 function selectVersion(version) {
 	// Only allow selecting enabled versions
 	if (enabledVersions.value.includes(version)) {
-		emit('update-version', version)
+		selectedVersion.value = version
 	}
 }
 </script>
