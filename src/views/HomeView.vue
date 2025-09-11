@@ -704,7 +704,7 @@ watch(
 				Settings
 			</button>
 			<button
-				v-if="showExportFeature"
+				v-if="showExportFeature || canEditItems"
 				@click="openExportModal"
 				class="inline-flex items-center btn-secondary pl-3">
 				<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
