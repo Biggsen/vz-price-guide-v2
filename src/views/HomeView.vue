@@ -56,8 +56,8 @@ const allItemsQuery = query(
 const allItemsCollection = useCollection(allItemsQuery)
 
 // Feature flags
-const showExportFeature = ref(false) // Set to true to enable export functionality
-const disableAlert = ref(true) // Set to true to disable all alerts regardless of showAlert state
+const showExportFeature = ref(true) // Set to true to enable export functionality
+const disableAlert = ref(false) // Set to true to disable all alerts regardless of showAlert state
 
 // Info alert state
 const showAlert = ref(true)
