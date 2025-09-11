@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { ArrowDownTrayIcon, UserPlusIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { UserIcon } from '@heroicons/vue/24/solid'
-import { categories } from '../constants.js'
+import { enabledCategories } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { useRouter } from 'vue-router'
@@ -118,6 +118,16 @@ const filteredItems = computed(() => {
 	if (selectedCategories.value.length > 0) {
 		filtered = filtered.filter((item) => selectedCategories.value.includes(item.category))
 	}
+
+	// Filter out items from disabled categories
+	filtered = filtered.filter((item) => enabledCategories.includes(item.category))
+
+	// Filter out items with 0 base price
+	const versionKey = selectedVersion.value.replace('.', '_')
+	filtered = filtered.filter((item) => {
+		const basePrice = getEffectivePrice(item, versionKey)
+		return basePrice > 0
+	})
 
 	return filtered
 })
@@ -368,7 +378,7 @@ function selectVersion(version) {
 				<div
 					class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded-md p-2">
 					<label
-						v-for="category in categories"
+						v-for="category in enabledCategories"
 						:key="category"
 						class="flex items-center space-x-2 text-sm">
 						<input
