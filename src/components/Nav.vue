@@ -15,6 +15,7 @@ import {
 import { useAdmin } from '../utils/admin.js'
 import { userProfileExists } from '../utils/userProfile.js'
 import { getFirestore, doc, getDoc } from 'firebase/firestore'
+import { navigationHandlers } from '../utils/analytics.js'
 
 const props = defineProps({
 	activeMainNav: {
@@ -75,6 +76,11 @@ watch(
 )
 
 function handleLogoClick() {
+	navigationHandlers.logoClick({
+		current_page: route.path,
+		action: route.path === '/' ? 'scroll_to_top' : 'navigate_home'
+	})
+
 	if (route.path === '/') {
 		// Already on homepage - scroll to top
 		window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -86,8 +92,10 @@ function handleLogoClick() {
 
 function toggleMenu() {
 	console.log('Toggle menu clicked, current state:', isMenuOpen.value)
-	isMenuOpen.value = !isMenuOpen.value
-	console.log('New state:', isMenuOpen.value)
+	const newState = !isMenuOpen.value
+	isMenuOpen.value = newState
+	navigationHandlers.menuToggle(newState)
+	console.log('New state:', newState)
 }
 
 function closeMenu() {
@@ -97,6 +105,14 @@ function closeMenu() {
 function setActiveMainNav(section) {
 	emit('setActiveMainNav', section)
 	closeMenu()
+}
+
+// Track navigation link clicks
+function handleNavigationClick(linkName) {
+	navigationHandlers.navigationLink(linkName, {
+		location: 'main_nav',
+		current_page: route.path
+	})
 }
 
 function toggleSubnav(section) {
@@ -119,6 +135,12 @@ function handleSuggestionsClick() {
 	}
 	closeMenu()
 }
+
+// Navigation handlers using externalized analytics
+const handleSignInClickMobile = () => navigationHandlers.signInMobile(closeMenu)
+const handleSignUpClickMobile = () => navigationHandlers.signUpMobile(closeMenu)
+const handleSignInClickDesktop = () => navigationHandlers.signInDesktop()
+const handleSignUpClickDesktop = () => navigationHandlers.signUpDesktop()
 
 // Scroll detection for auto-hiding header
 function handleScroll() {
@@ -194,7 +216,12 @@ onUnmounted(() => {
 			<!-- Main Navigation Links -->
 			<RouterLink
 				to="/"
-				@click="setActiveMainNav(null)"
+				@click="
+					() => {
+						handleNavigationClick('Home')
+						setActiveMainNav(null)
+					}
+				"
 				:class="[
 					'block px-3 py-2 transition-colors',
 					route.path === '/' || route.path.startsWith('/edit/')
@@ -218,7 +245,12 @@ onUnmounted(() => {
 
 			<RouterLink
 				to="/updates"
-				@click="setActiveMainNav(null)"
+				@click="
+					() => {
+						handleNavigationClick('Updates')
+						setActiveMainNav(null)
+					}
+				"
 				:class="[
 					'block px-3 py-2 transition-colors',
 					route.path === '/updates'
@@ -361,7 +393,7 @@ onUnmounted(() => {
 			<RouterLink
 				v-if="!user?.email"
 				to="/signin"
-				@click="closeMenu"
+				@click="handleSignInClickMobile"
 				:class="[
 					'block px-3 py-2 transition-colors',
 					route.path === '/signin'
@@ -376,7 +408,7 @@ onUnmounted(() => {
 			<RouterLink
 				v-if="!user?.email"
 				to="/signup"
-				@click="closeMenu"
+				@click="handleSignUpClickMobile"
 				:class="[
 					'block px-3 py-2 transition-colors',
 					route.path === '/signup'
@@ -424,7 +456,12 @@ onUnmounted(() => {
 	<nav class="bg-gray-800 text-white px-4 py-2 hidden sm:flex gap-2 items-center">
 		<RouterLink
 			to="/"
-			@click="setActiveMainNav(null)"
+			@click="
+				() => {
+					handleNavigationClick('Home')
+					setActiveMainNav(null)
+				}
+			"
 			:class="[
 				'px-3 py-2 rounded transition-colors',
 				route.path === '/' || route.path.startsWith('/edit/')
@@ -446,7 +483,12 @@ onUnmounted(() => {
 		</button>
 		<RouterLink
 			to="/updates"
-			@click="setActiveMainNav(null)"
+			@click="
+				() => {
+					handleNavigationClick('Updates')
+					setActiveMainNav(null)
+				}
+			"
 			:class="[
 				'px-3 py-2 rounded transition-colors',
 				route.path === '/updates'
@@ -499,6 +541,7 @@ onUnmounted(() => {
 		<div v-if="!user?.email" class="flex gap-2 ml-auto">
 			<RouterLink
 				to="/signin"
+				@click="handleSignInClickDesktop"
 				:class="[
 					'px-3 py-2 rounded transition-colors',
 					route.path === '/signin'
@@ -512,6 +555,7 @@ onUnmounted(() => {
 			</RouterLink>
 			<RouterLink
 				to="/signup"
+				@click="handleSignUpClickDesktop"
 				:class="[
 					'px-3 py-2 rounded transition-colors',
 					route.path === '/signup'
