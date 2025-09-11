@@ -696,16 +696,11 @@ watch(
 
 		<!-- Customisation Section -->
 		<div class="mb-4 flex items-center gap-4">
-			<button
-				@click="openSettingsModal"
-				class="inline-flex items-center rounded-md bg-norway text-heavy-metal border-2 border-gray-asparagus px-3 py-2 text-sm font-medium hover:bg-gray-100 transition">
+			<button @click="openSettingsModal" class="inline-flex items-center btn-secondary pl-3">
 				<Cog6ToothIcon class="w-4 h-4 mr-1.5" />
 				Settings
 			</button>
-			<button
-				v-if="user?.email && user?.emailVerified"
-				@click="openExportModal"
-				class="inline-flex items-center rounded-md bg-norway text-heavy-metal border-2 border-gray-asparagus px-3 py-2 text-sm font-medium hover:bg-gray-100 transition">
+			<button @click="openExportModal" class="inline-flex items-center btn-secondary pl-3">
 				<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
 				Export price list
 			</button>
