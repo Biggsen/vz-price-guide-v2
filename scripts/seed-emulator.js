@@ -144,7 +144,6 @@ const TEST_DATA = {
 			name: 'stone',
 			image: '/images/items/stone.png',
 			url: 'https://minecraft.fandom.com/wiki/Stone',
-			price: 1.0,
 			stack: 64,
 			category: 'stone',
 			subcategory: '',
@@ -162,7 +161,6 @@ const TEST_DATA = {
 			name: 'diamond',
 			image: '/images/items/diamond.png',
 			url: 'https://minecraft.fandom.com/wiki/Diamond',
-			price: 100.0,
 			stack: 64,
 			category: 'ores',
 			subcategory: 'diamond',
@@ -180,7 +178,6 @@ const TEST_DATA = {
 			name: 'oak planks',
 			image: '/images/items/oak_planks.png',
 			url: 'https://minecraft.fandom.com/wiki/Oak_Planks',
-			price: 0.8,
 			stack: 64,
 			category: 'wood',
 			subcategory: 'oak',
@@ -203,7 +200,6 @@ const TEST_DATA = {
 			name: 'oak log',
 			image: '/images/items/oak_log.png',
 			url: 'https://minecraft.fandom.com/wiki/Oak_Log',
-			price: 3.0,
 			stack: 64,
 			category: 'wood',
 			subcategory: 'oak',
@@ -212,6 +208,74 @@ const TEST_DATA = {
 			pricing_type: 'static',
 			prices_by_version: {
 				'1_16': 3.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'air',
+			material_id: 'air',
+			name: 'air',
+			image: '/images/items/air.png',
+			url: 'https://minecraft.fandom.com/wiki/Air',
+			stack: 64,
+			category: '',
+			subcategory: '',
+			version: '1.19',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_19': 0.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'zombie_spawn_egg',
+			material_id: 'zombie_spawn_egg',
+			name: 'zombie spawn egg',
+			image: '/images/items/zombie_spawn_egg.png',
+			url: 'https://minecraft.fandom.com/wiki/Zombie_Spawn_Egg',
+			stack: 64,
+			category: 'spawn',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 25.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'heart_of_the_sea',
+			material_id: 'heart_of_the_sea',
+			name: 'heart of the sea',
+			image: '/images/items/heart_of_the_sea.png',
+			url: 'https://minecraft.fandom.com/wiki/Heart_of_the_Sea',
+			stack: 64,
+			category: '',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 50.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'trial_key',
+			material_id: 'trial_key',
+			name: 'trial key',
+			image: '/images/items/trial_key.png',
+			url: 'https://minecraft.fandom.com/wiki/Trial_Key',
+			stack: 1,
+			category: '',
+			subcategory: '',
+			version: '1.21',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_21': 75.0
 			},
 			recipes_by_version: {}
 		}
