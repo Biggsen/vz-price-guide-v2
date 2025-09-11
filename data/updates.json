@@ -1,5 +1,19 @@
 [
 	{
+		"id": 22,
+		"title": "Export Price List - New Feature! 📊",
+		"date": "2025-01-11",
+		"type": "Feature",
+		"description": "🎉 You can now export the price list! This feature was a user suggestion (thanks William!) and covers everything you need - whether you want to share prices with your server community, backup your data, or use the prices in other tools, the new export feature has you covered with multiple formats.",
+		"changes": [
+			"Export the price list in JSON format for easy integration with other tools",
+			"Export the price list in YAML format for human-readable data",
+			"Export one or multiple categories to get exactly what you need",
+			"Export includes item data (names, prices, categories, stack size) for the selected Minecraft version",
+			"Easy access from the homepage with a dedicated export button"
+		]
+	},
+	{
 		"id": 21,
 		"title": "User Accounts Complete + New Suggestions Feature!",
 		"date": "2025-07-23",

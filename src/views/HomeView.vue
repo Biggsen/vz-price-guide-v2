@@ -60,7 +60,7 @@ const showAlert = ref(true)
 
 function dismissAlert() {
 	showAlert.value = false
-	localStorage.setItem('userAccountsAlertDismissed', 'true')
+	localStorage.setItem('exportFeatureAlertDismissed', 'true')
 }
 
 // Version filtering state
@@ -473,7 +473,7 @@ onMounted(() => {
 	initializeFromQuery()
 
 	// Check if alert was previously dismissed
-	const dismissed = localStorage.getItem('userAccountsAlertDismissed')
+	const dismissed = localStorage.getItem('exportFeatureAlertDismissed')
 	if (dismissed === 'true') {
 		showAlert.value = false
 	}
@@ -590,10 +590,9 @@ watch(
 			<div class="flex items-center">
 				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					<UsersIcon class="w-4 h-4 inline" />
-					User accounts are now live! You can register, sign in, and manage your profile.
-					Plus, you can now submit suggestions and feedback for the site using the new
-					Suggestions feature. Check
+					<ArrowDownTrayIcon class="w-4 h-4 inline" />
+					New export feature! You can now export the price list in JSON or YAML format.
+					Check
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
 						<span>Updates</span>
 					</router-link>
