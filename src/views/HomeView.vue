@@ -5,6 +5,8 @@ import { computed, ref, watch, onMounted } from 'vue'
 import { useCurrentUser } from 'vuefire'
 import { useRoute, useRouter } from 'vue-router'
 import ItemTable from '../components/ItemTable.vue'
+import ExportModal from '../components/ExportModal.vue'
+import SettingsModal from '../components/SettingsModal.vue'
 import { categories, enabledCategories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { getEffectivePrice } from '../utils/pricing.js'
@@ -13,7 +15,8 @@ import {
 	EyeIcon,
 	EyeSlashIcon,
 	ArrowPathIcon,
-	Cog6ToothIcon
+	Cog6ToothIcon,
+	ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
 import { Cog6ToothIcon as Cog6ToothIconSolid, UsersIcon } from '@heroicons/vue/16/solid'
 
@@ -150,13 +153,16 @@ const searchQuery = ref('')
 // Make economyConfig reactive with localStorage persistence
 const priceMultiplier = ref(1)
 const sellMargin = ref(0.3)
-const showEconomySettings = ref(false)
 const roundToWhole = ref(false)
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
 
 // Admin-only option to show zero-priced items
 const showZeroPricedItems = ref(false)
+
+// Modal states
+const showExportModal = ref(false)
+const showSettingsModal = ref(false)
 
 // Computed property for percentage display (30 instead of 0.3)
 const sellMarginPercentage = computed({
@@ -177,7 +183,6 @@ const economyConfig = computed(() => ({
 function loadEconomyConfig() {
 	const savedPriceMultiplier = localStorage.getItem('priceMultiplier')
 	const savedSellMargin = localStorage.getItem('sellMargin')
-	const savedShowEconomySettings = localStorage.getItem('showEconomySettings')
 	const savedRoundToWhole = localStorage.getItem('roundToWhole')
 	const savedViewMode = localStorage.getItem('viewMode')
 	const savedLayout = localStorage.getItem('layout')
@@ -190,9 +195,6 @@ function loadEconomyConfig() {
 	if (savedSellMargin !== null) {
 		sellMargin.value = parseFloat(savedSellMargin)
 	}
-	if (savedShowEconomySettings !== null) {
-		showEconomySettings.value = savedShowEconomySettings === 'true'
-	}
 	if (savedRoundToWhole !== null) {
 		roundToWhole.value = savedRoundToWhole === 'true'
 	}
@@ -202,7 +204,9 @@ function loadEconomyConfig() {
 	if (savedLayout !== null) {
 		layout.value = savedLayout
 	}
-	if (savedSelectedVersion !== null) {
+	// Only load from localStorage if there's no version query parameter
+	const versionParam = route.query.version
+	if (savedSelectedVersion !== null && !versionParam) {
 		selectedVersion.value = savedSelectedVersion
 	}
 	if (savedShowZeroPricedItems !== null) {
@@ -214,7 +218,6 @@ function loadEconomyConfig() {
 function saveEconomyConfig() {
 	localStorage.setItem('priceMultiplier', priceMultiplier.value.toString())
 	localStorage.setItem('sellMargin', sellMargin.value.toString())
-	localStorage.setItem('showEconomySettings', showEconomySettings.value.toString())
 	localStorage.setItem('roundToWhole', roundToWhole.value.toString())
 	localStorage.setItem('viewMode', viewMode.value)
 	localStorage.setItem('layout', layout.value)
@@ -227,7 +230,6 @@ watch(
 	[
 		priceMultiplier,
 		sellMargin,
-		showEconomySettings,
 		roundToWhole,
 		viewMode,
 		layout,
@@ -245,10 +247,6 @@ function resetEconomyConfig() {
 	priceMultiplier.value = 1
 	sellMargin.value = 0.3
 	roundToWhole.value = false
-}
-
-function toggleEconomySettings() {
-	showEconomySettings.value = !showEconomySettings.value
 }
 
 const filteredGroupedItems = computed(() => {
@@ -484,6 +482,21 @@ onMounted(() => {
 	loadEconomyConfig()
 })
 
+// Watch for changes in enabledVersions and re-initialize version from query
+watch(
+	enabledVersions,
+	(newEnabledVersions) => {
+		// Only re-initialize if we have enabled versions and there's a version param
+		if (newEnabledVersions.length > 0 && route.query.version) {
+			const versionParam = route.query.version
+			if (newEnabledVersions.includes(versionParam)) {
+				selectedVersion.value = versionParam
+			}
+		}
+	},
+	{ immediate: true }
+)
+
 const allVisible = computed(() => visibleCategories.value.length === enabledCategories.length)
 
 function toggleCategory(cat) {
@@ -522,6 +535,34 @@ function resetCategories() {
 	visibleCategories.value = [...enabledCategories]
 	showUncategorised.value = true
 	searchQuery.value = ''
+}
+
+function openExportModal() {
+	showExportModal.value = true
+}
+
+function closeExportModal() {
+	showExportModal.value = false
+}
+
+function openSettingsModal() {
+	showSettingsModal.value = true
+}
+
+function closeSettingsModal() {
+	showSettingsModal.value = false
+}
+
+function handleSaveSettings(settings) {
+	// Apply the settings changes
+	selectedVersion.value = settings.selectedVersion
+	priceMultiplier.value = settings.priceMultiplier
+	sellMargin.value = settings.sellMargin
+	roundToWhole.value = settings.roundToWhole
+	showZeroPricedItems.value = settings.showZeroPricedItems
+
+	// Close the modal
+	showSettingsModal.value = false
 }
 
 // Watch for user changes and update selected version if needed
@@ -654,131 +695,20 @@ watch(
 		</div>
 
 		<!-- Customisation Section -->
-		<div class="mb-4">
+		<div class="mb-4 flex items-center gap-4">
 			<button
-				@click="toggleEconomySettings"
-				class="text-gray-asparagus hover:text-heavy-metal underline text-sm flex items-center gap-1">
-				<Cog6ToothIconSolid v-if="showEconomySettings" class="w-4 h-4" />
-				<Cog6ToothIcon v-else class="w-4 h-4" />
+				@click="openSettingsModal"
+				class="inline-flex items-center rounded-md bg-norway text-heavy-metal border-2 border-gray-asparagus px-3 py-2 text-sm font-medium hover:bg-gray-100 transition">
+				<Cog6ToothIcon class="w-4 h-4 mr-1.5" />
 				Settings
 			</button>
-		</div>
-
-		<!-- Economy Configuration (Collapsible) -->
-		<div
-			v-if="showEconomySettings"
-			class="bg-norway bg-opacity-20 border border-gray-300 rounded p-3 mb-4">
-			<!-- Version Filters -->
-			<div v-if="enabledVersions && enabledVersions.length > 0" class="mb-4">
-				<span class="text-sm font-medium text-heavy-metal mb-2 block">
-					Minecraft Version:
-				</span>
-				<!-- Mobile dropdown -->
-				<select
-					v-model="selectedVersion"
-					class="sm:hidden w-full border-2 border-gray-asparagus rounded px-3 py-2 text-sm">
-					<option
-						v-for="version in versions"
-						:key="version"
-						:value="version"
-						:disabled="!enabledVersions.includes(version)">
-						{{ version
-						}}{{ !enabledVersions.includes(version) ? ' (Coming Soon)' : '' }}
-					</option>
-				</select>
-				<!-- Desktop pills -->
-				<div
-					class="hidden sm:inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-					<button
-						v-for="version in versions"
-						:key="version"
-						@click="selectVersion(version)"
-						:disabled="!enabledVersions.includes(version)"
-						:class="[
-							selectedVersion === version
-								? 'bg-gray-asparagus text-white'
-								: enabledVersions.includes(version)
-								? 'bg-norway text-heavy-metal hover:bg-gray-100'
-								: 'bg-gray-200 text-gray-400 cursor-not-allowed',
-							'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0',
-							!enabledVersions.includes(version) ? 'opacity-60' : ''
-						]">
-						{{ version }}
-					</button>
-				</div>
-				<p class="text-xs text-gray-500 mt-1">
-					<span v-if="user?.email && canEditItems">
-						All versions available for admin users
-					</span>
-					<span v-else>Grayed out versions will be available soon</span>
-				</p>
-			</div>
-
-			<span class="text-sm font-medium text-heavy-metal mb-2 block">Prices:</span>
-			<div class="flex flex-wrap items-center gap-4 mb-3">
-				<!-- Price Multiplier -->
-				<div class="flex items-center gap-2">
-					<label
-						for="priceMultiplier"
-						class="text-sm font-medium text-heavy-metal whitespace-nowrap">
-						Buy ×
-					</label>
-					<input
-						id="priceMultiplier"
-						v-model.number="priceMultiplier"
-						type="number"
-						min="0.1"
-						max="10"
-						step="0.1"
-						class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
-				</div>
-
-				<!-- Sell Margin -->
-				<div class="flex items-center gap-2">
-					<label
-						for="sellMargin"
-						class="text-sm font-medium text-heavy-metal whitespace-nowrap">
-						Sell %
-					</label>
-					<input
-						id="sellMargin"
-						v-model.number="sellMarginPercentage"
-						type="number"
-						min="1"
-						max="100"
-						step="1"
-						class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
-				</div>
-
-				<!-- Reset Button -->
-				<button
-					@click="resetEconomyConfig"
-					class="bg-laurel text-white border-2 border-gray-asparagus rounded px-2 py-1 text-sm transition hover:bg-opacity-90">
-					Reset
-				</button>
-			</div>
-
-			<!-- Round to Whole (separate line) -->
-			<div class="flex items-center gap-2">
-				<input
-					id="roundToWhole"
-					v-model="roundToWhole"
-					type="checkbox"
-					class="checkbox-input" />
-				<label for="roundToWhole" class="text-sm text-heavy-metal">Round to whole</label>
-			</div>
-
-			<!-- Show Zero Priced Items (admin only) -->
-			<div v-if="canEditItems" class="flex items-center gap-2 mt-2">
-				<input
-					id="showZeroPricedItems"
-					v-model="showZeroPricedItems"
-					type="checkbox"
-					class="checkbox-input" />
-				<label for="showZeroPricedItems" class="text-sm text-heavy-metal">
-					Show zero priced items
-				</label>
-			</div>
+			<button
+				v-if="user?.email && user?.emailVerified"
+				@click="openExportModal"
+				class="inline-flex items-center rounded-md bg-norway text-heavy-metal border-2 border-gray-asparagus px-3 py-2 text-sm font-medium hover:bg-gray-100 transition">
+				<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
+				Export price list
+			</button>
 		</div>
 
 		<div class="mb-4 text-sm text-gray-asparagus font-medium">
@@ -900,6 +830,21 @@ watch(
 			</div>
 		</div>
 	</template>
+
+	<!-- Export Modal -->
+	<ExportModal
+		:isOpen="showExportModal"
+		:items="allItemsCollection"
+		:economyConfig="economyConfig"
+		:selectedVersion="selectedVersion"
+		@close="closeExportModal"
+		@update-version="selectVersion" />
+
+	<!-- Settings Modal -->
+	<SettingsModal
+		:isOpen="showSettingsModal"
+		@close="closeSettingsModal"
+		@save-settings="handleSaveSettings" />
 </template>
 
 <style scoped>
