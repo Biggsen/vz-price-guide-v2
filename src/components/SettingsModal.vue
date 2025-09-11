@@ -259,16 +259,8 @@ defineExpose({
 			<div
 				class="flex items-center justify-end p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
 				<div class="flex space-x-3">
-					<button
-						@click="closeModal"
-						class="rounded-md bg-white text-gray-700 border-2 border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 transition">
-						Cancel
-					</button>
-					<button
-						@click="handleClose"
-						class="px-4 py-2 text-sm font-medium text-white bg-gray-asparagus border border-transparent rounded-md hover:bg-laurel focus:outline-none focus:ring-2 focus:ring-gray-asparagus focus:ring-offset-2">
-						Save Settings
-					</button>
+					<button @click="closeModal" class="btn-secondary--outline">Cancel</button>
+					<button @click="handleClose" class="btn-primary">Save Settings</button>
 				</div>
 			</div>
 		</template>
