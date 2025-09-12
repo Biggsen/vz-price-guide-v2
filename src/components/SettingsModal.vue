@@ -5,10 +5,14 @@ import { versions } from '../constants.js'
 import { useRoute } from 'vue-router'
 import BaseModal from './BaseModal.vue'
 
-defineProps({
+const props = defineProps({
 	isOpen: {
 		type: Boolean,
 		default: false
+	},
+	currentSettings: {
+		type: Object,
+		default: () => ({})
 	}
 })
 
@@ -45,6 +49,9 @@ const priceMultiplier = ref(1)
 const sellMargin = ref(0.3)
 const roundToWhole = ref(false)
 const showZeroPricedItems = ref(false)
+const currencyType = ref('money')
+const diamondConversionRatio = ref(32)
+const hideSellColumns = ref(false)
 
 // Computed property for percentage display (30 instead of 0.3)
 const sellMarginPercentage = computed({
@@ -54,33 +61,73 @@ const sellMarginPercentage = computed({
 	}
 })
 
-// Load settings from localStorage, but prioritize URL query parameters
+// Load settings from current props first, then localStorage, but prioritize URL query parameters
 function loadSettings() {
+	const currentSettings = props.currentSettings || {}
+
 	const savedPriceMultiplier = localStorage.getItem('priceMultiplier')
 	const savedSellMargin = localStorage.getItem('sellMargin')
 	const savedRoundToWhole = localStorage.getItem('roundToWhole')
 	const savedSelectedVersion = localStorage.getItem('selectedVersion')
 	const savedShowZeroPricedItems = localStorage.getItem('showZeroPricedItems')
+	const savedCurrencyType = localStorage.getItem('currencyType')
+	const savedDiamondConversionRatio = localStorage.getItem('diamondConversionRatio')
+	const savedHideSellColumns = localStorage.getItem('hideSellColumns')
 
 	// Check URL query parameters first for version
 	const versionParam = route.query.version
 	if (versionParam && enabledVersions.value.includes(versionParam)) {
 		selectedVersion.value = versionParam
+	} else if (currentSettings.selectedVersion !== undefined) {
+		selectedVersion.value = currentSettings.selectedVersion
 	} else if (savedSelectedVersion !== null) {
 		selectedVersion.value = savedSelectedVersion
 	}
 
-	if (savedPriceMultiplier !== null) {
+	if (currentSettings.priceMultiplier !== undefined) {
+		priceMultiplier.value = currentSettings.priceMultiplier
+	} else if (savedPriceMultiplier !== null) {
 		priceMultiplier.value = parseFloat(savedPriceMultiplier)
 	}
-	if (savedSellMargin !== null) {
+
+	if (currentSettings.sellMargin !== undefined) {
+		sellMargin.value = currentSettings.sellMargin
+	} else if (savedSellMargin !== null) {
 		sellMargin.value = parseFloat(savedSellMargin)
 	}
-	if (savedRoundToWhole !== null) {
+
+	if (currentSettings.roundToWhole !== undefined) {
+		roundToWhole.value = currentSettings.roundToWhole
+	} else if (savedRoundToWhole !== null) {
 		roundToWhole.value = savedRoundToWhole === 'true'
 	}
-	if (savedShowZeroPricedItems !== null) {
+
+	if (currentSettings.showZeroPricedItems !== undefined) {
+		showZeroPricedItems.value = currentSettings.showZeroPricedItems
+	} else if (savedShowZeroPricedItems !== null) {
 		showZeroPricedItems.value = savedShowZeroPricedItems === 'true'
+	}
+
+	if (currentSettings.currencyType !== undefined) {
+		currencyType.value = currentSettings.currencyType
+	} else if (savedCurrencyType !== null) {
+		currencyType.value = savedCurrencyType
+	}
+
+	if (currentSettings.diamondConversionRatio !== undefined) {
+		diamondConversionRatio.value = currentSettings.diamondConversionRatio
+	} else if (savedDiamondConversionRatio !== null) {
+		diamondConversionRatio.value = parseFloat(savedDiamondConversionRatio)
+	}
+
+	// Always prioritize current settings from props over localStorage
+	if (currentSettings.hideSellColumns !== undefined) {
+		hideSellColumns.value = currentSettings.hideSellColumns
+	} else if (savedHideSellColumns !== null) {
+		hideSellColumns.value = savedHideSellColumns === 'true'
+	} else {
+		// Default to false (show sell prices) for new users
+		hideSellColumns.value = false
 	}
 }
 
@@ -91,6 +138,9 @@ function saveSettings() {
 	localStorage.setItem('roundToWhole', roundToWhole.value.toString())
 	localStorage.setItem('selectedVersion', selectedVersion.value)
 	localStorage.setItem('showZeroPricedItems', showZeroPricedItems.value.toString())
+	localStorage.setItem('currencyType', currencyType.value)
+	localStorage.setItem('diamondConversionRatio', diamondConversionRatio.value.toString())
+	localStorage.setItem('hideSellColumns', hideSellColumns.value.toString())
 
 	// Emit settings to parent component
 	emit('save-settings', {
@@ -98,7 +148,10 @@ function saveSettings() {
 		priceMultiplier: priceMultiplier.value,
 		sellMargin: sellMargin.value,
 		roundToWhole: roundToWhole.value,
-		showZeroPricedItems: showZeroPricedItems.value
+		showZeroPricedItems: showZeroPricedItems.value,
+		currencyType: currencyType.value,
+		diamondConversionRatio: diamondConversionRatio.value,
+		hideSellColumns: hideSellColumns.value
 	})
 }
 
@@ -117,6 +170,27 @@ function closeModal() {
 function handleOpen() {
 	loadSettings()
 }
+
+// Watch for modal opening and load current settings
+watch(
+	() => props.isOpen,
+	(isOpen) => {
+		if (isOpen) {
+			loadSettings()
+		}
+	}
+)
+
+// Watch for changes in current settings and update modal state
+watch(
+	() => props.currentSettings,
+	(newSettings) => {
+		if (newSettings && Object.keys(newSettings).length > 0) {
+			loadSettings()
+		}
+	},
+	{ deep: true }
+)
 
 // Watch for changes in enabledVersions and re-initialize version from query
 watch(
@@ -193,16 +267,66 @@ defineExpose({
 			</div>
 		</div>
 
+		<!-- Currency Configuration (Admin only) -->
+		<div v-if="canEditItems">
+			<label class="block text-sm font-medium text-gray-700 mb-2">Currency:</label>
+
+			<!-- Currency Type Toggle -->
+			<div class="flex items-center gap-4 mb-3">
+				<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+					<button
+						@click="currencyType = 'money'"
+						:class="[
+							currencyType === 'money'
+								? 'bg-gray-asparagus text-white'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100',
+							'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+						]">
+						Money
+					</button>
+					<button
+						@click="currencyType = 'diamond'"
+						:class="[
+							currencyType === 'diamond'
+								? 'bg-gray-asparagus text-white'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100',
+							'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+						]">
+						Diamond
+					</button>
+				</div>
+
+				<!-- Diamond Conversion Ratio (only show when diamond currency is selected) -->
+				<div v-if="currencyType === 'diamond'" class="flex items-center gap-2">
+					<label
+						for="diamondConversionRatio"
+						class="text-sm font-medium text-gray-700 whitespace-nowrap">
+						Ratio:
+					</label>
+					<input
+						id="diamondConversionRatio"
+						v-model.number="diamondConversionRatio"
+						type="number"
+						min="1"
+						max="100"
+						step="1"
+						class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
+					<span class="text-xs text-gray-600">money:diamond</span>
+				</div>
+			</div>
+		</div>
+
 		<!-- Price Configuration -->
 		<div>
 			<label class="block text-sm font-medium text-gray-700 mb-2">Prices:</label>
-			<div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+
+			<div class="space-y-3 mb-3">
 				<!-- Price Multiplier -->
-				<div class="flex items-center gap-2">
+				<div>
 					<label
 						for="priceMultiplier"
-						class="text-sm font-medium text-gray-700 whitespace-nowrap">
-						Buy ×
+						class="block text-sm font-medium text-gray-700 mb-1">
+						Buy price multiplier
 					</label>
 					<input
 						id="priceMultiplier"
@@ -211,15 +335,13 @@ defineExpose({
 						min="0.1"
 						max="10"
 						step="0.1"
-						class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
+						class="border-2 border-gray-asparagus rounded px-2 py-1 w-20 text-sm" />
 				</div>
 
 				<!-- Sell Margin -->
-				<div class="flex items-center gap-2">
-					<label
-						for="sellMargin"
-						class="text-sm font-medium text-gray-700 whitespace-nowrap">
-						Sell %
+				<div>
+					<label for="sellMargin" class="block text-sm font-medium text-gray-700 mb-1">
+						Sell percentage
 					</label>
 					<input
 						id="sellMargin"
@@ -228,7 +350,19 @@ defineExpose({
 						min="1"
 						max="100"
 						step="1"
-						class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
+						class="border-2 border-gray-asparagus rounded px-2 py-1 w-20 text-sm" />
+				</div>
+
+				<!-- Hide Sell Prices -->
+				<div class="flex items-center gap-2">
+					<input
+						id="hideSellColumns"
+						v-model="hideSellColumns"
+						type="checkbox"
+						class="checkbox-input" />
+					<label for="hideSellColumns" class="text-sm text-gray-700">
+						Don't display sell prices in lists
+					</label>
 				</div>
 			</div>
 
@@ -239,7 +373,9 @@ defineExpose({
 					v-model="roundToWhole"
 					type="checkbox"
 					class="checkbox-input" />
-				<label for="roundToWhole" class="text-sm text-gray-700">Round to whole</label>
+				<label for="roundToWhole" class="text-sm text-gray-700">
+					Round prices to the nearest whole number
+				</label>
 			</div>
 
 			<!-- Show Zero Priced Items (admin only) -->
