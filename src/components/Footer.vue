@@ -16,7 +16,16 @@
 			</router-link>
 		</div>
 		<p class="text-gray-500 text-sm mt-2">
-			Need help? support@minecraft-economy-price-guide.net
+			Need help? Join my
+			<a
+				href="https://discord.gg/bz6ckxGZKw"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="text-heavy-metal underline">
+				<span class="sm:hidden">Discord</span>
+				<span class="hidden sm:inline">Discord</span>
+			</a>
+			or email support@minecraft-economy-price-guide.net
 		</p>
 	</footer>
 </template>
