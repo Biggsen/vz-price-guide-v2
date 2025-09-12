@@ -4,6 +4,14 @@
 
 Implement community features to enable user interaction, feedback, and collaboration. This builds on the user accounts fundamentals and enhances the platform's community aspect.
 
+Current decisions for a minimal, pragmatic path:
+
+-   Keep a single flow for input. Use the existing suggestions feature and add a `category` to capture feedback type (`bug | feature | general`).
+-   Defer separate feedback routes, rich editors, attachments, and analytics until submission volume grows.
+-   Defer suggestion tagging for now; categories are sufficient at low volume.
+-   Tie feature request voting to `data/roadmap.json` using a lightweight Firestore vote store. Avoid migrating roadmap content until in-app editing is needed.
+-   Keep `data/updates.json` as static; migrate only if you want admin editing or commentary.
+
 ## Dependencies
 
 ### Prerequisites
@@ -33,35 +41,22 @@ Based on `docs/user-profiles.md`, the community features should serve:
 
 ## Implementation Plan
 
-### Phase 1: Feedback & Feature Request System
+### Phase 1: Suggestions & Feedback (Combined, Minimal)
 
-#### Task 1.1: Feedback Submission
+Current stance: no large changes until volume increases. Make the smallest edits that unlock triage and prioritisation.
 
--   [ ] Create `FeedbackView.vue` component
--   [ ] Add `/feedback` route
--   [ ] Feedback categories: bug report, feature request, general feedback
--   [ ] Rich text editor for detailed feedback
--   [ ] File attachment support (screenshots, logs)
--   [ ] User context (browser, page, user info)
--   [ ] Feedback status tracking
+#### Task 1.1: Add Category to Suggestions
 
-#### Task 1.2: Feature Request Voting
+-   [ ] Extend existing `suggestions` docs with `category: 'bug' | 'feature' | 'general'`.
+-   [ ] Add a category select to the `/suggestions` form.
+-   [ ] Add an optional category filter to the admin view at `/suggestions/all`.
 
--   [ ] Create `FeatureRequestsView.vue` component
--   [ ] Add `/feature-requests` route
--   [ ] List all feature requests with voting
--   [ ] User voting system (upvote/downvote)
--   [ ] Feature request status (proposed, planned, in progress, completed)
--   [ ] Admin management interface
--   [ ] Duplicate detection and merging
+#### Task 1.2: Roadmap Voting (Lightweight)
 
-#### Task 1.3: Feedback Management
-
--   [ ] Admin feedback dashboard
--   [ ] Feedback categorization and tagging
--   [ ] Response system for feedback
--   [ ] Feedback analytics and reporting
--   [ ] Email notifications for feedback updates
+-   [ ] Keep `data/roadmap.json` as the source of truth for roadmap items.
+-   [ ] Create a Firestore vote store keyed by `roadmapId` that aggregates vote counts and prevents duplicate user votes.
+-   [ ] Client reads roadmap from JSON and merges Firestore vote totals.
+-   [ ] No in-app CRUD for roadmap items yet; editing remains in JSON.
 
 ### Phase 2: Community Price Sharing
 
@@ -154,43 +149,24 @@ Based on `docs/user-profiles.md`, the community features should serve:
 
 ### Database Schema
 
-#### Feedback System
+#### Suggestions extension (combined with feedback)
 
 ```javascript
-// feedback collection
+// suggestions collection (existing; additions shown)
 {
-  id: string,
-  user_id: string,
-  type: 'bug' | 'feature' | 'general',
-  category: string,
-  title: string,
-  description: string,
-  status: 'open' | 'in_progress' | 'resolved' | 'closed',
-  priority: 'low' | 'medium' | 'high' | 'critical',
-  attachments: string[], // file URLs
-  user_context: {
-    browser: string,
-    page: string,
-    timestamp: timestamp
-  },
-  admin_response: string,
-  created_at: timestamp,
-  updated_at: timestamp
+	// ...existing fields...
+	category: 'bug' | 'feature' | 'general' // NEW: combines feedback + suggestions
 }
+```
 
-// feature_requests collection
+#### Roadmap voting (JSON + Firestore votes)
+
+```javascript
+// roadmap_votes collection (doc id = roadmapId from data/roadmap.json)
 {
-  id: string,
-  user_id: string,
-  title: string,
-  description: string,
-  status: 'proposed' | 'planned' | 'in_progress' | 'completed',
-  votes: number,
-  voters: string[], // user IDs
-  tags: string[],
-  admin_notes: string,
-  created_at: timestamp,
-  updated_at: timestamp
+  id: string,             // roadmapId, e.g. 'R12'
+  votes: number,          // aggregate count
+  voters: { [uid]: true } // map for O(1) duplicate prevention
 }
 ```
 
@@ -230,50 +206,48 @@ Based on `docs/user-profiles.md`, the community features should serve:
 }
 ```
 
-### New Routes
+### Routes
+
+No new routes required for Phase 1.
+
+Existing:
 
 ```
-/feedback                    - Feedback submission
-/feature-requests           - Feature request voting
-/community                  - Community hub
-/forums                     - Discussion forums
-/guilds                     - Guild management
-/experts                    - Expert network
-/market-intelligence        - Market reports
+/suggestions               - Combined suggestions & feedback (user)
+/suggestions/all           - Suggestions admin view
+```
+
+Optional (for voting UI integration):
+
+```
+/roadmap                   - Read roadmap.json, merge with Firestore vote totals
 ```
 
 ### Security Rules
 
 ```javascript
 // Add to firestore.rules:
-match /feedback/{feedbackId} {
+
+// Suggestions (ensure users can only write their own)
+match /suggestions/{suggestionId} {
   allow read: if request.auth != null && (
-    request.auth.uid == resource.data.user_id ||
+    request.auth.uid == resource.data.userId ||
     request.auth.token.admin == true
   );
   allow create: if request.auth != null;
   allow update: if request.auth != null && (
-    request.auth.uid == resource.data.user_id ||
+    request.auth.uid == resource.data.userId ||
     request.auth.token.admin == true
   );
 }
 
-match /feature_requests/{requestId} {
+// Roadmap votes (one vote per user per roadmapId)
+match /roadmap_votes/{roadmapId} {
   allow read: if true;
-  allow create: if request.auth != null;
-  allow update: if request.auth != null && (
-    request.auth.uid == resource.data.user_id ||
-    request.auth.token.admin == true
-  );
-}
-
-match /community_posts/{postId} {
-  allow read: if resource.data.status != 'deleted';
-  allow create: if request.auth != null;
-  allow update: if request.auth != null && (
-    request.auth.uid == resource.data.user_id ||
-    request.auth.token.moderator == true ||
-    request.auth.token.admin == true
+  allow create, update: if request.auth != null && (
+    // allow setting current user's vote if not previously set
+    !(resource.data.voters[request.auth.uid] == true) &&
+    request.resource.data.voters[request.auth.uid] == true
   );
 }
 ```
@@ -343,10 +317,10 @@ match /community_posts/{postId} {
 
 ### High Priority (Phase 1-2)
 
-1. **Feedback System** - Essential for user input
-2. **Feature Request Voting** - Community-driven development
-3. **Public Price Guides** - Core value proposition
-4. **Basic Moderation** - Community health
+1. **Suggestions Category** – Minimal combined flow improvement
+2. **Roadmap Voting (Lightweight)** – Community input without migration
+3. **Public Price Guides** – Core value proposition (when ready)
+4. **Basic Moderation** – As volume requires
 
 ### Medium Priority (Phase 3)
 
@@ -409,3 +383,10 @@ match /community_posts/{postId} {
 -   **Regional Communities**: Server-specific communities
 -   **Cross-Platform Integration**: Discord, Reddit, etc.
 -   **API Access**: Third-party community tools
+
+---
+
+Notes on data sources:
+
+-   `data/roadmap.json` remains authoritative for roadmap content in the lightweight phase; Firestore stores only vote state.
+-   `data/updates.json` remains a static historical log. Consider migration only if admin editing or commentary features are required.

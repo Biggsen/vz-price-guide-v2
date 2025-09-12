@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "vz-price-guide"
+    "default": "demo-vz-price-guide",
+    "prod": "vz-price-guide"
   }
 }

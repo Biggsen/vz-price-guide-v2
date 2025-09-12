@@ -195,6 +195,7 @@ function clearError() {
 							required
 							v-model="userInput.email"
 							@input="clearError"
+							data-cy="signup-email"
 							class="block w-full sm:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
 							placeholder="Enter your email address"
 							:disabled="isLoading" />
@@ -217,6 +218,7 @@ function clearError() {
 								v-model="userInput.password"
 								@input="clearError"
 								minlength="8"
+								data-cy="signup-password"
 								class="block w-full sm:w-80 rounded border-2 border-gray-asparagus px-3 py-1 pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
 								placeholder="Create a password"
 								:disabled="isLoading" />
@@ -262,6 +264,7 @@ function clearError() {
 								required
 								v-model="userInput.confirmPassword"
 								@input="clearError"
+								data-cy="signup-confirm-password"
 								class="block w-full sm:w-80 rounded border-2 px-3 py-1 pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
 								:class="{
 									'border-gray-asparagus':
@@ -318,6 +321,7 @@ function clearError() {
 									type="checkbox"
 									v-model="termsAccepted"
 									required
+									data-cy="signup-terms"
 									class="checkbox-input mr-2"
 									:disabled="isLoading" />
 								<span class="text-sm text-gray-700">
@@ -340,9 +344,7 @@ function clearError() {
 
 					<!-- Submit Button -->
 					<div class="pt-2">
-						<button
-							type="submit"
-							class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
+						<button type="submit" data-cy="signup-submit" class="btn-primary">
 							<svg
 								v-if="isLoading"
 								class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline"

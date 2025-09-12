@@ -1,5 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'firebase/app'
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
+import { getAuth, connectAuthEmulator } from 'firebase/auth'
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -14,3 +16,23 @@ const firebaseConfig = {
 
 // Initialize Firebase
 export const firebaseApp = initializeApp(firebaseConfig)
+
+// Connect to local emulators during E2E/dev when opted in
+const useEmulators =
+	(import.meta.env.VITE_FIREBASE_EMULATORS || '').toString().toLowerCase() === '1' ||
+	(import.meta.env.VITE_FIREBASE_EMULATORS || '').toString().toLowerCase() === 'true'
+
+export const db = getFirestore(firebaseApp)
+export const auth = getAuth(firebaseApp)
+
+if (useEmulators && typeof window !== 'undefined') {
+	try {
+		// Use the current hostname to allow network access from mobile devices
+		const hostname = window.location.hostname
+		connectFirestoreEmulator(db, hostname, 8080)
+	} catch {}
+	try {
+		const hostname = window.location.hostname
+		connectAuthEmulator(auth, `http://${hostname}:9099`, { disableWarnings: true })
+	} catch {}
+}

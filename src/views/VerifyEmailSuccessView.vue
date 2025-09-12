@@ -20,6 +20,23 @@ const isRedirecting = ref(false)
 async function handleEmailVerification() {
 	const oobCode = route.query.oobCode
 
+	// Check if user is already verified (for test scenarios)
+	if (currentUser.value?.emailVerified) {
+		isSuccess.value = true
+		setTimeout(() => {
+			isRedirecting.value = true
+			router.push({
+				path: '/account',
+				query: {
+					message: 'email-verified',
+					email: currentUser.value?.email || route.query.email
+				}
+			})
+		}, 3000)
+		isLoading.value = false
+		return
+	}
+
 	if (!oobCode) {
 		errorMessage.value = 'Invalid verification link. Please try again.'
 		isLoading.value = false

@@ -71,10 +71,13 @@ const sortedStatusLegend = computed(() => {
 
 // Computed property to control displayed updates
 const displayedUpdates = computed(() => {
+	// Filter out hidden updates
+	const visibleUpdates = updates.value.filter((update) => !update.hidden)
+
 	if (showAllUpdates.value) {
-		return updates.value
+		return visibleUpdates
 	}
-	return updates.value.slice(0, 3)
+	return visibleUpdates.slice(0, 3)
 })
 
 function toggleShowAllUpdates() {
@@ -216,11 +219,19 @@ function formatCompletionDate(dateString) {
 			</div>
 
 			<!-- Show All/Show Less Toggle -->
-			<div v-if="updates.length > 3" class="mt-6 text-center">
+			<div
+				v-if="updates.filter((update) => !update.hidden).length > 3"
+				class="mt-6 text-center">
 				<button
 					@click="toggleShowAllUpdates"
 					class="text-laurel hover:text-gray-asparagus font-medium underline transition-colors duration-200">
-					{{ showAllUpdates ? 'Show less' : `Show all ${updates.length} updates` }}
+					{{
+						showAllUpdates
+							? 'Show less'
+							: `Show all ${
+									updates.filter((update) => !update.hidden).length
+							  } updates`
+					}}
 				</button>
 			</div>
 		</section>

@@ -300,5 +300,40 @@
 				"completed": false
 			}
 		]
+	},
+	{
+		"id": 13,
+		"title": "Profile Switcher / Server Profiles",
+		"status": "Idea",
+		"description": "Allow users to save and quickly switch between different sets of price guide settings (version, currency, price ratios, etc.) for different servers or shop contexts. This is especially useful for users who manage shops on multiple servers with different economies.",
+		"features": [
+			{
+				"name": "Save multiple named profiles with version, currency, and price settings",
+				"completed": false
+			},
+			{
+				"name": "Quickly switch between profiles from the main price guide UI",
+				"completed": false
+			},
+			{
+				"name": "Profile management: create, rename, delete, and reorder profiles",
+				"completed": false
+			},
+			{
+				"name": "Profiles can be linked to specific servers or shop types (optional)",
+				"completed": false
+			}
+		]
+	},
+	{
+		"id": 14,
+		"title": "Diamond Currency Support",
+		"status": "Pending",
+		"description": "Support diamond-based economies as an alternative to money. Users can switch between money and diamond currencies, set conversion ratios, and see prices displayed in their preferred currency. This feature will make the price guide more flexible for servers that use diamonds as currency.",
+		"features": [
+			{ "name": "Switch between money and diamond currencies in the UI", "completed": false },
+			{ "name": "Set and adjust diamond-to-money conversion ratios", "completed": false },
+			{ "name": "Display all prices in the selected currency", "completed": false }
+		]
 	}
 ]

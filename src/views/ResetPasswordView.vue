@@ -135,6 +135,7 @@ function clearSuccess() {
 						required
 						v-model="userInput.email"
 						@input="clearError"
+						data-cy="reset-email"
 						class="block w-full sm:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
 						placeholder="Enter your email address"
 						:disabled="isLoading" />
@@ -144,6 +145,7 @@ function clearSuccess() {
 				<div class="pt-2">
 					<button
 						type="submit"
+						data-cy="reset-submit"
 						class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
 						<svg
 							v-if="isLoading"

@@ -3,7 +3,6 @@ import { ref, computed } from 'vue'
 import { useFirebaseAuth, useCurrentUser } from 'vuefire'
 import { useRouter, useRoute } from 'vue-router'
 import { signInWithEmailAndPassword, signOut } from '@firebase/auth'
-import { userProfileExists } from '../utils/userProfile.js'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 import { CheckCircleIcon, XCircleIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 
@@ -58,17 +57,12 @@ async function signInToFirebase() {
 			userInput.value.password
 		)
 
-		// Check if user has a profile
-		const hasProfile = await userProfileExists(userCredential.user.uid)
-
-		// Redirect based on profile status
-		if (hasProfile) {
-			// User has profile - redirect to home
-			router.push('/')
-		} else {
-			// First time user - redirect to account to complete setup
-			router.push('/account')
-		}
+		// Redirect to requested path if provided, otherwise home
+		const redirectTo =
+			typeof route.query.redirect === 'string' && route.query.redirect
+				? route.query.redirect
+				: '/'
+		router.push(redirectTo)
 	} catch (error) {
 		console.error('Sign in error:', error.code, error.message)
 
@@ -185,6 +179,7 @@ function clearError() {
 							required
 							v-model="userInput.email"
 							@input="clearError"
+							data-cy="signin-email"
 							class="block w-full sm:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
 							placeholder="Enter your email address"
 							:disabled="isLoading" />
@@ -206,6 +201,7 @@ function clearError() {
 								required
 								v-model="userInput.password"
 								@input="clearError"
+								data-cy="signin-password"
 								class="block w-full sm:w-80 rounded border-2 border-gray-asparagus px-3 py-1 pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
 								placeholder="Enter your password"
 								:disabled="isLoading" />
@@ -234,9 +230,7 @@ function clearError() {
 
 					<!-- Submit Button -->
 					<div class="pt-2">
-						<button
-							type="submit"
-							class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
+						<button type="submit" data-cy="signin-submit" class="btn-primary">
 							<svg
 								v-if="isLoading"
 								class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline"
