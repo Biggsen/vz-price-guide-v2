@@ -1,5 +1,22 @@
 [
 	{
+		"id": 23,
+		"title": "Discord Community Server - Join the Conversation! 💬",
+		"date": "2025-09-12",
+		"type": "Community",
+		"hidden": false,
+		"description": "🎉 I've created a Discord server for the price guide community! This is a place where you can chat with other users, get help with pricing questions, share feedback, and stay updated on new features.",
+		"link": "https://discord.gg/bz6ckxGZKw",
+		"linkText": "verzion's price guide discord server",
+		"changes": [
+			"New Discord server for community discussions and support",
+			"Discord link added to the site footer for easy access",
+			"Join the conversation with other price guide users",
+			"Get help with pricing questions and share feedback",
+			"Stay updated on new features and announcements"
+		]
+	},
+	{
 		"id": 22,
 		"title": "Export Price List - New Feature! 📊",
 		"date": "2025-09-11",

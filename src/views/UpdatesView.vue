@@ -207,6 +207,15 @@ function formatCompletionDate(dateString) {
 						</span>
 					</div>
 					<p class="text-gray-700 leading-relaxed">{{ update.description }}</p>
+					<div v-if="update.link" class="mt-3">
+						<a
+							:href="update.link"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="text-gray-800 hover:text-gray-600 font-medium underline transition-colors duration-200">
+							{{ update.linkText || 'Visit Link' }}
+						</a>
+					</div>
 					<ul v-if="update.changes && update.changes.length" class="mt-3 ml-4 space-y-1">
 						<li
 							v-for="change in update.changes"
