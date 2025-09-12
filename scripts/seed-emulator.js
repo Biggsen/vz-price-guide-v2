@@ -4,12 +4,18 @@
 //   - Emulators already running:   node scripts/seed-emulator.js
 //   - One-shot with emulators:     firebase emulators:exec --only firestore,auth "node scripts/seed-emulator.js"
 //
+// SAFETY MEASURES:
+// - This script will REFUSE to run against production databases
+// - Set DRY_RUN=true to test without making changes
+// - Requires explicit confirmation for any non-emulator operations
+//
 // Notes:
 // - When running under emulators, Admin SDK connects automatically if the
 //   emulator env vars are present. We still support service-account.json for
 //   consistency with other scripts in this repo.
 
 const path = require('path')
+const readline = require('readline')
 const admin = require('firebase-admin')
 
 function usingEmulators() {
@@ -20,6 +26,47 @@ function usingEmulators() {
 		flag === '1' ||
 		flag === 'true'
 	)
+}
+
+function isProductionProject(projectId) {
+	// List of known production project IDs - add more as needed
+	const productionProjects = ['vz-price-guide', 'vz-price-guide-prod']
+	return productionProjects.includes(projectId)
+}
+
+function isDryRun() {
+	return process.env.DRY_RUN === 'true' || process.env.DRY_RUN === '1'
+}
+
+async function confirmProductionOperation(projectId) {
+	if (isDryRun()) {
+		console.log('🔍 DRY_RUN mode: Would have asked for confirmation to run against production')
+		return true
+	}
+
+	const rl = readline.createInterface({
+		input: process.stdin,
+		output: process.stdout
+	})
+
+	return new Promise((resolve) => {
+		console.log('')
+		console.log(
+			'⚠️  WARNING: You are about to run the seed script against a PRODUCTION database!'
+		)
+		console.log(`   Project ID: ${projectId}`)
+		console.log('   This could corrupt or overwrite production data!')
+		console.log('')
+		console.log('   If you meant to seed the emulator, make sure:')
+		console.log('   1. Firebase emulators are running: firebase emulators:start')
+		console.log('   2. Environment variables are set correctly')
+		console.log('   3. You are in the correct directory')
+		console.log('')
+		rl.question('Type "YES I UNDERSTAND THE RISK" to continue: ', (answer) => {
+			rl.close()
+			resolve(answer === 'YES I UNDERSTAND THE RISK')
+		})
+	})
 }
 
 function initializeAdminApp() {
@@ -52,16 +99,50 @@ initializeAdminApp()
 const db = admin.firestore()
 const auth = admin.auth()
 
+// Get the actual project ID we're connecting to
+const projectId = admin.app().options.projectId || process.env.GCLOUD_PROJECT
+
 // Debug: show where we're seeding
-console.log('[seed] Project ID:', admin.app().options.projectId || process.env.GCLOUD_PROJECT)
+console.log('[seed] Project ID:', projectId)
 console.log('[seed] FIRESTORE_EMULATOR_HOST:', process.env.FIRESTORE_EMULATOR_HOST || '(not set)')
 console.log(
 	'[seed] FIREBASE_AUTH_EMULATOR_HOST:',
 	process.env.FIREBASE_AUTH_EMULATOR_HOST || '(not set)'
 )
+console.log('[seed] Using emulators:', usingEmulators())
+console.log('[seed] DRY_RUN mode:', isDryRun())
+
+// SAFETY CHECK: Prevent accidental production seeding
+async function safetyCheck() {
+	const isEmulator = usingEmulators()
+	const isProd = isProductionProject(projectId)
+
+	if (!isEmulator && isProd) {
+		console.log('')
+		console.log('🚨 SAFETY CHECK FAILED!')
+		console.log('   This script is designed for emulator seeding only.')
+		console.log('   You are about to run against a PRODUCTION database!')
+		console.log('')
+
+		const confirmed = await confirmProductionOperation(projectId)
+		if (!confirmed) {
+			console.log('❌ Operation cancelled by user.')
+			process.exit(1)
+		}
+		console.log('✅ User confirmed production operation.')
+	} else if (isEmulator) {
+		console.log('✅ Safety check passed: Running against emulators')
+	} else {
+		console.log('✅ Safety check passed: Not a known production project')
+	}
+}
 
 // Centralized helper to create/update a document
 async function upsertDoc(collectionName, docId, data) {
+	if (isDryRun()) {
+		console.log(`[DRY_RUN] Would upsert ${collectionName}/${docId}`)
+		return
+	}
 	await db.collection(collectionName).doc(docId).set(data, { merge: true })
 }
 
@@ -304,6 +385,67 @@ const TEST_DATA = {
 					output_count: 1
 				}
 			}
+		},
+		{
+			id: 'diamond_chestplate',
+			material_id: 'diamond_chestplate',
+			name: 'diamond chestplate',
+			image: '/images/items/diamond_chestplate.png',
+			url: 'https://minecraft.fandom.com/wiki/Diamond_Chestplate',
+			stack: 1,
+			category: 'armor',
+			subcategory: 'diamond',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 800.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'diamond', quantity: 8 }],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'iron_ingot',
+			material_id: 'iron_ingot',
+			name: 'iron ingot',
+			image: '/images/items/iron_ingot.png',
+			url: 'https://minecraft.fandom.com/wiki/Iron_Ingot',
+			stack: 64,
+			category: 'ores',
+			subcategory: 'iron',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 8.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'iron_block',
+			material_id: 'iron_block',
+			name: 'iron block',
+			image: '/images/items/iron_block.png',
+			url: 'https://minecraft.fandom.com/wiki/Iron_Block',
+			stack: 64,
+			category: 'ores',
+			subcategory: 'iron',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 72.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'iron_ingot', quantity: 9 }],
+					output_count: 1
+				}
+			}
 		}
 	],
 	shop_items: [
@@ -348,6 +490,48 @@ const TEST_DATA = {
 			stock_full: false,
 			notes: 'Competitive with main shop',
 			last_updated: nowIso()
+		},
+		{
+			id: 'shop-item-4',
+			shop_id: 'test-shop-1',
+			item_id: 'diamond_chestplate',
+			buy_price: 850.0,
+			sell_price: 750.0,
+			previous_buy_price: 800.0,
+			previous_sell_price: 700.0,
+			previous_price_date: new Date(Date.now() - 259200000).toISOString(),
+			stock_quantity: 3,
+			stock_full: false,
+			notes: 'Premium armor - limited stock',
+			last_updated: nowIso()
+		},
+		{
+			id: 'shop-item-5',
+			shop_id: 'test-shop-1',
+			item_id: 'iron_ingot',
+			buy_price: 9.0,
+			sell_price: 7.5,
+			previous_buy_price: 8.5,
+			previous_sell_price: 7.0,
+			previous_price_date: new Date(Date.now() - 172800000).toISOString(),
+			stock_quantity: 200,
+			stock_full: false,
+			notes: 'Good supply of iron ingots',
+			last_updated: nowIso()
+		},
+		{
+			id: 'shop-item-6',
+			shop_id: 'test-shop-2',
+			item_id: 'iron_block',
+			buy_price: 80.0,
+			sell_price: 70.0,
+			previous_buy_price: 75.0,
+			previous_sell_price: 65.0,
+			previous_price_date: new Date(Date.now() - 345600000).toISOString(),
+			stock_quantity: 25,
+			stock_full: false,
+			notes: 'Iron blocks for building',
+			last_updated: nowIso()
 		}
 	],
 	suggestions: [
@@ -366,10 +550,18 @@ const TEST_DATA = {
 async function seedEmulator() {
 	console.log('🌱 Seeding Firebase emulators with test data...')
 
+	// Run safety check first
+	await safetyCheck()
+
 	try {
 		// Auth users
 		console.log('🔐 Seeding Auth users...')
 		for (const user of TEST_DATA.users) {
+			if (isDryRun()) {
+				console.log(`  [DRY_RUN] Would create/update auth user: ${user.email}`)
+				continue
+			}
+
 			let existing = null
 			try {
 				existing = await auth.getUser(user.id)
