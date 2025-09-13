@@ -35,10 +35,22 @@ function initializeAdminForEmulator() {
 module.exports = defineConfig({
 	video: false,
 	screenshotOnRunFailure: true,
+	// Run in headless mode by default for faster execution
+	headless: true,
 	e2e: {
 		baseUrl: 'http://localhost:5173',
 		specPattern: 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}',
 		supportFile: 'cypress/support/e2e.js',
+		// Performance optimizations
+		defaultCommandTimeout: 15000, // Balanced timeout for auth operations
+		requestTimeout: 10000, // Reduced from default 5000ms
+		responseTimeout: 10000, // Reduced from default 30000ms
+		pageLoadTimeout: 15000, // Reduced from default 60000ms
+		// Faster assertion timeouts
+		execTimeout: 30000, // Reduced from default 60000ms
+		// Viewport optimization for faster rendering
+		viewportWidth: 1280,
+		viewportHeight: 720,
 		setupNodeEvents(on, config) {
 			on('task', {
 				async verifyUserEmail(email) {

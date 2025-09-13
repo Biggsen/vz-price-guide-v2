@@ -143,7 +143,7 @@ Cypress.Commands.add('signOut', () => {
 	})
 
 	// Wait for router to settle on either account or auth page
-	cy.location('pathname', { timeout: 10000 }).should((p) => {
+	cy.location('pathname', { timeout: 5000 }).should((p) => {
 		expect(['/account', '/signin', '/signup']).to.include(p)
 	})
 
@@ -202,7 +202,7 @@ Cypress.Commands.add('ensureSignedOut', () => {
 	cy.waitForAuth()
 
 	// Check if we're still on account page or have been redirected
-	cy.location('pathname', { timeout: 10000 }).should((p) => {
+	cy.location('pathname', { timeout: 5000 }).should((p) => {
 		expect(['/account', '/signin', '/signup']).to.include(p)
 	})
 	cy.location('pathname').then((path) => {
@@ -229,15 +229,15 @@ Cypress.Commands.add('ensureSignedIn', (email, password) => {
 		sessionId,
 		() => {
 			cy.visit('/signin')
-			cy.get('body', { timeout: 10000 }).then(($body) => {
+			cy.get('body', { timeout: 5000 }).then(($body) => {
 				const hasForm = $body.find('[data-cy="signin-email"]').length > 0
 				if (hasForm) {
 					cy.get('[data-cy="signin-email"]').type(email)
 					cy.get('[data-cy="signin-password"]').type(password)
 					cy.get('[data-cy="signin-submit"]').click()
-					cy.location('pathname').should('eq', '/')
+					cy.location('pathname', { timeout: 15000 }).should('eq', '/')
 				} else {
-					cy.location('pathname', { timeout: 10000 }).then((p) => {
+					cy.location('pathname', { timeout: 5000 }).then((p) => {
 						if (p !== '/') {
 							cy.visit('/')
 						}
@@ -257,16 +257,16 @@ Cypress.Commands.add('signIn', (email, password) => {
 
 	cy.waitForAuth()
 
-	cy.get('body', { timeout: 10000 }).then(($body) => {
+	cy.get('body', { timeout: 5000 }).then(($body) => {
 		const hasForm = $body.find('[data-cy="signin-email"]').length > 0
 		if (hasForm) {
 			cy.get('[data-cy="signin-email"]').type(email)
 			cy.get('[data-cy="signin-password"]').type(password)
 			cy.get('[data-cy="signin-submit"]').click()
-			cy.location('pathname').should('eq', '/')
+			cy.location('pathname', { timeout: 15000 }).should('eq', '/')
 			cy.log('Sign in completed successfully')
 		} else {
-			cy.location('pathname', { timeout: 10000 }).then((p) => {
+			cy.location('pathname', { timeout: 5000 }).then((p) => {
 				if (p !== '/') {
 					cy.visit('/')
 				}
@@ -283,7 +283,7 @@ Cypress.Commands.add('signUp', (email, password, confirmPassword) => {
 
 	cy.waitForAuth()
 
-	cy.get('body', { timeout: 10000 }).then(($body) => {
+	cy.get('body', { timeout: 5000 }).then(($body) => {
 		const hasForm = $body.find('[data-cy="signup-email"]').length > 0
 		if (hasForm) {
 			cy.get('[data-cy="signup-email"]').type(email)
@@ -291,6 +291,8 @@ Cypress.Commands.add('signUp', (email, password, confirmPassword) => {
 			cy.get('[data-cy="signup-confirm-password"]').type(confirmPassword)
 			cy.get('[data-cy="signup-terms"]').check()
 			cy.get('[data-cy="signup-submit"]').click()
+			// Wait for redirect to verify-email page with longer timeout for auth operations
+			cy.location('pathname', { timeout: 15000 }).should('eq', '/verify-email')
 			cy.log('Sign up completed successfully')
 		} else {
 			cy.log('Sign up form not present; assuming already signed in or on different page')
@@ -305,11 +307,15 @@ Cypress.Commands.add('requestPasswordReset', (email) => {
 
 	cy.waitForAuth()
 
-	cy.get('body', { timeout: 10000 }).then(($body) => {
+	cy.get('body', { timeout: 5000 }).then(($body) => {
 		const hasForm = $body.find('[data-cy="reset-email"]').length > 0
 		if (hasForm) {
 			cy.get('[data-cy="reset-email"]').type(email)
 			cy.get('[data-cy="reset-submit"]').click()
+			// Wait for success message with longer timeout for auth operations
+			cy.contains('Password reset email sent! Check your inbox for instructions.', {
+				timeout: 15000
+			}).should('be.visible')
 			cy.log('Password reset request completed successfully')
 		} else {
 			cy.log('Password reset form not present; assuming already on different page')
@@ -339,7 +345,7 @@ Cypress.Commands.add('simulateEmailVerification', (email) => {
 	cy.contains('Email Verified!').should('be.visible')
 
 	// Wait for redirect to account page
-	cy.location('pathname', { timeout: 10000 }).should('eq', '/account')
+	cy.location('pathname', { timeout: 5000 }).should('eq', '/account')
 })
 
 Cypress.Commands.add('confirmPasswordReset', (oobCode, newPassword, confirmPassword) => {
@@ -348,7 +354,7 @@ Cypress.Commands.add('confirmPasswordReset', (oobCode, newPassword, confirmPassw
 	cy.visit(`/reset-password-confirm?oobCode=${oobCode}`)
 	cy.waitForAuth()
 
-	cy.get('body', { timeout: 10000 }).then(($body) => {
+	cy.get('body', { timeout: 5000 }).then(($body) => {
 		const hasForm = $body.find('input[name="newPassword"]').length > 0
 		if (hasForm) {
 			cy.get('input[name="newPassword"]').type(newPassword)
@@ -369,7 +375,7 @@ Cypress.Commands.add('changePassword', (currentPassword, newPassword, confirmPas
 	cy.visit('/change-password')
 	cy.waitForAuth()
 
-	cy.get('body', { timeout: 10000 }).then(($body) => {
+	cy.get('body', { timeout: 5000 }).then(($body) => {
 		const hasForm = $body.find('[data-cy="change-password-current"]').length > 0
 		if (hasForm) {
 			cy.get('[data-cy="change-password-current"]').type(currentPassword)
@@ -493,5 +499,6 @@ Cypress.Commands.add(
 // Wait for auth state to stabilize
 Cypress.Commands.add('waitForAuth', () => {
 	cy.log('Waiting for auth state to stabilize...')
-	cy.wait(2000) // Give Firebase Auth time to settle
+	// Simple wait for auth state - reduced from 2000ms to 1000ms
+	cy.wait(1000)
 })

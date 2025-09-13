@@ -6,19 +6,24 @@ describe('User Account Flow', () => {
 	})
 
 	describe('Change Password Flow', () => {
-		it('allows verified user to change password successfully', () => {
+		let sharedEmail
+		const sharedPassword = 'passWORD123'
+
+		before(() => {
+			// Create shared account for validation tests
 			const timestamp = Date.now()
-			const tempEmail = `passwordtest${timestamp}@example.com`
+			sharedEmail = `passwordtest${timestamp}@example.com`
 
-			// Create temporary user and verify email
 			cy.ensureSignedOut()
-			cy.signUp(tempEmail, 'passWORD123', 'passWORD123')
+			cy.signUp(sharedEmail, sharedPassword, sharedPassword)
 			cy.location('pathname').should('eq', '/verify-email')
-			cy.simulateEmailVerification(tempEmail)
+			cy.simulateEmailVerification(sharedEmail)
+		})
 
+		it('allows verified user to change password successfully', () => {
 			// Test password change
 			cy.visit('/change-password')
-			cy.changePassword('passWORD123', 'NewPass123', 'NewPass123')
+			cy.changePassword(sharedPassword, 'NewPass123', 'NewPass123')
 
 			// Verify success redirect and message
 			cy.location('pathname').should('eq', '/account')
@@ -26,19 +31,15 @@ describe('User Account Flow', () => {
 
 			// Verify new password works
 			cy.signOut()
-			cy.signIn(tempEmail, 'NewPass123')
+			cy.signIn(sharedEmail, 'NewPass123')
 			cy.location('pathname').should('eq', '/')
+
+			// Reset password back for other tests
+			cy.visit('/change-password')
+			cy.changePassword('NewPass123', sharedPassword, sharedPassword)
 		})
 
 		it('shows error for incorrect current password', () => {
-			const timestamp = Date.now()
-			const tempEmail = `passwordtest${timestamp}@example.com`
-
-			// Create temporary user and verify email
-			cy.ensureSignedOut()
-			cy.signUp(tempEmail, 'passWORD123', 'passWORD123')
-			cy.simulateEmailVerification(tempEmail)
-
 			// Test password change with wrong current password
 			cy.visit('/change-password')
 			cy.changePassword('wrongpassword', 'NewPass123', 'NewPass123')
@@ -49,17 +50,9 @@ describe('User Account Flow', () => {
 		})
 
 		it('shows error for weak new password', () => {
-			const timestamp = Date.now()
-			const tempEmail = `passwordtest${timestamp}@example.com`
-
-			// Create temporary user and verify email
-			cy.ensureSignedOut()
-			cy.signUp(tempEmail, 'passWORD123', 'passWORD123')
-			cy.simulateEmailVerification(tempEmail)
-
 			// Test password change with weak password
 			cy.visit('/change-password')
-			cy.get('[data-cy="change-password-current"]').type('passWORD123')
+			cy.get('[data-cy="change-password-current"]').type(sharedPassword)
 			cy.get('[data-cy="change-password-new"]').type('weak')
 			cy.get('[data-cy="change-password-confirm"]').type('weak')
 
@@ -75,18 +68,9 @@ describe('User Account Flow', () => {
 		})
 
 		it('shows error for mismatched password confirmation', () => {
-			const timestamp = Date.now()
-			const tempEmail = `passwordtest${timestamp}@example.com`
-
-			// Create temporary user and verify email
-			cy.ensureSignedOut()
-			cy.signUp(tempEmail, 'passWORD123', 'passWORD123')
-			cy.location('pathname').should('eq', '/verify-email')
-			cy.simulateEmailVerification(tempEmail)
-
 			// Test password change with mismatched confirmation
 			cy.visit('/change-password')
-			cy.get('[data-cy="change-password-current"]').type('passWORD123')
+			cy.get('[data-cy="change-password-current"]').type(sharedPassword)
 			cy.get('[data-cy="change-password-new"]').type('NewPass123')
 			cy.get('[data-cy="change-password-confirm"]').type('DifferentPass123')
 
