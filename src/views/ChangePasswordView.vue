@@ -131,6 +131,7 @@ function clearError() {
 							v-model="form.currentPassword"
 							@input="clearError"
 							required
+							data-cy="change-password-current"
 							class="block w-full sm:w-80 rounded border-2 border-gray-asparagus px-3 py-1 pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
 							placeholder="Enter your current password"
 							:disabled="isLoading" />
@@ -188,6 +189,7 @@ function clearError() {
 							v-model="form.newPassword"
 							@input="clearError"
 							required
+							data-cy="change-password-new"
 							class="block w-full sm:w-80 rounded border-2 border-gray-asparagus px-3 py-1 pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
 							placeholder="Enter your new password"
 							:disabled="isLoading" />
@@ -254,6 +256,7 @@ function clearError() {
 							v-model="form.confirmPassword"
 							@input="clearError"
 							required
+							data-cy="change-password-confirm"
 							class="block w-full sm:w-80 rounded border-2 px-3 py-1 pr-10 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"
 							:class="{
 								'border-gray-asparagus':
@@ -327,6 +330,7 @@ function clearError() {
 					<button
 						type="submit"
 						:disabled="isLoading"
+						data-cy="change-password-submit"
 						class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
 						<svg
 							v-if="isLoading"

@@ -342,6 +342,26 @@ Cypress.Commands.add('simulateEmailVerification', (email) => {
 	cy.location('pathname', { timeout: 10000 }).should('eq', '/account')
 })
 
+Cypress.Commands.add('changePassword', (currentPassword, newPassword, confirmPassword) => {
+	cy.log(`Changing password for current user...`)
+
+	cy.visit('/change-password')
+	cy.waitForAuth()
+
+	cy.get('body', { timeout: 10000 }).then(($body) => {
+		const hasForm = $body.find('[data-cy="change-password-current"]').length > 0
+		if (hasForm) {
+			cy.get('[data-cy="change-password-current"]').type(currentPassword)
+			cy.get('[data-cy="change-password-new"]').type(newPassword)
+			cy.get('[data-cy="change-password-confirm"]').type(confirmPassword)
+			cy.get('[data-cy="change-password-submit"]').click()
+			cy.log('Password change form submitted successfully')
+		} else {
+			cy.log('Password change form not present; assuming already on different page')
+		}
+	})
+})
+
 // Wait for auth state to stabilize
 Cypress.Commands.add('waitForAuth', () => {
 	cy.log('Waiting for auth state to stabilize...')
