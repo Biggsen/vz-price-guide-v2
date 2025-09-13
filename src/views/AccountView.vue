@@ -302,6 +302,7 @@ function signOutOfFirebase() {
 							type="text"
 							id="profile_minecraft_username"
 							v-model="profileForm.minecraft_username"
+							data-cy="profile-minecraft-username"
 							required
 							placeholder="Your Minecraft username"
 							class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
@@ -319,6 +320,7 @@ function signOutOfFirebase() {
 							type="text"
 							id="profile_display_name"
 							v-model="profileForm.display_name"
+							data-cy="profile-display-name"
 							required
 							:disabled="useMinecraftUsername"
 							placeholder="How others will see your name"
@@ -329,6 +331,7 @@ function signOutOfFirebase() {
 							type="checkbox"
 							id="profile_use_minecraft_username"
 							v-model="useMinecraftUsername"
+							data-cy="profile-use-minecraft-username"
 							class="checkbox-input" />
 						<label
 							for="profile_use_minecraft_username"
@@ -345,12 +348,14 @@ function signOutOfFirebase() {
 						<textarea
 							id="profile_bio"
 							v-model="profileForm.bio"
+							data-cy="profile-bio"
 							placeholder="Tell us a little about yourself..."
 							class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus min-h-[120px]" />
 					</div>
 					<div class="flex space-x-3">
 						<button
 							type="submit"
+							data-cy="profile-submit"
 							class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 							{{ profileFormMode === 'edit' ? 'Save Changes' : 'Create Profile' }}
 						</button>
@@ -410,6 +415,7 @@ function signOutOfFirebase() {
 					<p class="text-gray-700 text-base mb-4">You have not created a profile yet.</p>
 					<button
 						@click="showCreateProfileForm = true"
+						data-cy="create-profile-button"
 						class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 						Create Profile
 					</button>

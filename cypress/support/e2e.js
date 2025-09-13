@@ -428,6 +428,68 @@ Cypress.Commands.add('completeForgotPasswordFlow', (email, originalPassword, new
 	})
 })
 
+Cypress.Commands.add(
+	'createUserProfile',
+	(minecraftUsername, displayName, bio = '', useMinecraftAsDisplay = false) => {
+		cy.log(`Creating user profile: ${minecraftUsername}`)
+
+		cy.visit('/account')
+		cy.waitForAuth()
+
+		// Click the Create Profile button
+		cy.get('[data-cy="create-profile-button"]').should('be.visible').click()
+
+		// Fill out the profile form
+		cy.get('[data-cy="profile-minecraft-username"]').type(minecraftUsername)
+
+		if (useMinecraftAsDisplay) {
+			// Check the checkbox to use Minecraft username as display name
+			cy.get('[data-cy="profile-use-minecraft-username"]').check()
+		} else {
+			// Fill out the display name field
+			cy.get('[data-cy="profile-display-name"]').type(displayName)
+		}
+
+		if (bio) {
+			cy.get('[data-cy="profile-bio"]').type(bio)
+		}
+
+		// Submit the form
+		cy.get('[data-cy="profile-submit"]').click()
+
+		// Verify profile was created successfully
+		cy.contains(minecraftUsername).should('be.visible')
+
+		// Check the expected display name (either provided or same as Minecraft username)
+		const expectedDisplayName = useMinecraftAsDisplay ? minecraftUsername : displayName
+		cy.contains(expectedDisplayName).should('be.visible')
+
+		if (bio) {
+			cy.contains(bio).should('be.visible')
+		}
+
+		cy.log('User profile created successfully')
+	}
+)
+
+Cypress.Commands.add(
+	'completeProfileCreationFlow',
+	(email, password, minecraftUsername, displayName, bio = '', useMinecraftAsDisplay = false) => {
+		cy.log(`Starting complete profile creation flow for: ${email}`)
+
+		// Step 1: Create and verify user account
+		cy.ensureSignedOut()
+		cy.signUp(email, password, password)
+		cy.location('pathname').should('eq', '/verify-email')
+		cy.simulateEmailVerification(email)
+
+		// Step 2: Create user profile
+		cy.createUserProfile(minecraftUsername, displayName, bio, useMinecraftAsDisplay)
+
+		cy.log('Complete profile creation flow successful')
+	}
+)
+
 // Wait for auth state to stabilize
 Cypress.Commands.add('waitForAuth', () => {
 	cy.log('Waiting for auth state to stabilize...')

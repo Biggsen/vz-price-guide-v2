@@ -140,6 +140,30 @@ describe('User Account Flow', () => {
 		})
 	})
 
+	describe('Profile Creation Flow', () => {
+		it('completes the entire profile creation journey - happy path', () => {
+			const timestamp = Date.now()
+			const tempEmail = `profiletest${timestamp}@example.com`
+			const password = 'passWORD123'
+			const minecraftUsername = `TestPlayer${timestamp}`
+			const displayName = `Test Player ${timestamp}`
+			const bio = 'This is a test bio for profile creation'
+
+			// Test the complete flow: registration → verification → profile creation
+			cy.completeProfileCreationFlow(tempEmail, password, minecraftUsername, displayName, bio)
+		})
+
+		it('creates profile with minimal required fields', () => {
+			const timestamp = Date.now()
+			const tempEmail = `minimalprofile${timestamp}@example.com`
+			const password = 'passWORD123'
+			const minecraftUsername = `MinimalPlayer${timestamp}`
+
+			// Test profile creation with only required fields (no bio, use Minecraft username as display name)
+			cy.completeProfileCreationFlow(tempEmail, password, minecraftUsername, '', '', true)
+		})
+	})
+
 	describe('Sign Up Flow', () => {
 		it('completes sign up flow with valid data', () => {
 			const timestamp = Date.now()
