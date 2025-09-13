@@ -4,7 +4,7 @@
 
 Implement a currency toggle system that allows users to switch between traditional money units and diamond-based currency. The diamond currency will use a conversion ratio to transform existing prices, making the price guide relevant for Minecraft servers that use diamond-based economies.
 
-**Status**: 🚧 **PLANNING** - Ready for implementation
+**Status**: ✅ **IMPLEMENTED** - Core functionality complete, but overengineered
 
 ---
 
@@ -29,6 +29,167 @@ Based on user examples, the conversion ratio is approximately **32:1**:
 | 64 Coal Ore (stack) | 640           | 18 diamonds   | 35.6:1 |
 
 **Recommended conversion ratio**: **32:1** (current units ÷ 32 = diamonds)
+
+---
+
+## 📋 Current Implementation Status
+
+### ✅ **What's Implemented**
+
+**Core Infrastructure (COMPLETE)**
+
+-   ✅ Currency toggle in settings (Money/Diamond)
+-   ✅ Configurable conversion ratio (32:1 default)
+-   ✅ localStorage persistence for currency settings
+-   ✅ Clean separation between money and diamond logic
+
+**Utility Functions (COMPLETE)**
+
+-   ✅ `convertToDiamondPrice()` and `convertToMoneyPrice()` for conversions
+-   ✅ `formatDiamondPrice()` with smart diamond block formatting (≥9 diamonds = blocks)
+-   ✅ Currency-aware pricing functions (`buyUnitPriceWithCurrency`, etc.)
+
+**UI Integration (COMPLETE)**
+
+-   ✅ Clean toggle interface in settings modal
+-   ✅ Automatic price updates when switching currencies
+-   ✅ Hides diamond items when using diamond currency (smart UX)
+
+**Price Display (COMPLETE)**
+
+-   ✅ `ItemTable.vue` updated to handle diamond formatting
+-   ✅ All price columns show correct currency
+-   ✅ Sorting works with diamond prices
+
+### ⚠️ **Overengineered Components**
+
+**Diamond Recipe System (OVERENGINEERED)**
+
+-   ❌ **Problem**: Created a separate pricing system for items with diamond in their recipes
+-   ❌ **Issue**: Two competing pricing systems (conversion vs recipe-based)
+-   ❌ **Complexity**: `findDiamondRecipeItems()` function with 140+ lines of complex logic
+-   ❌ **Inconsistency**: Same item gets different prices depending on which system is used
+
+**Redundant Functions (OVERENGINEERED)**
+
+-   ❌ **Problem**: Multiple similar formatting functions:
+    -   `formatDiamondRecipePrice()`
+    -   `formatDiamondRecipeStackPrice()`
+    -   `formatDiamondRecipeSellPrice()`
+    -   `formatDiamondRecipeSellStackPrice()`
+-   ❌ **Issue**: Could be consolidated into a single parameterized function
+
+**Complex Price Logic (OVERENGINEERED)**
+
+-   ❌ **Problem**: `getDisplayPrice()` function chooses between two pricing systems
+-   ❌ **Issue**: Creates confusion about which system is used for which items
+-   ❌ **Maintenance**: Two systems to maintain and debug
+
+### 🚫 **Missing Implementation (From Original Spec)**
+
+**Shop Management (NOT IMPLEMENTED)**
+
+-   ❌ `ShopItemTable.vue` has no diamond currency support
+-   ❌ `ShopItemForm.vue` has no diamond currency support
+-   ❌ No server/shop-level currency configuration
+
+**Data Model Extensions (NOT IMPLEMENTED)**
+
+-   ❌ No `currency_type` field in servers/shops collections
+-   ❌ No database-level currency support
+
+**Admin Tools (NOT IMPLEMENTED)**
+
+-   ❌ No diamond currency in `AddItemView.vue` or `EditItemView.vue`
+-   ❌ No migration tools
+
+---
+
+## 🔧 **Recommendations for Simplification**
+
+### **Remove Diamond Recipe System**
+
+The recipe-based pricing adds unnecessary complexity without clear user value. The simple 32:1 conversion ratio is:
+
+-   ✅ Easier to understand
+-   ✅ More predictable
+-   ✅ Easier to maintain
+-   ✅ Matches the original spec
+
+### **Consolidate Functions**
+
+Replace multiple `formatDiamondRecipe*` functions with a single parameterized function.
+
+### **Simplify Price Logic**
+
+Use one consistent pricing system (conversion-based) instead of two competing systems.
+
+### **Focus on Core Value**
+
+The basic currency toggle with conversion is the main value. The complex recipe system can be removed.
+
+---
+
+## 📊 **Implementation Comparison**
+
+### **Current Overengineered Approach**
+
+```javascript
+// Two competing pricing systems
+function getDisplayPrice(item) {
+	if (
+		currencyType.value === 'diamond' &&
+		diamondRecipePriceMap.value[item.material_id] !== undefined
+	) {
+		// Use recipe-based pricing (inconsistent)
+		return diamondRecipePriceMap.value[item.material_id]
+	}
+	// Use conversion-based pricing
+	return getItemEffectivePrice(item)
+}
+
+// Complex recipe calculation (140+ lines)
+function findDiamondRecipeItems(allItems, version) {
+	// ... complex logic to calculate recipe-based prices
+	// Diamond = 1, other ingredients converted to diamond equivalent
+}
+
+// Multiple redundant functions
+formatDiamondRecipePrice()
+formatDiamondRecipeStackPrice()
+formatDiamondRecipeSellPrice()
+formatDiamondRecipeSellStackPrice()
+```
+
+### **Recommended Simplified Approach**
+
+```javascript
+// Single consistent pricing system
+function getDisplayPrice(item) {
+	const moneyPrice = getEffectivePrice(item, version)
+	if (currencyType === 'diamond') {
+		return convertToDiamondPrice(moneyPrice, 32)
+	}
+	return moneyPrice
+}
+
+// Single parameterized function
+function formatPriceWithCurrency(price, currencyType, priceMultiplier, sellMargin, stack) {
+	const calculatedPrice = price * priceMultiplier * (sellMargin || 1) * (stack || 1)
+	if (currencyType === 'diamond') {
+		return formatDiamondPrice(calculatedPrice)
+	}
+	return formatCurrency(calculatedPrice)
+}
+```
+
+### **Benefits of Simplification**
+
+-   ✅ **Consistency**: All items use the same pricing logic
+-   ✅ **Predictability**: Users know exactly how prices are calculated
+-   ✅ **Maintainability**: One system to debug and maintain
+-   ✅ **Performance**: No complex recipe calculations
+-   ✅ **User Experience**: Simpler, more intuitive behavior
 
 ---
 
@@ -109,39 +270,41 @@ function getEffectivePriceInCurrency(
 
 #### Task 1.1: Extend Economy Configuration
 
--   [ ] **Update `src/views/HomeView.vue`**
-    -   Add `currencyType` ref (default: 'money')
-    -   Add `diamondConversionRatio` ref (default: 32)
-    -   Update `economyConfig` computed property
-    -   Add localStorage persistence for new fields
-    -   Update `resetEconomyConfig()` function
+-   [x] **Update `src/views/HomeView.vue`**
+    -   [x] Add `currencyType` ref (default: 'money')
+    -   [x] Add `diamondConversionRatio` ref (default: 32)
+    -   [x] Update `economyConfig` computed property
+    -   [x] Add localStorage persistence for new fields
+    -   [x] Update `resetEconomyConfig()` function
 
 #### Task 1.2: Create Diamond Currency Utilities
 
--   [ ] **Extend `src/utils/pricing.js`**
-    -   Add `convertToDiamondPrice()` function (money → diamonds)
-    -   Add `convertToMoneyPrice()` function (diamonds → money)
-    -   Add `formatDiamondPrice()` function (diamonds → diamonds or diamond blocks based on amount)
-    -   Add `getEffectivePriceInCurrency()` function
-    -   Update existing price functions to handle currency type
+-   [x] **Extend `src/utils/pricing.js`**
+    -   [x] Add `convertToDiamondPrice()` function (money → diamonds)
+    -   [x] Add `convertToMoneyPrice()` function (diamonds → money)
+    -   [x] Add `formatDiamondPrice()` function (diamonds → diamonds or diamond blocks based on amount)
+    -   [x] Add `getEffectivePriceInCurrency()` function
+    -   [x] Update existing price functions to handle currency type
+    -   [x] **OVERENGINEERED**: Added `findDiamondRecipeItems()` function (should be removed)
 
 #### Task 1.3: Add Currency Toggle UI
 
--   [ ] **Update economy settings in `src/views/HomeView.vue`**
-    -   Add currency type toggle (Money/Diamond)
-    -   Add diamond conversion ratio input (when in diamond mode)
-    -   Update styling to accommodate new controls
-    -   Add visual indicators for current currency mode
+-   [x] **Update economy settings in `src/views/HomeView.vue`**
+    -   [x] Add currency type toggle (Money/Diamond)
+    -   [x] Add diamond conversion ratio input (when in diamond mode)
+    -   [x] Update styling to accommodate new controls
+    -   [x] Add visual indicators for current currency mode
 
 ### Phase 2: Price Display Updates
 
 #### Task 2.1: Update Item Table Display
 
--   [ ] **Update `src/components/ItemTable.vue`**
-    -   Modify price display logic to use `getEffectivePriceInCurrency()`
-    -   Add diamond formatting for diamond currency mode (diamonds or diamond blocks)
--   Update sorting logic to handle diamond prices
-    -   Ensure all price columns show correct currency
+-   [x] **Update `src/components/ItemTable.vue`**
+    -   [x] Modify price display logic to use `getEffectivePriceInCurrency()`
+    -   [x] Add diamond formatting for diamond currency mode (diamonds or diamond blocks)
+    -   [x] Update sorting logic to handle diamond prices
+    -   [x] Ensure all price columns show correct currency
+    -   [x] **OVERENGINEERED**: Added complex `diamondRecipePriceMap` logic (should be simplified)
 
 #### Task 2.2: Update Shop Management
 
