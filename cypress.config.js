@@ -72,6 +72,35 @@ module.exports = defineConfig({
 						)
 						throw error
 					}
+				},
+				async generatePasswordResetCode(email) {
+					try {
+						console.log(`[cypress-task] Generating password reset code for: ${email}`)
+
+						const adminApp = initializeAdminForEmulator()
+
+						// Generate a password reset code using Firebase Admin SDK
+						const resetCode = await adminApp.auth().generatePasswordResetLink(email, {
+							url: 'http://localhost:5173/reset-password-confirm'
+						})
+
+						// Extract oobCode from the reset link
+						const url = new URL(resetCode)
+						const oobCode = url.searchParams.get('oobCode')
+
+						if (!oobCode) {
+							throw new Error('Failed to extract oobCode from reset link')
+						}
+
+						console.log(`[cypress-task] Generated oobCode for ${email}: ${oobCode}`)
+						return { success: true, oobCode, email }
+					} catch (error) {
+						console.error(
+							`[cypress-task] Failed to generate password reset code for ${email}:`,
+							error.message
+						)
+						throw error
+					}
 				}
 			})
 		}

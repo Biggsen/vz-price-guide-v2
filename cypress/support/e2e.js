@@ -342,6 +342,27 @@ Cypress.Commands.add('simulateEmailVerification', (email) => {
 	cy.location('pathname', { timeout: 10000 }).should('eq', '/account')
 })
 
+Cypress.Commands.add('confirmPasswordReset', (oobCode, newPassword, confirmPassword) => {
+	cy.log(`Confirming password reset with oobCode: ${oobCode}`)
+
+	cy.visit(`/reset-password-confirm?oobCode=${oobCode}`)
+	cy.waitForAuth()
+
+	cy.get('body', { timeout: 10000 }).then(($body) => {
+		const hasForm = $body.find('input[name="newPassword"]').length > 0
+		if (hasForm) {
+			cy.get('input[name="newPassword"]').type(newPassword)
+			cy.get('input[name="confirmPassword"]').type(confirmPassword)
+			cy.get('button[type="submit"]').click()
+			cy.log('Password reset confirmation form submitted successfully')
+		} else {
+			cy.log(
+				'Password reset confirmation form not present; assuming already on different page'
+			)
+		}
+	})
+})
+
 Cypress.Commands.add('changePassword', (currentPassword, newPassword, confirmPassword) => {
 	cy.log(`Changing password for current user...`)
 
@@ -359,6 +380,51 @@ Cypress.Commands.add('changePassword', (currentPassword, newPassword, confirmPas
 		} else {
 			cy.log('Password change form not present; assuming already on different page')
 		}
+	})
+})
+
+Cypress.Commands.add('generatePasswordResetCode', (email) => {
+	cy.log(`Generating password reset code for: ${email}`)
+
+	cy.task('generatePasswordResetCode', email).then((result) => {
+		cy.log(`Generated oobCode for ${email}: ${result.oobCode}`)
+		cy.wrap(result.oobCode).as('oobCode')
+	})
+})
+
+Cypress.Commands.add('completeForgotPasswordFlow', (email, originalPassword, newPassword) => {
+	cy.log(`Starting complete forgot password flow for: ${email}`)
+
+	// Step 1: Create and verify user account
+	cy.ensureSignedOut()
+	cy.signUp(email, originalPassword, originalPassword)
+	cy.location('pathname').should('eq', '/verify-email')
+	cy.simulateEmailVerification(email)
+
+	// Step 2: Sign out to test forgot password flow
+	cy.signOut()
+
+	// Step 3: Request password reset
+	cy.requestPasswordReset(email)
+	cy.contains('Password reset email sent! Check your inbox for instructions.').should(
+		'be.visible'
+	)
+
+	// Step 4: Generate valid oobCode for testing
+	cy.generatePasswordResetCode(email)
+
+	// Step 5: Complete password reset with new password
+	cy.get('@oobCode').then((oobCode) => {
+		cy.confirmPasswordReset(oobCode, newPassword, newPassword)
+
+		// Step 6: Verify success and redirect to sign in
+		cy.location('pathname').should('eq', '/signin')
+		cy.contains('Your password has been reset successfully!').should('be.visible')
+
+		// Step 7: Sign in with new password
+		cy.signIn(email, newPassword)
+		cy.location('pathname').should('eq', '/')
+		cy.log('Complete forgot password flow successful')
 	})
 })
 
