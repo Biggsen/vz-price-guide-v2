@@ -10,9 +10,16 @@ import {
 	FunnelIcon,
 	MagnifyingGlassIcon,
 	ArrowsPointingOutIcon,
-	ArrowsPointingInIcon
+	ArrowsPointingInIcon,
+	DocumentTextIcon,
+	CodeBracketIcon
 } from '@heroicons/vue/24/outline'
 import { HeartIcon as HeartSolid } from '@heroicons/vue/24/solid'
+import {
+	screenshotToViewMap,
+	getScreenshotMetadata,
+	getScreenshotsByType
+} from '../screenshot-metadata.js'
 
 // State management
 const screenshots = ref([])
@@ -23,7 +30,7 @@ const selectedScreenshot = ref(null)
 const isFullscreen = ref(false)
 const isLoading = ref(true)
 
-// Categories from the visual testing system
+// Enhanced categories with metadata integration
 const categories = {
 	all: 'All Screenshots',
 	favorites: '⭐ Favorites',
@@ -43,11 +50,11 @@ async function loadScreenshots() {
 		const response = await fetch('http://localhost:3001/api/screenshots')
 		if (response.ok) {
 			const apiScreenshots = await response.json()
-			screenshots.value = apiScreenshots
+			screenshots.value = enhanceScreenshotsWithMetadata(apiScreenshots)
 		} else {
 			// Fallback to mock data if API is not available
 			console.warn('Screenshot API not available, using mock data')
-			screenshots.value = getMockScreenshots()
+			screenshots.value = enhanceScreenshotsWithMetadata(getMockScreenshots())
 		}
 
 		// Load favorites from localStorage
@@ -60,9 +67,27 @@ async function loadScreenshots() {
 	} catch (error) {
 		console.error('Failed to load screenshots:', error)
 		// Fallback to mock data
-		screenshots.value = getMockScreenshots()
+		screenshots.value = enhanceScreenshotsWithMetadata(getMockScreenshots())
 		isLoading.value = false
 	}
+}
+
+// Enhance screenshots with metadata from the mapping
+function enhanceScreenshotsWithMetadata(screenshotList) {
+	return screenshotList.map((screenshot) => {
+		const metadata = getScreenshotMetadata(screenshot.id)
+		return {
+			...screenshot,
+			// Add metadata fields
+			viewFile: metadata?.viewFile || null,
+			route: metadata?.route || null,
+			type: metadata?.type || screenshot.category,
+			// Override description with metadata if available
+			description: metadata?.description || screenshot.description,
+			// Add viewport from metadata if available
+			viewport: metadata?.viewport || screenshot.viewport
+		}
+	})
 }
 
 // Fallback mock data
@@ -117,7 +142,7 @@ function getMockScreenshots() {
 			viewport: '1280x720'
 		},
 		{
-			id: 'settings-modal',
+			id: 'settings-modal-default',
 			name: 'Settings Modal',
 			category: 'modals',
 			path: '/visual-screenshots/modals/settings-modal-default.png',
@@ -125,7 +150,7 @@ function getMockScreenshots() {
 			viewport: '1280x720'
 		},
 		{
-			id: 'export-modal',
+			id: 'export-modal-default',
 			name: 'Export Modal',
 			category: 'modals',
 			path: '/visual-screenshots/modals/export-modal-default.png',
@@ -138,6 +163,30 @@ function getMockScreenshots() {
 			category: 'errors',
 			path: '/visual-screenshots/public-pages/404-default.png',
 			description: 'Page not found error page',
+			viewport: '1280x720'
+		},
+		{
+			id: 'account-default',
+			name: 'Account Page',
+			category: 'user-pages',
+			path: '/visual-screenshots/user-pages/account-default.png',
+			description: 'User account page with profile information',
+			viewport: '1280x720'
+		},
+		{
+			id: 'account-edit-profile',
+			name: 'Account - Edit Profile',
+			category: 'user-pages',
+			path: '/visual-screenshots/user-pages/account-edit-profile.png',
+			description: 'Account page in profile editing mode',
+			viewport: '1280x720'
+		},
+		{
+			id: 'account-unverified',
+			name: 'Account - Unverified User',
+			category: 'user-pages',
+			path: '/visual-screenshots/user-pages/account-unverified.png',
+			description: 'Account page for unverified user without profile',
 			viewport: '1280x720'
 		}
 	]
@@ -161,7 +210,9 @@ const filteredScreenshots = computed(() => {
 			(s) =>
 				s.name.toLowerCase().includes(query) ||
 				s.description.toLowerCase().includes(query) ||
-				s.category.toLowerCase().includes(query)
+				s.category.toLowerCase().includes(query) ||
+				(s.viewFile && s.viewFile.toLowerCase().includes(query)) ||
+				(s.route && s.route.toLowerCase().includes(query))
 		)
 	}
 
@@ -210,6 +261,20 @@ function navigateScreenshot(direction) {
 	}
 
 	selectedScreenshot.value = filteredScreenshots.value[newIndex]
+}
+
+// Helper function to get view file name from path
+function getViewFileName(viewFile) {
+	if (!viewFile) return null
+	return viewFile.split('/').pop()
+}
+
+// Helper function to open view file in editor (placeholder)
+function openViewFile(viewFile) {
+	// This would typically open the file in your editor
+	console.log('Opening view file:', viewFile)
+	// For now, just copy to clipboard
+	navigator.clipboard.writeText(viewFile)
 }
 
 // Keyboard navigation
@@ -283,7 +348,7 @@ onMounted(() => {
 							<input
 								v-model="searchQuery"
 								type="text"
-								placeholder="Search screenshots..."
+								placeholder="Search screenshots, components, or routes..."
 								class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus" />
 						</div>
 					</div>
@@ -366,6 +431,29 @@ onMounted(() => {
 						<p class="text-sm text-gray-600 mt-1 line-clamp-2">
 							{{ screenshot.description }}
 						</p>
+
+						<!-- View File Info -->
+						<div
+							v-if="screenshot.viewFile"
+							class="mt-2 flex items-center justify-between">
+							<div class="flex items-center space-x-1 text-xs text-gray-500">
+								<CodeBracketIcon class="h-3 w-3" />
+								<span class="truncate">
+									{{ getViewFileName(screenshot.viewFile) }}
+								</span>
+							</div>
+							<button
+								@click.stop="openViewFile(screenshot.viewFile)"
+								class="text-xs text-gray-asparagus hover:text-laurel transition-colors"
+								:title="`Open ${screenshot.viewFile}`">
+								<DocumentTextIcon class="h-3 w-3" />
+							</button>
+						</div>
+
+						<!-- Route Info -->
+						<div v-if="screenshot.route" class="mt-1 text-xs text-gray-400">
+							Route: {{ screenshot.route }}
+						</div>
 					</div>
 				</div>
 			</div>
@@ -399,6 +487,18 @@ onMounted(() => {
 						<p class="text-sm text-gray-600 mt-1">
 							{{ selectedScreenshot.description }}
 						</p>
+
+						<!-- View File Link in Modal -->
+						<div
+							v-if="selectedScreenshot.viewFile"
+							class="mt-2 flex items-center space-x-2">
+							<button
+								@click="openViewFile(selectedScreenshot.viewFile)"
+								class="flex items-center space-x-1 text-sm text-gray-asparagus hover:text-laurel transition-colors">
+								<CodeBracketIcon class="h-4 w-4" />
+								<span>{{ selectedScreenshot.viewFile }}</span>
+							</button>
+						</div>
 					</div>
 
 					<div class="flex items-center space-x-2 ml-4">
@@ -467,6 +567,9 @@ onMounted(() => {
 								categories[selectedScreenshot.category] ||
 								selectedScreenshot.category
 							}}
+						</span>
+						<span v-if="selectedScreenshot.route">
+							Route: {{ selectedScreenshot.route }}
 						</span>
 					</div>
 
