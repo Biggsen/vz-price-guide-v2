@@ -314,8 +314,8 @@ describe('Visual Screenshots - All Pages and States', () => {
 		})
 
 		it('should capture edit recipe page', () => {
-			// Visit edit recipe page with a sample recipe ID
-			cy.visit('/recipes/edit/sample-recipe-id')
+			// Visit edit recipe page with a real recipe ID and version
+			cy.visit('/edit-recipe/brush?version=1.20')
 			waitForPageReady()
 			takeScreenshot('edit-recipe', 'default')
 		})
