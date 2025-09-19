@@ -11,6 +11,7 @@ This directory contains organized screenshots from the visual regression test su
 - **modals/** - Modal dialogs and overlays
 - **responsive/** - Responsive breakpoints
 - **errors/** - Error pages and states
+- **misc/** - Miscellaneous screenshots
 
 ## How to Use
 

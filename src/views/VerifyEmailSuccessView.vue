@@ -97,7 +97,20 @@ function requestNewVerification() {
 }
 
 onMounted(() => {
-	handleEmailVerification()
+	// Check for forceState query parameter for screenshot testing
+	const forceState = route.query.forceState
+	if (forceState === 'success') {
+		isLoading.value = false
+		isSuccess.value = true
+		// Don't redirect when forcing success state for screenshots
+	} else if (forceState === 'error') {
+		isLoading.value = false
+		errorMessage.value =
+			'This verification link has expired or is invalid. Please request a new verification email.'
+	} else {
+		// Normal flow
+		handleEmailVerification()
+	}
 })
 </script>
 

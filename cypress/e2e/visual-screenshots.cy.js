@@ -103,18 +103,57 @@ describe('Visual Screenshots - All Pages and States', () => {
 
 	// Test authentication flow pages
 	describe('Authentication Flow', () => {
-		it('should capture verify email page', () => {
-			// Sign in as unverified user first
-			signInUser('unverified@example.com')
+		it('should capture verify email page - default state', () => {
+			// Sign in as regular user
+			signInUser('user@example.com')
 			cy.visit('/verify-email')
 			waitForPageReady()
+			// Wait a bit longer for the page to fully load
+			cy.wait(1000)
+			// Ensure we're on the right page and can see the main content
+			cy.url().should('include', '/verify-email')
+			cy.get('body').should('contain', 'Verify')
 			takeScreenshot('verify-email', 'default')
 		})
 
-		it('should capture verify email success page - error state', () => {
-			cy.visit('/verify-email-success')
+		it('should capture verify email page - success state', () => {
+			// Sign in as regular user and force success state
+			signInUser('user@example.com')
+			cy.visit('/verify-email?forceState=success')
 			waitForPageReady()
+			// Wait for the forced state to take effect
+			cy.wait(500)
+			// Ensure we're on the right page and success state is shown
+			cy.url().should('include', '/verify-email')
+			cy.url().should('include', 'forceState=success')
+			cy.get('body').should('contain', 'successfully')
+			takeScreenshot('verify-email', 'success')
+		})
+
+		it('should capture verify email success page - error state', () => {
+			cy.visit('/verify-email-success?forceState=error')
+			waitForPageReady()
+			// Wait for the forced state to take effect
+			cy.wait(500)
+			// Ensure we're on the right page and error state is shown
+			cy.url().should('include', '/verify-email-success')
+			cy.url().should('include', 'forceState=error')
+			cy.get('body').should('contain', 'Failed')
 			takeScreenshot('verify-email-success', 'error')
+		})
+
+		it('should capture verify email success page - success state', () => {
+			// Sign in as a user and force success state
+			signInUser('user@example.com')
+			cy.visit('/verify-email-success?forceState=success')
+			waitForPageReady()
+			// Wait for the forced state to take effect
+			cy.wait(500)
+			// Ensure we're on the right page and success state is shown
+			cy.url().should('include', '/verify-email-success')
+			cy.url().should('include', 'forceState=success')
+			cy.get('body').should('contain', 'Verified')
+			takeScreenshot('verify-email-success-page', 'success')
 		})
 
 		it('should capture reset password confirm page - form state', () => {
@@ -213,6 +252,13 @@ describe('Visual Screenshots - All Pages and States', () => {
 			takeScreenshot('add-item', 'default')
 		})
 
+		it('should capture edit item page', () => {
+			// Visit edit page with a sample item ID
+			cy.visit('/edit/sample-item-id')
+			waitForPageReady()
+			takeScreenshot('edit-item', 'default')
+		})
+
 		it('should capture missing items page', () => {
 			cy.visit('/missing-items')
 			waitForPageReady()
@@ -267,6 +313,13 @@ describe('Visual Screenshots - All Pages and States', () => {
 			takeScreenshot('recipes-recalculate', 'default')
 		})
 
+		it('should capture edit recipe page', () => {
+			// Visit edit recipe page with a sample recipe ID
+			cy.visit('/recipes/edit/sample-recipe-id')
+			waitForPageReady()
+			takeScreenshot('edit-recipe', 'default')
+		})
+
 		it('should capture suggestions admin page', () => {
 			cy.visit('/suggestions/all')
 			waitForPageReady()
@@ -282,7 +335,14 @@ describe('Visual Screenshots - All Pages and States', () => {
 
 	// Test restricted access page
 	describe('Access Control', () => {
+		beforeEach(() => {
+			// Sign in as regular user (not admin)
+			cy.ensureSignedOut()
+			signInUser('user@example.com')
+		})
+
 		it('should capture restricted access page', () => {
+			// Try to access admin page as regular user
 			cy.visit('/admin')
 			waitForPageReady()
 			takeScreenshot('restricted-access', 'default')

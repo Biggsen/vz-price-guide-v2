@@ -1,7 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useFirebaseAuth, useCurrentUser } from 'vuefire'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { sendEmailVerification } from '@firebase/auth'
 import { EnvelopeIcon } from '@heroicons/vue/24/outline'
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid'
@@ -9,11 +9,24 @@ import { CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid'
 const auth = useFirebaseAuth()
 const currentUser = useCurrentUser()
 const router = useRouter()
+const route = useRoute()
 
 // State management
 const isLoading = ref(false)
 const resendSuccess = ref(false)
 const resendError = ref('')
+
+// Check for forceState query parameter for screenshot testing
+onMounted(() => {
+	const forceState = route.query.forceState
+	if (forceState === 'success') {
+		resendSuccess.value = true
+	} else if (forceState === 'error') {
+		resendError.value = 'Failed to send verification email. Please try again.'
+	} else if (forceState === 'loading') {
+		isLoading.value = true
+	}
+})
 
 // Computed properties
 const buttonText = computed(() => {

@@ -99,11 +99,23 @@ export const screenshotToViewMap = {
 		type: 'auth',
 		description: 'Email verification prompt for unverified users'
 	},
+	'verify-email-success': {
+		viewFile: 'src/views/VerifyEmailView.vue',
+		route: '/verify-email',
+		type: 'auth',
+		description: 'Email verification page after successful resend'
+	},
 	'verify-email-success-error': {
 		viewFile: 'src/views/VerifyEmailSuccessView.vue',
 		route: '/verify-email-success',
 		type: 'auth',
 		description: 'Email verification error state'
+	},
+	'verify-email-success-page-success': {
+		viewFile: 'src/views/VerifyEmailSuccessView.vue',
+		route: '/verify-email-success',
+		type: 'auth',
+		description: 'Email verification success state with redirect'
 	},
 	'reset-password-confirm-form': {
 		viewFile: 'src/views/ResetPasswordConfirmView.vue',
@@ -169,6 +181,12 @@ export const screenshotToViewMap = {
 		type: 'admin',
 		description: 'Add new item form'
 	},
+	'edit-item-default': {
+		viewFile: 'src/views/EditItemView.vue',
+		route: '/edit/:id',
+		type: 'admin',
+		description: 'Edit existing item form'
+	},
 	'missing-items-default': {
 		viewFile: 'src/views/MissingItemsView.vue',
 		route: '/missing-items',
@@ -222,6 +240,12 @@ export const screenshotToViewMap = {
 		route: '/recipes/recalculate',
 		type: 'admin',
 		description: 'Recipe price recalculation interface'
+	},
+	'edit-recipe-default': {
+		viewFile: 'src/views/EditRecipeView.vue',
+		route: '/recipes/edit/:id',
+		type: 'admin',
+		description: 'Edit existing recipe form'
 	},
 	'suggestions-admin-default': {
 		viewFile: 'src/views/SuggestionsAdminView.vue',

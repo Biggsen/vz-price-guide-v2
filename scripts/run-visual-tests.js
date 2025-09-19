@@ -43,7 +43,8 @@ function organizeScreenshots() {
 		'admin-pages': 'Admin pages (admin auth required)',
 		modals: 'Modal dialogs and overlays',
 		responsive: 'Responsive breakpoints',
-		errors: 'Error pages and states'
+		errors: 'Error pages and states',
+		misc: 'Miscellaneous screenshots'
 	}
 
 	Object.keys(categories).forEach((category) => {
@@ -66,9 +67,6 @@ function organizeScreenshots() {
 		// Categorize screenshots based on filename
 		if (
 			screenshot.includes('home') ||
-			screenshot.includes('signin') ||
-			screenshot.includes('signup') ||
-			screenshot.includes('reset-password') ||
 			screenshot.includes('updates') ||
 			screenshot.includes('privacy-policy') ||
 			screenshot.includes('cookie-policy') ||
@@ -77,8 +75,15 @@ function organizeScreenshots() {
 		) {
 			category = 'public-pages'
 		} else if (
+			screenshot.includes('signin') ||
+			screenshot.includes('signup') ||
+			screenshot.includes('reset-password') ||
+			screenshot.includes('verify-email') ||
+			screenshot.includes('change-password')
+		) {
+			category = 'auth-pages'
+		} else if (
 			screenshot.includes('account') ||
-			screenshot.includes('change-password') ||
 			(screenshot.includes('suggestions') && !screenshot.includes('admin'))
 		) {
 			category = 'user-pages'
@@ -87,6 +92,7 @@ function organizeScreenshots() {
 			screenshot.includes('shop-manager') ||
 			screenshot.includes('add-item') ||
 			screenshot.includes('edit-item') ||
+			screenshot.includes('edit-recipe') ||
 			screenshot.includes('missing-items') ||
 			screenshot.includes('bulk-update') ||
 			screenshot.includes('servers') ||
@@ -110,12 +116,20 @@ function organizeScreenshots() {
 			screenshot.includes('desktop')
 		) {
 			category = 'responsive'
-		} else if (
-			screenshot.includes('error') ||
-			screenshot.includes('restricted') ||
-			screenshot.includes('404')
-		) {
+		} else if (screenshot.includes('restricted') || screenshot.includes('404')) {
 			category = 'errors'
+		} else if (screenshot.includes('error')) {
+			// Error states of auth pages should stay in auth-pages
+			if (
+				screenshot.includes('verify-email') ||
+				screenshot.includes('reset-password') ||
+				screenshot.includes('signin') ||
+				screenshot.includes('signup')
+			) {
+				category = 'auth-pages'
+			} else {
+				category = 'errors'
+			}
 		}
 
 		const sourcePath = path.join(SCREENSHOTS_DIR, screenshot)

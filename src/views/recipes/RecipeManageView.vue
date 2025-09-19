@@ -380,7 +380,8 @@ function highlightMatch(text) {
 												path: `/edit-recipe/${recipe.id}`,
 												query: { version: recipe.version }
 											}"
-											class="rounded bg-semantic-info px-3 py-1 text-sm text-white hover:bg-opacity-80 transition-colors">
+											class="rounded bg-semantic-info px-3 py-1 text-sm text-white hover:bg-opacity-80 transition-colors"
+											data-cy="edit-recipe-link">
 											Edit
 										</RouterLink>
 										<button
