@@ -147,6 +147,33 @@ describe('Visual Screenshots - All Pages and States', () => {
 			takeScreenshot('account', 'default')
 		})
 
+		it('should capture account page - edit profile state', () => {
+			cy.visit('/account')
+			waitForPageReady()
+			// Click edit profile button if it exists
+			cy.get('body').then(($body) => {
+				if (
+					$body.find('button:contains("Edit Profile"), [data-cy="edit-profile-button"]')
+						.length > 0
+				) {
+					cy.get(
+						'button:contains("Edit Profile"), [data-cy="edit-profile-button"]'
+					).click()
+					cy.wait(500) // Wait for edit mode to activate
+				}
+			})
+			takeScreenshot('account', 'edit-profile')
+		})
+
+		it('should capture account page - unverified user state', () => {
+			// Sign in as unverified user
+			cy.ensureSignedOut()
+			signInUser('unverified@example.com')
+			cy.visit('/account')
+			waitForPageReady()
+			takeScreenshot('account', 'unverified')
+		})
+
 		it('should capture change password page', () => {
 			cy.visit('/change-password')
 			waitForPageReady()
