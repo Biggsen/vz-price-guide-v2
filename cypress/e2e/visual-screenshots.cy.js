@@ -8,7 +8,7 @@ describe('Visual Screenshots - All Pages and States', () => {
 
 	beforeEach(() => {
 		cy.viewport(viewportWidth, viewportHeight)
-		cy.clearLocalStorage()
+		cy.ensureSignedOut()
 	})
 
 	// Helper function to take screenshots with consistent naming
@@ -136,7 +136,8 @@ describe('Visual Screenshots - All Pages and States', () => {
 	// Test authenticated user pages
 	describe('Authenticated User Pages', () => {
 		beforeEach(() => {
-			// Sign in as regular user
+			// Ensure we're signed out first, then sign in as regular user
+			cy.ensureSignedOut()
 			signInUser('user@example.com')
 		})
 
@@ -263,6 +264,11 @@ describe('Visual Screenshots - All Pages and States', () => {
 
 	// Test home page variations
 	describe('Home Page Variations', () => {
+		beforeEach(() => {
+			// Ensure we're signed out for public page captures
+			cy.ensureSignedOut()
+		})
+
 		it('should capture home page without alert', () => {
 			cy.visit('/')
 			// Dismiss the alert if it exists
@@ -304,6 +310,11 @@ describe('Visual Screenshots - All Pages and States', () => {
 
 	// Test responsive breakpoints
 	describe('Responsive Breakpoints', () => {
+		beforeEach(() => {
+			// Ensure we're signed out for public page captures
+			cy.ensureSignedOut()
+		})
+
 		it('should capture home page on mobile', () => {
 			cy.viewport(375, 667)
 			cy.visit('/')
@@ -329,6 +340,8 @@ describe('Visual Screenshots - All Pages and States', () => {
 	// Test modal states
 	describe('Modal States', () => {
 		beforeEach(() => {
+			// Ensure we're signed out for public page modal captures
+			cy.ensureSignedOut()
 			cy.visit('/')
 			waitForPageReady()
 			// Extra dismissal for modal tests since they're more sensitive
