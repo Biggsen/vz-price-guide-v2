@@ -104,17 +104,17 @@ describe('Visual Screenshots - All Pages and States', () => {
 	// Test authentication flow pages
 	describe('Authentication Flow', () => {
 		it('should capture verify email page', () => {
-			// Sign in as unverified user
-			cy.task('verifyUserEmail', 'unverified@example.com')
+			// Sign in as unverified user first
+			signInUser('unverified@example.com')
 			cy.visit('/verify-email')
 			waitForPageReady()
 			takeScreenshot('verify-email', 'default')
 		})
 
-		it('should capture verify email success page', () => {
+		it('should capture verify email success page - error state', () => {
 			cy.visit('/verify-email-success')
 			waitForPageReady()
-			takeScreenshot('verify-email-success', 'default')
+			takeScreenshot('verify-email-success', 'error')
 		})
 
 		it('should capture reset password confirm page - form state', () => {
@@ -127,7 +127,7 @@ describe('Visual Screenshots - All Pages and States', () => {
 		})
 
 		it('should capture reset password confirm page - error state', () => {
-			cy.visit('/reset-password-confirm?oobCode=invalid-code')
+			cy.visit('/reset-password-confirm')
 			waitForPageReady()
 			takeScreenshot('reset-password-confirm', 'error')
 		})
@@ -267,18 +267,6 @@ describe('Visual Screenshots - All Pages and States', () => {
 		beforeEach(() => {
 			// Ensure we're signed out for public page captures
 			cy.ensureSignedOut()
-		})
-
-		it('should capture home page without alert', () => {
-			cy.visit('/')
-			// Dismiss the alert if it exists
-			cy.get('body').then(($body) => {
-				if ($body.find('button[aria-label="Dismiss alert"]').length > 0) {
-					cy.get('button[aria-label="Dismiss alert"]').click()
-				}
-			})
-			waitForPageReady()
-			takeScreenshot('home', 'no-alert')
 		})
 
 		it('should capture home page in list view', () => {

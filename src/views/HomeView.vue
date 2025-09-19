@@ -606,7 +606,8 @@ watch(
 			<button
 				@click="dismissAlert"
 				class="text-gray-asparagus hover:text-heavy-metal ml-2 sm:ml-4 p-1"
-				aria-label="Dismiss alert">
+				aria-label="Dismiss alert"
+				data-cy="dismiss-alert">
 				<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
 					<path
 						fill-rule="evenodd"
