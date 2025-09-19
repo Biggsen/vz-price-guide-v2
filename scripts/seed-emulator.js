@@ -543,6 +543,44 @@ const TEST_DATA = {
 			status: 'open',
 			title: 'Add more building blocks',
 			body: 'Would be great to have more variety in building blocks for creative builds.'
+		},
+		{
+			id: 'test-suggestion-2',
+			userId: 'test-admin-1',
+			userDisplayName: 'Test Admin 1',
+			createdAt: nowIso(),
+			status: 'in-progress',
+			title: 'Improve recipe calculation',
+			body: 'The recipe calculation could be more accurate for complex items.'
+		},
+		{
+			id: 'test-suggestion-3',
+			userId: 'test-user-1',
+			userDisplayName: 'Test Player 1',
+			createdAt: nowIso(),
+			status: 'closed',
+			title: 'Add enchantment support',
+			body: 'It would be great to track prices for enchanted items separately.'
+		}
+	],
+	recipes: [
+		{
+			id: 'test-recipe-1',
+			item_id: 'oak_planks',
+			version: '1_16',
+			ingredients: [{ material_id: 'oak_log', quantity: 1 }],
+			output_count: 4,
+			created_at: nowIso(),
+			updated_at: nowIso()
+		},
+		{
+			id: 'test-recipe-2',
+			item_id: 'iron_block',
+			version: '1_16',
+			ingredients: [{ material_id: 'iron_ingot', quantity: 9 }],
+			output_count: 1,
+			created_at: nowIso(),
+			updated_at: nowIso()
 		}
 	]
 }
@@ -652,6 +690,13 @@ async function seedEmulator() {
 		for (const s of TEST_DATA.suggestions) {
 			await upsertDoc('suggestions', s.id, s)
 			console.log(`  ✓ ${s.title}`)
+		}
+
+		// Recipes
+		console.log('📋 Seeding recipes...')
+		for (const r of TEST_DATA.recipes) {
+			await upsertDoc('recipes', r.id, r)
+			console.log(`  ✓ ${r.item_id} recipe`)
 		}
 
 		console.log('🎉 Seeding complete!')

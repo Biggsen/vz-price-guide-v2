@@ -50,7 +50,7 @@ function setActiveMainNav(section) {
 </script>
 
 <template>
-	<div class="min-h-screen flex flex-col">
+	<div class="min-h-screen flex flex-col" data-cy="app-loaded">
 		<header>
 			<HeaderBanner />
 			<Nav :activeMainNav="activeMainNav" @setActiveMainNav="setActiveMainNav" />

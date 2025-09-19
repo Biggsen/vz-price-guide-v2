@@ -85,6 +85,29 @@ module.exports = defineConfig({
 						throw error
 					}
 				},
+				async signInUser(email, password = 'password123') {
+					try {
+						console.log(`[cypress-task] Signing in user: ${email}`)
+
+						const adminApp = initializeAdminForEmulator()
+
+						// Get user and verify email
+						const user = await adminApp.auth().getUserByEmail(email)
+						await adminApp.auth().updateUser(user.uid, { emailVerified: true })
+
+						// Create custom token for sign in
+						const customToken = await adminApp.auth().createCustomToken(user.uid)
+
+						console.log(`[cypress-task] Created custom token for user: ${email}`)
+						return { success: true, email, customToken }
+					} catch (error) {
+						console.error(
+							`[cypress-task] Failed to sign in user ${email}:`,
+							error.message
+						)
+						throw error
+					}
+				},
 				async generatePasswordResetCode(email) {
 					try {
 						console.log(`[cypress-task] Generating password reset code for: ${email}`)

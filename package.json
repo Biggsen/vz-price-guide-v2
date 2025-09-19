@@ -17,7 +17,9 @@
 		"seed:emu": "cross-env GCLOUD_PROJECT=demo-vz-price-guide FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 VITE_FIREBASE_EMULATORS=1 node scripts/seed-emulator.js",
 		"seed:emu:exec": "cross-env GCLOUD_PROJECT=demo-vz-price-guide VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth --project demo-vz-price-guide --import=./.emulator-data \"node scripts/seed-emulator.js\"",
 		"seed:emu:dry": "cross-env GCLOUD_PROJECT=demo-vz-price-guide FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 VITE_FIREBASE_EMULATORS=1 DRY_RUN=true node scripts/seed-emulator.js",
-		"test:e2e:emu:seeded": "cross-env GCLOUD_PROJECT=demo-vz-price-guide VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth --project demo-vz-price-guide --import=./.emulator-data \"node scripts/seed-emulator.js && node scripts/run-e2e.js\""
+		"test:e2e:emu:seeded": "cross-env GCLOUD_PROJECT=demo-vz-price-guide VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth --project demo-vz-price-guide --import=./.emulator-data \"node scripts/seed-emulator.js && node scripts/run-e2e.js\"",
+		"visual:tests": "cross-env GCLOUD_PROJECT=demo-vz-price-guide FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 VITE_FIREBASE_EMULATORS=1 node scripts/run-visual-tests.js",
+		"visual:serve": "node scripts/serve-screenshots.js"
 	},
 	"dependencies": {
 		"@heroicons/vue": "^2.2.0",
@@ -39,6 +41,7 @@
 		"cypress": "^14.5.4",
 		"eslint": "^8.49.0",
 		"eslint-plugin-vue": "^9.17.0",
+		"express": "^5.1.0",
 		"firebase-tools": "^14.12.0",
 		"postcss": "^8.4.31",
 		"prettier": "^3.0.3",

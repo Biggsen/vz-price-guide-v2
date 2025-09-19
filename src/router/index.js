@@ -301,6 +301,17 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/visual-gallery',
+			name: 'visual-gallery',
+			component: () => import('../views/VisualGalleryView.vue'),
+			meta: {
+				requiresAuth: false,
+				requiresVerification: false,
+				requiresAdmin: false,
+				title: "Visual Gallery - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/restricted',
 			name: 'RestrictedAccess',
 			component: () => import('../views/RestrictedAccessView.vue'),
