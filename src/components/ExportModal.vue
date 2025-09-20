@@ -7,6 +7,7 @@ import { useAdmin } from '../utils/admin.js'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { useRouter } from 'vue-router'
 import BaseModal from './BaseModal.vue'
+import BaseButton from './BaseButton.vue'
 
 const props = defineProps({
 	isOpen: {
@@ -321,10 +322,12 @@ function selectVersion(version) {
 
 			<!-- Action buttons -->
 			<div>
-				<button @click="goToVerifyEmail" class="inline-flex items-center btn-primary pl-3">
-					<CheckCircleIcon class="w-4 h-4 mr-1.5" />
+				<BaseButton @click="goToVerifyEmail" variant="primary">
+					<template #left-icon>
+						<CheckCircleIcon class="w-4 h-4 mr-1.5" />
+					</template>
 					Resend verification email
-				</button>
+				</BaseButton>
 				<div class="text-left pt-4">
 					<p class="text-sm text-gray-500">
 						Need to sign in with a different account?
@@ -445,13 +448,15 @@ function selectVersion(version) {
 				</div>
 				<div class="flex justify-center space-x-2 sm:space-x-3">
 					<button @click="closeModal" class="btn-secondary--outline">Cancel</button>
-					<button
+					<BaseButton
 						@click="exportJSON"
 						:disabled="Object.keys(exportData).length === 0"
-						class="inline-flex items-center btn-primary pl-3">
-						<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
-						<span>JSON</span>
-					</button>
+						variant="primary">
+						<template #left-icon>
+							<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
+						</template>
+						JSON
+					</BaseButton>
 					<button
 						@click="exportYAML"
 						:disabled="Object.keys(exportData).length === 0"

@@ -7,6 +7,7 @@ import { useRoute, useRouter } from 'vue-router'
 import ItemTable from '../components/ItemTable.vue'
 import ExportModal from '../components/ExportModal.vue'
 import SettingsModal from '../components/SettingsModal.vue'
+import BaseButton from '../components/BaseButton.vue'
 import { categories, enabledCategories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { getEffectivePrice } from '../utils/pricing.js'
@@ -700,17 +701,21 @@ watch(
 
 		<!-- Customisation Section -->
 		<div class="mb-4 flex items-center gap-4">
-			<button @click="openSettingsModal" class="inline-flex items-center btn-secondary pl-3">
-				<Cog6ToothIcon class="w-4 h-4 mr-1.5" />
+			<BaseButton @click="openSettingsModal" variant="secondary">
+				<template #left-icon>
+					<Cog6ToothIcon class="w-4 h-4 mr-1.5" />
+				</template>
 				Settings
-			</button>
-			<button
+			</BaseButton>
+			<BaseButton
 				v-if="showExportFeature || canEditItems"
 				@click="openExportModal"
-				class="inline-flex items-center btn-secondary pl-3">
-				<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
+				variant="secondary">
+				<template #left-icon>
+					<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
+				</template>
 				Export price list
-			</button>
+			</BaseButton>
 		</div>
 
 		<div class="mb-4 text-sm text-gray-asparagus font-medium">
