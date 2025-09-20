@@ -1,6 +1,13 @@
 <script setup>
 import { ref } from 'vue'
-import { ArrowDownIcon } from '@heroicons/vue/24/outline'
+import {
+	ArrowDownIcon,
+	ArrowDownTrayIcon,
+	CheckIcon,
+	Cog6ToothIcon,
+	XMarkIcon
+} from '@heroicons/vue/24/outline'
+import BaseButton from '@/components/BaseButton.vue'
 
 defineOptions({
 	name: 'StyleguideView'
@@ -439,31 +446,86 @@ function isSelected(index) {
 			<div class="space-y-8">
 				<!-- Primary Buttons -->
 				<div class="space-y-4">
-					<h3 class="text-lg font-semibold text-gray-800">Primary Buttons</h3>
-					<div class="flex flex-wrap gap-4">
-						<button
-							class="rounded-md bg-gray-asparagus px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-							Primary Button
-						</button>
-						<button
-							class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-							Primary Large
-						</button>
-						<button
-							class="rounded-md bg-gray-asparagus px-2 py-1 text-xs font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-							Primary Small
-						</button>
+					<h3 class="text-lg font-semibold text-gray-800">
+						Primary Buttons (BaseButton Component)
+					</h3>
+					<div class="space-y-4">
+						<!-- Regular Primary Button -->
+						<div>
+							<h4 class="text-md font-medium text-gray-700 mb-2">
+								Regular Primary Button
+							</h4>
+							<div class="flex flex-wrap gap-4">
+								<BaseButton variant="primary">Primary Button</BaseButton>
+							</div>
+						</div>
+
+						<!-- Primary Buttons with Icons -->
+						<div>
+							<h4 class="text-md font-medium text-gray-700 mb-2">
+								Primary Buttons with Icons
+							</h4>
+							<div class="flex flex-wrap gap-4">
+								<BaseButton variant="primary">
+									<template #left-icon>
+										<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
+									</template>
+									Download
+								</BaseButton>
+								<BaseButton variant="primary">
+									Continue
+									<template #right-icon>
+										<ArrowDownIcon class="w-4 h-4 ml-1.5" />
+									</template>
+								</BaseButton>
+							</div>
+						</div>
 					</div>
 				</div>
 
 				<!-- Secondary Buttons -->
 				<div class="space-y-4">
-					<h3 class="text-lg font-semibold text-gray-800">Secondary Buttons</h3>
+					<h3 class="text-lg font-semibold text-gray-800">
+						Secondary Buttons (BaseButton Component)
+					</h3>
+					<div class="space-y-4">
+						<!-- Regular Secondary Button -->
+						<div>
+							<h4 class="text-md font-medium text-gray-700 mb-2">
+								Regular Secondary Button
+							</h4>
+							<div class="flex flex-wrap gap-4">
+								<BaseButton variant="secondary">Secondary Button</BaseButton>
+							</div>
+						</div>
+
+						<!-- Secondary Buttons with Icons -->
+						<div>
+							<h4 class="text-md font-medium text-gray-700 mb-2">
+								Secondary Buttons with Icons
+							</h4>
+							<div class="flex flex-wrap gap-4">
+								<BaseButton variant="secondary">
+									<template #left-icon>
+										<Cog6ToothIcon class="w-4 h-4 mr-1.5" />
+									</template>
+									Settings
+								</BaseButton>
+								<BaseButton variant="secondary">
+									Cancel
+									<template #right-icon>
+										<XMarkIcon class="w-4 h-4 ml-1.5" />
+									</template>
+								</BaseButton>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Tertiary Buttons -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Tertiary Buttons</h3>
 					<div class="flex flex-wrap gap-4">
-						<button
-							class="rounded-md bg-norway text-heavy-metal border-2 border-gray-asparagus px-3 py-2 text-sm font-medium hover:bg-gray-100 transition">
-							Secondary Button
-						</button>
 						<button
 							class="rounded-md bg-white text-gray-700 border-2 border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 transition">
 							Outline Button
