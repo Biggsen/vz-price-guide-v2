@@ -524,16 +524,40 @@ function isSelected(index) {
 
 				<!-- Tertiary Buttons -->
 				<div class="space-y-4">
-					<h3 class="text-lg font-semibold text-gray-800">Tertiary Buttons</h3>
-					<div class="flex flex-wrap gap-4">
-						<button
-							class="rounded-md bg-white text-gray-700 border-2 border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 transition">
-							Outline Button
-						</button>
-						<button
-							class="rounded-md bg-gray-200 text-gray-800 px-3 py-2 text-sm font-medium hover:bg-gray-300 transition">
-							Gray Button
-						</button>
+					<h3 class="text-lg font-semibold text-gray-800">
+						Tertiary Buttons (BaseButton Component)
+					</h3>
+					<div class="space-y-4">
+						<!-- Regular Tertiary Button -->
+						<div>
+							<h4 class="text-md font-medium text-gray-700 mb-2">
+								Regular Tertiary Button
+							</h4>
+							<div class="flex flex-wrap gap-4">
+								<BaseButton variant="tertiary">Outline Button</BaseButton>
+							</div>
+						</div>
+
+						<!-- Tertiary Buttons with Icons -->
+						<div>
+							<h4 class="text-md font-medium text-gray-700 mb-2">
+								Tertiary Buttons with Icons
+							</h4>
+							<div class="flex flex-wrap gap-4">
+								<BaseButton variant="tertiary">
+									<template #left-icon>
+										<XMarkIcon />
+									</template>
+									Cancel
+								</BaseButton>
+								<BaseButton variant="tertiary">
+									Close
+									<template #right-icon>
+										<XMarkIcon />
+									</template>
+								</BaseButton>
+							</div>
+						</div>
 					</div>
 				</div>
 

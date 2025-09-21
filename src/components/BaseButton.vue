@@ -5,7 +5,7 @@ const props = defineProps({
 	variant: {
 		type: String,
 		default: 'primary',
-		validator: (value) => ['primary', 'secondary'].includes(value)
+		validator: (value) => ['primary', 'secondary', 'tertiary'].includes(value)
 	},
 	loading: {
 		type: Boolean,
@@ -38,6 +38,10 @@ const buttonClasses = computed(() => {
 		// Use py-1.5 to match btn-secondary exactly
 		const secondaryBaseClasses = baseClasses.replace('py-2', 'py-1.5')
 		return `${secondaryBaseClasses} ${paddingClass} bg-norway text-heavy-metal border-2 border-gray-asparagus hover:bg-gray-100`
+	} else if (props.variant === 'tertiary') {
+		// Use py-1.5 to match secondary height and outline styling for tertiary
+		const tertiaryBaseClasses = baseClasses.replace('py-2', 'py-1.5')
+		return `${tertiaryBaseClasses} ${paddingClass} bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50`
 	}
 
 	return `${baseClasses} ${paddingClass}`
