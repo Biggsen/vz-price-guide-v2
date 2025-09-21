@@ -43,12 +43,9 @@
 					:disabled="!isVerified"></textarea>
 			</div>
 			<div v-if="error" class="text-red-600 text-sm">{{ error }}</div>
-			<button
-				type="submit"
-				:disabled="loading || !isVerified"
-				class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80">
+			<BaseButton type="submit" variant="primary" :disabled="loading || !isVerified">
 				Submit Suggestion
-			</button>
+			</BaseButton>
 		</form>
 		<div v-if="isVerified">
 			<h2 class="text-lg font-semibold mb-4">Previous Suggestions</h2>
@@ -86,11 +83,11 @@
 						</form>
 					</template>
 					<template v-else>
-						<div class="font-bold text-gray-900 mb-2">{{ s.title }}</div>
+						<div class="text-lg font-bold text-gray-900 mb-2">{{ s.title }}</div>
 						<div class="text-gray-700 mb-2 whitespace-pre-line">{{ s.body }}</div>
 						<button
 							v-if="editingId !== s.id && s.status === 'open'"
-							class="bg-semantic-info text-white rounded px-3 py-1 text-sm shadow-sm focus:outline-none inline-flex items-center mb-2 hover:bg-opacity-80"
+							class="text-sm text-gray-700 hover:text-gray-900 underline inline-flex items-center mb-2"
 							@click="startEdit(s)">
 							<PencilSquareIcon class="w-4 h-4 mr-1" />
 							Edit
@@ -114,6 +111,12 @@
 								<EyeIcon class="w-4 h-4 mr-1 align-middle -mt-0.5" />
 								{{ statusLabel(s.status) }}
 							</span>
+							<span
+								v-else-if="s.status === 'closed'"
+								class="inline-flex items-center">
+								<CheckIcon class="w-4 h-4 mr-1 align-middle -mt-0.5" />
+								{{ statusLabel(s.status) }}
+							</span>
 							<span v-else>{{ statusLabel(s.status) }}</span>
 						</div>
 						<div class="flex items-center justify-between mt-4">
@@ -134,7 +137,7 @@
 								<template v-else>
 									<button
 										@click="deleteConfirmId = s.id"
-										class="bg-semantic-warning text-white rounded px-3 py-1 text-sm shadow-sm focus:outline-none inline-flex items-center hover:bg-opacity-80">
+										class="text-sm text-gray-700 hover:text-gray-900 underline inline-flex items-center">
 										<TrashIcon class="w-4 h-4 mr-1" />
 										Delete
 									</button>
@@ -167,8 +170,9 @@ import { useFirebaseAuth } from 'vuefire'
 import { useUserProfile } from '../utils/userProfile.js'
 import { InboxIcon } from '@heroicons/vue/20/solid'
 import { EyeIcon } from '@heroicons/vue/24/outline'
-import { TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
+import { TrashIcon, PencilSquareIcon, CheckIcon } from '@heroicons/vue/20/solid'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import BaseButton from '@/components/BaseButton.vue'
 
 const auth = useFirebaseAuth()
 const db = getFirestore()
