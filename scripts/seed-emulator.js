@@ -539,7 +539,7 @@ const TEST_DATA = {
 			id: 'test-suggestion-1',
 			userId: 'test-user-1',
 			userDisplayName: 'Test Player 1',
-			createdAt: nowIso(),
+			createdAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 86400000 * 3)), // 3 days ago
 			status: 'open',
 			title: 'Add more building blocks',
 			body: 'Would be great to have more variety in building blocks for creative builds.'
@@ -548,7 +548,7 @@ const TEST_DATA = {
 			id: 'test-suggestion-2',
 			userId: 'test-admin-1',
 			userDisplayName: 'Test Admin 1',
-			createdAt: nowIso(),
+			createdAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 86400000 * 2)), // 2 days ago
 			status: 'in-progress',
 			title: 'Improve recipe calculation',
 			body: 'The recipe calculation could be more accurate for complex items.'
@@ -557,10 +557,10 @@ const TEST_DATA = {
 			id: 'test-suggestion-3',
 			userId: 'test-user-1',
 			userDisplayName: 'Test Player 1',
-			createdAt: nowIso(),
+			createdAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 86400000 * 1)), // 1 day ago
 			status: 'closed',
 			title: 'Add enchantment support',
-			body: 'It would be great to track prices for enchanted items separately.'
+			body: 'It would be great to track prices for enchanted items separately. Yes.'
 		}
 	],
 	recipes: [
