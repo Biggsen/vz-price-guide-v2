@@ -632,12 +632,13 @@ watch(
 				</p>
 			</div>
 			<div class="flex gap-2 sm:gap-0 sm:ml-2">
-				<button
+				<BaseButton
 					@click="resetCategories"
-					class="bg-laurel text-white border-2 border-gray-asparagus rounded px-3 py-2 transition flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2 h-10 flex items-center justify-center gap-1">
-					<ArrowPathIcon class="w-4 h-4" />
+					variant="tertiary"
+					class="flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2 h-10">
+					<ArrowPathIcon class="w-4 h-4 sm:mr-1.5" />
 					<span class="hidden sm:inline">Reset</span>
-				</button>
+				</BaseButton>
 			</div>
 		</div>
 
