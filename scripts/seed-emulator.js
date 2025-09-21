@@ -146,8 +146,11 @@ async function upsertDoc(collectionName, docId, data) {
 	await db.collection(collectionName).doc(docId).set(data, { merge: true })
 }
 
+// Generate a fixed timestamp for consistent test data
+const FIXED_TIMESTAMP = new Date('2025-09-19T10:30:00.000Z').toISOString()
+
 function nowIso() {
-	return new Date().toISOString()
+	return FIXED_TIMESTAMP
 }
 
 const TEST_DATA = {
