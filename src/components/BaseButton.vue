@@ -57,7 +57,9 @@ function handleClick(event) {
 <template>
 	<button :type="type" :class="buttonClasses" :disabled="isDisabled" @click="handleClick">
 		<!-- Left Icon Slot -->
-		<slot name="left-icon" />
+		<div class="left-icon">
+			<slot name="left-icon" />
+		</div>
 
 		<!-- Loading Spinner -->
 		<svg
@@ -83,6 +85,25 @@ function handleClick(event) {
 		<slot />
 
 		<!-- Right Icon Slot -->
-		<slot name="right-icon" />
+		<div class="right-icon">
+			<slot name="right-icon" />
+		</div>
 	</button>
 </template>
+
+<style scoped>
+/* Apply consistent icon styling to SVG elements in slots */
+:deep(svg) {
+	@apply w-4 h-4;
+}
+
+/* Left icon spacing - target SVG elements that are direct children of left-icon slot */
+:deep(.left-icon svg) {
+	@apply mr-1.5;
+}
+
+/* Right icon spacing - target SVG elements that are direct children of right-icon slot */
+:deep(.right-icon svg) {
+	@apply ml-1.5;
+}
+</style>

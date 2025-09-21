@@ -468,14 +468,14 @@ function isSelected(index) {
 							<div class="flex flex-wrap gap-4">
 								<BaseButton variant="primary">
 									<template #left-icon>
-										<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
+										<ArrowDownTrayIcon />
 									</template>
 									Download
 								</BaseButton>
 								<BaseButton variant="primary">
 									Continue
 									<template #right-icon>
-										<ArrowDownIcon class="w-4 h-4 ml-1.5" />
+										<ArrowDownIcon />
 									</template>
 								</BaseButton>
 							</div>
@@ -507,14 +507,14 @@ function isSelected(index) {
 							<div class="flex flex-wrap gap-4">
 								<BaseButton variant="secondary">
 									<template #left-icon>
-										<Cog6ToothIcon class="w-4 h-4 mr-1.5" />
+										<Cog6ToothIcon />
 									</template>
 									Settings
 								</BaseButton>
 								<BaseButton variant="secondary">
 									Cancel
 									<template #right-icon>
-										<XMarkIcon class="w-4 h-4 ml-1.5" />
+										<XMarkIcon />
 									</template>
 								</BaseButton>
 							</div>

@@ -703,7 +703,7 @@ watch(
 		<div class="mb-4 flex items-center gap-4">
 			<BaseButton @click="openSettingsModal" variant="secondary">
 				<template #left-icon>
-					<Cog6ToothIcon class="w-4 h-4 mr-1.5" />
+					<Cog6ToothIcon />
 				</template>
 				Settings
 			</BaseButton>
@@ -712,7 +712,7 @@ watch(
 				@click="openExportModal"
 				variant="secondary">
 				<template #left-icon>
-					<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
+					<ArrowDownTrayIcon />
 				</template>
 				Export price list
 			</BaseButton>

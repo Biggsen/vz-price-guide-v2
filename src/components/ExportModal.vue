@@ -295,7 +295,7 @@ function selectVersion(version) {
 			<div>
 				<BaseButton @click="goToSignUp" variant="primary">
 					<template #left-icon>
-						<UserIcon class="w-4 h-4 mr-1.5" />
+						<UserIcon />
 					</template>
 					Create Account
 				</BaseButton>
@@ -326,7 +326,7 @@ function selectVersion(version) {
 			<div>
 				<BaseButton @click="goToVerifyEmail" variant="primary">
 					<template #left-icon>
-						<CheckCircleIcon class="w-4 h-4 mr-1.5" />
+						<CheckCircleIcon />
 					</template>
 					Resend verification email
 				</BaseButton>
@@ -455,7 +455,7 @@ function selectVersion(version) {
 						:disabled="Object.keys(exportData).length === 0"
 						variant="primary">
 						<template #left-icon>
-							<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
+							<ArrowDownTrayIcon />
 						</template>
 						JSON
 					</BaseButton>
@@ -464,7 +464,7 @@ function selectVersion(version) {
 						:disabled="Object.keys(exportData).length === 0"
 						variant="primary">
 						<template #left-icon>
-							<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
+							<ArrowDownTrayIcon />
 						</template>
 						YAML
 					</BaseButton>
