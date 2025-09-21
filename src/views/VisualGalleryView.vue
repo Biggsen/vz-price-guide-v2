@@ -29,6 +29,8 @@ const searchQuery = ref('')
 const selectedScreenshot = ref(null)
 const isFullscreen = ref(false)
 const isLoading = ref(true)
+const apiAvailable = ref(false)
+const apiStatus = ref('checking') // 'checking', 'available', 'unavailable'
 
 // Enhanced categories with metadata integration
 const categories = {
@@ -45,31 +47,43 @@ const categories = {
 
 // Load screenshots from the API
 async function loadScreenshots() {
+	apiStatus.value = 'checking'
+	isLoading.value = true
+
 	try {
-		// Try to load from the screenshot server API
-		const response = await fetch('http://localhost:3001/api/screenshots')
+		// Try to load from the screenshot server API with timeout
+		const controller = new AbortController()
+		const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
+
+		const response = await fetch('http://localhost:3001/api/screenshots', {
+			signal: controller.signal
+		})
+
+		clearTimeout(timeoutId)
+
 		if (response.ok) {
 			const apiScreenshots = await response.json()
 			screenshots.value = enhanceScreenshotsWithMetadata(apiScreenshots)
+			apiAvailable.value = true
+			apiStatus.value = 'available'
 		} else {
-			// Fallback to mock data if API is not available
-			console.warn('Screenshot API not available, using mock data')
-			screenshots.value = enhanceScreenshotsWithMetadata(getMockScreenshots())
+			throw new Error(`API returned ${response.status}`)
 		}
-
-		// Load favorites from localStorage
-		const savedFavorites = localStorage.getItem('visual-gallery-favorites')
-		if (savedFavorites) {
-			favorites.value = new Set(JSON.parse(savedFavorites))
-		}
-
-		isLoading.value = false
 	} catch (error) {
-		console.error('Failed to load screenshots:', error)
-		// Fallback to mock data
+		console.warn('Screenshot API not available, using mock data:', error.message)
+		// Fallback to mock data if API is not available
 		screenshots.value = enhanceScreenshotsWithMetadata(getMockScreenshots())
-		isLoading.value = false
+		apiAvailable.value = false
+		apiStatus.value = 'unavailable'
 	}
+
+	// Load favorites from localStorage
+	const savedFavorites = localStorage.getItem('visual-gallery-favorites')
+	if (savedFavorites) {
+		favorites.value = new Set(JSON.parse(savedFavorites))
+	}
+
+	isLoading.value = false
 }
 
 // Enhance screenshots with metadata from the mapping
@@ -277,6 +291,11 @@ function openViewFile(viewFile) {
 	navigator.clipboard.writeText(viewFile)
 }
 
+// Retry API connection
+function retryApiConnection() {
+	loadScreenshots()
+}
+
 // Keyboard navigation
 function handleKeydown(event) {
 	if (!selectedScreenshot.value) return
@@ -313,7 +332,20 @@ onMounted(() => {
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 				<div class="flex items-center justify-between">
 					<div>
-						<h1 class="text-3xl font-bold text-gray-900">Visual Gallery</h1>
+						<div class="flex items-center space-x-3">
+							<h1 class="text-3xl font-bold text-gray-900">Visual Gallery</h1>
+							<!-- API Status Indicator -->
+							<div v-if="!isLoading" class="flex items-center space-x-1">
+								<div
+									:class="[
+										'w-2 h-2 rounded-full',
+										apiAvailable ? 'bg-green-500' : 'bg-yellow-500'
+									]"></div>
+								<span class="text-xs text-gray-500">
+									{{ apiAvailable ? 'Live API' : 'Mock Data' }}
+								</span>
+							</div>
+						</div>
 						<p class="text-gray-600 mt-1">Browse and compare application screenshots</p>
 					</div>
 
@@ -367,9 +399,55 @@ onMounted(() => {
 			</div>
 		</div>
 
+		<!-- API Status Banner -->
+		<div
+			v-if="!isLoading && !apiAvailable"
+			class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex items-center justify-between">
+					<div class="flex">
+						<div class="flex-shrink-0">
+							<svg
+								class="h-5 w-5 text-yellow-400"
+								viewBox="0 0 20 20"
+								fill="currentColor">
+								<path
+									fill-rule="evenodd"
+									d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+									clip-rule="evenodd" />
+							</svg>
+						</div>
+						<div class="ml-3">
+							<p class="text-sm text-yellow-700">
+								<strong>Screenshot API Server Not Running</strong>
+								- Showing limited mock data. To see all screenshots, start the
+								server with:
+								<code class="bg-yellow-100 px-2 py-1 rounded text-xs font-mono">
+									node scripts/serve-screenshots.js
+								</code>
+							</p>
+						</div>
+					</div>
+					<button
+						@click="retryApiConnection"
+						:disabled="isLoading"
+						class="ml-4 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 hover:bg-yellow-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors">
+						{{ isLoading ? 'Retrying...' : 'Retry Connection' }}
+					</button>
+				</div>
+			</div>
+		</div>
+
 		<!-- Loading State -->
 		<div v-if="isLoading" class="flex items-center justify-center py-12">
-			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-asparagus"></div>
+			<div class="flex flex-col items-center">
+				<div
+					class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-asparagus mb-4"></div>
+				<p class="text-gray-600">
+					<span v-if="apiStatus === 'checking'">Checking screenshot server...</span>
+					<span v-else>Loading screenshots...</span>
+				</p>
+			</div>
 		</div>
 
 		<!-- Screenshots Grid -->
