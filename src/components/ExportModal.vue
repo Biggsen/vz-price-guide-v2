@@ -293,10 +293,12 @@ function selectVersion(version) {
 
 			<!-- Action buttons -->
 			<div>
-				<button @click="goToSignUp" class="inline-flex items-center btn-primary pl-3">
-					<UserIcon class="w-4 h-4 mr-1.5" />
+				<BaseButton @click="goToSignUp" variant="primary">
+					<template #left-icon>
+						<UserIcon class="w-4 h-4 mr-1.5" />
+					</template>
 					Create Account
-				</button>
+				</BaseButton>
 				<div class="text-left pt-4">
 					<p class="text-sm text-gray-500">
 						Already have an account?
@@ -457,13 +459,15 @@ function selectVersion(version) {
 						</template>
 						JSON
 					</BaseButton>
-					<button
+					<BaseButton
 						@click="exportYAML"
 						:disabled="Object.keys(exportData).length === 0"
-						class="inline-flex items-center btn-primary pl-3">
-						<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
-						<span>YAML</span>
-					</button>
+						variant="primary">
+						<template #left-icon>
+							<ArrowDownTrayIcon class="w-4 h-4 mr-1.5" />
+						</template>
+						YAML
+					</BaseButton>
 				</div>
 			</div>
 			<div

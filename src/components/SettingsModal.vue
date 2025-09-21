@@ -4,6 +4,7 @@ import { useAdmin } from '../utils/admin.js'
 import { versions } from '../constants.js'
 import { useRoute } from 'vue-router'
 import BaseModal from './BaseModal.vue'
+import BaseButton from './BaseButton.vue'
 
 defineProps({
 	isOpen: {
@@ -260,7 +261,7 @@ defineExpose({
 				class="flex items-center justify-end p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
 				<div class="flex space-x-3">
 					<button @click="closeModal" class="btn-secondary--outline">Cancel</button>
-					<button @click="handleClose" class="btn-primary">Save Settings</button>
+					<BaseButton @click="handleClose" variant="primary">Save Settings</BaseButton>
 				</div>
 			</div>
 		</template>
