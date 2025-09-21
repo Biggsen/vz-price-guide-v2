@@ -10,17 +10,20 @@
 		</div>
 		<!-- Action Buttons -->
 		<div class="flex gap-4">
-			<RouterLink
-				to="/"
-				class="inline-flex items-center justify-center rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-				<HomeIcon class="w-5 h-5 mr-2" />
+			<BaseButton @click="() => router.push('/')" variant="primary">
+				<template #left-icon>
+					<HomeIcon />
+				</template>
 				Homepage
-			</RouterLink>
+			</BaseButton>
 		</div>
 	</div>
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { LockClosedIcon, HomeIcon, ArrowLeftIcon } from '@heroicons/vue/24/solid'
+import BaseButton from '@/components/BaseButton.vue'
+
+const router = useRouter()
 </script>

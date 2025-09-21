@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useFirebaseAuth, useCurrentUser } from 'vuefire'
 import { applyActionCode } from '@firebase/auth'
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid'
+import BaseButton from '@/components/BaseButton.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -155,14 +156,12 @@ onMounted(() => {
 			</div>
 			<!-- Action Buttons -->
 			<div v-else class="flex flex-col items-start gap-3 mb-4">
-				<button
-					@click="() => router.push('/account')"
-					class="inline-flex items-center justify-center rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
+				<BaseButton @click="() => router.push('/account')" variant="primary">
 					Go to Your Account
-				</button>
+				</BaseButton>
 				<button
 					@click="goToHome"
-					class="inline-flex items-center justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
+					class="text-sm text-gray-700 hover:text-gray-900 underline">
 					Go to Homepage
 				</button>
 			</div>
@@ -176,14 +175,12 @@ onMounted(() => {
 			<p class="text-gray-600 mb-6">{{ errorMessage }}</p>
 			<!-- Action Buttons -->
 			<div class="flex flex-col items-start gap-3 mb-4">
-				<button
-					@click="requestNewVerification"
-					class="inline-flex items-center justify-center rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
+				<BaseButton @click="requestNewVerification" variant="primary">
 					Request New Verification Email
-				</button>
+				</BaseButton>
 				<button
 					@click="goToSignIn"
-					class="inline-flex items-center justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
+					class="text-sm text-gray-700 hover:text-gray-900 underline">
 					Go to Sign In
 				</button>
 			</div>

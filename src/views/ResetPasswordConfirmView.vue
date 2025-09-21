@@ -5,6 +5,7 @@ import { useFirebaseAuth } from 'vuefire'
 import { confirmPasswordReset } from '@firebase/auth'
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
+import BaseButton from '@/components/BaseButton.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -172,11 +173,9 @@ onMounted(() => {
 
 			<!-- Action Buttons -->
 			<div v-else class="flex flex-col items-start gap-3 mb-4">
-				<button
-					@click="goToSignIn"
-					class="inline-flex items-center justify-center rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
+				<BaseButton @click="goToSignIn" variant="primary">
 					Sign In with New Password
-				</button>
+				</BaseButton>
 			</div>
 		</div>
 
@@ -190,17 +189,16 @@ onMounted(() => {
 
 			<!-- Action Buttons -->
 			<div class="flex flex-col items-start gap-3 mb-4">
-				<button
-					@click="goToResetPassword"
-					class="inline-flex items-center justify-center rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
+				<BaseButton @click="goToResetPassword" variant="primary">
 					Request New Reset Link
-				</button>
+				</BaseButton>
 
-				<button
-					@click="goToSignIn"
-					class="inline-flex items-center justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
-					Go to Sign In
-				</button>
+				<p class="text-sm text-gray-500">
+					Remember your password?
+					<RouterLink to="/signin" class="text-gray-700 hover:text-opacity-80">
+						<span class="underline">Go to Sign In</span>
+					</RouterLink>
+				</p>
 			</div>
 		</div>
 
@@ -318,33 +316,9 @@ onMounted(() => {
 					</div>
 					<!-- Submit Button -->
 					<div class="pt-2">
-						<button
-							type="submit"
-							class="inline-flex items-center justify-center rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors duration-200">
-							<span
-								v-if="isProcessing"
-								class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									fill="none"
-									viewBox="0 0 24 24">
-									<circle
-										class="opacity-25"
-										cx="12"
-										cy="12"
-										r="10"
-										stroke="currentColor"
-										stroke-width="4"></circle>
-									<path
-										class="opacity-75"
-										fill="currentColor"
-										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-								</svg>
-							</span>
-							<span>
-								{{ isProcessing ? 'Resetting Password...' : 'Reset Password' }}
-							</span>
-						</button>
+						<BaseButton type="submit" variant="primary" :loading="isProcessing">
+							{{ buttonText }}
+						</BaseButton>
 					</div>
 					<!-- Back to Sign In Link -->
 					<div class="pt-4">

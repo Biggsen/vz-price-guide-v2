@@ -449,7 +449,7 @@ function selectVersion(version) {
 					{{ filteredItems.length }} items will be exported
 				</div>
 				<div class="flex justify-center space-x-2 sm:space-x-3">
-					<button @click="closeModal" class="btn-secondary--outline">Cancel</button>
+					<BaseButton @click="closeModal" variant="tertiary">Cancel</BaseButton>
 					<BaseButton
 						@click="exportJSON"
 						:disabled="Object.keys(exportData).length === 0"
@@ -473,7 +473,7 @@ function selectVersion(version) {
 			<div
 				v-else
 				class="flex justify-center p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-				<button @click="closeModal" class="btn-secondary--outline">Close</button>
+				<BaseButton @click="closeModal" variant="tertiary">Close</BaseButton>
 			</div>
 		</template>
 	</BaseModal>

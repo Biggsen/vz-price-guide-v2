@@ -12,6 +12,7 @@ import {
 	isMinecraftUsernameTaken
 } from '../utils/userProfile.js'
 import { CheckCircleIcon, XMarkIcon } from '@heroicons/vue/24/solid'
+import BaseButton from '@/components/BaseButton.vue'
 
 const { user, isAdmin } = useAdmin()
 const auth = useFirebaseAuth()
@@ -353,18 +354,12 @@ function signOutOfFirebase() {
 							class="block w-full md:w-80 rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus min-h-[120px]" />
 					</div>
 					<div class="flex space-x-3">
-						<button
-							type="submit"
-							data-cy="profile-submit"
-							class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+						<BaseButton type="submit" variant="primary" data-cy="profile-submit">
 							{{ profileFormMode === 'edit' ? 'Save Changes' : 'Create Profile' }}
-						</button>
-						<button
-							type="button"
-							@click="cancelProfileForm"
-							class="rounded-md bg-gray-200 text-gray-800 px-4 py-2 text-sm font-medium hover:bg-gray-300 transition">
+						</BaseButton>
+						<BaseButton type="button" @click="cancelProfileForm" variant="tertiary">
 							Cancel
-						</button>
+						</BaseButton>
 					</div>
 				</form>
 
@@ -402,12 +397,13 @@ function signOutOfFirebase() {
 							{{ userProfile?.bio ? userProfile.bio : 'No bio' }}
 						</p>
 					</div>
-					<button
+					<BaseButton
 						@click="editingProfile = true"
 						:disabled="editingProfile"
-						class="rounded-md bg-semantic-info px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mt-4">
+						variant="secondary"
+						class="mt-4">
 						Edit Profile
-					</button>
+					</BaseButton>
 				</div>
 
 				<!-- No profile yet (verified) -->
@@ -429,19 +425,21 @@ function signOutOfFirebase() {
 					Account Actions
 				</h2>
 				<div class="flex space-x-3">
-					<RouterLink
+					<BaseButton
 						v-if="isVerified"
-						to="/change-password"
-						class="rounded-md bg-semantic-info px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+						@click="() => router.push('/change-password')"
+						variant="secondary">
 						Change Password
-					</RouterLink>
-					<button
+					</BaseButton>
+					<BaseButton
 						data-cy="sign-out-button"
 						@click="signOutOfFirebase"
-						class="rounded-md bg-semantic-danger px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 flex items-center">
-						<ArrowLeftStartOnRectangleIcon class="w-4 h-4 inline mr-1" />
+						variant="tertiary">
+						<template #left-icon>
+							<ArrowLeftStartOnRectangleIcon />
+						</template>
 						Sign Out
-					</button>
+					</BaseButton>
 				</div>
 			</div>
 		</div>
