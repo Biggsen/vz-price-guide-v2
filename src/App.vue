@@ -16,22 +16,28 @@ const activeMainNav = ref(null)
 
 // Determine active main nav based on current route
 function updateActiveMainNav() {
-	const adminRoutes = ['/admin', '/missing-items', '/add', '/bulk-update', '/styleguide']
-	const shopManagerRoutes = [
+	// All admin-related routes now fall under the 'admin' main nav
+	const adminRoutes = [
+		'/admin',
+		'/missing-items',
+		'/add',
+		'/bulk-update',
+		'/design',
+		'/styleguide',
+		'/visual-gallery',
 		'/shop-manager',
 		'/servers',
 		'/shops',
 		'/shop-items',
-		'/market-overview'
+		'/market-overview',
+		'/recipes',
+		'/recipes/import',
+		'/recipes/manage',
+		'/recipes/recalculate'
 	]
-	const recipeRoutes = ['/recipes', '/recipes/import', '/recipes/manage', '/recipes/recalculate']
 
-	if (adminRoutes.includes(route.path)) {
+	if (adminRoutes.includes(route.path) || route.path.startsWith('/edit-recipe/')) {
 		activeMainNav.value = 'admin'
-	} else if (shopManagerRoutes.includes(route.path)) {
-		activeMainNav.value = 'shop-manager'
-	} else if (recipeRoutes.includes(route.path) || route.path.startsWith('/edit-recipe/')) {
-		activeMainNav.value = 'recipes'
 	} else {
 		activeMainNav.value = null
 	}

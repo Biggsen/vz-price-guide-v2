@@ -308,83 +308,6 @@ onUnmounted(() => {
 				</div>
 			</div>
 
-			<!-- Recipes section (only for admins) -->
-			<div v-if="isAdmin">
-				<button
-					@click="toggleSubnav('recipes')"
-					class="w-full text-left px-3 py-2 flex items-center justify-between">
-					<span>Recipes</span>
-					<ChevronRightIcon v-if="!isSubnavExpanded('recipes')" class="w-4 h-4" />
-					<ChevronDownIcon v-else class="w-4 h-4" />
-				</button>
-
-				<!-- Recipes Subnav -->
-				<div v-show="isSubnavExpanded('recipes')" class="ml-4 space-y-0.5">
-					<RouterLink
-						to="/recipes/import"
-						@click="closeMenu"
-						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
-						Import
-					</RouterLink>
-					<RouterLink
-						to="/recipes/manage"
-						@click="closeMenu"
-						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
-						Manage
-					</RouterLink>
-					<RouterLink
-						to="/recipes/recalculate"
-						@click="closeMenu"
-						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
-						Recalculate Prices
-					</RouterLink>
-				</div>
-			</div>
-
-			<!-- Shop Manager section (for admins only) -->
-			<div v-if="isAdmin">
-				<button
-					@click="toggleSubnav('shop-manager')"
-					class="w-full text-left px-3 py-2 flex items-center justify-between">
-					<span>Shop Manager</span>
-					<ChevronRightIcon v-if="!isSubnavExpanded('shop-manager')" class="w-4 h-4" />
-					<ChevronDownIcon v-else class="w-4 h-4" />
-				</button>
-				<!-- Shop Manager Subnav -->
-				<div v-show="isSubnavExpanded('shop-manager')" class="ml-4 space-y-0.5">
-					<RouterLink
-						to="/shop-manager"
-						@click="closeMenu"
-						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
-						Dashboard
-					</RouterLink>
-					<RouterLink
-						to="/market-overview"
-						@click="closeMenu"
-						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
-						Market Overview
-					</RouterLink>
-					<RouterLink
-						to="/shop-items"
-						@click="closeMenu"
-						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
-						Shop Items
-					</RouterLink>
-					<RouterLink
-						to="/shops"
-						@click="closeMenu"
-						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
-						Shops
-					</RouterLink>
-					<RouterLink
-						to="/servers"
-						@click="closeMenu"
-						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
-						Servers
-					</RouterLink>
-				</div>
-			</div>
-
 			<!-- Divider -->
 			<div v-if="user?.email" class="border-t border-gray-700 my-2"></div>
 
@@ -509,32 +432,6 @@ onUnmounted(() => {
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
 			Admin
-		</RouterLink>
-
-		<!-- Recipes section (only for admins) -->
-		<RouterLink
-			v-if="isAdmin"
-			to="/recipes"
-			:class="[
-				'px-3 py-2 rounded transition-colors',
-				activeMainNav === 'recipes'
-					? 'bg-gray-700 text-white'
-					: 'hover:bg-gray-700 hover:text-white'
-			]">
-			Recipes
-		</RouterLink>
-
-		<!-- Shop Manager section (for admins only) -->
-		<RouterLink
-			v-if="isAdmin"
-			to="/shop-manager"
-			:class="[
-				'px-3 py-2 rounded transition-colors',
-				activeMainNav === 'shop-manager'
-					? 'bg-gray-700 text-white'
-					: 'hover:bg-gray-700 hover:text-white'
-			]">
-			Shop Manager
 		</RouterLink>
 
 		<!-- Sign In/Sign Up buttons (when not logged in) -->

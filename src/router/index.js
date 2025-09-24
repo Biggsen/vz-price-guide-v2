@@ -290,6 +290,17 @@ const router = createRouter({
 			meta: { title: "Terms of Use - verzion's economy price guide for Minecraft" }
 		},
 		{
+			path: '/design',
+			name: 'design',
+			component: () => import('../views/DesignView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: "Design Dashboard - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/styleguide',
 			name: 'styleguide',
 			component: () => import('../views/StyleguideView.vue'),

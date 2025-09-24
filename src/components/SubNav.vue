@@ -1,21 +1,76 @@
 <script setup>
 import { inject, ref, computed, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { useAdmin } from '../utils/admin.js'
 
-const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAdmin()
+const { user, isAdmin } = useAdmin()
 const activeMainNav = inject('activeMainNav')
+const route = useRoute()
 
 // State for collapsible sections
-const isAdminExpanded = ref(false)
-const isRecipesExpanded = ref(false)
+const isPriceGuideExpanded = ref(false)
 const isShopManagerExpanded = ref(false)
+const isDesignExpanded = ref(false)
 
-// Auto-expand the active section
+// Computed properties for active states
+const isPriceGuideActive = computed(() => {
+	return (
+		[
+			'/admin',
+			'/missing-items',
+			'/add',
+			'/bulk-update',
+			'/recipes/import',
+			'/recipes/manage',
+			'/recipes/recalculate'
+		].includes(route.path) || route.path.startsWith('/edit-recipe/')
+	)
+})
+
+const isShopManagerActive = computed(() => {
+	return ['/shop-manager', '/market-overview', '/shop-items', '/shops', '/servers'].includes(
+		route.path
+	)
+})
+
+const isDesignActive = computed(() => {
+	return ['/design', '/styleguide', '/visual-gallery'].includes(route.path)
+})
+
+// Auto-expand the active section based on current route
 const expandedSection = computed(() => {
-	if (activeMainNav === 'admin') return 'admin'
-	if (activeMainNav === 'recipes') return 'recipes'
-	if (activeMainNav === 'shop-manager') return 'shop-manager'
+	if (activeMainNav === 'admin') {
+		// Determine which category should be expanded based on current route
+		const currentPath = window.location.pathname
+
+		// Price Guide routes
+		if (
+			[
+				'/admin',
+				'/missing-items',
+				'/add',
+				'/bulk-update',
+				'/recipes/import',
+				'/recipes/manage',
+				'/recipes/recalculate'
+			].includes(currentPath) ||
+			currentPath.startsWith('/edit-recipe/')
+		) {
+			return 'price-guide'
+		}
+		// Shop Manager routes
+		else if (
+			['/shop-manager', '/market-overview', '/shop-items', '/shops', '/servers'].includes(
+				currentPath
+			)
+		) {
+			return 'shop-manager'
+		}
+		// Design routes
+		else if (['/design', '/styleguide', '/visual-gallery'].includes(currentPath)) {
+			return 'design'
+		}
+	}
 	return null
 })
 
@@ -24,29 +79,53 @@ watch(
 	activeMainNav,
 	(newSection) => {
 		if (newSection === 'admin') {
-			isAdminExpanded.value = true
-			isRecipesExpanded.value = false
+			const currentPath = window.location.pathname
+
+			// Reset all expansions
+			isPriceGuideExpanded.value = false
 			isShopManagerExpanded.value = false
-		} else if (newSection === 'recipes') {
-			isAdminExpanded.value = false
-			isRecipesExpanded.value = true
+			isDesignExpanded.value = false
+
+			// Expand the appropriate section
+			if (
+				[
+					'/admin',
+					'/missing-items',
+					'/add',
+					'/bulk-update',
+					'/recipes/import',
+					'/recipes/manage',
+					'/recipes/recalculate'
+				].includes(currentPath) ||
+				currentPath.startsWith('/edit-recipe/')
+			) {
+				isPriceGuideExpanded.value = true
+			} else if (
+				['/shop-manager', '/market-overview', '/shop-items', '/shops', '/servers'].includes(
+					currentPath
+				)
+			) {
+				isShopManagerExpanded.value = true
+			} else if (['/design', '/styleguide', '/visual-gallery'].includes(currentPath)) {
+				isDesignExpanded.value = true
+			}
+		} else {
+			// Collapse all when not in admin section
+			isPriceGuideExpanded.value = false
 			isShopManagerExpanded.value = false
-		} else if (newSection === 'shop-manager') {
-			isAdminExpanded.value = false
-			isRecipesExpanded.value = false
-			isShopManagerExpanded.value = true
+			isDesignExpanded.value = false
 		}
 	},
 	{ immediate: true }
 )
 
 function toggleSection(section) {
-	if (section === 'admin') {
-		isAdminExpanded.value = !isAdminExpanded.value
-	} else if (section === 'recipes') {
-		isRecipesExpanded.value = !isRecipesExpanded.value
+	if (section === 'price-guide') {
+		isPriceGuideExpanded.value = !isPriceGuideExpanded.value
 	} else if (section === 'shop-manager') {
 		isShopManagerExpanded.value = !isShopManagerExpanded.value
+	} else if (section === 'design') {
+		isDesignExpanded.value = !isDesignExpanded.value
 	}
 }
 </script>
@@ -58,166 +137,33 @@ function toggleSection(section) {
 		class="bg-gray-700 text-white border-t border-gray-600 hidden sm:block">
 		<!-- Mobile: Collapsible layout -->
 		<div class="sm:hidden">
-			<!-- Section Header -->
+			<!-- Price Guide Section -->
 			<button
-				@click="toggleSection('admin')"
+				@click="toggleSection('price-guide')"
 				class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-600 transition-colors">
-				<span class="font-medium">Admin Tools</span>
+				<span class="font-medium">Price Guide</span>
 				<span
 					class="text-sm transition-transform"
-					:class="{ 'rotate-180': isAdminExpanded }">
+					:class="{ 'rotate-180': isPriceGuideExpanded }">
 					▼
 				</span>
 			</button>
 
-			<!-- Collapsible Content -->
-			<div v-show="isAdminExpanded" class="border-t border-gray-600">
+			<!-- Price Guide Content -->
+			<div v-show="isPriceGuideExpanded" class="border-t border-gray-600">
 				<RouterLink
 					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
 					active-class="bg-blue-600 text-white"
 					to="/admin">
 					Dashboard
 				</RouterLink>
-				<RouterLink
-					v-if="canViewMissingItems"
-					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
-					active-class="bg-blue-600 text-white"
-					to="/missing-items">
-					Missing Items
-				</RouterLink>
-				<RouterLink
-					v-if="canAddItems"
-					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
-					active-class="bg-blue-600 text-white"
-					to="/add">
-					Add Item
-				</RouterLink>
-				<RouterLink
-					v-if="canBulkUpdate"
-					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
-					active-class="bg-blue-600 text-white"
-					to="/bulk-update">
-					Bulk Update
-				</RouterLink>
-				<RouterLink
-					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
-					active-class="bg-blue-600 text-white"
-					to="/styleguide">
-					Styleguide
-				</RouterLink>
-				<div class="px-6 py-2">
-					<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
-				</div>
 			</div>
-		</div>
 
-		<!-- Desktop: Horizontal layout -->
-		<div class="hidden sm:flex gap-4 items-center px-4 py-2">
-			<RouterLink class="hover:underline" active-class="underline" to="/admin">
-				Dashboard
-			</RouterLink>
-			<RouterLink
-				v-if="canViewMissingItems"
-				class="hover:underline"
-				active-class="underline"
-				to="/missing-items">
-				Missing Items
-			</RouterLink>
-			<RouterLink
-				v-if="canAddItems"
-				class="hover:underline"
-				active-class="underline"
-				to="/add">
-				Add Item
-			</RouterLink>
-			<RouterLink
-				v-if="canBulkUpdate"
-				class="hover:underline"
-				active-class="underline"
-				to="/bulk-update">
-				Bulk Update
-			</RouterLink>
-			<RouterLink class="hover:underline" active-class="underline" to="/styleguide">
-				Styleguide
-			</RouterLink>
-			<div class="ml-auto">
-				<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
-			</div>
-		</div>
-	</nav>
-
-	<!-- Recipes Subnav (Desktop Only) -->
-	<nav
-		v-if="activeMainNav === 'recipes' && isAdmin"
-		class="bg-gray-700 text-white border-t border-gray-600 hidden sm:block">
-		<!-- Mobile: Collapsible layout -->
-		<div class="sm:hidden">
-			<!-- Section Header -->
-			<button
-				@click="toggleSection('recipes')"
-				class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-600 transition-colors">
-				<span class="font-medium">Recipe Management</span>
-				<span
-					class="text-sm transition-transform"
-					:class="{ 'rotate-180': isRecipesExpanded }">
-					▼
-				</span>
-			</button>
-
-			<!-- Collapsible Content -->
-			<div v-show="isRecipesExpanded" class="border-t border-gray-600">
-				<RouterLink
-					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
-					active-class="bg-blue-600 text-white"
-					to="/recipes/import">
-					Import
-				</RouterLink>
-				<RouterLink
-					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
-					active-class="bg-blue-600 text-white"
-					to="/recipes/manage">
-					Manage
-				</RouterLink>
-				<RouterLink
-					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
-					active-class="bg-blue-600 text-white"
-					to="/recipes/recalculate">
-					Recalculate Prices
-				</RouterLink>
-				<div class="px-6 py-2">
-					<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
-				</div>
-			</div>
-		</div>
-
-		<!-- Desktop: Horizontal layout -->
-		<div class="hidden sm:flex gap-4 items-center px-4 py-2">
-			<RouterLink class="hover:underline" active-class="underline" to="/recipes/import">
-				Import
-			</RouterLink>
-			<RouterLink class="hover:underline" active-class="underline" to="/recipes/manage">
-				Manage
-			</RouterLink>
-			<RouterLink class="hover:underline" active-class="underline" to="/recipes/recalculate">
-				Recalculate Prices
-			</RouterLink>
-			<div class="ml-auto">
-				<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
-			</div>
-		</div>
-	</nav>
-
-	<!-- Shop Manager Subnav (Desktop Only) -->
-	<nav
-		v-if="activeMainNav === 'shop-manager' && user?.email"
-		class="bg-gray-700 text-white border-t border-gray-600 hidden sm:block">
-		<!-- Mobile: Collapsible layout -->
-		<div class="sm:hidden">
-			<!-- Section Header -->
+			<!-- Shop Manager Section -->
 			<button
 				@click="toggleSection('shop-manager')"
 				class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-600 transition-colors">
-				<span class="font-medium">Shop Management</span>
+				<span class="font-medium">Shop Manager</span>
 				<span
 					class="text-sm transition-transform"
 					:class="{ 'rotate-180': isShopManagerExpanded }">
@@ -225,7 +171,7 @@ function toggleSection(section) {
 				</span>
 			</button>
 
-			<!-- Collapsible Content -->
+			<!-- Shop Manager Content -->
 			<div v-show="isShopManagerExpanded" class="border-t border-gray-600">
 				<RouterLink
 					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
@@ -233,50 +179,58 @@ function toggleSection(section) {
 					to="/shop-manager">
 					Dashboard
 				</RouterLink>
+			</div>
+
+			<!-- Design Section -->
+			<button
+				@click="toggleSection('design')"
+				class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-600 transition-colors">
+				<span class="font-medium">Design</span>
+				<span
+					class="text-sm transition-transform"
+					:class="{ 'rotate-180': isDesignExpanded }">
+					▼
+				</span>
+			</button>
+
+			<!-- Design Content -->
+			<div v-show="isDesignExpanded" class="border-t border-gray-600">
 				<RouterLink
 					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
 					active-class="bg-blue-600 text-white"
-					to="/market-overview">
-					Market Overview
+					to="/design">
+					Dashboard
 				</RouterLink>
-				<RouterLink
-					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
-					active-class="bg-blue-600 text-white"
-					to="/shop-items">
-					Shop Items
-				</RouterLink>
-				<RouterLink
-					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
-					active-class="bg-blue-600 text-white"
-					to="/shops">
-					Shops
-				</RouterLink>
-				<RouterLink
-					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
-					active-class="bg-blue-600 text-white"
-					to="/servers">
-					Servers
-				</RouterLink>
+			</div>
+
+			<div class="px-6 py-2">
+				<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
 			</div>
 		</div>
 
 		<!-- Desktop: Horizontal layout -->
-		<div class="hidden sm:flex gap-4 items-center px-4 py-2">
-			<RouterLink class="hover:underline" active-class="underline" to="/shop-manager">
-				Dashboard
+		<div class="hidden sm:flex gap-6 items-center px-4 py-2">
+			<RouterLink
+				class="hover:underline"
+				:class="{ 'underline font-semibold': isPriceGuideActive }"
+				to="/admin">
+				Price Guide
 			</RouterLink>
-			<RouterLink class="hover:underline" active-class="underline" to="/market-overview">
-				Market Overview
+			<RouterLink
+				class="hover:underline"
+				:class="{ 'underline font-semibold': isShopManagerActive }"
+				to="/shop-manager">
+				Shop Manager
 			</RouterLink>
-			<RouterLink class="hover:underline" active-class="underline" to="/shop-items">
-				Shop Items
+			<RouterLink
+				class="hover:underline"
+				:class="{ 'underline font-semibold': isDesignActive }"
+				to="/design">
+				Design
 			</RouterLink>
-			<RouterLink class="hover:underline" active-class="underline" to="/shops">
-				Shops
-			</RouterLink>
-			<RouterLink class="hover:underline" active-class="underline" to="/servers">
-				Servers
-			</RouterLink>
+			<div class="ml-auto">
+				<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
+			</div>
 		</div>
 	</nav>
 </template>
