@@ -1,0 +1,336 @@
+import { ref, computed } from 'vue'
+import { useFirestore, useCollection, useDocument } from 'vuefire'
+import {
+	collection,
+	doc,
+	addDoc,
+	updateDoc,
+	deleteDoc,
+	query,
+	where,
+	orderBy,
+	writeBatch,
+	getDocs
+} from 'firebase/firestore'
+import { getEffectivePrice } from './pricing.js'
+
+const db = useFirestore()
+
+/**
+ * Crate Reward Data Models
+ */
+
+// Crate Reward Collection Structure
+// Collection: 'crate_rewards'
+// Document fields:
+// {
+//   id: string (auto-generated)
+//   user_id: string (owner)
+//   name: string
+//   description: string
+//   minecraft_version: string (e.g., "1.20")
+//   created_at: timestamp
+//   updated_at: timestamp
+// }
+
+// Crate Reward Item Collection Structure
+// Collection: 'crate_reward_items'
+// Document fields:
+// {
+//   id: string (auto-generated)
+//   crate_reward_id: string (parent crate reward)
+//   item_id: string (reference to items collection)
+//   quantity: number
+//   weight: number (for Crazy Crates probability)
+//   display_name: string (custom display name)
+//   display_item: string (material_id for display)
+//   display_amount: number (amount to show in GUI)
+//   custom_model_data: number (optional)
+//   enchantments: object (optional, for enchanted items)
+//   created_at: timestamp
+//   updated_at: timestamp
+// }
+
+/**
+ * Create a new crate reward
+ */
+export async function createCrateReward(userId, crateData) {
+	try {
+		const crateReward = {
+			user_id: userId,
+			name: crateData.name,
+			description: crateData.description || '',
+			minecraft_version: crateData.minecraft_version || '1.20',
+			created_at: new Date(),
+			updated_at: new Date()
+		}
+
+		const docRef = await addDoc(collection(db, 'crate_rewards'), crateReward)
+		return { id: docRef.id, ...crateReward }
+	} catch (error) {
+		console.error('Error creating crate reward:', error)
+		throw error
+	}
+}
+
+/**
+ * Update an existing crate reward
+ */
+export async function updateCrateReward(crateId, updates) {
+	try {
+		const updateData = {
+			...updates,
+			updated_at: new Date()
+		}
+
+		await updateDoc(doc(db, 'crate_rewards', crateId), updateData)
+		return true
+	} catch (error) {
+		console.error('Error updating crate reward:', error)
+		throw error
+	}
+}
+
+/**
+ * Delete a crate reward and all its items
+ */
+export async function deleteCrateReward(crateId) {
+	try {
+		const batch = writeBatch(db)
+
+		// Delete all reward items first
+		const rewardItemsQuery = query(
+			collection(db, 'crate_reward_items'),
+			where('crate_reward_id', '==', crateId)
+		)
+		const rewardItemsSnapshot = await getDocs(rewardItemsQuery)
+		rewardItemsSnapshot.forEach((itemDoc) => {
+			batch.delete(itemDoc.ref)
+		})
+
+		// Delete the crate reward
+		batch.delete(doc(db, 'crate_rewards', crateId))
+
+		await batch.commit()
+		return true
+	} catch (error) {
+		console.error('Error deleting crate reward:', error)
+		throw error
+	}
+}
+
+/**
+ * Add an item to a crate reward
+ */
+export async function addCrateRewardItem(crateId, itemData) {
+	try {
+		const rewardItem = {
+			crate_reward_id: crateId,
+			item_id: itemData.item_id,
+			quantity: itemData.quantity || 1,
+			weight: itemData.weight || 50,
+			display_name: itemData.display_name || '',
+			display_item: itemData.display_item || itemData.item_id,
+			display_amount: itemData.display_amount || itemData.quantity || 1,
+			custom_model_data: itemData.custom_model_data || -1,
+			enchantments: itemData.enchantments || {},
+			created_at: new Date(),
+			updated_at: new Date()
+		}
+
+		const docRef = await addDoc(collection(db, 'crate_reward_items'), rewardItem)
+		return { id: docRef.id, ...rewardItem }
+	} catch (error) {
+		console.error('Error adding crate reward item:', error)
+		throw error
+	}
+}
+
+/**
+ * Update a crate reward item
+ */
+export async function updateCrateRewardItem(itemId, updates) {
+	try {
+		const updateData = {
+			...updates,
+			updated_at: new Date()
+		}
+
+		await updateDoc(doc(db, 'crate_reward_items', itemId), updateData)
+		return true
+	} catch (error) {
+		console.error('Error updating crate reward item:', error)
+		throw error
+	}
+}
+
+/**
+ * Delete a crate reward item
+ */
+export async function deleteCrateRewardItem(itemId) {
+	try {
+		await deleteDoc(doc(db, 'crate_reward_items', itemId))
+		return true
+	} catch (error) {
+		console.error('Error deleting crate reward item:', error)
+		throw error
+	}
+}
+
+/**
+ * Get all crate rewards for a user
+ */
+export function useCrateRewards(userId) {
+	const crateRewardsQuery = computed(() => {
+		if (!userId.value) return null
+		return query(
+			collection(db, 'crate_rewards'),
+			where('user_id', '==', userId.value),
+			orderBy('created_at', 'desc')
+		)
+	})
+
+	const { data: crateRewards, pending, error } = useCollection(crateRewardsQuery)
+
+	return {
+		crateRewards,
+		pending,
+		error
+	}
+}
+
+/**
+ * Get a specific crate reward
+ */
+export function useCrateReward(crateId) {
+	const crateRewardRef = computed(() => {
+		if (!crateId.value) return null
+		return doc(db, 'crate_rewards', crateId.value)
+	})
+
+	const { data: crateReward, pending, error } = useDocument(crateRewardRef)
+
+	return {
+		crateReward,
+		pending,
+		error
+	}
+}
+
+/**
+ * Get all items for a specific crate reward
+ */
+export function useCrateRewardItems(crateId) {
+	const rewardItemsQuery = computed(() => {
+		if (!crateId.value) return null
+		return query(
+			collection(db, 'crate_reward_items'),
+			where('crate_reward_id', '==', crateId.value),
+			orderBy('created_at', 'asc')
+		)
+	})
+
+	const { data: rewardItems, pending, error } = useCollection(rewardItemsQuery)
+
+	return {
+		rewardItems,
+		pending,
+		error
+	}
+}
+
+/**
+ * Calculate the total value of a crate reward item
+ */
+export function calculateRewardItemValue(rewardItem, item, version = '1_20') {
+	if (!rewardItem || !item) return 0
+
+	const unitPrice = getEffectivePrice(item, version)
+	const totalValue = unitPrice * rewardItem.quantity
+
+	return totalValue
+}
+
+/**
+ * Calculate the total value of all items in a crate reward
+ */
+export function calculateCrateRewardTotalValue(rewardItems, allItems, version = '1_20') {
+	if (!rewardItems || !allItems) return 0
+
+	let totalValue = 0
+
+	rewardItems.forEach((rewardItem) => {
+		const item = allItems.find((i) => i.id === rewardItem.item_id)
+		if (item) {
+			totalValue += calculateRewardItemValue(rewardItem, item, version)
+		}
+	})
+
+	return totalValue
+}
+
+/**
+ * Generate Crazy Crates YAML configuration
+ */
+export function generateCrazyCratesYaml(crateReward, rewardItems, allItems, version = '1_20') {
+	if (!crateReward || !rewardItems || !allItems) return ''
+
+	const yamlLines = ['Prizes:']
+
+	rewardItems.forEach((rewardItem, index) => {
+		const item = allItems.find((i) => i.id === rewardItem.item_id)
+		if (!item) return
+
+		const prizeId = (index + 1).toString()
+		const displayName = rewardItem.display_name || `<white>${rewardItem.quantity}x ${item.name}`
+		const displayItem = rewardItem.display_item || item.material_id
+		const displayAmount = rewardItem.display_amount || rewardItem.quantity
+		const weight = rewardItem.weight || 50
+
+		// Build the item string
+		let itemString = `item:${item.material_id}`
+		if (rewardItem.quantity > 1) {
+			itemString += `, amount:${rewardItem.quantity}`
+		}
+
+		// Add enchantments if any
+		if (rewardItem.enchantments && Object.keys(rewardItem.enchantments).length > 0) {
+			Object.entries(rewardItem.enchantments).forEach(([enchant, level]) => {
+				itemString += `, ${enchant}:${level}`
+			})
+		}
+
+		yamlLines.push(`    "${prizeId}":`)
+		yamlLines.push(`      DisplayName: "${displayName}"`)
+		yamlLines.push(`      DisplayItem: "${displayItem}"`)
+		yamlLines.push(
+			`      Settings: { Custom-Model-Data: ${
+				rewardItem.custom_model_data || -1
+			}, Model: { Namespace: "", Id: "" } }`
+		)
+		yamlLines.push(`      DisplayAmount: ${displayAmount}`)
+		yamlLines.push(`      Weight: ${weight}`)
+		yamlLines.push(`      Items:`)
+		yamlLines.push(`        - "${itemString}"`)
+		yamlLines.push('')
+	})
+
+	return yamlLines.join('\n')
+}
+
+/**
+ * Export crate reward as downloadable YAML file
+ */
+export function downloadCrateRewardYaml(crateReward, rewardItems, allItems, version = '1_20') {
+	const yamlContent = generateCrazyCratesYaml(crateReward, rewardItems, allItems, version)
+	const blob = new Blob([yamlContent], { type: 'text/yaml' })
+	const url = URL.createObjectURL(blob)
+
+	const link = document.createElement('a')
+	link.href = url
+	link.download = `${crateReward.name.replace(/[^a-zA-Z0-9]/g, '_')}_crate_rewards.yaml`
+	document.body.appendChild(link)
+	link.click()
+	document.body.removeChild(link)
+	URL.revokeObjectURL(url)
+}

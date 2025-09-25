@@ -244,6 +244,24 @@ onUnmounted(() => {
 			</button>
 
 			<RouterLink
+				to="/crate-rewards"
+				@click="
+					() => {
+						handleNavigationClick('Crate Rewards')
+						setActiveMainNav(null)
+					}
+				"
+				:class="[
+					'block px-3 py-2 transition-colors',
+					route.path === '/crate-rewards' || route.path.startsWith('/crate-rewards/')
+						? 'bg-gray-700 text-white'
+						: 'hover:bg-gray-700 hover:text-white'
+				]"
+				v-if="user?.email">
+				Crate Rewards
+			</RouterLink>
+
+			<RouterLink
 				to="/updates"
 				@click="
 					() => {
@@ -404,6 +422,23 @@ onUnmounted(() => {
 			v-if="user?.email">
 			Suggestions
 		</button>
+		<RouterLink
+			to="/crate-rewards"
+			@click="
+				() => {
+					handleNavigationClick('Crate Rewards')
+					setActiveMainNav(null)
+				}
+			"
+			:class="[
+				'px-3 py-2 rounded transition-colors',
+				route.path === '/crate-rewards' || route.path.startsWith('/crate-rewards/')
+					? 'bg-gray-700 text-white'
+					: 'hover:bg-gray-700 hover:text-white'
+			]"
+			v-if="user?.email">
+			Crate Rewards
+		</RouterLink>
 		<RouterLink
 			to="/updates"
 			@click="

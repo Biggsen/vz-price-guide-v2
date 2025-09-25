@@ -349,6 +349,26 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/crate-rewards',
+			name: 'crate-rewards',
+			component: () => import('../views/CrateRewardManagerView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				title: "Crate Reward Manager - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/crate-rewards/:id',
+			name: 'crate-reward-detail',
+			component: () => import('../views/CrateRewardManagerView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				title: "Crate Reward Manager - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/:pathMatch(.*)*',
 			name: 'not-found',
 			component: () => import('../views/NotFoundView.vue'),
