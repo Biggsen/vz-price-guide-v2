@@ -276,21 +276,102 @@ export function formatRewardItemForYaml(rewardItem, item, prizeId) {
 	if (!rewardItem || !item) return null
 
 	const displayName = rewardItem.display_name || `<white>${rewardItem.quantity}x ${item.name}`
-	const displayItem = rewardItem.display_item || item.material_id
-	const displayAmount = rewardItem.display_amount || rewardItem.quantity
+
+	// For enchanted books, always use "enchanted_book" as DisplayItem
+	let displayItem = rewardItem.display_item || item.material_id
+	if (item.material_id === 'enchanted_book' || item.material_id.startsWith('enchanted_book_')) {
+		displayItem = 'enchanted_book'
+	}
+
+	const displayAmount = rewardItem.quantity
 	const weight = rewardItem.weight || 50
 
 	// Build the item string
-	let itemString = `item:${item.material_id}`
-	if (rewardItem.quantity > 1) {
-		itemString += `, amount:${rewardItem.quantity}`
-	}
+	let itemString
 
-	// Add enchantments if any
-	if (rewardItem.enchantments && Object.keys(rewardItem.enchantments).length > 0) {
-		Object.entries(rewardItem.enchantments).forEach(([enchant, level]) => {
-			itemString += `, ${enchant}:${level}`
-		})
+	// Handle enchanted books differently - use base item and list enchantments separately
+	if (item.material_id === 'enchanted_book' || item.material_id.startsWith('enchanted_book_')) {
+		itemString = `item:enchanted_book`
+		// Always include amount for consistency
+		itemString += `, amount:${rewardItem.quantity}`
+
+		// For enchanted books, extract enchantment from material_id if not in enchantments object
+		if (
+			item.material_id.startsWith('enchanted_book_') &&
+			item.material_id !== 'enchanted_book'
+		) {
+			// Try to extract enchantment with level first (e.g., "enchanted_book_mending_1" -> "mending:1")
+			const enchantWithLevelMatch = item.material_id.match(/^enchanted_book_(.+)_(\d+)$/)
+			if (enchantWithLevelMatch) {
+				const enchantName = enchantWithLevelMatch[1] // Get the enchantment name
+				const enchantLevel = parseInt(enchantWithLevelMatch[2]) // Get the level as number
+				itemString += `, ${enchantName}:${enchantLevel}`
+			} else {
+				// Try to extract enchantment without level (e.g., "enchanted_book_silk_touch" -> "silk_touch:1")
+				const enchantWithoutLevelMatch = item.material_id.match(/^enchanted_book_(.+)$/)
+				if (enchantWithoutLevelMatch) {
+					const enchantName = enchantWithoutLevelMatch[1] // Get the enchantment name
+					itemString += `, ${enchantName}:1` // Default to level 1
+				}
+			}
+		}
+
+		// Add enchantments from enchantments object if any
+		if (rewardItem.enchantments && Object.keys(rewardItem.enchantments).length > 0) {
+			Object.entries(rewardItem.enchantments).forEach(([enchant, level]) => {
+				// Convert enchantment format from "enchanted_book_unbreaking_3" to "unbreaking:3"
+				let formattedEnchant = enchant
+				let enchantLevel = level
+
+				// Remove "enchanted_book_" prefix if present
+				if (formattedEnchant.startsWith('enchanted_book_')) {
+					formattedEnchant = formattedEnchant.replace('enchanted_book_', '')
+				}
+
+				// Extract level from enchantment name if it ends with a number
+				const levelMatch = formattedEnchant.match(/^(.+)_(\d+)$/)
+				if (levelMatch) {
+					formattedEnchant = levelMatch[1] // Get the enchantment name without level
+					enchantLevel = parseInt(levelMatch[2]) // Get the level as number
+				}
+
+				// Don't remove underscores - they're part of the enchantment name
+				// (e.g., "feather_falling" should stay as "feather_falling")
+
+				itemString += `, ${formattedEnchant}:${enchantLevel}`
+			})
+		}
+	} else {
+		// Regular items (gear, tools, etc.)
+		itemString = `item:${item.material_id}`
+		// Always include amount for consistency
+		itemString += `, amount:${rewardItem.quantity}`
+
+		// Add enchantments if any
+		if (rewardItem.enchantments && Object.keys(rewardItem.enchantments).length > 0) {
+			Object.entries(rewardItem.enchantments).forEach(([enchant, level]) => {
+				// Convert enchantment format from "enchanted_book_unbreaking_3" to "unbreaking:3"
+				let formattedEnchant = enchant
+				let enchantLevel = level
+
+				// Remove "enchanted_book_" prefix if present
+				if (formattedEnchant.startsWith('enchanted_book_')) {
+					formattedEnchant = formattedEnchant.replace('enchanted_book_', '')
+				}
+
+				// Extract level from enchantment name if it ends with a number
+				const levelMatch = formattedEnchant.match(/^(.+)_(\d+)$/)
+				if (levelMatch) {
+					formattedEnchant = levelMatch[1] // Get the enchantment name without level
+					enchantLevel = parseInt(levelMatch[2]) // Get the level as number
+				}
+
+				// Don't remove underscores - they're part of the enchantment name
+				// (e.g., "feather_falling" should stay as "feather_falling")
+
+				itemString += `, ${formattedEnchant}:${enchantLevel}`
+			})
+		}
 	}
 
 	return {
