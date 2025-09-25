@@ -235,7 +235,7 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'static',
 			prices_by_version: {
-				'1_16': 1.0
+				'1_16': 2.0
 			},
 			recipes_by_version: {}
 		},
@@ -252,7 +252,7 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'static',
 			prices_by_version: {
-				'1_16': 100.0
+				'1_16': 280.0
 			},
 			recipes_by_version: {}
 		},
@@ -269,7 +269,7 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_16': 0.8
+				'1_16': 2.0
 			},
 			recipes_by_version: {
 				'1_16': {
@@ -291,7 +291,7 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'static',
 			prices_by_version: {
-				'1_16': 3.0
+				'1_16': 8
 			},
 			recipes_by_version: {}
 		},
@@ -336,13 +336,13 @@ const TEST_DATA = {
 			image: '/images/items/heart_of_the_sea.png',
 			url: 'https://minecraft.fandom.com/wiki/Heart_of_the_Sea',
 			stack: 64,
-			category: '',
+			category: 'ocean',
 			subcategory: '',
 			version: '1.16',
 			version_removed: null,
 			pricing_type: 'static',
 			prices_by_version: {
-				'1_16': 50.0
+				'1_16': 500.0
 			},
 			recipes_by_version: {}
 		},
@@ -370,13 +370,13 @@ const TEST_DATA = {
 			image: '/images/items/brush.png',
 			url: 'https://minecraft.fandom.com/wiki/Brush',
 			stack: 1,
-			category: 'tools',
-			subcategory: 'archaeology',
+			category: 'archaeology',
+			subcategory: '',
 			version: '1.20',
 			version_removed: null,
-			pricing_type: 'static',
+			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_20': 25.0
+				'1_20': 9.0
 			},
 			recipes_by_version: {
 				'1_20': {
@@ -402,7 +402,7 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_16': 800.0
+				'1_16': 2240.0
 			},
 			recipes_by_version: {
 				'1_16': {
@@ -410,6 +410,239 @@ const TEST_DATA = {
 					output_count: 1
 				}
 			}
+		},
+		{
+			id: 'diamond_helmet',
+			material_id: 'diamond_helmet',
+			name: 'diamond helmet',
+			image: '/images/items/diamond_helmet.png',
+			url: 'https://minecraft.fandom.com/wiki/Diamond_Helmet',
+			stack: 1,
+			category: 'armor',
+			subcategory: 'diamond',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 1400.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'diamond', quantity: 5 }],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'diamond_leggings',
+			material_id: 'diamond_leggings',
+			name: 'diamond leggings',
+			image: '/images/items/diamond_leggings.png',
+			url: 'https://minecraft.fandom.com/wiki/Diamond_Leggings',
+			stack: 1,
+			category: 'armor',
+			subcategory: 'diamond',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 1960.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'diamond', quantity: 7 }],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'diamond_boots',
+			material_id: 'diamond_boots',
+			name: 'diamond boots',
+			image: '/images/items/diamond_boots.png',
+			url: 'https://minecraft.fandom.com/wiki/Diamond_Boots',
+			stack: 1,
+			category: 'armor',
+			subcategory: 'diamond',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 1120.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'diamond', quantity: 4 }],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'diamond_pickaxe',
+			material_id: 'diamond_pickaxe',
+			name: 'diamond pickaxe',
+			image: '/images/items/diamond_pickaxe.png',
+			url: 'https://minecraft.fandom.com/wiki/Diamond_Pickaxe',
+			stack: 1,
+			category: 'tools',
+			subcategory: 'diamond',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 842.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'diamond', quantity: 3 },
+						{ material_id: 'stick', quantity: 2 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'diamond_axe',
+			material_id: 'diamond_axe',
+			name: 'diamond axe',
+			image: '/images/items/diamond_axe.png',
+			url: 'https://minecraft.fandom.com/wiki/Diamond_Axe',
+			stack: 1,
+			category: 'tools',
+			subcategory: 'diamond',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 842.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'diamond', quantity: 3 },
+						{ material_id: 'stick', quantity: 2 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'diamond_sword',
+			material_id: 'diamond_sword',
+			name: 'diamond sword',
+			image: '/images/items/diamond_sword.png',
+			url: 'https://minecraft.fandom.com/wiki/Diamond_Sword',
+			stack: 1,
+			category: 'weapons',
+			subcategory: 'diamond',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 561.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'diamond', quantity: 2 },
+						{ material_id: 'stick', quantity: 1 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'diamond_shovel',
+			material_id: 'diamond_shovel',
+			name: 'diamond shovel',
+			image: '/images/items/diamond_shovel.png',
+			url: 'https://minecraft.fandom.com/wiki/Diamond_Shovel',
+			stack: 1,
+			category: 'tools',
+			subcategory: 'diamond',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 282.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'diamond', quantity: 1 },
+						{ material_id: 'stick', quantity: 2 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'diamond_hoe',
+			material_id: 'diamond_hoe',
+			name: 'diamond hoe',
+			image: '/images/items/diamond_hoe.png',
+			url: 'https://minecraft.fandom.com/wiki/Diamond_Hoe',
+			stack: 1,
+			category: 'tools',
+			subcategory: 'diamond',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 562.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'diamond', quantity: 2 },
+						{ material_id: 'stick', quantity: 2 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'bow',
+			material_id: 'bow',
+			name: 'bow',
+			image: '/images/items/bow.png',
+			url: 'https://minecraft.fandom.com/wiki/Bow',
+			stack: 1,
+			category: 'weapons',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 9.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'stick', quantity: 3 },
+						{ material_id: 'string', quantity: 3 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'string',
+			material_id: 'string',
+			name: 'string',
+			image: '/images/items/string.png',
+			url: 'https://minecraft.fandom.com/wiki/String',
+			stack: 64,
+			category: 'drops',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 2.0
+			},
+			recipes_by_version: {}
 		},
 		{
 			id: 'iron_ingot',
@@ -424,7 +657,8 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'static',
 			prices_by_version: {
-				'1_16': 8.0
+				'1_16': 20.0,
+				'1_18': 15.0
 			},
 			recipes_by_version: {}
 		},
@@ -441,7 +675,7 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_16': 72.0
+				'1_16': 135.0
 			},
 			recipes_by_version: {
 				'1_16': {
@@ -449,6 +683,1041 @@ const TEST_DATA = {
 					output_count: 1
 				}
 			}
+		},
+		{
+			id: 'cooked_beef',
+			material_id: 'cooked_beef',
+			name: 'steak',
+			image: '/images/items/cooked_beef.png',
+			url: 'https://minecraft.fandom.com/wiki/Steak',
+			stack: 64,
+			category: 'food',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 8
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'golden_carrot',
+			material_id: 'golden_carrot',
+			name: 'golden carrot',
+			image: '/images/items/golden_carrot.png',
+			url: 'https://minecraft.fandom.com/wiki/Golden_Carrot',
+			stack: 64,
+			category: 'food',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 56.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'gold_nugget', quantity: 8 },
+						{ material_id: 'carrot', quantity: 1 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'bread',
+			material_id: 'bread',
+			name: 'bread',
+			image: '/images/items/bread.png',
+			url: 'https://minecraft.fandom.com/wiki/Bread',
+			stack: 64,
+			category: 'food',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 6
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'wheat', quantity: 3 }],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'torch',
+			material_id: 'torch',
+			name: 'torch',
+			image: '/images/items/torch.gif',
+			url: 'https://minecraft.fandom.com/wiki/Torch',
+			stack: 64,
+			category: 'light',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 1.5
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'stick', quantity: 1 },
+						{ material_id: 'coal', quantity: 1 }
+					],
+					output_count: 4
+				}
+			}
+		},
+		{
+			id: 'arrow',
+			material_id: 'arrow',
+			name: 'arrow',
+			image: '/images/items/arrow.png',
+			url: 'https://minecraft.fandom.com/wiki/Arrow',
+			stack: 64,
+			category: 'weapons',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 2.8
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'flint', quantity: 1 },
+						{ material_id: 'stick', quantity: 1 },
+						{ material_id: 'feather', quantity: 1 }
+					],
+					output_count: 4
+				}
+			}
+		},
+		{
+			id: 'coal',
+			material_id: 'coal',
+			name: 'coal',
+			image: '/images/items/coal.png',
+			url: 'https://minecraft.fandom.com/wiki/Coal',
+			stack: 64,
+			category: 'ores',
+			subcategory: 'coal',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 8,
+				'1_18': 5
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'lapis_lazuli',
+			material_id: 'lapis_lazuli',
+			name: 'lapis lazuli',
+			image: '/images/items/lapis_lazuli.png',
+			url: 'https://minecraft.fandom.com/wiki/Lapis_Lazuli',
+			stack: 64,
+			category: 'ores',
+			subcategory: 'lapis',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 5
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'paper',
+			material_id: 'paper',
+			name: 'paper',
+			image: '/images/items/paper.png',
+			url: 'https://minecraft.fandom.com/wiki/Paper',
+			stack: 64,
+			category: 'utility',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 1.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'sugar_cane', quantity: 3 }],
+					output_count: 3
+				}
+			}
+		},
+		{
+			id: 'firework_rocket',
+			material_id: 'firework_rocket',
+			name: 'firework rocket',
+			image: '/images/items/firework_rocket.png',
+			url: 'https://minecraft.fandom.com/wiki/Firework_Rocket',
+			stack: 64,
+			category: 'utility',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 3.7
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'paper', quantity: 1 },
+						{ material_id: 'gunpowder', quantity: 1 }
+					],
+					output_count: 3
+				}
+			}
+		},
+		{
+			id: 'cooked_cod',
+			material_id: 'cooked_cod',
+			name: 'cooked cod',
+			image: '/images/items/cooked_cod.png',
+			url: 'https://minecraft.fandom.com/wiki/Cooked_Cod',
+			stack: 64,
+			category: 'food',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 4
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'gold_block',
+			material_id: 'gold_block',
+			name: 'gold block',
+			image: '/images/items/gold_block.png',
+			url: 'https://minecraft.fandom.com/wiki/Gold_Block',
+			stack: 64,
+			category: 'ores',
+			subcategory: 'gold',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 540.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'gold_ingot', quantity: 9 }],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'emerald',
+			material_id: 'emerald',
+			name: 'emerald',
+			image: '/images/items/emerald.png',
+			url: 'https://minecraft.fandom.com/wiki/Emerald',
+			stack: 64,
+			category: 'ores',
+			subcategory: 'emerald',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 100.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'redstone',
+			material_id: 'redstone',
+			name: 'redstone dust',
+			image: '/images/items/redstone.png',
+			url: 'https://minecraft.fandom.com/wiki/Redstone_Dust',
+			stack: 64,
+			category: 'ores',
+			subcategory: 'redstone',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 3
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'diamond_block',
+			material_id: 'diamond_block',
+			name: 'diamond block',
+			image: '/images/items/diamond_block.png',
+			url: 'https://minecraft.fandom.com/wiki/Diamond_Block',
+			stack: 64,
+			category: 'ores',
+			subcategory: 'diamond',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 2520.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'diamond', quantity: 9 }],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'anvil',
+			material_id: 'anvil',
+			name: 'anvil',
+			image: '/images/items/anvil.png',
+			url: 'https://minecraft.fandom.com/wiki/Anvil',
+			stack: 64,
+			category: 'utility',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 620.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'iron_block', quantity: 3 },
+						{ material_id: 'iron_ingot', quantity: 4 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'enchanted_book_mending_1',
+			material_id: 'enchanted_book_mending_1',
+			name: 'enchanted book (mending)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'tools',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 1400.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'enchanted_book_unbreaking_3',
+			material_id: 'enchanted_book_unbreaking_3',
+			name: 'enchanted book (unbreaking iii)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'tools',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 750.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'enchanted_book_efficiency_4',
+			material_id: 'enchanted_book_efficiency_4',
+			name: 'enchanted book (efficiency iv)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'tools',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 800.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'enchanted_book_sharpness_5',
+			material_id: 'enchanted_book_sharpness_5',
+			name: 'enchanted book (sharpness v)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'weapons',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 1200.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'enchanted_book_power_3',
+			material_id: 'enchanted_book_power_3',
+			name: 'enchanted book (power iii)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'weapons',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 660.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'enchanted_book_efficiency_5',
+			material_id: 'enchanted_book_efficiency_5',
+			name: 'enchanted book (efficiency v)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'tools',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 1000.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'enchanted_book_fortune_3',
+			material_id: 'enchanted_book_fortune_3',
+			name: 'enchanted book (fortune iii)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'tools',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 1200.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'enchanted_book_silk_touch',
+			material_id: 'enchanted_book_silk_touch',
+			name: 'enchanted book (silk touch)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'tools',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 1300.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'enchanted_book_protection_4',
+			material_id: 'enchanted_book_protection_4',
+			name: 'enchanted book (protection iv)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'armor',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 1100.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'enchanted_book_feather_falling_4',
+			material_id: 'enchanted_book_feather_falling_4',
+			name: 'enchanted book (feather falling iv)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'armor',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 800.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'enchanted_book_aqua_affinity',
+			material_id: 'enchanted_book_aqua_affinity',
+			name: 'enchanted book (aqua affinity)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'armor',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 400.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'enchanted_book_respiration_3',
+			material_id: 'enchanted_book_respiration_3',
+			name: 'enchanted book (respiration iii)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'armor',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 800.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'enchanted_book_depth_strider_3',
+			material_id: 'enchanted_book_depth_strider_3',
+			name: 'enchanted book (depth strider iii)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'armor',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 850.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'shulker_box',
+			material_id: 'shulker_box',
+			name: 'shulker box',
+			image: '/images/items/shulker_box.gif',
+			url: 'https://minecraft.fandom.com/wiki/Shulker_Box',
+			stack: 64,
+			category: 'end',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 516.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'shulker_shell', quantity: 2 },
+						{ material_id: 'chest', quantity: 1 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'ender_chest',
+			material_id: 'ender_chest',
+			name: 'ender chest',
+			image: '/images/items/ender_chest.gif',
+			url: 'https://minecraft.fandom.com/wiki/Ender_Chest',
+			stack: 64,
+			category: 'end',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 231.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'obsidian', quantity: 8 },
+						{ material_id: 'eye_of_ender', quantity: 1 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'netherite_scrap',
+			material_id: 'netherite_scrap',
+			name: 'netherite scrap',
+			image: '/images/items/netherite_scrap.png',
+			url: 'https://minecraft.fandom.com/wiki/Netherite_Scrap',
+			stack: 64,
+			category: 'ores',
+			subcategory: 'netherite',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 150.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'ancient_debris',
+			material_id: 'ancient_debris',
+			name: 'ancient debris',
+			image: '/images/items/ancient_debris.png',
+			url: 'https://minecraft.fandom.com/wiki/Ancient_Debris',
+			stack: 64,
+			category: 'ores',
+			subcategory: 'netherite',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 160.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'elytra',
+			material_id: 'elytra',
+			name: 'elytra',
+			image: '/images/items/elytra.png',
+			url: 'https://minecraft.fandom.com/wiki/Elytra',
+			stack: 1,
+			category: 'end',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 3500.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'beacon',
+			material_id: 'beacon',
+			name: 'beacon',
+			image: '/images/items/beacon.png',
+			url: 'https://minecraft.fandom.com/wiki/Beacon',
+			stack: 64,
+			category: 'utility',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 3085.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'obsidian', quantity: 3 },
+						{ material_id: 'nether_star', quantity: 1 },
+						{ material_id: 'glass', quantity: 5 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'netherite_upgrade_smithing_template',
+			material_id: 'netherite_upgrade_smithing_template',
+			name: 'netherite upgrade smithing template',
+			image: '/images/items/netherite_upgrade_smithing_template.png',
+			url: 'https://minecraft.fandom.com/wiki/Netherite_Upgrade_Smithing_Template',
+			stack: 64,
+			category: 'nether',
+			subcategory: '',
+			version: '1.20',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_20': 1500.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'stick',
+			material_id: 'stick',
+			name: 'stick',
+			image: '/images/items/stick.png',
+			url: 'https://minecraft.fandom.com/wiki/Stick',
+			stack: 64,
+			category: 'utility',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 1.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'oak_planks', quantity: 2 }],
+					output_count: 4
+				}
+			}
+		},
+		{
+			id: 'copper_ingot',
+			material_id: 'copper_ingot',
+			name: 'copper ingot',
+			image: '/images/items/copper_ingot.png',
+			url: 'https://minecraft.fandom.com/wiki/Copper_Ingot',
+			stack: 64,
+			category: 'ores',
+			subcategory: 'copper',
+			version: '1.17',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_17': 6.0,
+				'1_18': 3.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'feather',
+			material_id: 'feather',
+			name: 'feather',
+			image: '/images/items/feather.png',
+			url: 'https://minecraft.fandom.com/wiki/Feather',
+			stack: 64,
+			category: 'drops',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 5
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'gold_nugget',
+			material_id: 'gold_nugget',
+			name: 'gold nugget',
+			image: '/images/items/gold_nugget.png',
+			url: 'https://minecraft.fandom.com/wiki/Gold_Nugget',
+			stack: 64,
+			category: 'ores',
+			subcategory: 'gold',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 7
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'gold_ingot', quantity: 1 }],
+					output_count: 9
+				}
+			}
+		},
+		{
+			id: 'carrot',
+			material_id: 'carrot',
+			name: 'carrot',
+			image: '/images/items/carrot.png',
+			url: 'https://minecraft.fandom.com/wiki/Carrot',
+			stack: 64,
+			category: 'food',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 2.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'wheat',
+			material_id: 'wheat',
+			name: 'wheat',
+			image: '/images/items/wheat.png',
+			url: 'https://minecraft.fandom.com/wiki/Wheat',
+			stack: 64,
+			category: 'food',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 2.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'flint',
+			material_id: 'flint',
+			name: 'flint',
+			image: '/images/items/flint.png',
+			url: 'https://minecraft.fandom.com/wiki/Flint',
+			stack: 64,
+			category: 'utility',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 5.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'sugar_cane',
+			material_id: 'sugar_cane',
+			name: 'sugar cane',
+			image: '/images/items/sugar_cane.png',
+			url: 'https://minecraft.fandom.com/wiki/Sugar_Cane',
+			stack: 64,
+			category: 'plants',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 1.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'gunpowder',
+			material_id: 'gunpowder',
+			name: 'gunpowder',
+			image: '/images/items/gunpowder.png',
+			url: 'https://minecraft.fandom.com/wiki/Gunpowder',
+			stack: 64,
+			category: 'drops',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 10.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'gold_ingot',
+			material_id: 'gold_ingot',
+			name: 'gold ingot',
+			image: '/images/items/gold_ingot.png',
+			url: 'https://minecraft.fandom.com/wiki/Gold_Ingot',
+			stack: 64,
+			category: 'ores',
+			subcategory: 'gold',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 50.0,
+				'1_18': 60.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'shulker_shell',
+			material_id: 'shulker_shell',
+			name: 'shulker shell',
+			image: '/images/items/shulker_shell.png',
+			url: 'https://minecraft.fandom.com/wiki/Shulker_Shell',
+			stack: 64,
+			category: 'end',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 250.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'chest',
+			material_id: 'chest',
+			name: 'chest',
+			image: '/images/items/chest.png',
+			url: 'https://minecraft.fandom.com/wiki/Chest',
+			stack: 64,
+			category: 'utility',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 16.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'oak_planks', quantity: 8 }],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'obsidian',
+			material_id: 'obsidian',
+			name: 'obsidian',
+			image: '/images/items/obsidian.png',
+			url: 'https://minecraft.fandom.com/wiki/Obsidian',
+			stack: 64,
+			category: 'nether',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 25.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'eye_of_ender',
+			material_id: 'eye_of_ender',
+			name: 'eye of ender',
+			image: '/images/items/eye_of_ender.png',
+			url: 'https://minecraft.fandom.com/wiki/Eye_of_Ender',
+			stack: 64,
+			category: 'misc',
+			subcategory: 'end',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 31.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'blaze_powder', quantity: 1 },
+						{ material_id: 'ender_pearl', quantity: 1 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'nether_star',
+			material_id: 'nether_star',
+			name: 'nether star',
+			image: '/images/items/nether_star.png',
+			url: 'https://minecraft.fandom.com/wiki/Nether_Star',
+			stack: 64,
+			category: 'drops',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 3000.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'glass',
+			material_id: 'glass',
+			name: 'glass',
+			image: '/images/items/glass.png',
+			url: 'https://minecraft.fandom.com/wiki/Glass',
+			stack: 64,
+			category: 'dyed',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 2.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'blaze_powder',
+			material_id: 'blaze_powder',
+			name: 'blaze powder',
+			image: '/images/items/blaze_powder.png',
+			url: 'https://minecraft.fandom.com/wiki/Blaze_Powder',
+			stack: 64,
+			category: 'drops',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 15.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'blaze_rod', quantity: 1 }],
+					output_count: 2
+				}
+			}
+		},
+		{
+			id: 'ender_pearl',
+			material_id: 'ender_pearl',
+			name: 'ender pearl',
+			image: '/images/items/ender_pearl.png',
+			url: 'https://minecraft.fandom.com/wiki/Ender_Pearl',
+			stack: 16,
+			category: 'drops',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 16.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'blaze_rod',
+			material_id: 'blaze_rod',
+			name: 'blaze rod',
+			image: '/images/items/blaze_rod.png',
+			url: 'https://minecraft.fandom.com/wiki/Blaze_Rod',
+			stack: 64,
+			category: 'drops',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 30.0
+			},
+			recipes_by_version: {}
 		}
 	],
 	shop_items: [
