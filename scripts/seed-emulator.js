@@ -296,6 +296,125 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
+			id: 'spruce_log',
+			material_id: 'spruce_log',
+			name: 'spruce log',
+			image: '/images/items/spruce_log.png',
+			url: 'https://minecraft.fandom.com/wiki/Spruce_Log',
+			stack: 64,
+			category: 'wood',
+			subcategory: 'spruce',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 8
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'jungle_log',
+			material_id: 'jungle_log',
+			name: 'jungle log',
+			image: '/images/items/jungle_log.png',
+			url: 'https://minecraft.fandom.com/wiki/Jungle_Log',
+			stack: 64,
+			category: 'wood',
+			subcategory: 'jungle',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 8
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'dark_oak_log',
+			material_id: 'dark_oak_log',
+			name: 'dark oak log',
+			image: '/images/items/dark_oak_log.png',
+			url: 'https://minecraft.fandom.com/wiki/Dark_Oak_Log',
+			stack: 64,
+			category: 'wood',
+			subcategory: 'dark_oak',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 8
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'acacia_log',
+			material_id: 'acacia_log',
+			name: 'acacia log',
+			image: '/images/items/acacia_log.png',
+			url: 'https://minecraft.fandom.com/wiki/Acacia_Log',
+			stack: 64,
+			category: 'wood',
+			subcategory: 'acacia',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 8
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'birch_log',
+			material_id: 'birch_log',
+			name: 'birch log',
+			image: '/images/items/birch_log.png',
+			url: 'https://minecraft.fandom.com/wiki/Birch_Log',
+			stack: 64,
+			category: 'wood',
+			subcategory: 'birch',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 8
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'cherry_log',
+			material_id: 'cherry_log',
+			name: 'cherry log',
+			image: '/images/items/cherry_log.png',
+			url: 'https://minecraft.fandom.com/wiki/Cherry_Log',
+			stack: 64,
+			category: 'wood',
+			subcategory: 'cherry',
+			version: '1.20',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_20': 8
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'mangrove_log',
+			material_id: 'mangrove_log',
+			name: 'mangrove log',
+			image: '/images/items/mangrove_log.png',
+			url: 'https://minecraft.fandom.com/wiki/Mangrove_Log',
+			stack: 64,
+			category: 'wood',
+			subcategory: 'mangrove',
+			version: '1.19',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_19': 10
+			},
+			recipes_by_version: {}
+		},
+		{
 			id: 'air',
 			material_id: 'air',
 			name: 'air',
