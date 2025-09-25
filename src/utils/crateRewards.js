@@ -270,6 +270,41 @@ export function calculateCrateRewardTotalValue(rewardItems, allItems, version = 
 }
 
 /**
+ * Format a single reward item for YAML export
+ */
+export function formatRewardItemForYaml(rewardItem, item, prizeId) {
+	if (!rewardItem || !item) return null
+
+	const displayName = rewardItem.display_name || `<white>${rewardItem.quantity}x ${item.name}`
+	const displayItem = rewardItem.display_item || item.material_id
+	const displayAmount = rewardItem.display_amount || rewardItem.quantity
+	const weight = rewardItem.weight || 50
+
+	// Build the item string
+	let itemString = `item:${item.material_id}`
+	if (rewardItem.quantity > 1) {
+		itemString += `, amount:${rewardItem.quantity}`
+	}
+
+	// Add enchantments if any
+	if (rewardItem.enchantments && Object.keys(rewardItem.enchantments).length > 0) {
+		Object.entries(rewardItem.enchantments).forEach(([enchant, level]) => {
+			itemString += `, ${enchant}:${level}`
+		})
+	}
+
+	return {
+		prizeId: prizeId.toString(),
+		displayName,
+		displayItem,
+		displayAmount,
+		weight,
+		itemString,
+		customModelData: rewardItem.custom_model_data || -1
+	}
+}
+
+/**
  * Generate Crazy Crates YAML configuration
  */
 export function generateCrazyCratesYaml(crateReward, rewardItems, allItems, version = '1_20') {
@@ -277,41 +312,26 @@ export function generateCrazyCratesYaml(crateReward, rewardItems, allItems, vers
 
 	const yamlLines = ['Prizes:']
 
-	rewardItems.forEach((rewardItem, index) => {
+	// Sort reward items by weight (high to low)
+	const sortedRewardItems = [...rewardItems].sort((a, b) => (b.weight || 0) - (a.weight || 0))
+
+	sortedRewardItems.forEach((rewardItem, index) => {
 		const item = allItems.find((i) => i.id === rewardItem.item_id)
 		if (!item) return
 
-		const prizeId = (index + 1).toString()
-		const displayName = rewardItem.display_name || `<white>${rewardItem.quantity}x ${item.name}`
-		const displayItem = rewardItem.display_item || item.material_id
-		const displayAmount = rewardItem.display_amount || rewardItem.quantity
-		const weight = rewardItem.weight || 50
+		const formattedItem = formatRewardItemForYaml(rewardItem, item, index + 1)
+		if (!formattedItem) return
 
-		// Build the item string
-		let itemString = `item:${item.material_id}`
-		if (rewardItem.quantity > 1) {
-			itemString += `, amount:${rewardItem.quantity}`
-		}
-
-		// Add enchantments if any
-		if (rewardItem.enchantments && Object.keys(rewardItem.enchantments).length > 0) {
-			Object.entries(rewardItem.enchantments).forEach(([enchant, level]) => {
-				itemString += `, ${enchant}:${level}`
-			})
-		}
-
-		yamlLines.push(`    "${prizeId}":`)
-		yamlLines.push(`      DisplayName: "${displayName}"`)
-		yamlLines.push(`      DisplayItem: "${displayItem}"`)
+		yamlLines.push(`    "${formattedItem.prizeId}":`)
+		yamlLines.push(`      DisplayName: "${formattedItem.displayName}"`)
+		yamlLines.push(`      DisplayItem: "${formattedItem.displayItem}"`)
 		yamlLines.push(
-			`      Settings: { Custom-Model-Data: ${
-				rewardItem.custom_model_data || -1
-			}, Model: { Namespace: "", Id: "" } }`
+			`      Settings: { Custom-Model-Data: ${formattedItem.customModelData}, Model: { Namespace: "", Id: "" } }`
 		)
-		yamlLines.push(`      DisplayAmount: ${displayAmount}`)
-		yamlLines.push(`      Weight: ${weight}`)
+		yamlLines.push(`      DisplayAmount: ${formattedItem.displayAmount}`)
+		yamlLines.push(`      Weight: ${formattedItem.weight}`)
 		yamlLines.push(`      Items:`)
-		yamlLines.push(`        - "${itemString}"`)
+		yamlLines.push(`        - "${formattedItem.itemString}"`)
 		yamlLines.push('')
 	})
 

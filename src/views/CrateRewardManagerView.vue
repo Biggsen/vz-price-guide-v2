@@ -14,7 +14,8 @@ import {
 	updateCrateRewardItem,
 	deleteCrateRewardItem,
 	calculateCrateRewardTotalValue,
-	downloadCrateRewardYaml
+	downloadCrateRewardYaml,
+	formatRewardItemForYaml
 } from '../utils/crateRewards.js'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { versions } from '../constants.js'
@@ -41,6 +42,9 @@ const showAddItemForm = ref(false)
 const editingItem = ref(null)
 const loading = ref(false)
 const error = ref(null)
+
+// Review panel state
+const expandedReviewPanels = ref(new Set())
 
 // Form data
 const crateForm = ref({
@@ -587,17 +591,26 @@ function cancelEnchantment() {
 	}
 }
 
-// Weight adjustment functions
-function increaseWeight() {
-	if (itemForm.value.weight < 1000) {
-		itemForm.value.weight = Math.min(itemForm.value.weight + 10, 1000)
+// Review panel functions
+function toggleReviewPanel(itemId) {
+	if (expandedReviewPanels.value.has(itemId)) {
+		expandedReviewPanels.value.delete(itemId)
+	} else {
+		expandedReviewPanels.value.add(itemId)
 	}
 }
 
-function decreaseWeight() {
-	if (itemForm.value.weight > 10) {
-		itemForm.value.weight = Math.max(itemForm.value.weight - 10, 1)
-	}
+function isReviewPanelExpanded(itemId) {
+	return expandedReviewPanels.value.has(itemId)
+}
+
+function getFormattedYamlForItem(rewardItem) {
+	if (!rewardItem || !allItems.value) return null
+
+	const item = allItems.value.find((i) => i.id === rewardItem.item_id)
+	if (!item) return null
+
+	return formatRewardItemForYaml(rewardItem, item, 1)
 }
 
 // Item weight adjustment functions (for existing items in the list)
@@ -1185,6 +1198,41 @@ watch(selectedCrate, (crate) => {
 									</button>
 								</div>
 							</div>
+
+							<!-- Review Panel -->
+							<div class="mt-4">
+								<button
+									@click="toggleReviewPanel(rewardItem.id)"
+									class="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+									<svg
+										:class="[
+											'w-4 h-4 transition-transform',
+											isReviewPanelExpanded(rewardItem.id) ? 'rotate-90' : ''
+										]"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M9 5l7 7-7 7" />
+									</svg>
+									{{ isReviewPanelExpanded(rewardItem.id) ? 'Hide' : 'Show' }}
+									YAML Preview
+								</button>
+
+								<pre
+									v-if="isReviewPanelExpanded(rewardItem.id)"
+									class="mt-3 text-xs bg-white p-3 rounded border overflow-x-auto"><code>{{ getFormattedYamlForItem(rewardItem) ? `    "1":
+      DisplayName: "${getFormattedYamlForItem(rewardItem).displayName}"
+      DisplayItem: "${getFormattedYamlForItem(rewardItem).displayItem}"
+      Settings: { Custom-Model-Data: ${getFormattedYamlForItem(rewardItem).customModelData}, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: ${getFormattedYamlForItem(rewardItem).displayAmount}
+      Weight: ${getFormattedYamlForItem(rewardItem).weight}
+      Items:
+        - "${getFormattedYamlForItem(rewardItem).itemString}"` : 'Loading...' }}</code></pre>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -1523,49 +1571,13 @@ watch(selectedCrate, (crate) => {
 									class="block text-sm font-medium text-gray-700 mb-1">
 									Weight *
 								</label>
-								<div class="flex items-center">
-									<button
-										type="button"
-										@click="decreaseWeight"
-										class="flex-shrink-0 p-2 border border-gray-300 rounded-l-lg bg-gray-50 hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-										title="Decrease weight by 10">
-										<svg
-											class="w-4 h-4 text-gray-600"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24">
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M15 19l-7-7 7-7" />
-										</svg>
-									</button>
-									<input
-										id="item-weight"
-										v-model.number="itemForm.weight"
-										type="number"
-										min="1"
-										required
-										class="flex-1 px-3 py-2 border-t border-b border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-									<button
-										type="button"
-										@click="increaseWeight"
-										class="flex-shrink-0 p-2 border border-gray-300 rounded-r-lg bg-gray-50 hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-										title="Increase weight by 10">
-										<svg
-											class="w-4 h-4 text-gray-600"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24">
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M9 5l7 7-7 7" />
-										</svg>
-									</button>
-								</div>
+								<input
+									id="item-weight"
+									v-model.number="itemForm.weight"
+									type="number"
+									min="1"
+									required
+									class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
 							</div>
 						</div>
 
