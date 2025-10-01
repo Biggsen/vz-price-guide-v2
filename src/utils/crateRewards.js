@@ -275,7 +275,18 @@ export function calculateCrateRewardTotalValue(rewardItems, allItems, version = 
 export function formatRewardItemForYaml(rewardItem, item, prizeId) {
 	if (!rewardItem || !item) return null
 
-	const displayName = rewardItem.display_name || `<white>${rewardItem.quantity}x ${item.name}`
+	// Check if item has enchantments
+	const hasEnchantments =
+		(rewardItem.enchantments && Object.keys(rewardItem.enchantments).length > 0) ||
+		(item.material_id.startsWith('enchanted_book_') && item.material_id !== 'enchanted_book')
+
+	// Build display name with "enchanted" prefix if applicable
+	let itemName = item.name
+	if (hasEnchantments && !itemName.toLowerCase().includes('enchanted')) {
+		itemName = `enchanted ${itemName}`
+	}
+
+	const displayName = rewardItem.display_name || `<white>${rewardItem.quantity}x ${itemName}`
 
 	// For enchanted books, always use "enchanted_book" as DisplayItem
 	let displayItem = rewardItem.display_item || item.material_id
