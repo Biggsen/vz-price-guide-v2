@@ -2,8 +2,19 @@
 import { useFirestore } from 'vuefire'
 import { useRoute, RouterLink } from 'vue-router'
 import { doc, deleteDoc } from 'firebase/firestore'
-import { buyUnitPrice, sellUnitPrice, buyStackPrice, sellStackPrice } from '../utils/pricing.js'
-import { getEffectivePrice } from '../utils/pricing.js'
+import {
+	buyUnitPrice,
+	sellUnitPrice,
+	buyStackPrice,
+	sellStackPrice,
+	buyUnitPriceWithCurrency,
+	sellUnitPriceWithCurrency,
+	buyStackPriceWithCurrency,
+	sellStackPriceWithCurrency,
+	getEffectivePrice,
+	findDiamondRecipeItems,
+	formatDiamondPrice
+} from '../utils/pricing.js'
 import { useAdmin } from '../utils/admin.js'
 import { getImageUrl } from '../utils/image.js'
 import { computed, ref, watch } from 'vue'
@@ -45,6 +56,9 @@ const priceMultiplier = computed(() => props.economyConfig.priceMultiplier)
 const sellMargin = computed(() => props.economyConfig.sellMargin)
 const roundToWhole = computed(() => props.economyConfig.roundToWhole)
 const currentVersion = computed(() => props.economyConfig.version || '1.18')
+const currencyType = computed(() => props.economyConfig.currencyType || 'money')
+const diamondConversionRatio = computed(() => props.economyConfig.diamondConversionRatio || 32)
+const showSellColumns = computed(() => !props.economyConfig.hideSellColumns) // Show sell columns when not hidden
 
 // Check if sorting is enabled (only in list view)
 const sortingEnabled = computed(() => props.viewMode === 'list')
@@ -66,7 +80,7 @@ const sortedCollection = computed(() => {
 		}
 
 		if (sortField.value === 'buy') {
-			// Calculate buy prices for comparison using effective price
+			// Calculate buy prices for comparison using effective price in money
 			const versionKey = currentVersion.value.replace('.', '_')
 			valueA = getEffectivePrice(a, versionKey) * (priceMultiplier.value || 1)
 			valueB = getEffectivePrice(b, versionKey) * (priceMultiplier.value || 1)
@@ -77,6 +91,58 @@ const sortedCollection = computed(() => {
 		return 0
 	})
 })
+
+// Compute a map of material_id to diamond recipe price for the current version
+const diamondRecipePriceMap = computed(() => {
+	if (currencyType.value !== 'diamond') return {}
+	const versionKey = currentVersion.value.replace('.', '_')
+	const { items } = findDiamondRecipeItems(props.collection, versionKey)
+	const map = {}
+	for (const item of items) {
+		map[item.material_id] = item.diamondPrice
+	}
+	return map
+})
+
+// Helper function to get the correct price for display
+function getDisplayPrice(item) {
+	if (
+		currencyType.value === 'diamond' &&
+		diamondRecipePriceMap.value[item.material_id] !== undefined
+	) {
+		return diamondRecipePriceMap.value[item.material_id]
+	}
+	return getItemEffectivePrice(item)
+}
+
+// Helper functions for diamond recipe items (no conversion needed)
+function formatDiamondRecipePrice(price, priceMultiplier) {
+	const calculatedPrice = price * priceMultiplier
+	return formatDiamondPrice(calculatedPrice)
+}
+
+function formatDiamondRecipeStackPrice(price, stack, priceMultiplier) {
+	const calculatedPrice = price * stack * priceMultiplier
+	return formatDiamondPrice(calculatedPrice)
+}
+
+function formatDiamondRecipeSellPrice(price, priceMultiplier, sellMargin) {
+	const calculatedPrice = price * priceMultiplier * sellMargin
+	return formatDiamondPrice(calculatedPrice)
+}
+
+function formatDiamondRecipeSellStackPrice(price, stack, priceMultiplier, sellMargin) {
+	const calculatedPrice = price * stack * priceMultiplier * sellMargin
+	return formatDiamondPrice(calculatedPrice)
+}
+
+// Helper function to check if item is a diamond recipe item
+function isDiamondRecipeItem(item) {
+	return (
+		currencyType.value === 'diamond' &&
+		diamondRecipePriceMap.value[item.material_id] !== undefined
+	)
+}
 
 // Watch for view mode changes and reset/set sorting accordingly
 watch(
@@ -158,11 +224,11 @@ function getItemEffectivePrice(item) {
 					<span v-else>Item/Block Name</span>
 				</th>
 				<th rowspan="2"></th>
-				<th colspan="2">
+				<th :colspan="showSellColumns ? 2 : 1">
 					<span class="hidden min-[330px]:inline">Unit Price</span>
 					<span class="min-[330px]:hidden">Unit</span>
 				</th>
-				<th colspan="2">
+				<th :colspan="showSellColumns ? 2 : 1">
 					<span class="hidden min-[330px]:inline">Stack Price</span>
 					<span class="min-[330px]:hidden">Stack</span>
 				</th>
@@ -184,9 +250,9 @@ function getItemEffectivePrice(item) {
 					</div>
 					<span v-else>Buy</span>
 				</th>
-				<th>Sell</th>
+				<th v-if="showSellColumns">Sell</th>
 				<th>Buy</th>
-				<th>Sell</th>
+				<th v-if="showSellColumns">Sell</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -226,39 +292,70 @@ function getItemEffectivePrice(item) {
 						" />
 				</td>
 				<td class="text-center">
-					{{ buyUnitPrice(getItemEffectivePrice(item), priceMultiplier, roundToWhole) }}
+					{{
+						isDiamondRecipeItem(item)
+							? formatDiamondRecipePrice(getDisplayPrice(item), priceMultiplier)
+							: buyUnitPriceWithCurrency(
+									getDisplayPrice(item),
+									priceMultiplier,
+									currencyType,
+									roundToWhole
+							  )
+					}}
 				</td>
 
-				<td class="text-center">
+				<td v-if="showSellColumns" class="text-center">
 					{{
-						sellUnitPrice(
-							getItemEffectivePrice(item),
-							priceMultiplier,
-							sellMargin,
-							roundToWhole
-						)
+						isDiamondRecipeItem(item)
+							? formatDiamondRecipeSellPrice(
+									getDisplayPrice(item),
+									priceMultiplier,
+									sellMargin
+							  )
+							: sellUnitPriceWithCurrency(
+									getDisplayPrice(item),
+									priceMultiplier,
+									sellMargin,
+									currencyType,
+									roundToWhole
+							  )
 					}}
 				</td>
 
 				<td class="text-center">
 					{{
-						buyStackPrice(
-							getItemEffectivePrice(item),
-							item.stack,
-							priceMultiplier,
-							roundToWhole
-						)
+						isDiamondRecipeItem(item)
+							? formatDiamondRecipeStackPrice(
+									getDisplayPrice(item),
+									item.stack,
+									priceMultiplier
+							  )
+							: buyStackPriceWithCurrency(
+									getDisplayPrice(item),
+									item.stack,
+									priceMultiplier,
+									currencyType,
+									roundToWhole
+							  )
 					}}
 				</td>
-				<td class="text-center">
+				<td v-if="showSellColumns" class="text-center">
 					{{
-						sellStackPrice(
-							getItemEffectivePrice(item),
-							item.stack,
-							priceMultiplier,
-							sellMargin,
-							roundToWhole
-						)
+						isDiamondRecipeItem(item)
+							? formatDiamondRecipeSellStackPrice(
+									getDisplayPrice(item),
+									item.stack,
+									priceMultiplier,
+									sellMargin
+							  )
+							: sellStackPriceWithCurrency(
+									getDisplayPrice(item),
+									item.stack,
+									priceMultiplier,
+									sellMargin,
+									currencyType,
+									roundToWhole
+							  )
 					}}
 				</td>
 				<td v-if="canEditItems">

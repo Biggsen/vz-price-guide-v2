@@ -37,6 +37,93 @@ export function formatCurrency(num, roundToWhole = false) {
 	return formatNumber(Math.round(num))
 }
 
+/**
+ * Convert money price to diamond price
+ * @param {number} moneyPrice - The price in money units
+ * @param {number} ratio - Conversion ratio (default: 32)
+ * @returns {number} - The price in diamonds
+ */
+export function convertToDiamondPrice(moneyPrice, ratio = 32) {
+	if (
+		moneyPrice === undefined ||
+		moneyPrice === null ||
+		typeof moneyPrice !== 'number' ||
+		isNaN(moneyPrice)
+	) {
+		return 0
+	}
+	return moneyPrice / ratio
+}
+
+/**
+ * Convert diamond price to money price
+ * @param {number} diamondPrice - The price in diamonds
+ * @param {number} ratio - Conversion ratio (default: 32)
+ * @returns {number} - The price in money units
+ */
+export function convertToMoneyPrice(diamondPrice, ratio = 32) {
+	if (
+		diamondPrice === undefined ||
+		diamondPrice === null ||
+		typeof diamondPrice !== 'number' ||
+		isNaN(diamondPrice)
+	) {
+		return 0
+	}
+	return diamondPrice * ratio
+}
+
+/**
+ * Format diamond price as either diamonds or diamond blocks (no decimals, no mixed values)
+ * @param {number} diamondPrice - The price in diamonds
+ * @returns {string} - Formatted price (e.g., "5 diamonds" or "3 diamond blocks")
+ */
+export function formatDiamondPrice(diamondPrice) {
+	if (
+		diamondPrice === undefined ||
+		diamondPrice === null ||
+		typeof diamondPrice !== 'number' ||
+		isNaN(diamondPrice)
+	) {
+		return '1d'
+	}
+
+	// Round to whole number, minimum 1
+	const wholePrice = Math.max(1, Math.round(diamondPrice))
+
+	if (wholePrice >= 9) {
+		// Convert to diamond blocks (9 diamonds = 1 diamond block)
+		const blocks = Math.floor(wholePrice / 9)
+		return `${blocks}db`
+	} else {
+		return `${wholePrice}d`
+	}
+}
+
+/**
+ * Get effective price in current currency
+ * @param {Object} item - The item object
+ * @param {string} version - Version key (e.g., "1_16")
+ * @param {string} currencyType - Currency type ('money' or 'diamond')
+ * @param {Object} config - Economy configuration
+ * @returns {number} - The effective price in the specified currency
+ */
+export function getEffectivePriceInCurrency(
+	item,
+	version = '1_16',
+	currencyType = 'money',
+	config = {}
+) {
+	const moneyPrice = getEffectivePrice(item, version)
+
+	if (currencyType === 'diamond') {
+		const ratio = config.diamondConversionRatio || 32
+		return convertToDiamondPrice(moneyPrice, ratio)
+	}
+
+	return moneyPrice
+}
+
 export function buyUnitPrice(price, priceMultiplier, roundToWhole = false) {
 	return formatCurrency(price * priceMultiplier, roundToWhole)
 }
@@ -51,6 +138,132 @@ export function buyStackPrice(price, stack, priceMultiplier, roundToWhole = fals
 
 export function sellStackPrice(price, stack, priceMultiplier, sellMargin, roundToWhole = false) {
 	return formatCurrency(price * stack * priceMultiplier * sellMargin, roundToWhole)
+}
+
+/**
+ * Format price with currency support
+ * @param {number} price - The price value
+ * @param {string} currencyType - Currency type ('money' or 'diamond')
+ * @param {boolean} roundToWhole - Whether to round to whole numbers
+ * @returns {string} - Formatted price
+ */
+export function formatPriceWithCurrency(price, currencyType = 'money', roundToWhole = false) {
+	if (currencyType === 'diamond') {
+		return formatDiamondPrice(price)
+	}
+	return formatCurrency(price, roundToWhole)
+}
+
+/**
+ * Buy unit price with currency support
+ * @param {number} price - Base price in money
+ * @param {number} priceMultiplier - Price multiplier
+ * @param {string} currencyType - Currency type ('money' or 'diamond')
+ * @param {boolean} roundToWhole - Whether to round to whole numbers
+ * @returns {string} - Formatted buy price
+ */
+export function buyUnitPriceWithCurrency(
+	price,
+	priceMultiplier,
+	currencyType = 'money',
+	roundToWhole = false
+) {
+	if (currencyType === 'diamond') {
+		// Apply price multiplier to money price, then convert to diamonds
+		const moneyPrice = price * priceMultiplier
+		const diamondPrice = convertToDiamondPrice(moneyPrice, 32)
+		return formatDiamondPrice(diamondPrice)
+	}
+
+	// For money currency, use existing logic
+	const calculatedPrice = price * priceMultiplier
+	return formatCurrency(calculatedPrice, roundToWhole)
+}
+
+/**
+ * Sell unit price with currency support
+ * @param {number} price - Base price in money
+ * @param {number} priceMultiplier - Price multiplier
+ * @param {number} sellMargin - Sell margin
+ * @param {string} currencyType - Currency type ('money' or 'diamond')
+ * @param {boolean} roundToWhole - Whether to round to whole numbers
+ * @returns {string} - Formatted sell price
+ */
+export function sellUnitPriceWithCurrency(
+	price,
+	priceMultiplier,
+	sellMargin,
+	currencyType = 'money',
+	roundToWhole = false
+) {
+	if (currencyType === 'diamond') {
+		// Apply price multiplier and sell margin to money price, then convert to diamonds
+		const moneyPrice = price * priceMultiplier * sellMargin
+		const diamondPrice = convertToDiamondPrice(moneyPrice, 32)
+		return formatDiamondPrice(diamondPrice)
+	}
+
+	// For money currency, use existing logic
+	const calculatedPrice = price * priceMultiplier * sellMargin
+	return formatCurrency(calculatedPrice, roundToWhole)
+}
+
+/**
+ * Buy stack price with currency support
+ * @param {number} price - Base price in money
+ * @param {number} stack - Stack size
+ * @param {number} priceMultiplier - Price multiplier
+ * @param {string} currencyType - Currency type ('money' or 'diamond')
+ * @param {boolean} roundToWhole - Whether to round to whole numbers
+ * @returns {string} - Formatted buy stack price
+ */
+export function buyStackPriceWithCurrency(
+	price,
+	stack,
+	priceMultiplier,
+	currencyType = 'money',
+	roundToWhole = false
+) {
+	if (currencyType === 'diamond') {
+		// Apply price multiplier and stack to money price, then convert to diamonds
+		const moneyPrice = price * priceMultiplier * stack
+		const diamondPrice = convertToDiamondPrice(moneyPrice, 32)
+		return formatDiamondPrice(diamondPrice)
+	}
+
+	// For money currency, use existing logic
+	const calculatedPrice = price * stack * priceMultiplier
+	return formatCurrency(calculatedPrice, roundToWhole)
+}
+
+/**
+ * Sell stack price with currency support
+ * @param {number} price - Base price in money
+ * @param {number} stack - Stack size
+ * @param {number} priceMultiplier - Price multiplier
+ * @param {number} sellMargin - Sell margin
+ * @param {string} currencyType - Currency type ('money' or 'diamond')
+ * @param {boolean} roundToWhole - Whether to round to whole numbers
+ * @returns {string} - Formatted sell stack price
+ */
+export function sellStackPriceWithCurrency(
+	price,
+	stack,
+	priceMultiplier,
+	sellMargin,
+	currencyType = 'money',
+	roundToWhole = false
+) {
+	if (currencyType === 'diamond') {
+		// Apply price multiplier, stack, and sell margin to money price, then convert to diamonds
+		const moneyPrice = price * priceMultiplier * stack * sellMargin
+		const diamondPrice = convertToDiamondPrice(moneyPrice, 32)
+		return formatDiamondPrice(diamondPrice)
+	}
+
+	// For money currency, use existing logic
+	const calculatedPrice = price * stack * priceMultiplier * sellMargin
+	return formatCurrency(calculatedPrice, roundToWhole)
 }
 
 /**
@@ -267,6 +480,145 @@ export function customRoundPrice(price) {
 	} else {
 		return Math.ceil(price)
 	}
+}
+
+/**
+ * Find items that have diamond in their recipe and calculate prices based on diamond = 1
+ * @param {Array} allItems - Array of all items
+ * @param {string} version - Version key (e.g., "1_16")
+ * @returns {Object} - { items: Array, summary: Object }
+ */
+export function findDiamondRecipeItems(allItems, version = '1_16') {
+	const results = {
+		items: [],
+		summary: {
+			total: 0,
+			withDiamond: 0,
+			withoutDiamond: 0
+		}
+	}
+
+	// Helper function to check if item should be shown for selected version
+	function shouldShowItemForVersion(item, selectedVersion) {
+		// Item must have a version and be <= selected version
+		if (!item.version || !isVersionLessOrEqual(item.version, selectedVersion)) {
+			return false
+		}
+
+		// If item has version_removed and it's <= selected version, don't show it
+		if (item.version_removed && isVersionLessOrEqual(item.version_removed, selectedVersion)) {
+			return false
+		}
+
+		return true
+	}
+
+	// Helper function to compare version strings (e.g., "1.16" vs "1.17")
+	function isVersionLessOrEqual(itemVersion, targetVersion) {
+		if (!itemVersion || !targetVersion) return false
+
+		const [itemMajor, itemMinor] = itemVersion.split('.').map(Number)
+		const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+
+		if (itemMajor < targetMajor) return true
+		if (itemMajor > targetMajor) return false
+		return itemMinor <= targetMinor
+	}
+
+	// Find all items with recipes that are available in the selected version
+	const itemsWithRecipes = allItems.filter(
+		(item) =>
+			item.recipes_by_version &&
+			Object.keys(item.recipes_by_version).length > 0 &&
+			shouldShowItemForVersion(item, version.replace('_', '.'))
+	)
+	results.summary.total = itemsWithRecipes.length
+
+	for (const item of itemsWithRecipes) {
+		// Get recipe for this version (with fallback to earlier versions)
+		let recipe = item.recipes_by_version?.[version]
+		if (!recipe && item.recipes_by_version) {
+			const availableVersions = Object.keys(item.recipes_by_version)
+			const sortedVersions = availableVersions.sort((a, b) => {
+				const aVersion = a.replace('_', '.')
+				const bVersion = b.replace('_', '.')
+				const [aMajor, aMinor] = aVersion.split('.').map(Number)
+				const [bMajor, bMinor] = bVersion.split('.').map(Number)
+				if (aMajor !== bMajor) return bMajor - aMajor
+				return bMinor - aMinor
+			})
+			const requestedVersion = version.replace('_', '.')
+			const [reqMajor, reqMinor] = requestedVersion.split('.').map(Number)
+			for (const availableVersion of sortedVersions) {
+				const availableVersionFormatted = availableVersion.replace('_', '.')
+				const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
+				if (avMajor < reqMajor || (avMajor === reqMajor && avMinor <= reqMinor)) {
+					recipe = item.recipes_by_version[availableVersion]
+					break
+				}
+			}
+		}
+
+		if (!recipe) continue
+
+		// Handle both old format (array) and new format (object)
+		const ingredients = Array.isArray(recipe) ? recipe : recipe.ingredients
+		const outputCount = Array.isArray(recipe) ? 1 : recipe.output_count || 1
+
+		if (!ingredients || !Array.isArray(ingredients)) continue
+
+		// Check if recipe contains diamond
+		const hasDiamond = ingredients.some((ingredient) => ingredient.material_id === 'diamond')
+
+		if (hasDiamond) {
+			// Calculate price based on diamond = 1
+			let totalDiamondCost = 0
+			const calculationChain = []
+
+			for (const ingredient of ingredients) {
+				if (ingredient.material_id === 'diamond') {
+					totalDiamondCost += ingredient.quantity
+					calculationChain.push(`diamond: ${ingredient.quantity} (diamond = 1)`)
+				} else {
+					// For non-diamond ingredients, use their current price converted to diamonds
+					const ingredientItem = allItems.find(
+						(i) => i.material_id === ingredient.material_id
+					)
+					if (ingredientItem) {
+						const ingredientPrice = getEffectivePrice(ingredientItem, version)
+						const diamondEquivalent = ingredientPrice / 32 // Convert money price to diamond equivalent
+						totalDiamondCost += diamondEquivalent * ingredient.quantity
+						calculationChain.push(
+							`${ingredient.material_id}: ${
+								ingredient.quantity
+							} × ${diamondEquivalent.toFixed(2)}d = ${(
+								diamondEquivalent * ingredient.quantity
+							).toFixed(2)}d`
+						)
+					}
+				}
+			}
+
+			const pricePerUnit = totalDiamondCost / outputCount
+			const roundedPrice = Math.ceil(pricePerUnit) // Round up to whole number
+
+			results.items.push({
+				material_id: item.material_id,
+				name: item.name,
+				diamondPrice: roundedPrice,
+				calculationChain,
+				ingredients: ingredients,
+				outputCount,
+				totalDiamondCost: totalDiamondCost.toFixed(2)
+			})
+
+			results.summary.withDiamond++
+		} else {
+			results.summary.withoutDiamond++
+		}
+	}
+
+	return results
 }
 
 /**

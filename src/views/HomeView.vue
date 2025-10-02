@@ -98,6 +98,18 @@ function shouldShowItemForVersion(item, selectedVersion) {
 	return true
 }
 
+// Helper function to check if item should be hidden when using diamond currency
+function shouldHideInDiamondCurrency(item) {
+	if (currencyType.value !== 'diamond') {
+		return false
+	}
+
+	// Hide diamond-related items when using diamond currency
+	const diamondItems = ['diamond', 'diamond_block', 'diamond_ore', 'deepslate_diamond_ore']
+
+	return diamondItems.includes(item.material_id)
+}
+
 const groupedItems = computed(() => {
 	if (!allItemsCollection.value) return {}
 	return allItemsCollection.value.reduce((acc, item) => {
@@ -108,6 +120,8 @@ const groupedItems = computed(() => {
 		// Skip zero-priced items unless admin has enabled showing them
 		const effectivePrice = getEffectivePrice(item, selectedVersion.value.replace('.', '_'))
 		if (!showZeroPricedItems.value && (!effectivePrice || effectivePrice === 0)) return acc
+		// Skip diamond items when using diamond currency
+		if (shouldHideInDiamondCurrency(item)) return acc
 
 		if (!acc[item.category]) acc[item.category] = []
 		acc[item.category].push(item)
@@ -132,7 +146,8 @@ const uncategorizedItemsByVersion = computed(() => {
 			(user.value?.email || hasImage) &&
 			isAvailableInVersion &&
 			hasValidPrice &&
-			item.version
+			item.version &&
+			!shouldHideInDiamondCurrency(item)
 		) {
 			if (!uncatByVersion[item.version]) {
 				uncatByVersion[item.version] = []
@@ -162,6 +177,13 @@ const roundToWhole = ref(false)
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
 
+// Currency configuration
+const currencyType = ref('money') // 'money' or 'diamond'
+const diamondConversionRatio = ref(32)
+
+// Table display options
+const hideSellColumns = ref(false)
+
 // Admin-only option to show zero-priced items
 const showZeroPricedItems = ref(false)
 
@@ -181,7 +203,22 @@ const economyConfig = computed(() => ({
 	priceMultiplier: priceMultiplier.value,
 	sellMargin: sellMargin.value,
 	roundToWhole: roundToWhole.value,
-	version: selectedVersion.value
+	version: selectedVersion.value,
+	currencyType: currencyType.value,
+	diamondConversionRatio: diamondConversionRatio.value,
+	hideSellColumns: hideSellColumns.value
+}))
+
+// Current settings for the modal
+const currentSettings = computed(() => ({
+	selectedVersion: selectedVersion.value,
+	priceMultiplier: priceMultiplier.value,
+	sellMargin: sellMargin.value,
+	roundToWhole: roundToWhole.value,
+	showZeroPricedItems: showZeroPricedItems.value,
+	currencyType: currencyType.value,
+	diamondConversionRatio: diamondConversionRatio.value,
+	hideSellColumns: hideSellColumns.value
 }))
 
 // Load config from localStorage
@@ -193,6 +230,9 @@ function loadEconomyConfig() {
 	const savedLayout = localStorage.getItem('layout')
 	const savedSelectedVersion = localStorage.getItem('selectedVersion')
 	const savedShowZeroPricedItems = localStorage.getItem('showZeroPricedItems')
+	const savedCurrencyType = localStorage.getItem('currencyType')
+	const savedDiamondConversionRatio = localStorage.getItem('diamondConversionRatio')
+	const savedHideSellColumns = localStorage.getItem('hideSellColumns')
 
 	if (savedPriceMultiplier !== null) {
 		priceMultiplier.value = parseFloat(savedPriceMultiplier)
@@ -202,6 +242,18 @@ function loadEconomyConfig() {
 	}
 	if (savedRoundToWhole !== null) {
 		roundToWhole.value = savedRoundToWhole === 'true'
+	}
+	if (savedCurrencyType !== null) {
+		currencyType.value = savedCurrencyType
+	}
+	if (savedDiamondConversionRatio !== null) {
+		diamondConversionRatio.value = parseFloat(savedDiamondConversionRatio)
+	}
+	if (savedHideSellColumns !== null) {
+		hideSellColumns.value = savedHideSellColumns === 'true'
+	} else {
+		// Default to false (show sell prices) for new users
+		hideSellColumns.value = false
 	}
 	if (savedViewMode !== null) {
 		viewMode.value = savedViewMode
@@ -228,6 +280,9 @@ function saveEconomyConfig() {
 	localStorage.setItem('layout', layout.value)
 	localStorage.setItem('selectedVersion', selectedVersion.value)
 	localStorage.setItem('showZeroPricedItems', showZeroPricedItems.value.toString())
+	localStorage.setItem('currencyType', currencyType.value)
+	localStorage.setItem('diamondConversionRatio', diamondConversionRatio.value.toString())
+	localStorage.setItem('hideSellColumns', hideSellColumns.value.toString())
 }
 
 // Watch for changes and save to localStorage
@@ -239,20 +294,16 @@ watch(
 		viewMode,
 		layout,
 		selectedVersion,
-		showZeroPricedItems
+		showZeroPricedItems,
+		currencyType,
+		diamondConversionRatio,
+		hideSellColumns
 	],
 	() => {
 		saveEconomyConfig()
 	},
 	{ deep: true }
 )
-
-// Reset to defaults
-function resetEconomyConfig() {
-	priceMultiplier.value = 1
-	sellMargin.value = 0.3
-	roundToWhole.value = false
-}
 
 const filteredGroupedItems = computed(() => {
 	if (!allItemsCollection.value) return {}
@@ -565,6 +616,9 @@ function handleSaveSettings(settings) {
 	sellMargin.value = settings.sellMargin
 	roundToWhole.value = settings.roundToWhole
 	showZeroPricedItems.value = settings.showZeroPricedItems
+	currencyType.value = settings.currencyType
+	diamondConversionRatio.value = settings.diamondConversionRatio
+	hideSellColumns.value = settings.hideSellColumns
 
 	// Close the modal
 	showSettingsModal.value = false
@@ -849,6 +903,7 @@ watch(
 	<!-- Settings Modal -->
 	<SettingsModal
 		:isOpen="showSettingsModal"
+		:currentSettings="currentSettings"
 		@close="closeSettingsModal"
 		@save-settings="handleSaveSettings" />
 </template>
