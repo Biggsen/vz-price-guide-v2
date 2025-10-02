@@ -1121,7 +1121,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'enchanted_book_mending_1',
+			id: 'enchbook001',
 			material_id: 'enchanted_book_mending_1',
 			name: 'enchanted book (mending)',
 			image: '/images/items/enchanted_book.webp',
@@ -1138,7 +1138,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchanted_book_unbreaking_3',
+			id: 'enchbook002',
 			material_id: 'enchanted_book_unbreaking_3',
 			name: 'enchanted book (unbreaking iii)',
 			image: '/images/items/enchanted_book.webp',
@@ -1155,7 +1155,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchanted_book_efficiency_4',
+			id: 'enchbook003',
 			material_id: 'enchanted_book_efficiency_4',
 			name: 'enchanted book (efficiency iv)',
 			image: '/images/items/enchanted_book.webp',
@@ -1172,7 +1172,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchanted_book_sharpness_5',
+			id: 'enchbook004',
 			material_id: 'enchanted_book_sharpness_5',
 			name: 'enchanted book (sharpness v)',
 			image: '/images/items/enchanted_book.webp',
@@ -1189,7 +1189,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchanted_book_power_3',
+			id: 'enchbook005',
 			material_id: 'enchanted_book_power_3',
 			name: 'enchanted book (power iii)',
 			image: '/images/items/enchanted_book.webp',
@@ -1206,7 +1206,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchanted_book_efficiency_5',
+			id: 'enchbook006',
 			material_id: 'enchanted_book_efficiency_5',
 			name: 'enchanted book (efficiency v)',
 			image: '/images/items/enchanted_book.webp',
@@ -1223,7 +1223,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchanted_book_fortune_3',
+			id: 'enchbook007',
 			material_id: 'enchanted_book_fortune_3',
 			name: 'enchanted book (fortune iii)',
 			image: '/images/items/enchanted_book.webp',
@@ -1240,7 +1240,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchanted_book_silk_touch',
+			id: 'enchbook008',
 			material_id: 'enchanted_book_silk_touch',
 			name: 'enchanted book (silk touch)',
 			image: '/images/items/enchanted_book.webp',
@@ -1257,7 +1257,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchanted_book_protection_4',
+			id: 'enchbook009',
 			material_id: 'enchanted_book_protection_4',
 			name: 'enchanted book (protection iv)',
 			image: '/images/items/enchanted_book.webp',
@@ -1274,7 +1274,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchanted_book_feather_falling_4',
+			id: 'enchbook010',
 			material_id: 'enchanted_book_feather_falling_4',
 			name: 'enchanted book (feather falling iv)',
 			image: '/images/items/enchanted_book.webp',
@@ -1291,7 +1291,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchanted_book_aqua_affinity',
+			id: 'enchbook011',
 			material_id: 'enchanted_book_aqua_affinity',
 			name: 'enchanted book (aqua affinity)',
 			image: '/images/items/enchanted_book.webp',
@@ -1308,7 +1308,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchanted_book_respiration_3',
+			id: 'enchbook012',
 			material_id: 'enchanted_book_respiration_3',
 			name: 'enchanted book (respiration iii)',
 			image: '/images/items/enchanted_book.webp',
@@ -1325,7 +1325,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchanted_book_depth_strider_3',
+			id: 'enchbook013',
 			material_id: 'enchanted_book_depth_strider_3',
 			name: 'enchanted book (depth strider iii)',
 			image: '/images/items/enchanted_book.webp',
@@ -2459,7 +2459,7 @@ const TEST_DATA = {
 		{
 			id: 'test-crate-item-4',
 			crate_reward_id: 'test-crate-1',
-			item_id: 'enchanted_book_mending_1',
+			item_id: 'enchbook001',
 			quantity: 1,
 			weight: 10,
 			display_name: '',
