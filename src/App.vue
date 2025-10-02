@@ -22,6 +22,7 @@ function updateActiveMainNav() {
 		'/missing-items',
 		'/add',
 		'/bulk-update',
+		'/crate-rewards',
 		'/design',
 		'/styleguide',
 		'/visual-gallery',
@@ -36,7 +37,11 @@ function updateActiveMainNav() {
 		'/recipes/recalculate'
 	]
 
-	if (adminRoutes.includes(route.path) || route.path.startsWith('/edit-recipe/')) {
+	if (
+		adminRoutes.includes(route.path) ||
+		route.path.startsWith('/edit-recipe/') ||
+		route.path.startsWith('/crate-rewards/')
+	) {
 		activeMainNav.value = 'admin'
 	} else {
 		activeMainNav.value = null

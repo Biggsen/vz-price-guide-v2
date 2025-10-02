@@ -244,6 +244,9 @@ watch(
 	(newId) => {
 		if (newId) {
 			selectedCrateId.value = newId
+		} else {
+			// Reset to empty string when navigating to main crate rewards page
+			selectedCrateId.value = ''
 		}
 	},
 	{ immediate: true }

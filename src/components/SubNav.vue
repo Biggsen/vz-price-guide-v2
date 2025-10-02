@@ -10,6 +10,7 @@ const route = useRoute()
 // State for collapsible sections
 const isPriceGuideExpanded = ref(false)
 const isShopManagerExpanded = ref(false)
+const isCrateRewardsExpanded = ref(false)
 const isDesignExpanded = ref(false)
 
 // Computed properties for active states
@@ -31,6 +32,10 @@ const isShopManagerActive = computed(() => {
 	return ['/shop-manager', '/market-overview', '/shop-items', '/shops', '/servers'].includes(
 		route.path
 	)
+})
+
+const isCrateRewardsActive = computed(() => {
+	return route.path === '/crate-rewards' || route.path.startsWith('/crate-rewards/')
 })
 
 const isDesignActive = computed(() => {
@@ -66,6 +71,10 @@ const expandedSection = computed(() => {
 		) {
 			return 'shop-manager'
 		}
+		// Crate Rewards routes
+		else if (currentPath === '/crate-rewards' || currentPath.startsWith('/crate-rewards/')) {
+			return 'crate-rewards'
+		}
 		// Design routes
 		else if (['/design', '/styleguide', '/visual-gallery'].includes(currentPath)) {
 			return 'design'
@@ -84,6 +93,7 @@ watch(
 			// Reset all expansions
 			isPriceGuideExpanded.value = false
 			isShopManagerExpanded.value = false
+			isCrateRewardsExpanded.value = false
 			isDesignExpanded.value = false
 
 			// Expand the appropriate section
@@ -106,6 +116,11 @@ watch(
 				)
 			) {
 				isShopManagerExpanded.value = true
+			} else if (
+				currentPath === '/crate-rewards' ||
+				currentPath.startsWith('/crate-rewards/')
+			) {
+				isCrateRewardsExpanded.value = true
 			} else if (['/design', '/styleguide', '/visual-gallery'].includes(currentPath)) {
 				isDesignExpanded.value = true
 			}
@@ -113,6 +128,7 @@ watch(
 			// Collapse all when not in admin section
 			isPriceGuideExpanded.value = false
 			isShopManagerExpanded.value = false
+			isCrateRewardsExpanded.value = false
 			isDesignExpanded.value = false
 		}
 	},
@@ -124,6 +140,8 @@ function toggleSection(section) {
 		isPriceGuideExpanded.value = !isPriceGuideExpanded.value
 	} else if (section === 'shop-manager') {
 		isShopManagerExpanded.value = !isShopManagerExpanded.value
+	} else if (section === 'crate-rewards') {
+		isCrateRewardsExpanded.value = !isCrateRewardsExpanded.value
 	} else if (section === 'design') {
 		isDesignExpanded.value = !isDesignExpanded.value
 	}
@@ -181,6 +199,28 @@ function toggleSection(section) {
 				</RouterLink>
 			</div>
 
+			<!-- Crate Rewards Section -->
+			<button
+				@click="toggleSection('crate-rewards')"
+				class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-600 transition-colors">
+				<span class="font-medium">Crate Rewards</span>
+				<span
+					class="text-sm transition-transform"
+					:class="{ 'rotate-180': isCrateRewardsExpanded }">
+					▼
+				</span>
+			</button>
+
+			<!-- Crate Rewards Content -->
+			<div v-show="isCrateRewardsExpanded" class="border-t border-gray-600">
+				<RouterLink
+					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
+					active-class="bg-blue-600 text-white"
+					to="/crate-rewards">
+					Dashboard
+				</RouterLink>
+			</div>
+
 			<!-- Design Section -->
 			<button
 				@click="toggleSection('design')"
@@ -221,6 +261,12 @@ function toggleSection(section) {
 				:class="{ 'underline font-semibold': isShopManagerActive }"
 				to="/shop-manager">
 				Shop Manager
+			</RouterLink>
+			<RouterLink
+				class="hover:underline"
+				:class="{ 'underline font-semibold': isCrateRewardsActive }"
+				to="/crate-rewards">
+				Crate Rewards
 			</RouterLink>
 			<RouterLink
 				class="hover:underline"
