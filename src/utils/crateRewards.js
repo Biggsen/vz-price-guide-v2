@@ -124,15 +124,38 @@ export async function deleteCrateReward(crateId) {
  */
 export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 	try {
+		console.log(`🔧 addCrateRewardItem called with:`, {
+			crateId,
+			itemData: {
+				item_id: itemData.item_id,
+				quantity: itemData.quantity,
+				weight: itemData.weight,
+				enchantments: itemData.enchantments,
+				material_id: itemData.material_id,
+				display_item: itemData.display_item
+			},
+			itemDoc: itemDoc
+				? {
+						id: itemDoc.id,
+						material_id: itemDoc.material_id,
+						name: itemDoc.name
+				  }
+				: null
+		})
+
 		// Use provided itemDoc or fetch if not provided
 		let materialId = itemData.item_id // fallback to item_id if item not found
 
 		if (itemDoc) {
 			// Use the provided item document data
 			materialId = itemDoc.material_id || itemData.item_id
+			console.log(`📝 Using itemDoc.material_id: "${itemDoc.material_id}"`)
 		} else if (itemData.material_id) {
 			// Use material_id if provided directly in itemData
 			materialId = itemData.material_id
+			console.log(`📝 Using itemData.material_id: "${itemData.material_id}"`)
+		} else {
+			console.log(`📝 Using fallback itemData.item_id: "${itemData.item_id}"`)
 		}
 
 		const rewardItem = {
@@ -149,10 +172,17 @@ export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 			updated_at: new Date()
 		}
 
+		console.log(`💾 Creating reward item:`, {
+			display_item: rewardItem.display_item,
+			enchantments: rewardItem.enchantments,
+			materialId_used: materialId
+		})
+
 		const docRef = await addDoc(collection(db, 'crate_reward_items'), rewardItem)
+		console.log(`✅ Successfully created reward item with ID: ${docRef.id}`)
 		return { id: docRef.id, ...rewardItem }
 	} catch (error) {
-		console.error('Error adding crate reward item:', error)
+		console.error('💥 Error adding crate reward item:', error)
 		throw error
 	}
 }
@@ -578,11 +608,28 @@ export function parseItemString(itemString) {
  * Find matching item in the items collection
  */
 export function findMatchingItem(parsedItem, allItems) {
-	if (!parsedItem || !allItems) return null
+	console.log(`🔍 findMatchingItem called with:`, {
+		materialId: parsedItem?.materialId,
+		enchantments: parsedItem?.enchantments,
+		totalItems: allItems?.length
+	})
+
+	if (!parsedItem || !allItems) {
+		console.log(`❌ Missing data - parsedItem: ${!!parsedItem}, allItems: ${!!allItems}`)
+		return null
+	}
 
 	// First try exact material_id match
+	console.log(`🎯 Trying exact match for: "${parsedItem.materialId}"`)
 	let item = allItems.find((i) => i.material_id === parsedItem.materialId)
-	if (item) return item
+	if (item) {
+		console.log(`✅ Exact match found:`, {
+			id: item.id,
+			material_id: item.material_id,
+			name: item.name
+		})
+		return item
+	}
 
 	// For enchanted books, try to find the specific enchantment variant
 	if (
@@ -591,6 +638,7 @@ export function findMatchingItem(parsedItem, allItems) {
 	) {
 		const enchantment = Object.keys(parsedItem.enchantments)[0]
 		const level = parsedItem.enchantments[enchantment]
+		console.log(`📚 Processing enchanted book - enchantment: "${enchantment}", level: ${level}`)
 
 		// Try different formats for specific enchanted books
 		// This works for both local and production - we match by material_id, not document ID
@@ -600,25 +648,57 @@ export function findMatchingItem(parsedItem, allItems) {
 			`enchanted_book_${enchantment}_${level.toString().toLowerCase()}`
 		]
 
+		console.log(`🔍 Trying enchanted book variants:`, possibleIds)
+
 		for (const id of possibleIds) {
+			console.log(`   Checking: "${id}"`)
 			item = allItems.find((i) => i.material_id === id)
 			if (item) {
+				console.log(`✅ Found enchanted book variant:`, {
+					id: item.id,
+					material_id: item.material_id,
+					name: item.name
+				})
 				// Found the specific enchanted book variant
+				// Update the parsedItem to use the found item's material_id for display_item
+				parsedItem.materialId = item.material_id
 				// Clear enchantments from parsed item since the material_id already contains the enchantment info
 				parsedItem.enchantments = {}
+				console.log(`📝 Updated parsedItem:`, {
+					materialId: parsedItem.materialId,
+					enchantments: parsedItem.enchantments
+				})
 				return item
 			}
 		}
+		console.log(`❌ No enchanted book variants found`)
 	}
 
 	// Try case-insensitive match
+	console.log(`🔍 Trying case-insensitive match for: "${parsedItem.materialId}"`)
 	item = allItems.find((i) => i.material_id.toLowerCase() === parsedItem.materialId.toLowerCase())
-	if (item) return item
+	if (item) {
+		console.log(`✅ Case-insensitive match found:`, {
+			id: item.id,
+			material_id: item.material_id,
+			name: item.name
+		})
+		return item
+	}
 
 	// Try name-based matching as last resort
+	console.log(`🔍 Trying name-based match for: "${parsedItem.materialId}"`)
 	item = allItems.find((i) => i.name.toLowerCase().includes(parsedItem.materialId.toLowerCase()))
-	if (item) return item
+	if (item) {
+		console.log(`✅ Name-based match found:`, {
+			id: item.id,
+			material_id: item.material_id,
+			name: item.name
+		})
+		return item
+	}
 
+	console.log(`❌ No matching item found`)
 	return null
 }
 
@@ -627,33 +707,66 @@ export function findMatchingItem(parsedItem, allItems) {
  */
 export async function importCrateRewardsFromYaml(crateId, yamlContent, allItems) {
 	try {
+		console.log('🔍 Starting import process...')
+		console.log(`📦 Crate ID: ${crateId}`)
+		console.log(`📄 Items in database: ${allItems.length}`)
+
 		const prizes = parseCrateRewardsYaml(yamlContent)
+		console.log(`🎁 Found ${prizes.length} prizes to import`)
+
 		const importedItems = []
 		const errors = []
 
-		for (const prize of prizes) {
+		for (let i = 0; i < prizes.length; i++) {
+			const prize = prizes[i]
+			console.log(`\n🎯 Processing prize ${i + 1}/${prizes.length} (ID: ${prize.id})`)
+			console.log(`   Weight: ${prize.weight}`)
+			console.log(`   Items: ${JSON.stringify(prize.items)}`)
 			if (!prize.items || prize.items.length === 0) {
-				errors.push(`Prize ${prize.id}: No items found`)
+				const errorMsg = `Prize ${prize.id}: No items found`
+				console.log(`❌ ${errorMsg}`)
+				errors.push(errorMsg)
 				continue
 			}
 
 			// Parse the first item (we'll ignore multiple items for now)
 			const itemString = prize.items[0]
+			console.log(`🔧 Parsing item string: "${itemString}"`)
+
 			const parsedItem = parseItemString(itemString)
+			console.log(`📋 Parsed item:`, {
+				materialId: parsedItem?.materialId,
+				amount: parsedItem?.amount,
+				enchantments: parsedItem?.enchantments
+			})
 
 			if (!parsedItem) {
-				errors.push(`Prize ${prize.id}: Failed to parse item string "${itemString}"`)
+				const errorMsg = `Prize ${prize.id}: Failed to parse item string "${itemString}"`
+				console.log(`❌ ${errorMsg}`)
+				errors.push(errorMsg)
 				continue
 			}
 
 			// Find matching item in our database
+			console.log(`🔍 Looking for matching item with material_id: "${parsedItem.materialId}"`)
 			const matchingItem = findMatchingItem(parsedItem, allItems)
+
 			if (!matchingItem) {
-				errors.push(
-					`Prize ${prize.id}: No matching item found for "${parsedItem.materialId}"`
+				const errorMsg = `Prize ${prize.id}: No matching item found for "${parsedItem.materialId}"`
+				console.log(`❌ ${errorMsg}`)
+				console.log(
+					`   Available material_ids (first 10):`,
+					allItems.slice(0, 10).map((item) => item.material_id)
 				)
+				errors.push(errorMsg)
 				continue
 			}
+
+			console.log(`✅ Found matching item:`, {
+				id: matchingItem.id,
+				material_id: matchingItem.material_id,
+				name: matchingItem.name
+			})
 
 			// Create reward item data
 			const rewardItemData = {
@@ -664,13 +777,27 @@ export async function importCrateRewardsFromYaml(crateId, yamlContent, allItems)
 				material_id: matchingItem.material_id // Pass material_id directly
 			}
 
+			console.log(`📦 Reward item data:`, rewardItemData)
+
 			// Add to crate reward
 			try {
 				const newItem = await addCrateRewardItem(crateId, rewardItemData, matchingItem)
+				console.log(`✅ Successfully added item with ID: ${newItem.id}`)
 				importedItems.push(newItem)
 			} catch (error) {
-				errors.push(`Prize ${prize.id}: Failed to add item - ${error.message}`)
+				const errorMsg = `Prize ${prize.id}: Failed to add item - ${error.message}`
+				console.log(`❌ ${errorMsg}`)
+				console.error('Add item error:', error)
+				errors.push(errorMsg)
 			}
+		}
+
+		console.log(`\n🎉 Import completed!`)
+		console.log(`   ✅ Successfully imported: ${importedItems.length}`)
+		console.log(`   ❌ Errors: ${errors.length}`)
+
+		if (errors.length > 0) {
+			console.log(`   Error details:`, errors)
 		}
 
 		return {
@@ -680,7 +807,7 @@ export async function importCrateRewardsFromYaml(crateId, yamlContent, allItems)
 			errors: errors
 		}
 	} catch (error) {
-		console.error('Error importing crate rewards:', error)
+		console.error('💥 Import process failed:', error)
 		return {
 			success: false,
 			importedCount: 0,
