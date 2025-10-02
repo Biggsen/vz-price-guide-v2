@@ -1837,6 +1837,434 @@ const TEST_DATA = {
 				'1_16': 30.0
 			},
 			recipes_by_version: {}
+		},
+		{
+			id: 'rabbit_hide',
+			material_id: 'rabbit_hide',
+			name: 'rabbit hide',
+			image: '/images/items/rabbit_hide.png',
+			url: 'https://minecraft.fandom.com/wiki/Rabbit_Hide',
+			stack: 64,
+			category: 'drops',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 2.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'leather',
+			material_id: 'leather',
+			name: 'leather',
+			image: '/images/items/leather.png',
+			url: 'https://minecraft.fandom.com/wiki/Leather',
+			stack: 64,
+			category: 'drops',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 8.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'rabbit_hide', quantity: 4 }],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'lantern',
+			material_id: 'lantern',
+			name: 'lantern',
+			image: '/images/items/lantern.gif',
+			url: 'https://minecraft.fandom.com/wiki/Lantern',
+			stack: 64,
+			category: 'light',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 21.0,
+				'1_18': 15.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'iron_nugget', quantity: 8 },
+						{ material_id: 'torch', quantity: 1 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'iron_nugget',
+			material_id: 'iron_nugget',
+			name: 'iron nugget',
+			image: '/images/items/iron_nugget.png',
+			url: 'https://minecraft.fandom.com/wiki/Iron_Nugget',
+			stack: 64,
+			category: 'ores',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 2.3,
+				'1_18': 1.7
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'iron_ingot', quantity: 1 }],
+					output_count: 9
+				}
+			}
+		},
+		{
+			id: 'slime_ball',
+			material_id: 'slime_ball',
+			name: 'slime ball',
+			image: '/images/items/slime_ball.png',
+			url: 'https://minecraft.fandom.com/wiki/Slime_Ball',
+			stack: 64,
+			category: 'drops',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 10.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'lead',
+			material_id: 'lead',
+			name: 'lead',
+			image: '/images/items/lead.png',
+			url: 'https://minecraft.fandom.com/wiki/Lead',
+			stack: 64,
+			category: 'utility',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 9.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'string', quantity: 4 },
+						{ material_id: 'slime_ball', quantity: 1 }
+					],
+					output_count: 2
+				}
+			}
+		},
+		{
+			id: 'saddle',
+			material_id: 'saddle',
+			name: 'saddle',
+			image: '/images/items/saddle.png',
+			url: 'https://minecraft.fandom.com/wiki/Saddle',
+			stack: 1,
+			category: 'utility',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 200.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'iron_axe',
+			material_id: 'iron_axe',
+			name: 'iron axe',
+			image: '/images/items/iron_axe.png',
+			url: 'https://minecraft.fandom.com/wiki/Iron_Axe',
+			stack: 1,
+			category: 'tools',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 62.0,
+				'1_18': 47.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'iron_ingot', quantity: 3 },
+						{ material_id: 'stick', quantity: 2 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'iron_pickaxe',
+			material_id: 'iron_pickaxe',
+			name: 'iron pickaxe',
+			image: '/images/items/iron_pickaxe.png',
+			url: 'https://minecraft.fandom.com/wiki/Iron_Pickaxe',
+			stack: 1,
+			category: 'tools',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 62.0,
+				'1_18': 47.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'iron_ingot', quantity: 3 },
+						{ material_id: 'stick', quantity: 2 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'iron_shovel',
+			material_id: 'iron_shovel',
+			name: 'iron shovel',
+			image: '/images/items/iron_shovel.png',
+			url: 'https://minecraft.fandom.com/wiki/Iron_Shovel',
+			stack: 1,
+			category: 'tools',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 22.0,
+				'1_18': 17.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'iron_ingot', quantity: 1 },
+						{ material_id: 'stick', quantity: 2 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'iron_sword',
+			material_id: 'iron_sword',
+			name: 'iron sword',
+			image: '/images/items/iron_sword.png',
+			url: 'https://minecraft.fandom.com/wiki/Iron_Sword',
+			stack: 1,
+			category: 'weapons',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 41.0,
+				'1_18': 31.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'iron_ingot', quantity: 2 },
+						{ material_id: 'stick', quantity: 1 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'iron_hoe',
+			material_id: 'iron_hoe',
+			name: 'iron hoe',
+			image: '/images/items/iron_hoe.png',
+			url: 'https://minecraft.fandom.com/wiki/Iron_Hoe',
+			stack: 1,
+			category: 'tools',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 42.0,
+				'1_18': 32.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'iron_ingot', quantity: 2 },
+						{ material_id: 'stick', quantity: 2 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'white_wool',
+			material_id: 'white_wool',
+			name: 'white wool',
+			image: '/images/items/white_wool.png',
+			url: 'https://minecraft.fandom.com/wiki/White_Wool',
+			stack: 64,
+			category: 'dyed',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 4.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'white_banner',
+			material_id: 'white_banner',
+			name: 'white banner',
+			image: '/images/items/white_banner.png',
+			url: 'https://minecraft.fandom.com/wiki/White_Banner',
+			stack: 16,
+			category: 'dyed',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 25.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'white_wool', quantity: 6 },
+						{ material_id: 'stick', quantity: 1 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'name_tag',
+			material_id: 'name_tag',
+			name: 'name tag',
+			image: '/images/items/name_tag.png',
+			url: 'https://minecraft.fandom.com/wiki/Name_Tag',
+			stack: 64,
+			category: 'utility',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 50.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'iron_helmet',
+			material_id: 'iron_helmet',
+			name: 'iron helmet',
+			image: '/images/items/iron_helmet.png',
+			url: 'https://minecraft.fandom.com/wiki/Iron_Helmet',
+			stack: 1,
+			category: 'armor',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 100.0,
+				'1_18': 75.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'iron_ingot', quantity: 5 }],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'iron_chestplate',
+			material_id: 'iron_chestplate',
+			name: 'iron chestplate',
+			image: '/images/items/iron_chestplate.png',
+			url: 'https://minecraft.fandom.com/wiki/Iron_Chestplate',
+			stack: 1,
+			category: 'armor',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 160.0,
+				'1_18': 120.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'iron_ingot', quantity: 8 }],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'iron_leggings',
+			material_id: 'iron_leggings',
+			name: 'iron leggings',
+			image: '/images/items/iron_leggings.png',
+			url: 'https://minecraft.fandom.com/wiki/Iron_Leggings',
+			stack: 1,
+			category: 'armor',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 140.0,
+				'1_18': 105.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'iron_ingot', quantity: 7 }],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'iron_boots',
+			material_id: 'iron_boots',
+			name: 'iron boots',
+			image: '/images/items/iron_boots.png',
+			url: 'https://minecraft.fandom.com/wiki/Iron_Boots',
+			stack: 1,
+			category: 'armor',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 80.0,
+				'1_18': 60.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [{ material_id: 'iron_ingot', quantity: 4 }],
+					output_count: 1
+				}
+			}
 		}
 	],
 	shop_items: [
