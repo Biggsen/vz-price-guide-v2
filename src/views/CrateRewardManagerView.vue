@@ -15,7 +15,8 @@ import {
 	deleteCrateRewardItem,
 	calculateCrateRewardTotalValue,
 	downloadCrateRewardYaml,
-	formatRewardItemForYaml
+	formatRewardItemForYaml,
+	importCrateRewardsFromYaml
 } from '../utils/crateRewards.js'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { versions } from '../constants.js'
@@ -24,6 +25,7 @@ import {
 	PencilIcon,
 	TrashIcon,
 	ArrowDownTrayIcon,
+	ArrowUpTrayIcon,
 	XMarkIcon,
 	CheckIcon,
 	ExclamationTriangleIcon
@@ -39,6 +41,7 @@ const selectedCrateId = ref('')
 const showCreateForm = ref(false)
 const showEditForm = ref(false)
 const showAddItemForm = ref(false)
+const showImportModal = ref(false)
 const editingItem = ref(null)
 const loading = ref(false)
 const error = ref(null)
@@ -84,6 +87,11 @@ const showEnchantmentModal = ref(false)
 const enchantmentForm = ref({
 	enchantment: ''
 })
+
+// Import state
+const importFile = ref(null)
+const importResult = ref(null)
+const isImporting = ref(false)
 
 // Get all items for selection
 const allItemsQuery = query(collection(db, 'items'), orderBy('name', 'asc'))
@@ -454,6 +462,31 @@ async function removeItem(itemId) {
 	}
 }
 
+async function clearAllRewards() {
+	if (
+		!confirm(
+			'Are you sure you want to clear ALL rewards from this crate? This action cannot be undone.'
+		)
+	) {
+		return
+	}
+
+	loading.value = true
+	error.value = null
+
+	try {
+		// Delete all reward items for the selected crate
+		if (rewardItems.value && rewardItems.value.length > 0) {
+			const deletePromises = rewardItems.value.map((item) => deleteCrateRewardItem(item.id))
+			await Promise.all(deletePromises)
+		}
+	} catch (err) {
+		error.value = 'Failed to clear rewards: ' + err.message
+	} finally {
+		loading.value = false
+	}
+}
+
 function exportYaml() {
 	if (!selectedCrate.value || !rewardItems.value || !allItems.value) return
 	downloadCrateRewardYaml(
@@ -786,6 +819,70 @@ function getItemVisualIndex(targetCategory, targetCategoryIndex) {
 	return -1
 }
 
+// Import functions
+function handleFileSelect(event) {
+	const file = event.target.files[0]
+	if (
+		(file && file.type === 'text/yaml') ||
+		file.name.endsWith('.yml') ||
+		file.name.endsWith('.yaml')
+	) {
+		importFile.value = file
+		importResult.value = null
+	} else {
+		error.value = 'Please select a valid YAML file (.yml or .yaml)'
+	}
+}
+
+async function importYamlFile() {
+	if (!importFile.value || !selectedCrateId.value) {
+		error.value = 'Please select a YAML file and ensure you have a crate selected'
+		return
+	}
+
+	isImporting.value = true
+	error.value = null
+	importResult.value = null
+
+	try {
+		const fileContent = await readFileContent(importFile.value)
+		const result = await importCrateRewardsFromYaml(
+			selectedCrateId.value,
+			fileContent,
+			allItems.value
+		)
+
+		importResult.value = result
+
+		if (result.success && result.importedCount > 0) {
+			// Clear the file input
+			importFile.value = null
+			const fileInput = document.getElementById('yaml-file-input')
+			if (fileInput) fileInput.value = ''
+		}
+	} catch (err) {
+		error.value = 'Failed to import YAML file: ' + err.message
+	} finally {
+		isImporting.value = false
+	}
+}
+
+function readFileContent(file) {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader()
+		reader.onload = (e) => resolve(e.target.result)
+		reader.onerror = (e) => reject(new Error('Failed to read file'))
+		reader.readAsText(file)
+	})
+}
+
+function closeImportModal() {
+	showImportModal.value = false
+	importFile.value = null
+	importResult.value = null
+	error.value = null
+}
+
 // Initialize form when crate loads
 watch(selectedCrate, (crate) => {
 	if (crate) {
@@ -840,11 +937,26 @@ watch(selectedCrate, (crate) => {
 				<div class="flex gap-2">
 					<button
 						v-if="selectedCrateId"
+						@click="showImportModal = true"
+						class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+						<ArrowUpTrayIcon class="w-4 h-4 mr-2" />
+						Import YAML
+					</button>
+					<button
+						v-if="selectedCrateId"
 						@click="exportYaml"
 						class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
 						:disabled="!rewardItems?.length">
 						<ArrowDownTrayIcon class="w-4 h-4 mr-2" />
 						Export YAML
+					</button>
+					<button
+						v-if="selectedCrateId"
+						@click="clearAllRewards"
+						class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+						:disabled="!rewardItems?.length || loading">
+						<TrashIcon class="w-4 h-4 mr-2" />
+						Clear All Rewards
 					</button>
 					<button
 						v-if="selectedCrateId"
@@ -1682,6 +1794,90 @@ watch(selectedCrate, (crate) => {
 						</button>
 					</div>
 				</form>
+			</div>
+		</div>
+
+		<!-- Import YAML Modal -->
+		<div
+			v-if="showImportModal"
+			class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+			<div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+				<div class="p-6">
+					<div class="flex items-center justify-between mb-4">
+						<h3 class="text-lg font-semibold text-gray-900">Import Crate Rewards</h3>
+						<button @click="closeImportModal" class="text-gray-400 hover:text-gray-600">
+							<XMarkIcon class="w-6 h-6" />
+						</button>
+					</div>
+
+					<div class="space-y-4">
+						<div>
+							<label
+								for="yaml-file-input"
+								class="block text-sm font-medium text-gray-700 mb-1">
+								Select YAML File
+							</label>
+							<input
+								id="yaml-file-input"
+								type="file"
+								accept=".yml,.yaml"
+								@change="handleFileSelect"
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+							<p class="text-xs text-gray-500 mt-1">
+								Select a Crazy Crates YAML file containing prize definitions
+							</p>
+						</div>
+
+						<!-- Import Results -->
+						<div v-if="importResult" class="space-y-2">
+							<div
+								v-if="importResult.success"
+								class="p-3 bg-green-50 border border-green-200 rounded-lg">
+								<div class="flex items-center">
+									<CheckIcon class="w-5 h-5 text-green-600 mr-2" />
+									<div>
+										<div class="text-green-800 font-medium">
+											Import completed successfully!
+										</div>
+										<div class="text-green-700 text-sm">
+											{{ importResult.importedCount }} items imported
+											<span v-if="importResult.errorCount > 0">
+												, {{ importResult.errorCount }} errors
+											</span>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<div
+								v-if="importResult.errors && importResult.errors.length > 0"
+								class="p-3 bg-red-50 border border-red-200 rounded-lg">
+								<div class="text-red-800 font-medium mb-2">Import Errors:</div>
+								<div class="text-red-700 text-sm space-y-1">
+									<div v-for="error in importResult.errors" :key="error">
+										{{ error }}
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="flex gap-3 pt-4">
+							<button
+								type="button"
+								@click="closeImportModal"
+								class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+								{{ importResult ? 'Close' : 'Cancel' }}
+							</button>
+							<button
+								v-if="!importResult"
+								@click="importYamlFile"
+								:disabled="!importFile || isImporting"
+								class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50">
+								{{ isImporting ? 'Importing...' : 'Import' }}
+							</button>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>

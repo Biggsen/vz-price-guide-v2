@@ -446,3 +446,234 @@ export function downloadCrateRewardYaml(crateReward, rewardItems, allItems, vers
 	document.body.removeChild(link)
 	URL.revokeObjectURL(url)
 }
+
+/**
+ * Parse YAML content and extract prize data
+ */
+export function parseCrateRewardsYaml(yamlContent) {
+	try {
+		// Simple YAML parser for the specific format we're dealing with
+		const lines = yamlContent.split('\n')
+		const prizes = {}
+		let currentPrize = null
+		let currentPrizeId = null
+		let inPrizesSection = false
+
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i]
+			const trimmed = line.trim()
+
+			// Check if we're entering the Prizes section (indented with 2 spaces under Crate:)
+			if (trimmed === 'Prizes:') {
+				inPrizesSection = true
+				continue
+			}
+
+			// If we hit another section at the same level as Prizes, stop parsing prizes
+			if (
+				inPrizesSection &&
+				line &&
+				!line.startsWith('  ') &&
+				!line.startsWith('\t') &&
+				line.includes(':')
+			) {
+				break
+			}
+
+			if (!inPrizesSection) continue
+
+			// Parse prize ID (e.g., "1":) - indented with 4 spaces
+			const prizeIdMatch = line.match(/^    "(\d+)":\s*$/)
+			if (prizeIdMatch) {
+				currentPrizeId = prizeIdMatch[1]
+				currentPrize = {
+					id: currentPrizeId,
+					displayName: '',
+					displayItem: '',
+					displayAmount: 1,
+					weight: 50,
+					items: []
+				}
+				prizes[currentPrizeId] = currentPrize
+				continue
+			}
+
+			// Parse prize properties - indented with 6 spaces
+			if (currentPrize) {
+				// Only parse Weight - that's what we actually need
+				const weightMatch = line.match(/^      Weight:\s*(\d+)/)
+				if (weightMatch) {
+					currentPrize.weight = parseInt(weightMatch[1])
+					continue
+				}
+
+				// Parse item strings (e.g., - "item:torch, amount:64") - indented with 8 spaces
+				const itemMatch = line.match(/^        -\s*"(.+)"/)
+				if (itemMatch) {
+					currentPrize.items.push(itemMatch[1])
+					continue
+				}
+			}
+		}
+
+		return Object.values(prizes)
+	} catch (error) {
+		console.error('Error parsing YAML:', error)
+		throw new Error('Failed to parse YAML file: ' + error.message)
+	}
+}
+
+/**
+ * Parse item string and extract item data
+ */
+export function parseItemString(itemString) {
+	try {
+		const parts = itemString.split(', ')
+		const itemData = {
+			materialId: '',
+			amount: 1,
+			enchantments: {}
+		}
+
+		for (const part of parts) {
+			if (part.startsWith('item:')) {
+				itemData.materialId = part.replace('item:', '')
+			} else if (part.startsWith('amount:')) {
+				itemData.amount = parseInt(part.replace('amount:', ''))
+			} else if (part.includes(':')) {
+				// This is likely an enchantment
+				const [enchantment, level] = part.split(':')
+
+				// For enchanted books, store the enchantment in original format
+				// The findMatchingItem function will handle converting to the full item ID
+				if (itemData.materialId === 'enchanted_book') {
+					itemData.enchantments[enchantment] = parseInt(level)
+				} else {
+					// For other items, store enchantments in the format "enchanted_book_[enchantment]_[level]: 1" for cross-referencing
+					const enchantmentKey = `enchanted_book_${enchantment}_${level}`
+					itemData.enchantments[enchantmentKey] = 1
+				}
+			}
+		}
+
+		return itemData
+	} catch (error) {
+		console.error('Error parsing item string:', error)
+		return null
+	}
+}
+
+/**
+ * Find matching item in the items collection
+ */
+export function findMatchingItem(parsedItem, allItems) {
+	if (!parsedItem || !allItems) return null
+
+	// First try exact material_id match
+	let item = allItems.find((i) => i.material_id === parsedItem.materialId)
+	if (item) return item
+
+	// For enchanted books, try to find the specific enchantment
+	if (
+		parsedItem.materialId === 'enchanted_book' &&
+		Object.keys(parsedItem.enchantments).length > 0
+	) {
+		const enchantment = Object.keys(parsedItem.enchantments)[0]
+		const level = parsedItem.enchantments[enchantment]
+
+		// Try different formats
+		const possibleIds = [
+			`enchanted_book_${enchantment}_${level}`,
+			`enchanted_book_${enchantment}`,
+			`enchanted_book_${enchantment}_${level.toString().toLowerCase()}`
+		]
+
+		for (const id of possibleIds) {
+			item = allItems.find((i) => i.material_id === id)
+			if (item) {
+				// For enchanted books, we want to use the full item ID and clear enchantments
+				// Update the parsedItem to use the found item's material_id
+				parsedItem.materialId = item.material_id
+				parsedItem.enchantments = {} // Clear enchantments for enchanted books
+				return item
+			}
+		}
+	}
+
+	// Try case-insensitive match
+	item = allItems.find((i) => i.material_id.toLowerCase() === parsedItem.materialId.toLowerCase())
+	if (item) return item
+
+	// Try name-based matching as last resort
+	item = allItems.find((i) => i.name.toLowerCase().includes(parsedItem.materialId.toLowerCase()))
+	if (item) return item
+
+	return null
+}
+
+/**
+ * Import crate rewards from YAML content
+ */
+export async function importCrateRewardsFromYaml(crateId, yamlContent, allItems) {
+	try {
+		const prizes = parseCrateRewardsYaml(yamlContent)
+		const importedItems = []
+		const errors = []
+
+		for (const prize of prizes) {
+			if (!prize.items || prize.items.length === 0) {
+				errors.push(`Prize ${prize.id}: No items found`)
+				continue
+			}
+
+			// Parse the first item (we'll ignore multiple items for now)
+			const itemString = prize.items[0]
+			const parsedItem = parseItemString(itemString)
+
+			if (!parsedItem) {
+				errors.push(`Prize ${prize.id}: Failed to parse item string "${itemString}"`)
+				continue
+			}
+
+			// Find matching item in our database
+			const matchingItem = findMatchingItem(parsedItem, allItems)
+			if (!matchingItem) {
+				errors.push(
+					`Prize ${prize.id}: No matching item found for "${parsedItem.materialId}"`
+				)
+				continue
+			}
+
+			// Create reward item data
+			const rewardItemData = {
+				item_id: matchingItem.id,
+				quantity: parsedItem.amount,
+				weight: prize.weight,
+				enchantments: parsedItem.enchantments
+			}
+
+			// Add to crate reward
+			try {
+				const newItem = await addCrateRewardItem(crateId, rewardItemData)
+				importedItems.push(newItem)
+			} catch (error) {
+				errors.push(`Prize ${prize.id}: Failed to add item - ${error.message}`)
+			}
+		}
+
+		return {
+			success: true,
+			importedCount: importedItems.length,
+			errorCount: errors.length,
+			errors: errors
+		}
+	} catch (error) {
+		console.error('Error importing crate rewards:', error)
+		return {
+			success: false,
+			importedCount: 0,
+			errorCount: 0,
+			errors: [error.message]
+		}
+	}
+}
