@@ -584,7 +584,7 @@ export function findMatchingItem(parsedItem, allItems) {
 	let item = allItems.find((i) => i.material_id === parsedItem.materialId)
 	if (item) return item
 
-	// For enchanted books, try to find the specific enchantment
+	// For enchanted books, try to find the specific enchantment variant
 	if (
 		parsedItem.materialId === 'enchanted_book' &&
 		Object.keys(parsedItem.enchantments).length > 0
@@ -592,7 +592,8 @@ export function findMatchingItem(parsedItem, allItems) {
 		const enchantment = Object.keys(parsedItem.enchantments)[0]
 		const level = parsedItem.enchantments[enchantment]
 
-		// Try different formats
+		// Try different formats for specific enchanted books
+		// This works for both local and production - we match by material_id, not document ID
 		const possibleIds = [
 			`enchanted_book_${enchantment}_${level}`,
 			`enchanted_book_${enchantment}`,
@@ -602,10 +603,9 @@ export function findMatchingItem(parsedItem, allItems) {
 		for (const id of possibleIds) {
 			item = allItems.find((i) => i.material_id === id)
 			if (item) {
-				// For enchanted books, we want to use the full item ID and clear enchantments
-				// Update the parsedItem to use the found item's material_id
-				parsedItem.materialId = item.material_id
-				parsedItem.enchantments = {} // Clear enchantments for enchanted books
+				// Found the specific enchanted book variant
+				// Clear enchantments from parsed item since the material_id already contains the enchantment info
+				parsedItem.enchantments = {}
 				return item
 			}
 		}
