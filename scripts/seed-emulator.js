@@ -2401,6 +2401,75 @@ const TEST_DATA = {
 			created_at: nowIso(),
 			updated_at: nowIso()
 		}
+	],
+	crate_rewards: [
+		{
+			id: 'test-crate-1',
+			user_id: 'test-admin-1',
+			name: 'Test Starter Crate',
+			description: 'A test crate with basic items for new players',
+			minecraft_version: '1.21',
+			created_at: nowIso(),
+			updated_at: nowIso()
+		}
+	],
+	crate_reward_items: [
+		{
+			id: 'test-crate-item-1',
+			crate_reward_id: 'test-crate-1',
+			item_id: 'diamond',
+			quantity: 1,
+			weight: 25,
+			display_name: '',
+			display_item: 'diamond',
+			display_amount: 1,
+			custom_model_data: -1,
+			enchantments: {},
+			created_at: nowIso(),
+			updated_at: nowIso()
+		},
+		{
+			id: 'test-crate-item-2',
+			crate_reward_id: 'test-crate-1',
+			item_id: 'iron_ingot',
+			quantity: 5,
+			weight: 50,
+			display_name: '',
+			display_item: 'iron_ingot',
+			display_amount: 5,
+			custom_model_data: -1,
+			enchantments: {},
+			created_at: nowIso(),
+			updated_at: nowIso()
+		},
+		{
+			id: 'test-crate-item-3',
+			crate_reward_id: 'test-crate-1',
+			item_id: 'firework_rocket',
+			quantity: 48,
+			weight: 55,
+			display_name: '',
+			display_item: 'firework_rocket',
+			display_amount: 48,
+			custom_model_data: -1,
+			enchantments: {},
+			created_at: nowIso(),
+			updated_at: nowIso()
+		},
+		{
+			id: 'test-crate-item-4',
+			crate_reward_id: 'test-crate-1',
+			item_id: 'enchanted_book_mending_1',
+			quantity: 1,
+			weight: 10,
+			display_name: '',
+			display_item: 'enchanted_book_mending_1',
+			display_amount: 1,
+			custom_model_data: -1,
+			enchantments: {},
+			created_at: nowIso(),
+			updated_at: nowIso()
+		}
 	]
 }
 
@@ -2516,6 +2585,20 @@ async function seedEmulator() {
 		for (const r of TEST_DATA.recipes) {
 			await upsertDoc('recipes', r.id, r)
 			console.log(`  ✓ ${r.item_id} recipe`)
+		}
+
+		// Crate Rewards
+		console.log('🎁 Seeding crate rewards...')
+		for (const cr of TEST_DATA.crate_rewards) {
+			await upsertDoc('crate_rewards', cr.id, cr)
+			console.log(`  ✓ ${cr.name}`)
+		}
+
+		// Crate Reward Items
+		console.log('🎁 Seeding crate reward items...')
+		for (const cri of TEST_DATA.crate_reward_items) {
+			await upsertDoc('crate_reward_items', cri.id, cri)
+			console.log(`  ✓ ${cri.item_id} → ${cri.crate_reward_id}`)
 		}
 
 		console.log('🎉 Seeding complete!')

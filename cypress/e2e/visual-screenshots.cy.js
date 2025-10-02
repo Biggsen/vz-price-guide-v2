@@ -331,6 +331,19 @@ describe('Visual Screenshots - All Pages and States', () => {
 			waitForPageReady()
 			takeScreenshot('styleguide', 'default')
 		})
+
+		it('should capture crate rewards page', () => {
+			cy.visit('/crate-rewards')
+			waitForPageReady()
+			takeScreenshot('crate-rewards', 'default')
+		})
+
+		it('should capture crate rewards detail page', () => {
+			// Visit the detail page for the test crate we seeded
+			cy.visit('/crate-rewards/test-crate-1')
+			waitForPageReady()
+			takeScreenshot('crate-rewards-detail', 'default')
+		})
 	})
 
 	// Test restricted access page
