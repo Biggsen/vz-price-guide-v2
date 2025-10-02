@@ -619,16 +619,27 @@ export function findMatchingItem(parsedItem, allItems) {
 		return null
 	}
 
-	// First try exact material_id match
-	console.log(`🎯 Trying exact match for: "${parsedItem.materialId}"`)
-	let item = allItems.find((i) => i.material_id === parsedItem.materialId)
-	if (item) {
-		console.log(`✅ Exact match found:`, {
-			id: item.id,
-			material_id: item.material_id,
-			name: item.name
-		})
-		return item
+	// First try exact material_id match, but skip for enchanted_book with enchantments
+	// (we want to find the specific variant, not the generic enchanted_book)
+	const isEnchantedBookWithEnchantments =
+		parsedItem.materialId === 'enchanted_book' &&
+		Object.keys(parsedItem.enchantments).length > 0
+
+	if (!isEnchantedBookWithEnchantments) {
+		console.log(`🎯 Trying exact match for: "${parsedItem.materialId}"`)
+		let item = allItems.find((i) => i.material_id === parsedItem.materialId)
+		if (item) {
+			console.log(`✅ Exact match found:`, {
+				id: item.id,
+				material_id: item.material_id,
+				name: item.name
+			})
+			return item
+		}
+	} else {
+		console.log(
+			`⏭️ Skipping exact match for enchanted_book (has enchantments, looking for variant)`
+		)
 	}
 
 	// For enchanted books, try to find the specific enchantment variant
