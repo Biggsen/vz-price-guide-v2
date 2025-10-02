@@ -429,8 +429,9 @@ async function saveItem() {
 			// Update existing item
 			await updateCrateRewardItem(editingItem.value.id, itemForm.value)
 		} else {
-			// Add new item
-			await addCrateRewardItem(selectedCrateId.value, itemForm.value)
+			// Add new item - pass the selected item data to avoid extra queries
+			const selectedItem = getItemById(itemForm.value.item_id)
+			await addCrateRewardItem(selectedCrateId.value, itemForm.value, selectedItem)
 		}
 
 		showAddItemForm.value = false

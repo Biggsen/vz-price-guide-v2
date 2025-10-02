@@ -122,15 +122,26 @@ export async function deleteCrateReward(crateId) {
 /**
  * Add an item to a crate reward
  */
-export async function addCrateRewardItem(crateId, itemData) {
+export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 	try {
+		// Use provided itemDoc or fetch if not provided
+		let materialId = itemData.item_id // fallback to item_id if item not found
+
+		if (itemDoc) {
+			// Use the provided item document data
+			materialId = itemDoc.material_id || itemData.item_id
+		} else if (itemData.material_id) {
+			// Use material_id if provided directly in itemData
+			materialId = itemData.material_id
+		}
+
 		const rewardItem = {
 			crate_reward_id: crateId,
 			item_id: itemData.item_id,
 			quantity: itemData.quantity || 1,
 			weight: itemData.weight || 50,
 			display_name: itemData.display_name || '',
-			display_item: itemData.display_item || itemData.item_id,
+			display_item: itemData.display_item || materialId,
 			display_amount: itemData.display_amount || itemData.quantity || 1,
 			custom_model_data: itemData.custom_model_data || -1,
 			enchantments: itemData.enchantments || {},
@@ -649,12 +660,13 @@ export async function importCrateRewardsFromYaml(crateId, yamlContent, allItems)
 				item_id: matchingItem.id,
 				quantity: parsedItem.amount,
 				weight: prize.weight,
-				enchantments: parsedItem.enchantments
+				enchantments: parsedItem.enchantments,
+				material_id: matchingItem.material_id // Pass material_id directly
 			}
 
 			// Add to crate reward
 			try {
-				const newItem = await addCrateRewardItem(crateId, rewardItemData)
+				const newItem = await addCrateRewardItem(crateId, rewardItemData, matchingItem)
 				importedItems.push(newItem)
 			} catch (error) {
 				errors.push(`Prize ${prize.id}: Failed to add item - ${error.message}`)

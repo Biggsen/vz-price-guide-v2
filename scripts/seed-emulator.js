@@ -2463,7 +2463,7 @@ const TEST_DATA = {
 			quantity: 1,
 			weight: 10,
 			display_name: '',
-			display_item: 'enchanted_book_mending_1',
+			display_item: 'enchanted_book',
 			display_amount: 1,
 			custom_model_data: -1,
 			enchantments: {},
