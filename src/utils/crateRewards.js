@@ -625,9 +625,11 @@ export function findMatchingItem(parsedItem, allItems) {
 		parsedItem.materialId === 'enchanted_book' &&
 		Object.keys(parsedItem.enchantments).length > 0
 
+	let item = null
+
 	if (!isEnchantedBookWithEnchantments) {
 		console.log(`🎯 Trying exact match for: "${parsedItem.materialId}"`)
-		let item = allItems.find((i) => i.material_id === parsedItem.materialId)
+		item = allItems.find((i) => i.material_id === parsedItem.materialId)
 		if (item) {
 			console.log(`✅ Exact match found:`, {
 				id: item.id,
