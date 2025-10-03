@@ -1,7 +1,7 @@
 <script setup>
 import { useFirestore, useCollection } from 'vuefire'
 import { query, collection, orderBy } from 'firebase/firestore'
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted, shallowRef } from 'vue'
 import { useCurrentUser } from 'vuefire'
 import { useRoute, useRouter } from 'vue-router'
 import ItemTable from '../components/ItemTable.vue'
@@ -103,48 +103,57 @@ function shouldShowItemForVersion(item, selectedVersion) {
 	return true
 }
 
-const groupedItems = computed(() => {
-	if (!allItemsCollection.value) return {}
-	return allItemsCollection.value.reduce((acc, item) => {
-		// Skip items without images for non-admin users
-		if (!user.value?.email && (!item.image || item.image.trim() === '')) return acc
-		// Skip items not available in selected version
-		if (!shouldShowItemForVersion(item, selectedVersion.value)) return acc
-		// Skip zero-priced items unless admin has enabled showing them
+// Helper computed for version-filtered items
+const versionFilteredItems = computed(() => {
+	if (!allItemsCollection.value) return []
+	return allItemsCollection.value.filter((item) =>
+		shouldShowItemForVersion(item, selectedVersion.value)
+	)
+})
+
+// Helper computed for items with valid images
+const itemsWithImages = computed(() => {
+	const items = versionFilteredItems.value
+	if (user.value?.email) return items // Admin users see all items
+
+	return items.filter((item) => item.image && item.image.trim() !== '')
+})
+
+// Helper computed for items with valid prices
+const itemsWithValidPrices = computed(() => {
+	const items = itemsWithImages.value
+	if (showZeroPricedItems.value) return items
+
+	return items.filter((item) => {
 		const effectivePrice = getEffectivePriceMemoized(
 			item,
 			selectedVersion.value.replace('.', '_')
 		)
-		if (!showZeroPricedItems.value && (!effectivePrice || effectivePrice === 0)) return acc
+		return effectivePrice && effectivePrice !== 0
+	})
+})
 
+const groupedItems = computed(() => {
+	const items = itemsWithValidPrices.value
+	return items.reduce((acc, item) => {
 		if (!acc[item.category]) acc[item.category] = []
 		acc[item.category].push(item)
 		return acc
 	}, {})
 })
 
-const uncategorizedItemsByVersion = computed(() => {
-	if (!allItemsCollection.value) return {}
+// Helper computed for uncategorized items
+const uncategorizedItems = computed(() => {
+	const items = itemsWithValidPrices.value
+	return items.filter((item) => !item.category || !categories.includes(item.category))
+})
 
+const uncategorizedItemsByVersion = computed(() => {
+	const items = uncategorizedItems.value
 	const uncatByVersion = {}
 
-	allItemsCollection.value.forEach((item) => {
-		const isUncat = !item.category || !categories.includes(item.category)
-		const hasImage = item.image && item.image.trim() !== ''
-		const isAvailableInVersion = shouldShowItemForVersion(item, selectedVersion.value)
-		const effectivePrice = getEffectivePriceMemoized(
-			item,
-			selectedVersion.value.replace('.', '_')
-		)
-		const hasValidPrice = showZeroPricedItems.value || (effectivePrice && effectivePrice !== 0)
-
-		if (
-			isUncat &&
-			(user.value?.email || hasImage) &&
-			isAvailableInVersion &&
-			hasValidPrice &&
-			item.version
-		) {
+	items.forEach((item) => {
+		if (item.version) {
 			if (!uncatByVersion[item.version]) {
 				uncatByVersion[item.version] = []
 			}
@@ -156,7 +165,7 @@ const uncategorizedItemsByVersion = computed(() => {
 })
 
 // Get all uncategorized items as a flat array (for backwards compatibility)
-const uncategorizedItems = computed(() => {
+const uncategorizedItemsFlat = computed(() => {
 	const allUncategorized = []
 	Object.values(uncategorizedItemsByVersion.value).forEach((versionItems) => {
 		allUncategorized.push(...versionItems)
@@ -267,29 +276,33 @@ function resetEconomyConfig() {
 	roundToWhole.value = false
 }
 
+// Helper function for search term processing
+function processSearchTerms(query) {
+	return query
+		.split(/[,\s]+/)
+		.map((term) => term.trim())
+		.filter((term) => term.length > 0)
+}
+
+// Helper function for item filtering
+function filterItemsBySearch(items, searchTerms) {
+	if (searchTerms.length === 0) return items
+
+	return items.filter((item) => {
+		if (!item.name) return false
+		const itemName = item.name.toLowerCase()
+		return searchTerms.some((term) => itemName.includes(term))
+	})
+}
+
 const filteredGroupedItems = computed(() => {
 	if (!allItemsCollection.value) return {}
 	const query = searchQuery.value.trim().toLowerCase()
+	const searchTerms = processSearchTerms(query)
+
 	return enabledCategories.reduce((acc, cat) => {
 		const items = groupedItems.value[cat] || []
-		acc[cat] = query
-			? items.filter((item) => {
-					if (!item.name) return false
-					const itemName = item.name.toLowerCase()
-
-					// Split search query by commas and/or spaces, then trim and filter out empty strings
-					const searchTerms = query
-						.split(/[,\s]+/)
-						.map((term) => term.trim())
-						.filter((term) => term.length > 0)
-
-					// If no valid search terms, return all items
-					if (searchTerms.length === 0) return true
-
-					// Check if item name contains any of the search terms (OR logic)
-					return searchTerms.some((term) => itemName.includes(term))
-			  })
-			: items
+		acc[cat] = filterItemsBySearch(items, searchTerms)
 		return acc
 	}, {})
 })
@@ -297,27 +310,11 @@ const filteredGroupedItems = computed(() => {
 const filteredUncategorizedItemsByVersion = computed(() => {
 	if (!allItemsCollection.value) return {}
 	const query = searchQuery.value.trim().toLowerCase()
+	const searchTerms = processSearchTerms(query)
 	const result = {}
 
 	Object.entries(uncategorizedItemsByVersion.value).forEach(([version, items]) => {
-		result[version] = query
-			? items.filter((item) => {
-					if (!item.name) return false
-					const itemName = item.name.toLowerCase()
-
-					// Split search query by commas and/or spaces, then trim and filter out empty strings
-					const searchTerms = query
-						.split(/[,\s]+/)
-						.map((term) => term.trim())
-						.filter((term) => term.length > 0)
-
-					// If no valid search terms, return all items
-					if (searchTerms.length === 0) return true
-
-					// Check if item name contains any of the search terms (OR logic)
-					return searchTerms.some((term) => itemName.includes(term))
-			  })
-			: items
+		result[version] = filterItemsBySearch(items, searchTerms)
 	})
 
 	return result
@@ -337,25 +334,9 @@ const uncategorizedVersions = computed(() => {
 const filteredUncategorizedItems = computed(() => {
 	if (!allItemsCollection.value) return []
 	const query = searchQuery.value.trim().toLowerCase()
-	const items = uncategorizedItems.value
-	return query
-		? items.filter((item) => {
-				if (!item.name) return false
-				const itemName = item.name.toLowerCase()
-
-				// Split search query by commas and/or spaces, then trim and filter out empty strings
-				const searchTerms = query
-					.split(/[,\s]+/)
-					.map((term) => term.trim())
-					.filter((term) => term.length > 0)
-
-				// If no valid search terms, return all items
-				if (searchTerms.length === 0) return true
-
-				// Check if item name contains any of the search terms (OR logic)
-				return searchTerms.some((term) => itemName.includes(term))
-		  })
-		: items
+	const searchTerms = processSearchTerms(query)
+	const items = uncategorizedItemsFlat.value
+	return filterItemsBySearch(items, searchTerms)
 })
 
 // Flat list view combining all visible items
@@ -385,7 +366,7 @@ const allVisibleItems = computed(() => {
 	})
 })
 
-const visibleCategories = ref([...enabledCategories])
+const visibleCategories = shallowRef([...enabledCategories])
 const showUncategorised = ref(true)
 const showCategoryFilters = ref(false) // Hidden by default on mobile
 
@@ -520,9 +501,11 @@ const allVisible = computed(() => visibleCategories.value.length === enabledCate
 function toggleCategory(cat) {
 	const idx = visibleCategories.value.indexOf(cat)
 	if (idx !== -1) {
-		visibleCategories.value.splice(idx, 1)
+		// Remove category - create new array without the item
+		visibleCategories.value = visibleCategories.value.filter((c) => c !== cat)
 	} else {
-		visibleCategories.value.push(cat)
+		// Add category - create new array with the item
+		visibleCategories.value = [...visibleCategories.value, cat]
 	}
 }
 function toggleUncategorised() {
