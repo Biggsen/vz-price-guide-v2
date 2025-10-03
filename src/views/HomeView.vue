@@ -357,7 +357,7 @@ function resetEconomyConfig() {
 // Helper function for search term processing
 function processSearchTerms(query) {
 	return query
-		.split(/[,\s]+/)
+		.split(',')
 		.map((term) => term.trim())
 		.filter((term) => term.length > 0)
 }
@@ -737,7 +737,7 @@ watch(
 					placeholder="Search for items..."
 					class="border-2 border-gray-asparagus rounded px-3 py-2 w-full mb-1 h-10" />
 				<p class="text-xs text-gray-500 mb-2 sm:mb-0 hidden sm:block">
-					Tip: Use commas or spaces to search for multiple items
+					Tip: Use commas to search multiple terms
 				</p>
 			</div>
 			<div class="flex gap-2 sm:gap-0 sm:ml-2">

@@ -428,9 +428,7 @@ const priceAnalysis = computed(() => {
 					v-model="searchQuery"
 					placeholder="Search for items..."
 					class="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-				<p class="text-xs text-gray-500 mt-1">
-					Tip: Use commas or spaces to search for multiple items
-				</p>
+				<p class="text-xs text-gray-500 mt-1">Tip: Use commas to search multiple terms</p>
 				<div v-if="searchQuery" class="mt-2 text-sm text-gray-600">
 					Showing {{ marketStats?.totalItems || 0 }} item{{
 						marketStats?.totalItems === 1 ? '' : 's'
