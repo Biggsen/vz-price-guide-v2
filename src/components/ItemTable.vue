@@ -43,6 +43,10 @@ const props = defineProps({
 	layout: {
 		type: String,
 		default: 'comfortable'
+	},
+	showStackSize: {
+		type: Boolean,
+		default: true
 	}
 })
 
@@ -172,6 +176,10 @@ function getItemEffectivePrice(item) {
 					<span class="hidden min-[330px]:inline">Stack Price</span>
 					<span class="min-[330px]:hidden">Stack</span>
 				</th>
+				<th v-if="showStackSize" rowspan="2" class="w-16">
+					<span class="hidden min-[330px]:inline">Stack Size</span>
+					<span class="min-[330px]:hidden">Size</span>
+				</th>
 				<th rowspan="2" v-if="canEditItems">Actions</th>
 			</tr>
 			<tr>
@@ -267,6 +275,7 @@ function getItemEffectivePrice(item) {
 						)
 					}}
 				</td>
+				<td v-if="showStackSize" class="text-center px-1 py-0.5 w-16">{{ item.stack }}</td>
 				<td v-if="canEditItems">
 					<RouterLink
 						:to="{ path: `/edit/${item.id}`, query: getEditLinkQuery() }"

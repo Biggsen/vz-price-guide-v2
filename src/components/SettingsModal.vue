@@ -46,6 +46,7 @@ const priceMultiplier = ref(1)
 const sellMargin = ref(0.3)
 const roundToWhole = ref(false)
 const showZeroPricedItems = ref(false)
+const showStackSize = ref(true)
 
 // Computed property for percentage display (30 instead of 0.3)
 const sellMarginPercentage = computed({
@@ -62,6 +63,7 @@ function loadSettings() {
 	const savedRoundToWhole = localStorage.getItem('roundToWhole')
 	const savedSelectedVersion = localStorage.getItem('selectedVersion')
 	const savedShowZeroPricedItems = localStorage.getItem('showZeroPricedItems')
+	const savedShowStackSize = localStorage.getItem('showStackSize')
 
 	// Check URL query parameters first for version
 	const versionParam = route.query.version
@@ -83,6 +85,9 @@ function loadSettings() {
 	if (savedShowZeroPricedItems !== null) {
 		showZeroPricedItems.value = savedShowZeroPricedItems === 'true'
 	}
+	if (savedShowStackSize !== null) {
+		showStackSize.value = savedShowStackSize === 'true'
+	}
 }
 
 // Save settings to localStorage and emit to parent
@@ -92,6 +97,7 @@ function saveSettings() {
 	localStorage.setItem('roundToWhole', roundToWhole.value.toString())
 	localStorage.setItem('selectedVersion', selectedVersion.value)
 	localStorage.setItem('showZeroPricedItems', showZeroPricedItems.value.toString())
+	localStorage.setItem('showStackSize', showStackSize.value.toString())
 
 	// Emit settings to parent component
 	emit('save-settings', {
@@ -99,7 +105,8 @@ function saveSettings() {
 		priceMultiplier: priceMultiplier.value,
 		sellMargin: sellMargin.value,
 		roundToWhole: roundToWhole.value,
-		showZeroPricedItems: showZeroPricedItems.value
+		showZeroPricedItems: showZeroPricedItems.value,
+		showStackSize: showStackSize.value
 	})
 }
 
@@ -253,6 +260,16 @@ defineExpose({
 				<label for="showZeroPricedItems" class="text-sm text-gray-700">
 					Show zero priced items
 				</label>
+			</div>
+
+			<!-- Show Stack Size -->
+			<div class="flex items-center gap-2 mt-2">
+				<input
+					id="showStackSize"
+					v-model="showStackSize"
+					type="checkbox"
+					class="checkbox-input" />
+				<label for="showStackSize" class="text-sm text-gray-700">Show stack size</label>
 			</div>
 		</div>
 

@@ -257,6 +257,7 @@ const searchQuery = ref('')
 const priceMultiplier = ref(1)
 const sellMargin = ref(0.3)
 const roundToWhole = ref(false)
+const showStackSize = ref(true)
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
 
@@ -279,6 +280,7 @@ const economyConfig = computed(() => ({
 	priceMultiplier: priceMultiplier.value,
 	sellMargin: sellMargin.value,
 	roundToWhole: roundToWhole.value,
+	showStackSize: showStackSize.value,
 	version: selectedVersion.value
 }))
 
@@ -291,6 +293,7 @@ function loadEconomyConfig() {
 	const savedLayout = localStorage.getItem('layout')
 	const savedSelectedVersion = localStorage.getItem('selectedVersion')
 	const savedShowZeroPricedItems = localStorage.getItem('showZeroPricedItems')
+	const savedShowStackSize = localStorage.getItem('showStackSize')
 
 	if (savedPriceMultiplier !== null) {
 		priceMultiplier.value = parseFloat(savedPriceMultiplier)
@@ -306,6 +309,9 @@ function loadEconomyConfig() {
 	}
 	if (savedLayout !== null) {
 		layout.value = savedLayout
+	}
+	if (savedShowStackSize !== null) {
+		showStackSize.value = savedShowStackSize === 'true'
 	}
 	// Only load from localStorage if there's no version query parameter
 	const versionParam = route.query.version
@@ -326,6 +332,7 @@ function saveEconomyConfig() {
 	localStorage.setItem('layout', layout.value)
 	localStorage.setItem('selectedVersion', selectedVersion.value)
 	localStorage.setItem('showZeroPricedItems', showZeroPricedItems.value.toString())
+	localStorage.setItem('showStackSize', showStackSize.value.toString())
 }
 
 // Watch for changes and save to localStorage
@@ -337,7 +344,8 @@ watch(
 		viewMode,
 		layout,
 		selectedVersion,
-		showZeroPricedItems
+		showZeroPricedItems,
+		showStackSize
 	],
 	() => {
 		saveEconomyConfig()
@@ -674,6 +682,7 @@ function handleSaveSettings(settings) {
 	sellMargin.value = settings.sellMargin
 	roundToWhole.value = settings.roundToWhole
 	showZeroPricedItems.value = settings.showZeroPricedItems
+	showStackSize.value = settings.showStackSize
 
 	// Close the modal
 	showSettingsModal.value = false
@@ -916,7 +925,8 @@ watch(
 				:categories="enabledCategories"
 				:economyConfig="economyConfig"
 				:viewMode="viewMode"
-				:layout="layout" />
+				:layout="layout"
+				:showStackSize="showStackSize" />
 		</template>
 		<template v-for="version in uncategorizedVersions" :key="`uncat-${version}`">
 			<ItemTable
@@ -930,7 +940,8 @@ watch(
 				:categories="enabledCategories"
 				:economyConfig="economyConfig"
 				:viewMode="viewMode"
-				:layout="layout" />
+				:layout="layout"
+				:showStackSize="showStackSize" />
 		</template>
 
 		<!-- Empty state for categories view -->
