@@ -10,20 +10,20 @@ describe('Smoke: Home loads and seeded data available', () => {
 		// Ensure category/table renders
 		cy.contains('caption', 'wood', { matchCase: false })
 
-		// oak planks by visible name link and expected unit buy price 0.8
+		// oak planks by visible name link and expected unit buy price 2
 		cy.contains('a', /^oak planks$/i)
 			.should('be.visible')
 			.parents('tr')
 			.within(() => {
-				cy.contains(/0\.8\b/).should('be.visible')
+				cy.contains(/\b2\b/).should('be.visible')
 			})
 
-		// oak log by visible name link and expected unit buy price 3
+		// oak log by visible name link and expected unit buy price 8
 		cy.contains('a', /^oak log$/i)
 			.should('be.visible')
 			.parents('tr')
 			.within(() => {
-				cy.contains(/\b3\b/).should('be.visible')
+				cy.contains(/\b8\b/).should('be.visible')
 			})
 	})
 })
