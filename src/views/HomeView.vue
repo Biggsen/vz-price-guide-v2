@@ -385,6 +385,41 @@ const filteredGroupedItems = computed(() => {
 	}, {})
 })
 
+// All categories with search filtering (for count display)
+const allCategoriesWithSearch = computed(() => {
+	if (!allItemsForCounts.value) return {} // Use allItemsForCounts as base
+	const query = searchQuery.value.trim().toLowerCase()
+	const searchTerms = processSearchTerms(query)
+
+	return enabledCategories.reduce((acc, cat) => {
+		// Get all items for this category from the unfiltered-by-category list
+		const items = allItemsForCounts.value.filter((item) => item.category === cat)
+		// Apply client-side version_removed filtering and price/image filtering
+		const versionAndPriceFilteredItems = items.filter((item) => {
+			// Apply version_removed filtering (client-side)
+			if (
+				item.version_removed &&
+				isVersionLessOrEqual(item.version_removed, selectedVersion.value)
+			) {
+				return false
+			}
+			// Apply price/image filtering (mirroring itemsWithValidPrices logic)
+			if (user.value?.email) return true // Admin users see all items
+			if (!item.image || item.image.trim() === '') return false // Non-admin users need images
+			if (!showZeroPricedItems.value) {
+				const effectivePrice = getEffectivePriceMemoized(
+					item,
+					selectedVersion.value.replace('.', '_')
+				)
+				if (!effectivePrice || effectivePrice === 0) return false
+			}
+			return true
+		})
+		acc[cat] = filterItemsBySearch(versionAndPriceFilteredItems, searchTerms)
+		return acc
+	}, {})
+})
+
 const filteredUncategorizedItemsByVersion = computed(() => {
 	if (!allItemsCollection.value) return {}
 	const query = searchQuery.value.trim().toLowerCase()
@@ -421,7 +456,13 @@ const filteredUncategorizedItems = computed(() => {
 // Since categories are now filtered at database level, we can simplify this
 const allVisibleItems = computed(() => {
 	if (!allItemsCollection.value) return []
-	let items = [...versionFilteredItems.value]
+	let items = []
+
+	// Add items from visible categories only
+	for (const cat of visibleCategories.value) {
+		const categoryItems = filteredGroupedItems.value[cat] || []
+		items.push(...categoryItems)
+	}
 
 	// Add uncategorized items if shown AND user is admin
 	if (showUncategorised.value && user.value?.email) {
@@ -429,12 +470,6 @@ const allVisibleItems = computed(() => {
 		Object.values(filteredUncategorizedItemsByVersion.value).forEach((versionItems) => {
 			items.push(...versionItems)
 		})
-	}
-
-	// Apply search filter if there's a search term
-	if (searchQuery.value && searchQuery.value.trim()) {
-		const searchTerms = processSearchTerms(searchQuery.value)
-		items = filterItemsBySearch(items, searchTerms)
 	}
 
 	// Sort alphabetically by name
@@ -737,11 +772,23 @@ watch(
 						? 'bg-gray-asparagus text-white'
 						: 'bg-norway text-heavy-metal',
 					'rounded-xl px-2.5 py-1 transition text-xs sm:text-sm',
-					totalCategoryCounts[cat] === 0 ? 'cursor-not-allowed opacity-40' : ''
+					(
+						searchQuery && searchQuery.trim()
+							? (allCategoriesWithSearch[cat]?.length || 0) === 0
+							: totalCategoryCounts[cat] === 0
+					)
+						? 'cursor-not-allowed opacity-40'
+						: ''
 				]"
-				:disabled="totalCategoryCounts[cat] === 0">
+				:disabled="
+					searchQuery && searchQuery.trim()
+						? (allCategoriesWithSearch[cat]?.length || 0) === 0
+						: totalCategoryCounts[cat] === 0
+				">
 				{{ cat.charAt(0).toUpperCase() + cat.slice(1) }} ({{
-					totalCategoryCounts[cat] || 0
+					searchQuery && searchQuery.trim()
+						? allCategoriesWithSearch[cat]?.length || 0
+						: totalCategoryCounts[cat] || 0
 				}})
 			</button>
 			<button
