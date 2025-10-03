@@ -662,9 +662,9 @@ watch(
 					visibleCategories.includes(cat)
 						? 'bg-gray-asparagus text-white'
 						: 'bg-norway text-heavy-metal',
-					'border border-gray-asparagus rounded px-2 py-1 sm:px-3 sm:py-2 transition text-xs sm:text-sm',
+					'rounded-xl px-2.5 py-1 transition text-xs sm:text-sm',
 					!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0
-						? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
+						? 'cursor-not-allowed opacity-40'
 						: ''
 				]"
 				:disabled="!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0">
@@ -679,10 +679,8 @@ watch(
 					showUncategorised
 						? 'bg-gray-asparagus text-white'
 						: 'bg-norway text-heavy-metal',
-					'border border-gray-asparagus rounded px-2 py-1 sm:px-3 sm:py-2 transition text-xs sm:text-sm',
-					filteredUncategorizedItems.length === 0
-						? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
-						: ''
+					'rounded-xl px-2.5 py-1 transition text-xs sm:text-sm',
+					filteredUncategorizedItems.length === 0 ? 'cursor-not-allowed opacity-40' : ''
 				]"
 				:disabled="filteredUncategorizedItems.length === 0">
 				Uncategorised ({{ filteredUncategorizedItems.length }})
