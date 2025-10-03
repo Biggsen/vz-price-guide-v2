@@ -2,8 +2,14 @@
 import { useFirestore } from 'vuefire'
 import { useRoute, RouterLink } from 'vue-router'
 import { doc, deleteDoc } from 'firebase/firestore'
-import { buyUnitPrice, sellUnitPrice, buyStackPrice, sellStackPrice } from '../utils/pricing.js'
-import { getEffectivePrice } from '../utils/pricing.js'
+import {
+	buyUnitPrice,
+	sellUnitPrice,
+	buyStackPrice,
+	sellStackPrice,
+	getEffectivePrice,
+	getEffectivePriceMemoized
+} from '../utils/pricing.js'
 import { useAdmin } from '../utils/admin.js'
 import { getImageUrl } from '../utils/image.js'
 import { computed, ref, watch } from 'vue'
@@ -125,7 +131,7 @@ async function deleteItem(itemId) {
 // Helper function to get effective price for template use
 function getItemEffectivePrice(item) {
 	const versionKey = currentVersion.value.replace('.', '_')
-	return getEffectivePrice(item, versionKey)
+	return getEffectivePriceMemoized(item, versionKey)
 }
 </script>
 

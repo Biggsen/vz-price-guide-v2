@@ -269,6 +269,56 @@ export function customRoundPrice(price) {
 	}
 }
 
+// Price memoization cache
+const priceCache = new Map()
+const cacheStats = {
+	hits: 0,
+	misses: 0,
+	size: 0
+}
+
+/**
+ * Clear the price cache
+ */
+export function clearPriceCache() {
+	priceCache.clear()
+	cacheStats.hits = 0
+	cacheStats.misses = 0
+	cacheStats.size = 0
+}
+
+/**
+ * Get cache statistics
+ */
+export function getCacheStats() {
+	return { ...cacheStats, size: priceCache.size }
+}
+
+/**
+ * Memoized version of getEffectivePrice
+ * @param {Object} item - The item object
+ * @param {string} version - Version key (e.g., "1_16")
+ * @returns {number} - The effective price
+ */
+export function getEffectivePriceMemoized(item, version = '1_16') {
+	// Create cache key from item properties that affect price calculation
+	const cacheKey = `${item.id || item.material_id}-${version}-${
+		item.prices_by_version ? JSON.stringify(item.prices_by_version) : 'no-prices'
+	}-${item.price || 0}`
+
+	if (priceCache.has(cacheKey)) {
+		cacheStats.hits++
+		return priceCache.get(cacheKey)
+	}
+
+	cacheStats.misses++
+	const price = getEffectivePrice(item, version)
+	priceCache.set(cacheKey, price)
+	cacheStats.size = priceCache.size
+
+	return price
+}
+
 /**
  * Recalculate prices for all items with dynamic pricing for a specific version
  * @param {Array} allItems - Array of all items

@@ -10,7 +10,12 @@ import SettingsModal from '../components/SettingsModal.vue'
 import BaseButton from '../components/BaseButton.vue'
 import { categories, enabledCategories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
-import { getEffectivePrice } from '../utils/pricing.js'
+import {
+	getEffectivePrice,
+	getEffectivePriceMemoized,
+	clearPriceCache,
+	getCacheStats
+} from '../utils/pricing.js'
 import {
 	RocketLaunchIcon,
 	EyeIcon,
@@ -106,7 +111,10 @@ const groupedItems = computed(() => {
 		// Skip items not available in selected version
 		if (!shouldShowItemForVersion(item, selectedVersion.value)) return acc
 		// Skip zero-priced items unless admin has enabled showing them
-		const effectivePrice = getEffectivePrice(item, selectedVersion.value.replace('.', '_'))
+		const effectivePrice = getEffectivePriceMemoized(
+			item,
+			selectedVersion.value.replace('.', '_')
+		)
 		if (!showZeroPricedItems.value && (!effectivePrice || effectivePrice === 0)) return acc
 
 		if (!acc[item.category]) acc[item.category] = []
@@ -124,7 +132,10 @@ const uncategorizedItemsByVersion = computed(() => {
 		const isUncat = !item.category || !categories.includes(item.category)
 		const hasImage = item.image && item.image.trim() !== ''
 		const isAvailableInVersion = shouldShowItemForVersion(item, selectedVersion.value)
-		const effectivePrice = getEffectivePrice(item, selectedVersion.value.replace('.', '_'))
+		const effectivePrice = getEffectivePriceMemoized(
+			item,
+			selectedVersion.value.replace('.', '_')
+		)
 		const hasValidPrice = showZeroPricedItems.value || (effectivePrice && effectivePrice !== 0)
 
 		if (
@@ -243,6 +254,8 @@ watch(
 	],
 	() => {
 		saveEconomyConfig()
+		// Clear price cache when economy config changes
+		clearPriceCache()
 	},
 	{ deep: true }
 )
@@ -719,6 +732,12 @@ watch(
 
 		<div class="mb-4 text-sm text-gray-asparagus font-medium">
 			Showing {{ allVisibleItems.length }} item{{ allVisibleItems.length === 1 ? '' : 's' }}
+			<span v-if="user?.email" class="ml-4 text-xs text-gray-500">
+				Cache: {{ getCacheStats().hits }}/{{
+					getCacheStats().hits + getCacheStats().misses
+				}}
+				hits ({{ getCacheStats().size }} entries)
+			</span>
 		</div>
 
 		<!-- View Mode and Layout Toggle -->
