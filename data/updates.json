@@ -1,5 +1,20 @@
 [
 	{
+		"id": 24,
+		"title": "Homepage Performance Boost & Search Enhancements",
+		"date": "2025-10-03",
+		"type": "Enhancement",
+		"hidden": false,
+		"description": "Performance improvements to the homepage for faster loading and smoother interactions. Also enhanced search functionality and added stack size display with user customization options.",
+		"changes": [
+			"Significant homepage performance improvements for faster loading and smoother interactions",
+			"Optimized rendering and data processing for better user experience",
+			"Search now supports spaces in search terms for more natural searching",
+			"Added stack size display for items with toggleable setting in Settings",
+			"Restyled category filter buttons for improved visual consistency"
+		]
+	},
+	{
 		"id": 23,
 		"title": "Discord Community Server - Join the Conversation! 💬",
 		"date": "2025-09-12",
