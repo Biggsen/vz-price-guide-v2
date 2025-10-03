@@ -56,7 +56,10 @@ const enabledVersions = computed(() => {
 // Version filtering state - declare before itemsQuery
 const selectedVersion = ref(baseEnabledVersions[baseEnabledVersions.length - 1]) // Default to latest base enabled version
 
-// Create reactive query based on selected version
+// Category filtering state - declare before itemsQuery
+const visibleCategories = shallowRef([...enabledCategories])
+
+// Create reactive query based on selected version and categories
 const itemsQuery = computed(() => {
 	const baseQuery = collection(db, 'items')
 
@@ -65,6 +68,15 @@ const itemsQuery = computed(() => {
 
 	// Add version filtering - only get items available in selected version
 	filters.push(where('version', '<=', selectedVersion.value))
+
+	// Add category filtering - only get items from visible categories
+	// Only apply category filter if not all categories are selected (optimization)
+	if (
+		visibleCategories.value.length < enabledCategories.length &&
+		visibleCategories.value.length > 0
+	) {
+		filters.push(where('category', 'in', visibleCategories.value))
+	}
 
 	// Note: We can't filter version_removed at DB level because:
 	// 1. Firestore doesn't support != null queries
@@ -81,6 +93,22 @@ const itemsQuery = computed(() => {
 })
 
 const allItemsCollection = useCollection(itemsQuery)
+
+// Separate query to get all items for category counts (unfiltered by category)
+const allItemsForCountsQuery = computed(() => {
+	const baseQuery = collection(db, 'items')
+	const filters = []
+
+	// Only filter by version for counts
+	filters.push(where('version', '<=', selectedVersion.value))
+	filters.push(orderBy('version', 'asc'))
+	filters.push(orderBy('category', 'asc'))
+	filters.push(orderBy('name', 'asc'))
+
+	return query(baseQuery, ...filters)
+})
+
+const allItemsForCounts = useCollection(allItemsForCountsQuery)
 
 // Feature flags
 const showExportFeature = ref(true) // Set to true to enable export functionality
@@ -164,6 +192,30 @@ const groupedItems = computed(() => {
 	return items.reduce((acc, item) => {
 		if (!acc[item.category]) acc[item.category] = []
 		acc[item.category].push(item)
+		return acc
+	}, {})
+})
+
+// Total category counts (unfiltered by selection) for button disabled state
+const totalCategoryCounts = computed(() => {
+	if (!allItemsForCounts.value) return {}
+	// Use allItemsForCounts directly, not versionFilteredItems (which is already filtered)
+	const items = allItemsForCounts.value
+
+	return enabledCategories.reduce((acc, cat) => {
+		const categoryItems = items.filter((item) => {
+			// Apply version filtering but not category filtering
+			if (
+				item.version_removed &&
+				isVersionLessOrEqual(item.version_removed, selectedVersion.value)
+			) {
+				return false
+			}
+			// Apply same filtering as groupedItems but without search
+			if (user.value?.email) return item.category === cat
+			return item.category === cat && item.image && item.image.trim() !== ''
+		})
+		acc[cat] = categoryItems.length
 		return acc
 	}, {})
 })
@@ -366,15 +418,10 @@ const filteredUncategorizedItems = computed(() => {
 })
 
 // Flat list view combining all visible items
+// Since categories are now filtered at database level, we can simplify this
 const allVisibleItems = computed(() => {
 	if (!allItemsCollection.value) return []
-	let items = []
-
-	// Add items from visible categories
-	for (const cat of visibleCategories.value) {
-		const categoryItems = filteredGroupedItems.value[cat] || []
-		items.push(...categoryItems)
-	}
+	let items = [...versionFilteredItems.value]
 
 	// Add uncategorized items if shown AND user is admin
 	if (showUncategorised.value && user.value?.email) {
@@ -382,6 +429,12 @@ const allVisibleItems = computed(() => {
 		Object.values(filteredUncategorizedItemsByVersion.value).forEach((versionItems) => {
 			items.push(...versionItems)
 		})
+	}
+
+	// Apply search filter if there's a search term
+	if (searchQuery.value && searchQuery.value.trim()) {
+		const searchTerms = processSearchTerms(searchQuery.value)
+		items = filterItemsBySearch(items, searchTerms)
 	}
 
 	// Sort alphabetically by name
@@ -392,7 +445,6 @@ const allVisibleItems = computed(() => {
 	})
 })
 
-const visibleCategories = shallowRef([...enabledCategories])
 const showUncategorised = ref(true)
 const showCategoryFilters = ref(false) // Hidden by default on mobile
 
@@ -685,13 +737,11 @@ watch(
 						? 'bg-gray-asparagus text-white'
 						: 'bg-norway text-heavy-metal',
 					'rounded-xl px-2.5 py-1 transition text-xs sm:text-sm',
-					!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0
-						? 'cursor-not-allowed opacity-40'
-						: ''
+					totalCategoryCounts[cat] === 0 ? 'cursor-not-allowed opacity-40' : ''
 				]"
-				:disabled="!filteredGroupedItems[cat] || filteredGroupedItems[cat].length === 0">
+				:disabled="totalCategoryCounts[cat] === 0">
 				{{ cat.charAt(0).toUpperCase() + cat.slice(1) }} ({{
-					filteredGroupedItems[cat]?.length || 0
+					totalCategoryCounts[cat] || 0
 				}})
 			</button>
 			<button
