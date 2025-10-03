@@ -965,7 +965,7 @@ watch(
 	<!-- Export Modal -->
 	<ExportModal
 		:isOpen="showExportModal"
-		:items="allItemsCollection"
+		:items="allItemsForCounts"
 		:economyConfig="economyConfig"
 		@close="closeExportModal" />
 
