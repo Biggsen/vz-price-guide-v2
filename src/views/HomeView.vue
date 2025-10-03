@@ -1,6 +1,6 @@
 <script setup>
 import { useFirestore, useCollection } from 'vuefire'
-import { query, collection, orderBy } from 'firebase/firestore'
+import { query, collection, orderBy, where } from 'firebase/firestore'
 import { computed, ref, watch, onMounted, shallowRef } from 'vue'
 import { useCurrentUser } from 'vuefire'
 import { useRoute, useRouter } from 'vue-router'
@@ -53,13 +53,34 @@ const enabledVersions = computed(() => {
 	}
 })
 
-const allItemsQuery = query(
-	collection(db, 'items'),
-	orderBy('category', 'asc'),
-	orderBy('subcategory', 'asc'),
-	orderBy('name', 'asc')
-)
-const allItemsCollection = useCollection(allItemsQuery)
+// Version filtering state - declare before itemsQuery
+const selectedVersion = ref(baseEnabledVersions[baseEnabledVersions.length - 1]) // Default to latest base enabled version
+
+// Create reactive query based on selected version
+const itemsQuery = computed(() => {
+	const baseQuery = collection(db, 'items')
+
+	// Build filters array
+	const filters = []
+
+	// Add version filtering - only get items available in selected version
+	filters.push(where('version', '<=', selectedVersion.value))
+
+	// Note: We can't filter version_removed at DB level because:
+	// 1. Firestore doesn't support != null queries
+	// 2. Items with version_removed: null should be included
+	// 3. Items with version_removed <= selectedVersion should be excluded
+	// So we'll do this filtering client-side for now
+
+	// Add ordering
+	filters.push(orderBy('version', 'asc'))
+	filters.push(orderBy('category', 'asc'))
+	filters.push(orderBy('name', 'asc'))
+
+	return query(baseQuery, ...filters)
+})
+
+const allItemsCollection = useCollection(itemsQuery)
 
 // Feature flags
 const showExportFeature = ref(true) // Set to true to enable export functionality
@@ -72,9 +93,6 @@ function dismissAlert() {
 	showAlert.value = false
 	localStorage.setItem('exportFeatureAlertDismissed', 'true')
 }
-
-// Version filtering state
-const selectedVersion = ref(baseEnabledVersions[baseEnabledVersions.length - 1]) // Default to latest base enabled version
 
 // Helper function to compare version strings (e.g., "1.16" vs "1.17")
 function isVersionLessOrEqual(itemVersion, targetVersion) {
@@ -104,11 +122,19 @@ function shouldShowItemForVersion(item, selectedVersion) {
 }
 
 // Helper computed for version-filtered items
+// Now we only need to filter version_removed client-side since version is filtered at DB level
 const versionFilteredItems = computed(() => {
 	if (!allItemsCollection.value) return []
-	return allItemsCollection.value.filter((item) =>
-		shouldShowItemForVersion(item, selectedVersion.value)
-	)
+	return allItemsCollection.value.filter((item) => {
+		// Check if item was removed in or before selected version
+		if (
+			item.version_removed &&
+			isVersionLessOrEqual(item.version_removed, selectedVersion.value)
+		) {
+			return false
+		}
+		return true
+	})
 })
 
 // Helper computed for items with valid images
