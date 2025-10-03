@@ -1688,7 +1688,7 @@ const TEST_DATA = {
 			id: 'chest',
 			material_id: 'chest',
 			name: 'chest',
-			image: '/images/items/chest.png',
+			image: '/images/items/chest.gif',
 			url: 'https://minecraft.fandom.com/wiki/Chest',
 			stack: 64,
 			category: 'utility',
@@ -1727,11 +1727,11 @@ const TEST_DATA = {
 			id: 'eye_of_ender',
 			material_id: 'eye_of_ender',
 			name: 'eye of ender',
-			image: '/images/items/eye_of_ender.png',
+			image: '/images/items/ender_eye.png',
 			url: 'https://minecraft.fandom.com/wiki/Eye_of_Ender',
 			stack: 64,
-			category: 'misc',
-			subcategory: 'end',
+			category: 'utility',
+			subcategory: '',
 			version: '1.16',
 			version_removed: null,
 			pricing_type: 'dynamic',
@@ -1752,7 +1752,7 @@ const TEST_DATA = {
 			id: 'nether_star',
 			material_id: 'nether_star',
 			name: 'nether star',
-			image: '/images/items/nether_star.png',
+			image: '/images/items/nether_star.gif',
 			url: 'https://minecraft.fandom.com/wiki/Nether_Star',
 			stack: 64,
 			category: 'drops',
@@ -2265,6 +2265,180 @@ const TEST_DATA = {
 					output_count: 1
 				}
 			}
+		},
+		{
+			id: 'dirt',
+			material_id: 'dirt',
+			name: 'dirt',
+			image: '/images/items/dirt.png',
+			url: 'https://minecraft.fandom.com/wiki/Dirt',
+			stack: 64,
+			category: 'earth',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 1.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'grass_block',
+			material_id: 'grass_block',
+			name: 'grass block',
+			image: '/images/items/grass_block.png',
+			url: 'https://minecraft.fandom.com/wiki/Grass_Block',
+			stack: 64,
+			category: 'earth',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 2.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'sand',
+			material_id: 'sand',
+			name: 'sand',
+			image: '/images/items/sand.png',
+			url: 'https://minecraft.fandom.com/wiki/Sand',
+			stack: 64,
+			category: 'sand',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 1.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'red_sand',
+			material_id: 'red_sand',
+			name: 'red sand',
+			image: '/images/items/red_sand.png',
+			url: 'https://minecraft.fandom.com/wiki/Red_Sand',
+			stack: 64,
+			category: 'sand',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 1.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'tripwire_hook',
+			material_id: 'tripwire_hook',
+			name: 'tripwire hook',
+			image: '/images/items/tripwire_hook.png',
+			url: 'https://minecraft.fandom.com/wiki/Tripwire_Hook',
+			stack: 64,
+			category: 'redstone',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 12.0,
+				'1_18': 9.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'iron_ingot', quantity: 1 },
+						{ material_id: 'stick', quantity: 1 },
+						{ material_id: 'oak_planks', quantity: 1 }
+					],
+					output_count: 2
+				}
+			}
+		},
+		{
+			id: 'piston',
+			material_id: 'piston',
+			name: 'piston',
+			image: '/images/items/piston.gif',
+			url: 'https://minecraft.fandom.com/wiki/Piston',
+			stack: 64,
+			category: 'redstone',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 33.0,
+				'1_18': 28.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'oak_planks', quantity: 3 },
+						{ material_id: 'cobblestone', quantity: 4 },
+						{ material_id: 'iron_ingot', quantity: 1 },
+						{ material_id: 'redstone', quantity: 1 }
+					],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'cobblestone',
+			material_id: 'cobblestone',
+			name: 'cobblestone',
+			image: '/images/items/cobblestone.png',
+			url: 'https://minecraft.fandom.com/wiki/Cobblestone',
+			stack: 64,
+			category: 'stone',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 1.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'echo_shard',
+			material_id: 'echo_shard',
+			name: 'echo shard',
+			image: '/images/items/echo_shard.png',
+			url: 'https://minecraft.fandom.com/wiki/Echo_Shard',
+			stack: 64,
+			category: 'deep dark',
+			subcategory: '',
+			version: '1.19',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_19': 35.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'sculk',
+			material_id: 'sculk',
+			name: 'sculk',
+			image: '/images/items/sculk.gif',
+			url: 'https://minecraft.fandom.com/wiki/Sculk',
+			stack: 64,
+			category: 'deep dark',
+			subcategory: '',
+			version: '1.19',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_19': 20.0
+			},
+			recipes_by_version: {}
 		}
 	],
 	shop_items: [
