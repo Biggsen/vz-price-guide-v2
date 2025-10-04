@@ -9,7 +9,11 @@ import {
 	ChevronRightIcon,
 	ChevronDownIcon,
 	UserIcon,
-	ArrowRightEndOnRectangleIcon
+	ArrowRightEndOnRectangleIcon,
+	CurrencyDollarIcon,
+	LightBulbIcon,
+	WrenchScrewdriverIcon,
+	NewspaperIcon
 } from '@heroicons/vue/24/solid'
 
 import { useAdmin } from '../utils/admin.js'
@@ -218,7 +222,7 @@ onUnmounted(() => {
 				to="/"
 				@click="
 					() => {
-						handleNavigationClick('Home')
+						handleNavigationClick('Price Guide')
 						setActiveMainNav(null)
 					}
 				"
@@ -228,7 +232,10 @@ onUnmounted(() => {
 						? 'bg-gray-700 text-white'
 						: 'hover:bg-gray-700 hover:text-white'
 				]">
-				Home
+				<div class="flex items-center gap-2">
+					<CurrencyDollarIcon class="w-4 h-4" />
+					<span>Price Guide</span>
+				</div>
 			</RouterLink>
 
 			<button
@@ -240,8 +247,31 @@ onUnmounted(() => {
 						: 'hover:bg-gray-700 hover:text-white'
 				]"
 				v-if="user?.email">
-				Suggestions
+				<div class="flex items-center gap-2">
+					<LightBulbIcon class="w-4 h-4" />
+					<span>Suggestions</span>
+				</div>
 			</button>
+
+			<RouterLink
+				to="/tools"
+				@click="
+					() => {
+						handleNavigationClick('Tools')
+						setActiveMainNav(null)
+					}
+				"
+				:class="[
+					'block px-3 py-2 transition-colors',
+					route.path === '/tools'
+						? 'bg-gray-700 text-white'
+						: 'hover:bg-gray-700 hover:text-white'
+				]">
+				<div class="flex items-center gap-2">
+					<WrenchScrewdriverIcon class="w-4 h-4" />
+					<span>Tools</span>
+				</div>
+			</RouterLink>
 
 			<RouterLink
 				to="/updates"
@@ -257,7 +287,10 @@ onUnmounted(() => {
 						? 'bg-gray-700 text-white'
 						: 'hover:bg-gray-700 hover:text-white'
 				]">
-				Updates
+				<div class="flex items-center gap-2">
+					<NewspaperIcon class="w-4 h-4" />
+					<span>Updates</span>
+				</div>
 			</RouterLink>
 
 			<!-- Admin section (only for admins) -->
@@ -381,7 +414,7 @@ onUnmounted(() => {
 			to="/"
 			@click="
 				() => {
-					handleNavigationClick('Home')
+					handleNavigationClick('Price Guide')
 					setActiveMainNav(null)
 				}
 			"
@@ -391,7 +424,10 @@ onUnmounted(() => {
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
-			Home
+			<div class="flex items-center gap-2">
+				<CurrencyDollarIcon class="w-4 h-4" />
+				<span>Price Guide</span>
+			</div>
 		</RouterLink>
 		<button
 			@click="handleSuggestionsClick"
@@ -402,8 +438,30 @@ onUnmounted(() => {
 					: 'hover:bg-gray-700 hover:text-white'
 			]"
 			v-if="user?.email">
-			Suggestions
+			<div class="flex items-center gap-2">
+				<LightBulbIcon class="w-4 h-4" />
+				<span>Suggestions</span>
+			</div>
 		</button>
+		<RouterLink
+			to="/tools"
+			@click="
+				() => {
+					handleNavigationClick('Tools')
+					setActiveMainNav(null)
+				}
+			"
+			:class="[
+				'px-3 py-2 rounded transition-colors',
+				route.path === '/tools'
+					? 'bg-gray-700 text-white'
+					: 'hover:bg-gray-700 hover:text-white'
+			]">
+			<div class="flex items-center gap-2">
+				<WrenchScrewdriverIcon class="w-4 h-4" />
+				<span>Tools</span>
+			</div>
+		</RouterLink>
 		<RouterLink
 			to="/updates"
 			@click="
@@ -418,7 +476,10 @@ onUnmounted(() => {
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
-			Updates
+			<div class="flex items-center gap-2">
+				<NewspaperIcon class="w-4 h-4" />
+				<span>Updates</span>
+			</div>
 		</RouterLink>
 
 		<!-- Admin section (only for admins) -->

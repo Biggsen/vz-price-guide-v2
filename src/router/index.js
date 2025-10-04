@@ -267,6 +267,12 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/tools',
+			name: 'tools',
+			component: () => import('../views/ToolsView.vue'),
+			meta: { title: "Tools - verzion's economy price guide for Minecraft" }
+		},
+		{
 			path: '/updates',
 			name: 'updates',
 			component: () => import('../views/UpdatesView.vue'),
