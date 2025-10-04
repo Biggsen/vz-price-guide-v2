@@ -350,22 +350,17 @@ function startAddItem() {
 }
 
 function setQuantityToStack() {
-	console.log('setQuantityToStack called', itemForm.value.item_id)
 	if (itemForm.value.item_id) {
 		const item = getItemById(itemForm.value.item_id)
-		console.log('Found item:', item)
 		if (item) {
 			const stackSize = item.stack || 64
-			console.log('Setting quantity to:', stackSize)
 			itemForm.value.quantity = stackSize
 		} else {
 			// Fallback to 64 if item not found
-			console.log('Item not found, using default 64')
 			itemForm.value.quantity = 64
 		}
 	} else {
 		// If no item selected, set to default stack size
-		console.log('No item selected, using default 64')
 		itemForm.value.quantity = 64
 	}
 }
@@ -530,42 +525,48 @@ function getItemChance(rewardItem) {
 }
 
 function formatEnchantmentName(enchantmentId) {
-	// Extract enchantment name and level from ID like "enchanted_book_efficiency_4" or "enchanted_book_feather_falling_4"
-	const parts = enchantmentId.split('_')
-	if (parts.length >= 4 && parts[0] === 'enchanted' && parts[1] === 'book') {
-		// Find the level (last part that's a number or roman numeral)
-		let level = null
-		let enchantmentParts = []
+	// Get the item name from the enchantmentId using getItemById
+	const itemName = getItemById(enchantmentId)?.name || enchantmentId
 
-		for (let i = 2; i < parts.length; i++) {
-			const part = parts[i].toLowerCase()
-			if (['1', '2', '3', '4', '5', 'i', 'ii', 'iii', 'iv', 'v'].includes(part)) {
-				level = parts[i]
+	// Extract enchantment name and level from name like "enchanted book (unbreaking iii)" or "enchanted book (feather falling iv)"
+	const match = itemName.match(/^enchanted book \((.+)\)$/)
+
+	if (match) {
+		const contentInParentheses = match[1].trim()
+
+		// Split by spaces and process each part
+		const parts = contentInParentheses.split(' ')
+
+		// Find the last part that's a roman numeral
+		const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v']
+		let levelIndex = -1
+		let level = null
+
+		for (let i = parts.length - 1; i >= 0; i--) {
+			if (romanNumerals.includes(parts[i].toLowerCase())) {
+				levelIndex = i
+				level = parts[i].toLowerCase()
 				break
-			} else {
-				enchantmentParts.push(parts[i])
 			}
 		}
 
-		// Join enchantment parts and capitalize
+		// Extract enchantment name (everything except the level)
+		const enchantmentParts = levelIndex >= 0 ? parts.slice(0, levelIndex) : parts
 		const enchantment = enchantmentParts.join(' ')
+
+		// Capitalize each word
 		const capitalizedEnchantment = enchantment.replace(/\b\w/g, (l) => l.toUpperCase())
 
 		if (level) {
 			// Convert roman numerals to numbers for display
 			const levelMap = {
-				1: '1',
-				2: '2',
-				3: '3',
-				4: '4',
-				5: '5',
 				i: '1',
 				ii: '2',
 				iii: '3',
 				iv: '4',
 				v: '5'
 			}
-			const displayLevel = levelMap[level.toLowerCase()] || level
+			const displayLevel = levelMap[level] || level
 			return `${capitalizedEnchantment} ${displayLevel}`
 		} else {
 			// No level found, just return the enchantment name
@@ -576,7 +577,7 @@ function formatEnchantmentName(enchantmentId) {
 	// Fallback to original name if format doesn't match
 	return (
 		getItemById(enchantmentId)?.name ||
-		enchantmentId.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+		itemName.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
 	)
 }
 
@@ -647,7 +648,7 @@ function getFormattedYamlForItem(rewardItem) {
 	const item = allItems.value.find((i) => i.id === rewardItem.item_id)
 	if (!item) return null
 
-	return formatRewardItemForYaml(rewardItem, item, 1)
+	return formatRewardItemForYaml(rewardItem, item, 1, allItems.value)
 }
 
 // Item weight adjustment functions (for existing items in the list)
