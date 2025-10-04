@@ -120,7 +120,6 @@
 		"title": "Shop Manager - Your Ultimate Minecraft Trading Hub",
 		"status": "In Development",
 		"description": "Transform your Minecraft trading experience with a powerful Shop Manager! Track your competitors, maximize profits, and never miss a great deal again. Whether you're running multiple shops across different servers or just want to find the best prices, this feature puts you in control of your trading empire.",
-		"dependencies": [6],
 		"features": [
 			{
 				"name": "🏪 Manage multiple shops across different Minecraft servers",
@@ -277,7 +276,6 @@
 		"title": "Custom Price Guides - Create Your Own Price References",
 		"status": "Idea",
 		"description": "Create your own price guides with custom prices and notes. Set prices for any item from the main guide, add personal notes, and choose between static or recipe-based pricing. Perfect for documenting server-specific prices or building your own price reference.",
-		"dependencies": [6],
 		"features": [
 			{
 				"name": "📝 Create multiple price guides - name them and optionally link to servers",
