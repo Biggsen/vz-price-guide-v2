@@ -56,13 +56,14 @@ const db = useFirestore()
  */
 export async function createCrateReward(userId, crateData) {
 	try {
+		const now = new Date().toISOString()
 		const crateReward = {
 			user_id: userId,
 			name: crateData.name,
 			description: crateData.description || '',
 			minecraft_version: crateData.minecraft_version || '1.20',
-			created_at: new Date(),
-			updated_at: new Date()
+			created_at: now,
+			updated_at: now
 		}
 
 		const docRef = await addDoc(collection(db, 'crate_rewards'), crateReward)
@@ -80,7 +81,7 @@ export async function updateCrateReward(crateId, updates) {
 	try {
 		const updateData = {
 			...updates,
-			updated_at: new Date()
+			updated_at: new Date().toISOString()
 		}
 
 		await updateDoc(doc(db, 'crate_rewards', crateId), updateData)
@@ -135,6 +136,7 @@ export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 			materialId = itemData.material_id
 		}
 
+		const now = new Date().toISOString()
 		const rewardItem = {
 			crate_reward_id: crateId,
 			item_id: itemData.item_id,
@@ -145,8 +147,8 @@ export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 			display_amount: itemData.display_amount || itemData.quantity || 1,
 			custom_model_data: itemData.custom_model_data || -1,
 			enchantments: itemData.enchantments || {},
-			created_at: new Date(),
-			updated_at: new Date()
+			created_at: now,
+			updated_at: now
 		}
 
 		const docRef = await addDoc(collection(db, 'crate_reward_items'), rewardItem)
@@ -164,7 +166,7 @@ export async function updateCrateRewardItem(itemId, updates) {
 	try {
 		const updateData = {
 			...updates,
-			updated_at: new Date()
+			updated_at: new Date().toISOString()
 		}
 
 		await updateDoc(doc(db, 'crate_reward_items', itemId), updateData)
