@@ -1,6 +1,6 @@
 <template>
 	<div class="p-4 py-8 max-w-2xl">
-		<h1 class="text-2xl font-bold mb-6">Your Suggestions</h1>
+		<h1 class="text-3xl font-bold mb-6">Your Suggestions</h1>
 		<p class="mb-6 text-gray-700">
 			Hey {{ userName }}. Glad you're here. Would you mind helping out? If you have any ideas
 			or feedback to make this site better, I'd love to hear from you.
@@ -48,7 +48,10 @@
 			</BaseButton>
 		</form>
 		<div v-if="isVerified">
-			<h2 class="text-lg font-semibold mb-4">Previous Suggestions</h2>
+			<h2
+				class="text-2xl font-semibold mb-6 text-gray-700 border-b-2 border-gray-asparagus pb-2">
+				Previous Suggestions
+			</h2>
 			<div v-if="suggestions.length === 0" class="text-gray-500">No suggestions yet.</div>
 			<ul v-else class="space-y-4">
 				<li
@@ -152,21 +155,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed } from 'vue'
 import {
-	getFirestore,
 	collection,
 	addDoc,
 	query,
 	where,
 	orderBy,
-	getDocs,
 	serverTimestamp,
-	deleteDoc,
 	doc as firestoreDoc,
 	updateDoc
 } from 'firebase/firestore'
-import { useFirebaseAuth } from 'vuefire'
+import { useFirebaseAuth, useFirestore, useCollection } from 'vuefire'
 import { useUserProfile } from '../utils/userProfile.js'
 import { InboxIcon } from '@heroicons/vue/20/solid'
 import { EyeIcon } from '@heroicons/vue/24/outline'
@@ -175,11 +175,10 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/BaseButton.vue'
 
 const auth = useFirebaseAuth()
-const db = getFirestore()
+const db = useFirestore()
 const form = ref({ title: '', body: '' })
 const error = ref('')
 const loading = ref(false)
-const suggestions = ref([])
 const userId = computed(() => auth.currentUser?.uid)
 const { userProfile } = useUserProfile(userId.value)
 const userName = computed(
@@ -194,17 +193,27 @@ const editingId = ref(null)
 const editForm = ref({ title: '', body: '' })
 const isVerified = computed(() => auth.currentUser?.emailVerified)
 
-async function fetchSuggestions() {
-	if (!auth.currentUser) return
-	const q = query(
+// Reactive suggestions query
+const suggestionsQuery = computed(() => {
+	if (!auth.currentUser) {
+		// Return a query that will return no results instead of null for SSR compatibility
+		return query(collection(db, 'suggestions'), where('userId', '==', 'no-user'))
+	}
+	return query(
 		collection(db, 'suggestions'),
 		where('userId', '==', auth.currentUser.uid),
 		orderBy('createdAt', 'desc')
 	)
-	const snap = await getDocs(q)
-	const withProfiles = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-	suggestions.value = withProfiles.filter((s) => !s.deleted)
-}
+})
+
+// Use reactive collection
+const { data: rawSuggestions } = useCollection(suggestionsQuery)
+
+// Filter out deleted suggestions
+const suggestions = computed(() => {
+	if (!rawSuggestions.value) return []
+	return rawSuggestions.value.filter((s) => !s.deleted)
+})
 
 async function submitSuggestion() {
 	error.value = ''
@@ -232,7 +241,7 @@ async function submitSuggestion() {
 		})
 		form.value.title = ''
 		form.value.body = ''
-		await fetchSuggestions()
+		// No need to manually fetch - useCollection will update automatically
 	} catch (e) {
 		error.value = 'Failed to submit suggestion.'
 	}
@@ -242,14 +251,10 @@ async function submitSuggestion() {
 async function softDeleteSuggestion(id) {
 	await updateDoc(firestoreDoc(db, 'suggestions', id), { deleted: true })
 	deleteConfirmId.value = null
-	await fetchSuggestions()
+	// No need to manually fetch - useCollection will update automatically
 }
 
-async function deleteSuggestion(id) {
-	if (!confirm('Are you sure you want to delete this suggestion?')) return
-	await deleteDoc(firestoreDoc(db, 'suggestions', id))
-	await fetchSuggestions()
-}
+// Removed deleteSuggestion function as it's not used in the template
 
 function startEdit(s) {
 	editingId.value = s.id
@@ -267,7 +272,7 @@ async function saveEdit(s) {
 		body: editForm.value.body.trim()
 	})
 	editingId.value = null
-	await fetchSuggestions()
+	// No need to manually fetch - useCollection will update automatically
 }
 
 function statusLabel(status) {
@@ -278,7 +283,5 @@ function statusLabel(status) {
 	return status
 }
 
-onMounted(() => {
-	fetchSuggestions()
-})
+// No need for onMounted since useCollection handles reactivity automatically
 </script>

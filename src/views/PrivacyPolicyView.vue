@@ -5,7 +5,7 @@ defineOptions({ name: 'PrivacyPolicyView' })
 </script>
 
 <template>
-	<div class="prose mt-6 px-4">
+	<div class="prose max-w-2xl mt-6 px-4">
 		<PrivacyPolicyHeader />
 		<PrivacyPolicyTOC />
 

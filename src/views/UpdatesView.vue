@@ -177,7 +177,7 @@ function formatCompletionDate(dateString) {
 </script>
 
 <template>
-	<div class="p-4 py-8 max-w-4xl">
+	<div class="p-4 py-8 max-w-2xl">
 		<h1 class="text-3xl font-bold mb-6 text-gray-800">Updates & Roadmap</h1>
 
 		<!-- Updates Section -->
@@ -187,26 +187,15 @@ function formatCompletionDate(dateString) {
 				Recent Updates
 			</h2>
 
-			<div class="space-y-6">
-				<div
-					v-for="update in displayedUpdates"
-					:key="update.id"
-					class="bg-gray-100 border border-gray-300 p-6 border-l-4 border-laurel">
-					<div class="flex justify-between items-start mb-3">
-						<h3 class="text-lg font-semibold text-gray-800">{{ update.title }}</h3>
-						<span
-							class="text-sm text-gray-500 bg-white px-2 py-1 rounded whitespace-nowrap">
+			<div class="space-y-4">
+				<div v-for="update in displayedUpdates" :key="update.id" class="py-3">
+					<div class="mb-3">
+						<span class="text-sm text-flame inline-block mb-2">
 							{{ formatDate(update.date) }}
 						</span>
+						<h3 class="text-xl font-semibold text-gray-800">{{ update.title }}</h3>
 					</div>
-					<div class="text-sm text-gray-600 mb-2">
-						<span
-							:class="getUpdateTypeClass(update.type)"
-							class="px-2 py-1 rounded-full text-xs font-medium bg-white">
-							{{ update.type }}
-						</span>
-					</div>
-					<p class="text-gray-700 leading-relaxed">{{ update.description }}</p>
+					<p class="text-gray-700">{{ update.description }}</p>
 					<div v-if="update.link" class="mt-3">
 						<a
 							:href="update.link"
@@ -216,7 +205,7 @@ function formatCompletionDate(dateString) {
 							{{ update.linkText || 'Visit Link' }}
 						</a>
 					</div>
-					<ul v-if="update.changes && update.changes.length" class="mt-3 ml-4 space-y-1">
+					<ul v-if="update.changes && update.changes.length" class="mt-3 ml-6 space-y-1">
 						<li
 							v-for="change in update.changes"
 							:key="change"
@@ -224,6 +213,12 @@ function formatCompletionDate(dateString) {
 							{{ change }}
 						</li>
 					</ul>
+					<div class="mt-3">
+						<span
+							class="px-3 py-1 rounded-full text-[10px] font-medium bg-white border border-laurel text-gray-asparagus uppercase">
+							{{ update.type }}
+						</span>
+					</div>
 				</div>
 			</div>
 
@@ -271,21 +266,20 @@ function formatCompletionDate(dateString) {
 				</div>
 			</details>
 
-			<div class="space-y-8">
-				<div
-					v-for="phase in displayedRoadmap"
-					:key="phase.id"
-					class="bg-gray-100 border border-gray-300 p-6">
+			<div class="space-y-4">
+				<div v-for="phase in displayedRoadmap" :key="phase.id" class="py-3">
 					<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-						<h3 class="text-lg font-semibold text-gray-800 mb-2 sm:mb-0">
-							{{ phase.title }}
-						</h3>
-						<div class="flex items-center gap-2">
+						<div class="flex items-center gap-3 mb-2 sm:mb-0">
+							<h3 class="text-xl font-semibold text-gray-800">
+								{{ phase.title }}
+							</h3>
 							<span
 								:style="getStatusStyle(phase.status)"
-								class="px-3 py-1 rounded-full text-xs font-medium">
+								class="px-3 py-1 rounded-full text-[10px] font-medium uppercase">
 								{{ phase.status }}
 							</span>
+						</div>
+						<div class="flex items-center gap-2">
 							<span v-if="phase.timeline" class="text-sm text-gray-500">
 								{{ phase.timeline }}
 							</span>
@@ -325,7 +319,7 @@ function formatCompletionDate(dateString) {
 						<h4 class="text-sm font-semibold text-gray-600 mb-2">
 							{{ phase.status === 'Completed' ? 'Delivered:' : 'Planned:' }}
 						</h4>
-						<ul class="space-y-2">
+						<ul class="ml-2 space-y-1">
 							<li
 								v-for="feature in phase.features"
 								:key="feature.name"
@@ -337,7 +331,7 @@ function formatCompletionDate(dateString) {
 									:class="
 										feature.completed
 											? 'line-through text-gray-500'
-											: 'text-gray-700'
+											: 'text-gray-600'
 									"
 									class="text-sm">
 									{{ feature.name }}
