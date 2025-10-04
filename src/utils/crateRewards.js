@@ -524,7 +524,7 @@ export function parseCrateRewardsYaml(yamlContent) {
 			if (!inPrizesSection) continue
 
 			// Parse prize ID (e.g., "1":) - indented with 4 spaces
-			const prizeIdMatch = line.match(/^    "(\d+)":\s*$/)
+			const prizeIdMatch = line.match(/^ {4}"(\d+)":\s*$/)
 			if (prizeIdMatch) {
 				currentPrizeId = prizeIdMatch[1]
 				currentPrize = {
@@ -542,14 +542,14 @@ export function parseCrateRewardsYaml(yamlContent) {
 			// Parse prize properties - indented with 6 spaces
 			if (currentPrize) {
 				// Only parse Weight - that's what we actually need
-				const weightMatch = line.match(/^      Weight:\s*(\d+)/)
+				const weightMatch = line.match(/^ {6}Weight:\s*(\d+)/)
 				if (weightMatch) {
 					currentPrize.weight = parseInt(weightMatch[1])
 					continue
 				}
 
 				// Parse item strings (e.g., - "item:torch, amount:64") - indented with 8 spaces
-				const itemMatch = line.match(/^        -\s*"(.+)"/)
+				const itemMatch = line.match(/^ {8}-\s*"(.+)"/)
 				if (itemMatch) {
 					currentPrize.items.push(itemMatch[1])
 					continue
