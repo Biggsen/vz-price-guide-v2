@@ -20,12 +20,15 @@ import {
 } from '../utils/crateRewards.js'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { versions } from '../constants.js'
+import BaseButton from '../components/BaseButton.vue'
 import {
 	PlusIcon,
 	PencilIcon,
 	TrashIcon,
 	ArrowDownTrayIcon,
 	ArrowUpTrayIcon,
+	ArrowLeftIcon,
+	ClipboardIcon,
 	XMarkIcon,
 	CheckIcon,
 	ExclamationTriangleIcon
@@ -45,6 +48,7 @@ const showImportModal = ref(false)
 const editingItem = ref(null)
 const loading = ref(false)
 const error = ref(null)
+const showCopyToast = ref(false)
 
 // Review panel state
 const expandedReviewPanels = ref(new Set())
@@ -280,8 +284,15 @@ async function createNewCrateReward() {
 }
 
 async function updateCrateRewardData() {
-	if (!selectedCrateId.value || !crateForm.value.name.trim()) {
+	if (!crateForm.value.name.trim()) {
 		error.value = 'Crate reward name is required'
+		return
+	}
+
+	// Determine which crate to update
+	const crateId = selectedCrateId.value || crateForm.value.crateId
+	if (!crateId) {
+		error.value = 'No crate selected for update'
 		return
 	}
 
@@ -289,8 +300,12 @@ async function updateCrateRewardData() {
 	error.value = null
 
 	try {
-		await updateCrateReward(selectedCrateId.value, crateForm.value)
+		await updateCrateReward(crateId, crateForm.value)
 		showEditForm.value = false
+		// Clear the crateId from form after successful update
+		if (crateForm.value.crateId) {
+			delete crateForm.value.crateId
+		}
 	} catch (err) {
 		error.value = 'Failed to update crate reward: ' + err.message
 	} finally {
@@ -321,6 +336,30 @@ async function deleteCrateRewardData() {
 	}
 }
 
+async function deleteCrateFromCard(crate) {
+	if (
+		!confirm(`Are you sure you want to delete "${crate.name}"? This action cannot be undone.`)
+	) {
+		return
+	}
+
+	loading.value = true
+	error.value = null
+
+	try {
+		await deleteCrateReward(crate.id)
+		// If we're currently viewing this crate, navigate back to dashboard
+		if (selectedCrateId.value === crate.id) {
+			selectedCrateId.value = ''
+			router.push('/crate-rewards')
+		}
+	} catch (err) {
+		error.value = 'Failed to delete crate reward: ' + err.message
+	} finally {
+		loading.value = false
+	}
+}
+
 function startEditCrate() {
 	if (!selectedCrate.value) return
 	crateForm.value = {
@@ -329,6 +368,26 @@ function startEditCrate() {
 		minecraft_version: selectedCrate.value.minecraft_version
 	}
 	showEditForm.value = true
+}
+
+function editCrateFromCard(crate) {
+	crateForm.value = {
+		crateId: crate.id, // Store the crate ID for updating
+		name: crate.name,
+		description: crate.description || '',
+		minecraft_version: crate.minecraft_version
+	}
+	showEditForm.value = true
+}
+
+function startCreateCrate() {
+	// Clear the form to ensure it's always empty when creating new
+	crateForm.value = {
+		name: '',
+		description: '',
+		minecraft_version: '1.20'
+	}
+	showCreateForm.value = true
 }
 
 function startAddItem() {
@@ -496,6 +555,100 @@ function exportYaml() {
 	)
 }
 
+function copyRewardList() {
+	if (!rewardItems.value || !allItems.value) return
+
+	// Get the sorted items (respecting current sort order)
+	const sortedItems = [...rewardItems.value].sort((a, b) => {
+		const itemA = getItemById(a.item_id)
+		const itemB = getItemById(b.item_id)
+
+		if (!itemA || !itemB) return 0
+
+		if (sortBy.value === 'name') {
+			return sortOrder.value === 'asc'
+				? itemA.name.localeCompare(itemB.name)
+				: itemB.name.localeCompare(itemA.name)
+		} else if (sortBy.value === 'value') {
+			const valueA = getEffectivePrice(itemA, currentVersion.value) * (a.quantity || 1)
+			const valueB = getEffectivePrice(itemB, currentVersion.value) * (b.quantity || 1)
+			return sortOrder.value === 'asc' ? valueA - valueB : valueB - valueA
+		} else if (sortBy.value === 'weight') {
+			return sortOrder.value === 'asc'
+				? (a.weight || 0) - (b.weight || 0)
+				: (b.weight || 0) - (a.weight || 0)
+		}
+		return 0
+	})
+
+	// Generate the text list
+	const listText = sortedItems
+		.map((item) => {
+			const itemData = getItemById(item.item_id)
+			if (!itemData) return `${item.item_id} (${item.quantity || 1}) - Value: Unknown`
+
+			// Use the same calculation as the UI to ensure values match
+			const totalValue = getItemValue(item)
+
+			// Build enchantments string
+			let enchantmentsStr = ''
+			if (item.enchantments && Object.keys(item.enchantments).length > 0) {
+				const enchantList = []
+				for (const [enchantId, level] of Object.entries(item.enchantments)) {
+					const enchantItem = getItemById(enchantId)
+					if (enchantItem) {
+						// Extract enchantment name from material_id (e.g., "enchanted_book_unbreaking_3" -> "Unbreaking III")
+						const enchantName =
+							enchantItem.material_id
+								?.replace('enchanted_book_', '')
+								?.replace(/_(\d+)$/, (match, level) => {
+									// Convert number to roman numerals for levels > 1
+									if (parseInt(level) === 1) return ''
+									const romanNumerals = [
+										'',
+										'II',
+										'III',
+										'IV',
+										'V',
+										'VI',
+										'VII',
+										'VIII',
+										'IX',
+										'X'
+									]
+									return ' ' + (romanNumerals[parseInt(level) - 1] || level)
+								})
+								?.replace(/_/g, ' ')
+								?.replace(/\b\w/g, (l) => l.toUpperCase()) || 'Unknown'
+						enchantList.push(enchantName)
+					}
+				}
+				if (enchantList.length > 0) {
+					enchantmentsStr = ` - Enchantments: ${enchantList.join(', ')}`
+				}
+			}
+
+			return `${itemData.name} (${item.quantity || 1}) - Value: ${Math.ceil(
+				totalValue
+			)}${enchantmentsStr}`
+		})
+		.join('\n')
+
+	// Copy to clipboard
+	navigator.clipboard
+		.writeText(listText)
+		.then(() => {
+			// Show toast notification
+			showCopyToast.value = true
+			setTimeout(() => {
+				showCopyToast.value = false
+			}, 2000) // Hide after 2 seconds
+		})
+		.catch((err) => {
+			console.error('Failed to copy reward list:', err)
+		})
+}
+
 function getItemById(itemId) {
 	return allItems.value?.find((item) => item.id === itemId)
 }
@@ -522,6 +675,24 @@ function getItemValue(rewardItem) {
 function getItemChance(rewardItem) {
 	if (!totalWeight.value || totalWeight.value === 0) return 0
 	return (rewardItem.weight / totalWeight.value) * 100
+}
+
+function formatDate(dateValue) {
+	if (!dateValue) return 'Unknown'
+
+	// Expect ISO string format: "2025-10-04T09:33:49.883Z"
+	if (typeof dateValue !== 'string') {
+		return 'Invalid Date'
+	}
+
+	const date = new Date(dateValue)
+
+	// Check if the date is valid
+	if (isNaN(date.getTime())) {
+		return 'Invalid Date'
+	}
+
+	return date.toLocaleDateString()
 }
 
 function formatEnchantmentName(enchantmentId) {
@@ -915,6 +1086,19 @@ watch(selectedCrate, (crate) => {
 					</div>
 					<!-- Crate Header -->
 					<div v-else-if="selectedCrate">
+						<!-- Back Button -->
+						<div class="mb-4">
+							<BaseButton
+								variant="tertiary"
+								@click="router.push('/crate-rewards')"
+								class="text-sm">
+								<template #left-icon>
+									<ArrowLeftIcon class="w-4 h-4" />
+								</template>
+								Back to Dashboard
+							</BaseButton>
+						</div>
+
 						<h1 class="text-3xl font-bold text-gray-900">{{ selectedCrate.name }}</h1>
 						<p v-if="selectedCrate.description" class="text-gray-600 mt-1">
 							{{ selectedCrate.description }}
@@ -940,50 +1124,41 @@ watch(selectedCrate, (crate) => {
 					</div>
 				</div>
 				<div class="flex gap-2">
-					<button
+					<BaseButton
 						v-if="selectedCrateId"
 						@click="showImportModal = true"
-						class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-						<ArrowUpTrayIcon class="w-4 h-4 mr-2" />
+						variant="secondary">
+						<template #left-icon>
+							<ArrowUpTrayIcon class="w-4 h-4" />
+						</template>
 						Import YAML
-					</button>
-					<button
+					</BaseButton>
+					<BaseButton
 						v-if="selectedCrateId"
 						@click="exportYaml"
-						class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+						variant="secondary"
 						:disabled="!rewardItems?.length">
-						<ArrowDownTrayIcon class="w-4 h-4 mr-2" />
+						<template #left-icon>
+							<ArrowDownTrayIcon class="w-4 h-4" />
+						</template>
 						Export YAML
-					</button>
-					<button
+					</BaseButton>
+					<BaseButton
 						v-if="selectedCrateId"
-						@click="clearAllRewards"
-						class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-						:disabled="!rewardItems?.length || loading">
-						<TrashIcon class="w-4 h-4 mr-2" />
-						Clear All Rewards
-					</button>
-					<button
-						v-if="selectedCrateId"
-						@click="startEditCrate"
-						class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-						<PencilIcon class="w-4 h-4 mr-2" />
-						Edit
-					</button>
-					<button
-						v-if="selectedCrateId"
-						@click="deleteCrateRewardData"
-						class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-						<TrashIcon class="w-4 h-4 mr-2" />
-						Delete
-					</button>
-					<button
-						v-if="!selectedCrateId"
-						@click="showCreateForm = true"
-						class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-						<PlusIcon class="w-4 h-4 mr-2" />
-						New Crate Reward
-					</button>
+						@click="copyRewardList"
+						variant="secondary"
+						:disabled="!rewardItems?.length">
+						<template #left-icon>
+							<ClipboardIcon class="w-4 h-4" />
+						</template>
+						Copy List
+					</BaseButton>
+					<BaseButton v-if="!selectedCrateId" @click="startCreateCrate" variant="primary">
+						<template #left-icon>
+							<PlusIcon class="w-4 h-4" />
+						</template>
+						New Crate
+					</BaseButton>
 				</div>
 			</div>
 		</div>
@@ -1007,19 +1182,44 @@ watch(selectedCrate, (crate) => {
 				<div
 					v-for="crate in crateRewards"
 					:key="crate.id"
-					@click="router.push(`/crate-rewards/${crate.id}`)"
-					class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-blue-300 cursor-pointer">
-					<h3 class="text-lg font-semibold text-gray-900 mb-2">{{ crate.name }}</h3>
-					<p v-if="crate.description" class="text-gray-600 text-sm mb-2">
+					class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
+					<!-- Card Header with Title and Actions -->
+					<div class="flex items-start justify-between mb-3">
+						<h3
+							@click="router.push(`/crate-rewards/${crate.id}`)"
+							class="text-lg font-semibold text-gray-900 hover:text-blue-600 cursor-pointer flex-1">
+							{{ crate.name }}
+						</h3>
+						<!-- Action Buttons -->
+						<div class="flex gap-2 ml-3">
+							<button
+								@click.stop="editCrateFromCard(crate)"
+								class="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+								title="Edit crate">
+								<PencilIcon class="w-4 h-4" />
+							</button>
+							<button
+								@click.stop="deleteCrateFromCard(crate)"
+								class="p-1 text-gray-400 hover:text-red-600 transition-colors"
+								title="Delete crate">
+								<TrashIcon class="w-4 h-4" />
+							</button>
+						</div>
+					</div>
+
+					<!-- Card Content -->
+					<p v-if="crate.description" class="text-gray-600 text-sm mb-3">
 						{{ crate.description }}
 					</p>
-					<div class="text-sm text-gray-500">
-						<span class="font-medium">Version:</span>
-						{{ crate.minecraft_version }}
-					</div>
-					<div class="text-sm text-gray-500">
-						<span class="font-medium">Created:</span>
-						{{ new Date(crate.created_at).toLocaleDateString() }}
+					<div class="space-y-1">
+						<div class="text-sm text-gray-500">
+							<span class="font-medium">Version:</span>
+							{{ crate.minecraft_version }}
+						</div>
+						<div class="text-sm text-gray-500">
+							<span class="font-medium">Created:</span>
+							{{ formatDate(crate.created_at) }}
+						</div>
 					</div>
 				</div>
 			</div>
@@ -1032,12 +1232,12 @@ watch(selectedCrate, (crate) => {
 				<div class="p-6 border-b border-gray-200">
 					<div class="flex items-center justify-between">
 						<h3 class="text-lg font-semibold text-gray-900">Reward Items</h3>
-						<button
-							@click="startAddItem"
-							class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-							<PlusIcon class="w-4 h-4 mr-2" />
+						<BaseButton @click="startAddItem" variant="primary">
+							<template #left-icon>
+								<PlusIcon class="w-4 h-4" />
+							</template>
 							Add Item
-						</button>
+						</BaseButton>
 					</div>
 				</div>
 
@@ -1356,14 +1556,25 @@ watch(selectedCrate, (crate) => {
 			</div>
 		</div>
 
+		<!-- Clear All Rewards Link -->
+		<div v-if="selectedCrateId && rewardItems?.length" class="mt-4 flex justify-start">
+			<button
+				@click="clearAllRewards"
+				:disabled="loading"
+				class="inline-flex items-center text-sm text-gray-600 hover:text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+				<TrashIcon class="w-4 h-4 mr-1" />
+				Clear all items
+			</button>
+		</div>
+
 		<!-- Add Item Button -->
 		<div v-if="selectedCrateId" class="mt-4 flex justify-center">
-			<button
-				@click="startAddItem"
-				class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-				<PlusIcon class="w-5 h-5 mr-2" />
+			<BaseButton @click="startAddItem" variant="primary">
+				<template #left-icon>
+					<PlusIcon class="w-5 h-5" />
+				</template>
 				Add Item
-			</button>
+			</BaseButton>
 		</div>
 
 		<!-- Create Crate Reward Modal -->
@@ -1884,6 +2095,20 @@ watch(selectedCrate, (crate) => {
 					</div>
 				</div>
 			</div>
+		</div>
+
+		<!-- Copy Success Toast -->
+		<div
+			v-if="showCopyToast"
+			class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 z-50 transition-all duration-300">
+			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M5 13l4 4L19 7" />
+			</svg>
+			<span>Reward list copied to clipboard!</span>
 		</div>
 	</div>
 </template>
