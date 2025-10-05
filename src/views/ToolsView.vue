@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useCurrentUser } from 'vuefire'
+import BaseButton from '../components/BaseButton.vue'
 import {
 	CalculatorIcon,
 	ChartBarIcon,
@@ -8,6 +9,7 @@ import {
 	DocumentTextIcon,
 	GlobeAltIcon,
 	LightBulbIcon,
+	RocketLaunchIcon,
 	PuzzlePieceIcon,
 	SparklesIcon,
 	WrenchScrewdriverIcon
@@ -137,127 +139,76 @@ function getStatusText(status) {
 </script>
 
 <template>
-	<div class="min-h-screen bg-gray-50">
+	<!-- Main Content -->
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
 		<!-- Header -->
-		<div class="bg-white shadow-sm">
-			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-				<div class="text-left">
-					<h1 class="text-3xl font-bold text-gray-900 mb-2">Tools Dashboard</h1>
-					<p class="text-lg text-gray-600 max-w-2xl mx-auto">
-						Access powerful tools to enhance your Minecraft economy management
-						experience. Calculate prices, convert formats, generate configurations, and
-						analyze your data.
+		<div class="text-left mb-8">
+			<h1 class="text-3xl font-bold text-gray-900 mb-2">Tools Dashboard</h1>
+			<p class="text-gray-600 max-w-2xl">
+				Here you will find various server and plugin-related tools that I'm building for
+				myself, but they might be useful for other people too. From price calculators to
+				config generators, these are the utilities I use to manage my own Minecraft servers.
+			</p>
+		</div>
+		<!-- New Asparagus Card -->
+		<div class="mb-12 w-1/3">
+			<div
+				class="bg-norway rounded-lg shadow-md border-2 border-gray-asparagus overflow-hidden">
+				<img
+					src="/images/tools/crate-rewards.png"
+					alt="Crate Rewards"
+					class="w-full h-36 object-cover object-top" />
+				<h3
+					class="text-xl font-semibold text-white bg-gray-asparagus px-4 py-2 w-full border-x-2 border-white">
+					CrazyCrates Crate Rewards
+				</h3>
+				<div class="text-left p-4 border-2 border-white rounded-b-lg">
+					<p class="text-heavy-metal mb-4 max-w-2xl mx-auto">
+						Build up crate prizes one item at a time, set their weights, and see their
+						values. Export your configuration as CrazyCrates Prizes format for easy
+						integration into your server.
 					</p>
+					<div class="mb-6 text-heavy-metal">
+						<span class="font-bold">Plugin:</span>
+						<a
+							href="https://modrinth.com/plugin/crazycrates"
+							class="text-heavy-metal hover:text-gray-asparagus ml-2">
+							<span class="underline">CrazyCrates</span>
+						</a>
+					</div>
+					<router-link to="/crate-rewards">
+						<BaseButton variant="primary">Try Crate Rewards</BaseButton>
+					</router-link>
 				</div>
 			</div>
 		</div>
 
-		<!-- Main Content -->
-		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-			<!-- Tool Categories -->
-			<div class="space-y-8">
-				<div
-					v-for="category in toolCategories"
-					:key="category.id"
-					class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-					<!-- Category Header -->
-					<div class="px-6 py-4 border-b border-gray-200">
-						<div class="flex items-center">
-							<div :class="[category.color, 'p-3 rounded-lg mr-4']">
-								<component :is="category.icon" class="w-6 h-6 text-white" />
-							</div>
-							<div>
-								<h2 class="text-xl font-semibold text-gray-900">
-									{{ category.name }}
-								</h2>
-								<p class="text-gray-600 mt-1">
-									{{ category.description }}
-								</p>
-							</div>
-						</div>
-					</div>
-
-					<!-- Tools Grid -->
-					<div class="p-6">
-						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-							<div
-								v-for="tool in category.tools"
-								:key="tool.name"
-								class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
-								<!-- Tool Icon and Status -->
-								<div class="flex items-start justify-between mb-4">
-									<div :class="[category.color, 'p-2 rounded-lg']">
-										<component :is="tool.icon" class="w-5 h-5 text-white" />
-									</div>
-									<span
-										:class="[
-											getStatusColor(tool.status),
-											'px-2 py-1 rounded-full text-xs font-medium'
-										]">
-										{{ getStatusText(tool.status) }}
-									</span>
-								</div>
-
-								<!-- Tool Info -->
-								<div>
-									<h3 class="text-lg font-semibold text-gray-900 mb-2">
-										{{ tool.name }}
-									</h3>
-									<p class="text-gray-600 text-sm mb-4">
-										{{ tool.description }}
-									</p>
-
-									<!-- Action Button -->
-									<button
-										:disabled="tool.status !== 'available'"
-										:class="[
-											tool.status === 'available'
-												? 'bg-gray-asparagus hover:bg-gray-700 text-white'
-												: 'bg-gray-200 text-gray-500 cursor-not-allowed',
-											'w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200'
-										]">
-										{{
-											tool.status === 'available'
-												? 'Open Tool'
-												: 'Coming Soon'
-										}}
-									</button>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Call to Action -->
-			<div class="mt-12 text-center">
-				<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+		<!-- Call to Action -->
+		<div class="mt-12 text-left w-1/2">
+			<div class="bg-saltpan rounded-lg shadow-md border-2 border-laurel">
+				<div class="p-6 border-2 border-white rounded-lg">
 					<h3 class="text-xl font-semibold text-gray-900 mb-2">Need a specific tool?</h3>
-					<p class="text-gray-600 mb-6 max-w-2xl mx-auto">
+					<p class="text-heavy-metal mb-4 max-w-2xl">
 						Have an idea for a tool that would help with your Minecraft economy
 						management? We're always looking for ways to improve the platform.
 					</p>
-					<div class="flex flex-col sm:flex-row gap-4 justify-center">
-						<router-link
-							v-if="user?.email"
-							to="/suggestions"
-							class="inline-flex items-center px-6 py-3 bg-gray-asparagus text-white font-medium rounded-lg hover:bg-gray-700 transition-colors duration-200">
-							<LightBulbIcon class="w-5 h-5 mr-2" />
-							Suggest a Tool
+					<div class="flex flex-col sm:flex-row gap-4">
+						<router-link v-if="user?.email" to="/suggestions">
+							<BaseButton variant="secondary">
+								<template #left-icon>
+									<LightBulbIcon />
+								</template>
+								Suggest a Tool
+							</BaseButton>
 						</router-link>
-						<router-link
-							v-else
-							to="/signup"
-							class="inline-flex items-center px-6 py-3 bg-gray-asparagus text-white font-medium rounded-lg hover:bg-gray-700 transition-colors duration-200">
-							<LightBulbIcon class="w-5 h-5 mr-2" />
-							Sign Up to Suggest
+						<router-link v-else to="/signup">
+							<BaseButton variant="secondary">
+								<template #left-icon>
+									<LightBulbIcon />
+								</template>
+								Sign Up to Suggest
+							</BaseButton>
 						</router-link>
-						<a
-							href="/updates"
-							class="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200">
-							<SparklesIcon class="w-5 h-5 mr-2" />
-							View Updates
-						</a>
 					</div>
 				</div>
 			</div>
