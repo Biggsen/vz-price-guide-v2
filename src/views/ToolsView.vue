@@ -157,7 +157,7 @@ function getStatusText(status) {
 				<img
 					src="/images/tools/crate-rewards.png"
 					alt="Crate Rewards"
-					class="w-full h-36 object-cover object-top" />
+					class="w-full h-36 object-cover object-top border-t-2 border-x-2 border-white rounded-t-lg" />
 				<h3
 					class="text-xl font-semibold text-white bg-gray-asparagus px-4 py-2 w-full border-x-2 border-white">
 					CrazyCrates Crate Rewards
@@ -184,7 +184,7 @@ function getStatusText(status) {
 		</div>
 
 		<!-- Call to Action -->
-		<div class="mt-12 text-left w-1/2">
+		<div class="mt-12 text-left w-1/3">
 			<div class="bg-saltpan rounded-lg shadow-md border-2 border-laurel">
 				<div class="p-6 border-2 border-white rounded-lg">
 					<h3 class="text-xl font-semibold text-gray-900 mb-2">Need a specific tool?</h3>

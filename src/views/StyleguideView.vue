@@ -793,6 +793,40 @@ function isSelected(index) {
 						This is an informational card with blue styling for important notices.
 					</p>
 				</div>
+
+				<!-- Feature Card (Norway Background) -->
+				<div
+					class="bg-norway rounded-lg shadow-md border-2 border-gray-asparagus overflow-hidden">
+					<img
+						src="https://picsum.photos/400/128"
+						alt="Feature Card Image"
+						class="w-full h-32 object-cover border-t-2 border-x-2 border-white rounded-t-lg" />
+					<h3
+						class="text-xl font-semibold text-white bg-gray-asparagus px-4 py-2 w-full border-x-2 border-white">
+						Feature Card
+					</h3>
+					<div class="p-4 border-2 border-white rounded-b-lg">
+						<p class="text-heavy-metal mb-4">
+							This is a feature card with norway background, asparagus border, and
+							white inner section.
+						</p>
+						<BaseButton variant="primary">Action</BaseButton>
+					</div>
+				</div>
+
+				<!-- Call to Action Card (Saltpan Background) -->
+				<div class="bg-saltpan rounded-lg shadow-md border-2 border-laurel h-full">
+					<div class="p-6 border-2 border-white rounded-lg h-full flex flex-col">
+						<h3 class="text-xl font-semibold text-gray-900 mb-2">
+							Call to Action Card
+						</h3>
+						<p class="text-heavy-metal mb-4 flex-grow">
+							This is a call to action card with saltpan background, laurel border,
+							and white inner section.
+						</p>
+						<BaseButton variant="secondary" class="self-start">Action</BaseButton>
+					</div>
+				</div>
 			</div>
 		</section>
 
