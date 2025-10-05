@@ -13,7 +13,8 @@ import {
 	CurrencyDollarIcon,
 	LightBulbIcon,
 	WrenchScrewdriverIcon,
-	NewspaperIcon
+	RocketLaunchIcon,
+	Cog6ToothIcon
 } from '@heroicons/vue/24/solid'
 
 import { useAdmin } from '../utils/admin.js'
@@ -288,7 +289,7 @@ onUnmounted(() => {
 						: 'hover:bg-gray-700 hover:text-white'
 				]">
 				<div class="flex items-center gap-2">
-					<NewspaperIcon class="w-4 h-4" />
+					<RocketLaunchIcon class="w-4 h-4" />
 					<span>Updates</span>
 				</div>
 			</RouterLink>
@@ -298,7 +299,10 @@ onUnmounted(() => {
 				<button
 					@click="toggleSubnav('admin')"
 					class="w-full text-left px-3 py-2 flex items-center justify-between">
-					<span>Admin</span>
+					<div class="flex items-center gap-2">
+						<Cog6ToothIcon class="w-4 h-4" />
+						<span>Admin</span>
+					</div>
 					<ChevronRightIcon v-if="!isSubnavExpanded('admin')" class="w-4 h-4" />
 					<ChevronDownIcon v-else class="w-4 h-4" />
 				</button>
@@ -477,7 +481,7 @@ onUnmounted(() => {
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
 			<div class="flex items-center gap-2">
-				<NewspaperIcon class="w-4 h-4" />
+				<RocketLaunchIcon class="w-4 h-4" />
 				<span>Updates</span>
 			</div>
 		</RouterLink>
@@ -492,7 +496,10 @@ onUnmounted(() => {
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
-			Admin
+			<div class="flex items-center gap-2">
+				<Cog6ToothIcon class="w-4 h-4" />
+				<span>Admin</span>
+			</div>
 		</RouterLink>
 
 		<!-- Sign In/Sign Up buttons (when not logged in) -->
