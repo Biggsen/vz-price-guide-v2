@@ -115,6 +115,14 @@ function isSelected(index) {
 							</div>
 						</div>
 						<div class="flex items-center space-x-3">
+							<div class="w-16 h-16 bg-sea-mist rounded-lg shadow-md"></div>
+							<div>
+								<div class="font-medium text-gray-900">Sea Mist</div>
+								<div class="text-sm text-gray-500">#c2ddbc</div>
+								<div class="text-xs text-gray-400">Lighter than norway</div>
+							</div>
+						</div>
+						<div class="flex items-center space-x-3">
 							<div class="w-16 h-16 bg-heavy-metal rounded-lg shadow-md"></div>
 							<div>
 								<div class="font-medium text-gray-900">Heavy Metal</div>

@@ -7,6 +7,7 @@ module.exports = {
 				'gray-asparagus': '#49584b',
 				laurel: '#789471',
 				norway: '#a7c3a0',
+				'sea-mist': '#c2ddbc', // lighter than norway
 				'heavy-metal': '#242c25',
 				goldenrod: '#d4a42d',
 				flame: '#cb6843',
