@@ -33,7 +33,7 @@ const buttonClasses = computed(() => {
 	const paddingClass = hasLeftIcon ? 'pl-3' : ''
 
 	if (props.variant === 'primary') {
-		return `${baseClasses} ${paddingClass} bg-gray-asparagus text-white hover:bg-laurel`
+		return `${baseClasses} ${paddingClass} bg-gray-asparagus text-white hover:bg-highland`
 	} else if (props.variant === 'secondary') {
 		// Use py-1.5 to match btn-secondary exactly
 		const secondaryBaseClasses = baseClasses.replace('py-2', 'py-1.5')

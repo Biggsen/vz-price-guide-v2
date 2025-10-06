@@ -542,7 +542,7 @@ onMounted(() => {
 							</div>
 							<button
 								@click.stop="openViewFile(screenshot.viewFile)"
-								class="text-xs text-gray-asparagus hover:text-laurel transition-colors"
+								class="text-xs text-gray-asparagus hover:text-highland transition-colors"
 								:title="`Open ${screenshot.viewFile}`">
 								<DocumentTextIcon class="h-3 w-3" />
 							</button>
@@ -592,7 +592,7 @@ onMounted(() => {
 							class="mt-2 flex items-center space-x-2">
 							<button
 								@click="openViewFile(selectedScreenshot.viewFile)"
-								class="flex items-center space-x-1 text-sm text-gray-asparagus hover:text-laurel transition-colors">
+								class="flex items-center space-x-1 text-sm text-gray-asparagus hover:text-highland transition-colors">
 								<CodeBracketIcon class="h-4 w-4" />
 								<span>{{ selectedScreenshot.viewFile }}</span>
 							</button>

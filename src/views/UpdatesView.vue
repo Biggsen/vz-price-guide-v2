@@ -228,7 +228,7 @@ function formatCompletionDate(dateString) {
 				class="mt-6 text-center">
 				<button
 					@click="toggleShowAllUpdates"
-					class="text-laurel hover:text-gray-asparagus font-medium underline transition-colors duration-200">
+					class="text-highland hover:text-gray-asparagus font-medium underline transition-colors duration-200">
 					{{
 						showAllUpdates
 							? 'Show less'
@@ -360,7 +360,7 @@ function formatCompletionDate(dateString) {
 			<div v-if="completedRoadmapCount > 0" class="mt-6 text-center">
 				<button
 					@click="toggleShowCompletedRoadmap"
-					class="text-laurel hover:text-gray-asparagus font-medium underline transition-colors duration-200">
+					class="text-highland hover:text-gray-asparagus font-medium underline transition-colors duration-200">
 					{{
 						showCompletedRoadmap
 							? 'Hide completed'

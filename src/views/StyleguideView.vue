@@ -99,11 +99,19 @@ function isSelected(index) {
 							</div>
 						</div>
 						<div class="flex items-center space-x-3">
-							<div class="w-16 h-16 bg-laurel rounded-lg shadow-md"></div>
+							<div class="w-16 h-16 bg-highland rounded-lg shadow-md"></div>
 							<div>
-								<div class="font-medium text-gray-900">Laurel</div>
-								<div class="text-sm text-gray-500">#789471</div>
+								<div class="font-medium text-gray-900">Highland</div>
+								<div class="text-sm text-gray-500">#6b835f</div>
 								<div class="text-xs text-gray-400">Secondary brand color</div>
+							</div>
+						</div>
+						<div class="flex items-center space-x-3">
+							<div class="w-16 h-16 bg-amulet rounded-lg shadow-md"></div>
+							<div>
+								<div class="font-medium text-gray-900">Amulet</div>
+								<div class="text-sm text-gray-500">#85a17e</div>
+								<div class="text-xs text-gray-400">Tertiary brand color</div>
 							</div>
 						</div>
 						<div class="flex items-center space-x-3">
@@ -771,7 +779,7 @@ function isSelected(index) {
 							content containers.
 						</p>
 						<button
-							class="rounded-md bg-gray-asparagus px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel">
+							class="rounded-md bg-gray-asparagus px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-highland">
 							Action
 						</button>
 					</div>
@@ -815,7 +823,7 @@ function isSelected(index) {
 				</div>
 
 				<!-- Call to Action Card (Saltpan Background) -->
-				<div class="bg-saltpan rounded-lg shadow-md border-2 border-laurel h-full">
+				<div class="bg-saltpan rounded-lg shadow-md border-2 border-highland h-full">
 					<div class="p-6 border-2 border-white rounded-lg h-full flex flex-col">
 						<h3 class="text-xl font-semibold text-gray-900 mb-2">
 							Call to Action Card

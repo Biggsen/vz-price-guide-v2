@@ -242,7 +242,7 @@ function signOutOfFirebase() {
 						<button
 							v-if="!isVerified"
 							@click="auth.currentUser?.sendEmailVerification()"
-							class="mt-2 rounded-md bg-gray-asparagus px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+							class="mt-2 rounded-md bg-gray-asparagus px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-highland focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 							Resend Verification Email
 						</button>
 					</div>
@@ -412,7 +412,7 @@ function signOutOfFirebase() {
 					<button
 						@click="showCreateProfileForm = true"
 						data-cy="create-profile-button"
-						class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-laurel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+						class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-highland focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 						Create Profile
 					</button>
 				</div>

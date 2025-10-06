@@ -5,7 +5,8 @@ module.exports = {
 		extend: {
 			colors: {
 				'gray-asparagus': '#49584b',
-				laurel: '#789471',
+				highland: '#6b835f',
+				amulet: '#85a17e',
 				norway: '#a7c3a0',
 				'sea-mist': '#c2ddbc', // lighter than norway
 				'heavy-metal': '#242c25',
