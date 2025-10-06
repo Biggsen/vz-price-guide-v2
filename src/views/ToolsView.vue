@@ -172,6 +172,8 @@ function getStatusText(status) {
 						<span class="font-bold">Plugin:</span>
 						<a
 							href="https://modrinth.com/plugin/crazycrates"
+							target="_blank"
+							rel="noopener noreferrer"
 							class="text-heavy-metal hover:text-gray-asparagus ml-2">
 							<span class="underline">CrazyCrates</span>
 						</a>
@@ -185,7 +187,7 @@ function getStatusText(status) {
 
 		<!-- Call to Action -->
 		<div class="mt-12 text-left w-1/3">
-			<div class="bg-saltpan rounded-lg shadow-md border-2 border-laurel">
+			<div class="bg-saltpan rounded-lg shadow-md border-2 border-highland">
 				<div class="p-6 border-2 border-white rounded-lg">
 					<h3 class="text-xl font-semibold text-gray-900 mb-2">Need a specific tool?</h3>
 					<p class="text-heavy-metal mb-4 max-w-2xl">
