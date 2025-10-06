@@ -142,6 +142,29 @@ const totalWeight = computed(() => {
 	return rewardItems.value.reduce((total, item) => total + (item.weight || 0), 0)
 })
 
+// Get all crate reward items to calculate counts
+const allCrateRewardItemsQuery = computed(() => {
+	if (!crateRewards.value || crateRewards.value.length === 0) return null
+
+	const crateIds = crateRewards.value.map((crate) => crate.id)
+	return query(collection(db, 'crate_reward_items'), where('crate_reward_id', 'in', crateIds))
+})
+
+const { data: allCrateRewardItems } = useCollection(allCrateRewardItemsQuery)
+
+// Get item counts for all crates
+const crateItemCounts = computed(() => {
+	if (!allCrateRewardItems.value || !crateRewards.value) return {}
+
+	const counts = {}
+	crateRewards.value.forEach((crate) => {
+		counts[crate.id] = allCrateRewardItems.value.filter(
+			(item) => item.crate_reward_id === crate.id
+		).length
+	})
+	return counts
+})
+
 // Sorted reward items
 const sortedRewardItems = computed(() => {
 	if (!rewardItems.value || sortBy.value === 'none') return rewardItems.value
@@ -1173,7 +1196,10 @@ watch(selectedCrate, (crate) => {
 
 		<!-- Crate Rewards List -->
 		<div v-if="!selectedCrateId" class="mb-8">
-			<h2 class="text-xl font-semibold text-gray-900 mb-4">Your Crate Rewards</h2>
+			<h2
+				class="text-2xl font-semibold mb-6 text-gray-700 border-b-2 border-gray-asparagus pb-2">
+				Your Crate Rewards
+			</h2>
 			<div v-if="crateRewardsPending" class="text-gray-600">Loading crate rewards...</div>
 			<div v-else-if="!hasCrateRewards" class="text-gray-600">
 				No crate rewards found. Create your first one to get started.
@@ -1182,43 +1208,63 @@ watch(selectedCrate, (crate) => {
 				<div
 					v-for="crate in crateRewards"
 					:key="crate.id"
-					class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
-					<!-- Card Header with Title and Actions -->
-					<div class="flex items-start justify-between mb-3">
-						<h3
-							@click="router.push(`/crate-rewards/${crate.id}`)"
-							class="text-lg font-semibold text-gray-900 hover:text-blue-600 cursor-pointer flex-1">
-							{{ crate.name }}
-						</h3>
-						<!-- Action Buttons -->
-						<div class="flex gap-2 ml-3">
-							<button
-								@click.stop="editCrateFromCard(crate)"
-								class="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-								title="Edit crate">
-								<PencilIcon class="w-4 h-4" />
-							</button>
-							<button
-								@click.stop="deleteCrateFromCard(crate)"
-								class="p-1 text-gray-400 hover:text-red-600 transition-colors"
-								title="Delete crate">
-								<TrashIcon class="w-4 h-4" />
-							</button>
+					class="bg-sea-mist rounded-lg shadow-md border-2 border-amulet h-full overflow-hidden flex flex-col">
+					<!-- Card Header -->
+					<div
+						class="bg-amulet py-2 px-3 pl-4 border-x-2 border-t-2 border-white rounded-t-lg">
+						<div class="flex items-center justify-between">
+							<h3
+								@click="router.push(`/crate-rewards/${crate.id}`)"
+								class="text-xl font-semibold text-heavy-metal hover:text-blue-600 cursor-pointer flex-1">
+								{{ crate.name }}
+							</h3>
+							<!-- Action Buttons -->
+							<div class="flex gap-2 ml-3">
+								<button
+									@click.stop="editCrateFromCard(crate)"
+									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
+									title="Edit crate">
+									<PencilIcon class="w-4 h-4" />
+								</button>
+								<button
+									@click.stop="deleteCrateFromCard(crate)"
+									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
+									title="Delete crate">
+									<TrashIcon class="w-4 h-4" />
+								</button>
+							</div>
 						</div>
 					</div>
 
-					<!-- Card Content -->
-					<p v-if="crate.description" class="text-gray-600 text-sm mb-3">
-						{{ crate.description }}
-					</p>
-					<div class="space-y-1">
-						<div class="text-sm text-gray-500">
-							<span class="font-medium">Version:</span>
-							{{ crate.minecraft_version }}
+					<!-- Card Body -->
+					<div
+						class="bg-norway p-4 border-x-2 border-b-2 border-white rounded-b-lg flex-1">
+						<div class="flex-1">
+							<p v-if="crate.description" class="text-heavy-metal mb-3">
+								{{ crate.description }}
+							</p>
+							<div class="space-y-1">
+								<div class="text-sm text-heavy-metal">
+									<span class="font-medium">Version:</span>
+									{{ crate.minecraft_version }}
+								</div>
+								<div class="text-sm text-heavy-metal">
+									<span class="font-medium">Items:</span>
+									{{ crateItemCounts[crate.id] || 0 }}
+								</div>
+								<div class="text-sm text-heavy-metal">
+									<span class="font-medium">Created:</span>
+									{{ formatDate(crate.created_at) }}
+								</div>
+							</div>
 						</div>
-						<div class="text-sm text-gray-500">
-							<span class="font-medium">Created:</span>
-							{{ formatDate(crate.created_at) }}
+						<div class="mt-4">
+							<BaseButton
+								@click="router.push(`/crate-rewards/${crate.id}`)"
+								variant="primary"
+								class="w-full">
+								Manage
+							</BaseButton>
 						</div>
 					</div>
 				</div>
