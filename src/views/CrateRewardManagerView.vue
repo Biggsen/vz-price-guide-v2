@@ -21,6 +21,7 @@ import {
 import { getEffectivePrice } from '../utils/pricing.js'
 import { versions } from '../constants.js'
 import BaseButton from '../components/BaseButton.vue'
+import BaseModal from '../components/BaseModal.vue'
 import {
 	PlusIcon,
 	PencilIcon,
@@ -49,6 +50,16 @@ const editingItem = ref(null)
 const loading = ref(false)
 const error = ref(null)
 const showCopyToast = ref(false)
+
+// Modal-specific error states
+const createFormError = ref(null)
+const editFormError = ref(null)
+const addItemFormError = ref(null)
+const importModalError = ref(null)
+
+// Delete confirmation modal state
+const showDeleteModal = ref(false)
+const itemToDelete = ref(null)
 
 // Review panel state
 const expandedReviewPanels = ref(new Set())
@@ -282,12 +293,12 @@ watch(
 // Methods
 async function createNewCrateReward() {
 	if (!crateForm.value.name.trim()) {
-		error.value = 'Crate reward name is required'
+		createFormError.value = 'Crate reward name is required'
 		return
 	}
 
 	loading.value = true
-	error.value = null
+	createFormError.value = null
 
 	try {
 		const newCrate = await createCrateReward(user.value.uid, crateForm.value)
@@ -300,7 +311,7 @@ async function createNewCrateReward() {
 			minecraft_version: '1.20'
 		}
 	} catch (err) {
-		error.value = 'Failed to create crate reward: ' + err.message
+		createFormError.value = 'Failed to create crate reward: ' + err.message
 	} finally {
 		loading.value = false
 	}
@@ -308,19 +319,19 @@ async function createNewCrateReward() {
 
 async function updateCrateRewardData() {
 	if (!crateForm.value.name.trim()) {
-		error.value = 'Crate reward name is required'
+		editFormError.value = 'Crate reward name is required'
 		return
 	}
 
 	// Determine which crate to update
 	const crateId = selectedCrateId.value || crateForm.value.crateId
 	if (!crateId) {
-		error.value = 'No crate selected for update'
+		editFormError.value = 'No crate selected for update'
 		return
 	}
 
 	loading.value = true
-	error.value = null
+	editFormError.value = null
 
 	try {
 		await updateCrateReward(crateId, crateForm.value)
@@ -330,57 +341,24 @@ async function updateCrateRewardData() {
 			delete crateForm.value.crateId
 		}
 	} catch (err) {
-		error.value = 'Failed to update crate reward: ' + err.message
+		editFormError.value = 'Failed to update crate reward: ' + err.message
 	} finally {
 		loading.value = false
 	}
 }
 
-async function deleteCrateRewardData() {
-	if (!selectedCrateId.value) return
-
-	if (
-		!confirm('Are you sure you want to delete this crate reward? This action cannot be undone.')
-	) {
-		return
+function confirmDeleteCrate() {
+	itemToDelete.value = {
+		type: 'crate',
+		id: selectedCrateId.value,
+		name: selectedCrate.value?.name
 	}
-
-	loading.value = true
-	error.value = null
-
-	try {
-		await deleteCrateReward(selectedCrateId.value)
-		selectedCrateId.value = ''
-		router.push('/crate-rewards')
-	} catch (err) {
-		error.value = 'Failed to delete crate reward: ' + err.message
-	} finally {
-		loading.value = false
-	}
+	showDeleteModal.value = true
 }
 
-async function deleteCrateFromCard(crate) {
-	if (
-		!confirm(`Are you sure you want to delete "${crate.name}"? This action cannot be undone.`)
-	) {
-		return
-	}
-
-	loading.value = true
-	error.value = null
-
-	try {
-		await deleteCrateReward(crate.id)
-		// If we're currently viewing this crate, navigate back to dashboard
-		if (selectedCrateId.value === crate.id) {
-			selectedCrateId.value = ''
-			router.push('/crate-rewards')
-		}
-	} catch (err) {
-		error.value = 'Failed to delete crate reward: ' + err.message
-	} finally {
-		loading.value = false
-	}
+function confirmDeleteCrateFromCard(crate) {
+	itemToDelete.value = { type: 'crate', id: crate.id, name: crate.name }
+	showDeleteModal.value = true
 }
 
 function startEditCrate() {
@@ -390,6 +368,7 @@ function startEditCrate() {
 		description: selectedCrate.value.description || '',
 		minecraft_version: selectedCrate.value.minecraft_version
 	}
+	editFormError.value = null
 	showEditForm.value = true
 }
 
@@ -400,6 +379,7 @@ function editCrateFromCard(crate) {
 		description: crate.description || '',
 		minecraft_version: crate.minecraft_version
 	}
+	editFormError.value = null
 	showEditForm.value = true
 }
 
@@ -410,6 +390,7 @@ function startCreateCrate() {
 		description: '',
 		minecraft_version: '1.20'
 	}
+	createFormError.value = null
 	showCreateForm.value = true
 }
 
@@ -422,6 +403,7 @@ function startAddItem() {
 	}
 	searchQuery.value = ''
 	highlightedIndex.value = -1
+	addItemFormError.value = null
 	showAddItemForm.value = true
 	// Focus search input after modal opens
 	setTimeout(() => {
@@ -494,12 +476,12 @@ async function saveWeight(item) {
 
 async function saveItem() {
 	if (!selectedCrateId.value || !itemForm.value.item_id) {
-		error.value = 'Please select an item'
+		addItemFormError.value = 'Please select an item'
 		return
 	}
 
 	loading.value = true
-	error.value = null
+	addItemFormError.value = null
 
 	try {
 		if (editingItem.value) {
@@ -520,26 +502,44 @@ async function saveItem() {
 			enchantments: {}
 		}
 	} catch (err) {
-		error.value = 'Failed to save item: ' + err.message
+		addItemFormError.value = 'Failed to save item: ' + err.message
 	} finally {
 		loading.value = false
 	}
 }
 
-async function removeItem(itemId) {
-	if (!confirm('Are you sure you want to remove this item from the crate reward?')) {
-		return
+function confirmRemoveItem(item) {
+	itemToDelete.value = {
+		type: 'item',
+		id: item.id,
+		name: getItemById(item.item_id)?.name || 'Unknown Item'
 	}
+	showDeleteModal.value = true
+}
+
+async function executeDelete() {
+	if (!itemToDelete.value) return
 
 	loading.value = true
 	error.value = null
 
 	try {
-		await deleteCrateRewardItem(itemId)
+		if (itemToDelete.value.type === 'crate') {
+			await deleteCrateReward(itemToDelete.value.id)
+			// If we're currently viewing this crate, navigate back to dashboard
+			if (selectedCrateId.value === itemToDelete.value.id) {
+				selectedCrateId.value = ''
+				router.push('/crate-rewards')
+			}
+		} else if (itemToDelete.value.type === 'item') {
+			await deleteCrateRewardItem(itemToDelete.value.id)
+		}
 	} catch (err) {
-		error.value = 'Failed to remove item: ' + err.message
+		error.value = `Failed to delete ${itemToDelete.value.type}: ` + err.message
 	} finally {
 		loading.value = false
+		showDeleteModal.value = false
+		itemToDelete.value = null
 	}
 }
 
@@ -1035,12 +1035,12 @@ function handleFileSelect(event) {
 
 async function importYamlFile() {
 	if (!importFile.value || !selectedCrateId.value) {
-		error.value = 'Please select a YAML file and ensure you have a crate selected'
+		importModalError.value = 'Please select a YAML file and ensure you have a crate selected'
 		return
 	}
 
 	isImporting.value = true
-	error.value = null
+	importModalError.value = null
 	importResult.value = null
 
 	try {
@@ -1060,7 +1060,7 @@ async function importYamlFile() {
 			if (fileInput) fileInput.value = ''
 		}
 	} catch (err) {
-		error.value = 'Failed to import YAML file: ' + err.message
+		importModalError.value = 'Failed to import YAML file: ' + err.message
 	} finally {
 		isImporting.value = false
 	}
@@ -1079,7 +1079,7 @@ function closeImportModal() {
 	showImportModal.value = false
 	importFile.value = null
 	importResult.value = null
-	error.value = null
+	importModalError.value = null
 }
 
 // Initialize form when crate loads
@@ -1227,7 +1227,7 @@ watch(selectedCrate, (crate) => {
 									<PencilIcon class="w-4 h-4" />
 								</button>
 								<button
-									@click.stop="deleteCrateFromCard(crate)"
+									@click.stop="confirmDeleteCrateFromCard(crate)"
 									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
 									title="Delete crate">
 									<TrashIcon class="w-4 h-4" />
@@ -1261,8 +1261,7 @@ watch(selectedCrate, (crate) => {
 						<div class="mt-4">
 							<BaseButton
 								@click="router.push(`/crate-rewards/${crate.id}`)"
-								variant="primary"
-								class="w-full">
+								variant="primary">
 								Manage
 							</BaseButton>
 						</div>
@@ -1555,7 +1554,7 @@ watch(selectedCrate, (crate) => {
 										<PencilIcon class="w-4 h-4" />
 									</button>
 									<button
-										@click="removeItem(rewardItem.id)"
+										@click="confirmRemoveItem(rewardItem)"
 										class="inline-flex items-center px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
 										<TrashIcon class="w-4 h-4" />
 									</button>
@@ -1624,524 +1623,554 @@ watch(selectedCrate, (crate) => {
 		</div>
 
 		<!-- Create Crate Reward Modal -->
-		<div
-			v-if="showCreateForm"
-			class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-				<div class="p-6">
-					<div class="flex items-center justify-between mb-4">
-						<h3 class="text-lg font-semibold text-gray-900">Create New Crate Reward</h3>
-						<button
-							@click="showCreateForm = false"
-							class="text-gray-400 hover:text-gray-600">
-							<XMarkIcon class="w-6 h-6" />
-						</button>
-					</div>
-
-					<form @submit.prevent="createNewCrateReward" class="space-y-4">
-						<div>
-							<label
-								for="crate-name"
-								class="block text-sm font-medium text-gray-700 mb-1">
-								Name *
-							</label>
-							<input
-								id="crate-name"
-								v-model="crateForm.name"
-								type="text"
-								required
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-						</div>
-
-						<div>
-							<label
-								for="crate-description"
-								class="block text-sm font-medium text-gray-700 mb-1">
-								Description
-							</label>
-							<textarea
-								id="crate-description"
-								v-model="crateForm.description"
-								rows="3"
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-						</div>
-
-						<div>
-							<label
-								for="crate-version"
-								class="block text-sm font-medium text-gray-700 mb-1">
-								Minecraft Version
-							</label>
-							<select
-								id="crate-version"
-								v-model="crateForm.minecraft_version"
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-								<option v-for="version in versions" :key="version" :value="version">
-									{{ version }}
-								</option>
-							</select>
-						</div>
-
-						<div class="flex gap-3 pt-4">
-							<button
-								type="button"
-								@click="showCreateForm = false"
-								class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-								Cancel
-							</button>
-							<button
-								type="submit"
-								:disabled="loading"
-								class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
-								{{ loading ? 'Creating...' : 'Create' }}
-							</button>
-						</div>
-					</form>
+		<!-- prettier-ignore -->
+		<BaseModal
+			:isOpen="showCreateForm"
+			title="Create New Crate Reward"
+			maxWidth="max-w-md"
+			@close="showCreateForm = false; createFormError = null">
+			<!-- Error Display -->
+			<div v-if="createFormError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+				<div class="flex items-center">
+					<ExclamationTriangleIcon class="w-5 h-5 text-red-600 mr-2" />
+					<span class="text-red-800">{{ createFormError }}</span>
 				</div>
 			</div>
-		</div>
 
-		<!-- Edit Crate Reward Modal -->
-		<div
-			v-if="showEditForm"
-			class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-				<div class="p-6">
-					<div class="flex items-center justify-between mb-4">
-						<h3 class="text-lg font-semibold text-gray-900">Edit Crate Reward</h3>
-						<button
-							@click="showEditForm = false"
-							class="text-gray-400 hover:text-gray-600">
-							<XMarkIcon class="w-6 h-6" />
-						</button>
-					</div>
-
-					<form @submit.prevent="updateCrateRewardData" class="space-y-4">
-						<div>
-							<label
-								for="edit-crate-name"
-								class="block text-sm font-medium text-gray-700 mb-1">
-								Name *
-							</label>
-							<input
-								id="edit-crate-name"
-								v-model="crateForm.name"
-								type="text"
-								required
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-						</div>
-
-						<div>
-							<label
-								for="edit-crate-description"
-								class="block text-sm font-medium text-gray-700 mb-1">
-								Description
-							</label>
-							<textarea
-								id="edit-crate-description"
-								v-model="crateForm.description"
-								rows="3"
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-						</div>
-
-						<div>
-							<label
-								for="edit-crate-version"
-								class="block text-sm font-medium text-gray-700 mb-1">
-								Minecraft Version
-							</label>
-							<select
-								id="edit-crate-version"
-								v-model="crateForm.minecraft_version"
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-								<option v-for="version in versions" :key="version" :value="version">
-									{{ version }}
-								</option>
-							</select>
-						</div>
-
-						<div class="flex gap-3 pt-4">
-							<button
-								type="button"
-								@click="showEditForm = false"
-								class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-								Cancel
-							</button>
-							<button
-								type="submit"
-								:disabled="loading"
-								class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
-								{{ loading ? 'Updating...' : 'Update' }}
-							</button>
-						</div>
-					</form>
+			<form @submit.prevent="createNewCrateReward" class="space-y-4">
+				<div>
+					<label for="crate-name" class="block text-sm font-medium text-gray-700 mb-1">
+						Name *
+					</label>
+					<input
+						id="crate-name"
+						v-model="crateForm.name"
+						type="text"
+						required
+						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
 				</div>
-			</div>
-		</div>
 
-		<!-- Add/Edit Item Modal -->
-		<div
-			v-if="showAddItemForm"
-			class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div
-				class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-				<div class="p-6">
-					<div class="flex items-center justify-between mb-4">
-						<h3 class="text-lg font-semibold text-gray-900">
-							{{ editingItem ? 'Edit Item' : 'Add Item to Crate Reward' }}
-						</h3>
+				<div>
+					<label
+						for="crate-description"
+						class="block text-sm font-medium text-gray-700 mb-1">
+						Description
+					</label>
+					<textarea
+						id="crate-description"
+						v-model="crateForm.description"
+						rows="3"
+						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>
+				</div>
+
+				<div>
+					<label for="crate-version" class="block text-sm font-medium text-gray-700 mb-1">
+						Minecraft Version
+					</label>
+					<select
+						id="crate-version"
+						v-model="crateForm.minecraft_version"
+						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
+						<option v-for="version in versions" :key="version" :value="version">
+							{{ version }}
+						</option>
+					</select>
+				</div>
+			</form>
+
+			<template #footer>
+				<div class="flex items-center justify-end">
+					<div class="flex space-x-3">
 						<!-- prettier-ignore -->
 						<button
-							@click="showAddItemForm = false; editingItem = null"
-							class="text-gray-400 hover:text-gray-600">
-							<XMarkIcon class="w-6 h-6" />
+							type="button"
+							@click="showCreateForm = false; createFormError = null"
+							class="btn-secondary--outline">
+							Cancel
 						</button>
+						<BaseButton
+							@click="createNewCrateReward"
+							:disabled="loading"
+							variant="primary">
+							{{ loading ? 'Creating...' : 'Create' }}
+						</BaseButton>
 					</div>
+				</div>
+			</template>
+		</BaseModal>
 
-					<form @submit.prevent="saveItem" class="space-y-4">
-						<!-- Item selection -->
-						<div v-if="!editingItem">
-							<!-- Show search input when no item is selected -->
-							<div v-if="!selectedItem">
-								<label
-									for="item-search"
-									class="block text-sm font-medium text-gray-700 mb-1">
-									Search and Select Item *
-								</label>
-								<input
-									id="item-search"
-									ref="searchInput"
-									v-model="searchQuery"
-									@input="handleSearchInput"
-									@keydown="handleKeyDown"
-									type="text"
-									placeholder="Search items by name, material ID, or category..."
-									class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2" />
+		<!-- Edit Crate Reward Modal -->
+		<!-- prettier-ignore -->
+		<BaseModal
+			:isOpen="showEditForm"
+			title="Edit Crate Reward"
+			maxWidth="max-w-md"
+			@close="showEditForm = false; editFormError = null">
+			<!-- Error Display -->
+			<div v-if="editFormError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+				<div class="flex items-center">
+					<ExclamationTriangleIcon class="w-5 h-5 text-red-600 mr-2" />
+					<span class="text-red-800">{{ editFormError }}</span>
+				</div>
+			</div>
 
-								<!-- Item selection dropdown -->
+			<form @submit.prevent="updateCrateRewardData" class="space-y-4">
+				<div>
+					<label
+						for="edit-crate-name"
+						class="block text-sm font-medium text-gray-700 mb-1">
+						Name *
+					</label>
+					<input
+						id="edit-crate-name"
+						v-model="crateForm.name"
+						type="text"
+						required
+						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
+				</div>
+
+				<div>
+					<label
+						for="edit-crate-description"
+						class="block text-sm font-medium text-gray-700 mb-1">
+						Description
+					</label>
+					<textarea
+						id="edit-crate-description"
+						v-model="crateForm.description"
+						rows="3"
+						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>
+				</div>
+
+				<div>
+					<label
+						for="edit-crate-version"
+						class="block text-sm font-medium text-gray-700 mb-1">
+						Minecraft Version
+					</label>
+					<select
+						id="edit-crate-version"
+						v-model="crateForm.minecraft_version"
+						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
+						<option v-for="version in versions" :key="version" :value="version">
+							{{ version }}
+						</option>
+					</select>
+				</div>
+			</form>
+
+			<template #footer>
+				<div class="flex items-center justify-end">
+					<div class="flex space-x-3">
+						<!-- prettier-ignore -->
+						<button
+							type="button"
+							@click="showEditForm = false; editFormError = null"
+							class="btn-secondary--outline">
+							Cancel
+						</button>
+						<BaseButton
+							@click="updateCrateRewardData"
+							:disabled="loading"
+							variant="primary">
+							{{ loading ? 'Updating...' : 'Update' }}
+						</BaseButton>
+					</div>
+				</div>
+			</template>
+		</BaseModal>
+
+		<!-- Add/Edit Item Modal -->
+		<!-- prettier-ignore -->
+		<BaseModal
+			:isOpen="showAddItemForm"
+			:title="editingItem ? 'Edit Item' : 'Add Item to Crate Reward'"
+			maxWidth="max-w-2xl"
+			@close="showAddItemForm = false; editingItem = null; addItemFormError = null">
+			<!-- Error Display -->
+			<div v-if="addItemFormError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+				<div class="flex items-center">
+					<ExclamationTriangleIcon class="w-5 h-5 text-red-600 mr-2" />
+					<span class="text-red-800">{{ addItemFormError }}</span>
+				</div>
+			</div>
+
+			<form @submit.prevent="saveItem" class="space-y-4">
+				<!-- Item selection -->
+				<div v-if="!editingItem">
+					<!-- Show search input when no item is selected -->
+					<div v-if="!selectedItem">
+						<label
+							for="item-search"
+							class="block text-sm font-medium text-gray-700 mb-1">
+							Search and Select Item *
+						</label>
+						<input
+							id="item-search"
+							ref="searchInput"
+							v-model="searchQuery"
+							@input="handleSearchInput"
+							@keydown="handleKeyDown"
+							type="text"
+							placeholder="Search items by name, material ID, or category..."
+							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
+
+						<!-- Item selection dropdown -->
+						<div
+							v-if="searchQuery && filteredItems.length > 0"
+							ref="dropdownContainer"
+							class="max-h-64 overflow-y-auto border border-gray-300 rounded-md bg-white">
+							<template
+								v-for="(categoryItems, category) in itemsByCategory"
+								:key="category">
 								<div
-									v-if="searchQuery && filteredItems.length > 0"
-									ref="dropdownContainer"
-									class="max-h-64 overflow-y-auto border border-gray-300 rounded-md bg-white">
-									<template
-										v-for="(categoryItems, category) in itemsByCategory"
-										:key="category">
-										<div
-											class="px-3 py-2 bg-gray-100 text-sm font-medium text-gray-700 border-b">
-											{{ category }}
-										</div>
-										<div
-											v-for="(item, categoryIndex) in categoryItems"
-											:key="item.id"
-											@click="selectItem(item)"
-											@mouseenter="
-												highlightedIndex = getItemVisualIndex(
-													category,
-													categoryIndex
-												)
-											"
-											:class="[
-												'px-3 py-2 cursor-pointer border-b border-gray-100 flex items-center justify-between',
-												getItemVisualIndex(category, categoryIndex) ===
-												highlightedIndex
-													? 'bg-blue-100 text-blue-900'
-													: 'hover:bg-blue-50'
-											]">
-											<div>
-												<div class="font-medium">{{ item.name }}</div>
-												<div class="text-sm text-gray-500">
-													{{ item.material_id }}
-												</div>
-											</div>
-											<div v-if="item.image" class="w-8 h-8">
-												<img
-													:src="item.image"
-													:alt="item.name"
-													class="w-full h-full object-contain" />
-											</div>
-										</div>
-									</template>
+									class="px-3 py-2 bg-gray-100 text-sm font-medium text-gray-700 border-b">
+									{{ category }}
 								</div>
-							</div>
-
-							<!-- Show selected item when item is selected -->
-							<div v-else>
-								<label class="block text-sm font-medium text-gray-700 mb-1">
-									Item *
-								</label>
 								<div
-									class="p-3 bg-green-50 border border-green-200 rounded flex items-center justify-between">
+									v-for="(item, categoryIndex) in categoryItems"
+									:key="item.id"
+									@click="selectItem(item)"
+									@mouseenter="
+										highlightedIndex = getItemVisualIndex(
+											category,
+											categoryIndex
+										)
+									"
+									:class="[
+										'px-3 py-2 cursor-pointer border-b border-gray-100 flex items-center justify-between',
+										getItemVisualIndex(category, categoryIndex) ===
+										highlightedIndex
+											? 'bg-blue-100 text-blue-900'
+											: 'hover:bg-blue-50'
+									]">
 									<div>
-										<div class="font-medium text-green-800">
-											{{ selectedItem.name }}
-										</div>
-										<div class="text-sm text-green-600">
-											{{ selectedItem.material_id }}
+										<div class="font-medium">{{ item.name }}</div>
+										<div class="text-sm text-gray-500">
+											{{ item.material_id }}
 										</div>
 									</div>
-									<div v-if="selectedItem.image" class="w-8 h-8">
+									<div v-if="item.image" class="w-8 h-8">
 										<img
-											:src="selectedItem.image"
-											:alt="selectedItem.name"
+											:src="item.image"
+											:alt="item.name"
 											class="w-full h-full object-contain" />
 									</div>
 								</div>
-								<button
-									type="button"
-									@click="clearSelectedItem"
-									class="mt-2 text-sm text-blue-600 hover:text-blue-800 underline">
-									Select different item
-								</button>
-							</div>
+							</template>
 						</div>
-
-						<!-- Show selected item when editing -->
-						<div
-							v-else-if="editingItem && getItemById(editingItem.item_id)"
-							class="p-3 bg-gray-100 border border-gray-300 rounded">
-							<div class="flex items-center justify-between">
-								<div>
-									<div class="font-medium">
-										{{ getItemById(editingItem.item_id).name }}
-									</div>
-									<div class="text-sm text-gray-600">
-										{{ getItemById(editingItem.item_id).material_id }}
-									</div>
-								</div>
-								<div v-if="getItemById(editingItem.item_id).image" class="w-8 h-8">
-									<img
-										:src="getItemById(editingItem.item_id).image"
-										:alt="getItemById(editingItem.item_id).name"
-										class="w-full h-full object-contain" />
-								</div>
-							</div>
-						</div>
-
-						<div class="grid grid-cols-2 gap-4">
-							<div>
-								<label class="block text-sm font-medium text-gray-700 mb-1">
-									Quantity *
-								</label>
-								<div class="flex gap-2">
-									<button
-										type="button"
-										@click="setQuantityToStack"
-										class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm whitespace-nowrap">
-										Stack
-									</button>
-									<input
-										id="item-quantity"
-										v-model.number="itemForm.quantity"
-										type="number"
-										min="1"
-										required
-										placeholder="Custom"
-										class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-								</div>
-							</div>
-							<div>
-								<label
-									for="item-weight"
-									class="block text-sm font-medium text-gray-700 mb-1">
-									Weight *
-								</label>
-								<input
-									id="item-weight"
-									v-model.number="itemForm.weight"
-									type="number"
-									min="1"
-									required
-									class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-							</div>
-						</div>
-
-						<!-- Enchantments Section -->
-						<div class="mt-4">
-							<div class="flex items-center justify-between mb-2">
-								<label class="text-sm font-medium text-gray-700">
-									Enchantments
-								</label>
-								<button
-									type="button"
-									@click="addEnchantment"
-									class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors">
-									+ Add Enchantment
-								</button>
-							</div>
-							<div
-								v-if="Object.keys(itemForm.enchantments).length > 0"
-								class="space-y-2">
-								<div
-									v-for="(level, enchantment, index) in itemForm.enchantments"
-									:key="index"
-									class="flex items-center gap-2 p-2 bg-gray-50 rounded">
-									<span class="text-sm font-medium text-gray-700">
-										{{
-											getItemById(enchantment)?.name ||
-											enchantment
-												.replace(/_/g, ' ')
-												.replace(/\b\w/g, (l) => l.toUpperCase())
-										}}
-									</span>
-									<button
-										type="button"
-										@click="removeEnchantment(enchantment)"
-										class="text-red-500 hover:text-red-700 text-sm">
-										Remove
-									</button>
-								</div>
-							</div>
-							<div v-else class="text-sm text-gray-500 italic">
-								No enchantments added
-							</div>
-						</div>
-
-						<div class="flex gap-3 pt-4">
-							<!-- prettier-ignore -->
-							<button
-								type="button"
-								@click="showAddItemForm = false; editingItem = null"
-								class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-								Cancel
-							</button>
-							<button
-								type="submit"
-								:disabled="loading"
-								class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
-								{{ loading ? 'Saving...' : editingItem ? 'Update' : 'Add' }}
-							</button>
-						</div>
-					</form>
-				</div>
-			</div>
-		</div>
-
-		<!-- Enchantment Selection Modal -->
-		<div
-			v-if="showEnchantmentModal"
-			class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div class="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
-				<div class="flex items-center justify-between mb-4">
-					<h3 class="text-lg font-semibold text-gray-900">Add Enchantment</h3>
-					<button @click="cancelEnchantment" class="text-gray-400 hover:text-gray-600">
-						<XMarkIcon class="w-6 h-6" />
-					</button>
-				</div>
-
-				<form @submit.prevent="saveEnchantment" class="space-y-4">
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-1">
-							Enchantment
-						</label>
-						<select
-							v-model="enchantmentForm.enchantment"
-							@change="onEnchantmentSelected"
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-							<option value="">Select an enchantment...</option>
-							<option
-								v-for="enchantment in enchantmentItems"
-								:key="enchantment.id"
-								:value="enchantment.id">
-								{{ enchantment.name }}
-							</option>
-						</select>
 					</div>
 
-					<div class="pt-4">
+					<!-- Show selected item when item is selected -->
+					<div v-else>
+						<label class="block text-sm font-medium text-gray-700 mb-1">Item *</label>
+						<div
+							class="p-3 bg-green-50 border border-green-200 rounded flex items-center justify-between">
+							<div>
+								<div class="font-medium text-green-800">
+									{{ selectedItem.name }}
+								</div>
+								<div class="text-sm text-green-600">
+									{{ selectedItem.material_id }}
+								</div>
+							</div>
+							<div v-if="selectedItem.image" class="w-8 h-8">
+								<img
+									:src="selectedItem.image"
+									:alt="selectedItem.name"
+									class="w-full h-full object-contain" />
+							</div>
+						</div>
+						<button
+							type="button"
+							@click="clearSelectedItem"
+							class="mt-2 text-sm text-blue-600 hover:text-blue-800 underline">
+							Select different item
+						</button>
+					</div>
+				</div>
+
+				<!-- Show selected item when editing -->
+				<div
+					v-else-if="editingItem && getItemById(editingItem.item_id)"
+					class="p-3 bg-gray-100 border border-gray-300 rounded">
+					<div class="flex items-center justify-between">
+						<div>
+							<div class="font-medium">
+								{{ getItemById(editingItem.item_id).name }}
+							</div>
+							<div class="text-sm text-gray-600">
+								{{ getItemById(editingItem.item_id).material_id }}
+							</div>
+						</div>
+						<div v-if="getItemById(editingItem.item_id).image" class="w-8 h-8">
+							<img
+								:src="getItemById(editingItem.item_id).image"
+								:alt="getItemById(editingItem.item_id).name"
+								class="w-full h-full object-contain" />
+						</div>
+					</div>
+				</div>
+
+				<div class="grid grid-cols-2 gap-4">
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">
+							Quantity *
+						</label>
+						<div class="flex gap-2">
+							<button
+								type="button"
+								@click="setQuantityToStack"
+								class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm whitespace-nowrap">
+								Stack
+							</button>
+							<input
+								id="item-quantity"
+								v-model.number="itemForm.quantity"
+								type="number"
+								min="1"
+								required
+								placeholder="Custom"
+								class="flex-1 rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
+						</div>
+					</div>
+					<div>
+						<label
+							for="item-weight"
+							class="block text-sm font-medium text-gray-700 mb-1">
+							Weight *
+						</label>
+						<input
+							id="item-weight"
+							v-model.number="itemForm.weight"
+							type="number"
+							min="1"
+							required
+							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
+					</div>
+				</div>
+
+				<!-- Enchantments Section -->
+				<div class="mt-4">
+					<div class="flex items-center justify-between mb-2">
+						<label class="text-sm font-medium text-gray-700">Enchantments</label>
+						<button
+							type="button"
+							@click="addEnchantment"
+							class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors">
+							+ Add Enchantment
+						</button>
+					</div>
+					<div v-if="Object.keys(itemForm.enchantments).length > 0" class="space-y-2">
+						<div
+							v-for="(level, enchantment, index) in itemForm.enchantments"
+							:key="index"
+							class="flex items-center gap-2 p-2 bg-gray-50 rounded">
+							<span class="text-sm font-medium text-gray-700">
+								{{
+									getItemById(enchantment)?.name ||
+									enchantment
+										.replace(/_/g, ' ')
+										.replace(/\b\w/g, (l) => l.toUpperCase())
+								}}
+							</span>
+							<button
+								type="button"
+								@click="removeEnchantment(enchantment)"
+								class="text-red-500 hover:text-red-700 text-sm">
+								Remove
+							</button>
+						</div>
+					</div>
+					<div v-else class="text-sm text-gray-500 italic">No enchantments added</div>
+				</div>
+			</form>
+
+			<template #footer>
+				<div class="flex items-center justify-end">
+					<div class="flex space-x-3">
+						<!-- prettier-ignore -->
+						<button
+							type="button"
+							@click="showAddItemForm = false; editingItem = null; addItemFormError = null"
+							class="btn-secondary--outline">
+							Cancel
+						</button>
+						<BaseButton @click="saveItem" :disabled="loading" variant="primary">
+							{{ loading ? 'Saving...' : editingItem ? 'Update' : 'Add' }}
+						</BaseButton>
+					</div>
+				</div>
+			</template>
+		</BaseModal>
+
+		<!-- Enchantment Selection Modal -->
+		<BaseModal
+			:isOpen="showEnchantmentModal"
+			title="Add Enchantment"
+			maxWidth="max-w-md"
+			@close="cancelEnchantment">
+			<form @submit.prevent="saveEnchantment" class="space-y-4">
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">Enchantment</label>
+					<select
+						v-model="enchantmentForm.enchantment"
+						@change="onEnchantmentSelected"
+						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
+						<option value="">Select an enchantment...</option>
+						<option
+							v-for="enchantment in enchantmentItems"
+							:key="enchantment.id"
+							:value="enchantment.id">
+							{{ enchantment.name }}
+						</option>
+					</select>
+				</div>
+			</form>
+
+			<template #footer>
+				<div
+					class="flex items-center justify-end p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+					<div class="flex space-x-3">
 						<button
 							type="button"
 							@click="cancelEnchantment"
-							class="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+							class="btn-secondary--outline">
 							Cancel
 						</button>
+						<BaseButton @click="saveEnchantment" variant="primary">
+							Add Enchantment
+						</BaseButton>
 					</div>
-				</form>
-			</div>
-		</div>
+				</div>
+			</template>
+		</BaseModal>
 
 		<!-- Import YAML Modal -->
-		<div
-			v-if="showImportModal"
-			class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-				<div class="p-6">
-					<div class="flex items-center justify-between mb-4">
-						<h3 class="text-lg font-semibold text-gray-900">Import Crate Rewards</h3>
-						<button @click="closeImportModal" class="text-gray-400 hover:text-gray-600">
-							<XMarkIcon class="w-6 h-6" />
-						</button>
+		<BaseModal
+			:isOpen="showImportModal"
+			title="Import Crate Rewards"
+			maxWidth="max-w-md"
+			@close="closeImportModal">
+			<!-- Error Display -->
+			<div
+				v-if="importModalError"
+				class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+				<div class="flex items-center">
+					<ExclamationTriangleIcon class="w-5 h-5 text-red-600 mr-2" />
+					<span class="text-red-800">{{ importModalError }}</span>
+				</div>
+			</div>
+
+			<div class="space-y-4">
+				<div>
+					<label
+						for="yaml-file-input"
+						class="block text-sm font-medium text-gray-700 mb-1">
+						Select YAML File
+					</label>
+					<input
+						id="yaml-file-input"
+						type="file"
+						accept=".yml,.yaml"
+						@change="handleFileSelect"
+						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
+					<p class="text-xs text-gray-500 mt-1">
+						Select a Crazy Crates YAML file containing prize definitions
+					</p>
+				</div>
+
+				<!-- Import Results -->
+				<div v-if="importResult" class="space-y-2">
+					<div
+						v-if="importResult.success"
+						class="p-3 bg-green-50 border border-green-200 rounded-lg">
+						<div class="flex items-center">
+							<CheckIcon class="w-5 h-5 text-green-600 mr-2" />
+							<div>
+								<div class="text-green-800 font-medium">
+									Import completed successfully!
+								</div>
+								<div class="text-green-700 text-sm">
+									{{ importResult.importedCount }} items imported
+									<span v-if="importResult.errorCount > 0">
+										, {{ importResult.errorCount }} errors
+									</span>
+								</div>
+							</div>
+						</div>
 					</div>
 
-					<div class="space-y-4">
-						<div>
-							<label
-								for="yaml-file-input"
-								class="block text-sm font-medium text-gray-700 mb-1">
-								Select YAML File
-							</label>
-							<input
-								id="yaml-file-input"
-								type="file"
-								accept=".yml,.yaml"
-								@change="handleFileSelect"
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-							<p class="text-xs text-gray-500 mt-1">
-								Select a Crazy Crates YAML file containing prize definitions
-							</p>
-						</div>
-
-						<!-- Import Results -->
-						<div v-if="importResult" class="space-y-2">
-							<div
-								v-if="importResult.success"
-								class="p-3 bg-green-50 border border-green-200 rounded-lg">
-								<div class="flex items-center">
-									<CheckIcon class="w-5 h-5 text-green-600 mr-2" />
-									<div>
-										<div class="text-green-800 font-medium">
-											Import completed successfully!
-										</div>
-										<div class="text-green-700 text-sm">
-											{{ importResult.importedCount }} items imported
-											<span v-if="importResult.errorCount > 0">
-												, {{ importResult.errorCount }} errors
-											</span>
-										</div>
-									</div>
-								</div>
+					<div
+						v-if="importResult.errors && importResult.errors.length > 0"
+						class="p-3 bg-red-50 border border-red-200 rounded-lg">
+						<div class="text-red-800 font-medium mb-2">Import Errors:</div>
+						<div class="text-red-700 text-sm space-y-1">
+							<div v-for="error in importResult.errors" :key="error">
+								{{ error }}
 							</div>
-
-							<div
-								v-if="importResult.errors && importResult.errors.length > 0"
-								class="p-3 bg-red-50 border border-red-200 rounded-lg">
-								<div class="text-red-800 font-medium mb-2">Import Errors:</div>
-								<div class="text-red-700 text-sm space-y-1">
-									<div v-for="error in importResult.errors" :key="error">
-										{{ error }}
-									</div>
-								</div>
-							</div>
-						</div>
-
-						<div class="flex gap-3 pt-4">
-							<button
-								type="button"
-								@click="closeImportModal"
-								class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-								{{ importResult ? 'Close' : 'Cancel' }}
-							</button>
-							<button
-								v-if="!importResult"
-								@click="importYamlFile"
-								:disabled="!importFile || isImporting"
-								class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50">
-								{{ isImporting ? 'Importing...' : 'Import' }}
-							</button>
 						</div>
 					</div>
 				</div>
 			</div>
-		</div>
+
+			<template #footer>
+				<div class="flex items-center justify-end">
+					<div class="flex space-x-3">
+						<button
+							type="button"
+							@click="closeImportModal"
+							class="btn-secondary--outline">
+							{{ importResult ? 'Close' : 'Cancel' }}
+						</button>
+						<BaseButton
+							v-if="!importResult"
+							@click="importYamlFile"
+							:disabled="!importFile || isImporting"
+							variant="primary">
+							{{ isImporting ? 'Importing...' : 'Import' }}
+						</BaseButton>
+					</div>
+				</div>
+			</template>
+		</BaseModal>
+
+		<!-- Delete Confirmation Modal -->
+		<!-- prettier-ignore -->
+		<BaseModal
+			:isOpen="showDeleteModal"
+			:title="`Delete ${itemToDelete?.type === 'crate' ? 'Crate Reward' : 'Item'}`"
+			size="small"
+			@close="showDeleteModal = false; itemToDelete = null">
+			<div class="space-y-4">
+				<div>
+					<h3 class="font-normal text-gray-900">
+						Are you sure you want to delete <span class="font-semibold">{{ itemToDelete?.name }}</span>?
+					</h3>
+				</div>
+			</div>
+
+			<template #footer>
+				<div class="flex items-center justify-end p-4">
+					<div class="flex space-x-3">
+						<!-- prettier-ignore -->
+						<button
+							type="button"
+							@click="showDeleteModal = false; itemToDelete = null"
+							class="btn-secondary--outline">
+							Cancel
+						</button>
+						<BaseButton
+							@click="executeDelete"
+							:disabled="loading"
+							variant="primary"
+							class="bg-semantic-danger hover:bg-opacity-90">
+							{{ loading ? 'Deleting...' : 'Delete' }}
+						</BaseButton>
+					</div>
+				</div>
+			</template>
+		</BaseModal>
 
 		<!-- Copy Success Toast -->
 		<div
