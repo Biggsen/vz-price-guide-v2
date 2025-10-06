@@ -274,8 +274,7 @@ defineExpose({
 		</div>
 
 		<template #footer>
-			<div
-				class="flex items-center justify-end p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+			<div class="flex items-center justify-end">
 				<div class="flex space-x-3">
 					<button @click="closeModal" class="btn-secondary--outline">Cancel</button>
 					<BaseButton @click="handleClose" variant="primary">Save Settings</BaseButton>

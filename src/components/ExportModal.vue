@@ -444,7 +444,7 @@ function selectVersion(version) {
 		<template #footer>
 			<div
 				v-if="isAuthenticated"
-				class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+				class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 				<div class="text-sm text-gray-600 text-center sm:text-left">
 					{{ filteredItems.length }} items will be exported
 				</div>
@@ -470,9 +470,7 @@ function selectVersion(version) {
 					</BaseButton>
 				</div>
 			</div>
-			<div
-				v-else
-				class="flex justify-center p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+			<div v-else class="flex justify-center">
 				<BaseButton @click="closeModal" variant="tertiary">Close</BaseButton>
 			</div>
 		</template>

@@ -1,5 +1,5 @@
 <script setup>
-import { watch } from 'vue'
+import { watch, computed } from 'vue'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -15,6 +15,11 @@ const props = defineProps({
 		type: String,
 		default: 'max-w-2xl'
 	},
+	size: {
+		type: String,
+		default: 'normal',
+		validator: (value) => ['small', 'normal', 'large'].includes(value)
+	},
 	showCloseButton: {
 		type: Boolean,
 		default: true
@@ -26,6 +31,51 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
+
+// Computed properties for size-based styling
+const sizeClasses = computed(() => {
+	switch (props.size) {
+		case 'small':
+			return {
+				maxWidth: 'max-w-sm',
+				headerPadding: 'p-4',
+				contentPadding: 'p-4 pt-0',
+				footerPadding: '',
+				titleSize: 'text-lg',
+				contentSize: 'text-base',
+				headerBorder: '',
+				footerBorder: '',
+				footerBackground: '',
+				footerFlex: ''
+			}
+		case 'large':
+			return {
+				maxWidth: 'max-w-4xl',
+				headerPadding: 'p-6',
+				contentPadding: 'p-6',
+				footerPadding: 'p-6',
+				titleSize: 'text-xl',
+				contentSize: 'text-base',
+				headerBorder: 'border-b border-gray-200',
+				footerBorder: 'border-t border-gray-200',
+				footerBackground: 'bg-gray-50',
+				footerFlex: 'flex-shrink-0'
+			}
+		default: // normal
+			return {
+				maxWidth: props.maxWidth,
+				headerPadding: 'p-4 sm:p-6',
+				contentPadding: 'p-4 sm:p-6',
+				footerPadding: 'p-4 sm:p-6',
+				titleSize: 'text-xl',
+				contentSize: 'text-base',
+				headerBorder: 'border-b border-gray-200',
+				footerBorder: 'border-t border-gray-200',
+				footerBackground: 'bg-gray-50',
+				footerFlex: 'flex-shrink-0'
+			}
+	}
+})
 
 // Lock/unlock body scroll when modal opens/closes
 function lockBodyScroll() {
@@ -70,13 +120,17 @@ function handleBackdropClick() {
 		<div
 			:class="[
 				'bg-white rounded-lg shadow-xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden',
-				maxWidth
+				sizeClasses.maxWidth
 			]"
 			@click.stop>
 			<!-- Header -->
 			<div
-				class="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
-				<h2 class="text-xl font-semibold text-gray-900">{{ title }}</h2>
+				:class="[
+					'flex items-center justify-between flex-shrink-0',
+					sizeClasses.headerPadding,
+					sizeClasses.headerBorder
+				]">
+				<h2 :class="['font-semibold text-gray-900', sizeClasses.titleSize]">{{ title }}</h2>
 				<button
 					v-if="showCloseButton"
 					@click="closeModal"
@@ -86,12 +140,23 @@ function handleBackdropClick() {
 			</div>
 
 			<!-- Content slot -->
-			<div class="p-4 sm:p-6 space-y-6 overflow-y-auto flex-1">
-				<slot />
+			<div :class="[sizeClasses.contentPadding, 'space-y-6 overflow-y-auto flex-1']">
+				<div :class="sizeClasses.contentSize">
+					<slot />
+				</div>
 			</div>
 
 			<!-- Footer slot (optional) -->
-			<slot name="footer" />
+			<div
+				v-if="$slots.footer"
+				:class="[
+					sizeClasses.footerPadding,
+					sizeClasses.footerBorder,
+					sizeClasses.footerBackground,
+					sizeClasses.footerFlex
+				]">
+				<slot name="footer" />
+			</div>
 		</div>
 	</div>
 </template>
