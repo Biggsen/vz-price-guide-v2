@@ -21,6 +21,7 @@ import {
 import { getEffectivePrice } from '../utils/pricing.js'
 import { getImageUrl } from '../utils/image.js'
 import { versions } from '../constants.js'
+import { useAdmin } from '../utils/admin.js'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import {
@@ -41,6 +42,7 @@ const user = useCurrentUser()
 const router = useRouter()
 const route = useRoute()
 const db = useFirestore()
+const { canEditItems } = useAdmin()
 
 // Reactive state
 const selectedCrateId = ref('')
@@ -52,6 +54,9 @@ const editingItem = ref(null)
 const loading = ref(false)
 const error = ref(null)
 const showCopyToast = ref(false)
+
+// Debug flag for YAML preview
+const showYamlPreview = ref(false)
 
 // Modal-specific error states
 const createFormError = ref(null)
@@ -1221,6 +1226,13 @@ watch(selectedCrate, (crate) => {
 				</template>
 				Copy List
 			</BaseButton>
+			<BaseButton
+				v-if="canEditItems"
+				@click="showYamlPreview = !showYamlPreview"
+				:variant="showYamlPreview ? 'primary' : 'secondary'"
+				class="ml-auto">
+				{{ showYamlPreview ? 'Hide' : 'Show' }} YAML Debug
+			</BaseButton>
 		</div>
 
 		<!-- Error Display -->
@@ -1457,7 +1469,7 @@ watch(selectedCrate, (crate) => {
 												result.item.enchantments
 											)"
 											:key="enchantmentId"
-											class="px-1 py-0.5 bg-flame text-white text-xs rounded">
+											class="px-1 py-0.5 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase">
 											{{ formatEnchantmentName(enchantmentId) }}
 										</span>
 									</div>
@@ -1500,8 +1512,16 @@ watch(selectedCrate, (crate) => {
 												<h4 class="text-base font-semibold text-gray-900">
 													{{
 														`${rewardItem.quantity}x ${
-															getItemById(rewardItem.item_id)?.name ||
-															'Unknown Item'
+															Object.keys(
+																rewardItem.enchantments || {}
+															).length > 0
+																? `enchanted ${
+																		getItemById(
+																			rewardItem.item_id
+																		)?.name || 'Unknown Item'
+																  }`
+																: getItemById(rewardItem.item_id)
+																		?.name || 'Unknown Item'
 														}`
 													}}
 												</h4>
@@ -1523,12 +1543,53 @@ watch(selectedCrate, (crate) => {
 																rewardItem.enchantments
 															)"
 															:key="enchantmentId"
-															class="px-2 py-1 bg-flame text-white text-xs rounded">
+															class="px-2 py-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase">
 															{{
 																formatEnchantmentName(enchantmentId)
 															}}
 														</span>
 													</div>
+												</div>
+
+												<!-- YAML Preview (Debug) -->
+												<div v-if="showYamlPreview" class="mt-2">
+													<button
+														@click="toggleReviewPanel(rewardItem.id)"
+														class="flex items-center gap-2 text-sm text-heavy-metal hover:text-gray-800 transition-colors">
+														<svg
+															:class="[
+																'w-4 h-4 transition-transform',
+																isReviewPanelExpanded(rewardItem.id)
+																	? 'rotate-90'
+																	: ''
+															]"
+															fill="none"
+															stroke="currentColor"
+															viewBox="0 0 24 24">
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M9 5l7 7-7 7" />
+														</svg>
+														{{
+															isReviewPanelExpanded(rewardItem.id)
+																? 'Hide'
+																: 'Show'
+														}}
+														YAML Preview
+													</button>
+
+													<pre
+														v-if="isReviewPanelExpanded(rewardItem.id)"
+														class="mt-3 text-xs bg-white p-3 rounded border overflow-x-auto"><code>{{ getFormattedYamlForItem(rewardItem) ? `    "1":
+      DisplayName: "${getFormattedYamlForItem(rewardItem).displayName}"
+      DisplayItem: "${getFormattedYamlForItem(rewardItem).displayItem}"
+      Settings: { Custom-Model-Data: ${getFormattedYamlForItem(rewardItem).customModelData}, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: ${getFormattedYamlForItem(rewardItem).displayAmount}
+      Weight: ${getFormattedYamlForItem(rewardItem).weight}
+      Items:
+        - "${getFormattedYamlForItem(rewardItem).itemString}"` : 'Loading...' }}</code></pre>
 												</div>
 											</div>
 											<!-- Weight and Chance Boxes -->
@@ -1599,41 +1660,6 @@ watch(selectedCrate, (crate) => {
 										<TrashIcon class="w-4 h-4" />
 									</button>
 								</div>
-							</div>
-
-							<!-- Review Panel -->
-							<div class="hidden mt-4">
-								<button
-									@click="toggleReviewPanel(rewardItem.id)"
-									class="hidden flex items-center gap-2 text-sm text-heavy-metal hover:text-gray-800 transition-colors">
-									<svg
-										:class="[
-											'w-4 h-4 transition-transform',
-											isReviewPanelExpanded(rewardItem.id) ? 'rotate-90' : ''
-										]"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M9 5l7 7-7 7" />
-									</svg>
-									{{ isReviewPanelExpanded(rewardItem.id) ? 'Hide' : 'Show' }}
-									YAML Preview
-								</button>
-
-								<pre
-									v-if="isReviewPanelExpanded(rewardItem.id)"
-									class="hidden mt-3 text-xs bg-white p-3 rounded border overflow-x-auto"><code>{{ getFormattedYamlForItem(rewardItem) ? `    "1":
-      DisplayName: "${getFormattedYamlForItem(rewardItem).displayName}"
-      DisplayItem: "${getFormattedYamlForItem(rewardItem).displayItem}"
-      Settings: { Custom-Model-Data: ${getFormattedYamlForItem(rewardItem).customModelData}, Model: { Namespace: "", Id: "" } }
-      DisplayAmount: ${getFormattedYamlForItem(rewardItem).displayAmount}
-      Weight: ${getFormattedYamlForItem(rewardItem).weight}
-      Items:
-        - "${getFormattedYamlForItem(rewardItem).itemString}"` : 'Loading...' }}</code></pre>
 							</div>
 						</div>
 					</div>
