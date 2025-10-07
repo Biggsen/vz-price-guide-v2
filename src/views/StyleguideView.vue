@@ -208,6 +208,49 @@ function isSelected(index) {
 					</div>
 				</div>
 
+				<!-- Semantic Color Light Variants -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Semantic Light Variants</h3>
+					<div class="space-y-3">
+						<div class="flex items-center space-x-3">
+							<div
+								class="w-16 h-16 bg-semantic-success-light rounded-lg shadow-md border border-gray-200"></div>
+							<div>
+								<div class="font-medium text-gray-900">Success Light</div>
+								<div class="text-sm text-gray-500">bg-semantic-success-light</div>
+								<div class="text-xs text-gray-400">Light success backgrounds</div>
+							</div>
+						</div>
+						<div class="flex items-center space-x-3">
+							<div
+								class="w-16 h-16 bg-semantic-danger-light rounded-lg shadow-md border border-gray-200"></div>
+							<div>
+								<div class="font-medium text-gray-900">Danger Light</div>
+								<div class="text-sm text-gray-500">bg-semantic-danger-light</div>
+								<div class="text-xs text-gray-400">Light danger backgrounds</div>
+							</div>
+						</div>
+						<div class="flex items-center space-x-3">
+							<div
+								class="w-16 h-16 bg-semantic-info-light rounded-lg shadow-md border border-gray-200"></div>
+							<div>
+								<div class="font-medium text-gray-900">Info Light</div>
+								<div class="text-sm text-gray-500">bg-semantic-info-light</div>
+								<div class="text-xs text-gray-400">Light info backgrounds</div>
+							</div>
+						</div>
+						<div class="flex items-center space-x-3">
+							<div
+								class="w-16 h-16 bg-semantic-warning-light rounded-lg shadow-md border border-gray-200"></div>
+							<div>
+								<div class="font-medium text-gray-900">Warning Light</div>
+								<div class="text-sm text-gray-500">bg-semantic-warning-light</div>
+								<div class="text-xs text-gray-400">Light warning backgrounds</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
 				<!-- Root Colors -->
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold text-gray-800">Root Colors</h3>
