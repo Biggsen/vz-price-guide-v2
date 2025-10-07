@@ -19,11 +19,13 @@ import {
 	importCrateRewardsFromYaml
 } from '../utils/crateRewards.js'
 import { getEffectivePrice } from '../utils/pricing.js'
+import { getImageUrl } from '../utils/image.js'
 import { versions } from '../constants.js'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import {
 	PlusIcon,
+	MinusIcon,
 	PencilIcon,
 	TrashIcon,
 	ArrowDownTrayIcon,
@@ -175,6 +177,14 @@ const crateItemCounts = computed(() => {
 	})
 	return counts
 })
+
+// Get total weight for a specific crate
+function getCrateTotalWeight(crateId) {
+	if (!allCrateRewardItems.value) return 0
+	return allCrateRewardItems.value
+		.filter((item) => item.crate_reward_id === crateId)
+		.reduce((total, item) => total + (item.weight || 0), 0)
+}
 
 // Sorted reward items
 const sortedRewardItems = computed(() => {
@@ -1106,6 +1116,14 @@ watch(selectedCrate, (crate) => {
 						<p class="text-gray-600">
 							Create and manage crate rewards for Crazy Crates plugin
 						</p>
+						<div class="mt-4">
+							<BaseButton @click="startCreateCrate" variant="primary">
+								<template #left-icon>
+									<PlusIcon class="w-4 h-4" />
+								</template>
+								New Crate
+							</BaseButton>
+						</div>
 					</div>
 					<!-- Crate Header -->
 					<div v-else-if="selectedCrate">
@@ -1122,8 +1140,18 @@ watch(selectedCrate, (crate) => {
 							</BaseButton>
 						</div>
 
-						<h1 class="text-3xl font-bold text-gray-900">{{ selectedCrate.name }}</h1>
-						<p v-if="selectedCrate.description" class="text-gray-600 mt-1">
+						<div class="flex items-center gap-3">
+							<h1 class="text-3xl font-bold text-gray-900">
+								{{ selectedCrate.name }}
+							</h1>
+							<button
+								@click="startEditCrate"
+								class="text-gray-900 hover:text-gray-600 transition-colors"
+								title="Edit crate">
+								<PencilIcon class="w-5 h-5" />
+							</button>
+						</div>
+						<p v-if="selectedCrate.description" class="text-gray-600 mt-1 max-w-2xl">
 							{{ selectedCrate.description }}
 						</p>
 						<div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
@@ -1139,6 +1167,10 @@ watch(selectedCrate, (crate) => {
 								<span class="font-medium">Items:</span>
 								{{ rewardItems?.length || 0 }}
 							</span>
+							<span>
+								<span class="font-medium">Created:</span>
+								{{ formatDate(selectedCrate.created_at) }}
+							</span>
 						</div>
 						<div class="mt-2 text-sm text-gray-900">
 							<span class="font-medium">Total Weight:</span>
@@ -1146,44 +1178,32 @@ watch(selectedCrate, (crate) => {
 						</div>
 					</div>
 				</div>
-				<div class="flex gap-2">
-					<BaseButton
-						v-if="selectedCrateId"
-						@click="showImportModal = true"
-						variant="secondary">
-						<template #left-icon>
-							<ArrowUpTrayIcon class="w-4 h-4" />
-						</template>
-						Import YAML
-					</BaseButton>
-					<BaseButton
-						v-if="selectedCrateId"
-						@click="exportYaml"
-						variant="secondary"
-						:disabled="!rewardItems?.length">
-						<template #left-icon>
-							<ArrowDownTrayIcon class="w-4 h-4" />
-						</template>
-						Export YAML
-					</BaseButton>
-					<BaseButton
-						v-if="selectedCrateId"
-						@click="copyRewardList"
-						variant="secondary"
-						:disabled="!rewardItems?.length">
-						<template #left-icon>
-							<ClipboardIcon class="w-4 h-4" />
-						</template>
-						Copy List
-					</BaseButton>
-					<BaseButton v-if="!selectedCrateId" @click="startCreateCrate" variant="primary">
-						<template #left-icon>
-							<PlusIcon class="w-4 h-4" />
-						</template>
-						New Crate
-					</BaseButton>
-				</div>
 			</div>
+		</div>
+
+		<!-- CTA Buttons for Single Crate View -->
+		<div v-if="selectedCrateId" class="mb-6 flex gap-2">
+			<BaseButton @click="showImportModal = true" variant="secondary">
+				<template #left-icon>
+					<ArrowUpTrayIcon class="w-4 h-4" />
+				</template>
+				Import YAML
+			</BaseButton>
+			<BaseButton @click="exportYaml" variant="secondary" :disabled="!rewardItems?.length">
+				<template #left-icon>
+					<ArrowDownTrayIcon class="w-4 h-4" />
+				</template>
+				Export YAML
+			</BaseButton>
+			<BaseButton
+				@click="copyRewardList"
+				variant="secondary"
+				:disabled="!rewardItems?.length">
+				<template #left-icon>
+					<ClipboardIcon class="w-4 h-4" />
+				</template>
+				Copy List
+			</BaseButton>
 		</div>
 
 		<!-- Error Display -->
@@ -1215,17 +1235,11 @@ watch(selectedCrate, (crate) => {
 						<div class="flex items-center justify-between">
 							<h3
 								@click="router.push(`/crate-rewards/${crate.id}`)"
-								class="text-xl font-semibold text-heavy-metal hover:text-blue-600 cursor-pointer flex-1">
+								class="text-xl font-semibold text-heavy-metal hover:text-gray-asparagus cursor-pointer flex-1">
 								{{ crate.name }}
 							</h3>
 							<!-- Action Buttons -->
 							<div class="flex gap-2 ml-3">
-								<button
-									@click.stop="editCrateFromCard(crate)"
-									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-									title="Edit crate">
-									<PencilIcon class="w-4 h-4" />
-								</button>
 								<button
 									@click.stop="confirmDeleteCrateFromCard(crate)"
 									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
@@ -1238,27 +1252,23 @@ watch(selectedCrate, (crate) => {
 
 					<!-- Card Body -->
 					<div
-						class="bg-norway p-4 border-x-2 border-b-2 border-white rounded-b-lg flex-1">
+						class="bg-norway p-4 border-x-2 border-b-2 border-white rounded-b-lg flex-1 flex flex-col">
 						<div class="flex-1">
 							<p v-if="crate.description" class="text-heavy-metal mb-3">
 								{{ crate.description }}
 							</p>
-							<div class="space-y-1">
-								<div class="text-sm text-heavy-metal">
-									<span class="font-medium">Version:</span>
-									{{ crate.minecraft_version }}
-								</div>
-								<div class="text-sm text-heavy-metal">
-									<span class="font-medium">Items:</span>
-									{{ crateItemCounts[crate.id] || 0 }}
-								</div>
-								<div class="text-sm text-heavy-metal">
-									<span class="font-medium">Created:</span>
-									{{ formatDate(crate.created_at) }}
-								</div>
+							<div class="text-sm text-heavy-metal">
+								<span class="font-medium">Version:</span>
+								{{ crate.minecraft_version }}
+								<span class="mx-2"></span>
+								<span class="font-medium">Items:</span>
+								{{ crateItemCounts[crate.id] || 0 }}
+								<span class="mx-2"></span>
+								<span class="font-medium">Weight:</span>
+								{{ getCrateTotalWeight(crate.id) }}
 							</div>
 						</div>
-						<div class="mt-4">
+						<div class="mt-4 flex-shrink-0">
 							<BaseButton
 								@click="router.push(`/crate-rewards/${crate.id}`)"
 								variant="primary">
@@ -1273,7 +1283,7 @@ watch(selectedCrate, (crate) => {
 		<!-- Selected Crate Reward -->
 		<div v-if="selectedCrateId && selectedCrate" class="space-y-6">
 			<!-- Reward Items -->
-			<div class="bg-white rounded-lg shadow-md border border-gray-200">
+			<div class="bg-white rounded-lg">
 				<div class="p-6 border-b border-gray-200">
 					<div class="flex items-center justify-between">
 						<h3 class="text-lg font-semibold text-gray-900">Reward Items</h3>
@@ -1396,9 +1406,17 @@ watch(selectedCrate, (crate) => {
 								class="p-2 bg-white rounded border">
 								<div class="flex items-center gap-2 mb-1">
 									<img
-										:src="result.itemData?.image || '/images/items/unknown.png'"
+										:src="
+											getImageUrl(
+												result.itemData?.image ||
+													'/images/items/unknown.png'
+											)
+										"
 										:alt="result.itemData?.name"
-										class="w-6 h-6 object-contain" />
+										loading="lazy"
+										decoding="async"
+										fetchpriority="low"
+										class="max-w-6 max-h-6 object-contain" />
 									<div class="flex-1 min-w-0">
 										<div class="text-xs font-medium text-gray-900 truncate">
 											{{ result.item.quantity }}x
@@ -1422,7 +1440,7 @@ watch(selectedCrate, (crate) => {
 												result.item.enchantments
 											)"
 											:key="enchantmentId"
-											class="px-1 py-0.5 bg-purple-100 text-purple-800 text-xs rounded">
+											class="px-1 py-0.5 bg-flame text-white text-xs rounded">
 											{{ formatEnchantmentName(enchantmentId) }}
 										</span>
 									</div>
@@ -1436,26 +1454,33 @@ watch(selectedCrate, (crate) => {
 						</div>
 					</div>
 
-					<div class="divide-y divide-gray-200">
+					<div class="divide-y-2 divide-white">
 						<div
 							v-for="rewardItem in sortedRewardItems"
 							:key="rewardItem.id"
-							class="p-6 hover:bg-gray-50">
-							<div class="flex items-center justify-between">
+							class="pr-6 bg-norway">
+							<div class="flex items-stretch justify-between">
 								<div class="flex-1">
-									<div class="flex items-center gap-4">
+									<div class="flex items-stretch gap-4">
 										<div
-											class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+											class="w-16 bg-highland border-r-2 border-white flex items-center justify-center">
 											<img
 												v-if="getItemById(rewardItem.item_id)?.image"
-												:src="getItemById(rewardItem.item_id).image"
+												:src="
+													getImageUrl(
+														getItemById(rewardItem.item_id).image
+													)
+												"
 												:alt="getItemById(rewardItem.item_id)?.name"
-												class="w-8 h-8" />
+												loading="lazy"
+												decoding="async"
+												fetchpriority="low"
+												class="max-w-10 max-h-10" />
 											<span v-else class="text-gray-400 text-xs">?</span>
 										</div>
 										<div class="flex-1 flex items-center justify-between">
-											<div>
-												<h4 class="font-medium text-gray-900">
+											<div class="pt-2 pb-3">
+												<h4 class="text-base font-semibold text-gray-900">
 													{{
 														`${rewardItem.quantity}x ${
 															getItemById(rewardItem.item_id)?.name ||
@@ -1463,7 +1488,7 @@ watch(selectedCrate, (crate) => {
 														}`
 													}}
 												</h4>
-												<div class="text-sm text-gray-500">
+												<div class="text-sm text-heavy-metal">
 													<span class="font-medium">Value:</span>
 													{{ Math.ceil(getItemValue(rewardItem)) }}
 												</div>
@@ -1481,7 +1506,7 @@ watch(selectedCrate, (crate) => {
 																rewardItem.enchantments
 															)"
 															:key="enchantmentId"
-															class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">
+															class="px-2 py-1 bg-flame text-white text-xs rounded">
 															{{
 																formatEnchantmentName(enchantmentId)
 															}}
@@ -1492,22 +1517,20 @@ watch(selectedCrate, (crate) => {
 											<!-- Weight and Chance Boxes -->
 											<div class="flex gap-2">
 												<div
-													class="bg-blue-50 border border-blue-200 rounded flex items-stretch">
+													class="bg-blue-50 border-2 border-gray-asparagus rounded flex items-stretch">
 													<button
 														@click="decreaseItemWeight(rewardItem)"
-														class="flex items-center justify-center px-2 py-1 bg-white hover:bg-gray-50 transition-colors rounded-l border-r border-blue-200 min-w-[2rem]"
+														class="flex items-center justify-center px-1 py-1 bg-sea-mist hover:bg-saltpan transition-colors rounded-l border-r-2 border-gray-asparagus min-w-[2rem]"
 														title="Decrease weight by 10">
-														<span
-															class="text-sm font-semibold text-gray-600">
-															−
-														</span>
+														<MinusIcon
+															class="w-4 h-4 text-heavy-metal" />
 													</button>
 													<div
 														v-if="editingWeightId !== rewardItem.id"
 														@click="startEditWeight(rewardItem)"
-														class="flex items-center justify-center px-2 py-1 text-center cursor-pointer hover:bg-blue-100 transition-colors min-w-[2rem] border-r border-blue-200">
+														class="flex items-center justify-center px-1 py-1 text-center cursor-pointer bg-norway hover:bg-saltpan transition-colors min-w-[2.5rem] border-r-2 border-gray-asparagus">
 														<span
-															class="text-sm font-semibold text-blue-800">
+															class="text-base font-bold text-heavy-metal">
 															{{ rewardItem.weight }}
 														</span>
 													</div>
@@ -1524,22 +1547,20 @@ watch(selectedCrate, (crate) => {
 														@blur="saveWeight(rewardItem)"
 														@keyup.enter="saveWeight(rewardItem)"
 														@keydown.escape="cancelEditWeight"
-														class="px-1 py-1 text-center text-sm font-semibold text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 w-8 border-r border-blue-200 bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+														class="px-1 py-1 text-center text-base font-semibold text-heavy-metal focus:outline-none focus:ring-2 focus:ring-blue-500 w-10 border-r-2 border-gray-asparagus bg-norway [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 														autofocus />
 													<button
 														@click="increaseItemWeight(rewardItem)"
-														class="flex items-center justify-center px-2 py-1 bg-white hover:bg-gray-50 transition-colors rounded-r min-w-[2rem]"
+														class="flex items-center justify-center px-1 py-1 bg-sea-mist hover:bg-saltpan transition-colors rounded-r min-w-[2rem]"
 														title="Increase weight by 10">
-														<span
-															class="text-sm font-semibold text-gray-600">
-															+
-														</span>
+														<PlusIcon
+															class="w-4 h-4 text-heavy-metal" />
 													</button>
 												</div>
 												<div
-													class="bg-green-50 border border-green-200 rounded px-2 py-1 inline-block min-w-[60px] text-center">
+													class="bg-transparent px-2 py-1 inline-block min-w-[60px] text-center">
 													<span
-														class="text-sm font-semibold text-green-800">
+														class="text-base font-semibold text-heavy-metal">
 														{{ getItemChance(rewardItem).toFixed(1) }}%
 													</span>
 												</div>
@@ -1547,25 +1568,27 @@ watch(selectedCrate, (crate) => {
 										</div>
 									</div>
 								</div>
-								<div class="flex gap-2 ml-8">
+								<div class="flex items-center gap-2 ml-8">
 									<button
 										@click="startEditItem(rewardItem)"
-										class="inline-flex items-center px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
+										title="Edit item">
 										<PencilIcon class="w-4 h-4" />
 									</button>
 									<button
 										@click="confirmRemoveItem(rewardItem)"
-										class="inline-flex items-center px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
+										title="Delete item">
 										<TrashIcon class="w-4 h-4" />
 									</button>
 								</div>
 							</div>
 
 							<!-- Review Panel -->
-							<div class="mt-4">
+							<div class="hidden mt-4">
 								<button
 									@click="toggleReviewPanel(rewardItem.id)"
-									class="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+									class="hidden flex items-center gap-2 text-sm text-heavy-metal hover:text-gray-800 transition-colors">
 									<svg
 										:class="[
 											'w-4 h-4 transition-transform',
@@ -1586,7 +1609,7 @@ watch(selectedCrate, (crate) => {
 
 								<pre
 									v-if="isReviewPanelExpanded(rewardItem.id)"
-									class="mt-3 text-xs bg-white p-3 rounded border overflow-x-auto"><code>{{ getFormattedYamlForItem(rewardItem) ? `    "1":
+									class="hidden mt-3 text-xs bg-white p-3 rounded border overflow-x-auto"><code>{{ getFormattedYamlForItem(rewardItem) ? `    "1":
       DisplayName: "${getFormattedYamlForItem(rewardItem).displayName}"
       DisplayItem: "${getFormattedYamlForItem(rewardItem).displayItem}"
       Settings: { Custom-Model-Data: ${getFormattedYamlForItem(rewardItem).customModelData}, Model: { Namespace: "", Id: "" } }
@@ -1850,11 +1873,14 @@ watch(selectedCrate, (crate) => {
 											{{ item.material_id }}
 										</div>
 									</div>
-									<div v-if="item.image" class="w-8 h-8">
+									<div v-if="item.image" class="w-8 h-8 flex items-center justify-center">
 										<img
-											:src="item.image"
+											:src="getImageUrl(item.image)"
 											:alt="item.name"
-											class="w-full h-full object-contain" />
+											loading="lazy"
+											decoding="async"
+											fetchpriority="low"
+											class="max-w-full max-h-full object-contain" />
 									</div>
 								</div>
 							</template>
@@ -1874,11 +1900,14 @@ watch(selectedCrate, (crate) => {
 									{{ selectedItem.material_id }}
 								</div>
 							</div>
-							<div v-if="selectedItem.image" class="w-8 h-8">
+							<div v-if="selectedItem.image" class="w-8 h-8 flex items-center justify-center">
 								<img
-									:src="selectedItem.image"
+									:src="getImageUrl(selectedItem.image)"
 									:alt="selectedItem.name"
-									class="w-full h-full object-contain" />
+									loading="lazy"
+									decoding="async"
+									fetchpriority="low"
+									class="max-w-full max-h-full object-contain" />
 							</div>
 						</div>
 						<button
@@ -1903,11 +1932,14 @@ watch(selectedCrate, (crate) => {
 								{{ getItemById(editingItem.item_id).material_id }}
 							</div>
 						</div>
-						<div v-if="getItemById(editingItem.item_id).image" class="w-8 h-8">
+						<div v-if="getItemById(editingItem.item_id).image" class="w-8 h-8 flex items-center justify-center">
 							<img
-								:src="getItemById(editingItem.item_id).image"
+								:src="getImageUrl(getItemById(editingItem.item_id).image)"
 								:alt="getItemById(editingItem.item_id).name"
-								class="w-full h-full object-contain" />
+								loading="lazy"
+								decoding="async"
+								fetchpriority="low"
+								class="max-w-full max-h-full object-contain" />
 						</div>
 					</div>
 				</div>
