@@ -38,8 +38,10 @@ import {
 	ExclamationTriangleIcon,
 	ArrowUpIcon,
 	ArrowDownIcon,
-	PlayIcon
+	PlayIcon,
+	ChevronDoubleLeftIcon
 } from '@heroicons/vue/24/outline'
+import { XMarkIcon as XMarkIconMini, XCircleIcon } from '@heroicons/vue/20/solid'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -494,13 +496,26 @@ async function saveWeight(item) {
 }
 
 async function saveItem() {
+	// Clear previous errors
+	addItemFormError.value = null
+
+	// Validate required fields
 	if (!selectedCrateId.value || !itemForm.value.item_id) {
 		addItemFormError.value = 'Please select an item'
 		return
 	}
 
+	if (!itemForm.value.quantity || itemForm.value.quantity < 1) {
+		addItemFormError.value = 'quantity'
+		return
+	}
+
+	if (!itemForm.value.weight || itemForm.value.weight < 1) {
+		addItemFormError.value = 'weight'
+		return
+	}
+
 	loading.value = true
-	addItemFormError.value = null
 
 	try {
 		if (editingItem.value) {
@@ -1784,13 +1799,6 @@ watch(selectedCrate, (crate) => {
 			:title="editingItem ? 'Edit Item' : 'Add Item to Crate Reward'"
 			maxWidth="max-w-2xl"
 			@close="showAddItemForm = false; editingItem = null; addItemFormError = null">
-			<!-- Error Display -->
-			<div v-if="addItemFormError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-				<div class="flex items-center">
-					<ExclamationTriangleIcon class="w-5 h-5 text-red-600 mr-2" />
-					<span class="text-red-800">{{ addItemFormError }}</span>
-				</div>
-			</div>
 
 			<form @submit.prevent="saveItem" class="space-y-4">
 				<!-- Item selection -->
@@ -1812,11 +1820,19 @@ watch(selectedCrate, (crate) => {
 							placeholder="Search items by name, material ID, or category..."
 							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
 
+						<!-- Error message for item selection -->
+						<div
+							v-if="addItemFormError && addItemFormError === 'Please select an item'"
+							class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+							<XCircleIcon class="w-4 h-4" />
+							{{ addItemFormError }}
+						</div>
+
 						<!-- Item selection dropdown -->
 						<div
 							v-if="searchQuery && filteredItems.length > 0"
 							ref="dropdownContainer"
-							class="max-h-64 overflow-y-auto border border-gray-300 rounded-md bg-white">
+							class="max-h-64 overflow-y-auto border-2 border-gray-asparagus rounded-md bg-white">
 							<template
 								v-for="(categoryItems, category) in itemsByCategory"
 								:key="category">
@@ -1838,12 +1854,12 @@ watch(selectedCrate, (crate) => {
 										'px-3 py-2 cursor-pointer border-b border-gray-100 flex items-center justify-between',
 										getItemVisualIndex(category, categoryIndex) ===
 										highlightedIndex
-											? 'bg-blue-100 text-blue-900'
+											? 'bg-norway text-blue-900'
 											: 'hover:bg-blue-50'
 									]">
 									<div>
-										<div class="font-medium">{{ item.name }}</div>
-										<div class="text-sm text-gray-500">
+										<div class="font-medium text-heavy-metal">{{ item.name }}</div>
+										<div class="text-sm text-gray-asparagus">
 											{{ item.material_id }}
 										</div>
 									</div>
@@ -1865,12 +1881,12 @@ watch(selectedCrate, (crate) => {
 					<div v-else>
 						<label class="block text-sm font-medium text-gray-700 mb-1">Item *</label>
 						<div
-							class="p-3 bg-green-50 border border-green-200 rounded flex items-center justify-between">
+							class="px-3 py-2 bg-norway border-2 border-highland rounded flex items-center justify-between">
 							<div>
-								<div class="font-medium text-green-800">
+								<div class="font-medium text-heavy-metal">
 									{{ selectedItem.name }}
 								</div>
-								<div class="text-sm text-green-600">
+								<div class="text-sm text-gray-asparagus">
 									{{ selectedItem.material_id }}
 								</div>
 							</div>
@@ -1887,7 +1903,7 @@ watch(selectedCrate, (crate) => {
 						<button
 							type="button"
 							@click="clearSelectedItem"
-							class="mt-2 text-sm text-blue-600 hover:text-blue-800 underline">
+							class="mt-2 text-sm text-heavy-metal hover:text-gray-asparagus underline">
 							Select different item
 						</button>
 					</div>
@@ -1918,26 +1934,40 @@ watch(selectedCrate, (crate) => {
 					</div>
 				</div>
 
-				<div class="grid grid-cols-2 gap-4">
+				<div class="space-y-4">
 					<div>
 						<label class="block text-sm font-medium text-gray-700 mb-1">
 							Quantity *
 						</label>
 						<div class="flex gap-2">
-							<button
-								type="button"
-								@click="setQuantityToStack"
-								class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm whitespace-nowrap">
-								Stack
-							</button>
 							<input
 								id="item-quantity"
 								v-model.number="itemForm.quantity"
 								type="number"
 								min="1"
 								required
-								placeholder="Custom"
-								class="flex-1 rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
+								:class="[
+									'w-20 rounded border-2 px-3 py-1 text-gray-900 focus:ring-2 font-sans',
+									addItemFormError && addItemFormError.includes('quantity') 
+										? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+										: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+								]" />
+							<BaseButton
+								type="button"
+								@click="setQuantityToStack"
+								variant="tertiary"
+								class="text-sm whitespace-nowrap">
+								<template #left-icon>
+									<ChevronDoubleLeftIcon class="w-4 h-4" />
+								</template>
+								Apply stack size
+							</BaseButton>
+						</div>
+						<div
+							v-if="addItemFormError && addItemFormError.includes('quantity')"
+							class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+							<XCircleIcon class="w-4 h-4" />
+							Quantity must be at least 1
 						</div>
 					</div>
 					<div>
@@ -1952,7 +1982,18 @@ watch(selectedCrate, (crate) => {
 							type="number"
 							min="1"
 							required
-							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
+							:class="[
+								'block w-20 rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
+								addItemFormError && addItemFormError.includes('weight') 
+									? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+									: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+							]" />
+						<div
+							v-if="addItemFormError && addItemFormError.includes('weight')"
+							class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+							<XCircleIcon class="w-4 h-4" />
+							Weight must be at least 1
+						</div>
 					</div>
 				</div>
 
@@ -1960,31 +2001,25 @@ watch(selectedCrate, (crate) => {
 				<div class="mt-4">
 					<div class="flex items-center justify-between mb-2">
 						<label class="text-sm font-medium text-gray-700">Enchantments</label>
-						<button
+						<BaseButton
 							type="button"
 							@click="addEnchantment"
-							class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors">
+							variant="secondary"
+							class="text-sm">
 							+ Add Enchantment
-						</button>
+						</BaseButton>
 					</div>
-					<div v-if="Object.keys(itemForm.enchantments).length > 0" class="space-y-2">
+					<div v-if="Object.keys(itemForm.enchantments).length > 0" class="flex flex-wrap gap-2">
 						<div
 							v-for="(level, enchantment, index) in itemForm.enchantments"
 							:key="index"
-							class="flex items-center gap-2 p-2 bg-gray-50 rounded">
-							<span class="text-sm font-medium text-gray-700">
-								{{
-									getItemById(enchantment)?.name ||
-									enchantment
-										.replace(/_/g, ' ')
-										.replace(/\b\w/g, (l) => l.toUpperCase())
-								}}
-							</span>
+							class="flex items-center gap-2 pl-3 pr-2 py-1 bg-sea-mist text-heavy-metal rounded-md text-sm font-medium">
+							<span>{{ formatEnchantmentName(enchantment) }}</span>
 							<button
 								type="button"
 								@click="removeEnchantment(enchantment)"
-								class="text-red-500 hover:text-red-700 text-sm">
-								Remove
+								class="text-heavy-metal hover:text-red-700">
+								<XMarkIconMini class="w-4 h-4" />
 							</button>
 						</div>
 					</div>
@@ -2028,28 +2063,11 @@ watch(selectedCrate, (crate) => {
 							v-for="enchantment in enchantmentItems"
 							:key="enchantment.id"
 							:value="enchantment.id">
-							{{ enchantment.name }}
+							{{ formatEnchantmentName(enchantment.id) }}
 						</option>
 					</select>
 				</div>
 			</form>
-
-			<template #footer>
-				<div
-					class="flex items-center justify-end p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-					<div class="flex space-x-3">
-						<button
-							type="button"
-							@click="cancelEnchantment"
-							class="btn-secondary--outline">
-							Cancel
-						</button>
-						<BaseButton @click="saveEnchantment" variant="primary">
-							Add Enchantment
-						</BaseButton>
-					</div>
-				</div>
-			</template>
 		</BaseModal>
 
 		<!-- Import YAML Modal -->
