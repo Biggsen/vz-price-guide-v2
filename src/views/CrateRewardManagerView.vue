@@ -1219,7 +1219,7 @@ watch(selectedCrate, (crate) => {
 		</div>
 
 		<!-- CTA Buttons for Single Crate View -->
-		<div v-if="selectedCrateId" class="mb-6 flex gap-2">
+		<div v-if="selectedCrateId" class="mb-8 flex gap-2">
 			<BaseButton @click="showImportModal = true" variant="secondary">
 				<template #left-icon>
 					<ArrowUpTrayIcon class="w-4 h-4" />
@@ -1337,6 +1337,12 @@ watch(selectedCrate, (crate) => {
 		<div
 			v-if="selectedCrateId && selectedCrate && rewardItems && rewardItems.length > 0"
 			class="flex items-center justify-between gap-4 mb-4">
+			<BaseButton @click="startAddItem" variant="primary">
+				<template #left-icon>
+					<PlusIcon class="w-4 h-4" />
+				</template>
+				Add Item
+			</BaseButton>
 			<div class="flex items-center gap-4">
 				<span class="text-sm font-medium text-heavy-metal">Sort by:</span>
 				<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
@@ -1400,12 +1406,6 @@ watch(selectedCrate, (crate) => {
 					</button>
 				</div>
 			</div>
-			<BaseButton @click="startAddItem" variant="primary">
-				<template #left-icon>
-					<PlusIcon class="w-4 h-4" />
-				</template>
-				Add Item
-			</BaseButton>
 		</div>
 
 		<!-- Selected Crate Reward -->
