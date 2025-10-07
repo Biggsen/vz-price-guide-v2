@@ -21,7 +21,12 @@ module.exports = {
 				'semantic-success': '#5E8D64', // sea-green
 				'semantic-danger': '#b85745', // chestnut
 				'semantic-info': '#5b7d98', // horizon
-				'semantic-warning': '#b99130' // alpine
+				'semantic-warning': '#b99130', // alpine
+				// Semantic color light variants
+				'semantic-success-light': '#e8f5e8', // very light sea-green
+				'semantic-danger-light': '#fdf2f2', // very light chestnut
+				'semantic-info-light': '#f0f4f8', // very light horizon
+				'semantic-warning-light': '#fefce8' // very light alpine
 			}
 		}
 	},
