@@ -74,6 +74,9 @@ const importModalError = ref(null)
 const showDeleteModal = ref(false)
 const itemToDelete = ref(null)
 
+// Clear all confirmation modal state
+const showClearAllModal = ref(false)
+
 // Review panel state
 const expandedReviewPanels = ref(new Set())
 
@@ -578,15 +581,11 @@ async function executeDelete() {
 	}
 }
 
-async function clearAllRewards() {
-	if (
-		!confirm(
-			'Are you sure you want to clear ALL rewards from this crate? This action cannot be undone.'
-		)
-	) {
-		return
-	}
+function showClearAllConfirmation() {
+	showClearAllModal.value = true
+}
 
+async function clearAllRewards() {
 	loading.value = true
 	error.value = null
 
@@ -596,6 +595,7 @@ async function clearAllRewards() {
 			const deletePromises = rewardItems.value.map((item) => deleteCrateRewardItem(item.id))
 			await Promise.all(deletePromises)
 		}
+		showClearAllModal.value = false
 	} catch (err) {
 		error.value = 'Failed to clear rewards: ' + err.message
 	} finally {
@@ -1604,17 +1604,6 @@ watch(selectedCrate, (crate) => {
 			</div>
 		</div>
 
-		<!-- Clear All Rewards Link -->
-		<div v-if="selectedCrateId && rewardItems?.length" class="mt-4 flex justify-start">
-			<button
-				@click="clearAllRewards"
-				:disabled="loading"
-				class="inline-flex items-center text-sm text-gray-600 hover:text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-				<TrashIcon class="w-4 h-4 mr-1" />
-				Clear all items
-			</button>
-		</div>
-
 		<!-- Empty State Message -->
 		<div
 			v-if="selectedCrateId && !rewardItemsPending && !rewardItems?.length"
@@ -1633,6 +1622,17 @@ watch(selectedCrate, (crate) => {
 				</template>
 				Add Item
 			</BaseButton>
+		</div>
+
+		<!-- Clear All Rewards Link -->
+		<div v-if="selectedCrateId && rewardItems?.length" class="mt-4 flex justify-start">
+			<button
+				@click="showClearAllConfirmation"
+				:disabled="loading"
+				class="inline-flex items-center text-sm text-gray-600 hover:text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+				<TrashIcon class="w-4 h-4 mr-1" />
+				Clear all items
+			</button>
 		</div>
 
 		<!-- Create Crate Reward Modal -->
@@ -2191,6 +2191,47 @@ watch(selectedCrate, (crate) => {
 							variant="primary"
 							class="bg-semantic-danger hover:bg-opacity-90">
 							{{ loading ? 'Deleting...' : 'Delete' }}
+						</BaseButton>
+					</div>
+				</div>
+			</template>
+		</BaseModal>
+
+		<!-- Clear All Confirmation Modal -->
+		<BaseModal
+			:isOpen="showClearAllModal"
+			title="Clear All Items"
+			size="small"
+			@close="showClearAllModal = false">
+			<div class="space-y-4">
+				<div>
+					<h3 class="font-normal text-gray-900">
+						Are you sure you want to clear
+						<span class="font-semibold">ALL</span>
+						items from this crate?
+					</h3>
+					<p class="text-sm text-gray-600 mt-2">
+						This action cannot be undone and will permanently delete all
+						{{ rewardItems?.length || 0 }} items.
+					</p>
+				</div>
+			</div>
+
+			<template #footer>
+				<div class="flex items-center justify-end p-4">
+					<div class="flex space-x-3">
+						<button
+							type="button"
+							@click="showClearAllModal = false"
+							class="btn-secondary--outline">
+							Cancel
+						</button>
+						<BaseButton
+							@click="clearAllRewards"
+							:disabled="loading"
+							variant="primary"
+							class="bg-semantic-danger hover:bg-opacity-90">
+							{{ loading ? 'Clearing...' : 'Clear All' }}
 						</BaseButton>
 					</div>
 				</div>
