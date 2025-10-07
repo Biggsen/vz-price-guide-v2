@@ -35,6 +35,7 @@ import {
 	ClipboardIcon,
 	XMarkIcon,
 	CheckIcon,
+	CheckCircleIcon,
 	ExclamationTriangleIcon,
 	ArrowUpIcon,
 	ArrowDownIcon,
@@ -2098,7 +2099,7 @@ watch(selectedCrate, (crate) => {
 						type="file"
 						accept=".yml,.yaml"
 						@change="handleFileSelect"
-						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
+						class="block w-full pr-3 py-1 mt-2 mb-2 text-gray-900 font-sans" />
 					<p class="text-xs text-gray-500 mt-1">
 						Select a Crazy Crates YAML file containing prize definitions
 					</p>
@@ -2108,14 +2109,14 @@ watch(selectedCrate, (crate) => {
 				<div v-if="importResult" class="space-y-2">
 					<div
 						v-if="importResult.success"
-						class="p-3 bg-green-50 border border-green-200 rounded-lg">
-						<div class="flex items-center">
-							<CheckIcon class="w-5 h-5 text-green-600 mr-2" />
+						class="p-3 bg-semantic-success-light border-l-4 border-l-semantic-success">
+						<div class="flex items-start">
+							<CheckCircleIcon class="w-6 h-6 text-heavy-metal mr-2" />
 							<div>
-								<div class="text-green-800 font-medium">
+								<div class="text-heavy-metal font-medium">
 									Import completed successfully!
 								</div>
-								<div class="text-green-700 text-sm">
+								<div class="text-heavy-metal text-sm">
 									{{ importResult.importedCount }} items imported
 									<span v-if="importResult.errorCount > 0">
 										, {{ importResult.errorCount }} errors
