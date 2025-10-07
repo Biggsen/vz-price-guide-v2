@@ -36,8 +36,8 @@ import {
 	XMarkIcon,
 	CheckIcon,
 	ExclamationTriangleIcon,
-	ChevronUpIcon,
-	ChevronDownIcon
+	ArrowUpIcon,
+	ArrowDownIcon
 } from '@heroicons/vue/24/outline'
 
 const user = useCurrentUser()
@@ -1322,49 +1322,49 @@ watch(selectedCrate, (crate) => {
 						@click="setSortBy('value')"
 						:class="[
 							sortBy === 'value'
-								? 'bg-gray-asparagus text-white px-3'
+								? 'bg-gray-asparagus text-white pl-3 pr-2 hover:bg-highland'
 								: 'bg-norway text-heavy-metal hover:bg-gray-100 px-4',
 							'py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
 						]">
 						Value
-						<ChevronUpIcon
+						<ArrowUpIcon
 							v-if="sortBy === 'value' && sortDirection === 'asc'"
-							class="w-3 h-3 ml-1" />
-						<ChevronDownIcon
+							class="w-3 h-3 inline align-middle -mt-0.5" />
+						<ArrowDownIcon
 							v-if="sortBy === 'value' && sortDirection === 'desc'"
-							class="w-3 h-3 ml-1" />
+							class="w-3 h-3 inline align-middle -mt-0.5" />
 					</button>
 					<button
 						@click="setSortBy('weight')"
 						:class="[
 							sortBy === 'weight'
-								? 'bg-gray-asparagus text-white px-3'
+								? 'bg-gray-asparagus text-white pl-3 pr-2 hover:bg-highland'
 								: 'bg-norway text-heavy-metal hover:bg-gray-100 px-4',
 							'py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
 						]">
 						Weight
-						<ChevronUpIcon
+						<ArrowUpIcon
 							v-if="sortBy === 'weight' && sortDirection === 'asc'"
-							class="w-3 h-3 ml-1" />
-						<ChevronDownIcon
+							class="w-3 h-3 inline align-middle -mt-0.5" />
+						<ArrowDownIcon
 							v-if="sortBy === 'weight' && sortDirection === 'desc'"
-							class="w-3 h-3 ml-1" />
+							class="w-3 h-3 inline align-middle -mt-0.5" />
 					</button>
 					<button
 						@click="setSortBy('chance')"
 						:class="[
 							sortBy === 'chance'
-								? 'bg-gray-asparagus text-white px-3'
+								? 'bg-gray-asparagus text-white pl-3 pr-2 hover:bg-highland'
 								: 'bg-norway text-heavy-metal hover:bg-gray-100 px-4',
 							'py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
 						]">
 						Chance
-						<ChevronUpIcon
+						<ArrowUpIcon
 							v-if="sortBy === 'chance' && sortDirection === 'asc'"
-							class="w-3 h-3 ml-1" />
-						<ChevronDownIcon
+							class="w-3 h-3 inline align-middle -mt-0.5" />
+						<ArrowDownIcon
 							v-if="sortBy === 'chance' && sortDirection === 'desc'"
-							class="w-3 h-3 ml-1" />
+							class="w-3 h-3 inline align-middle -mt-0.5" />
 					</button>
 					<button
 						@click="setSortBy('none')"
