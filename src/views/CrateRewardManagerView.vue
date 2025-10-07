@@ -37,7 +37,8 @@ import {
 	CheckIcon,
 	ExclamationTriangleIcon,
 	ArrowUpIcon,
-	ArrowDownIcon
+	ArrowDownIcon,
+	PlayIcon
 } from '@heroicons/vue/24/outline'
 
 const user = useCurrentUser()
@@ -105,6 +106,7 @@ const sortDirection = ref('asc')
 // Simulation state
 const simulationResults = ref([])
 const isSimulating = ref(false)
+const showTestRewardsModal = ref(false)
 
 // Enchantment state
 const showEnchantmentModal = ref(false)
@@ -939,11 +941,6 @@ function simulateCrateOpen() {
 				timestamp: new Date()
 			}
 			simulationResults.value.unshift(result) // Add to beginning
-
-			// Keep only last 20 results
-			if (simulationResults.value.length > 20) {
-				simulationResults.value = simulationResults.value.slice(0, 20)
-			}
 			break
 		}
 	}
@@ -1229,6 +1226,15 @@ watch(selectedCrate, (crate) => {
 				Copy List
 			</BaseButton>
 			<BaseButton
+				@click="showTestRewardsModal = true"
+				variant="secondary"
+				:disabled="!rewardItems?.length">
+				<template #left-icon>
+					<PlayIcon class="w-4 h-4" />
+				</template>
+				Test Rewards
+			</BaseButton>
+			<BaseButton
 				v-if="canEditItems"
 				@click="showYamlPreview = !showYamlPreview"
 				:variant="showYamlPreview ? 'primary' : 'secondary'"
@@ -1389,7 +1395,7 @@ watch(selectedCrate, (crate) => {
 		<!-- Selected Crate Reward -->
 		<div v-if="selectedCrateId && selectedCrate" class="space-y-6">
 			<!-- Reward Items -->
-			<div class="bg-white rounded-lg">
+			<div v-if="rewardItems?.length" class="bg-white rounded-lg">
 				<div class="px-6 py-4 bg-gray-asparagus border-b-2 border-white">
 					<h3 class="text-xl font-semibold text-white">Reward Items</h3>
 				</div>
@@ -1397,105 +1403,7 @@ watch(selectedCrate, (crate) => {
 				<div v-if="rewardItemsPending" class="p-6 text-gray-600">
 					Loading reward items...
 				</div>
-				<div v-else-if="!rewardItems?.length" class="p-6 text-gray-600">
-					No items added yet. Click "Add Item" to get started.
-				</div>
 				<div v-else>
-					<!-- Simulation Controls -->
-					<div class="flex items-center gap-4 p-4 bg-yellow-50 border-b">
-						<span class="text-sm font-medium text-gray-700">Test Rewards:</span>
-						<div class="flex gap-2">
-							<button
-								@click="simulateCrateOpen"
-								:disabled="!rewardItems?.length || isSimulating"
-								class="px-3 py-1 text-sm bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-								Open 1 Crate
-							</button>
-							<button
-								@click="simulateMultipleOpens(10)"
-								:disabled="!rewardItems?.length || isSimulating"
-								class="px-3 py-1 text-sm bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-								Open 10 Crates
-							</button>
-							<button
-								@click="simulateMultipleOpens(100)"
-								:disabled="!rewardItems?.length || isSimulating"
-								class="px-3 py-1 text-sm bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-								Open 100 Crates
-							</button>
-							<button
-								@click="clearSimulationResults"
-								:disabled="!simulationResults.length"
-								class="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-								Clear Results
-							</button>
-						</div>
-						<div v-if="isSimulating" class="text-sm text-yellow-700 font-medium">
-							Simulating...
-						</div>
-					</div>
-
-					<!-- Simulation Results -->
-					<div v-if="simulationResults.length > 0" class="p-4 bg-gray-50 border-b">
-						<h4 class="text-sm font-medium text-gray-700 mb-3">
-							Recent Simulation Results ({{ simulationResults.length }}):
-						</h4>
-						<div
-							class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-							<div
-								v-for="result in simulationResults.slice(0, 12)"
-								:key="result.id"
-								class="p-2 bg-white rounded border">
-								<div class="flex items-center gap-2 mb-1">
-									<img
-										:src="
-											getImageUrl(
-												result.itemData?.image ||
-													'/images/items/unknown.png'
-											)
-										"
-										:alt="result.itemData?.name"
-										loading="lazy"
-										decoding="async"
-										fetchpriority="low"
-										class="max-w-6 max-h-6 object-contain" />
-									<div class="flex-1 min-w-0">
-										<div class="text-xs font-medium text-gray-900 truncate">
-											{{ result.item.quantity }}x
-											{{ result.itemData?.name || 'Unknown' }}
-										</div>
-										<div class="text-xs text-gray-500">
-											{{ getItemChance(result.item).toFixed(1) }}% chance
-										</div>
-									</div>
-								</div>
-								<!-- Enchantments Display -->
-								<div
-									v-if="
-										result.item.enchantments &&
-										Object.keys(result.item.enchantments).length > 0
-									"
-									class="mt-1">
-									<div class="flex flex-wrap gap-1">
-										<span
-											v-for="enchantmentId in Object.keys(
-												result.item.enchantments
-											)"
-											:key="enchantmentId"
-											class="px-1 py-0.5 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase">
-											{{ formatEnchantmentName(enchantmentId) }}
-										</span>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div
-							v-if="simulationResults.length > 12"
-							class="text-xs text-gray-500 mt-2">
-							... and {{ simulationResults.length - 12 }} more results
-						</div>
-					</div>
-
 					<div class="divide-y-2 divide-white">
 						<div
 							v-for="rewardItem in sortedRewardItems"
@@ -1691,8 +1599,18 @@ watch(selectedCrate, (crate) => {
 			</button>
 		</div>
 
+		<!-- Empty State Message -->
+		<div
+			v-if="selectedCrateId && !rewardItemsPending && !rewardItems?.length"
+			class="bg-white rounded-lg pt-6 pr-6 pb-6">
+			<div class="text-gray-600">
+				<p class="text-lg font-medium mb-2">No items added yet</p>
+				<p class="text-sm">Click "Add Item" to get started with your crate rewards.</p>
+			</div>
+		</div>
+
 		<!-- Add Item Button -->
-		<div v-if="selectedCrateId" class="mt-4 flex justify-center">
+		<div v-if="selectedCrateId" class="mt-4 flex justify-start">
 			<BaseButton @click="startAddItem" variant="primary">
 				<template #left-icon>
 					<PlusIcon class="w-5 h-5" />
@@ -2273,5 +2191,124 @@ watch(selectedCrate, (crate) => {
 			</svg>
 			<span>Reward list copied to clipboard!</span>
 		</div>
+
+		<!-- Test Rewards Modal -->
+		<BaseModal
+			:isOpen="showTestRewardsModal"
+			title="Test Crate Rewards"
+			maxWidth="max-w-4xl"
+			@close="showTestRewardsModal = false">
+			<div class="space-y-6">
+				<!-- Simulation Controls -->
+				<div class="flex items-center gap-4">
+					<div class="flex gap-2">
+						<BaseButton
+							@click="simulateCrateOpen"
+							:disabled="!rewardItems?.length || isSimulating"
+							variant="primary">
+							Open 1 Crate
+						</BaseButton>
+						<BaseButton
+							@click="simulateMultipleOpens(10)"
+							:disabled="!rewardItems?.length || isSimulating"
+							variant="primary">
+							Open 10 Crates
+						</BaseButton>
+						<BaseButton
+							@click="simulateMultipleOpens(50)"
+							:disabled="!rewardItems?.length || isSimulating"
+							variant="primary">
+							Open 50 Crates
+						</BaseButton>
+					</div>
+					<BaseButton
+						@click="clearSimulationResults"
+						:disabled="!simulationResults.length"
+						variant="tertiary"
+						class="ml-auto">
+						Clear Results
+					</BaseButton>
+					<div v-if="isSimulating" class="text-sm text-gray-700 font-medium">
+						Simulating...
+					</div>
+				</div>
+
+				<!-- Simulation Results -->
+				<div
+					v-if="simulationResults.length > 0"
+					class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+					<h4 class="text-sm font-medium text-gray-700 mb-3">
+						Recent Simulation Results ({{ simulationResults.length }}):
+					</h4>
+					<div class="max-h-[60vh] overflow-y-auto">
+						<div
+							class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+							<div
+								v-for="result in simulationResults"
+								:key="result.id"
+								class="p-2 bg-white rounded border">
+								<div class="flex items-start gap-2 mb-1">
+									<img
+										:src="
+											getImageUrl(
+												result.itemData?.image ||
+													'/images/items/unknown.png'
+											)
+										"
+										:alt="result.itemData?.name"
+										loading="lazy"
+										decoding="async"
+										fetchpriority="low"
+										class="max-w-6 max-h-6 object-contain" />
+									<div class="flex-1 min-w-0">
+										<div class="text-xs font-medium text-gray-900 truncate">
+											{{ result.item.quantity }}x
+											{{ result.itemData?.name || 'Unknown' }}
+											<span
+												v-if="
+													result.item.enchantments &&
+													Object.keys(result.item.enchantments).length > 0
+												"
+												class="text-blue-600">
+												(enchanted)
+											</span>
+										</div>
+										<div class="text-xs text-gray-500">
+											{{ getItemChance(result.item).toFixed(1) }}% chance
+										</div>
+										<!-- Enchantments Display -->
+										<div
+											v-if="
+												result.item.enchantments &&
+												Object.keys(result.item.enchantments).length > 0
+											"
+											class="mt-1">
+											<div class="flex flex-wrap gap-x-2 gap-y-1">
+												<span
+													v-for="enchantmentId in Object.keys(
+														result.item.enchantments
+													)"
+													:key="enchantmentId"
+													class="text-heavy-metal text-[10px] font-medium capitalize leading-none">
+													{{ formatEnchantmentName(enchantmentId) }}
+												</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Empty State -->
+				<div v-else class="text-center py-8 text-gray-500">
+					<p>
+						No simulation results yet. Click a button above to start testing your crate
+						rewards!
+					</p>
+				</div>
+			</div>
+		</BaseModal>
 	</div>
 </template>
