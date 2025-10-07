@@ -778,11 +778,28 @@ function formatEnchantmentName(enchantmentId) {
 		}
 	}
 
-	// Fallback to original name if format doesn't match
-	return (
-		getItemById(enchantmentId)?.name ||
-		itemName.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
-	)
+	// Try to extract from material_id if name doesn't match expected format
+	const materialId = getItemById(enchantmentId)?.material_id || enchantmentId
+	if (materialId.startsWith('enchanted_book_')) {
+		// Extract enchantment name from material_id like "enchanted_book_aqua_affinity_1"
+		const enchantmentPart = materialId.replace('enchanted_book_', '')
+		const parts = enchantmentPart.split('_')
+
+		// Remove the last part if it's a number (level)
+		if (parts.length > 1 && /^\d+$/.test(parts[parts.length - 1])) {
+			parts.pop()
+		}
+
+		// Join and capitalize
+		const enchantment = parts.join(' ').replace(/\b\w/g, (l) => l.toUpperCase())
+		return enchantment
+	}
+
+	// Final fallback - clean up the name
+	return itemName
+		.replace(/^enchanted book /i, '')
+		.replace(/_/g, ' ')
+		.replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
 // Item search functions

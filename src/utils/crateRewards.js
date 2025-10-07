@@ -416,11 +416,27 @@ export function formatRewardItemForYaml(rewardItem, item, prizeId, allItems = []
 						itemString += `, ${enchantment}:${displayLevel}`
 					} else {
 						// Fallback if name doesn't match expected format
-						itemString += `, ${enchant}:${level}`
+						// Try to extract enchantment name from the enchant ID
+						let enchantmentName = enchant
+						if (enchant.startsWith('enchanted_book_')) {
+							// Extract from material_id format like "enchanted_book_aqua_affinity_1"
+							enchantmentName = enchant.replace('enchanted_book_', '')
+							// Remove level suffix if present
+							enchantmentName = enchantmentName.replace(/_\d+$/, '')
+						}
+						itemString += `, ${enchantmentName}:${level}`
 					}
 				} else {
 					// Fallback if enchantment item not found
-					itemString += `, ${enchant}:${level}`
+					// Try to extract enchantment name from the enchant ID
+					let enchantmentName = enchant
+					if (enchant.startsWith('enchanted_book_')) {
+						// Extract from material_id format like "enchanted_book_aqua_affinity_1"
+						enchantmentName = enchant.replace('enchanted_book_', '')
+						// Remove level suffix if present
+						enchantmentName = enchantmentName.replace(/_\d+$/, '')
+					}
+					itemString += `, ${enchantmentName}:${level}`
 				}
 			})
 		}
