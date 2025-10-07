@@ -5,6 +5,8 @@ import {
 	ArrowDownTrayIcon,
 	CheckIcon,
 	Cog6ToothIcon,
+	PencilIcon,
+	TrashIcon,
 	XMarkIcon
 } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/BaseButton.vue'
@@ -770,38 +772,6 @@ function isSelected(index) {
 		<section class="mb-12">
 			<h2 class="text-2xl font-bold text-gray-900 mb-6">Cards & Containers</h2>
 			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-				<!-- Standard Card -->
-				<div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-					<div class="p-6">
-						<h3 class="text-lg font-semibold text-gray-900 mb-2">Standard Card</h3>
-						<p class="text-gray-600 text-sm mb-4">
-							This is a standard card component used throughout the application for
-							content containers.
-						</p>
-						<button
-							class="rounded-md bg-gray-asparagus px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-highland">
-							Action
-						</button>
-					</div>
-				</div>
-
-				<!-- Hover Card -->
-				<div
-					class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-blue-300">
-					<h3 class="text-lg font-semibold text-gray-900 mb-2">Hover Card</h3>
-					<p class="text-gray-600 text-sm">
-						This card has hover effects for interactive elements.
-					</p>
-				</div>
-
-				<!-- Info Card -->
-				<div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
-					<h3 class="text-lg font-semibold text-blue-900 mb-2">Info Card</h3>
-					<p class="text-blue-700 text-sm">
-						This is an informational card with blue styling for important notices.
-					</p>
-				</div>
-
 				<!-- Navigation Card (Norway Background) -->
 				<div
 					class="bg-norway rounded-lg shadow-md border-2 border-gray-asparagus overflow-hidden">
@@ -830,6 +800,55 @@ function isSelected(index) {
 							This is a support card for contextual help or suggestions.
 						</p>
 						<BaseButton variant="secondary" class="self-start">Action</BaseButton>
+					</div>
+				</div>
+
+				<!-- Object Card (Crate Reward Style) -->
+				<div
+					class="bg-sea-mist rounded-lg shadow-md border-2 border-amulet h-full overflow-hidden flex flex-col">
+					<!-- Card Header -->
+					<div
+						class="bg-amulet py-2 px-3 pl-4 border-x-2 border-t-2 border-white rounded-t-lg">
+						<div class="flex items-center justify-between">
+							<h3
+								class="text-xl font-semibold text-heavy-metal hover:text-gray-asparagus cursor-pointer flex-1">
+								Object Name
+							</h3>
+							<!-- Action Buttons -->
+							<div class="flex gap-2 ml-3">
+								<button
+									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+									<PencilIcon class="w-4 h-4" />
+								</button>
+								<button
+									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+									<TrashIcon class="w-4 h-4" />
+								</button>
+							</div>
+						</div>
+					</div>
+					<!-- Card Body -->
+					<div
+						class="bg-norway p-4 border-x-2 border-b-2 border-white rounded-b-lg flex-1 flex flex-col">
+						<div class="flex-1">
+							<p class="text-heavy-metal mb-3">
+								This is a description of the object or item being displayed in this
+								card.
+							</p>
+							<div class="text-sm text-heavy-metal">
+								<span class="font-medium">Type:</span>
+								Example
+								<span class="mx-2"></span>
+								<span class="font-medium">Count:</span>
+								12
+								<span class="mx-2"></span>
+								<span class="font-medium">Value:</span>
+								100
+							</div>
+						</div>
+						<div class="mt-4 flex-shrink-0">
+							<BaseButton variant="primary">Action</BaseButton>
+						</div>
 					</div>
 				</div>
 			</div>
