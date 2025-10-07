@@ -35,7 +35,9 @@ import {
 	ClipboardIcon,
 	XMarkIcon,
 	CheckIcon,
-	ExclamationTriangleIcon
+	ExclamationTriangleIcon,
+	ChevronUpIcon,
+	ChevronDownIcon
 } from '@heroicons/vue/24/outline'
 
 const user = useCurrentUser()
@@ -1309,20 +1311,87 @@ watch(selectedCrate, (crate) => {
 			</div>
 		</div>
 
+		<!-- Sorting Controls -->
+		<div
+			v-if="selectedCrateId && selectedCrate && rewardItems && rewardItems.length > 0"
+			class="flex items-center justify-between gap-4 mb-4">
+			<div class="flex items-center gap-4">
+				<span class="text-sm font-medium text-heavy-metal">Sort by:</span>
+				<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+					<button
+						@click="setSortBy('value')"
+						:class="[
+							sortBy === 'value'
+								? 'bg-gray-asparagus text-white px-3'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100 px-4',
+							'py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
+						]">
+						Value
+						<ChevronUpIcon
+							v-if="sortBy === 'value' && sortDirection === 'asc'"
+							class="w-3 h-3 ml-1" />
+						<ChevronDownIcon
+							v-if="sortBy === 'value' && sortDirection === 'desc'"
+							class="w-3 h-3 ml-1" />
+					</button>
+					<button
+						@click="setSortBy('weight')"
+						:class="[
+							sortBy === 'weight'
+								? 'bg-gray-asparagus text-white px-3'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100 px-4',
+							'py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
+						]">
+						Weight
+						<ChevronUpIcon
+							v-if="sortBy === 'weight' && sortDirection === 'asc'"
+							class="w-3 h-3 ml-1" />
+						<ChevronDownIcon
+							v-if="sortBy === 'weight' && sortDirection === 'desc'"
+							class="w-3 h-3 ml-1" />
+					</button>
+					<button
+						@click="setSortBy('chance')"
+						:class="[
+							sortBy === 'chance'
+								? 'bg-gray-asparagus text-white px-3'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100 px-4',
+							'py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
+						]">
+						Chance
+						<ChevronUpIcon
+							v-if="sortBy === 'chance' && sortDirection === 'asc'"
+							class="w-3 h-3 ml-1" />
+						<ChevronDownIcon
+							v-if="sortBy === 'chance' && sortDirection === 'desc'"
+							class="w-3 h-3 ml-1" />
+					</button>
+					<button
+						@click="setSortBy('none')"
+						:class="[
+							sortBy === 'none'
+								? 'bg-gray-asparagus text-white'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100',
+							'px-3 py-1 text-sm font-medium transition'
+						]">
+						None
+					</button>
+				</div>
+			</div>
+			<BaseButton @click="startAddItem" variant="primary">
+				<template #left-icon>
+					<PlusIcon class="w-4 h-4" />
+				</template>
+				Add Item
+			</BaseButton>
+		</div>
+
 		<!-- Selected Crate Reward -->
 		<div v-if="selectedCrateId && selectedCrate" class="space-y-6">
 			<!-- Reward Items -->
 			<div class="bg-white rounded-lg">
-				<div class="p-6 border-b border-gray-200">
-					<div class="flex items-center justify-between">
-						<h3 class="text-lg font-semibold text-gray-900">Reward Items</h3>
-						<BaseButton @click="startAddItem" variant="primary">
-							<template #left-icon>
-								<PlusIcon class="w-4 h-4" />
-							</template>
-							Add Item
-						</BaseButton>
-					</div>
+				<div class="px-6 py-4 bg-gray-asparagus border-b-2 border-white">
+					<h3 class="text-xl font-semibold text-white">Reward Items</h3>
 				</div>
 
 				<div v-if="rewardItemsPending" class="p-6 text-gray-600">
@@ -1332,62 +1401,6 @@ watch(selectedCrate, (crate) => {
 					No items added yet. Click "Add Item" to get started.
 				</div>
 				<div v-else>
-					<!-- Sorting Controls -->
-					<div class="flex items-center gap-4 p-4 bg-gray-50 border-b">
-						<span class="text-sm font-medium text-gray-700">Sort by:</span>
-						<div class="flex gap-2">
-							<button
-								@click="setSortBy('value')"
-								:class="[
-									'px-3 py-1 text-sm rounded transition-colors',
-									sortBy === 'value'
-										? 'bg-blue-100 text-blue-800 font-medium'
-										: 'bg-white text-gray-600 hover:bg-gray-100'
-								]">
-								Value
-								{{
-									sortBy === 'value' ? (sortDirection === 'asc' ? '↑' : '↓') : ''
-								}}
-							</button>
-							<button
-								@click="setSortBy('weight')"
-								:class="[
-									'px-3 py-1 text-sm rounded transition-colors',
-									sortBy === 'weight'
-										? 'bg-blue-100 text-blue-800 font-medium'
-										: 'bg-white text-gray-600 hover:bg-gray-100'
-								]">
-								Weight
-								{{
-									sortBy === 'weight' ? (sortDirection === 'asc' ? '↑' : '↓') : ''
-								}}
-							</button>
-							<button
-								@click="setSortBy('chance')"
-								:class="[
-									'px-3 py-1 text-sm rounded transition-colors',
-									sortBy === 'chance'
-										? 'bg-blue-100 text-blue-800 font-medium'
-										: 'bg-white text-gray-600 hover:bg-gray-100'
-								]">
-								Chance
-								{{
-									sortBy === 'chance' ? (sortDirection === 'asc' ? '↑' : '↓') : ''
-								}}
-							</button>
-							<button
-								@click="setSortBy('none')"
-								:class="[
-									'px-3 py-1 text-sm rounded transition-colors',
-									sortBy === 'none'
-										? 'bg-blue-100 text-blue-800 font-medium'
-										: 'bg-white text-gray-600 hover:bg-gray-100'
-								]">
-								None
-							</button>
-						</div>
-					</div>
-
 					<!-- Simulation Controls -->
 					<div class="flex items-center gap-4 p-4 bg-yellow-50 border-b">
 						<span class="text-sm font-medium text-gray-700">Test Rewards:</span>
