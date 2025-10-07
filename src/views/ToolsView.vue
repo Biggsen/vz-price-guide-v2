@@ -1,7 +1,9 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useCurrentUser } from 'vuefire'
+import { useRouter } from 'vue-router'
 import BaseButton from '../components/BaseButton.vue'
+import BaseModal from '../components/BaseModal.vue'
 import {
 	CalculatorIcon,
 	ChartBarIcon,
@@ -12,10 +14,25 @@ import {
 	RocketLaunchIcon,
 	PuzzlePieceIcon,
 	SparklesIcon,
-	WrenchScrewdriverIcon
+	WrenchScrewdriverIcon,
+	UserIcon,
+	CheckCircleIcon
 } from '@heroicons/vue/24/outline'
 
 const user = useCurrentUser()
+const router = useRouter()
+
+// Modal state
+const showCrateRewardsModal = ref(false)
+
+// Computed properties for authentication states
+const isAuthenticated = computed(() => {
+	return user.value?.email && user.value?.emailVerified
+})
+
+const isSignedInButNotVerified = computed(() => {
+	return user.value?.email && !user.value?.emailVerified
+})
 
 // Tool categories and their tools
 const toolCategories = ref([
@@ -136,6 +153,34 @@ function getStatusText(status) {
 			return 'Unknown'
 	}
 }
+
+// Navigation functions
+function goToSignUp() {
+	router.push('/signup')
+}
+
+function goToSignIn() {
+	router.push('/signin')
+}
+
+function goToVerifyEmail() {
+	router.push('/verify-email')
+}
+
+// Handle crate rewards button click
+function handleCrateRewardsClick() {
+	if (isAuthenticated.value) {
+		// User is authenticated and verified, navigate directly
+		router.push('/crate-rewards')
+	} else {
+		// User is not authenticated or not verified, show modal
+		showCrateRewardsModal.value = true
+	}
+}
+
+function closeCrateRewardsModal() {
+	showCrateRewardsModal.value = false
+}
 </script>
 
 <template>
@@ -143,11 +188,11 @@ function getStatusText(status) {
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
 		<!-- Header -->
 		<div class="text-left mb-8">
-			<h1 class="text-3xl font-bold text-gray-900 mb-2">Tools Dashboard</h1>
+			<h1 class="text-3xl font-bold text-gray-900 mb-2">Tools</h1>
 			<p class="text-gray-600 max-w-2xl">
 				Here you will find various server and plugin-related tools that I'm building for
-				myself, but they might be useful for other people too. From price calculators to
-				config generators, these are the utilities I use to manage my own Minecraft servers.
+				myself, but they might be useful for other people too. These are the tools I use to
+				setup and manage my own Minecraft servers.
 			</p>
 		</div>
 		<!-- New Asparagus Card -->
@@ -178,9 +223,9 @@ function getStatusText(status) {
 							<span class="underline">CrazyCrates</span>
 						</a>
 					</div>
-					<router-link to="/crate-rewards">
-						<BaseButton variant="primary">Try Crate Rewards</BaseButton>
-					</router-link>
+					<BaseButton @click="handleCrateRewardsClick" variant="primary">
+						Try Crate Rewards
+					</BaseButton>
 				</div>
 			</div>
 		</div>
@@ -216,6 +261,82 @@ function getStatusText(status) {
 			</div>
 		</div>
 	</div>
+
+	<!-- Crate Rewards Modal -->
+	<BaseModal
+		:isOpen="showCrateRewardsModal"
+		title="Try Crate Rewards"
+		@close="closeCrateRewardsModal">
+		<!-- Sign-up content for unauthenticated users -->
+		<div v-if="!user?.email" class="text-left pt-2 pb-4 sm:py-4">
+			<div class="mb-8">
+				<h1 class="text-3xl font-bold text-gray-900 mb-2">Almost there!</h1>
+				<p class="mb-6">You'll need an account to use the Crate Rewards tool.</p>
+				<p class="text-sm text-gray-900 mb-2">With an account, you can:</p>
+				<ul class="text-sm text-gray-900 space-y-1 list-disc list-inside">
+					<li>
+						import existing crates with items, quantities, weights, and enchantments
+					</li>
+					<li>build up your own crates and set quantities, weights, and enchantments</li>
+					<li>export your crate in CrazyCrates Prizes YAML format</li>
+					<li>test your crate with the simulate rewards functionality</li>
+				</ul>
+			</div>
+
+			<!-- Action buttons -->
+			<div>
+				<BaseButton @click="goToSignUp" variant="primary">
+					<template #left-icon>
+						<UserIcon />
+					</template>
+					Create Account
+				</BaseButton>
+				<div class="text-left pt-4">
+					<p class="text-sm text-gray-500">
+						Already have an account?
+						<button @click="goToSignIn" class="text-gray-700 hover:text-opacity-80">
+							<span class="underline">Sign in</span>
+						</button>
+					</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Email verification content for signed-in but unverified users -->
+		<div v-else-if="isSignedInButNotVerified" class="text-left pt-2 pb-4 sm:py-4">
+			<div class="mb-8">
+				<h1 class="text-3xl font-bold text-gray-900 mb-2">So close!</h1>
+				<p class="mb-6">Please verify your email address to use the Crate Rewards tool.</p>
+				<p class="text-sm text-gray-900 mb-2">Once verified, you can:</p>
+				<ul class="text-sm text-gray-900 space-y-1 list-disc list-inside">
+					<li>
+						import existing crates with items, quantities, weights, and enchantments
+					</li>
+					<li>build up your own crates and set quantities, weights, and enchantments</li>
+					<li>export your crate in CrazyCrates Prizes YAML format</li>
+					<li>test your crate with the simulate rewards functionality</li>
+				</ul>
+			</div>
+
+			<!-- Action buttons -->
+			<div>
+				<BaseButton @click="goToVerifyEmail" variant="primary">
+					<template #left-icon>
+						<CheckCircleIcon />
+					</template>
+					Resend verification email
+				</BaseButton>
+				<div class="text-left pt-4">
+					<p class="text-sm text-gray-500">
+						Need to sign in with a different account?
+						<button @click="goToSignIn" class="text-gray-700 hover:text-opacity-80">
+							<span class="underline">Sign in</span>
+						</button>
+					</p>
+				</div>
+			</div>
+		</div>
+	</BaseModal>
 </template>
 
 <style scoped>
