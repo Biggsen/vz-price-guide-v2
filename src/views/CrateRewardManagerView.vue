@@ -80,6 +80,9 @@ const showClearAllModal = ref(false)
 // Review panel state
 const expandedReviewPanels = ref(new Set())
 
+// Info modal state
+const showInfoModal = ref(false)
+
 // Form data
 const crateForm = ref({
 	name: '',
@@ -1149,11 +1152,29 @@ watch(selectedCrate, (crate) => {
 				<div>
 					<!-- Dashboard Header -->
 					<div v-if="!selectedCrateId">
-						<h1 class="text-3xl font-bold text-gray-900">Crate Reward Manager</h1>
+						<h1 class="text-3xl font-bold text-gray-900 mb-2">Crate Rewards Manager</h1>
 						<p class="text-gray-600">
 							Create and manage crate rewards for Crazy Crates plugin
 						</p>
-						<div class="mt-4">
+						<div class="mt-2">
+							<button
+								@click="showInfoModal = true"
+								class="text-sm text-heavy-metal hover:text-gray-asparagus underline flex items-center gap-1">
+								<svg
+									class="w-4 h-4"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24">
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+								</svg>
+								What This Tool Does (and Doesn't Do)
+							</button>
+						</div>
+						<div class="mt-6">
 							<BaseButton @click="startCreateCrate" variant="primary">
 								<template #left-icon>
 									<PlusIcon class="w-4 h-4" />
@@ -1173,7 +1194,7 @@ watch(selectedCrate, (crate) => {
 								<template #left-icon>
 									<ArrowLeftIcon class="w-4 h-4" />
 								</template>
-								Back to Dashboard
+								Back to Crate Rewards Manager
 							</BaseButton>
 						</div>
 
@@ -2369,6 +2390,133 @@ watch(selectedCrate, (crate) => {
 					</p>
 				</div>
 			</div>
+		</BaseModal>
+
+		<!-- Info Modal -->
+		<BaseModal
+			:isOpen="showInfoModal"
+			title="What This Tool Does (and Doesn't Do)"
+			maxWidth="max-w-2xl"
+			@close="showInfoModal = false">
+			<div class="space-y-6">
+				<div>
+					<p class="text-gray-700 mb-4">
+						The Crate Rewards Tool lets you quickly create and balance crate rewards for
+						the CrazyCrates plugin using an easy, visual interface. You can import
+						existing crates or build new ones from scratch — set item quantities,
+						weights (drop chances), and enchantments — then export them directly in
+						CrazyCrates YAML format for fast use on your server. You can also simulate
+						rewards to preview what players might get.
+					</p>
+					<p class="text-gray-700 mb-4">
+						This tool focuses on simplicity and speed, not full configuration coverage.
+					</p>
+				</div>
+
+				<div>
+					<h3 class="text-lg font-semibold text-gray-900 mb-3">What This Tool Exports</h3>
+					<p class="text-gray-700 mb-3">
+						CrazyCrates has many configuration options — this tool only exports the
+						Prizes section of a crate, with a limited set of fields:
+					</p>
+					<ul class="space-y-2 text-gray-700 text-sm">
+						<li class="flex items-start">
+							<span class="font-mono bg-gray-100 px-2 py-1 rounded mr-2 text-xs">
+								DisplayName
+							</span>
+							<span>
+								– Item name, exported in white ("
+								<!-- prettier-ignore -->
+								<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">&lt;white&gt;Item Name</span>
+								").
+							</span>
+						</li>
+						<li class="flex items-start">
+							<span class="font-mono bg-gray-100 px-2 py-1 rounded mr-2 text-xs">
+								DisplayItem
+							</span>
+							<span>
+								– Correct item ID (e.g.
+								<!-- prettier-ignore -->
+								<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">iron_ingot</span>
+								).
+							</span>
+						</li>
+						<li class="flex items-start">
+							<span class="font-mono bg-gray-100 px-2 py-1 rounded mr-2 text-xs">
+								Settings
+							</span>
+							<span>
+								– Default values:
+								<!-- prettier-ignore -->
+								<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">{ Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }</span>
+								.
+							</span>
+						</li>
+						<li class="flex items-start">
+							<span class="font-mono bg-gray-100 px-2 py-1 rounded mr-2 text-xs">
+								DisplayAmount
+							</span>
+							<span>– Quantity you set for the reward item.</span>
+						</li>
+						<li class="flex items-start">
+							<span class="font-mono bg-gray-100 px-2 py-1 rounded mr-2 text-xs">
+								Weight
+							</span>
+							<span>– The weight (chance) you assigned to the reward item.</span>
+						</li>
+						<li class="flex items-start">
+							<span class="font-mono bg-gray-100 px-2 py-1 rounded mr-2 text-xs">
+								Items
+							</span>
+							<span>
+								– The reward item(s), amount, and any enchantments (e.g. -
+								<!-- prettier-ignore -->
+								<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">"item:iron_sword, amount:1, sharpness:5"</span>
+								).
+							</span>
+						</li>
+					</ul>
+				</div>
+
+				<div>
+					<h3 class="text-lg font-semibold text-gray-900 mb-3">Limitations</h3>
+					<p class="text-gray-700 mb-3">
+						This tool uses flat weights (no tiered system) and does not handle
+						crate-level settings like
+						<!-- prettier-ignore -->
+						<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">Name</span>
+						,
+						<!-- prettier-ignore -->
+						<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">Slot</span>
+						,
+						<!-- prettier-ignore -->
+						<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">CrateType</span>
+						, or custom items (e.g. keys).
+					</p>
+					<p class="text-gray-700 mb-3">
+						After exporting, you may still want to edit the YAML manually to fine-tune
+						advanced settings such as
+						<!-- prettier-ignore -->
+						<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">DisplayLore</span>
+						or custom models.
+					</p>
+				</div>
+
+				<div>
+					<h3 class="text-lg font-semibold text-gray-900 mb-3">The Goal</h3>
+					<p class="text-gray-700">
+						Make crate creation fast, visual, and intuitive — so you can focus on
+						balance, not syntax.
+					</p>
+				</div>
+			</div>
+
+			<template #footer>
+				<div class="flex items-center justify-end">
+					<BaseButton @click="showInfoModal = false" variant="primary">Got it</BaseButton>
+				</div>
+			</template>
 		</BaseModal>
 	</div>
 </template>
