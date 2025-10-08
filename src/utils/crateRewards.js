@@ -699,8 +699,30 @@ export function findMatchingItem(parsedItem, allItems) {
 /**
  * Import crate rewards from YAML content
  */
-export async function importCrateRewardsFromYaml(crateId, yamlContent, allItems) {
+export async function importCrateRewardsFromYaml(
+	crateId,
+	yamlContent,
+	allItems,
+	crateName = null,
+	userId = null
+) {
 	try {
+		let targetCrateId = crateId
+
+		// If no crateId provided, create a new crate first
+		if (!targetCrateId && crateName && userId) {
+			const newCrate = await createCrateReward(userId, {
+				name: crateName,
+				description: `Imported from YAML file`,
+				minecraft_version: '1.20'
+			})
+			targetCrateId = newCrate.id
+		}
+
+		if (!targetCrateId) {
+			throw new Error('No crate ID provided and unable to create new crate')
+		}
+
 		const prizes = parseCrateRewardsYaml(yamlContent)
 		const importedItems = []
 		const errors = []
@@ -744,7 +766,11 @@ export async function importCrateRewardsFromYaml(crateId, yamlContent, allItems)
 
 			// Add to crate reward
 			try {
-				const newItem = await addCrateRewardItem(crateId, rewardItemData, matchingItem)
+				const newItem = await addCrateRewardItem(
+					targetCrateId,
+					rewardItemData,
+					matchingItem
+				)
 				importedItems.push(newItem)
 			} catch (error) {
 				const errorMsg = `Prize ${prize.id}: Failed to add item - ${error.message}`
