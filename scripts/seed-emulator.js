@@ -438,7 +438,7 @@ const TEST_DATA = {
 			image: '/images/items/enchanted_book.webp',
 			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
 			stack: 64,
-			category: '',
+			category: 'enchantments',
 			subcategory: '',
 			version: '1.16',
 			version_removed: null,
