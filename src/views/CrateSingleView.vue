@@ -217,10 +217,10 @@ const availableItems = computed(() => {
 		// Filter out items without valid images (for non-admin users)
 		if (!user.value?.email && (!item.image || item.image.trim() === '')) return false
 
-		// Filter out 0-price items (unless admin has showZeroPricedItems enabled)
-		// For crate rewards, we don't have a showZeroPricedItems toggle, so always filter out 0-price items
+		// Filter out 0-price items (unless it's the base enchanted book used for normalization)
 		const effectivePrice = getEffectivePrice(item, version.replace('.', '_'))
-		if (!effectivePrice || effectivePrice === 0) return false
+		if ((!effectivePrice || effectivePrice === 0) && item.material_id !== 'enchanted_book')
+			return false
 
 		return true
 	})
@@ -704,15 +704,73 @@ function formatEnchantmentName(enchantmentId) {
 		.replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
+// Extract enchantments from material_id (e.g., "enchanted_book_mending_1" -> [{id: "mending", level: 1}])
+function extractEnchantmentsFromMaterialId(materialId) {
+	if (!materialId || !materialId.startsWith('enchanted_book_')) {
+		return []
+	}
+
+	// Remove "enchanted_book_" prefix
+	const enchantmentPart = materialId.replace('enchanted_book_', '')
+
+	// Try to extract enchantment with level first (e.g., "mending_1" -> "mending:1")
+	const enchantWithLevelMatch = enchantmentPart.match(/^(.+)_(\d+)$/)
+	if (enchantWithLevelMatch) {
+		const enchantName = enchantWithLevelMatch[1]
+		const enchantLevel = parseInt(enchantWithLevelMatch[2])
+		return [{ id: enchantName, level: enchantLevel }]
+	}
+
+	// Try to extract enchantment without level (e.g., "silk_touch" -> "silk_touch:1")
+	const enchantWithoutLevelMatch = enchantmentPart.match(/^(.+)$/)
+	if (enchantWithoutLevelMatch) {
+		const enchantName = enchantWithoutLevelMatch[1]
+		return [{ id: enchantName, level: 1 }]
+	}
+
+	return []
+}
+
 // Item search functions
 function selectItem(item) {
-	itemForm.value.item_id = item.id
+	// Check if this is an enchanted book that needs normalization
+	if (
+		item.material_id &&
+		item.material_id.startsWith('enchanted_book_') &&
+		item.material_id !== 'enchanted_book'
+	) {
+		// Find the base enchanted book item
+		const baseEnchantedBook = allItems.value.find((item) => item.id === 'enchbook000')
+		if (baseEnchantedBook) {
+			// Use the base enchanted book instead
+			itemForm.value.item_id = baseEnchantedBook.id
+
+			// Extract enchantments from the original item's material_id
+			const extractedEnchantments = extractEnchantmentsFromMaterialId(item.material_id)
+
+			// Add the extracted enchantments to the form
+			if (extractedEnchantments.length > 0) {
+				itemForm.value.enchantments = {}
+				extractedEnchantments.forEach((enchantment) => {
+					itemForm.value.enchantments[enchantment.id] = enchantment.level
+				})
+			}
+		} else {
+			// Fallback to original item if base enchanted book not found
+			itemForm.value.item_id = item.id
+		}
+	} else {
+		// Normal item selection
+		itemForm.value.item_id = item.id
+	}
+
 	searchQuery.value = '' // Clear search query when item is selected
 	highlightedIndex.value = -1 // Reset highlight
 }
 
 function clearSelectedItem() {
 	itemForm.value.item_id = ''
+	itemForm.value.enchantments = {} // Clear enchantments when clearing item
 	searchQuery.value = ''
 	highlightedIndex.value = -1
 }
@@ -1244,18 +1302,34 @@ watch(selectedCrate, (crate) => {
 											<div class="pt-2 pb-3">
 												<h4 class="text-base font-semibold text-gray-900">
 													{{
-														`${rewardItem.quantity}x ${
-															Object.keys(
-																rewardItem.enchantments || {}
-															).length > 0
-																? `enchanted ${
-																		getItemById(
-																			rewardItem.item_id
-																		)?.name || 'Unknown Item'
-																  }`
-																: getItemById(rewardItem.item_id)
-																		?.name || 'Unknown Item'
-														}`
+														(() => {
+															const item = getItemById(
+																rewardItem.item_id
+															)
+															const itemName =
+																item?.name || 'Unknown Item'
+															const hasEnchantments =
+																Object.keys(
+																	rewardItem.enchantments || {}
+																).length > 0
+
+															let finalName
+															if (hasEnchantments) {
+																if (
+																	itemName
+																		.toLowerCase()
+																		.includes('enchanted')
+																) {
+																	finalName = itemName
+																} else {
+																	finalName = `enchanted ${itemName}`
+																}
+															} else {
+																finalName = itemName
+															}
+
+															return `${rewardItem.quantity}x ${finalName}`
+														})()
 													}}
 												</h4>
 												<div class="text-sm text-heavy-metal">
@@ -1316,7 +1390,9 @@ watch(selectedCrate, (crate) => {
 													<pre
 														v-if="isReviewPanelExpanded(rewardItem.id)"
 														class="mt-3 text-xs bg-white p-3 rounded border overflow-x-auto"><code>{{ getFormattedYamlForItem(rewardItem) ? `    "1":
-      DisplayName: "${getFormattedYamlForItem(rewardItem).displayName}"
+      DisplayName: "${getFormattedYamlForItem(rewardItem).displayName}"${getFormattedYamlForItem(rewardItem).displayEnchantments && getFormattedYamlForItem(rewardItem).displayEnchantments.length > 0 ? `
+      DisplayEnchantments:${getFormattedYamlForItem(rewardItem).displayEnchantments.map(enchantment => `
+        - "${enchantment}"`).join('')}` : ''}
       DisplayItem: "${getFormattedYamlForItem(rewardItem).displayItem}"
       Settings: { Custom-Model-Data: ${getFormattedYamlForItem(rewardItem).customModelData}, Model: { Namespace: "", Id: "" } }
       DisplayAmount: ${getFormattedYamlForItem(rewardItem).displayAmount}
