@@ -18,7 +18,7 @@ import {
 } from '../utils/crateRewards.js'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { getImageUrl } from '../utils/image.js'
-import { versions } from '../constants.js'
+import { versions, enabledCategories } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
@@ -201,14 +201,27 @@ const sortedRewardItems = computed(() => {
 	})
 })
 
-// Filter items by version
+// Filter items by version, category, price, and image (same logic as homepage)
 const availableItems = computed(() => {
 	if (!allItems.value) return []
 	const version = selectedCrate.value?.minecraft_version || '1.20'
+
 	return allItems.value.filter((item) => {
 		// Item must be available in the selected version
 		if (item.version && item.version > version) return false
 		if (item.version_removed && item.version_removed <= version) return false
+
+		// Filter out disabled categories (same as homepage)
+		if (!enabledCategories.includes(item.category)) return false
+
+		// Filter out items without valid images (for non-admin users)
+		if (!user.value?.email && (!item.image || item.image.trim() === '')) return false
+
+		// Filter out 0-price items (unless admin has showZeroPricedItems enabled)
+		// For crate rewards, we don't have a showZeroPricedItems toggle, so always filter out 0-price items
+		const effectivePrice = getEffectivePrice(item, version.replace('.', '_'))
+		if (!effectivePrice || effectivePrice === 0) return false
+
 		return true
 	})
 })
