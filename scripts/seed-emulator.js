@@ -432,6 +432,23 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
+			id: 'enchbook000',
+			material_id: 'enchanted_book',
+			name: 'enchanted book',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: '',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 0.0
+			},
+			recipes_by_version: {}
+		},
+		{
 			id: 'zombie_spawn_egg',
 			material_id: 'zombie_spawn_egg',
 			name: 'zombie spawn egg',
