@@ -362,8 +362,7 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				requiresVerification: true,
-				requiresAdmin: true,
-				title: "Crate Reward Manager - verzion's economy price guide for Minecraft"
+				title: "Crate Rewards - verzion's economy price guide for Minecraft"
 			}
 		},
 		{
@@ -373,8 +372,7 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				requiresVerification: true,
-				requiresAdmin: true,
-				title: "Crate Reward Manager - verzion's economy price guide for Minecraft"
+				title: "Crate Rewards - verzion's economy price guide for Minecraft"
 			}
 		},
 		{

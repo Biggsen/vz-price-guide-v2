@@ -16,13 +16,12 @@ const activeMainNav = ref(null)
 
 // Determine active main nav based on current route
 function updateActiveMainNav() {
-	// All admin-related routes now fall under the 'admin' main nav
+	// Admin-related routes
 	const adminRoutes = [
 		'/admin',
 		'/missing-items',
 		'/add',
 		'/bulk-update',
-		'/crate-rewards',
 		'/design',
 		'/styleguide',
 		'/visual-gallery',
@@ -37,12 +36,13 @@ function updateActiveMainNav() {
 		'/recipes/recalculate'
 	]
 
-	if (
-		adminRoutes.includes(route.path) ||
-		route.path.startsWith('/edit-recipe/') ||
-		route.path.startsWith('/crate-rewards/')
-	) {
+	// Tools-related routes (for authenticated users)
+	const toolsRoutes = ['/tools', '/crate-rewards']
+
+	if (adminRoutes.includes(route.path) || route.path.startsWith('/edit-recipe/')) {
 		activeMainNav.value = 'admin'
+	} else if (toolsRoutes.includes(route.path) || route.path.startsWith('/crate-rewards/')) {
+		activeMainNav.value = 'tools'
 	} else {
 		activeMainNav.value = null
 	}

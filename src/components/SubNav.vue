@@ -10,8 +10,8 @@ const route = useRoute()
 // State for collapsible sections
 const isPriceGuideExpanded = ref(false)
 const isShopManagerExpanded = ref(false)
-const isCrateRewardsExpanded = ref(false)
 const isDesignExpanded = ref(false)
+const isToolsExpanded = ref(false)
 
 // Computed properties for active states
 const isPriceGuideActive = computed(() => {
@@ -34,12 +34,16 @@ const isShopManagerActive = computed(() => {
 	)
 })
 
-const isCrateRewardsActive = computed(() => {
-	return route.path === '/crate-rewards' || route.path.startsWith('/crate-rewards/')
-})
-
 const isDesignActive = computed(() => {
 	return ['/design', '/styleguide', '/visual-gallery'].includes(route.path)
+})
+
+const isToolsActive = computed(() => {
+	return (
+		route.path === '/tools' ||
+		route.path === '/crate-rewards' ||
+		route.path.startsWith('/crate-rewards/')
+	)
 })
 
 // Auto-expand the active section based on current route
@@ -71,13 +75,19 @@ const expandedSection = computed(() => {
 		) {
 			return 'shop-manager'
 		}
-		// Crate Rewards routes
-		else if (currentPath === '/crate-rewards' || currentPath.startsWith('/crate-rewards/')) {
-			return 'crate-rewards'
-		}
 		// Design routes
 		else if (['/design', '/styleguide', '/visual-gallery'].includes(currentPath)) {
 			return 'design'
+		}
+	} else if (activeMainNav === 'tools') {
+		// Tools routes
+		const currentPath = window.location.pathname
+		if (
+			currentPath === '/tools' ||
+			currentPath === '/crate-rewards' ||
+			currentPath.startsWith('/crate-rewards/')
+		) {
+			return 'tools'
 		}
 	}
 	return null
@@ -93,8 +103,8 @@ watch(
 			// Reset all expansions
 			isPriceGuideExpanded.value = false
 			isShopManagerExpanded.value = false
-			isCrateRewardsExpanded.value = false
 			isDesignExpanded.value = false
+			isToolsExpanded.value = false
 
 			// Expand the appropriate section
 			if (
@@ -116,20 +126,32 @@ watch(
 				)
 			) {
 				isShopManagerExpanded.value = true
-			} else if (
-				currentPath === '/crate-rewards' ||
-				currentPath.startsWith('/crate-rewards/')
-			) {
-				isCrateRewardsExpanded.value = true
 			} else if (['/design', '/styleguide', '/visual-gallery'].includes(currentPath)) {
 				isDesignExpanded.value = true
 			}
-		} else {
-			// Collapse all when not in admin section
+		} else if (newSection === 'tools') {
+			const currentPath = window.location.pathname
+
+			// Reset all expansions
 			isPriceGuideExpanded.value = false
 			isShopManagerExpanded.value = false
-			isCrateRewardsExpanded.value = false
 			isDesignExpanded.value = false
+			isToolsExpanded.value = false
+
+			// Expand tools section
+			if (
+				currentPath === '/tools' ||
+				currentPath === '/crate-rewards' ||
+				currentPath.startsWith('/crate-rewards/')
+			) {
+				isToolsExpanded.value = true
+			}
+		} else {
+			// Collapse all when not in admin or tools section
+			isPriceGuideExpanded.value = false
+			isShopManagerExpanded.value = false
+			isDesignExpanded.value = false
+			isToolsExpanded.value = false
 		}
 	},
 	{ immediate: true }
@@ -140,10 +162,10 @@ function toggleSection(section) {
 		isPriceGuideExpanded.value = !isPriceGuideExpanded.value
 	} else if (section === 'shop-manager') {
 		isShopManagerExpanded.value = !isShopManagerExpanded.value
-	} else if (section === 'crate-rewards') {
-		isCrateRewardsExpanded.value = !isCrateRewardsExpanded.value
 	} else if (section === 'design') {
 		isDesignExpanded.value = !isDesignExpanded.value
+	} else if (section === 'tools') {
+		isToolsExpanded.value = !isToolsExpanded.value
 	}
 }
 </script>
@@ -199,28 +221,6 @@ function toggleSection(section) {
 				</RouterLink>
 			</div>
 
-			<!-- Crate Rewards Section -->
-			<button
-				@click="toggleSection('crate-rewards')"
-				class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-600 transition-colors">
-				<span class="font-medium">Crate Rewards</span>
-				<span
-					class="text-sm transition-transform"
-					:class="{ 'rotate-180': isCrateRewardsExpanded }">
-					▼
-				</span>
-			</button>
-
-			<!-- Crate Rewards Content -->
-			<div v-show="isCrateRewardsExpanded" class="border-t border-gray-600">
-				<RouterLink
-					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
-					active-class="bg-blue-600 text-white"
-					to="/crate-rewards">
-					Dashboard
-				</RouterLink>
-			</div>
-
 			<!-- Design Section -->
 			<button
 				@click="toggleSection('design')"
@@ -264,12 +264,6 @@ function toggleSection(section) {
 			</RouterLink>
 			<RouterLink
 				class="hover:underline"
-				:class="{ 'underline font-semibold': isCrateRewardsActive }"
-				to="/crate-rewards">
-				Crate Rewards
-			</RouterLink>
-			<RouterLink
-				class="hover:underline"
 				:class="{ 'underline font-semibold': isDesignActive }"
 				to="/design">
 				Design
@@ -277,6 +271,58 @@ function toggleSection(section) {
 			<div class="ml-auto">
 				<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
 			</div>
+		</div>
+	</nav>
+
+	<!-- Tools Subnav (Desktop Only) -->
+	<nav
+		v-if="activeMainNav === 'tools' && user?.email"
+		class="bg-gray-700 text-white border-t border-gray-600 hidden sm:block">
+		<!-- Mobile: Collapsible layout -->
+		<div class="sm:hidden">
+			<!-- Tools Section -->
+			<button
+				@click="toggleSection('tools')"
+				class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-600 transition-colors">
+				<span class="font-medium">Tools</span>
+				<span
+					class="text-sm transition-transform"
+					:class="{ 'rotate-180': isToolsExpanded }">
+					▼
+				</span>
+			</button>
+
+			<!-- Tools Content -->
+			<div v-show="isToolsExpanded" class="border-t border-gray-600">
+				<RouterLink
+					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
+					active-class="bg-blue-600 text-white"
+					to="/tools">
+					Dashboard
+				</RouterLink>
+				<RouterLink
+					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
+					active-class="bg-blue-600 text-white"
+					to="/crate-rewards">
+					Crate Rewards
+				</RouterLink>
+			</div>
+		</div>
+
+		<!-- Desktop: Horizontal layout -->
+		<div class="hidden sm:flex gap-6 items-center px-4 py-2">
+			<RouterLink
+				class="hover:underline"
+				:class="{ 'underline font-semibold': route.path === '/tools' }"
+				to="/tools">
+				Tools
+			</RouterLink>
+			<RouterLink
+				class="hover:underline"
+				:class="{ 'underline font-semibold': isToolsActive && route.path !== '/tools' }"
+				to="/crate-rewards">
+				Crate Rewards
+			</RouterLink>
 		</div>
 	</nav>
 </template>

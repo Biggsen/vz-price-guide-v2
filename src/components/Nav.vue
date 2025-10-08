@@ -457,7 +457,9 @@ onUnmounted(() => {
 			"
 			:class="[
 				'px-3 py-2 rounded transition-colors',
-				route.path === '/tools'
+				route.path === '/tools' ||
+				route.path === '/crate-rewards' ||
+				route.path.startsWith('/crate-rewards/')
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
