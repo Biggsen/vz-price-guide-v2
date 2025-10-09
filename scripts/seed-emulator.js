@@ -38,6 +38,16 @@ function isDryRun() {
 	return process.env.DRY_RUN === 'true' || process.env.DRY_RUN === '1'
 }
 
+// Generate random ID similar to production format (e.g., bqPQpZccWWwziLEJZkHm)
+function generateRandomId() {
+	const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+	let result = ''
+	for (let i = 0; i < 20; i++) {
+		result += chars.charAt(Math.floor(Math.random() * chars.length))
+	}
+	return result
+}
+
 async function confirmProductionOperation(projectId) {
 	if (isDryRun()) {
 		console.log('🔍 DRY_RUN mode: Would have asked for confirmation to run against production')
@@ -223,7 +233,7 @@ const TEST_DATA = {
 	],
 	items: [
 		{
-			id: 'stone',
+			id: 'rGrtHDukgyNAVnyCRLdA',
 			material_id: 'stone',
 			name: 'stone',
 			image: '/images/items/stone.png',
@@ -240,7 +250,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'diamond',
+			id: 'XVCyPYaBBsdifkVvJjJe',
 			material_id: 'diamond',
 			name: 'diamond',
 			image: '/images/items/diamond.png',
@@ -257,7 +267,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'oak_planks',
+			id: 'csaSQiGyUFGsxUDyHEiF',
 			material_id: 'oak_planks',
 			name: 'oak planks',
 			image: '/images/items/oak_planks.png',
@@ -279,7 +289,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'oak_log',
+			id: 'ZORvmsDxYXbsZLzFxEPA',
 			material_id: 'oak_log',
 			name: 'oak log',
 			image: '/images/items/oak_log.png',
@@ -296,7 +306,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'spruce_log',
+			id: 'XECvCPxMeraJxaejsCiO',
 			material_id: 'spruce_log',
 			name: 'spruce log',
 			image: '/images/items/spruce_log.png',
@@ -313,7 +323,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'jungle_log',
+			id: 'mlenoIwfTRkeFMchwjev',
 			material_id: 'jungle_log',
 			name: 'jungle log',
 			image: '/images/items/jungle_log.png',
@@ -330,7 +340,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'dark_oak_log',
+			id: 'VhxzwILlDjIkRocyTgLG',
 			material_id: 'dark_oak_log',
 			name: 'dark oak log',
 			image: '/images/items/dark_oak_log.png',
@@ -347,7 +357,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'acacia_log',
+			id: 'dcWkqQSOpiYlNoFjTsLQ',
 			material_id: 'acacia_log',
 			name: 'acacia log',
 			image: '/images/items/acacia_log.png',
@@ -364,7 +374,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'birch_log',
+			id: 'AuTiRMCwuoDQfYEkydYs',
 			material_id: 'birch_log',
 			name: 'birch log',
 			image: '/images/items/birch_log.png',
@@ -381,7 +391,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'cherry_log',
+			id: 'XQpfniICNcdbVhLjwYOr',
 			material_id: 'cherry_log',
 			name: 'cherry log',
 			image: '/images/items/cherry_log.png',
@@ -398,7 +408,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'mangrove_log',
+			id: 'bOxYepvDKsfcjpchDKKB',
 			material_id: 'mangrove_log',
 			name: 'mangrove log',
 			image: '/images/items/mangrove_log.png',
@@ -415,7 +425,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'air',
+			id: 'KrkWGHYGFeOMXDGLhkVJ',
 			material_id: 'air',
 			name: 'air',
 			image: '/images/items/air.png',
@@ -432,7 +442,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchbook000',
+			id: 'xsdQqpscAytYFvladiMw',
 			material_id: 'enchanted_book',
 			name: 'enchanted book',
 			image: '/images/items/enchanted_book.webp',
@@ -449,7 +459,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'zombie_spawn_egg',
+			id: 'ucYtznZSqddDlFCfFNHZ',
 			material_id: 'zombie_spawn_egg',
 			name: 'zombie spawn egg',
 			image: '/images/items/zombie_spawn_egg.png',
@@ -466,7 +476,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'heart_of_the_sea',
+			id: 'HvnYeoBjljQRElpwxjYO',
 			material_id: 'heart_of_the_sea',
 			name: 'heart of the sea',
 			image: '/images/items/heart_of_the_sea.png',
@@ -483,7 +493,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'trial_key',
+			id: 'sbDGUiNAOCbtYeKyvjqZ',
 			material_id: 'trial_key',
 			name: 'trial key',
 			image: '/images/items/trial_key.png',
@@ -500,7 +510,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'brush',
+			id: 'sFfRnNkOAkabFBEmTzEM',
 			material_id: 'brush',
 			name: 'brush',
 			image: '/images/items/brush.png',
@@ -526,7 +536,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'diamond_chestplate',
+			id: 'roAOUEuthxnzGKtHTFkD',
 			material_id: 'diamond_chestplate',
 			name: 'diamond chestplate',
 			image: '/images/items/diamond_chestplate.png',
@@ -548,7 +558,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'diamond_helmet',
+			id: 'CQosweTrNNZlYfWUVjpQ',
 			material_id: 'diamond_helmet',
 			name: 'diamond helmet',
 			image: '/images/items/diamond_helmet.png',
@@ -570,7 +580,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'diamond_leggings',
+			id: 'LljTOGghvlbQVrNKeQxq',
 			material_id: 'diamond_leggings',
 			name: 'diamond leggings',
 			image: '/images/items/diamond_leggings.png',
@@ -592,7 +602,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'diamond_boots',
+			id: 'tcGtiESTVdtqbgJuAwif',
 			material_id: 'diamond_boots',
 			name: 'diamond boots',
 			image: '/images/items/diamond_boots.png',
@@ -614,7 +624,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'diamond_pickaxe',
+			id: 'MXZHDYkYQljMpSjZPJyF',
 			material_id: 'diamond_pickaxe',
 			name: 'diamond pickaxe',
 			image: '/images/items/diamond_pickaxe.png',
@@ -639,7 +649,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'diamond_axe',
+			id: 'cPNFVPnrWGWvWgDvWWWn',
 			material_id: 'diamond_axe',
 			name: 'diamond axe',
 			image: '/images/items/diamond_axe.png',
@@ -664,7 +674,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'diamond_sword',
+			id: 'RGhRyLFOitVnvfTEzMXx',
 			material_id: 'diamond_sword',
 			name: 'diamond sword',
 			image: '/images/items/diamond_sword.png',
@@ -689,7 +699,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'diamond_shovel',
+			id: 'wRHrRelGALOqgetTRuhe',
 			material_id: 'diamond_shovel',
 			name: 'diamond shovel',
 			image: '/images/items/diamond_shovel.png',
@@ -714,7 +724,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'diamond_hoe',
+			id: 'oWvMwTVdYTsGcenRChFy',
 			material_id: 'diamond_hoe',
 			name: 'diamond hoe',
 			image: '/images/items/diamond_hoe.png',
@@ -739,7 +749,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'bow',
+			id: 'SijXidmBVutbbTIaaGLR',
 			material_id: 'bow',
 			name: 'bow',
 			image: '/images/items/bow.png',
@@ -764,7 +774,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'string',
+			id: 'lrzFInvhDtAcWsPaAnIM',
 			material_id: 'string',
 			name: 'string',
 			image: '/images/items/string.png',
@@ -781,7 +791,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'iron_ingot',
+			id: 'UXTtxkUcRiIfpMcYsKFa',
 			material_id: 'iron_ingot',
 			name: 'iron ingot',
 			image: '/images/items/iron_ingot.png',
@@ -799,7 +809,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'iron_block',
+			id: 'TOuKiveEZqsQerKlpOew',
 			material_id: 'iron_block',
 			name: 'iron block',
 			image: '/images/items/iron_block.png',
@@ -821,7 +831,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'cooked_beef',
+			id: 'agHhxLNXuwTDbfHqRGOH',
 			material_id: 'cooked_beef',
 			name: 'steak',
 			image: '/images/items/cooked_beef.png',
@@ -838,7 +848,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'golden_carrot',
+			id: 'IFToFxcoPUfdwvoMTsQd',
 			material_id: 'golden_carrot',
 			name: 'golden carrot',
 			image: '/images/items/golden_carrot.png',
@@ -863,7 +873,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'bread',
+			id: 'JZeiVYnoyqAKEVUjLrza',
 			material_id: 'bread',
 			name: 'bread',
 			image: '/images/items/bread.png',
@@ -885,7 +895,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'torch',
+			id: 'sdUcewoelkgSUDihQHjb',
 			material_id: 'torch',
 			name: 'torch',
 			image: '/images/items/torch.gif',
@@ -910,7 +920,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'arrow',
+			id: 'nghcxLbHnuzwRIqibCON',
 			material_id: 'arrow',
 			name: 'arrow',
 			image: '/images/items/arrow.png',
@@ -936,7 +946,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'coal',
+			id: 'GHQjbNCmuvrjIfgzreFz',
 			material_id: 'coal',
 			name: 'coal',
 			image: '/images/items/coal.png',
@@ -954,7 +964,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'lapis_lazuli',
+			id: 'GGYlJlEYSsQyjkjiiUxq',
 			material_id: 'lapis_lazuli',
 			name: 'lapis lazuli',
 			image: '/images/items/lapis_lazuli.png',
@@ -971,7 +981,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'paper',
+			id: 'CCHHaPhDODZUEbhsqKsO',
 			material_id: 'paper',
 			name: 'paper',
 			image: '/images/items/paper.png',
@@ -993,7 +1003,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'firework_rocket',
+			id: 'VCppHTgrqhEqkJkQWlDq',
 			material_id: 'firework_rocket',
 			name: 'firework rocket',
 			image: '/images/items/firework_rocket.png',
@@ -1018,7 +1028,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'cooked_cod',
+			id: 'ylFEFSwCDtSjVlxTGHKX',
 			material_id: 'cooked_cod',
 			name: 'cooked cod',
 			image: '/images/items/cooked_cod.png',
@@ -1035,7 +1045,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'gold_block',
+			id: 'fTFHzJMWpBcNfeyKURDi',
 			material_id: 'gold_block',
 			name: 'gold block',
 			image: '/images/items/gold_block.png',
@@ -1057,7 +1067,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'emerald',
+			id: 'wadVlBgIDBKfbQDWbPLd',
 			material_id: 'emerald',
 			name: 'emerald',
 			image: '/images/items/emerald.png',
@@ -1074,7 +1084,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'redstone',
+			id: 'WuxkIaiahPAVuWxxIePm',
 			material_id: 'redstone',
 			name: 'redstone dust',
 			image: '/images/items/redstone.png',
@@ -1091,7 +1101,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'diamond_block',
+			id: 'DprMxTsQkmNdpznHsrZp',
 			material_id: 'diamond_block',
 			name: 'diamond block',
 			image: '/images/items/diamond_block.png',
@@ -1113,7 +1123,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'anvil',
+			id: 'mBavWfTvvNpDbAGLMpyu',
 			material_id: 'anvil',
 			name: 'anvil',
 			image: '/images/items/anvil.png',
@@ -1138,7 +1148,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'enchbook001',
+			id: 'KyymuTiPLtULAXZegXlH',
 			material_id: 'enchanted_book_mending_1',
 			name: 'enchanted book (mending)',
 			image: '/images/items/enchanted_book.webp',
@@ -1155,7 +1165,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchbook002',
+			id: 'ZAwrXdLMCfTSzhzYErxG',
 			material_id: 'enchanted_book_unbreaking_3',
 			name: 'enchanted book (unbreaking iii)',
 			image: '/images/items/enchanted_book.webp',
@@ -1172,7 +1182,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchbook003',
+			id: 'hFbeHmtBfSCKHXtvDTtg',
 			material_id: 'enchanted_book_efficiency_4',
 			name: 'enchanted book (efficiency iv)',
 			image: '/images/items/enchanted_book.webp',
@@ -1189,7 +1199,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchbook004',
+			id: 'FAolooXwUfooppFZFmCO',
 			material_id: 'enchanted_book_sharpness_5',
 			name: 'enchanted book (sharpness v)',
 			image: '/images/items/enchanted_book.webp',
@@ -1206,7 +1216,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchbook005',
+			id: 'ItJgVPcMDqZthisUsbcg',
 			material_id: 'enchanted_book_power_3',
 			name: 'enchanted book (power iii)',
 			image: '/images/items/enchanted_book.webp',
@@ -1223,7 +1233,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchbook006',
+			id: 'HjWnjuteHioxhKjBXWwo',
 			material_id: 'enchanted_book_efficiency_5',
 			name: 'enchanted book (efficiency v)',
 			image: '/images/items/enchanted_book.webp',
@@ -1240,7 +1250,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchbook007',
+			id: 'ejlrWPcBTtDfJgbdlhVP',
 			material_id: 'enchanted_book_fortune_3',
 			name: 'enchanted book (fortune iii)',
 			image: '/images/items/enchanted_book.webp',
@@ -1257,7 +1267,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchbook008',
+			id: 'EwjxmRjFilwMmdfUSbSp',
 			material_id: 'enchanted_book_silk_touch',
 			name: 'enchanted book (silk touch)',
 			image: '/images/items/enchanted_book.webp',
@@ -1274,7 +1284,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchbook009',
+			id: 'MFjdbPBLNPzKCNfYHqHL',
 			material_id: 'enchanted_book_protection_4',
 			name: 'enchanted book (protection iv)',
 			image: '/images/items/enchanted_book.webp',
@@ -1291,7 +1301,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchbook010',
+			id: 'gGIViEPJFMBzdNEiZshP',
 			material_id: 'enchanted_book_feather_falling_4',
 			name: 'enchanted book (feather falling iv)',
 			image: '/images/items/enchanted_book.webp',
@@ -1308,7 +1318,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchbook011',
+			id: 'yenIYinEBMQeblFmSWdK',
 			material_id: 'enchanted_book_aqua_affinity',
 			name: 'enchanted book (aqua affinity)',
 			image: '/images/items/enchanted_book.webp',
@@ -1325,7 +1335,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchbook012',
+			id: 'VlHxmMmjsrjpBkbJzXeW',
 			material_id: 'enchanted_book_respiration_3',
 			name: 'enchanted book (respiration iii)',
 			image: '/images/items/enchanted_book.webp',
@@ -1342,7 +1352,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'enchbook013',
+			id: 'oOrrrBXcxLJcAnnENBdL',
 			material_id: 'enchanted_book_depth_strider_3',
 			name: 'enchanted book (depth strider iii)',
 			image: '/images/items/enchanted_book.webp',
@@ -1359,7 +1369,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'shulker_box',
+			id: 'RGdHvhoyEKGmIRoGEmRw',
 			material_id: 'shulker_box',
 			name: 'shulker box',
 			image: '/images/items/shulker_box.gif',
@@ -1384,7 +1394,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'ender_chest',
+			id: 'ShNZAqlNqzJmhFadrFMP',
 			material_id: 'ender_chest',
 			name: 'ender chest',
 			image: '/images/items/ender_chest.gif',
@@ -1409,7 +1419,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'netherite_scrap',
+			id: 'GFlPwZMPWFObaFVhhvUz',
 			material_id: 'netherite_scrap',
 			name: 'netherite scrap',
 			image: '/images/items/netherite_scrap.png',
@@ -1426,7 +1436,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'ancient_debris',
+			id: 'qDcedSVdHpIEDpCFjrRh',
 			material_id: 'ancient_debris',
 			name: 'ancient debris',
 			image: '/images/items/ancient_debris.png',
@@ -1443,7 +1453,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'elytra',
+			id: 'AdfSowiUSLzjOqiEvbkt',
 			material_id: 'elytra',
 			name: 'elytra',
 			image: '/images/items/elytra.png',
@@ -1460,7 +1470,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'beacon',
+			id: 'MYVMeBoXoBwRecWXBqLj',
 			material_id: 'beacon',
 			name: 'beacon',
 			image: '/images/items/beacon.png',
@@ -1486,7 +1496,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'netherite_upgrade_smithing_template',
+			id: 'rbGqtdnkuHgNBgFsoMJr',
 			material_id: 'netherite_upgrade_smithing_template',
 			name: 'netherite upgrade smithing template',
 			image: '/images/items/netherite_upgrade_smithing_template.png',
@@ -1503,7 +1513,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'stick',
+			id: 'kPuZNnqpuOSxoYZlzPwC',
 			material_id: 'stick',
 			name: 'stick',
 			image: '/images/items/stick.png',
@@ -1525,7 +1535,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'copper_ingot',
+			id: 'AzsrDPBqjmGQQEWyKukz',
 			material_id: 'copper_ingot',
 			name: 'copper ingot',
 			image: '/images/items/copper_ingot.png',
@@ -1543,7 +1553,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'feather',
+			id: 'oqLPSrUHQhVbHkqexDoF',
 			material_id: 'feather',
 			name: 'feather',
 			image: '/images/items/feather.png',
@@ -1560,7 +1570,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'gold_nugget',
+			id: 'OBdeKswDetGyZpEXPcRN',
 			material_id: 'gold_nugget',
 			name: 'gold nugget',
 			image: '/images/items/gold_nugget.png',
@@ -1582,7 +1592,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'carrot',
+			id: 'CqwsTuordxFIszAyJFxy',
 			material_id: 'carrot',
 			name: 'carrot',
 			image: '/images/items/carrot.png',
@@ -1599,7 +1609,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'wheat',
+			id: 'zgufFFmHkaIKeTFBrgXr',
 			material_id: 'wheat',
 			name: 'wheat',
 			image: '/images/items/wheat.png',
@@ -1616,7 +1626,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'flint',
+			id: 'UGZZKtAXfuRAeMgfbWKn',
 			material_id: 'flint',
 			name: 'flint',
 			image: '/images/items/flint.png',
@@ -1633,7 +1643,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'sugar_cane',
+			id: 'kSMGOFpyUVRvcWZtrYRx',
 			material_id: 'sugar_cane',
 			name: 'sugar cane',
 			image: '/images/items/sugar_cane.png',
@@ -1650,7 +1660,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'gunpowder',
+			id: 'MnclOxUjJvzwymppAvNj',
 			material_id: 'gunpowder',
 			name: 'gunpowder',
 			image: '/images/items/gunpowder.png',
@@ -1667,7 +1677,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'gold_ingot',
+			id: 'yJwzpCfqSdFVyJRfvIzP',
 			material_id: 'gold_ingot',
 			name: 'gold ingot',
 			image: '/images/items/gold_ingot.png',
@@ -1685,7 +1695,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'shulker_shell',
+			id: 'fOxGGlQwoLUQUwJIphoc',
 			material_id: 'shulker_shell',
 			name: 'shulker shell',
 			image: '/images/items/shulker_shell.png',
@@ -1702,7 +1712,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'chest',
+			id: 'jTKDFqUDkPjRMPEQfwen',
 			material_id: 'chest',
 			name: 'chest',
 			image: '/images/items/chest.gif',
@@ -1724,7 +1734,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'obsidian',
+			id: 'zZEOYBACYQLKjoFDooOO',
 			material_id: 'obsidian',
 			name: 'obsidian',
 			image: '/images/items/obsidian.png',
@@ -1741,7 +1751,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'eye_of_ender',
+			id: 'sqttCquPIWgSFFlMIgfo',
 			material_id: 'eye_of_ender',
 			name: 'eye of ender',
 			image: '/images/items/ender_eye.png',
@@ -1766,7 +1776,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'nether_star',
+			id: 'lRsmhkhIfloQLfpKZWfm',
 			material_id: 'nether_star',
 			name: 'nether star',
 			image: '/images/items/nether_star.gif',
@@ -1783,7 +1793,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'glass',
+			id: 'XMWSsqUSjNIIXzlHfrqq',
 			material_id: 'glass',
 			name: 'glass',
 			image: '/images/items/glass.png',
@@ -1800,7 +1810,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'blaze_powder',
+			id: 'pjmpbcdvhDUjeTohXrdi',
 			material_id: 'blaze_powder',
 			name: 'blaze powder',
 			image: '/images/items/blaze_powder.png',
@@ -1822,7 +1832,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'ender_pearl',
+			id: 'ttlANdhxfuZTggpsVfwd',
 			material_id: 'ender_pearl',
 			name: 'ender pearl',
 			image: '/images/items/ender_pearl.png',
@@ -1839,7 +1849,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'blaze_rod',
+			id: 'uDCdsiodyOfgtFZEYLnh',
 			material_id: 'blaze_rod',
 			name: 'blaze rod',
 			image: '/images/items/blaze_rod.png',
@@ -1856,7 +1866,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'rabbit_hide',
+			id: 'GickghddzIwVBPQyDyvD',
 			material_id: 'rabbit_hide',
 			name: 'rabbit hide',
 			image: '/images/items/rabbit_hide.png',
@@ -1873,7 +1883,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'leather',
+			id: 'HcdMJxLpvLDzwABBLvuH',
 			material_id: 'leather',
 			name: 'leather',
 			image: '/images/items/leather.png',
@@ -1895,7 +1905,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'lantern',
+			id: 'zLKrzWSaozYfYdCupaAV',
 			material_id: 'lantern',
 			name: 'lantern',
 			image: '/images/items/lantern.gif',
@@ -1921,7 +1931,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'iron_nugget',
+			id: 'eLmaOBQwbCiBtugMyvLa',
 			material_id: 'iron_nugget',
 			name: 'iron nugget',
 			image: '/images/items/iron_nugget.png',
@@ -1944,7 +1954,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'slime_ball',
+			id: 'dzANFUwrSYemsKqNUYpm',
 			material_id: 'slime_ball',
 			name: 'slime ball',
 			image: '/images/items/slime_ball.png',
@@ -1961,7 +1971,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'lead',
+			id: 'VKhRUEcWHMdDvIvlRfiU',
 			material_id: 'lead',
 			name: 'lead',
 			image: '/images/items/lead.png',
@@ -1986,7 +1996,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'saddle',
+			id: 'kiDZzfIHUfdJNuPVvnZN',
 			material_id: 'saddle',
 			name: 'saddle',
 			image: '/images/items/saddle.png',
@@ -2003,7 +2013,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'iron_axe',
+			id: 'siNAJWgbZVpxPoQvpyEv',
 			material_id: 'iron_axe',
 			name: 'iron axe',
 			image: '/images/items/iron_axe.png',
@@ -2029,7 +2039,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'iron_pickaxe',
+			id: 'WIercTzNoCoFjwIPxcps',
 			material_id: 'iron_pickaxe',
 			name: 'iron pickaxe',
 			image: '/images/items/iron_pickaxe.png',
@@ -2055,7 +2065,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'iron_shovel',
+			id: 'FtPMekQWGFIJYjdbFpah',
 			material_id: 'iron_shovel',
 			name: 'iron shovel',
 			image: '/images/items/iron_shovel.png',
@@ -2081,7 +2091,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'iron_sword',
+			id: 'GgAjriqhVPKhFLYHMVxo',
 			material_id: 'iron_sword',
 			name: 'iron sword',
 			image: '/images/items/iron_sword.png',
@@ -2107,7 +2117,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'iron_hoe',
+			id: 'ZBjtbmxRfvgqPOEmqjaY',
 			material_id: 'iron_hoe',
 			name: 'iron hoe',
 			image: '/images/items/iron_hoe.png',
@@ -2133,7 +2143,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'white_wool',
+			id: 'ahwklHWQTynfLfwKqEOs',
 			material_id: 'white_wool',
 			name: 'white wool',
 			image: '/images/items/white_wool.png',
@@ -2150,7 +2160,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'white_banner',
+			id: 'CcAxTmjYVFJezGWIPkBx',
 			material_id: 'white_banner',
 			name: 'white banner',
 			image: '/images/items/white_banner.png',
@@ -2175,7 +2185,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'name_tag',
+			id: 'AOuRrcqqksvuwzlfmZtp',
 			material_id: 'name_tag',
 			name: 'name tag',
 			image: '/images/items/name_tag.png',
@@ -2192,7 +2202,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'iron_helmet',
+			id: 'KuvhHIHkrdZItvLYDeUo',
 			material_id: 'iron_helmet',
 			name: 'iron helmet',
 			image: '/images/items/iron_helmet.png',
@@ -2215,7 +2225,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'iron_chestplate',
+			id: 'nuVzHxVPPiCiGPbqnWxd',
 			material_id: 'iron_chestplate',
 			name: 'iron chestplate',
 			image: '/images/items/iron_chestplate.png',
@@ -2238,7 +2248,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'iron_leggings',
+			id: 'jrDmBkZewoIlWUqKBybI',
 			material_id: 'iron_leggings',
 			name: 'iron leggings',
 			image: '/images/items/iron_leggings.png',
@@ -2261,7 +2271,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'iron_boots',
+			id: 'zVNfUKbQfiXqpABpyBpE',
 			material_id: 'iron_boots',
 			name: 'iron boots',
 			image: '/images/items/iron_boots.png',
@@ -2284,7 +2294,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'dirt',
+			id: 'gMdrgzXRRsmDcclLOjGj',
 			material_id: 'dirt',
 			name: 'dirt',
 			image: '/images/items/dirt.png',
@@ -2301,7 +2311,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'grass_block',
+			id: 'fnLJWIskmJSGhJxICGEi',
 			material_id: 'grass_block',
 			name: 'grass block',
 			image: '/images/items/grass_block.png',
@@ -2318,7 +2328,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'sand',
+			id: 'DfXcSkxtqoCmNhFfJDJU',
 			material_id: 'sand',
 			name: 'sand',
 			image: '/images/items/sand.png',
@@ -2335,7 +2345,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'red_sand',
+			id: 'fIUidGzGTFNwpcCktNPH',
 			material_id: 'red_sand',
 			name: 'red sand',
 			image: '/images/items/red_sand.png',
@@ -2352,7 +2362,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'tripwire_hook',
+			id: 'mEPbHVlSdqQuUKOXSujK',
 			material_id: 'tripwire_hook',
 			name: 'tripwire hook',
 			image: '/images/items/tripwire_hook.png',
@@ -2379,7 +2389,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'piston',
+			id: 'wugqAAOJFsNlNdWriCpc',
 			material_id: 'piston',
 			name: 'piston',
 			image: '/images/items/piston.gif',
@@ -2407,7 +2417,7 @@ const TEST_DATA = {
 			}
 		},
 		{
-			id: 'cobblestone',
+			id: 'MSOEvPSuvROcpSPCcoiJ',
 			material_id: 'cobblestone',
 			name: 'cobblestone',
 			image: '/images/items/cobblestone.png',
@@ -2424,7 +2434,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'echo_shard',
+			id: 'ESmYYwzOGLueVGJvISYu',
 			material_id: 'echo_shard',
 			name: 'echo shard',
 			image: '/images/items/echo_shard.png',
@@ -2441,7 +2451,7 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
-			id: 'sculk',
+			id: 'WXNlTkfjYAtKouzDNOzJ',
 			material_id: 'sculk',
 			name: 'sculk',
 			image: '/images/items/sculk.gif',
@@ -2462,7 +2472,7 @@ const TEST_DATA = {
 		{
 			id: 'shop-item-1',
 			shop_id: 'test-shop-1',
-			item_id: 'stone',
+			item_id: 'rGrtHDukgyNAVnyCRLdA',
 			buy_price: 1.5,
 			sell_price: 1.0,
 			previous_buy_price: 1.0,
@@ -2476,7 +2486,7 @@ const TEST_DATA = {
 		{
 			id: 'shop-item-2',
 			shop_id: 'test-shop-1',
-			item_id: 'diamond',
+			item_id: 'XVCyPYaBBsdifkVvJjJe',
 			buy_price: 110.0,
 			sell_price: 95.0,
 			previous_buy_price: 105.0,
@@ -2490,7 +2500,7 @@ const TEST_DATA = {
 		{
 			id: 'shop-item-3',
 			shop_id: 'test-shop-2',
-			item_id: 'stone',
+			item_id: 'rGrtHDukgyNAVnyCRLdA',
 			buy_price: 1.8,
 			sell_price: 1.2,
 			previous_buy_price: 1.5,
@@ -2504,7 +2514,7 @@ const TEST_DATA = {
 		{
 			id: 'shop-item-4',
 			shop_id: 'test-shop-1',
-			item_id: 'diamond_chestplate',
+			item_id: 'roAOUEuthxnzGKtHTFkD',
 			buy_price: 850.0,
 			sell_price: 750.0,
 			previous_buy_price: 800.0,
@@ -2518,7 +2528,7 @@ const TEST_DATA = {
 		{
 			id: 'shop-item-5',
 			shop_id: 'test-shop-1',
-			item_id: 'iron_ingot',
+			item_id: 'UXTtxkUcRiIfpMcYsKFa',
 			buy_price: 9.0,
 			sell_price: 7.5,
 			previous_buy_price: 8.5,
@@ -2532,7 +2542,7 @@ const TEST_DATA = {
 		{
 			id: 'shop-item-6',
 			shop_id: 'test-shop-2',
-			item_id: 'iron_block',
+			item_id: 'TOuKiveEZqsQerKlpOew',
 			buy_price: 80.0,
 			sell_price: 70.0,
 			previous_buy_price: 75.0,
@@ -2576,7 +2586,7 @@ const TEST_DATA = {
 	recipes: [
 		{
 			id: 'test-recipe-1',
-			item_id: 'oak_planks',
+			item_id: 'csaSQiGyUFGsxUDyHEiF',
 			version: '1_16',
 			ingredients: [{ material_id: 'oak_log', quantity: 1 }],
 			output_count: 4,
@@ -2585,7 +2595,7 @@ const TEST_DATA = {
 		},
 		{
 			id: 'test-recipe-2',
-			item_id: 'iron_block',
+			item_id: 'TOuKiveEZqsQerKlpOew',
 			version: '1_16',
 			ingredients: [{ material_id: 'iron_ingot', quantity: 9 }],
 			output_count: 1,
@@ -2608,7 +2618,7 @@ const TEST_DATA = {
 		{
 			id: 'test-crate-item-1',
 			crate_reward_id: 'test-crate-1',
-			item_id: 'diamond',
+			item_id: 'XVCyPYaBBsdifkVvJjJe',
 			quantity: 1,
 			weight: 25,
 			display_name: '',
@@ -2622,7 +2632,7 @@ const TEST_DATA = {
 		{
 			id: 'test-crate-item-2',
 			crate_reward_id: 'test-crate-1',
-			item_id: 'iron_ingot',
+			item_id: 'UXTtxkUcRiIfpMcYsKFa',
 			quantity: 5,
 			weight: 50,
 			display_name: '',
@@ -2636,7 +2646,7 @@ const TEST_DATA = {
 		{
 			id: 'test-crate-item-3',
 			crate_reward_id: 'test-crate-1',
-			item_id: 'firework_rocket',
+			item_id: 'VCppHTgrqhEqkJkQWlDq',
 			quantity: 48,
 			weight: 55,
 			display_name: '',
