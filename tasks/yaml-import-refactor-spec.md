@@ -1,8 +1,8 @@
 # YAML Import Refactor Specification
 
-## 🚧 Current Status: IN PROGRESS - Phase 2 of 3
+## 🚧 Current Status: IN PROGRESS - Phase 3 of 3
 
-**Progress**: Dev implementation complete ✅ | Migration to production pending ⏳
+**Progress**: Dev implementation complete ✅ | Production utilities migrated ✅ | UI updates pending ⏳
 
 ## Overview
 
@@ -19,18 +19,22 @@ Replace the custom YAML parser with the `js-yaml` library to handle diverse Craz
 -   Full crate mode with prize navigation
 -   New data structure with all migration spec fields
 
+✅ **Phase 2**: Production utilities migrated
+
+-   Updated `src/utils/crateRewards.js` with new parser
+-   Replaced `parseCrateRewardsYaml()` with js-yaml implementation
+-   Replaced `importCrateRewardsFromYaml()` with warnings support
+-   Added enchantment validation utilities
+-   Format detection integrated
+-   Backward compatibility maintained
+
 ### What Needs to Be Done
-
-⏳ **Phase 2**: Migrate working code to production utilities
-
--   Update `src/utils/crateRewards.js` with new parser
--   Replace `parseCrateRewardsYaml()` and `importCrateRewardsFromYaml()`
--   Add enchantment validation utilities
 
 ⏳ **Phase 3**: Update UI components
 
 -   Enhance import modals in `CrateSingleView.vue` and `CrateRewardManagerView.vue`
 -   Add format detection display
+-   Add warnings section (yellow alerts)
 -   Add full crate mode support to UI
 -   Improve error/success messaging
 
@@ -175,7 +179,11 @@ The current implementation (`parseCrateRewardsYaml` in `src/utils/crateRewards.j
 
 ## YAML File Format Analysis
 
-### Format 1: Root-Level Prizes (Current)
+## Supported Full Crate YAML Formats
+
+**Important**: Users must provide **complete crate YAML files**, not individual prize snippets. The parser expects a full crate configuration.
+
+### Format 1: Root-Level Prizes (Simpler)
 
 ```yaml
 Prizes:
@@ -187,15 +195,21 @@ Prizes:
         Weight: 60
         Items:
             - 'item:bread, amount:16'
+    '2':
+        DisplayName: '<green>64x torch'
+        DisplayItem: 'torch'
+        Weight: 45
+        Items:
+            - 'item:torch, amount:64'
 ```
 
 **Characteristics**:
 
 -   `Prizes:` at root level
--   Prize IDs as quoted strings
--   Simple structure
+-   Multiple prizes under Prizes section
+-   Simpler structure, good for exports
 
-### Format 2: Nested Under Crate
+### Format 2: Full Crate with Metadata
 
 ```yaml
 Crate:
@@ -211,15 +225,22 @@ Crate:
             Weight: 60
             Items:
                 - 'item:bread, amount:16'
+        '2':
+            DisplayName: '<green>Diamond'
+            DisplayItem: 'diamond'
+            Weight: 10
+            Items:
+                - 'item:diamond, amount:1'
 ```
 
 **Characteristics**:
 
 -   Metadata at `Crate:` level
 -   `Prizes:` nested under `Crate:`
--   Additional properties (BalloonEffect, glowing, etc.)
+-   Additional crate properties (BalloonEffect, glowing, etc.)
+-   Full Crazy Crates format
 
-### Format 3: With Additional Sections
+### Format 3: With Additional Sections (Also Supported)
 
 ```yaml
 Crate:
@@ -239,13 +260,33 @@ Crate:
             Weight: 50
             Items:
                 - 'item:diamond, amount:1'
+        '2':
+            DisplayName: 'Prize 2'
+            Weight: 30
+            Items:
+                - 'item:emerald, amount:2'
 ```
 
 **Characteristics**:
 
--   Multiple top-level sections
+-   Multiple top-level sections (ignored by parser)
 -   Complex nested structures
--   Optional configurations
+-   Parser extracts only the Prizes section
+-   Full production Crazy Crates format
+
+### ❌ NOT Supported: Individual Prize Snippets
+
+The parser does **NOT** support individual prize snippets like:
+
+```yaml
+'1':
+    DisplayName: 'Single Prize'
+    Weight: 50
+    Items:
+        - 'item:diamond, amount:1'
+```
+
+Users must provide the **complete crate file** with a Prizes section.
 
 ---
 
@@ -767,34 +808,67 @@ NotAPrizeSection:
 
 ---
 
-### ⏳ Phase 2: Migrate to Production Utilities (IN PROGRESS)
+### ✅ Phase 2: Migrate to Production Utilities (COMPLETED)
 
 #### Step 1: Add Utility Functions to crateRewards.js
 
--   [ ] Copy `parseYamlFile()` function from YamlImportDevView (lines 200-241)
--   [ ] Copy `detectYamlFormat()` logic (lines 243-300)
--   [ ] Copy enhanced `parseItemString()` function (lines 600-662)
--   [ ] Add `getValidEnchantments()` helper (lines 167-171)
--   [ ] Add enchantment whitelist constants (lines 82-164)
+-   [x] Copy `parseYamlFile()` function from YamlImportDevView (lines 200-241)
+-   [x] Copy `detectYamlFormat()` logic (lines 243-300)
+-   [x] Copy enhanced `parseItemString()` function (lines 600-662)
+-   [x] Add `getValidEnchantments()` helper (lines 167-171)
+-   [x] Add enchantment whitelist constants (lines 82-164)
 
-**Target File**: `src/utils/crateRewards.js`
+**Target File**: `src/utils/crateRewards.js` ✅
 
 #### Step 2: Replace Old Parser Functions
 
--   [ ] Replace `parseCrateRewardsYaml()` (lines 604-675) with new implementation
--   [ ] Update to use js-yaml instead of string parsing
--   [ ] Add format detection and validation
--   [ ] Ensure backward compatibility
+-   [x] Replace `parseCrateRewardsYaml()` (lines 604-675) with new implementation
+-   [x] Update to use js-yaml instead of string parsing
+-   [x] Add format detection and validation
+-   [x] Ensure backward compatibility
 
 #### Step 3: Update Import Function
 
--   [ ] Update `importCrateRewardsFromYaml()` (lines 796-890)
--   [ ] Add support for new data structure fields
--   [ ] Add format detection to return value
--   [ ] Add warnings array to return value
--   [ ] Support full crate import mode
+-   [x] Update `importCrateRewardsFromYaml()` (lines 796-890)
+-   [x] Add support for new data structure fields
+-   [x] Add format detection to return value
+-   [x] Add warnings array to return value
+-   [x] Support full crate import mode
 
-**Estimated Time**: 2-3 hours
+**Completed!** ✅
+
+#### Summary of Changes
+
+**File Modified**: `src/utils/crateRewards.js`
+
+**Lines Added**: ~250 lines of new/enhanced code
+**Lines Removed**: ~70 lines of old string-based parser
+
+**Key Additions**:
+
+1. **Import**: Added `import * as yaml from 'js-yaml'` (line 15)
+2. **Enchantment Validation**: Lines 602-701 (whitelist + helper function)
+3. **Enhanced parseItemString()**: Lines 779-883 (supports enchantments, player heads, skulls)
+4. **New parseCrateRewardsYaml()**: Lines 703-804 (js-yaml based, full crate file support)
+5. **Enhanced importCrateRewardsFromYaml()**: Lines 973-1109 (warnings support)
+
+**Important Design Decision**:
+
+-   Parser expects **complete crate YAML files** only (not individual prize snippets)
+-   Supports both root-level `Prizes:` and `Crate: { Prizes: {} }` formats
+-   Single prize snippet mode removed (was only for POC/dev testing)
+
+**Build Verification**: ✅ Passed
+
+-   Bundle size: js-yaml adds 9.95 kB (gzipped) - well under 25kb budget
+-   No linter errors
+-   No compilation errors
+
+**Backward Compatibility**: ✅ Maintained
+
+-   Existing function signatures unchanged
+-   Old YAML files will still work (Format 1 support)
+-   New format support added without breaking changes
 
 ---
 

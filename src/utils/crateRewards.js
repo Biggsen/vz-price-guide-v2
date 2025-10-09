@@ -12,6 +12,7 @@ import {
 	writeBatch,
 	getDocs
 } from 'firebase/firestore'
+import * as yaml from 'js-yaml'
 import { getEffectivePrice } from './pricing.js'
 
 const db = useFirestore()
@@ -599,123 +600,312 @@ export function downloadCrateRewardYaml(crateReward, rewardItems, allItems, vers
 }
 
 /**
- * Parse YAML content and extract prize data
+ * Enchantment Validation
+ * Version-aware whitelist of valid Minecraft enchantments
+ */
+
+// Enchantment whitelist by version
+const enchantmentsByVersion = {
+	'1_16': [
+		'protection',
+		'fire_protection',
+		'feather_falling',
+		'blast_protection',
+		'projectile_protection',
+		'respiration',
+		'aqua_affinity',
+		'thorns',
+		'depth_strider',
+		'frost_walker',
+		'soul_speed',
+		'sharpness',
+		'smite',
+		'bane_of_arthropods',
+		'knockback',
+		'fire_aspect',
+		'looting',
+		'sweeping',
+		'efficiency',
+		'silk_touch',
+		'unbreaking',
+		'fortune',
+		'power',
+		'punch',
+		'flame',
+		'infinity',
+		'luck_of_the_sea',
+		'lure',
+		'loyalty',
+		'impaling',
+		'riptide',
+		'channeling',
+		'multishot',
+		'piercing',
+		'quick_charge',
+		'mending',
+		'curse_of_binding',
+		'curse_of_vanishing'
+	],
+	'1_19': [
+		'protection',
+		'fire_protection',
+		'feather_falling',
+		'blast_protection',
+		'projectile_protection',
+		'respiration',
+		'aqua_affinity',
+		'thorns',
+		'depth_strider',
+		'frost_walker',
+		'soul_speed',
+		'swift_sneak',
+		'sharpness',
+		'smite',
+		'bane_of_arthropods',
+		'knockback',
+		'fire_aspect',
+		'looting',
+		'sweeping',
+		'efficiency',
+		'silk_touch',
+		'unbreaking',
+		'fortune',
+		'power',
+		'punch',
+		'flame',
+		'infinity',
+		'luck_of_the_sea',
+		'lure',
+		'loyalty',
+		'impaling',
+		'riptide',
+		'channeling',
+		'multishot',
+		'piercing',
+		'quick_charge',
+		'mending',
+		'curse_of_binding',
+		'curse_of_vanishing'
+	]
+}
+
+/**
+ * Get valid enchantments for a Minecraft version
+ * @param {string} version - Minecraft version (e.g., '1_20')
+ * @returns {Array<string>} Array of valid enchantment names
+ */
+function getValidEnchantments(version = '1_20') {
+	// Map newer versions to 1.19+ list
+	const versionKey = ['1_19', '1_20', '1_21'].includes(version) ? '1_19' : '1_16'
+	return enchantmentsByVersion[versionKey] || enchantmentsByVersion['1_19']
+}
+
+/**
+ * Parse full crate YAML content and extract prize data
+ * Expects a complete crate configuration, not individual prize snippets
+ * Supports: root-level Prizes: or Crate: { Prizes: {} }
+ *
+ * @param {string} yamlContent - Raw YAML string content of complete crate file
+ * @returns {Array} Array of prize objects
+ * @throws {Error} If YAML is invalid or Prizes section not found
  */
 export function parseCrateRewardsYaml(yamlContent) {
 	try {
-		// Simple YAML parser for the specific format we're dealing with
-		const lines = yamlContent.split('\n')
-		const prizes = {}
-		let currentPrize = null
-		let currentPrizeId = null
-		let inPrizesSection = false
+		// Step 1: Remove comments from YAML content
+		const cleanedContent = yamlContent
+			.split('\n')
+			.map((line) => {
+				// Find the first # that's not inside quotes
+				let inQuotes = false
+				let quoteChar = null
 
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i]
-			const trimmed = line.trim()
+				for (let i = 0; i < line.length; i++) {
+					const char = line[i]
 
-			// Check if we're entering the Prizes section (indented with 2 spaces under Crate:)
-			if (trimmed === 'Prizes:') {
-				inPrizesSection = true
-				continue
-			}
-
-			// If we hit another section at the same level as Prizes, stop parsing prizes
-			if (
-				inPrizesSection &&
-				line &&
-				!line.startsWith('  ') &&
-				!line.startsWith('\t') &&
-				line.includes(':')
-			) {
-				break
-			}
-
-			if (!inPrizesSection) continue
-
-			// Parse prize ID (e.g., "1":) - indented with 4 spaces
-			const prizeIdMatch = line.match(/^ {4}"(\d+)":\s*$/)
-			if (prizeIdMatch) {
-				currentPrizeId = prizeIdMatch[1]
-				currentPrize = {
-					id: currentPrizeId,
-					displayName: '',
-					displayItem: '',
-					displayAmount: 1,
-					weight: 50,
-					items: []
-				}
-				prizes[currentPrizeId] = currentPrize
-				continue
-			}
-
-			// Parse prize properties - indented with 6 spaces
-			if (currentPrize) {
-				// Only parse Weight - that's what we actually need
-				const weightMatch = line.match(/^ {6}Weight:\s*(\d+)/)
-				if (weightMatch) {
-					currentPrize.weight = parseInt(weightMatch[1])
-					continue
+					if (!inQuotes && (char === '"' || char === "'")) {
+						inQuotes = true
+						quoteChar = char
+					} else if (inQuotes && char === quoteChar) {
+						inQuotes = false
+						quoteChar = null
+					} else if (!inQuotes && char === '#') {
+						// Found a comment outside quotes, remove everything from here
+						return line.substring(0, i).trimEnd()
+					}
 				}
 
-				// Parse item strings (e.g., - "item:torch, amount:64") - indented with 8 spaces
-				const itemMatch = line.match(/^ {8}-\s*"(.+)"/)
-				if (itemMatch) {
-					currentPrize.items.push(itemMatch[1])
-					continue
-				}
+				return line
+			})
+			.filter((line) => line.trim() !== '') // Remove empty lines
+			.join('\n')
+
+		// Step 2: Parse YAML into JavaScript object
+		let parsedYaml = null
+		try {
+			parsedYaml = yaml.load(cleanedContent)
+			if (!parsedYaml || typeof parsedYaml !== 'object') {
+				throw new Error('YAML file is empty or invalid')
 			}
+		} catch (yamlError) {
+			throw new Error(`Invalid YAML syntax: ${yamlError.message}`)
 		}
 
-		return Object.values(prizes)
+		// Step 3: Locate Prizes section (support both full crate formats)
+		let prizesSection = null
+		let format = 'unknown'
+
+		// Format 1: Root-level Prizes: {...}
+		if (parsedYaml.Prizes && typeof parsedYaml.Prizes === 'object') {
+			prizesSection = parsedYaml.Prizes
+			format = 'root-prizes'
+			console.log('✅ Detected full crate format: Root-level Prizes')
+		}
+		// Format 2: Crate: { Prizes: {...} }
+		else if (
+			parsedYaml.Crate &&
+			parsedYaml.Crate.Prizes &&
+			typeof parsedYaml.Crate.Prizes === 'object'
+		) {
+			prizesSection = parsedYaml.Crate.Prizes
+			format = 'nested-crate'
+			console.log('✅ Detected full crate format: Crate.Prizes')
+		}
+
+		if (!prizesSection) {
+			throw new Error(
+				'Invalid crate file format. Expected a full crate YAML with "Prizes:" section at root level or under "Crate:"'
+			)
+		}
+
+		// Step 4: Convert prizes object to array format
+		const prizes = []
+		for (const [prizeId, prizeData] of Object.entries(prizesSection)) {
+			if (!prizeData || typeof prizeData !== 'object') {
+				console.warn(`Prize ${prizeId} has invalid data, skipping`)
+				continue
+			}
+
+			prizes.push({
+				id: prizeId,
+				displayName: prizeData.DisplayName || '',
+				displayItem: prizeData.DisplayItem || '',
+				displayAmount: prizeData.DisplayAmount || 1,
+				weight: prizeData.Weight || 50,
+				items: Array.isArray(prizeData.Items) ? prizeData.Items : []
+			})
+		}
+
+		if (prizes.length === 0) {
+			throw new Error('No valid prizes found in crate file')
+		}
+
+		console.log(`✅ Successfully parsed ${prizes.length} prizes from ${format} format`)
+		return prizes
 	} catch (error) {
-		console.error('Error parsing YAML:', error)
-		throw new Error('Failed to parse YAML file: ' + error.message)
+		console.error('Error parsing crate YAML:', error)
+		throw new Error('Failed to parse crate file: ' + error.message)
 	}
 }
 
 /**
- * Parse item string and extract item data
+ * Parse item string and extract item data (Enhanced version with validation)
+ * Supports: item:material_id, amount:N, enchantment:level, Name:custom, Player:texture, Skull:id
+ * @param {string} itemString - The item string to parse (e.g., "Item:diamond_sword, Name:<red>Sword, sharpness:5")
+ * @param {Array} allItems - Array of all items from database for matching
+ * @param {string} version - Minecraft version for enchantment validation (default: '1_20')
+ * @returns {Object|null} Parsed item data or null if parsing fails
  */
-export function parseItemString(itemString, allItems = []) {
+export function parseItemString(itemString, allItems = [], version = '1_20') {
 	try {
-		const parts = itemString.split(', ')
+		console.log(`Parsing item string: ${itemString}`)
+
 		const itemData = {
-			materialId: '',
-			amount: 1,
-			enchantments: {}
+			item_id: null, // Will be looked up in items collection
+			materialId: '', // For backward compatibility
+			quantity: 1,
+			amount: 1, // For backward compatibility
+			name: '', // Custom display name
+			enchantments: {},
+			player_texture: null,
+			skull_id: null,
+			custom_properties: {}
 		}
 
+		// Split by comma and parse each part
+		const parts = itemString.split(',').map((part) => part.trim())
+
 		for (const part of parts) {
-			if (part.startsWith('item:')) {
-				itemData.materialId = part.replace('item:', '')
-			} else if (part.startsWith('amount:')) {
-				itemData.amount = parseInt(part.replace('amount:', ''))
-			} else if (part.includes(':')) {
-				// This is likely an enchantment
-				const [enchantment, level] = part.split(':')
+			if (part.startsWith('Item:') || part.startsWith('item:')) {
+				// Extract item type: "Item:diamond_sword" -> "diamond_sword"
+				const itemSlug = part.substring(part.indexOf(':') + 1)
 
-				// For enchanted books, store the enchantment in original format
-				// The findMatchingItem function will handle converting to the full item ID
-				if (itemData.materialId === 'enchanted_book') {
-					itemData.enchantments[enchantment] = parseInt(level)
+				// Look up item in database if available
+				if (allItems && allItems.length > 0) {
+					const itemMatch = allItems.find((item) => item.material_id === itemSlug)
+					itemData.item_id = itemMatch ? itemMatch.id : itemSlug
+					itemData.materialId = itemSlug
+					itemData.catalog_item = !!itemMatch
+					itemData.matched = !!itemMatch
 				} else {
-					// For other items, find the enchantment document ID by material_id
-					const enchantmentMaterialId = `enchanted_book_${enchantment}_${level}`
-					const enchantmentItem = allItems.find(
-						(item) => item.material_id === enchantmentMaterialId
-					)
+					itemData.item_id = itemSlug
+					itemData.materialId = itemSlug
+				}
+			} else if (part.startsWith('Name:')) {
+				// Extract custom name: "Name:<red>Diamond Sword" -> "<red>Diamond Sword"
+				itemData.name = part.substring(5)
+			} else if (part.startsWith('amount:')) {
+				// Extract quantity: "amount:5" -> 5
+				const qty = parseInt(part.substring(7)) || 1
+				itemData.quantity = qty
+				itemData.amount = qty // For backward compatibility
+			} else if (part.startsWith('Player:')) {
+				// Extract player head texture: "Player:1ee3126ff2c343da..." -> "1ee3126ff2c343da..."
+				itemData.player_texture = part.substring(7)
+			} else if (part.startsWith('Skull:')) {
+				// Extract skull database ID: "Skull:7129" -> "7129"
+				itemData.skull_id = part.substring(6)
+			} else if (part.includes(':')) {
+				// Check if this is a valid enchantment using whitelist
+				const [name, level] = part.split(':')
+				const validEnchantments = getValidEnchantments(version)
 
-					if (enchantmentItem) {
-						itemData.enchantments[enchantmentItem.id] = 1
+				if (name && level && validEnchantments.includes(name.toLowerCase())) {
+					// Valid enchantment - parse level
+					const enchantLevel = parseInt(level) || 1
+
+					// For enchanted books, store enchantment name directly
+					if (itemData.materialId === 'enchanted_book') {
+						itemData.enchantments[name] = enchantLevel
+						console.log(`✅ Found enchantment for book: ${name}:${enchantLevel}`)
 					} else {
-						// Fallback to material_id format if document ID not found
-						itemData.enchantments[enchantmentMaterialId] = 1
+						// For other items, find the enchantment document ID by material_id
+						const enchantmentMaterialId = `enchanted_book_${name}_${enchantLevel}`
+						const enchantmentItem = allItems.find(
+							(item) => item.material_id === enchantmentMaterialId
+						)
+
+						if (enchantmentItem) {
+							itemData.enchantments[enchantmentItem.id] = 1
+							console.log(
+								`✅ Found enchantment item: ${name}:${enchantLevel} -> ${enchantmentItem.id}`
+							)
+						} else {
+							// Fallback to material_id format if document ID not found
+							itemData.enchantments[enchantmentMaterialId] = 1
+							console.log(`⚠️ Enchantment not in catalog: ${enchantmentMaterialId}`)
+						}
+					}
+				} else if (name && level) {
+					// Not a valid enchantment - store as custom property (skip 'amount' since we have quantity)
+					if (name.toLowerCase() !== 'amount') {
+						itemData.custom_properties[name] = level
+						console.log(`📋 Found custom property: ${name}:${level}`)
 					}
 				}
 			}
 		}
 
+		console.log('Parsed item data:', itemData)
 		return itemData
 	} catch (error) {
 		console.error('Error parsing item string:', error)
@@ -791,7 +981,13 @@ export function findMatchingItem(parsedItem, allItems) {
 }
 
 /**
- * Import crate rewards from YAML content
+ * Import crate rewards from YAML content (Enhanced with warnings and format detection)
+ * @param {string} crateId - Target crate ID (or null to create new)
+ * @param {string} yamlContent - Raw YAML content
+ * @param {Array} allItems - All items from database
+ * @param {string} crateName - Name for new crate (if creating)
+ * @param {string} userId - User ID (if creating new crate)
+ * @returns {Object} Import result with success, counts, errors, and warnings
  */
 export async function importCrateRewardsFromYaml(
 	crateId,
@@ -817,16 +1013,25 @@ export async function importCrateRewardsFromYaml(
 			throw new Error('No crate ID provided and unable to create new crate')
 		}
 
+		// Parse full crate YAML (supports root-level Prizes or Crate.Prizes formats)
 		const prizes = parseCrateRewardsYaml(yamlContent)
 		const importedItems = []
 		const errors = []
+		const warnings = []
 
 		for (let i = 0; i < prizes.length; i++) {
 			const prize = prizes[i]
 
+			// Validate prize has weight
+			if (!prize.weight || prize.weight < 1) {
+				warnings.push(
+					`Prize ${prize.id}: Invalid weight (${prize.weight}), using default value of 50`
+				)
+				prize.weight = 50
+			}
+
 			if (!prize.items || prize.items.length === 0) {
-				const errorMsg = `Prize ${prize.id}: No items found`
-				errors.push(errorMsg)
+				errors.push(`Prize ${prize.id}: No items found`)
 				continue
 			}
 
@@ -835,8 +1040,7 @@ export async function importCrateRewardsFromYaml(
 			const parsedItem = parseItemString(itemString, allItems)
 
 			if (!parsedItem) {
-				const errorMsg = `Prize ${prize.id}: Failed to parse item string "${itemString}"`
-				errors.push(errorMsg)
+				errors.push(`Prize ${prize.id}: Failed to parse item string "${itemString}"`)
 				continue
 			}
 
@@ -844,9 +1048,23 @@ export async function importCrateRewardsFromYaml(
 			const matchingItem = findMatchingItem(parsedItem, allItems)
 
 			if (!matchingItem) {
-				const errorMsg = `Prize ${prize.id}: No matching item found for "${parsedItem.materialId}"`
-				errors.push(errorMsg)
+				errors.push(
+					`Prize ${prize.id}: No matching item found for "${parsedItem.materialId}"`
+				)
 				continue
+			}
+
+			// Check for enchantments on items that might need validation
+			if (
+				parsedItem.enchantments &&
+				Object.keys(parsedItem.enchantments).length > 0 &&
+				parsedItem.materialId !== 'enchanted_book'
+			) {
+				warnings.push(
+					`Prize ${prize.id}: Item has ${
+						Object.keys(parsedItem.enchantments).length
+					} enchantment(s)`
+				)
 			}
 
 			// Create reward item data
@@ -867,24 +1085,29 @@ export async function importCrateRewardsFromYaml(
 				)
 				importedItems.push(newItem)
 			} catch (error) {
-				const errorMsg = `Prize ${prize.id}: Failed to add item - ${error.message}`
-				errors.push(errorMsg)
+				errors.push(`Prize ${prize.id}: Failed to add item - ${error.message}`)
 			}
 		}
 
 		return {
 			success: true,
 			importedCount: importedItems.length,
+			totalPrizes: prizes.length,
 			errorCount: errors.length,
-			errors: errors
+			warningCount: warnings.length,
+			errors: errors,
+			warnings: warnings
 		}
 	} catch (error) {
 		console.error('Import process failed:', error)
 		return {
 			success: false,
 			importedCount: 0,
-			errorCount: 0,
-			errors: [error.message]
+			totalPrizes: 0,
+			errorCount: 1,
+			warningCount: 0,
+			errors: [error.message],
+			warnings: []
 		}
 	}
 }
