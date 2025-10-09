@@ -584,39 +584,74 @@ function closeImportModal() {
 						@change="handleFileSelect"
 						class="block w-full pr-3 py-1 mt-2 mb-2 text-gray-900 font-sans" />
 					<p class="text-xs text-gray-500 mt-1">
-						Select a Crazy Crates YAML file containing prize definitions. A new crate
-						will be created with the filename as the crate name.
+						Upload a complete Crazy Crates YAML file with
+						<code>Crate: { Prizes: {} }</code>
+						format. A new crate will be created with the filename as the crate name.
+						Export the file directly from your server's CrazyCrates plugin folder.
 					</p>
 				</div>
 
 				<!-- Import Results -->
-				<div v-if="importResult" class="space-y-2">
+				<div v-if="importResult" class="space-y-3">
+					<!-- Success Message -->
 					<div
 						v-if="importResult.success"
 						class="p-3 bg-semantic-success-light border-l-4 border-l-semantic-success">
 						<div class="flex items-start">
-							<CheckCircleIcon class="w-6 h-6 text-heavy-metal mr-2" />
+							<CheckCircleIcon class="w-6 h-6 text-heavy-metal mr-2 flex-shrink-0" />
 							<div>
 								<div class="text-heavy-metal font-medium">
 									Import completed successfully!
 								</div>
-								<div class="text-heavy-metal text-sm">
-									{{ importResult.importedCount }} items imported
+								<div class="text-heavy-metal text-sm mt-1">
+									{{ importResult.importedCount }} of
+									{{ importResult.totalPrizes }} prizes imported
 									<span v-if="importResult.errorCount > 0">
-										, {{ importResult.errorCount }} errors
+										({{ importResult.errorCount }} failed)
 									</span>
 								</div>
 							</div>
 						</div>
 					</div>
 
+					<!-- Warnings -->
+					<div
+						v-if="importResult.warnings && importResult.warnings.length > 0"
+						class="p-3 bg-yellow-50 border-l-4 border-l-yellow-400 rounded">
+						<div class="flex items-start">
+							<ExclamationTriangleIcon
+								class="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" />
+							<div class="flex-1">
+								<div class="text-yellow-800 font-medium mb-2">
+									Warnings ({{ importResult.warningCount }}):
+								</div>
+								<div
+									class="text-yellow-700 text-sm space-y-1 max-h-32 overflow-y-auto">
+									<div v-for="warning in importResult.warnings" :key="warning">
+										• {{ warning }}
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Errors -->
 					<div
 						v-if="importResult.errors && importResult.errors.length > 0"
-						class="p-3 bg-red-50 border border-red-200 rounded-lg">
-						<div class="text-red-800 font-medium mb-2">Import Errors:</div>
-						<div class="text-red-700 text-sm space-y-1">
-							<div v-for="error in importResult.errors" :key="error">
-								{{ error }}
+						class="p-3 bg-red-50 border-l-4 border-l-red-400 rounded">
+						<div class="flex items-start">
+							<ExclamationTriangleIcon
+								class="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+							<div class="flex-1">
+								<div class="text-red-800 font-medium mb-2">
+									Errors ({{ importResult.errorCount }}):
+								</div>
+								<div
+									class="text-red-700 text-sm space-y-1 max-h-32 overflow-y-auto">
+									<div v-for="error in importResult.errors" :key="error">
+										• {{ error }}
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>

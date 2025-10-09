@@ -1233,6 +1233,23 @@ const TEST_DATA = {
 			recipes_by_version: {}
 		},
 		{
+			id: 'Loot3XwUfooppFZFmCO',
+			material_id: 'enchanted_book_looting_3',
+			name: 'enchanted book (looting iii)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'weapon',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 1000.0
+			},
+			recipes_by_version: {}
+		},
+		{
 			id: 'HjWnjuteHioxhKjBXWwo',
 			material_id: 'enchanted_book_efficiency_5',
 			name: 'enchanted book (efficiency v)',
