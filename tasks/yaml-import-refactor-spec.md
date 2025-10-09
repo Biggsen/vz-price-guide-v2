@@ -1,8 +1,149 @@
 # YAML Import Refactor Specification
 
+## 🚧 Current Status: IN PROGRESS - Phase 2 of 3
+
+**Progress**: Dev implementation complete ✅ | Migration to production pending ⏳
+
 ## Overview
 
 Replace the custom YAML parser with the `js-yaml` library to handle diverse Crazy Crates YAML file formats and improve import reliability.
+
+### What's Been Completed
+
+✅ **Phase 1**: Fully functional implementation in `YamlImportDevView.vue`
+
+-   js-yaml library integration
+-   Support for both YAML formats (root-level and nested)
+-   Enhanced item string parsing with enchantment validation
+-   Comment removal and error handling
+-   Full crate mode with prize navigation
+-   New data structure with all migration spec fields
+
+### What Needs to Be Done
+
+⏳ **Phase 2**: Migrate working code to production utilities
+
+-   Update `src/utils/crateRewards.js` with new parser
+-   Replace `parseCrateRewardsYaml()` and `importCrateRewardsFromYaml()`
+-   Add enchantment validation utilities
+
+⏳ **Phase 3**: Update UI components
+
+-   Enhance import modals in `CrateSingleView.vue` and `CrateRewardManagerView.vue`
+-   Add format detection display
+-   Add full crate mode support to UI
+-   Improve error/success messaging
+
+---
+
+## Quick Reference: Code to Migrate
+
+The following code from `YamlImportDevView.vue` is ready to be copied to production:
+
+### Functions to Add to `src/utils/crateRewards.js`
+
+| Function                        | Source Lines | Purpose                          |
+| ------------------------------- | ------------ | -------------------------------- |
+| Enchantment whitelist constants | 82-164       | Version-aware valid enchantments |
+| `getValidEnchantments()`        | 167-171      | Get enchantments for a version   |
+| Comment removal logic           | 205-230      | Remove YAML comments safely      |
+| `yaml.load()` usage             | 234-241      | Parse YAML to object             |
+| Format detection                | 248-300      | Detect root vs nested format     |
+| Item string parsing             | 356-417      | Parse complex item strings       |
+| `parseItemString()` function    | 600-662      | Standalone item parser           |
+
+### Key Implementation Differences
+
+| Feature                | Old (crateRewards.js) | New (YamlImportDevView) |
+| ---------------------- | --------------------- | ----------------------- |
+| YAML Parsing           | String-based regex    | js-yaml library         |
+| Format Support         | Root-level only       | Root + Nested Crate     |
+| Enchantment Validation | None                  | Whitelist-based         |
+| Comment Handling       | None                  | Smart removal           |
+| Error Messages         | Generic               | Detailed with line info |
+| Data Structure         | Minimal fields        | Full migration spec     |
+
+### Data Structure Changes
+
+The new parser outputs documents with these fields:
+
+```javascript
+{
+    // Display properties (for crate GUI)
+    display_name: string,
+    display_item: string,              // Item ID or material_id
+    display_amount: number,
+    display_enchantments: object,      // { enchant_name: level }
+    display_lore: array,               // Array of lore strings
+
+    // Prize properties
+    weight: number,                    // Probability weight
+    items: array,                      // All items embedded in document
+
+    // Optional features
+    firework: boolean,                 // Firework effect on win
+    commands: array,                   // Commands to execute
+    messages: array,                   // Messages to send
+    display_patterns: array,           // Banner patterns
+    blacklisted_permissions: array,    // Permissions that exclude winning
+
+    // Metadata
+    custom_model_data: number,
+    created_at: string,
+    updated_at: string,
+    import_source: string,             // Track import method
+    original_yaml_key: string          // Original prize ID from YAML
+}
+```
+
+---
+
+## Next Steps to Start Phase 2
+
+To begin migrating the working code to production:
+
+### 1. Review the Reference Implementation
+
+Open `src/views/YamlImportDevView.vue` and familiarize yourself with:
+
+-   Lines 82-164: Enchantment whitelists
+-   Lines 200-241: Comment removal and YAML parsing
+-   Lines 243-300: Format detection logic
+-   Lines 600-662: Enhanced parseItemString function
+
+### 2. Update crateRewards.js
+
+Start by adding the js-yaml import at the top:
+
+```javascript
+import * as yaml from 'js-yaml'
+```
+
+### 3. Add Helper Functions
+
+Copy these functions from YamlImportDevView to crateRewards.js:
+
+1. Enchantment whitelist constants (lines 82-164)
+2. `getValidEnchantments()` helper (lines 167-171)
+3. Enhanced `parseItemString()` (lines 600-662)
+
+### 4. Replace parseCrateRewardsYaml()
+
+Replace the old string-based parser (lines 604-675) with js-yaml implementation including:
+
+-   Comment removal logic
+-   Format detection (root vs nested)
+-   Error handling
+
+### 5. Test Incrementally
+
+After each function is added:
+
+-   Test with existing YAML files
+-   Verify no regressions
+-   Check error handling
+
+---
 
 ## Problem Statement
 
@@ -610,46 +751,101 @@ NotAPrizeSection:
 
 ## Implementation Steps
 
-### Phase 1: Setup (15 mins)
+### ✅ Phase 1: Development & Proof of Concept (COMPLETED)
 
--   [ ] Install `js-yaml` package
--   [ ] Import js-yaml in `crateRewards.js`
--   [ ] Create test fixtures
+-   [x] Install `js-yaml` package
+-   [x] Create `YamlImportDevView.vue` for testing and development
+-   [x] Implement js-yaml integration with comment removal
+-   [x] Implement format detection (root-level and nested Crate formats)
+-   [x] Implement enhanced item string parsing
+-   [x] Add enchantment validation with version-aware whitelist
+-   [x] Support new data structure fields (display_enchantments, lore, commands, etc.)
+-   [x] Add full crate mode with prize navigation
+-   [x] Test with various YAML formats
 
-### Phase 2: Core Functions (45 mins)
+**Location**: `src/views/YamlImportDevView.vue` (lines 1-1039)
 
--   [ ] Implement `parseYamlFile()`
--   [ ] Implement `detectYamlFormat()`
--   [ ] Implement `extractPrizesFromYaml()`
--   [ ] Implement `validatePrize()`
+---
 
-### Phase 3: Update Existing Functions (30 mins)
+### ⏳ Phase 2: Migrate to Production Utilities (IN PROGRESS)
 
--   [ ] Replace `parseCrateRewardsYaml()` implementation
--   [ ] Update `importCrateRewardsFromYaml()` with warnings
+#### Step 1: Add Utility Functions to crateRewards.js
+
+-   [ ] Copy `parseYamlFile()` function from YamlImportDevView (lines 200-241)
+-   [ ] Copy `detectYamlFormat()` logic (lines 243-300)
+-   [ ] Copy enhanced `parseItemString()` function (lines 600-662)
+-   [ ] Add `getValidEnchantments()` helper (lines 167-171)
+-   [ ] Add enchantment whitelist constants (lines 82-164)
+
+**Target File**: `src/utils/crateRewards.js`
+
+#### Step 2: Replace Old Parser Functions
+
+-   [ ] Replace `parseCrateRewardsYaml()` (lines 604-675) with new implementation
+-   [ ] Update to use js-yaml instead of string parsing
+-   [ ] Add format detection and validation
 -   [ ] Ensure backward compatibility
 
-### Phase 4: UI Updates (20 mins)
+#### Step 3: Update Import Function
 
+-   [ ] Update `importCrateRewardsFromYaml()` (lines 796-890)
+-   [ ] Add support for new data structure fields
+-   [ ] Add format detection to return value
+-   [ ] Add warnings array to return value
+-   [ ] Support full crate import mode
+
+**Estimated Time**: 2-3 hours
+
+---
+
+### ⏳ Phase 3: Update UI Components (PENDING)
+
+#### CrateSingleView.vue
+
+-   [ ] Add format detection display to import modal (after line 1901)
+-   [ ] Add warnings section (yellow alerts)
+-   [ ] Add full crate mode support with prize navigation
+-   [ ] Update import result display
+-   [ ] Add progress indicator for multi-prize imports
+
+#### CrateRewardManagerView.vue
+
+-   [ ] Mirror changes from CrateSingleView
 -   [ ] Add format detection display
 -   [ ] Add warnings section
--   [ ] Improve error display
--   [ ] Update import feedback
+-   [ ] Support full crate import
 
-### Phase 5: Testing (40 mins)
+**Estimated Time**: 1-2 hours
 
--   [ ] Test with existing YAML files
--   [ ] Test with new format files
--   [ ] Test error cases
--   [ ] Test edge cases
+---
 
-### Phase 6: Documentation (10 mins)
+### 📋 Phase 4: Testing & Validation (PENDING)
 
--   [ ] Update comments and JSDoc
--   [ ] Document supported formats
--   [ ] Add usage examples
+-   [ ] Test with existing Format 1 YAML files (root-level Prizes)
+-   [ ] Test with Format 2 YAML files (nested under Crate)
+-   [ ] Test single prize import
+-   [ ] Test full crate import (multiple prizes)
+-   [ ] Test with enchanted items and books
+-   [ ] Test error handling for malformed YAML
+-   [ ] Test with comments in YAML
+-   [ ] Verify backward compatibility
 
-**Total Estimated Time**: ~2.5 hours
+**Estimated Time**: 1-2 hours
+
+---
+
+### 📝 Phase 5: Documentation & Cleanup (PENDING)
+
+-   [ ] Update JSDoc comments in crateRewards.js
+-   [ ] Document supported YAML formats
+-   [ ] Add migration notes to CHANGELOG
+-   [ ] Consider deprecating YamlImportDevView or convert to documentation
+
+**Estimated Time**: 30 mins
+
+---
+
+**Total Remaining Time**: ~5-8 hours
 
 ---
 
@@ -705,13 +901,38 @@ NotAPrizeSection:
 
 ## Success Criteria
 
--   ✅ All existing YAML files import successfully
--   ✅ New YAML formats import successfully
+### Phase 1 (Dev Implementation) - ✅ COMPLETE
+
+-   ✅ js-yaml library integrated
+-   ✅ All existing YAML files import successfully (Format 1)
+-   ✅ New YAML formats import successfully (Format 2 - nested Crate)
 -   ✅ Error messages are clear and actionable
--   ✅ No regression in import speed
--   ✅ Bundle size increase < 25kb
--   ✅ Code is more maintainable than before
--   ✅ All tests pass
+-   ✅ Bundle size increase < 25kb (js-yaml is ~19kb)
+-   ✅ Enchantment validation working
+-   ✅ Full crate import mode working
+-   ✅ Comment handling working
+
+### Phase 2 (Production Migration) - ⏳ PENDING
+
+-   [ ] Old parser functions replaced in crateRewards.js
+-   [ ] All existing YAML files still import successfully
+-   [ ] New format support available in production views
+-   [ ] No regression in import functionality
+-   [ ] Code is more maintainable than before
+
+### Phase 3 (UI Updates) - ⏳ PENDING
+
+-   [ ] Format detection displayed to users
+-   [ ] Warnings properly shown (separate from errors)
+-   [ ] Full crate import available in UI
+-   [ ] Progress indicators for multi-prize imports
+-   [ ] Error messages match dev view quality
+
+### Phase 4 (Testing) - ⏳ PENDING
+
+-   [ ] All manual test cases pass
+-   [ ] Backward compatibility verified
+-   [ ] Performance benchmarks acceptable
 
 ---
 
@@ -728,29 +949,81 @@ After core implementation, consider:
 
 ---
 
+## Relationship to Crate Reward Structure Migration
+
+This YAML import refactor is **closely related** to the [Crate Reward Structure Migration](./crate-reward-structure-migration-spec.md):
+
+### Shared Goals
+
+Both specs aim to:
+
+1. **Embed items in documents** instead of separate collections
+2. **Support new fields** (display_enchantments, lore, commands, messages, etc.)
+3. **Improve data structure** for better performance and flexibility
+
+### Key Difference
+
+-   **Structure Migration**: Focuses on changing how existing data is stored in Firestore
+-   **YAML Import Refactor**: Focuses on how new data is imported from YAML files
+
+### Why They Should Be Coordinated
+
+The new YAML parser in YamlImportDevView **already outputs the new structure**:
+
+-   Items are embedded in a single document
+-   All new fields are supported (display_enchantments, lore, etc.)
+-   Data matches the target structure from the migration spec
+
+### Recommended Approach
+
+**Option A: Complete YAML refactor first** (Recommended)
+
+1. Migrate YAML parser to production ✅
+2. Have both old and new structure in database temporarily
+3. Run migration script to convert old structure to new
+4. Update UI to handle both structures during transition
+5. Eventually deprecate old structure
+
+**Option B: Do them together**
+
+1. Migrate YAML parser and data structure simultaneously
+2. More complex but cleaner cut-over
+3. Requires more coordination
+
+The YamlImportDevView implementation is **already compatible** with the new structure, so completing this refactor first will make the data migration easier.
+
+---
+
 ## Related Files
 
 **Modified**:
 
 -   `src/utils/crateRewards.js` - Core parsing logic
 -   `src/views/CrateSingleView.vue` - Import modal UI
--   `package.json` - Add js-yaml dependency
+-   `src/views/CrateRewardManagerView.vue` - Import modal UI
+-   `package.json` - js-yaml dependency (already added)
 
-**New**:
+**Reference Implementation**:
 
--   `tests/fixtures/crate-format-*.yaml` - Test fixtures (optional)
+-   `src/views/YamlImportDevView.vue` - Completed working implementation
+
+**New (Optional)**:
+
+-   `tests/fixtures/crate-format-*.yaml` - Test fixtures for validation
 
 **Not Modified**:
 
--   `src/views/CrateRewardManagerView.vue` - Uses same import function
--   Export functionality - No changes needed
+-   Export functionality - Works with new structure already
+-   Database collections - No schema changes in Firestore
 
 ---
 
 ## Notes
 
--   Keep the existing `parseItemString()` function - it's already good
--   Keep the existing `findMatchingItem()` function - it works well
+-   The YamlImportDevView already implements the **complete solution**
 -   The custom parser removal will reduce code by ~70 lines
--   The new implementation will add ~150 lines but be more robust
--   Net increase of ~80 lines but with much better functionality
+-   The new implementation adds ~200 lines but is far more robust
+-   Net increase of ~130 lines with much better functionality
+-   js-yaml adds only 19kb to bundle size
+-   The new parser handles YAML comments, anchors, and complex structures
+-   Enchantment validation prevents invalid data from being imported
