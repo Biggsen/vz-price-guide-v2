@@ -1,11 +1,9 @@
 // Production Safety Utilities
 // Provides safety checks and warnings for production database operations
 
-import { firebaseConfig } from '../firebase.js'
-
 // Check if we're connected to production database
 export function isProductionDatabase() {
-	return firebaseConfig.projectId === 'vz-price-guide'
+	return import.meta.env.VITE_FIREBASE_PROJECT_ID === 'vz-price-guide'
 }
 
 // Check if emulators are being used
@@ -42,7 +40,7 @@ export function showProductionWarning() {
 
 	if (status.requiresConfirmation) {
 		console.warn('🚨 PRODUCTION DATABASE OPERATION 🚨')
-		console.warn('Project:', firebaseConfig.projectId)
+		console.warn('Project:', import.meta.env.VITE_FIREBASE_PROJECT_ID)
 		console.warn('Mode:', status.isProductionMode ? 'Production Development' : 'Standard')
 		console.warn('This operation will affect live data!')
 		return true
@@ -62,7 +60,7 @@ export function confirmProductionOperation(operation = 'database operation') {
 	const confirmed = window.confirm(
 		`🚨 PRODUCTION DATABASE WARNING 🚨\n\n` +
 			`You are about to perform: ${operation}\n` +
-			`Project: ${firebaseConfig.projectId}\n\n` +
+			`Project: ${import.meta.env.VITE_FIREBASE_PROJECT_ID}\n\n` +
 			`This will affect LIVE PRODUCTION DATA!\n\n` +
 			`Are you sure you want to continue?`
 	)
@@ -101,7 +99,7 @@ export function logEnvironmentInfo() {
 	const status = getSafetyStatus()
 
 	console.group('🔧 Development Environment Info')
-	console.log('Project ID:', firebaseConfig.projectId)
+	console.log('Project ID:', import.meta.env.VITE_FIREBASE_PROJECT_ID)
 	console.log('Is Production Database:', status.isProductionDatabase)
 	console.log('Using Emulators:', status.isUsingEmulators)
 	console.log('Production Mode:', status.isProductionMode)

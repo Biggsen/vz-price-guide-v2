@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useFirestore, useCollection } from 'vuefire'
-import { query, collection, orderBy } from 'firebase/firestore'
+import { query, collection, orderBy, addDoc } from 'firebase/firestore'
 import * as yaml from 'js-yaml'
+import { isUsingEmulators, isProductionDatabase } from '@/utils/productionSafety'
 import { getImageUrl } from '../utils/image.js'
 import { ClipboardIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 
@@ -33,6 +34,12 @@ const matchedItems = ref([])
 const autoParseEnabled = ref(true)
 const parseMode = ref('single') // 'single' or 'full'
 const currentPrizeIndex = ref(0) // For navigating through prizes in full mode
+
+// Save functionality state
+const isSaving = ref(false)
+const saveError = ref(null)
+const saveSuccess = ref(null)
+const targetCrateId = ref('test-crate-1') // Default crate
 
 // Example YAML for quick testing
 const exampleFullCrate = `Prizes:
@@ -70,8 +77,6 @@ const exampleSinglePrize = `"2":
   Weight: 15.0
   Items:
     - "Item:diamond_sword, Name:<red>Diamond Sword, sharpness:5, looting:3"`
-
-const currentExample = ref('full')
 
 // Enchantment whitelist by version
 const enchantmentsByVersion = {
@@ -188,6 +193,10 @@ function parseYaml(resetIndex = true) {
 		currentPrizeIndex.value = 0 // Reset prize navigation only when parsing new content
 	}
 
+	// Clear save messages when parsing new content
+	saveError.value = null
+	saveSuccess.value = null
+
 	try {
 		// Step 1 - Remove comments from YAML content
 		const yamlContent = yamlInput.value.trim()
@@ -231,48 +240,67 @@ function parseYaml(resetIndex = true) {
 			throw new Error(`YAML parsing failed: ${yamlError.message}`)
 		}
 
-		// Extract the prize data based on mode
+		// Auto-detect mode based on YAML structure
+		let detectedMode = 'single'
 		let prizeData = null
 		let allPrizes = null
 
 		if (parsedYaml) {
-			if (parseMode.value === 'single') {
-				// Single prize mode - get the first key from the parsed object
-				const prizeKeys = Object.keys(parsedYaml)
+			// Check if it has a Prizes section (full crate) - either direct or nested
+			let prizesSection = null
+
+			// Check for direct Prizes section
+			if (parsedYaml.Prizes) {
+				prizesSection = parsedYaml.Prizes
+				console.log(`Found direct Prizes section`)
+			}
+			// Check for nested Prizes section (Crate: { Prizes: {} })
+			else if (parsedYaml.Crate && parsedYaml.Crate.Prizes) {
+				prizesSection = parsedYaml.Crate.Prizes
+				console.log(`Found nested Prizes section under Crate`)
+			}
+
+			if (prizesSection) {
+				detectedMode = 'full'
+				allPrizes = prizesSection
+				console.log(
+					`Auto-detected: Full crate mode with ${Object.keys(allPrizes).length} prizes`
+				)
+				// Process the currently selected prize
+				const prizeKeys = Object.keys(allPrizes)
 				if (prizeKeys.length > 0) {
-					const firstPrizeKey = prizeKeys[0]
-					prizeData = parsedYaml[firstPrizeKey]
-					console.log(`Extracted single prize data from key: ${firstPrizeKey}`)
+					const currentKey = prizeKeys[currentPrizeIndex.value] || prizeKeys[0]
+					prizeData = allPrizes[currentKey]
+					console.log(
+						`Processing prize ${currentPrizeIndex.value + 1}/${
+							prizeKeys.length
+						} from key: ${currentKey}`
+					)
 				}
 			} else {
-				// Full crate mode - look for Prizes section
-				if (parsedYaml.Prizes) {
-					allPrizes = parsedYaml.Prizes
-					console.log(`Extracted full crate with ${Object.keys(allPrizes).length} prizes`)
-					// Process the currently selected prize
-					const prizeKeys = Object.keys(allPrizes)
-					if (prizeKeys.length > 0) {
-						const currentKey = prizeKeys[currentPrizeIndex.value] || prizeKeys[0]
-						prizeData = allPrizes[currentKey]
+				// Check if it starts with a numeric key (single prize)
+				const prizeKeys = Object.keys(parsedYaml)
+				if (prizeKeys.length > 0) {
+					const firstKey = prizeKeys[0]
+					// Check if the first key is numeric (like "1", "2", etc.)
+					if (/^\d+$/.test(firstKey)) {
+						detectedMode = 'single'
+						prizeData = parsedYaml[firstKey]
+						console.log(`Auto-detected: Single prize mode from key: ${firstKey}`)
+					} else {
+						// Fallback - treat as single prize
+						detectedMode = 'single'
+						prizeData = parsedYaml[firstKey]
 						console.log(
-							`Processing prize ${currentPrizeIndex.value + 1}/${
-								prizeKeys.length
-							} from key: ${currentKey}`
-						)
-					}
-				} else {
-					// Fallback to single prize mode if no Prizes section found
-					const prizeKeys = Object.keys(parsedYaml)
-					if (prizeKeys.length > 0) {
-						const firstPrizeKey = prizeKeys[0]
-						prizeData = parsedYaml[firstPrizeKey]
-						console.log(
-							`Fallback: Extracted single prize data from key: ${firstPrizeKey}`
+							`Auto-detected: Single prize mode (fallback) from key: ${firstKey}`
 						)
 					}
 				}
 			}
 		}
+
+		// Update the mode display to show detected mode
+		const actualMode = detectedMode
 
 		// Step 3 - Map prize data to DB structure
 		let mappedData = null
@@ -291,6 +319,7 @@ function parseYaml(resetIndex = true) {
 				commands: prizeData.Commands || [], // Array of commands to execute
 				messages: prizeData.Messages || [], // Array of messages to send to player
 				display_patterns: prizeData.DisplayPatterns || [], // Array of display patterns
+				blacklisted_permissions: prizeData['BlackListed-Permissions'] || [], // Array of blacklisted permissions
 				custom_model_data: prizeData.Settings?.['Custom-Model-Data'] || -1,
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
@@ -365,11 +394,18 @@ function parseYaml(resetIndex = true) {
 							console.log(`✅ Found enchantment: ${name}:${level}`)
 						} else if (name && level) {
 							// Store other colon-separated properties as custom data (patterns, etc.)
-							if (!itemData.custom_properties) {
-								itemData.custom_properties = {}
+							// Skip Amount since we already have quantity at the top level
+							if (name.toLowerCase() !== 'amount') {
+								if (!itemData.custom_properties) {
+									itemData.custom_properties = {}
+								}
+								itemData.custom_properties[name] = level
+								console.log(`📋 Found custom property: ${name}:${level}`)
+							} else {
+								console.log(
+									`⏭️ Skipping redundant Amount property (using quantity instead)`
+								)
 							}
-							itemData.custom_properties[name] = level
-							console.log(`📋 Found custom property: ${name}:${level}`)
 						}
 					}
 				})
@@ -451,7 +487,42 @@ function parseYaml(resetIndex = true) {
 			}
 		}
 
-		// TODO: Step 6 - Generate final DB structure
+		// Step 6 - Generate final DB structure
+		let finalDbStructure = null
+		if (mappedData) {
+			finalDbStructure = {
+				// Core fields (crate_reward_id will be generated by Firestore as document ID)
+				// Note: items are saved separately in crate_reward_items collection
+				display_name: mappedData.display_name || '',
+				display_item: mappedData.display_item || '',
+				display_amount: mappedData.display_amount || 1,
+				weight: mappedData.weight || 50,
+
+				// Display properties
+				display_enchantments: mappedData.display_enchantments || {},
+				display_lore: mappedData.display_lore || [],
+				firework: mappedData.firework || false,
+				commands: mappedData.commands || [],
+				messages: mappedData.messages || [],
+				display_patterns: mappedData.display_patterns || [],
+				blacklisted_permissions: mappedData.blacklisted_permissions || [],
+
+				// Metadata
+				custom_model_data: mappedData.custom_model_data || -1,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+
+				// Import metadata
+				import_source: 'yaml_parser',
+				import_timestamp: new Date().toISOString(),
+				original_yaml_key: getCurrentPrizeKey(allPrizes, currentPrizeIndex.value),
+
+				// Items data (for reference, but saved separately)
+				items_preview: mappedData.items || []
+			}
+
+			console.log('Generated final DB structure:', finalDbStructure)
+		}
 
 		parseResult.value = {
 			cleanedContent: cleanedContent,
@@ -459,13 +530,15 @@ function parseYaml(resetIndex = true) {
 			prizeData: prizeData,
 			allPrizes: allPrizes,
 			mappedData: mappedData,
-			parseMode: parseMode.value,
+			finalDbStructure: finalDbStructure,
+			parseMode: actualMode,
+			detectedMode: actualMode,
 			message:
-				parseMode.value === 'single'
-					? 'Step 5: Single prize processed - Next: Generate final DB structure'
-					: `Step 5: Full crate processed (${
-							Object.keys(allPrizes || {}).length
-					  } prizes) - Next: Generate final DB structure`
+				actualMode === 'single'
+					? 'Step 6: Final DB structure generated - Ready to save to Firestore'
+					: `Step 6: Final DB structure generated for prize ${
+							currentPrizeIndex.value + 1
+					  } - Ready to save to Firestore`
 		}
 	} catch (error) {
 		parseError.value = error.message
@@ -476,14 +549,6 @@ function clearResults() {
 	parseResult.value = null
 	parseError.value = null
 	matchedItems.value = []
-}
-
-function loadExample(type = 'single') {
-	currentExample.value = type
-	yamlInput.value = type === 'single' ? exampleSinglePrize : exampleFullCrate
-	if (autoParseEnabled.value) {
-		parseYaml()
-	}
 }
 
 // Auto-load the example on page load
@@ -525,6 +590,191 @@ function goToPrize(index) {
 	}
 }
 
+// Helper function to get the current prize key
+function getCurrentPrizeKey(allPrizes, index) {
+	if (!allPrizes) return null
+	const prizeKeys = Object.keys(allPrizes)
+	return prizeKeys[index] || null
+}
+
+// Parse individual item string (extracted from main parsing logic)
+function parseItemString(itemString) {
+	console.log(`Parsing item string: ${itemString}`)
+
+	// Parse the complex item string
+	// Format: "Item:diamond_sword, Name:<red>Diamond Sword, sharpness:5, looting:3"
+	const itemData = {
+		item_id: null, // Will be looked up in items collection
+		quantity: 1, // Default quantity
+		name: '', // Custom display name
+		enchantments: {}
+	}
+
+	// Split by comma and parse each part
+	const parts = itemString.split(',').map((part) => part.trim())
+
+	parts.forEach((part) => {
+		if (part.startsWith('Item:')) {
+			// Extract item type: "Item:diamond_sword" -> "diamond_sword"
+			const itemSlug = part.substring(5) // Remove "Item:"
+
+			// Look up item in database
+			const itemMatch = allItems.value.find((item) => item.material_id === itemSlug)
+			itemData.item_id = itemMatch ? itemMatch.id : itemSlug
+			itemData.catalog_item = !!itemMatch
+			itemData.matched = !!itemMatch
+		} else if (part.startsWith('Name:')) {
+			// Extract custom name: "Name:<red>Diamond Sword" -> "<red>Diamond Sword"
+			itemData.name = part.substring(5) // Remove "Name:"
+		} else if (part.startsWith('amount:')) {
+			// Extract quantity: "amount:5" -> 5
+			itemData.quantity = parseInt(part.substring(7)) || 1
+		} else if (part.startsWith('Player:')) {
+			// Extract player head texture: "Player:1ee3126ff2c343da..." -> "1ee3126ff2c343da..."
+			itemData.player_texture = part.substring(7) // Remove "Player:"
+		} else if (part.startsWith('Skull:')) {
+			// Extract skull database ID: "Skull:7129" -> "7129"
+			itemData.skull_id = part.substring(6) // Remove "Skull:"
+		} else if (part.includes(':')) {
+			// Check if this is a valid enchantment using whitelist
+			const [name, level] = part.split(':')
+			const validEnchantments = getValidEnchantments('1_20') // TODO: Get version from context
+
+			if (name && level && validEnchantments.includes(name.toLowerCase())) {
+				// Extract enchantments: "sharpness:5" -> {sharpness: 5}
+				itemData.enchantments[name] = parseInt(level) || 1
+				console.log(`✅ Found enchantment: ${name}:${level}`)
+			} else if (name && level) {
+				// Store other colon-separated properties as custom data (patterns, etc.)
+				// Skip Amount since we already have quantity at the top level
+				if (name.toLowerCase() !== 'amount') {
+					if (!itemData.custom_properties) {
+						itemData.custom_properties = {}
+					}
+					itemData.custom_properties[name] = level
+				}
+			}
+		}
+	})
+
+	console.log('Parsed item data:', itemData)
+	return itemData
+}
+
+// Save crate rewards to Firestore
+async function saveCrateRewards() {
+	if (!parseResult.value?.finalDbStructure) return
+
+	// Safety check for production database
+	if (!isUsingEmulators() && isProductionDatabase()) {
+		const confirmed = confirm('⚠️ You are about to save to PRODUCTION database. Continue?')
+		if (!confirmed) return
+	}
+
+	isSaving.value = true
+	saveError.value = null
+	saveSuccess.value = null
+
+	try {
+		if (parseResult.value.detectedMode === 'single') {
+			// For single prize mode, save the entire prize as one document
+			const { items_preview, ...rewardDataWithoutItems } = parseResult.value.finalDbStructure
+			const prizeData = {
+				crate_reward_id: targetCrateId.value,
+				...rewardDataWithoutItems,
+				items: items_preview || []
+			}
+
+			await addDoc(collection(db, 'crate_reward_items'), prizeData)
+			saveSuccess.value = `Single prize added to crate: ${targetCrateId.value} (${
+				items_preview?.length || 0
+			} items)`
+		} else {
+			// For full crate mode, save each prize as one document
+			const allPrizes = parseResult.value.allPrizes
+			const prizeKeys = Object.keys(allPrizes)
+			let prizesSaved = 0
+
+			for (const prizeKey of prizeKeys) {
+				// Re-parse each prize to get full mapped structure including items
+				const prizeData = allPrizes[prizeKey]
+
+				// Process the prize data (similar to main parseYaml logic)
+				const items = []
+				if (prizeData.Items && Array.isArray(prizeData.Items)) {
+					for (const itemEntry of prizeData.Items) {
+						if (typeof itemEntry === 'string') {
+							const parsedItem = parseItemString(itemEntry)
+							if (parsedItem) {
+								items.push(parsedItem)
+							}
+						}
+					}
+				}
+
+				// Extract display item and enchantments
+				const displayItemSlug = prizeData.DisplayItem || ''
+				const displayItemMatch = allItems.value.find(
+					(item) => item.material_id === displayItemSlug
+				)
+
+				// Build display_enchantments from prize data
+				const displayEnchantments = {}
+				if (prizeData.DisplayEnchantments && Array.isArray(prizeData.DisplayEnchantments)) {
+					for (const enchString of prizeData.DisplayEnchantments) {
+						const enchMatch = enchString.match(/^(.+):(\d+)$/)
+						if (enchMatch) {
+							const enchId = enchMatch[1]
+							const enchLevel = parseInt(enchMatch[2])
+							const enchItem = allItems.value.find(
+								(item) =>
+									item.material_id === `enchanted_book_${enchId}_${enchLevel}`
+							)
+							if (enchItem) {
+								displayEnchantments[enchItem.id] = enchLevel
+							}
+						}
+					}
+				}
+
+				// Save the entire prize as one document
+				const fullPrizeData = {
+					crate_reward_id: targetCrateId.value,
+					display_name: prizeData.DisplayName || '',
+					display_item: displayItemMatch?.id || displayItemSlug,
+					display_amount: prizeData.DisplayAmount || 1,
+					weight: prizeData.Weight || 50,
+					display_enchantments: displayEnchantments,
+					display_lore: prizeData.DisplayLore || [],
+					firework: prizeData.Firework || false,
+					commands: prizeData.Commands || [],
+					messages: prizeData.Messages || [],
+					display_patterns: prizeData.DisplayPatterns || [],
+					blacklisted_permissions: prizeData['BlackListed-Permissions'] || [],
+					custom_model_data: prizeData.Settings?.['Custom-Model-Data'] || -1,
+					created_at: new Date().toISOString(),
+					updated_at: new Date().toISOString(),
+					import_source: 'yaml_parser',
+					import_timestamp: new Date().toISOString(),
+					original_yaml_key: prizeKey,
+					items: items
+				}
+
+				await addDoc(collection(db, 'crate_reward_items'), fullPrizeData)
+				prizesSaved++
+			}
+
+			saveSuccess.value = `Added ${prizesSaved} prizes to crate: ${targetCrateId.value}`
+			console.log(`Added ${prizesSaved} prizes to crate: ${targetCrateId.value}`)
+		}
+	} catch (error) {
+		console.error('Save error:', error)
+		saveError.value = error.message || 'Failed to save rewards'
+	} finally {
+		isSaving.value = false
+	}
+}
+
 // Statistics - simplified for step-by-step development
 const stats = computed(() => {
 	if (!parseResult.value) return null
@@ -558,36 +808,16 @@ const stats = computed(() => {
 				</label>
 
 				<div class="flex items-center gap-2">
-					<span class="text-sm font-medium text-gray-700">Mode:</span>
-					<label class="flex items-center gap-1">
-						<input
-							v-model="parseMode"
-							type="radio"
-							value="single"
-							class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-						<span class="text-sm text-gray-700">Single Prize</span>
-					</label>
-					<label class="flex items-center gap-1">
-						<input
-							v-model="parseMode"
-							type="radio"
-							value="full"
-							class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-						<span class="text-sm text-gray-700">Full Crate</span>
-					</label>
-				</div>
-
-				<div class="flex gap-2">
-					<button
-						@click="loadExample('full')"
-						class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-						Load Full Crate
-					</button>
-					<button
-						@click="loadExample('single')"
-						class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
-						Load Single Prize
-					</button>
+					<span class="text-sm font-medium text-gray-700">Detected Mode:</span>
+					<span
+						:class="[
+							'px-2 py-1 rounded text-xs font-medium',
+							parseResult?.detectedMode === 'full'
+								? 'bg-blue-100 text-blue-800'
+								: 'bg-purple-100 text-purple-800'
+						]">
+						{{ parseResult?.detectedMode === 'full' ? 'Full Crate' : 'Single Prize' }}
+					</span>
 				</div>
 
 				<button
@@ -685,7 +915,7 @@ const stats = computed(() => {
 				<div v-if="parseResult" class="mt-4 space-y-4">
 					<!-- Prize Navigation for Full Crate Mode -->
 					<div
-						v-if="parseResult.parseMode === 'full' && parseResult.allPrizes"
+						v-if="parseResult.detectedMode === 'full' && parseResult.allPrizes"
 						class="bg-blue-50 border border-blue-200 rounded-lg p-4">
 						<div class="flex items-center justify-between mb-3">
 							<h3 class="font-medium text-gray-900">
@@ -730,7 +960,7 @@ const stats = computed(() => {
 					<div>
 						<h3 class="font-medium text-gray-900 mb-2">
 							{{
-								parseResult.parseMode === 'single'
+								parseResult.detectedMode === 'single'
 									? 'Extracted Prize Data (no wrapper):'
 									: `Prize ${currentPrizeIndex + 1} Data (being processed):`
 							}}
@@ -747,7 +977,53 @@ const stats = computed(() => {
 							>{{ JSON.stringify(parseResult.mappedData, null, 2) }}</pre
 						>
 					</div>
+					<div v-if="parseResult.finalDbStructure">
+						<h3 class="font-medium text-gray-900 mb-2">
+							Final DB Structure (Ready for Firestore):
+						</h3>
+						<pre
+							class="p-3 bg-green-50 border border-green-200 rounded text-xs overflow-x-auto"
+							>{{ JSON.stringify(parseResult.finalDbStructure, null, 2) }}</pre
+						>
+					</div>
 				</div>
+			</div>
+		</div>
+
+		<!-- Save to Database -->
+		<div
+			v-if="parseResult?.finalDbStructure"
+			class="mt-6 bg-white border border-gray-200 rounded-lg p-6">
+			<h3 class="font-medium text-gray-900 mb-4">Save to Database</h3>
+
+			<div class="mb-4">
+				<label class="block text-sm font-medium text-gray-700 mb-2">Target Crate ID:</label>
+				<input
+					v-model="targetCrateId"
+					type="text"
+					placeholder="test-crate-1"
+					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+			</div>
+
+			<button
+				@click="saveCrateRewards"
+				:disabled="isSaving"
+				class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
+				{{ isSaving ? 'Saving...' : 'Save Crate Rewards' }}
+			</button>
+
+			<!-- Success Message -->
+			<div
+				v-if="saveSuccess"
+				class="mt-3 p-3 bg-green-50 border border-green-200 rounded text-green-800 text-sm">
+				{{ saveSuccess }}
+			</div>
+
+			<!-- Error Message -->
+			<div
+				v-if="saveError"
+				class="mt-3 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
+				{{ saveError }}
 			</div>
 		</div>
 
