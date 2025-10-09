@@ -376,6 +376,17 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/dev/yaml-import',
+			name: 'yaml-import-dev',
+			component: () => import('../views/YamlImportDevView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: "YAML Import Dev - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
 			path: '/:pathMatch(.*)*',
 			name: 'not-found',
 			component: () => import('../views/NotFoundView.vue'),
