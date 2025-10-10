@@ -80,15 +80,26 @@ const allCrateRewardItemsQuery = computed(() => {
 
 const { data: allCrateRewardItems } = useCollection(allCrateRewardItemsQuery)
 
-// Get item counts for all crates
+// Get item counts for all crates (NEW: counts items within embedded arrays)
 const crateItemCounts = computed(() => {
 	if (!allCrateRewardItems.value || !crateRewards.value) return {}
 
 	const counts = {}
 	crateRewards.value.forEach((crate) => {
-		counts[crate.id] = allCrateRewardItems.value.filter(
-			(item) => item.crate_reward_id === crate.id
-		).length
+		// For NEW structure: sum up items.length for each document
+		// For OLD structure: count documents (backward compatibility)
+		const documentsForCrate = allCrateRewardItems.value.filter(
+			(doc) => doc.crate_reward_id === crate.id
+		)
+
+		counts[crate.id] = documentsForCrate.reduce((total, doc) => {
+			// If document has items array, count items in array
+			if (doc.items && Array.isArray(doc.items)) {
+				return total + doc.items.length
+			}
+			// Backward compatibility: count document as 1 item
+			return total + 1
+		}, 0)
 	})
 	return counts
 })

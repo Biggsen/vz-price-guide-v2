@@ -38,7 +38,8 @@ import {
 	ArrowUpIcon,
 	ArrowDownIcon,
 	PlayIcon,
-	ChevronDoubleLeftIcon
+	ChevronDoubleLeftIcon,
+	QuestionMarkCircleIcon
 } from '@heroicons/vue/24/outline'
 import { XMarkIcon as XMarkIconMini, XCircleIcon } from '@heroicons/vue/20/solid'
 
@@ -146,6 +147,7 @@ const {
 // Get items for selected crate reward
 const {
 	rewardItems,
+	rewardDocuments,
 	pending: rewardItemsPending,
 	error: rewardItemsError
 } = useCrateRewardItems(selectedCrateId)
@@ -358,11 +360,30 @@ function startAddItem() {
 }
 
 function startEditItem(rewardItem) {
+	// Handle both legacy enchantments and new display_enchantments formats
+	let enchantments = {}
+
+	// Check for new display_enchantments format (object with ID->level mapping)
+	if (rewardItem.display_enchantments && typeof rewardItem.display_enchantments === 'object') {
+		enchantments = { ...rewardItem.display_enchantments }
+	}
+	// Fallback to legacy enchantments format
+	else if (rewardItem.enchantments) {
+		// Handle both array and object formats for legacy enchantments
+		if (Array.isArray(rewardItem.enchantments)) {
+			rewardItem.enchantments.forEach((enchantmentId) => {
+				enchantments[enchantmentId] = 1 // Default level to 1
+			})
+		} else {
+			enchantments = { ...rewardItem.enchantments }
+		}
+	}
+
 	itemForm.value = {
 		item_id: rewardItem.item_id,
 		quantity: rewardItem.quantity,
 		weight: rewardItem.weight,
-		enchantments: { ...rewardItem.enchantments } || {}
+		enchantments: enchantments
 	}
 	addItemFormError.value = null
 	editingItem.value = rewardItem
@@ -391,21 +412,104 @@ function getItemById(itemId) {
 	return allItems.value.find((item) => item.id === itemId) || null
 }
 
-function getItemName(itemId) {
+function getItemName(itemId, rewardItem = null) {
 	const item = getItemById(itemId)
-	return item ? item.name : 'Unknown Item'
+	const name = rewardItem?.display_name || item?.name || 'Unknown Item'
+	return stripColorCodes(name)
+}
+
+function getDisplayItemImage(rewardItem) {
+	// If display_item is set, use that item's image
+	if (rewardItem.display_item) {
+		const displayItem = getItemById(rewardItem.display_item)
+		if (displayItem?.image) {
+			return displayItem.image
+		}
+	}
+
+	// Fallback to the main item's image
+	const mainItem = getItemById(rewardItem.item_id)
+	return mainItem?.image
+}
+
+function generateDisplayName(itemForm) {
+	const item = getItemById(itemForm.item_id)
+	if (!item) return ''
+
+	const quantity = itemForm.quantity || 1
+	const itemName = stripColorCodes(item.name)
+
+	return `<white>${quantity}x ${itemName}`
 }
 
 function getItemValue(rewardItem) {
 	const item = getItemById(rewardItem.item_id)
-	if (!item) return 0
+	if (!item) return 'Unknown'
 	const unitPrice = getEffectivePrice(item, currentVersion.value)
-	return unitPrice * (rewardItem.quantity || 1)
+
+	// Calculate enchantment values
+	let enchantmentValue = 0
+
+	// Handle new display_enchantments format (enchantment ID -> level mapping)
+	if (rewardItem.display_enchantments && typeof rewardItem.display_enchantments === 'object') {
+		for (const [enchantmentId, level] of Object.entries(rewardItem.display_enchantments)) {
+			const enchantmentItem = getItemById(enchantmentId)
+			if (enchantmentItem) {
+				const enchantmentPrice = getEffectivePrice(enchantmentItem, currentVersion.value)
+				enchantmentValue += enchantmentPrice
+			}
+		}
+	}
+	// Handle legacy enchantments format
+	else if (rewardItem.enchantments) {
+		const enchantmentIds = getEnchantmentIds(rewardItem.enchantments)
+
+		for (const enchantmentId of enchantmentIds) {
+			const enchantmentItem = getItemById(enchantmentId)
+			if (enchantmentItem) {
+				const enchantmentPrice = getEffectivePrice(enchantmentItem, currentVersion.value)
+				enchantmentValue += enchantmentPrice
+			}
+		}
+	}
+
+	const baseValue = unitPrice * (rewardItem.quantity || 1)
+	return baseValue + enchantmentValue
 }
 
 function getItemChance(rewardItem) {
 	if (!totalWeight.value || totalWeight.value === 0) return 0
 	return ((rewardItem.weight || 0) / totalWeight.value) * 100
+}
+
+// Helper function to get enchantment IDs from either array or object format
+function getEnchantmentIds(enchantments) {
+	if (!enchantments) return []
+
+	// Handle array format (new structure)
+	if (Array.isArray(enchantments)) {
+		return enchantments
+	}
+
+	// Handle object format (legacy structure)
+	if (typeof enchantments === 'object') {
+		return Object.keys(enchantments)
+	}
+
+	return []
+}
+
+// Helper function to strip color codes from text
+function stripColorCodes(text) {
+	if (!text) return ''
+
+	// Remove <color> format (e.g., <red>, <blue>, <#ff0000>)
+	let cleaned = text.replace(/<[^>]*>/g, '')
+
+	// Remove § format color codes (e.g., §c, §4, §r)
+	cleaned = cleaned.replace(/§[0-9a-fk-or]/gi, '')
+
+	return cleaned.trim()
 }
 
 // Weight editing functions
@@ -440,7 +544,7 @@ async function saveWeight(rewardItem) {
 	// Only update if the value changed
 	if (newWeight !== rewardItem.weight) {
 		try {
-			await updateCrateRewardItem(rewardItem.id, { weight: newWeight })
+			await updateCrateRewardItem(rewardItem.id, { weight: newWeight }, rewardDocuments.value)
 		} catch (err) {
 			console.error('Failed to update item weight:', err)
 			error.value = 'Failed to update item weight'
@@ -487,11 +591,18 @@ async function saveItem() {
 	try {
 		if (editingItem.value) {
 			// Update existing item
-			await updateCrateRewardItem(editingItem.value.id, itemForm.value)
+			await updateCrateRewardItem(editingItem.value.id, itemForm.value, rewardDocuments.value)
 		} else {
 			// Add new item - pass the selected item data to avoid extra queries
 			const selectedItem = getItemById(itemForm.value.item_id)
-			await addCrateRewardItem(selectedCrateId.value, itemForm.value, selectedItem)
+
+			// Generate display_name for new items
+			const itemDataWithDisplayName = {
+				...itemForm.value,
+				display_name: generateDisplayName(itemForm.value)
+			}
+
+			await addCrateRewardItem(selectedCrateId.value, itemDataWithDisplayName, selectedItem)
 		}
 
 		showAddItemForm.value = false
@@ -513,7 +624,7 @@ function confirmRemoveItem(item) {
 	itemToDelete.value = {
 		type: 'item',
 		id: item.id,
-		name: getItemById(item.item_id)?.name || 'Unknown Item'
+		name: getItemName(item.item_id, item)
 	}
 	showDeleteModal.value = true
 }
@@ -528,7 +639,7 @@ async function executeDelete() {
 		if (itemToDelete.value.type === 'crate') {
 			await deleteCrateRewardFromDetail()
 		} else if (itemToDelete.value.type === 'item') {
-			await deleteCrateRewardItem(itemToDelete.value.id)
+			await deleteCrateRewardItem(itemToDelete.value.id, rewardDocuments.value)
 		}
 	} catch (err) {
 		error.value = `Failed to delete ${itemToDelete.value.type}: ` + err.message
@@ -550,7 +661,9 @@ async function clearAllRewards() {
 	try {
 		// Delete all reward items for the selected crate
 		if (rewardItems.value && rewardItems.value.length > 0) {
-			const deletePromises = rewardItems.value.map((item) => deleteCrateRewardItem(item.id))
+			const deletePromises = rewardItems.value.map((item) =>
+				deleteCrateRewardItem(item.id, rewardDocuments.value)
+			)
 			await Promise.all(deletePromises)
 		}
 		showClearAllModal.value = false
@@ -601,14 +714,17 @@ function copyRewardList() {
 	const listText = sortedItems
 		.map((item) => {
 			const itemData = getItemById(item.item_id)
-			if (!itemData) return `${item.item_id} (${item.quantity || 1}) - Value: Unknown`
+			if (!itemData)
+				return `${stripColorCodes(item.display_name || item.item_id)} (${
+					item.quantity || 1
+				}) - Value: Unknown`
 
 			const value = getItemValue(item)
 			const chance = getItemChance(item).toFixed(1)
 
-			return `${item.quantity}x ${itemData.name} - Value: ${Math.ceil(value)} - Weight: ${
-				item.weight
-			} - Chance: ${chance}%`
+			return `${item.quantity}x ${stripColorCodes(itemData.name)} - Value: ${Math.ceil(
+				value
+			)} - Weight: ${item.weight} - Chance: ${chance}%`
 		})
 		.join('\n')
 
@@ -650,7 +766,38 @@ function formatEnchantmentName(enchantmentId) {
 	if (!enchantmentId) return ''
 
 	// Get enchantment item from allItems
-	const itemName = getItemById(enchantmentId)?.name || enchantmentId
+	const enchantmentItem = getItemById(enchantmentId)
+	if (!enchantmentItem) return enchantmentId
+
+	// Try to extract from material_id first (most reliable)
+	const materialId = enchantmentItem.material_id
+	if (materialId && materialId.startsWith('enchanted_book_')) {
+		// Extract enchantment name from material_id like "enchanted_book_aqua_affinity_1"
+		const enchantmentPart = materialId.replace('enchanted_book_', '')
+
+		// Try to extract enchantment with level first (e.g., "unbreaking_3" -> "unbreaking 3")
+		const enchantWithLevelMatch = enchantmentPart.match(/^(.+)_(\d+)$/)
+		if (enchantWithLevelMatch) {
+			const enchantName = enchantWithLevelMatch[1]
+			const level = enchantWithLevelMatch[2]
+
+			// Capitalize each word
+			const capitalizedEnchant = enchantName.replace(/\b\w/g, (l) => l.toUpperCase())
+			return `${capitalizedEnchant} ${level}`
+		}
+
+		// Try enchantment without level (e.g., "silk_touch" -> "silk touch")
+		const enchantWithoutLevelMatch = enchantmentPart.match(/^(.+)$/)
+		if (enchantWithoutLevelMatch) {
+			const enchantName = enchantWithoutLevelMatch[1]
+			// Capitalize each word
+			const capitalizedEnchant = enchantName.replace(/\b\w/g, (l) => l.toUpperCase())
+			return capitalizedEnchant
+		}
+	}
+
+	// Fallback: Try to extract from item name
+	const itemName = enchantmentItem.name || enchantmentId
 
 	// Expected format: "Enchanted Book (Sharpness IV)"
 	const match = itemName.match(/Enchanted Book \((.+?)\s*(I|II|III|IV|V|X)?\)/)
@@ -678,23 +825,6 @@ function formatEnchantmentName(enchantmentId) {
 			// No level found, just return the enchantment name
 			return capitalizedEnchantment
 		}
-	}
-
-	// Try to extract from material_id if name doesn't match expected format
-	const materialId = getItemById(enchantmentId)?.material_id || enchantmentId
-	if (materialId.startsWith('enchanted_book_')) {
-		// Extract enchantment name from material_id like "enchanted_book_aqua_affinity_1"
-		const enchantmentPart = materialId.replace('enchanted_book_', '')
-		const parts = enchantmentPart.split('_')
-
-		// Remove the last part if it's a number (level)
-		if (parts.length > 1 && /^\d+$/.test(parts[parts.length - 1])) {
-			parts.pop()
-		}
-
-		// Join and capitalize
-		const enchantment = parts.join(' ').replace(/\b\w/g, (l) => l.toUpperCase())
-		return enchantment
 	}
 
 	// Final fallback - clean up the name
@@ -837,7 +967,7 @@ async function increaseItemWeight(rewardItem) {
 	const newWeight = Math.min(rewardItem.weight + 10, 1000)
 	if (newWeight !== rewardItem.weight) {
 		try {
-			await updateCrateRewardItem(rewardItem.id, { weight: newWeight })
+			await updateCrateRewardItem(rewardItem.id, { weight: newWeight }, rewardDocuments.value)
 		} catch (err) {
 			console.error('Failed to update item weight:', err)
 			error.value = 'Failed to update item weight'
@@ -849,7 +979,7 @@ async function decreaseItemWeight(rewardItem) {
 	const newWeight = Math.max(rewardItem.weight - 10, 1)
 	if (newWeight !== rewardItem.weight) {
 		try {
-			await updateCrateRewardItem(rewardItem.id, { weight: newWeight })
+			await updateCrateRewardItem(rewardItem.id, { weight: newWeight }, rewardDocuments.value)
 		} catch (err) {
 			console.error('Failed to update item weight:', err)
 			error.value = 'Failed to update item weight'
@@ -1285,18 +1415,16 @@ watch(selectedCrate, (crate) => {
 										<div
 											class="w-16 bg-highland border-r-2 border-white flex items-center justify-center">
 											<img
-												v-if="getItemById(rewardItem.item_id)?.image"
-												:src="
-													getImageUrl(
-														getItemById(rewardItem.item_id).image
-													)
-												"
+												v-if="getDisplayItemImage(rewardItem)"
+												:src="getImageUrl(getDisplayItemImage(rewardItem))"
 												:alt="getItemById(rewardItem.item_id)?.name"
 												loading="lazy"
 												decoding="async"
 												fetchpriority="low"
 												class="max-w-10 max-h-10" />
-											<span v-else class="text-gray-400 text-xs">?</span>
+											<QuestionMarkCircleIcon
+												v-else
+												class="w-8 h-8 text-white" />
 										</div>
 										<div class="flex-1 flex items-center justify-between">
 											<div class="pt-2 pb-3">
@@ -1306,47 +1434,56 @@ watch(selectedCrate, (crate) => {
 															const item = getItemById(
 																rewardItem.item_id
 															)
-															const itemName =
-																item?.name || 'Unknown Item'
-															const hasEnchantments =
-																Object.keys(
-																	rewardItem.enchantments || {}
-																).length > 0
-
-															let finalName
-															if (hasEnchantments) {
-																if (
-																	itemName
-																		.toLowerCase()
-																		.includes('enchanted')
-																) {
-																	finalName = itemName
-																} else {
-																	finalName = `enchanted ${itemName}`
-																}
-															} else {
-																finalName = itemName
-															}
-
-															return `${rewardItem.quantity}x ${finalName}`
+															const itemName = stripColorCodes(
+																rewardItem.display_name ||
+																	item?.name ||
+																	'Unknown Item'
+															)
+															return itemName
 														})()
 													}}
 												</h4>
 												<div class="text-sm text-heavy-metal">
 													<span class="font-medium">Value:</span>
-													{{ Math.ceil(getItemValue(rewardItem)) }}
+													{{
+														(() => {
+															const value = getItemValue(rewardItem)
+															return typeof value === 'number'
+																? Math.ceil(value)
+																: value
+														})()
+													}}
+												</div>
+												<!-- Commands Display -->
+												<div
+													v-if="
+														rewardItem.commands &&
+														rewardItem.commands.length > 0
+													"
+													class="text-sm text-heavy-metal">
+													<span class="font-medium">Commands:</span>
+													<div class="mt-1 space-y-1">
+														<div
+															v-for="(
+																command, index
+															) in rewardItem.commands"
+															:key="index"
+															class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+															{{ command }}
+														</div>
+													</div>
 												</div>
 												<!-- Enchantments Display -->
 												<div
 													v-if="
 														rewardItem.enchantments &&
-														Object.keys(rewardItem.enchantments)
+														getEnchantmentIds(rewardItem.enchantments)
 															.length > 0
 													"
 													class="mt-1">
 													<div class="flex flex-wrap gap-1">
 														<span
-															v-for="enchantmentId in Object.keys(
+															v-for="enchantmentId in getEnchantmentIds(
 																rewardItem.enchantments
 															)"
 															:key="enchantmentId"
@@ -2137,25 +2274,26 @@ watch(selectedCrate, (crate) => {
 								class="p-2 bg-white rounded border">
 								<div class="flex items-start gap-2 mb-1">
 									<img
-										:src="
-											getImageUrl(
-												result.itemData?.image ||
-													'/images/items/unknown.png'
-											)
-										"
+										v-if="getDisplayItemImage(result.item)"
+										:src="getImageUrl(getDisplayItemImage(result.item))"
 										:alt="result.itemData?.name"
 										loading="lazy"
 										decoding="async"
 										fetchpriority="low"
 										class="max-w-6 max-h-6 object-contain" />
+									<QuestionMarkCircleIcon v-else class="w-6 h-6 text-white" />
 									<div class="flex-1 min-w-0">
 										<div class="text-xs font-medium text-gray-900 truncate">
-											{{ result.item.quantity }}x
-											{{ result.itemData?.name || 'Unknown' }}
+											{{
+												result.item.display_name ||
+												result.itemData?.name ||
+												'Unknown'
+											}}
 											<span
 												v-if="
 													result.item.enchantments &&
-													Object.keys(result.item.enchantments).length > 0
+													getEnchantmentIds(result.item.enchantments)
+														.length > 0
 												"
 												class="text-blue-600">
 												(enchanted)
@@ -2168,12 +2306,13 @@ watch(selectedCrate, (crate) => {
 										<div
 											v-if="
 												result.item.enchantments &&
-												Object.keys(result.item.enchantments).length > 0
+												getEnchantmentIds(result.item.enchantments).length >
+													0
 											"
 											class="mt-1">
 											<div class="flex flex-wrap gap-x-2 gap-y-1">
 												<span
-													v-for="enchantmentId in Object.keys(
+													v-for="enchantmentId in getEnchantmentIds(
 														result.item.enchantments
 													)"
 													:key="enchantmentId"

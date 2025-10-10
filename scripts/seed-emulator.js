@@ -2483,6 +2483,49 @@ const TEST_DATA = {
 				'1_19': 20.0
 			},
 			recipes_by_version: {}
+		},
+		{
+			id: 'SunflowerSeedItem2024',
+			material_id: 'sunflower',
+			name: 'sunflower',
+			image: '/images/items/sunflower.png',
+			url: 'https://minecraft.fandom.com/wiki/Sunflower',
+			stack: 64,
+			category: 'plants',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 2.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'ShieldSeedItem2024',
+			material_id: 'shield',
+			name: 'shield',
+			image: '/images/items/shield.png',
+			url: 'https://minecraft.fandom.com/wiki/Shield',
+			stack: 1,
+			category: 'armor',
+			subcategory: '',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_16': 32.0,
+				'1_18': 27.0
+			},
+			recipes_by_version: {
+				'1_16': {
+					ingredients: [
+						{ material_id: 'iron_ingot', quantity: 1 },
+						{ material_id: 'oak_planks', quantity: 6 }
+					],
+					output_count: 1
+				}
+			}
 		}
 	],
 	shop_items: [
@@ -2635,56 +2678,89 @@ const TEST_DATA = {
 		{
 			id: 'test-crate-item-1',
 			crate_reward_id: 'test-crate-1',
-			item_id: 'XVCyPYaBBsdifkVvJjJe',
-			quantity: 1,
 			weight: 25,
-			display_name: '',
-			display_item: 'diamond',
+			display_name: '1x diamond',
+			display_item: 'XVCyPYaBBsdifkVvJjJe',
 			display_amount: 1,
 			custom_model_data: -1,
-			enchantments: {},
+			import_source: 'manual',
+			items: [
+				{
+					item_id: 'XVCyPYaBBsdifkVvJjJe',
+					quantity: 1,
+					enchantments: {},
+					catalog_item: true,
+					matched: true,
+					name: ''
+				}
+			],
 			created_at: nowIso(),
 			updated_at: nowIso()
 		},
 		{
 			id: 'test-crate-item-2',
 			crate_reward_id: 'test-crate-1',
-			item_id: 'UXTtxkUcRiIfpMcYsKFa',
-			quantity: 5,
 			weight: 50,
-			display_name: '',
-			display_item: 'iron_ingot',
+			display_name: '1x iron ingot',
+			display_item: 'UXTtxkUcRiIfpMcYsKFa',
 			display_amount: 5,
 			custom_model_data: -1,
-			enchantments: {},
+			import_source: 'manual',
+			items: [
+				{
+					item_id: 'UXTtxkUcRiIfpMcYsKFa',
+					quantity: 5,
+					enchantments: {},
+					catalog_item: true,
+					matched: true,
+					name: ''
+				}
+			],
 			created_at: nowIso(),
 			updated_at: nowIso()
 		},
 		{
 			id: 'test-crate-item-3',
 			crate_reward_id: 'test-crate-1',
-			item_id: 'VCppHTgrqhEqkJkQWlDq',
-			quantity: 48,
 			weight: 55,
-			display_name: '',
-			display_item: 'firework_rocket',
+			display_name: '1x firework rocket',
+			display_item: 'VCppHTgrqhEqkJkQWlDq',
 			display_amount: 48,
 			custom_model_data: -1,
-			enchantments: {},
+			import_source: 'manual',
+			items: [
+				{
+					item_id: 'VCppHTgrqhEqkJkQWlDq',
+					quantity: 48,
+					enchantments: {},
+					catalog_item: true,
+					matched: true,
+					name: ''
+				}
+			],
 			created_at: nowIso(),
 			updated_at: nowIso()
 		},
 		{
 			id: 'test-crate-item-4',
 			crate_reward_id: 'test-crate-1',
-			item_id: 'enchbook001',
-			quantity: 1,
 			weight: 10,
-			display_name: '',
-			display_item: 'enchanted_book',
+			display_name: '1x enchanted book',
+			display_item: 'xsdQqpscAytYFvladiMw',
 			display_amount: 1,
+			display_enchantments: ['FAolooXwUfooppFZFmCO'],
 			custom_model_data: -1,
-			enchantments: {},
+			import_source: 'manual',
+			items: [
+				{
+					item_id: 'xsdQqpscAytYFvladiMw',
+					quantity: 1,
+					enchantments: ['FAolooXwUfooppFZFmCO'],
+					catalog_item: true,
+					matched: true,
+					name: ''
+				}
+			],
 			created_at: nowIso(),
 			updated_at: nowIso()
 		}
