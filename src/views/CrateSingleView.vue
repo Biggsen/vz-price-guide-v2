@@ -957,9 +957,63 @@ function getFormattedYamlForItem(rewardItem) {
 	if (!rewardItem || !allItems.value) return null
 
 	const item = allItems.value.find((i) => i.id === rewardItem.item_id)
-	if (!item) return null
+	// Item can be null for command-based rewards
 
 	return formatRewardItemForYaml(rewardItem, item, 1, allItems.value)
+}
+
+function getYamlPreview(rewardItem) {
+	const formatted = getFormattedYamlForItem(rewardItem)
+	if (!formatted) return 'Loading...'
+
+	let yaml = `    "1":\n`
+	yaml += `      DisplayName: "${formatted.displayName}"\n`
+
+	// Add DisplayEnchantments if present
+	if (formatted.displayEnchantments && formatted.displayEnchantments.length > 0) {
+		yaml += `      DisplayEnchantments:\n`
+		formatted.displayEnchantments.forEach((enchantment) => {
+			yaml += `        - "${enchantment}"\n`
+		})
+	}
+
+	yaml += `      DisplayItem: "${formatted.displayItem}"\n`
+	yaml += `      Settings: { Custom-Model-Data: ${formatted.customModelData}, Model: { Namespace: "", Id: "" } }\n`
+	yaml += `      DisplayAmount: ${formatted.displayAmount}\n`
+	yaml += `      Weight: ${formatted.weight}\n`
+
+	// Add Items section (always present)
+	yaml += `      Items:\n`
+	if (formatted.items && formatted.items.length > 0) {
+		// Export embedded items array
+		formatted.items.forEach((itemStr) => {
+			yaml += `        - "${itemStr}"\n`
+		})
+	} else if (formatted.itemString) {
+		// Legacy: Export single item string
+		yaml += `        - "${formatted.itemString}"\n`
+	} else {
+		// No items (command-based reward)
+		yaml += `        []\n`
+	}
+
+	// Add Commands section if present
+	if (formatted.commands && formatted.commands.length > 0) {
+		yaml += `      Commands:\n`
+		formatted.commands.forEach((command) => {
+			yaml += `        - "${command}"\n`
+		})
+	}
+
+	// Add Messages section if present
+	if (formatted.messages && formatted.messages.length > 0) {
+		yaml += `      Messages:\n`
+		formatted.messages.forEach((message) => {
+			yaml += `        - "${message}"\n`
+		})
+	}
+
+	return yaml
 }
 
 // Item weight adjustment functions (for existing items in the list)
@@ -1526,16 +1580,7 @@ watch(selectedCrate, (crate) => {
 
 													<pre
 														v-if="isReviewPanelExpanded(rewardItem.id)"
-														class="mt-3 text-xs bg-white p-3 rounded border overflow-x-auto"><code>{{ getFormattedYamlForItem(rewardItem) ? `    "1":
-      DisplayName: "${getFormattedYamlForItem(rewardItem).displayName}"${getFormattedYamlForItem(rewardItem).displayEnchantments && getFormattedYamlForItem(rewardItem).displayEnchantments.length > 0 ? `
-      DisplayEnchantments:${getFormattedYamlForItem(rewardItem).displayEnchantments.map(enchantment => `
-        - "${enchantment}"`).join('')}` : ''}
-      DisplayItem: "${getFormattedYamlForItem(rewardItem).displayItem}"
-      Settings: { Custom-Model-Data: ${getFormattedYamlForItem(rewardItem).customModelData}, Model: { Namespace: "", Id: "" } }
-      DisplayAmount: ${getFormattedYamlForItem(rewardItem).displayAmount}
-      Weight: ${getFormattedYamlForItem(rewardItem).weight}
-      Items:
-        - "${getFormattedYamlForItem(rewardItem).itemString}"` : 'Loading...' }}</code></pre>
+														class="mt-3 text-xs bg-white p-3 rounded border overflow-x-auto"><code>{{ getYamlPreview(rewardItem) }}</code></pre>
 												</div>
 											</div>
 											<!-- Weight and Chance Boxes -->
