@@ -875,8 +875,10 @@ function selectItem(item) {
 		item.material_id.startsWith('enchanted_book_') &&
 		item.material_id !== 'enchanted_book'
 	) {
-		// Find the base enchanted book item
-		const baseEnchantedBook = allItems.value.find((item) => item.id === 'enchbook000')
+		// Find the base enchanted book item by material_id instead of hardcoded ID
+		const baseEnchantedBook = allItems.value.find(
+			(item) => item.material_id === 'enchanted_book'
+		)
 		if (baseEnchantedBook) {
 			// Use the base enchanted book instead
 			itemForm.value.item_id = baseEnchantedBook.id
