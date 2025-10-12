@@ -139,6 +139,9 @@ export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 
 		const now = new Date().toISOString()
 
+		// Convert enchantments object to array format for consistency with YAML imports
+		const enchantmentsArray = itemData.enchantments ? Object.keys(itemData.enchantments) : []
+
 		// Create NEW structure with single item in items array
 		const rewardDocument = {
 			crate_reward_id: crateId,
@@ -146,16 +149,17 @@ export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 			display_name: itemData.display_name || '',
 			display_item: itemData.display_item || materialId,
 			display_amount: itemData.display_amount || itemData.quantity || 1,
+			display_enchantments: enchantmentsArray, // Add missing display_enchantments field
 			custom_model_data: itemData.custom_model_data || -1,
 			import_source: 'manual',
 			items: [
 				{
 					item_id: itemData.item_id,
 					quantity: itemData.quantity || 1,
-					enchantments: itemData.enchantments || {},
+					enchantments: enchantmentsArray, // Convert object to array format
 					catalog_item: true,
 					matched: true,
-					name: itemData.display_name || ''
+					name: '' // Only populated for imported items with special names
 				}
 			],
 			created_at: now,
@@ -190,25 +194,50 @@ export async function updateCrateRewardItem(itemId, updates, rewardDocuments = n
 				throw new Error(`Reward document not found: ${documentId}`)
 			}
 
+			// Convert enchantments object to array format if enchantments are being updated
+			let processedUpdates = { ...updates }
+			if (updates.enchantments && typeof updates.enchantments === 'object') {
+				processedUpdates.enchantments = Object.keys(updates.enchantments)
+			}
+
 			// Update the specific item in the items array
 			const updatedItems = [...rewardDoc.items]
 			updatedItems[itemIndex] = {
 				...updatedItems[itemIndex],
-				...updates
+				...processedUpdates
+			}
+
+			// Prepare document-level updates
+			const documentUpdates = {
+				items: updatedItems,
+				updated_at: new Date().toISOString()
+			}
+
+			// Update display_enchantments if enchantments were changed
+			if (updates.enchantments) {
+				documentUpdates.display_enchantments = processedUpdates.enchantments
 			}
 
 			// Update the document with the modified items array
-			await updateDoc(doc(db, 'crate_reward_items', documentId), {
-				items: updatedItems,
-				updated_at: new Date().toISOString()
-			})
+			await updateDoc(doc(db, 'crate_reward_items', documentId), documentUpdates)
 
 			return true
 		} else {
 			// Direct document ID - update the whole document (backward compatibility)
+			// Convert enchantments object to array format if enchantments are being updated
+			let processedUpdates = { ...updates }
+			if (updates.enchantments && typeof updates.enchantments === 'object') {
+				processedUpdates.enchantments = Object.keys(updates.enchantments)
+			}
+
 			const updateData = {
-				...updates,
+				...processedUpdates,
 				updated_at: new Date().toISOString()
+			}
+
+			// Update display_enchantments if enchantments were changed
+			if (updates.enchantments) {
+				updateData.display_enchantments = processedUpdates.enchantments
 			}
 
 			await updateDoc(doc(db, 'crate_reward_items', itemId), updateData)
@@ -343,6 +372,7 @@ export function flattenRewardItems(rewardDocuments) {
 				display_name: rewardDoc.display_name,
 				display_item: rewardDoc.display_item,
 				display_amount: rewardDoc.display_amount,
+				display_enchantments: rewardDoc.display_enchantments,
 				custom_model_data: rewardDoc.custom_model_data,
 				commands: rewardDoc.commands,
 				messages: rewardDoc.messages,
@@ -375,6 +405,7 @@ export function flattenRewardItems(rewardDocuments) {
 				display_name: rewardDoc.display_name,
 				display_item: rewardDoc.display_item,
 				display_amount: rewardDoc.display_amount,
+				display_enchantments: rewardDoc.display_enchantments,
 				custom_model_data: rewardDoc.custom_model_data,
 				enchantments: rewardDoc.enchantments || {},
 				commands: rewardDoc.commands,
@@ -491,314 +522,29 @@ export function calculateCrateRewardTotalValue(rewardItems, allItems, version = 
 }
 
 /**
- * Format a single reward item for YAML export
+ * Convert an item object back to Crazy Crates item string format
  */
-export function formatRewardItemForYaml(rewardItem, item, prizeId, allItems = []) {
-	if (!rewardItem) return null
+function itemObjectToItemString(itemObj, allItems = []) {
+	if (!itemObj) return ''
 
-	// Command-based rewards don't require an item
-	const isCommandBasedReward = !item && rewardItem.commands && rewardItem.commands.length > 0
-	const isItemBasedReward = item !== null
+	// Find the item document to get material_id
+	const itemDoc = allItems.find((i) => i.id === itemObj.item_id)
+	if (!itemDoc) return ''
 
-	// If neither item nor commands, return null
-	if (!isItemBasedReward && !isCommandBasedReward) return null
+	let itemString = `item:${itemDoc.material_id}`
+	itemString += `, amount:${itemObj.quantity || 1}`
 
-	let displayName
-	let displayItem
-	let displayAmount
-	let itemString = ''
-	const displayEnchantments = []
-	const weight = rewardItem.weight || 50
-
-	// Handle item-based rewards
-	if (isItemBasedReward) {
-		// Check if item has enchantments
-		const hasEnchantments =
-			(rewardItem.enchantments &&
-				Array.isArray(rewardItem.enchantments) &&
-				rewardItem.enchantments.length > 0) ||
-			(rewardItem.enchantments &&
-				!Array.isArray(rewardItem.enchantments) &&
-				Object.keys(rewardItem.enchantments).length > 0) ||
-			(item &&
-				item.material_id &&
-				item.material_id.startsWith('enchanted_book_') &&
-				item.material_id !== 'enchanted_book')
-
-		// Use display_name as-is from the reward item config
-		displayName = rewardItem.display_name
-
-		// For exports, use the display_item field (not the reward item's material_id)
-		if (rewardItem.display_item) {
-			// If display_item is a document ID, try to find the material_id
-			const displayItemObj = allItems.find((i) => i.id === rewardItem.display_item)
-			displayItem = displayItemObj ? displayItemObj.material_id : rewardItem.display_item
-		} else {
-			displayItem = item ? item.material_id : 'unknown_item'
-		}
-
-		displayAmount = rewardItem.quantity
-	} else {
-		// Handle command-based rewards (no item)
-		// Use display_name as-is from the reward item config
-		displayName = rewardItem.display_name
-
-		// Try to get display_item from the rewardItem or use a default
-		if (rewardItem.display_item) {
-			// If display_item is a document ID, try to find the material_id
-			const displayItemObj = allItems.find((i) => i.id === rewardItem.display_item)
-			displayItem = displayItemObj ? displayItemObj.material_id : rewardItem.display_item
-		} else {
-			displayItem = 'tripwire_hook' // Default display item for command rewards
-		}
-
-		displayAmount = rewardItem.display_amount || 1
-	}
-
-	// Build the item string (only for item-based rewards)
-	if (isItemBasedReward) {
-		// Handle enchanted books differently - use base item and list enchantments separately
-		if (
-			item &&
-			item.material_id &&
-			(item.material_id === 'enchanted_book' ||
-				item.material_id.startsWith('enchanted_book_'))
-		) {
-			itemString = `item:enchanted_book`
-			// Always include amount for consistency
-			itemString += `, amount:${rewardItem.quantity}`
-
-			// For enchanted books, extract enchantment from material_id if not in enchantments object
-			if (
-				item &&
-				item.material_id &&
-				item.material_id.startsWith('enchanted_book_') &&
-				item.material_id !== 'enchanted_book'
-			) {
-				// Try to extract enchantment with level first (e.g., "enchanted_book_mending_1" -> "mending:1")
-				const enchantWithLevelMatch = item.material_id.match(/^enchanted_book_(.+)_(\d+)$/)
-				if (enchantWithLevelMatch) {
-					const enchantName = enchantWithLevelMatch[1] // Get the enchantment name
-					const enchantLevel = parseInt(enchantWithLevelMatch[2]) // Get the level as number
-					itemString += `, ${enchantName}:${enchantLevel}`
-				} else {
-					// Try to extract enchantment without level (e.g., "enchanted_book_silk_touch" -> "silk_touch:1")
-					const enchantWithoutLevelMatch = item.material_id.match(/^enchanted_book_(.+)$/)
-					if (enchantWithoutLevelMatch) {
-						const enchantName = enchantWithoutLevelMatch[1] // Get the enchantment name
-						itemString += `, ${enchantName}:1` // Default to level 1
-					}
-				}
-			}
-
-			// Add enchantments from enchantments object if any
-			if (
-				rewardItem.enchantments &&
-				((Array.isArray(rewardItem.enchantments) && rewardItem.enchantments.length > 0) ||
-					(!Array.isArray(rewardItem.enchantments) &&
-						Object.keys(rewardItem.enchantments).length > 0))
-			) {
-				// Handle both array format (new) and object format (legacy)
-				const enchantmentEntries = Array.isArray(rewardItem.enchantments)
-					? rewardItem.enchantments.map((id) => [id, 1]) // Convert array to [id, level] format
-					: Object.entries(rewardItem.enchantments)
-
-				enchantmentEntries.forEach(([enchant, level]) => {
-					// Look up the enchantment item to get its name (same logic as regular items)
-					const enchantItem = allItems.find((item) => item.id === enchant)
-					if (enchantItem && enchantItem.name) {
-						// Extract enchantment name and level from name like "enchanted book (unbreaking iii)"
-						const match = enchantItem.name.match(/^enchanted book \((.+)\)$/)
-						if (match) {
-							const contentInParentheses = match[1].trim()
-
-							// Split by spaces and process each part
-							const parts = contentInParentheses.split(' ')
-
-							// Find the last part that's a roman numeral
-							const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v']
-							let levelIndex = -1
-							let romanLevel = null
-
-							for (let i = parts.length - 1; i >= 0; i--) {
-								if (romanNumerals.includes(parts[i].toLowerCase())) {
-									levelIndex = i
-									romanLevel = parts[i].toLowerCase()
-									break
-								}
-							}
-
-							// Extract enchantment name (everything except the level)
-							const enchantmentParts =
-								levelIndex >= 0 ? parts.slice(0, levelIndex) : parts
-							const enchantment = enchantmentParts.join('_') // Use underscores for YAML format
-
-							// Convert roman numerals to numbers for display
-							const levelMap = {
-								i: 1,
-								ii: 2,
-								iii: 3,
-								iv: 4,
-								v: 5
-							}
-							const displayLevel = romanLevel ? levelMap[romanLevel] : level
-
-							itemString += `, ${enchantment}:${displayLevel}`
-						} else {
-							// Fallback if name doesn't match expected format
-							itemString += `, ${enchant}:${level}`
-						}
-					} else {
-						// Fallback if enchantment item not found
-						itemString += `, ${enchant}:${level}`
-					}
-				})
-			}
-		} else {
-			// Regular items (gear, tools, etc.)
-			if (item) {
-				itemString = `item:${item.material_id}`
-				// Always include amount for consistency
-				itemString += `, amount:${rewardItem.quantity}`
-			}
-			// For command-based rewards (no item), itemString remains empty
-
-			// Add enchantments if any (only for item-based rewards)
-			if (
-				item &&
-				rewardItem.enchantments &&
-				((Array.isArray(rewardItem.enchantments) && rewardItem.enchantments.length > 0) ||
-					(!Array.isArray(rewardItem.enchantments) &&
-						Object.keys(rewardItem.enchantments).length > 0))
-			) {
-				// Handle both array format (new) and object format (legacy)
-				const enchantmentEntries = Array.isArray(rewardItem.enchantments)
-					? rewardItem.enchantments.map((id) => [id, 1]) // Convert array to [id, level] format
-					: Object.entries(rewardItem.enchantments)
-
-				enchantmentEntries.forEach(([enchant, level]) => {
-					// Look up the enchantment item to get its name
-					const enchantItem = allItems.find((item) => item.id === enchant)
-					if (enchantItem && enchantItem.name) {
-						// Extract enchantment name and level from name like "enchanted book (unbreaking iii)"
-						const match = enchantItem.name.match(/^enchanted book \((.+)\)$/)
-						if (match) {
-							const contentInParentheses = match[1].trim()
-
-							// Split by spaces and process each part
-							const parts = contentInParentheses.split(' ')
-
-							// Find the last part that's a roman numeral
-							const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v']
-							let levelIndex = -1
-							let romanLevel = null
-
-							for (let i = parts.length - 1; i >= 0; i--) {
-								if (romanNumerals.includes(parts[i].toLowerCase())) {
-									levelIndex = i
-									romanLevel = parts[i].toLowerCase()
-									break
-								}
-							}
-
-							// Extract enchantment name (everything except the level)
-							const enchantmentParts =
-								levelIndex >= 0 ? parts.slice(0, levelIndex) : parts
-							const enchantment = enchantmentParts.join('_') // Use underscores for YAML format
-
-							// Convert roman numerals to numbers for display
-							const levelMap = {
-								i: 1,
-								ii: 2,
-								iii: 3,
-								iv: 4,
-								v: 5
-							}
-							const displayLevel = romanLevel ? levelMap[romanLevel] : 1
-
-							itemString += `, ${enchantment}:${displayLevel}`
-						} else {
-							// Fallback if name doesn't match expected format
-							// Try to extract enchantment name from the enchant ID
-							let enchantmentName = enchant
-							if (enchant.startsWith('enchanted_book_')) {
-								// Extract from material_id format like "enchanted_book_aqua_affinity_1"
-								enchantmentName = enchant.replace('enchanted_book_', '')
-								// Remove level suffix if present
-								enchantmentName = enchantmentName.replace(/_\d+$/, '')
-							}
-							itemString += `, ${enchantmentName}:${level}`
-						}
-					} else {
-						// Fallback if enchantment item not found
-						// Try to extract enchantment name from the enchant ID
-						let enchantmentName = enchant
-						if (enchant.startsWith('enchanted_book_')) {
-							// Extract from material_id format like "enchanted_book_aqua_affinity_1"
-							enchantmentName = enchant.replace('enchanted_book_', '')
-							// Remove level suffix if present
-							enchantmentName = enchantmentName.replace(/_\d+$/, '')
-						}
-						itemString += `, ${enchantmentName}:${level}`
-					}
-				})
-			}
-		}
-
-		// Build display enchantments array (only for item-based rewards)
-		// Handle enchanted books - extract enchantment from material_id first
-		if (
-			item &&
-			item.material_id &&
-			(item.material_id === 'enchanted_book' ||
-				item.material_id.startsWith('enchanted_book_'))
-		) {
-			// For enchanted books, extract enchantment from material_id if not in enchantments object
-			if (
-				item &&
-				item.material_id &&
-				item.material_id.startsWith('enchanted_book_') &&
-				item.material_id !== 'enchanted_book'
-			) {
-				// Try to extract enchantment with level first (e.g., "enchanted_book_mending_1" -> "mending:1")
-				const enchantWithLevelMatch = item.material_id.match(/^enchanted_book_(.+)_(\d+)$/)
-				if (enchantWithLevelMatch) {
-					const enchantName = enchantWithLevelMatch[1] // Get the enchantment name
-					const enchantLevel = parseInt(enchantWithLevelMatch[2]) // Get the level as number
-					displayEnchantments.push(`${enchantName}:${enchantLevel}`)
-				} else {
-					// Try to extract enchantment without level (e.g., "enchanted_book_silk_touch" -> "silk_touch:1")
-					const enchantWithoutLevelMatch = item.material_id.match(/^enchanted_book_(.+)$/)
-					if (enchantWithoutLevelMatch) {
-						const enchantName = enchantWithoutLevelMatch[1] // Get the enchantment name
-						displayEnchantments.push(`${enchantName}:1`) // Default to level 1
-					}
-				}
-			}
-		}
-
-		// Add enchantments from enchantments object (for both regular items and enchanted books with additional enchantments)
-		if (
-			rewardItem.enchantments &&
-			((Array.isArray(rewardItem.enchantments) && rewardItem.enchantments.length > 0) ||
-				(!Array.isArray(rewardItem.enchantments) &&
-					Object.keys(rewardItem.enchantments).length > 0))
-		) {
-			// Handle both array format (new) and object format (legacy)
-			const enchantmentEntries = Array.isArray(rewardItem.enchantments)
-				? rewardItem.enchantments.map((id) => [id, 1]) // Convert array to [id, level] format
-				: Object.entries(rewardItem.enchantments)
-
-			enchantmentEntries.forEach(([enchantmentId, level]) => {
-				// Look up the enchantment item to get its name (same logic as in itemString generation)
-				const enchantItem = allItems.find((item) => item.id === enchantmentId)
-				if (enchantItem && enchantItem.name) {
-					// Extract enchantment name and level from name like "enchanted book (unbreaking iii)"
-					const match = enchantItem.name.match(/^enchanted book \((.+)\)$/)
+	// Add enchantments if present
+	if (itemObj.enchantments && itemObj.enchantments.length > 0) {
+		// Handle new array format (post-flattening removal)
+		if (Array.isArray(itemObj.enchantments)) {
+			itemObj.enchantments.forEach((enchantId) => {
+				const enchantDoc = allItems.find((i) => i.id === enchantId)
+				if (enchantDoc && enchantDoc.name) {
+					// Extract enchantment name from "enchanted book (unbreaking iii)"
+					const match = enchantDoc.name.match(/^enchanted book \((.+)\)$/)
 					if (match) {
 						const contentInParentheses = match[1].trim()
-
-						// Split by spaces and process each part
 						const parts = contentInParentheses.split(' ')
 
 						// Find the last part that's a roman numeral
@@ -817,30 +563,115 @@ export function formatRewardItemForYaml(rewardItem, item, prizeId, allItems = []
 						// Extract enchantment name (everything except the level)
 						const enchantmentParts =
 							levelIndex >= 0 ? parts.slice(0, levelIndex) : parts
-						const enchantment = enchantmentParts.join('_') // Use underscores for YAML format
+						const enchantment = enchantmentParts.join('_')
 
-						// Convert roman numerals to numbers for display
-						const levelMap = {
-							i: 1,
-							ii: 2,
-							iii: 3,
-							iv: 4,
-							v: 5
-						}
-						const displayLevel = romanLevel ? levelMap[romanLevel] : level
+						// Convert roman numerals to numbers
+						const levelMap = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 }
+						const displayLevel = romanLevel ? levelMap[romanLevel] : 1
 
-						displayEnchantments.push(`${enchantment}:${displayLevel}`)
+						itemString += `, ${enchantment}:${displayLevel}`
 					} else {
 						// Fallback if name doesn't match expected format
-						displayEnchantments.push(`${enchantmentId}:${level}`)
+						itemString += `, ${enchantId}:1`
 					}
 				} else {
 					// Fallback if enchantment item not found
-					displayEnchantments.push(`${enchantmentId}:${level}`)
+					itemString += `, ${enchantId}:1`
 				}
 			})
 		}
-	} // End of isItemBasedReward block
+		// Handle old object format for backward compatibility
+		else if (
+			typeof itemObj.enchantments === 'object' &&
+			Object.keys(itemObj.enchantments).length > 0
+		) {
+			Object.entries(itemObj.enchantments).forEach(([enchantId, level]) => {
+				const enchantDoc = allItems.find((i) => i.id === enchantId)
+				if (enchantDoc && enchantDoc.name) {
+					// Extract enchantment name from "enchanted book (unbreaking iii)"
+					const match = enchantDoc.name.match(/^enchanted book \((.+)\)$/)
+					if (match) {
+						const contentInParentheses = match[1].trim()
+						const parts = contentInParentheses.split(' ')
+
+						// Find the last part that's a roman numeral
+						const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v']
+						let levelIndex = -1
+						let romanLevel = null
+
+						for (let i = parts.length - 1; i >= 0; i--) {
+							if (romanNumerals.includes(parts[i].toLowerCase())) {
+								levelIndex = i
+								romanLevel = parts[i].toLowerCase()
+								break
+							}
+						}
+
+						// Extract enchantment name (everything except the level)
+						const enchantmentParts =
+							levelIndex >= 0 ? parts.slice(0, levelIndex) : parts
+						const enchantment = enchantmentParts.join('_')
+
+						// Convert roman numerals to numbers
+						const levelMap = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 }
+						const displayLevel = romanLevel ? levelMap[romanLevel] : level
+
+						itemString += `, ${enchantment}:${displayLevel}`
+					} else {
+						// Fallback if name doesn't match expected format
+						itemString += `, ${enchantId}:${level}`
+					}
+				} else {
+					// Fallback if enchantment item not found
+					itemString += `, ${enchantId}:${level}`
+				}
+			})
+		}
+	}
+
+	return itemString
+}
+
+/**
+ * Format a single reward document for YAML export
+ * Now works with reward documents directly instead of flattened items
+ */
+export function formatRewardItemForYaml(rewardDoc, prizeId, allItems = []) {
+	if (!rewardDoc) return null
+
+	// Use display_name as-is from the reward document
+	const displayName = rewardDoc.display_name
+
+	// Convert display_item from document ID to material_id if needed
+	let displayItem
+	if (rewardDoc.display_item) {
+		const displayItemObj = allItems.find((i) => i.id === rewardDoc.display_item)
+		displayItem = displayItemObj ? displayItemObj.material_id : rewardDoc.display_item
+	} else {
+		displayItem = 'tripwire_hook' // Default display item
+	}
+
+	const displayAmount = rewardDoc.display_amount || 1
+	const weight = rewardDoc.weight || 50
+
+	// Parse display_enchantments if it's a comma-separated string
+	let displayEnchantments = []
+	if (rewardDoc.display_enchantments) {
+		if (Array.isArray(rewardDoc.display_enchantments)) {
+			displayEnchantments = rewardDoc.display_enchantments
+		} else if (typeof rewardDoc.display_enchantments === 'string') {
+			// Handle comma-separated string format
+			displayEnchantments = rewardDoc.display_enchantments
+				.split(',')
+				.map((e) => e.trim())
+				.filter((e) => e)
+		}
+	}
+
+	// Convert items array to item strings
+	const itemStrings = (rewardDoc.items || [])
+		.map((itemObj) => itemObjectToItemString(itemObj, allItems))
+		.filter((str) => str) // Remove empty strings
 
 	return {
 		prizeId: prizeId.toString(),
@@ -848,31 +679,28 @@ export function formatRewardItemForYaml(rewardItem, item, prizeId, allItems = []
 		displayItem,
 		displayAmount,
 		weight,
-		itemString,
-		customModelData: rewardItem.custom_model_data || -1,
+		customModelData: rewardDoc.custom_model_data || -1,
 		displayEnchantments,
-		commands: rewardItem.commands || [],
-		items: rewardItem.items || [],
-		messages: rewardItem.messages || []
+		commands: rewardDoc.commands || [],
+		items: itemStrings,
+		messages: rewardDoc.messages || []
 	}
 }
 
 /**
  * Generate Crazy Crates YAML configuration
  */
-export function generateCrazyCratesYaml(crateReward, rewardItems, allItems, version = '1_20') {
-	if (!crateReward || !rewardItems || !allItems) return ''
+export function generateCrazyCratesYaml(crateReward, rewardDocuments, allItems, version = '1_20') {
+	if (!crateReward || !rewardDocuments || !allItems) return ''
 
 	const yamlLines = ['Prizes:']
 
-	// Sort reward items by weight (high to low)
-	const sortedRewardItems = [...rewardItems].sort((a, b) => (b.weight || 0) - (a.weight || 0))
+	// Sort reward documents by weight (high to low)
+	const sortedRewardDocs = [...rewardDocuments].sort((a, b) => (b.weight || 0) - (a.weight || 0))
 
-	sortedRewardItems.forEach((rewardItem, index) => {
-		const item = allItems.find((i) => i.id === rewardItem.item_id)
-
-		// For command-based rewards, item may be null
-		const formattedItem = formatRewardItemForYaml(rewardItem, item, index + 1, allItems)
+	sortedRewardDocs.forEach((rewardDoc, index) => {
+		// Pass the reward document directly - no need to lookup item
+		const formattedItem = formatRewardItemForYaml(rewardDoc, index + 1, allItems)
 		if (!formattedItem) return
 
 		yamlLines.push(`    "${formattedItem.prizeId}":`)
@@ -881,8 +709,47 @@ export function generateCrazyCratesYaml(crateReward, rewardItems, allItems, vers
 		// Add DisplayEnchantments if the item has enchantments
 		if (formattedItem.displayEnchantments && formattedItem.displayEnchantments.length > 0) {
 			yamlLines.push(`      DisplayEnchantments:`)
-			formattedItem.displayEnchantments.forEach((enchantment) => {
-				yamlLines.push(`        - "${enchantment}"`)
+			formattedItem.displayEnchantments.forEach((enchantmentId) => {
+				// Convert enchantment ID to human-readable format
+				const enchantDoc = allItems.find((i) => i.id === enchantmentId)
+				if (enchantDoc && enchantDoc.name) {
+					// Extract enchantment name from "enchanted book (unbreaking iii)"
+					const match = enchantDoc.name.match(/^enchanted book \((.+)\)$/)
+					if (match) {
+						const contentInParentheses = match[1].trim()
+						const parts = contentInParentheses.split(' ')
+
+						// Find the last part that's a roman numeral
+						const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v']
+						let levelIndex = -1
+						let romanLevel = null
+
+						for (let i = parts.length - 1; i >= 0; i--) {
+							if (romanNumerals.includes(parts[i].toLowerCase())) {
+								levelIndex = i
+								romanLevel = parts[i].toLowerCase()
+								break
+							}
+						}
+
+						// Extract enchantment name (everything except the level)
+						const enchantmentParts =
+							levelIndex >= 0 ? parts.slice(0, levelIndex) : parts
+						const enchantment = enchantmentParts.join('_')
+
+						// Convert roman numerals to numbers
+						const levelMap = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 }
+						const displayLevel = romanLevel ? levelMap[romanLevel] : 1
+
+						yamlLines.push(`        - "${enchantment}:${displayLevel}"`)
+					} else {
+						// Fallback if name doesn't match expected format
+						yamlLines.push(`        - "${enchantmentId}"`)
+					}
+				} else {
+					// Fallback if enchantment item not found
+					yamlLines.push(`        - "${enchantmentId}"`)
+				}
 			})
 		}
 
@@ -896,15 +763,12 @@ export function generateCrazyCratesYaml(crateReward, rewardItems, allItems, vers
 		// Add Items section (always present, may be empty)
 		yamlLines.push(`      Items:`)
 		if (formattedItem.items && formattedItem.items.length > 0) {
-			// Export embedded items array
+			// Export items array directly
 			formattedItem.items.forEach((itemStr) => {
 				yamlLines.push(`        - "${itemStr}"`)
 			})
-		} else if (formattedItem.itemString) {
-			// Legacy: Export single item string
-			yamlLines.push(`        - "${formattedItem.itemString}"`)
 		} else {
-			// No items (command-based reward)
+			// No items (command-based rewards or empty)
 			yamlLines.push(`        []`)
 		}
 
@@ -933,8 +797,8 @@ export function generateCrazyCratesYaml(crateReward, rewardItems, allItems, vers
 /**
  * Export crate reward as downloadable YAML file
  */
-export function downloadCrateRewardYaml(crateReward, rewardItems, allItems, version = '1_20') {
-	const yamlContent = generateCrazyCratesYaml(crateReward, rewardItems, allItems, version)
+export function downloadCrateRewardYaml(crateReward, rewardDocuments, allItems, version = '1_20') {
+	const yamlContent = generateCrazyCratesYaml(crateReward, rewardDocuments, allItems, version)
 	const blob = new Blob([yamlContent], { type: 'text/yaml' })
 	const url = URL.createObjectURL(blob)
 
