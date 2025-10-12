@@ -363,9 +363,11 @@ function startEditItem(rewardItem) {
 	// Handle both legacy enchantments and new display_enchantments formats
 	let enchantments = {}
 
-	// Check for new display_enchantments format (object with ID->level mapping)
-	if (rewardItem.display_enchantments && typeof rewardItem.display_enchantments === 'object') {
-		enchantments = { ...rewardItem.display_enchantments }
+	// Check for display_enchantments format (array of document IDs)
+	if (rewardItem.display_enchantments && Array.isArray(rewardItem.display_enchantments)) {
+		rewardItem.display_enchantments.forEach((enchantmentId) => {
+			enchantments[enchantmentId] = 1 // Default level to 1
+		})
 	}
 	// Fallback to legacy enchantments format
 	else if (rewardItem.enchantments) {
@@ -456,18 +458,8 @@ function getItemValue(rewardItem) {
 	// Calculate enchantment values
 	let enchantmentValue = 0
 
-	// Handle new display_enchantments format (enchantment ID -> level mapping)
-	if (rewardItem.display_enchantments && typeof rewardItem.display_enchantments === 'object') {
-		for (const [enchantmentId, level] of Object.entries(rewardItem.display_enchantments)) {
-			const enchantmentItem = getItemById(enchantmentId)
-			if (enchantmentItem) {
-				const enchantmentPrice = getEffectivePrice(enchantmentItem, currentVersion.value)
-				enchantmentValue += enchantmentPrice
-			}
-		}
-	}
-	// Handle legacy enchantments format
-	else if (rewardItem.enchantments) {
+	// Handle enchantments only (not display_enchantments)
+	if (rewardItem.enchantments) {
 		const enchantmentIds = getEnchantmentIds(rewardItem.enchantments)
 
 		for (const enchantmentId of enchantmentIds) {
@@ -787,8 +779,10 @@ function formatEnchantmentName(enchantmentId) {
 			const enchantName = enchantWithLevelMatch[1]
 			const level = enchantWithLevelMatch[2]
 
-			// Capitalize each word
-			const capitalizedEnchant = enchantName.replace(/\b\w/g, (l) => l.toUpperCase())
+			// Replace underscores with spaces, then capitalize each word
+			const capitalizedEnchant = enchantName
+				.replace(/_/g, ' ')
+				.replace(/\b\w/g, (l) => l.toUpperCase())
 			return `${capitalizedEnchant} ${level}`
 		}
 
@@ -796,8 +790,10 @@ function formatEnchantmentName(enchantmentId) {
 		const enchantWithoutLevelMatch = enchantmentPart.match(/^(.+)$/)
 		if (enchantWithoutLevelMatch) {
 			const enchantName = enchantWithoutLevelMatch[1]
-			// Capitalize each word
-			const capitalizedEnchant = enchantName.replace(/\b\w/g, (l) => l.toUpperCase())
+			// Replace underscores with spaces, then capitalize each word
+			const capitalizedEnchant = enchantName
+				.replace(/_/g, ' ')
+				.replace(/\b\w/g, (l) => l.toUpperCase())
 			return capitalizedEnchant
 		}
 	}
@@ -890,7 +886,14 @@ function selectItem(item) {
 			if (extractedEnchantments.length > 0) {
 				itemForm.value.enchantments = {}
 				extractedEnchantments.forEach((enchantment) => {
-					itemForm.value.enchantments[enchantment.id] = enchantment.level
+					// Find the catalog item by material_id and use its document ID
+					const enchantmentMaterialId = `enchanted_book_${enchantment.id}_${enchantment.level}`
+					const enchantmentItem = allItems.value.find(
+						(item) => item.material_id === enchantmentMaterialId
+					)
+					if (enchantmentItem) {
+						itemForm.value.enchantments[enchantmentItem.id] = enchantment.level
+					}
 				})
 			}
 		} else {
