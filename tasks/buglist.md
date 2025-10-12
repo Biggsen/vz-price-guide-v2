@@ -43,7 +43,43 @@ When adding items for a crate, enchanted books are not being added as separate b
 -   This was working previously, indicating a regression
 -   May be related to recent changes in crate management workflow
 
----
+### Duplicate Crate Names When Importing Same File
+
+**Status**: 🔴 Active  
+**Priority**: Medium  
+**Type**: UX Issue  
+**Discovered**: 2025-01-27
+
+**Description**:
+When importing the same crate YAML file multiple times, the crates have identical names making it impossible to distinguish between them in the crate list. This creates confusion for users managing multiple versions or iterations of the same crate.
+
+**Expected Behavior**:
+
+-   System should either automatically rename duplicate crates (e.g., "VillageCrate (2)", "VillageCrate (3)")
+-   Or warn the user that a crate with this name already exists before importing
+
+**Actual Behavior**:
+
+-   Multiple crates with identical names are created without any differentiation
+-   Users cannot distinguish between different versions of the same crate
+
+**Impact**:
+
+-   Poor user experience when managing multiple versions of crates
+-   Risk of accidentally managing the wrong crate
+-   Confusion in the crate management interface
+
+**Potential Solutions**:
+
+-   Auto-append a number suffix to duplicate crate names
+-   Show a confirmation dialog warning about existing crate names
+-   Allow users to specify a custom name during import
+
+**Files Potentially Affected**:
+
+-   Import functionality in crate management
+-   YAML import handlers
+-   Crate naming/validation logic
 
 ## Resolved Issues
 
