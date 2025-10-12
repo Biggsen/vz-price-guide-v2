@@ -979,8 +979,46 @@ function getYamlPreview(rewardItem) {
 	// Add DisplayEnchantments if present
 	if (formatted.displayEnchantments && formatted.displayEnchantments.length > 0) {
 		yaml += `      DisplayEnchantments:\n`
-		formatted.displayEnchantments.forEach((enchantment) => {
-			yaml += `        - "${enchantment}"\n`
+		formatted.displayEnchantments.forEach((enchantmentId) => {
+			// Convert enchantment ID to human-readable format
+			const enchantDoc = allItems.value.find((i) => i.id === enchantmentId)
+			if (enchantDoc && enchantDoc.name) {
+				// Extract enchantment name from "enchanted book (unbreaking iii)"
+				const match = enchantDoc.name.match(/^enchanted book \((.+)\)$/)
+				if (match) {
+					const contentInParentheses = match[1].trim()
+					const parts = contentInParentheses.split(' ')
+
+					// Find the last part that's a roman numeral
+					const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v']
+					let levelIndex = -1
+					let romanLevel = null
+
+					for (let i = parts.length - 1; i >= 0; i--) {
+						if (romanNumerals.includes(parts[i].toLowerCase())) {
+							levelIndex = i
+							romanLevel = parts[i].toLowerCase()
+							break
+						}
+					}
+
+					// Extract enchantment name (everything except the level)
+					const enchantmentParts = levelIndex >= 0 ? parts.slice(0, levelIndex) : parts
+					const enchantment = enchantmentParts.join('_')
+
+					// Convert roman numerals to numbers
+					const levelMap = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 }
+					const displayLevel = romanLevel ? levelMap[romanLevel] : 1
+
+					yaml += `        - "${enchantment}:${displayLevel}"\n`
+				} else {
+					// Fallback if name doesn't match expected format
+					yaml += `        - "${enchantmentId}"\n`
+				}
+			} else {
+				// Fallback if enchantment item not found
+				yaml += `        - "${enchantmentId}"\n`
+			}
 		})
 	}
 
@@ -992,15 +1030,12 @@ function getYamlPreview(rewardItem) {
 	// Add Items section (always present)
 	yaml += `      Items:\n`
 	if (formatted.items && formatted.items.length > 0) {
-		// Export embedded items array
+		// Export items array directly
 		formatted.items.forEach((itemStr) => {
 			yaml += `        - "${itemStr}"\n`
 		})
-	} else if (formatted.itemString) {
-		// Legacy: Export single item string
-		yaml += `        - "${formatted.itemString}"\n`
 	} else {
-		// No items (command-based reward)
+		// No items (command-based rewards or empty)
 		yaml += `        []\n`
 	}
 
@@ -1537,15 +1572,16 @@ watch(selectedCrate, (crate) => {
 												<!-- Enchantments Display -->
 												<div
 													v-if="
-														rewardItem.enchantments &&
-														getEnchantmentIds(rewardItem.enchantments)
-															.length > 0
+														rewardItem.display_enchantments &&
+														getEnchantmentIds(
+															rewardItem.display_enchantments
+														).length > 0
 													"
 													class="mt-1">
 													<div class="flex flex-wrap gap-1">
 														<span
 															v-for="enchantmentId in getEnchantmentIds(
-																rewardItem.enchantments
+																rewardItem.display_enchantments
 															)"
 															:key="enchantmentId"
 															class="px-2 py-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase">
@@ -2343,9 +2379,10 @@ watch(selectedCrate, (crate) => {
 											}}
 											<span
 												v-if="
-													result.item.enchantments &&
-													getEnchantmentIds(result.item.enchantments)
-														.length > 0
+													result.item.display_enchantments &&
+													getEnchantmentIds(
+														result.item.display_enchantments
+													).length > 0
 												"
 												class="text-blue-600">
 												(enchanted)
@@ -2357,15 +2394,15 @@ watch(selectedCrate, (crate) => {
 										<!-- Enchantments Display -->
 										<div
 											v-if="
-												result.item.enchantments &&
-												getEnchantmentIds(result.item.enchantments).length >
-													0
+												result.item.display_enchantments &&
+												getEnchantmentIds(result.item.display_enchantments)
+													.length > 0
 											"
 											class="mt-1">
 											<div class="flex flex-wrap gap-x-2 gap-y-1">
 												<span
 													v-for="enchantmentId in getEnchantmentIds(
-														result.item.enchantments
+														result.item.display_enchantments
 													)"
 													:key="enchantmentId"
 													class="text-heavy-metal text-[10px] font-medium capitalize leading-none">
