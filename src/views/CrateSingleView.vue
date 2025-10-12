@@ -681,10 +681,10 @@ async function clearAllRewards() {
 }
 
 function exportYaml() {
-	if (!selectedCrate.value || !rewardItems.value || !allItems.value) return
+	if (!selectedCrate.value || !rewardDocuments.value || !allItems.value) return
 	downloadCrateRewardYaml(
 		selectedCrate.value,
-		rewardItems.value,
+		rewardDocuments.value,
 		allItems.value,
 		currentVersion.value
 	)
@@ -962,10 +962,11 @@ function isReviewPanelExpanded(itemId) {
 function getFormattedYamlForItem(rewardItem) {
 	if (!rewardItem || !allItems.value) return null
 
-	const item = allItems.value.find((i) => i.id === rewardItem.item_id)
-	// Item can be null for command-based rewards
+	// Find the parent reward document from the flattened item
+	const parentDoc = rewardDocuments.value?.find((doc) => doc.id === rewardItem._parent_id)
+	if (!parentDoc) return null
 
-	return formatRewardItemForYaml(rewardItem, item, 1, allItems.value)
+	return formatRewardItemForYaml(parentDoc, 1, allItems.value)
 }
 
 function getYamlPreview(rewardItem) {
