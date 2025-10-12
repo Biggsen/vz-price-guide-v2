@@ -81,6 +81,43 @@ When importing the same crate YAML file multiple times, the crates have identica
 -   YAML import handlers
 -   Crate naming/validation logic
 
+### Crate Total Value Incorrect - Not Considering Enchantments
+
+**Status**: 🔴 Active  
+**Priority**: High  
+**Type**: Bug  
+**Discovered**: 2025-10-12
+
+**Description**:
+The total value calculation for crates is incorrect and appears to not be considering enchantments. This results in inaccurate pricing information for crates containing enchanted items.
+
+**Expected Behavior**:
+
+-   Total crate value should include the value of all items plus their enchantments
+-   Enchantments should be priced separately and added to the total
+
+**Actual Behavior**:
+
+-   Total value calculation is missing enchantment values
+-   Crate total displayed is lower than actual value
+
+**Impact**:
+
+-   Misleading pricing information for users
+-   Inaccurate crate value assessments
+-   Affects decision-making for crate management
+
+**Files Potentially Affected**:
+
+-   `src/utils/crateRewards.js` - Total value calculation logic
+-   `src/views/CrateSingleView.vue` - Display of total value
+-   Enchantment pricing utilities
+
+**Notes**:
+
+-   May be related to the enchanted books separation issue
+-   Need to verify if enchantment prices are being fetched correctly
+
 ## Resolved Issues
 
 _No resolved issues yet._
