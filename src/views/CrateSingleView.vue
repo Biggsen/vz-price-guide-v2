@@ -439,7 +439,13 @@ function generateDisplayName(itemForm) {
 	const quantity = itemForm.quantity || 1
 	const itemName = stripColorCodes(item.name)
 
-	return `<white>${quantity}x ${itemName}`
+	// Capitalize the item name (convert to title case)
+	const capitalizedItemName = itemName.replace(/\b\w/g, (l) => l.toUpperCase())
+
+	// Only show quantity prefix if quantity is more than 1
+	const quantityPrefix = quantity > 1 ? `${quantity}x ` : ''
+
+	return `<white>${quantityPrefix}${capitalizedItemName}`
 }
 
 function getItemValue(rewardItem) {
