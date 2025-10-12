@@ -525,18 +525,8 @@ export function formatRewardItemForYaml(rewardItem, item, prizeId, allItems = []
 				item.material_id.startsWith('enchanted_book_') &&
 				item.material_id !== 'enchanted_book')
 
-		// Build display name with "enchanted" prefix if applicable
-		let itemName = item ? item.name : 'Unknown Item'
-		if (
-			hasEnchantments &&
-			!itemName.toLowerCase().includes('enchanted') &&
-			item &&
-			item.material_id !== 'enchanted_book'
-		) {
-			itemName = `enchanted ${itemName}`
-		}
-
-		displayName = rewardItem.display_name || `<white>${rewardItem.quantity}x ${itemName}`
+		// Use display_name as-is from the reward item config
+		displayName = rewardItem.display_name
 
 		// For exports, use the display_item field (not the reward item's material_id)
 		if (rewardItem.display_item) {
@@ -550,7 +540,8 @@ export function formatRewardItemForYaml(rewardItem, item, prizeId, allItems = []
 		displayAmount = rewardItem.quantity
 	} else {
 		// Handle command-based rewards (no item)
-		displayName = rewardItem.display_name || '<white>Command Reward'
+		// Use display_name as-is from the reward item config
+		displayName = rewardItem.display_name
 
 		// Try to get display_item from the rewardItem or use a default
 		if (rewardItem.display_item) {
