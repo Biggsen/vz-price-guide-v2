@@ -147,7 +147,7 @@ export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 			crate_reward_id: crateId,
 			weight: itemData.weight || 50,
 			display_name: itemData.display_name || '',
-			display_item: itemData.display_item || materialId,
+			display_item: itemData.display_item || itemData.item_id,
 			display_amount: itemData.display_amount || itemData.quantity || 1,
 			display_enchantments: enchantmentsArray, // Add missing display_enchantments field
 			custom_model_data: itemData.custom_model_data || -1,
@@ -175,121 +175,12 @@ export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 }
 
 /**
- * Update a crate reward item (handles both composite IDs and direct document IDs)
+ * Delete a crate reward item by document ID
  */
-export async function updateCrateRewardItem(itemId, updates, rewardDocuments = null) {
+export async function deleteCrateRewardItem(documentId) {
 	try {
-		// Check if itemId is a composite ID (contains underscore at the end like "docId_0")
-		const isCompositeId = itemId.includes('_') && !isNaN(parseInt(itemId.split('_').pop()))
-
-		if (isCompositeId && rewardDocuments) {
-			// Parse composite ID
-			const parts = itemId.split('_')
-			const itemIndex = parseInt(parts[parts.length - 1])
-			const documentId = parts.slice(0, -1).join('_')
-
-			// Get the document
-			const rewardDoc = rewardDocuments.find((doc) => doc.id === documentId)
-			if (!rewardDoc) {
-				throw new Error(`Reward document not found: ${documentId}`)
-			}
-
-			// Convert enchantments object to array format if enchantments are being updated
-			let processedUpdates = { ...updates }
-			if (updates.enchantments && typeof updates.enchantments === 'object') {
-				processedUpdates.enchantments = Object.keys(updates.enchantments)
-			}
-
-			// Update the specific item in the items array
-			const updatedItems = [...rewardDoc.items]
-			updatedItems[itemIndex] = {
-				...updatedItems[itemIndex],
-				...processedUpdates
-			}
-
-			// Prepare document-level updates
-			const documentUpdates = {
-				items: updatedItems,
-				updated_at: new Date().toISOString()
-			}
-
-			// Update display_enchantments if enchantments were changed
-			if (updates.enchantments) {
-				documentUpdates.display_enchantments = processedUpdates.enchantments
-			}
-
-			// Update the document with the modified items array
-			await updateDoc(doc(db, 'crate_reward_items', documentId), documentUpdates)
-
-			return true
-		} else {
-			// Direct document ID - update the whole document (backward compatibility)
-			// Convert enchantments object to array format if enchantments are being updated
-			let processedUpdates = { ...updates }
-			if (updates.enchantments && typeof updates.enchantments === 'object') {
-				processedUpdates.enchantments = Object.keys(updates.enchantments)
-			}
-
-			const updateData = {
-				...processedUpdates,
-				updated_at: new Date().toISOString()
-			}
-
-			// Update display_enchantments if enchantments were changed
-			if (updates.enchantments) {
-				updateData.display_enchantments = processedUpdates.enchantments
-			}
-
-			await updateDoc(doc(db, 'crate_reward_items', itemId), updateData)
-			return true
-		}
-	} catch (error) {
-		console.error('Error updating crate reward item:', error)
-		throw error
-	}
-}
-
-/**
- * Delete a crate reward item (handles both composite IDs and direct document IDs)
- */
-export async function deleteCrateRewardItem(itemId, rewardDocuments = null) {
-	try {
-		// Check if itemId is a composite ID (contains underscore at the end like "docId_0")
-		const isCompositeId = itemId.includes('_') && !isNaN(parseInt(itemId.split('_').pop()))
-
-		if (isCompositeId && rewardDocuments) {
-			// Parse composite ID
-			const parts = itemId.split('_')
-			const itemIndex = parseInt(parts[parts.length - 1])
-			const documentId = parts.slice(0, -1).join('_')
-
-			// Get the document
-			const rewardDoc = rewardDocuments.find((doc) => doc.id === documentId)
-			if (!rewardDoc) {
-				throw new Error(`Reward document not found: ${documentId}`)
-			}
-
-			// If this is the only item, delete the entire document
-			if (rewardDoc.items && rewardDoc.items.length === 1) {
-				await deleteDoc(doc(db, 'crate_reward_items', documentId))
-				return true
-			}
-
-			// Remove the specific item from the items array
-			const updatedItems = rewardDoc.items.filter((_, index) => index !== itemIndex)
-
-			// Update the document with the modified items array
-			await updateDoc(doc(db, 'crate_reward_items', documentId), {
-				items: updatedItems,
-				updated_at: new Date().toISOString()
-			})
-
-			return true
-		} else {
-			// Direct document ID - delete the entire document (backward compatibility)
-			await deleteDoc(doc(db, 'crate_reward_items', itemId))
-			return true
-		}
+		await deleteDoc(doc(db, 'crate_reward_items', documentId))
+		return true
 	} catch (error) {
 		console.error('Error deleting crate reward item:', error)
 		throw error
@@ -348,122 +239,8 @@ export function isMultiItemReward(rewardDocument) {
 }
 
 /**
- * Helper function to flatten reward items for UI compatibility
- * Converts new structure (items embedded) to old structure (one item per row)
- */
-export function flattenRewardItems(rewardDocuments) {
-	if (!rewardDocuments || !Array.isArray(rewardDocuments)) {
-		return []
-	}
-
-	return rewardDocuments.flatMap((rewardDoc) => {
-		// If document has items array, flatten it
-		if (rewardDoc.items && Array.isArray(rewardDoc.items) && rewardDoc.items.length > 0) {
-			return rewardDoc.items.map((item, index) => ({
-				// Flattened item data (old structure)
-				id: `${rewardDoc.id}_${index}`, // Composite ID for UI operations
-				crate_reward_id: rewardDoc.crate_reward_id,
-				item_id: item.item_id,
-				quantity: item.quantity || 1,
-				enchantments: item.enchantments || [],
-
-				// Shared reward data
-				weight: rewardDoc.weight,
-				display_name: rewardDoc.display_name,
-				display_item: rewardDoc.display_item,
-				display_amount: rewardDoc.display_amount,
-				display_enchantments: rewardDoc.display_enchantments,
-				custom_model_data: rewardDoc.custom_model_data,
-				commands: rewardDoc.commands,
-				messages: rewardDoc.messages,
-				display_lore: rewardDoc.display_lore,
-				firework: rewardDoc.firework,
-
-				// Metadata
-				import_source: rewardDoc.import_source,
-				import_timestamp: rewardDoc.import_timestamp,
-				original_yaml_key: rewardDoc.original_yaml_key,
-				created_at: rewardDoc.created_at,
-				updated_at: rewardDoc.updated_at,
-
-				// Additional metadata for UI
-				_parent_id: rewardDoc.id, // Original document ID
-				_item_index: index, // Position in items array
-				_is_multi_item: rewardDoc.items.length > 1 // Flag for UI
-			}))
-		}
-
-		// Backward compatibility: Handle old structure (no items array)
-		// Treat as single item reward
-		return [
-			{
-				id: rewardDoc.id,
-				crate_reward_id: rewardDoc.crate_reward_id,
-				item_id: rewardDoc.item_id,
-				quantity: rewardDoc.quantity || 1,
-				weight: rewardDoc.weight,
-				display_name: rewardDoc.display_name,
-				display_item: rewardDoc.display_item,
-				display_amount: rewardDoc.display_amount,
-				display_enchantments: rewardDoc.display_enchantments,
-				custom_model_data: rewardDoc.custom_model_data,
-				enchantments: rewardDoc.enchantments || {},
-				commands: rewardDoc.commands,
-				messages: rewardDoc.messages,
-				display_lore: rewardDoc.display_lore,
-				firework: rewardDoc.firework,
-				created_at: rewardDoc.created_at,
-				updated_at: rewardDoc.updated_at,
-
-				// Metadata
-				_parent_id: rewardDoc.id,
-				_item_index: 0,
-				_is_multi_item: false,
-				_legacy_structure: true // Flag old structure
-			}
-		]
-	})
-}
-
-/**
- * Helper function to find a specific item within a reward document
- */
-export function getRewardItemById(compositeId, rewardDocuments) {
-	if (!compositeId || !rewardDocuments) {
-		return null
-	}
-
-	// Parse composite ID: "documentId_index"
-	const parts = compositeId.split('_')
-	const itemIndex = parseInt(parts[parts.length - 1])
-	const documentId = parts.slice(0, -1).join('_')
-
-	// Find the reward document
-	const rewardDoc = rewardDocuments.find((doc) => doc.id === documentId)
-	if (!rewardDoc) {
-		return null
-	}
-
-	// If document has items array, return specific item
-	if (rewardDoc.items && Array.isArray(rewardDoc.items)) {
-		return {
-			document: rewardDoc,
-			item: rewardDoc.items[itemIndex],
-			index: itemIndex
-		}
-	}
-
-	// Backward compatibility: old structure
-	return {
-		document: rewardDoc,
-		item: rewardDoc,
-		index: 0
-	}
-}
-
-/**
  * Get all items for a specific crate reward
- * Returns flattened data for UI compatibility
+ * Returns document-based data structure
  */
 export function useCrateRewardItems(crateId) {
 	const rewardItemsQuery = computed(() => {
@@ -477,15 +254,8 @@ export function useCrateRewardItems(crateId) {
 
 	const { data: rewardDocuments, pending, error } = useCollection(rewardItemsQuery)
 
-	// Flatten items for UI compatibility
-	const rewardItems = computed(() => {
-		if (!rewardDocuments.value) return []
-		return flattenRewardItems(rewardDocuments.value)
-	})
-
 	return {
-		rewardItems, // Flattened items (old structure for UI)
-		rewardDocuments, // Raw documents (new structure)
+		rewardDocuments, // Raw documents (document-based structure)
 		pending,
 		error
 	}
@@ -505,16 +275,29 @@ export function calculateRewardItemValue(rewardItem, item, version = '1_20') {
 
 /**
  * Calculate the total value of all items in a crate reward
+ * Works with both flattened rewardItems and document-based rewardDocuments
  */
-export function calculateCrateRewardTotalValue(rewardItems, allItems, version = '1_20') {
-	if (!rewardItems || !allItems) return 0
+export function calculateCrateRewardTotalValue(rewardData, allItems, version = '1_20') {
+	if (!rewardData || !allItems) return 0
 
 	let totalValue = 0
 
-	rewardItems.forEach((rewardItem) => {
-		const item = allItems.find((i) => i.id === rewardItem.item_id)
-		if (item) {
-			totalValue += calculateRewardItemValue(rewardItem, item, version)
+	rewardData.forEach((reward) => {
+		// Handle document-based structure (new)
+		if (reward.items && Array.isArray(reward.items)) {
+			reward.items.forEach((item) => {
+				const itemData = allItems.find((i) => i.id === item.item_id)
+				if (itemData) {
+					totalValue += calculateRewardItemValue(item, itemData, version)
+				}
+			})
+		}
+		// Handle flattened structure (legacy)
+		else if (reward.item_id) {
+			const item = allItems.find((i) => i.id === reward.item_id)
+			if (item) {
+				totalValue += calculateRewardItemValue(reward, item, version)
+			}
 		}
 	})
 

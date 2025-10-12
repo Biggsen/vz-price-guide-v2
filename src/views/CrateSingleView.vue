@@ -2,16 +2,14 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useCurrentUser, useFirestore, useCollection, useDocument } from 'vuefire'
 import { useRouter, useRoute } from 'vue-router'
-import { query, collection, orderBy, doc } from 'firebase/firestore'
+import { query, collection, orderBy, doc, updateDoc } from 'firebase/firestore'
 import {
 	useCrateReward,
 	useCrateRewardItems,
 	updateCrateReward,
 	deleteCrateReward,
 	addCrateRewardItem,
-	updateCrateRewardItem,
 	deleteCrateRewardItem,
-	calculateCrateRewardTotalValue,
 	downloadCrateRewardYaml,
 	formatRewardItemForYaml,
 	importCrateRewardsFromYaml
@@ -54,7 +52,7 @@ const selectedCrateId = ref('')
 const showEditForm = ref(false)
 const showAddItemForm = ref(false)
 const showImportModal = ref(false)
-const editingItem = ref(null)
+const editingRewardDoc = ref(null)
 const loading = ref(false)
 const error = ref(null)
 const showCopyToast = ref(false)
@@ -146,7 +144,6 @@ const {
 
 // Get items for selected crate reward
 const {
-	rewardItems,
 	rewardDocuments,
 	pending: rewardItemsPending,
 	error: rewardItemsError
@@ -161,35 +158,35 @@ const currentVersion = computed(() => {
 
 // Calculate total value of current crate reward
 const totalValue = computed(() => {
-	if (!rewardItems.value || !allItems.value) return 0
-	return calculateCrateRewardTotalValue(rewardItems.value, allItems.value, currentVersion.value)
+	if (!rewardDocuments.value || !allItems.value) return 0
+	return rewardDocuments.value.reduce((total, doc) => total + getRewardDocValue(doc), 0)
 })
 
 // Calculate total weight of current crate reward
 const totalWeight = computed(() => {
-	if (!rewardItems.value) return 0
-	return rewardItems.value.reduce((total, item) => total + (item.weight || 0), 0)
+	if (!rewardDocuments.value) return 0
+	return rewardDocuments.value.reduce((total, doc) => total + (doc.weight || 0), 0)
 })
 
-// Sorted reward items
-const sortedRewardItems = computed(() => {
-	if (!rewardItems.value || sortBy.value === 'none') return rewardItems.value
+// Sorted reward documents
+const sortedRewardDocuments = computed(() => {
+	if (!rewardDocuments.value || sortBy.value === 'none') return rewardDocuments.value
 
-	return [...rewardItems.value].sort((a, b) => {
+	return [...rewardDocuments.value].sort((a, b) => {
 		let aValue, bValue
 
 		switch (sortBy.value) {
 			case 'value':
-				aValue = getItemValue(a)
-				bValue = getItemValue(b)
+				aValue = getRewardDocValue(a)
+				bValue = getRewardDocValue(b)
 				break
 			case 'weight':
 				aValue = a.weight || 0
 				bValue = b.weight || 0
 				break
 			case 'chance':
-				aValue = getItemChance(a)
-				bValue = getItemChance(b)
+				aValue = getRewardDocChance(a)
+				bValue = getRewardDocChance(b)
 				break
 			default:
 				return 0
@@ -355,40 +352,6 @@ function startAddItem() {
 		enchantments: {}
 	}
 	addItemFormError.value = null
-	editingItem.value = null
-	showAddItemForm.value = true
-}
-
-function startEditItem(rewardItem) {
-	// Handle both legacy enchantments and new display_enchantments formats
-	let enchantments = {}
-
-	// Check for display_enchantments format (array of document IDs)
-	if (rewardItem.display_enchantments && Array.isArray(rewardItem.display_enchantments)) {
-		rewardItem.display_enchantments.forEach((enchantmentId) => {
-			enchantments[enchantmentId] = 1 // Default level to 1
-		})
-	}
-	// Fallback to legacy enchantments format
-	else if (rewardItem.enchantments) {
-		// Handle both array and object formats for legacy enchantments
-		if (Array.isArray(rewardItem.enchantments)) {
-			rewardItem.enchantments.forEach((enchantmentId) => {
-				enchantments[enchantmentId] = 1 // Default level to 1
-			})
-		} else {
-			enchantments = { ...rewardItem.enchantments }
-		}
-	}
-
-	itemForm.value = {
-		item_id: rewardItem.item_id,
-		quantity: rewardItem.quantity,
-		weight: rewardItem.weight,
-		enchantments: enchantments
-	}
-	addItemFormError.value = null
-	editingItem.value = rewardItem
 	showAddItemForm.value = true
 }
 
@@ -420,18 +383,176 @@ function getItemName(itemId, rewardItem = null) {
 	return stripColorCodes(name)
 }
 
-function getDisplayItemImage(rewardItem) {
-	// If display_item is set, use that item's image
-	if (rewardItem.display_item) {
-		const displayItem = getItemById(rewardItem.display_item)
+// ===== DOCUMENT-BASED HELPER FUNCTIONS =====
+
+function getRewardDocValue(rewardDoc) {
+	if (!rewardDoc.items || !rewardDoc.items.length || !allItems.value) return 0
+
+	let totalValue = 0
+	rewardDoc.items.forEach((item) => {
+		const itemData = getItemById(item.item_id)
+		if (itemData) {
+			const unitPrice = getEffectivePrice(itemData, currentVersion.value)
+			const baseValue = unitPrice * (item.quantity || 1)
+
+			// Calculate enchantment values from item's actual enchantments
+			let enchantmentValue = 0
+			if (item.enchantments && Array.isArray(item.enchantments)) {
+				item.enchantments.forEach((enchId) => {
+					const enchItem = getItemById(enchId)
+					if (enchItem) {
+						enchantmentValue += getEffectivePrice(enchItem, currentVersion.value)
+					}
+				})
+			}
+
+			totalValue += baseValue + enchantmentValue
+		}
+	})
+
+	return totalValue
+}
+
+function getRewardDocChance(rewardDoc) {
+	if (!totalWeight.value || totalWeight.value === 0) return 0
+	return ((rewardDoc.weight || 0) / totalWeight.value) * 100
+}
+
+function getDisplayItemImageFromDoc(rewardDoc) {
+	if (rewardDoc.display_item) {
+		const displayItem = getItemById(rewardDoc.display_item)
 		if (displayItem?.image) {
 			return displayItem.image
 		}
 	}
+	return null
+}
 
-	// Fallback to the main item's image
-	const mainItem = getItemById(rewardItem.item_id)
-	return mainItem?.image
+function isMultiItemReward(rewardDoc) {
+	return rewardDoc.items && rewardDoc.items.length > 1
+}
+
+function canEditReward(rewardDoc) {
+	// Can edit if single-item reward
+	return !rewardDoc.items || rewardDoc.items.length <= 1
+}
+
+// ===== DOCUMENT UPDATE FUNCTIONS =====
+
+async function updateRewardDocument(rewardDoc, updates) {
+	try {
+		let processedUpdates = { ...updates }
+		processedUpdates.updated_at = new Date().toISOString()
+
+		await updateDoc(doc(db, 'crate_reward_items', rewardDoc.id), processedUpdates)
+		return true
+	} catch (error) {
+		console.error('Error updating reward document:', error)
+		throw error
+	}
+}
+
+async function increaseRewardWeight(rewardDoc) {
+	const newWeight = Math.min(rewardDoc.weight + 10, 1000)
+	if (newWeight !== rewardDoc.weight) {
+		try {
+			await updateRewardDocument(rewardDoc, { weight: newWeight })
+		} catch (err) {
+			console.error('Failed to update reward weight:', err)
+			error.value = 'Failed to update reward weight'
+		}
+	}
+}
+
+async function decreaseRewardWeight(rewardDoc) {
+	const newWeight = Math.max(rewardDoc.weight - 10, 1)
+	if (newWeight !== rewardDoc.weight) {
+		try {
+			await updateRewardDocument(rewardDoc, { weight: newWeight })
+		} catch (err) {
+			console.error('Failed to update reward weight:', err)
+			error.value = 'Failed to update reward weight'
+		}
+	}
+}
+
+function startEditWeight(rewardDoc) {
+	editingWeightId.value = rewardDoc.id
+	editingWeightValue.value = rewardDoc.weight.toString()
+	nextTick(() => {
+		const input = weightInputRefs.value[rewardDoc.id]
+		if (input) {
+			input.focus()
+			input.select()
+		}
+	})
+}
+
+async function saveWeight(rewardDoc) {
+	const newWeight = parseInt(editingWeightValue.value)
+	if (isNaN(newWeight) || newWeight < 1) {
+		cancelEditWeight()
+		return
+	}
+
+	if (newWeight !== rewardDoc.weight) {
+		try {
+			await updateRewardDocument(rewardDoc, { weight: newWeight })
+		} catch (err) {
+			console.error('Failed to update reward weight:', err)
+			error.value = 'Failed to update reward weight'
+		}
+	}
+	cancelEditWeight()
+}
+
+function cancelEditWeight() {
+	editingWeightId.value = null
+	editingWeightValue.value = ''
+}
+
+// ===== DOCUMENT EDIT FUNCTIONS =====
+
+function startEditReward(rewardDoc) {
+	// Only allow editing single-item rewards
+	if (!canEditReward(rewardDoc)) {
+		error.value = 'Cannot edit multi-item rewards. Please re-import from YAML to modify.'
+		return
+	}
+
+	// Extract the single item
+	const singleItem = rewardDoc.items[0]
+
+	// Convert to form format
+	itemForm.value = {
+		item_id: singleItem.item_id,
+		quantity: singleItem.quantity,
+		weight: rewardDoc.weight,
+		enchantments: {} // Convert array to object for form
+	}
+
+	// Convert enchantments array to object for editing
+	if (singleItem.enchantments && Array.isArray(singleItem.enchantments)) {
+		singleItem.enchantments.forEach((enchId) => {
+			itemForm.value.enchantments[enchId] = 1
+		})
+	}
+
+	editingRewardDoc.value = rewardDoc
+	showAddItemForm.value = true
+}
+
+function confirmRemoveReward(rewardDoc) {
+	const itemCount = rewardDoc.items?.length || 0
+	const warningText = isMultiItemReward(rewardDoc) ? ` (contains ${itemCount} items)` : ''
+
+	itemToDelete.value = {
+		type: 'reward',
+		id: rewardDoc.id,
+		name: stripColorCodes(rewardDoc.display_name || 'Unknown Reward') + warningText,
+		isMultiItem: isMultiItemReward(rewardDoc)
+	}
+	showDeleteModal.value = true
 }
 
 function generateDisplayName(itemForm) {
@@ -448,36 +569,6 @@ function generateDisplayName(itemForm) {
 	const quantityPrefix = quantity > 1 ? `${quantity}x ` : ''
 
 	return `<white>${quantityPrefix}${capitalizedItemName}`
-}
-
-function getItemValue(rewardItem) {
-	const item = getItemById(rewardItem.item_id)
-	if (!item) return 'Unknown'
-	const unitPrice = getEffectivePrice(item, currentVersion.value)
-
-	// Calculate enchantment values
-	let enchantmentValue = 0
-
-	// Handle enchantments only (not display_enchantments)
-	if (rewardItem.enchantments) {
-		const enchantmentIds = getEnchantmentIds(rewardItem.enchantments)
-
-		for (const enchantmentId of enchantmentIds) {
-			const enchantmentItem = getItemById(enchantmentId)
-			if (enchantmentItem) {
-				const enchantmentPrice = getEffectivePrice(enchantmentItem, currentVersion.value)
-				enchantmentValue += enchantmentPrice
-			}
-		}
-	}
-
-	const baseValue = unitPrice * (rewardItem.quantity || 1)
-	return baseValue + enchantmentValue
-}
-
-function getItemChance(rewardItem) {
-	if (!totalWeight.value || totalWeight.value === 0) return 0
-	return ((rewardItem.weight || 0) / totalWeight.value) * 100
 }
 
 // Helper function to get enchantment IDs from either array or object format
@@ -510,60 +601,6 @@ function stripColorCodes(text) {
 	return cleaned.trim()
 }
 
-// Weight editing functions
-function startEditWeight(rewardItem) {
-	editingWeightId.value = rewardItem.id
-	editingWeightValue.value = rewardItem.weight.toString()
-
-	nextTick(() => {
-		const input = weightInputRefs.value[rewardItem.id]
-		if (input) {
-			input.focus()
-			input.select()
-		}
-	})
-}
-
-function cancelEditWeight() {
-	editingWeightId.value = null
-	editingWeightValue.value = ''
-}
-
-async function saveWeight(rewardItem) {
-	const newWeight = parseInt(editingWeightValue.value)
-
-	// Validate the new weight
-	if (isNaN(newWeight) || newWeight < 1) {
-		// If value is empty or invalid, just cancel without error message
-		cancelEditWeight()
-		return
-	}
-
-	// Only update if the value changed
-	if (newWeight !== rewardItem.weight) {
-		try {
-			await updateCrateRewardItem(rewardItem.id, { weight: newWeight }, rewardDocuments.value)
-		} catch (err) {
-			console.error('Failed to update item weight:', err)
-			error.value = 'Failed to update item weight'
-		}
-	}
-
-	cancelEditWeight()
-}
-
-// Handle keydown event for weight input
-function handleWeightKeyDown(event, rewardItem) {
-	if (event.key === 'Enter') {
-		event.preventDefault()
-		saveWeight(rewardItem)
-	} else if (event.key === 'Escape') {
-		event.preventDefault()
-		// If value is empty or invalid, just cancel without error message
-		cancelEditWeight()
-	}
-}
-
 async function saveItem() {
 	// Clear previous errors
 	addItemFormError.value = null
@@ -587,9 +624,26 @@ async function saveItem() {
 	loading.value = true
 
 	try {
-		if (editingItem.value) {
-			// Update existing item
-			await updateCrateRewardItem(editingItem.value.id, itemForm.value, rewardDocuments.value)
+		if (editingRewardDoc.value) {
+			// Update existing reward document
+			const singleItem = editingRewardDoc.value.items[0]
+
+			// Prepare updates for the document
+			const updates = {
+				weight: itemForm.value.weight,
+				display_name: generateDisplayName(itemForm.value),
+				items: [
+					{
+						...singleItem,
+						item_id: itemForm.value.item_id,
+						quantity: itemForm.value.quantity,
+						enchantments: Object.keys(itemForm.value.enchantments || {})
+					}
+				],
+				display_enchantments: Object.keys(itemForm.value.enchantments || {})
+			}
+
+			await updateRewardDocument(editingRewardDoc.value, updates)
 		} else {
 			// Add new item - pass the selected item data to avoid extra queries
 			const selectedItem = getItemById(itemForm.value.item_id)
@@ -604,7 +658,7 @@ async function saveItem() {
 		}
 
 		showAddItemForm.value = false
-		editingItem.value = null
+		editingRewardDoc.value = null
 		itemForm.value = {
 			item_id: '',
 			quantity: 1,
@@ -618,15 +672,6 @@ async function saveItem() {
 	}
 }
 
-function confirmRemoveItem(item) {
-	itemToDelete.value = {
-		type: 'item',
-		id: item.id,
-		name: getItemName(item.item_id, item)
-	}
-	showDeleteModal.value = true
-}
-
 async function executeDelete() {
 	if (!itemToDelete.value) return
 
@@ -636,8 +681,8 @@ async function executeDelete() {
 	try {
 		if (itemToDelete.value.type === 'crate') {
 			await deleteCrateRewardFromDetail()
-		} else if (itemToDelete.value.type === 'item') {
-			await deleteCrateRewardItem(itemToDelete.value.id, rewardDocuments.value)
+		} else if (itemToDelete.value.type === 'item' || itemToDelete.value.type === 'reward') {
+			await deleteCrateRewardItem(itemToDelete.value.id)
 		}
 	} catch (err) {
 		error.value = `Failed to delete ${itemToDelete.value.type}: ` + err.message
@@ -658,10 +703,8 @@ async function clearAllRewards() {
 
 	try {
 		// Delete all reward items for the selected crate
-		if (rewardItems.value && rewardItems.value.length > 0) {
-			const deletePromises = rewardItems.value.map((item) =>
-				deleteCrateRewardItem(item.id, rewardDocuments.value)
-			)
+		if (rewardDocuments.value && rewardDocuments.value.length > 0) {
+			const deletePromises = rewardDocuments.value.map((doc) => deleteCrateRewardItem(doc.id))
 			await Promise.all(deletePromises)
 		}
 		showClearAllModal.value = false
@@ -683,12 +726,12 @@ function exportYaml() {
 }
 
 function copyRewardList() {
-	if (!rewardItems.value || !allItems.value) return
+	if (!rewardDocuments.value || !allItems.value) return
 
 	// Get the sorted items (respecting current sort order)
-	const sortedItems = [...rewardItems.value].sort((a, b) => {
-		const itemA = getItemById(a.item_id)
-		const itemB = getItemById(b.item_id)
+	const sortedItems = [...rewardDocuments.value].sort((a, b) => {
+		const itemA = getItemById(a.items?.[0]?.item_id)
+		const itemB = getItemById(b.items?.[0]?.item_id)
 
 		if (!itemA || !itemB) return 0
 
@@ -710,19 +753,32 @@ function copyRewardList() {
 
 	// Generate the text list
 	const listText = sortedItems
-		.map((item) => {
-			const itemData = getItemById(item.item_id)
-			if (!itemData)
-				return `${stripColorCodes(item.display_name || item.item_id)} (${
-					item.quantity || 1
-				}) - Value: Unknown`
+		.map((rewardDoc) => {
+			if (isMultiItemReward(rewardDoc)) {
+				// For multi-item rewards, show summary
+				const totalValue = getRewardDocValue(rewardDoc)
+				const chance = getRewardDocChance(rewardDoc).toFixed(1)
+				return `${stripColorCodes(
+					rewardDoc.display_name || 'Multi-item Reward'
+				)} - Value: ${Math.ceil(totalValue)} - Weight: ${
+					rewardDoc.weight
+				} - Chance: ${chance}% (${rewardDoc.items.length} items)`
+			} else {
+				// For single-item rewards, show details
+				const singleItem = rewardDoc.items[0]
+				const itemData = getItemById(singleItem.item_id)
+				if (!itemData)
+					return `${stripColorCodes(
+						rewardDoc.display_name || 'Unknown'
+					)} - Value: Unknown`
 
-			const value = getItemValue(item)
-			const chance = getItemChance(item).toFixed(1)
+				const value = getRewardDocValue(rewardDoc)
+				const chance = getRewardDocChance(rewardDoc).toFixed(1)
 
-			return `${item.quantity}x ${stripColorCodes(itemData.name)} - Value: ${Math.ceil(
-				value
-			)} - Weight: ${item.weight} - Chance: ${chance}%`
+				return `${singleItem.quantity}x ${stripColorCodes(
+					itemData.name
+				)} - Value: ${Math.ceil(value)} - Weight: ${rewardDoc.weight} - Chance: ${chance}%`
+			}
 		})
 		.join('\n')
 
@@ -964,18 +1020,15 @@ function isReviewPanelExpanded(itemId) {
 	return expandedReviewPanels.value.has(itemId)
 }
 
-function getFormattedYamlForItem(rewardItem) {
-	if (!rewardItem || !allItems.value) return null
+function getFormattedYamlForItem(rewardDoc) {
+	if (!rewardDoc || !allItems.value) return null
 
-	// Find the parent reward document from the flattened item
-	const parentDoc = rewardDocuments.value?.find((doc) => doc.id === rewardItem._parent_id)
-	if (!parentDoc) return null
-
-	return formatRewardItemForYaml(parentDoc, 1, allItems.value)
+	// rewardDoc is already the document, no need to find parent
+	return formatRewardItemForYaml(rewardDoc, 1, allItems.value)
 }
 
-function getYamlPreview(rewardItem) {
-	const formatted = getFormattedYamlForItem(rewardItem)
+function getYamlPreview(rewardDoc) {
+	const formatted = getFormattedYamlForItem(rewardDoc)
 	if (!formatted) return 'Loading...'
 
 	let yaml = `    "1":\n`
@@ -1064,29 +1117,6 @@ function getYamlPreview(rewardItem) {
 }
 
 // Item weight adjustment functions (for existing items in the list)
-async function increaseItemWeight(rewardItem) {
-	const newWeight = Math.min(rewardItem.weight + 10, 1000)
-	if (newWeight !== rewardItem.weight) {
-		try {
-			await updateCrateRewardItem(rewardItem.id, { weight: newWeight }, rewardDocuments.value)
-		} catch (err) {
-			console.error('Failed to update item weight:', err)
-			error.value = 'Failed to update item weight'
-		}
-	}
-}
-
-async function decreaseItemWeight(rewardItem) {
-	const newWeight = Math.max(rewardItem.weight - 10, 1)
-	if (newWeight !== rewardItem.weight) {
-		try {
-			await updateCrateRewardItem(rewardItem.id, { weight: newWeight }, rewardDocuments.value)
-		} catch (err) {
-			console.error('Failed to update item weight:', err)
-			error.value = 'Failed to update item weight'
-		}
-	}
-}
 
 // Sorting functions
 function setSortBy(field) {
@@ -1102,25 +1132,25 @@ function setSortBy(field) {
 
 // Simulation functions
 function simulateCrateOpen() {
-	if (!rewardItems.value || rewardItems.value.length === 0) return
+	if (!rewardDocuments.value || rewardDocuments.value.length === 0) return
 
-	const totalWeight = rewardItems.value.reduce((sum, item) => sum + (item.weight || 0), 0)
+	const totalWeight = rewardDocuments.value.reduce((sum, doc) => sum + (doc.weight || 0), 0)
 	if (totalWeight === 0) return
 
 	// Generate random number between 0 and totalWeight
 	const random = Math.random() * totalWeight
 
-	// Find which item was selected
+	// Find which reward document was selected
 	let currentWeight = 0
-	for (const item of rewardItems.value) {
-		currentWeight += item.weight || 0
+	for (const rewardDoc of rewardDocuments.value) {
+		currentWeight += rewardDoc.weight || 0
 		if (random <= currentWeight) {
-			// This item was selected
-			const itemData = getItemById(item.item_id)
+			// This reward document was selected
+			const itemData = getItemById(rewardDoc.items[0]?.item_id) // Use first item for display
 
 			simulationResults.value.unshift({
 				id: Date.now() + Math.random(),
-				item,
+				item: rewardDoc, // Store the whole document
 				itemData
 			})
 
@@ -1135,7 +1165,7 @@ function simulateCrateOpen() {
 }
 
 function simulateMultipleOpens(count) {
-	if (!rewardItems.value || rewardItems.value.length === 0) return
+	if (!rewardDocuments.value || rewardDocuments.value.length === 0) return
 
 	isSimulating.value = true
 
@@ -1352,8 +1382,8 @@ watch(selectedCrate, (crate) => {
 								{{ Math.ceil(totalValue) }}
 							</span>
 							<span>
-								<span class="font-medium">Items:</span>
-								{{ rewardItems?.length || 0 }}
+								<span class="font-medium">Rewards:</span>
+								{{ rewardDocuments?.length || 0 }}
 							</span>
 							<span>
 								<span class="font-medium">Created:</span>
@@ -1377,7 +1407,10 @@ watch(selectedCrate, (crate) => {
 				</template>
 				Import YAML
 			</BaseButton>
-			<BaseButton @click="exportYaml" variant="secondary" :disabled="!rewardItems?.length">
+			<BaseButton
+				@click="exportYaml"
+				variant="secondary"
+				:disabled="!rewardDocuments?.length">
 				<template #left-icon>
 					<ArrowDownTrayIcon class="w-4 h-4" />
 				</template>
@@ -1386,7 +1419,7 @@ watch(selectedCrate, (crate) => {
 			<BaseButton
 				@click="copyRewardList"
 				variant="secondary"
-				:disabled="!rewardItems?.length">
+				:disabled="!rewardDocuments?.length">
 				<template #left-icon>
 					<ClipboardIcon class="w-4 h-4" />
 				</template>
@@ -1395,7 +1428,7 @@ watch(selectedCrate, (crate) => {
 			<BaseButton
 				@click="showTestRewardsModal = true"
 				variant="secondary"
-				:disabled="!rewardItems?.length">
+				:disabled="!rewardDocuments?.length">
 				<template #left-icon>
 					<PlayIcon class="w-4 h-4" />
 				</template>
@@ -1420,7 +1453,7 @@ watch(selectedCrate, (crate) => {
 
 		<!-- Sorting Controls -->
 		<div
-			v-if="selectedCrate && rewardItems && rewardItems.length > 0"
+			v-if="selectedCrate && rewardDocuments && rewardDocuments.length > 0"
 			class="flex items-center justify-between gap-4 mb-4">
 			<BaseButton @click="startAddItem" variant="primary">
 				<template #left-icon>
@@ -1496,7 +1529,7 @@ watch(selectedCrate, (crate) => {
 		<!-- Selected Crate Reward -->
 		<div v-if="selectedCrate" class="space-y-6">
 			<!-- Reward Items -->
-			<div v-if="rewardItems?.length" class="bg-white rounded-lg">
+			<div v-if="rewardDocuments?.length" class="bg-white rounded-lg">
 				<div class="px-6 py-4 bg-gray-asparagus border-b-2 border-white">
 					<h3 class="text-xl font-semibold text-white">Reward Items</h3>
 				</div>
@@ -1507,18 +1540,30 @@ watch(selectedCrate, (crate) => {
 				<div v-else>
 					<div class="divide-y-2 divide-white">
 						<div
-							v-for="rewardItem in sortedRewardItems"
-							:key="rewardItem.id"
+							v-for="rewardDoc in sortedRewardDocuments"
+							:key="rewardDoc.id"
 							class="pr-6 bg-norway">
+							<!-- Multi-item indicator badge -->
+							<div
+								v-if="isMultiItemReward(rewardDoc)"
+								class="px-4 py-1 bg-blue-100 border-b border-white">
+								<span class="text-xs font-medium text-blue-800">
+									⚠️ Multi-item reward (imported from YAML, read-only)
+								</span>
+							</div>
 							<div class="flex items-stretch justify-between">
 								<div class="flex-1">
 									<div class="flex items-stretch gap-4">
 										<div
 											class="w-16 bg-highland border-r-2 border-white flex items-center justify-center">
 											<img
-												v-if="getDisplayItemImage(rewardItem)"
-												:src="getImageUrl(getDisplayItemImage(rewardItem))"
-												:alt="getItemById(rewardItem.item_id)?.name"
+												v-if="getDisplayItemImageFromDoc(rewardDoc)"
+												:src="
+													getImageUrl(
+														getDisplayItemImageFromDoc(rewardDoc)
+													)
+												"
+												:alt="rewardDoc.display_name"
 												loading="lazy"
 												decoding="async"
 												fetchpriority="low"
@@ -1531,35 +1576,49 @@ watch(selectedCrate, (crate) => {
 											<div class="pt-2 pb-3">
 												<h4 class="text-base font-semibold text-gray-900">
 													{{
-														(() => {
-															const item = getItemById(
-																rewardItem.item_id
-															)
-															const itemName = stripColorCodes(
-																rewardItem.display_name ||
-																	item?.name ||
-																	'Unknown Item'
-															)
-															return itemName
-														})()
+														stripColorCodes(
+															rewardDoc.display_name ||
+																'Unknown Reward'
+														)
 													}}
 												</h4>
 												<div class="text-sm text-heavy-metal">
 													<span class="font-medium">Value:</span>
-													{{
-														(() => {
-															const value = getItemValue(rewardItem)
-															return typeof value === 'number'
-																? Math.ceil(value)
-																: value
-														})()
-													}}
+													{{ Math.ceil(getRewardDocValue(rewardDoc)) }}
 												</div>
+												<!-- Items list (only for multi-item rewards) -->
+												<div
+													v-if="
+														isMultiItemReward(rewardDoc) &&
+														rewardDoc.items &&
+														rewardDoc.items.length > 0
+													"
+													class="mt-2">
+													<div
+														class="text-sm text-heavy-metal font-medium mb-1">
+														Contains {{ rewardDoc.items.length }} items:
+													</div>
+													<div class="space-y-1">
+														<div
+															v-for="(item, idx) in rewardDoc.items"
+															:key="idx"
+															class="text-sm text-heavy-metal flex items-center gap-2">
+															<span>
+																• {{ item.quantity }}x
+																{{
+																	getItemById(item.item_id)
+																		?.name || 'Unknown'
+																}}
+															</span>
+														</div>
+													</div>
+												</div>
+
 												<!-- Commands Display -->
 												<div
 													v-if="
-														rewardItem.commands &&
-														rewardItem.commands.length > 0
+														rewardDoc.commands &&
+														rewardDoc.commands.length > 0
 													"
 													class="text-sm text-heavy-metal">
 													<span class="font-medium">Commands:</span>
@@ -1567,7 +1626,7 @@ watch(selectedCrate, (crate) => {
 														<div
 															v-for="(
 																command, index
-															) in rewardItem.commands"
+															) in rewardDoc.commands"
 															:key="index"
 															class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
 															{{ command }}
@@ -1577,16 +1636,16 @@ watch(selectedCrate, (crate) => {
 												<!-- Enchantments Display -->
 												<div
 													v-if="
-														rewardItem.display_enchantments &&
+														rewardDoc.display_enchantments &&
 														getEnchantmentIds(
-															rewardItem.display_enchantments
+															rewardDoc.display_enchantments
 														).length > 0
 													"
 													class="mt-1">
 													<div class="flex flex-wrap gap-1">
 														<span
 															v-for="enchantmentId in getEnchantmentIds(
-																rewardItem.display_enchantments
+																rewardDoc.display_enchantments
 															)"
 															:key="enchantmentId"
 															class="px-2 py-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase">
@@ -1600,12 +1659,12 @@ watch(selectedCrate, (crate) => {
 												<!-- YAML Preview (Debug) -->
 												<div v-if="showYamlPreview" class="mt-2">
 													<button
-														@click="toggleReviewPanel(rewardItem.id)"
+														@click="toggleReviewPanel(rewardDoc.id)"
 														class="flex items-center gap-2 text-sm text-heavy-metal hover:text-gray-800 transition-colors">
 														<svg
 															:class="[
 																'w-4 h-4 transition-transform',
-																isReviewPanelExpanded(rewardItem.id)
+																isReviewPanelExpanded(rewardDoc.id)
 																	? 'rotate-90'
 																	: ''
 															]"
@@ -1619,7 +1678,7 @@ watch(selectedCrate, (crate) => {
 																d="M9 5l7 7-7 7" />
 														</svg>
 														{{
-															isReviewPanelExpanded(rewardItem.id)
+															isReviewPanelExpanded(rewardDoc.id)
 																? 'Hide'
 																: 'Show'
 														}}
@@ -1627,8 +1686,8 @@ watch(selectedCrate, (crate) => {
 													</button>
 
 													<pre
-														v-if="isReviewPanelExpanded(rewardItem.id)"
-														class="mt-3 text-xs bg-white p-3 rounded border overflow-x-auto"><code>{{ getYamlPreview(rewardItem) }}</code></pre>
+														v-if="isReviewPanelExpanded(rewardDoc.id)"
+														class="mt-3 text-xs bg-white p-3 rounded border overflow-x-auto"><code>{{ getYamlPreview(rewardDoc) }}</code></pre>
 												</div>
 											</div>
 											<!-- Weight and Chance Boxes -->
@@ -1636,38 +1695,37 @@ watch(selectedCrate, (crate) => {
 												<div
 													class="bg-blue-50 border-2 border-gray-asparagus rounded flex items-stretch">
 													<button
-														@click="decreaseItemWeight(rewardItem)"
+														@click="decreaseRewardWeight(rewardDoc)"
 														class="flex items-center justify-center px-1 py-1 bg-sea-mist hover:bg-saltpan transition-colors rounded-l border-r-2 border-gray-asparagus min-w-[2rem]"
 														title="Decrease weight by 10">
 														<MinusIcon
 															class="w-4 h-4 text-heavy-metal" />
 													</button>
 													<div
-														v-if="editingWeightId !== rewardItem.id"
-														@click="startEditWeight(rewardItem)"
+														v-if="editingWeightId !== rewardDoc.id"
+														@click="startEditWeight(rewardDoc)"
 														class="flex items-center justify-center px-1 py-1 text-center cursor-pointer bg-norway hover:bg-saltpan transition-colors min-w-[2.5rem] border-r-2 border-gray-asparagus">
 														<span
 															class="text-base font-bold text-heavy-metal">
-															{{ rewardItem.weight }}
+															{{ rewardDoc.weight }}
 														</span>
 													</div>
 													<input
 														v-else
 														:ref="
 															(el) =>
-																(weightInputRefs[rewardItem.id] =
-																	el)
+																(weightInputRefs[rewardDoc.id] = el)
 														"
 														v-model="editingWeightValue"
 														type="number"
 														min="1"
-														@blur="saveWeight(rewardItem)"
-														@keyup.enter="saveWeight(rewardItem)"
+														@blur="saveWeight(rewardDoc)"
+														@keyup.enter="saveWeight(rewardDoc)"
 														@keydown.escape="cancelEditWeight"
 														class="px-1 py-1 text-center text-base font-semibold text-heavy-metal focus:outline-none focus:ring-2 focus:ring-blue-500 w-10 border-r-2 border-gray-asparagus bg-norway [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 														autofocus />
 													<button
-														@click="increaseItemWeight(rewardItem)"
+														@click="increaseRewardWeight(rewardDoc)"
 														class="flex items-center justify-center px-1 py-1 bg-sea-mist hover:bg-saltpan transition-colors rounded-r min-w-[2rem]"
 														title="Increase weight by 10">
 														<PlusIcon
@@ -1678,7 +1736,11 @@ watch(selectedCrate, (crate) => {
 													class="bg-transparent px-2 py-1 inline-block min-w-[60px] text-center">
 													<span
 														class="text-base font-semibold text-heavy-metal">
-														{{ getItemChance(rewardItem).toFixed(1) }}%
+														{{
+															getRewardDocChance(rewardDoc).toFixed(
+																1
+															)
+														}}%
 													</span>
 												</div>
 											</div>
@@ -1687,15 +1749,23 @@ watch(selectedCrate, (crate) => {
 								</div>
 								<div class="flex items-center gap-2 ml-8">
 									<button
-										@click="startEditItem(rewardItem)"
+										v-if="canEditReward(rewardDoc)"
+										@click="startEditReward(rewardDoc)"
 										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-										title="Edit item">
+										title="Edit reward">
 										<PencilIcon class="w-4 h-4" />
 									</button>
 									<button
-										@click="confirmRemoveItem(rewardItem)"
+										v-else
+										disabled
+										class="p-1 bg-gray-300 text-gray-500 cursor-not-allowed rounded"
+										title="Cannot edit multi-item rewards (imported from YAML)">
+										<PencilIcon class="w-4 h-4" />
+									</button>
+									<button
+										@click="confirmRemoveReward(rewardDoc)"
 										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-										title="Delete item">
+										title="Delete reward">
 										<TrashIcon class="w-4 h-4" />
 									</button>
 								</div>
@@ -1708,7 +1778,7 @@ watch(selectedCrate, (crate) => {
 
 		<!-- Empty State Message -->
 		<div
-			v-if="selectedCrate && !rewardItemsPending && !rewardItems?.length"
+			v-if="selectedCrate && !rewardItemsPending && !rewardDocuments?.length"
 			class="bg-white rounded-lg pt-6 pr-6 pb-6">
 			<div class="text-gray-600">
 				<p class="text-lg font-medium mb-2">No items added yet</p>
@@ -1727,7 +1797,7 @@ watch(selectedCrate, (crate) => {
 		</div>
 
 		<!-- Clear All Rewards Link -->
-		<div v-if="selectedCrate && rewardItems?.length" class="mt-4 flex justify-start">
+		<div v-if="selectedCrate && rewardDocuments?.length" class="mt-4 flex justify-start">
 			<button
 				@click="showClearAllConfirmation"
 				:disabled="loading"
@@ -1822,13 +1892,13 @@ watch(selectedCrate, (crate) => {
 		<!-- prettier-ignore -->
 		<BaseModal
 			:isOpen="showAddItemForm"
-			:title="editingItem ? 'Edit Item' : 'Add Item to Crate Reward'"
+			:title="editingRewardDoc ? 'Edit Reward' : 'Add Item to Crate Reward'"
 			maxWidth="max-w-2xl"
-			@close="showAddItemForm = false; editingItem = null; addItemFormError = null">
+			@close="showAddItemForm = false; editingRewardDoc = null; addItemFormError = null">
 
 			<form @submit.prevent="saveItem" class="space-y-4">
 				<!-- Item selection -->
-				<div v-if="!editingItem">
+				<div v-if="!editingRewardDoc">
 					<!-- Show search input when no item is selected -->
 					<div v-if="!selectedItem">
 						<label
@@ -1934,21 +2004,21 @@ watch(selectedCrate, (crate) => {
 
 				<!-- Show selected item when editing -->
 				<div
-					v-else-if="editingItem && getItemById(editingItem.item_id)"
+					v-else-if="editingRewardDoc && getItemById(itemForm.item_id)"
 					class="p-3 bg-gray-100 border border-gray-300 rounded">
 					<div class="flex items-center justify-between">
 						<div>
 							<div class="font-medium">
-								{{ getItemById(editingItem.item_id).name }}
+								{{ getItemById(itemForm.item_id).name }}
 							</div>
 							<div class="text-sm text-gray-600">
-								{{ getItemById(editingItem.item_id).material_id }}
+								{{ getItemById(itemForm.item_id).material_id }}
 							</div>
 						</div>
-						<div v-if="getItemById(editingItem.item_id).image" class="w-8 h-8 flex items-center justify-center">
+						<div v-if="getItemById(itemForm.item_id).image" class="w-8 h-8 flex items-center justify-center">
 							<img
-								:src="getImageUrl(getItemById(editingItem.item_id).image)"
-								:alt="getItemById(editingItem.item_id).name"
+								:src="getImageUrl(getItemById(itemForm.item_id).image)"
+								:alt="getItemById(itemForm.item_id).name"
 								loading="lazy"
 								decoding="async"
 								fetchpriority="low"
@@ -2056,12 +2126,12 @@ watch(selectedCrate, (crate) => {
 						<!-- prettier-ignore -->
 						<button
 							type="button"
-							@click="showAddItemForm = false; editingItem = null; addItemFormError = null"
+							@click="showAddItemForm = false; editingRewardDoc = null; addItemFormError = null"
 							class="btn-secondary--outline">
 							Cancel
 						</button>
 						<BaseButton @click="saveItem" :disabled="loading" variant="primary">
-							{{ loading ? 'Saving...' : editingItem ? 'Update' : 'Add' }}
+							{{ loading ? 'Saving...' : editingRewardDoc ? 'Update' : 'Add' }}
 						</BaseButton>
 					</div>
 				</div>
@@ -2270,7 +2340,7 @@ watch(selectedCrate, (crate) => {
 					</h3>
 					<p class="text-sm text-gray-600 mt-2">
 						This action cannot be undone and will permanently delete all
-						{{ rewardItems?.length || 0 }} items.
+						{{ rewardDocuments?.length || 0 }} rewards.
 					</p>
 				</div>
 			</div>
@@ -2322,19 +2392,19 @@ watch(selectedCrate, (crate) => {
 					<div class="flex gap-2">
 						<BaseButton
 							@click="simulateCrateOpen"
-							:disabled="!rewardItems?.length || isSimulating"
+							:disabled="!rewardDocuments?.length || isSimulating"
 							variant="primary">
 							Open 1 Crate
 						</BaseButton>
 						<BaseButton
 							@click="simulateMultipleOpens(10)"
-							:disabled="!rewardItems?.length || isSimulating"
+							:disabled="!rewardDocuments?.length || isSimulating"
 							variant="primary">
 							Open 10 Crates
 						</BaseButton>
 						<BaseButton
 							@click="simulateMultipleOpens(50)"
-							:disabled="!rewardItems?.length || isSimulating"
+							:disabled="!rewardDocuments?.length || isSimulating"
 							variant="primary">
 							Open 50 Crates
 						</BaseButton>
@@ -2367,9 +2437,9 @@ watch(selectedCrate, (crate) => {
 								class="p-2 bg-white rounded border">
 								<div class="flex items-start gap-2 mb-1">
 									<img
-										v-if="getDisplayItemImage(result.item)"
-										:src="getImageUrl(getDisplayItemImage(result.item))"
-										:alt="result.itemData?.name"
+										v-if="getDisplayItemImageFromDoc(result.item)"
+										:src="getImageUrl(getDisplayItemImageFromDoc(result.item))"
+										:alt="result.item.display_name"
 										loading="lazy"
 										decoding="async"
 										fetchpriority="low"
@@ -2394,7 +2464,13 @@ watch(selectedCrate, (crate) => {
 											</span>
 										</div>
 										<div class="text-xs text-gray-500">
-											{{ getItemChance(result.item).toFixed(1) }}% chance
+											{{ getRewardDocChance(result.item).toFixed(1) }}% chance
+										</div>
+										<!-- Multi-item indicator -->
+										<div
+											v-if="isMultiItemReward(result.item)"
+											class="text-xs text-blue-600 font-medium">
+											{{ result.item.items.length }} items
 										</div>
 										<!-- Enchantments Display -->
 										<div
