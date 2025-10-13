@@ -149,6 +149,20 @@ const {
 	error: rewardItemsError
 } = useCrateRewardItems(selectedCrateId)
 
+// Watch for when rewardDocuments data is loaded
+watch(
+	rewardDocuments,
+	(newRewardDocuments) => {
+		if (newRewardDocuments && newRewardDocuments.length > 0) {
+			console.log('Loaded rewardDocuments:', newRewardDocuments)
+			newRewardDocuments.forEach((rewardDoc, index) => {
+				console.log(`rewardDoc[${index}]:`, rewardDoc)
+			})
+		}
+	},
+	{ immediate: true }
+)
+
 // Computed properties
 const selectedCrate = computed(() => crateReward.value)
 const currentVersion = computed(() => {
