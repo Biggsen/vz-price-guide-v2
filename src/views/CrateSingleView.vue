@@ -86,7 +86,9 @@ const itemForm = ref({
 	item_id: '',
 	quantity: 1,
 	weight: 50,
-	enchantments: {}
+	enchantments: {},
+	value_source: 'catalog',
+	custom_value: null
 })
 
 // Item search state
@@ -363,7 +365,9 @@ function startAddItem() {
 		item_id: '',
 		quantity: 1,
 		weight: 50,
-		enchantments: {}
+		enchantments: {},
+		value_source: 'catalog',
+		custom_value: null
 	}
 	addItemFormError.value = null
 	showAddItemForm.value = true
@@ -402,6 +406,11 @@ function getItemName(itemId, rewardItem = null) {
 function getRewardDocValue(rewardDoc) {
 	if (!rewardDoc.items || !rewardDoc.items.length || !allItems.value) return 0
 
+	// Check for custom value first
+	if (rewardDoc.value_source === 'custom' && rewardDoc.custom_value) {
+		return rewardDoc.custom_value
+	}
+
 	let totalValue = 0
 	rewardDoc.items.forEach((item) => {
 		const itemData = getItemById(item.item_id)
@@ -430,6 +439,17 @@ function getRewardDocValue(rewardDoc) {
 function getRewardDocChance(rewardDoc) {
 	if (!totalWeight.value || totalWeight.value === 0) return 0
 	return ((rewardDoc.weight || 0) / totalWeight.value) * 100
+}
+
+function getValueDisplay(rewardDoc) {
+	const value = getRewardDocValue(rewardDoc)
+
+	// Show "Unknown" if value is 0
+	if (value === 0) {
+		return 'Unknown'
+	}
+
+	return Math.ceil(value)
 }
 
 function getDisplayItemImageFromDoc(rewardDoc) {
@@ -548,7 +568,9 @@ function startEditReward(rewardDoc) {
 			item_id: singleItem.item_id,
 			quantity: singleItem.quantity,
 			weight: rewardDoc.weight,
-			enchantments: {} // Convert array to object for form
+			enchantments: {}, // Convert array to object for form
+			value_source: rewardDoc.value_source || 'catalog',
+			custom_value: rewardDoc.custom_value || null
 		}
 
 		// Convert enchantments array to object for editing
@@ -563,7 +585,9 @@ function startEditReward(rewardDoc) {
 			item_id: null, // No item ID for command rewards
 			quantity: rewardDoc.display_amount || 1,
 			weight: rewardDoc.weight,
-			enchantments: {}
+			enchantments: {},
+			value_source: rewardDoc.value_source || 'catalog',
+			custom_value: rewardDoc.custom_value || null
 		}
 	}
 
@@ -667,6 +691,16 @@ async function saveItem() {
 		return
 	}
 
+	// Validate custom value if using custom pricing
+	if (
+		itemForm.value.value_source === 'custom' &&
+		(!itemForm.value.custom_value || itemForm.value.custom_value < 0)
+	) {
+		console.log('Validation failed: invalid custom value')
+		addItemFormError.value = 'custom_value'
+		return
+	}
+
 	console.log('All validations passed, starting save process...')
 	loading.value = true
 
@@ -700,7 +734,10 @@ async function saveItem() {
 						enchantments: Object.keys(itemForm.value.enchantments || {})
 					}
 				],
-				display_enchantments: Object.keys(itemForm.value.enchantments || {})
+				display_enchantments: Object.keys(itemForm.value.enchantments || {}),
+				value_source: itemForm.value.value_source,
+				custom_value:
+					itemForm.value.value_source === 'custom' ? itemForm.value.custom_value : null
 			}
 
 			console.log('Prepared updates:', updates)
@@ -725,7 +762,9 @@ async function saveItem() {
 			item_id: '',
 			quantity: 1,
 			weight: 50,
-			enchantments: {}
+			enchantments: {},
+			value_source: 'catalog',
+			custom_value: null
 		}
 	} catch (err) {
 		console.error('Error in saveItem:', err)
@@ -824,7 +863,7 @@ function copyRewardList() {
 				const chance = getRewardDocChance(rewardDoc).toFixed(1)
 				return `${stripColorCodes(
 					rewardDoc.display_name || 'Multi-item Reward'
-				)} - Value: ${Math.ceil(totalValue)} - Weight: ${
+				)} - Value: ${getValueDisplay(rewardDoc)} - Weight: ${
 					rewardDoc.weight
 				} - Chance: ${chance}% (${rewardDoc.items.length} items)`
 			} else {
@@ -841,7 +880,9 @@ function copyRewardList() {
 
 				return `${singleItem.quantity}x ${stripColorCodes(
 					itemData.name
-				)} - Value: ${Math.ceil(value)} - Weight: ${rewardDoc.weight} - Chance: ${chance}%`
+				)} - Value: ${getValueDisplay(rewardDoc)} - Weight: ${
+					rewardDoc.weight
+				} - Chance: ${chance}%`
 			}
 		})
 		.join('\n')
@@ -1715,7 +1756,7 @@ watch(selectedCrate, (crate) => {
 												</h4>
 												<div class="text-sm text-heavy-metal">
 													<span class="font-medium">Value:</span>
-													{{ Math.ceil(getRewardDocValue(rewardDoc)) }}
+													{{ getValueDisplay(rewardDoc) }}
 												</div>
 												<!-- Items list (only for multi-item rewards) -->
 												<div
@@ -2223,6 +2264,57 @@ watch(selectedCrate, (crate) => {
 					</div>
 				</div>
 
+				<!-- Value Source Section -->
+				<div class="space-y-4">
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">
+							Value Source
+						</label>
+						<div class="space-y-2">
+							<label class="flex items-center cursor-pointer">
+								<input
+									v-model="itemForm.value_source"
+									type="radio"
+									value="catalog"
+									class="mr-2 radio-input" />
+								<span class="text-sm text-gray-700">Use price guide</span>
+							</label>
+							<label class="flex items-center cursor-pointer">
+								<input
+									v-model="itemForm.value_source"
+									type="radio"
+									value="custom"
+									class="mr-2 radio-input" />
+								<span class="text-sm text-gray-700">Set custom value</span>
+							</label>
+						</div>
+					</div>
+
+					<!-- Custom Value Input (only show when custom is selected) -->
+					<div v-if="itemForm.value_source === 'custom'">
+						<label class="block text-sm font-medium text-gray-700 mb-1">
+							Custom Value *
+						</label>
+						<input
+							v-model.number="itemForm.custom_value"
+							type="number"
+							min="0"
+							step="0.01"
+							:class="[
+								'block w-32 rounded border-2 px-3 py-1 text-gray-900 focus:ring-2 font-sans',
+								addItemFormError && addItemFormError.includes('custom_value') 
+									? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+									: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+							]" />
+						<div
+							v-if="addItemFormError && addItemFormError.includes('custom_value')"
+							class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+							<XCircleIcon class="w-4 h-4" />
+							Custom value is required when using custom pricing
+						</div>
+					</div>
+				</div>
+
 				<!-- Enchantments Section -->
 				<div class="mt-4">
 					<div class="flex items-center justify-between mb-2">
@@ -2642,3 +2734,10 @@ watch(selectedCrate, (crate) => {
 		</BaseModal>
 	</div>
 </template>
+
+<style scoped>
+.radio-input {
+	@apply w-5 h-5;
+	accent-color: theme('colors.gray-asparagus');
+}
+</style>

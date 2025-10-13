@@ -150,6 +150,8 @@ export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 			display_item: itemData.display_item || itemData.item_id,
 			display_amount: itemData.display_amount || itemData.quantity || 1,
 			display_enchantments: enchantmentsArray, // Add missing display_enchantments field
+			value_source: itemData.value_source || 'catalog',
+			custom_value: itemData.value_source === 'custom' ? itemData.custom_value : null,
 			settings: {
 				'Custom-Model-Data': itemData.custom_model_data || -1,
 				Model: {
@@ -1281,6 +1283,8 @@ export async function importCrateRewardsFromYaml(
 					import_source: 'yaml_import',
 					import_timestamp: new Date().toISOString(),
 					original_yaml_key: prizeKey,
+					value_source: 'catalog', // Default to catalog pricing for imports
+					custom_value: null, // No custom value initially
 					items: items, // NEW: Items embedded in document
 					player: playerField, // NEW: Player field for player heads
 					display_trim: displayTrim // NEW: DisplayTrim field for armor trims
