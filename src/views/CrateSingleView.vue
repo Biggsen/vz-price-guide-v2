@@ -1095,7 +1095,41 @@ function getYamlPreview(rewardDoc) {
 	}
 
 	yaml += `      DisplayItem: "${formatted.displayItem}"\n`
-	yaml += `      Settings: { Custom-Model-Data: ${formatted.customModelData}, Model: { Namespace: "", Id: "" } }\n`
+	yaml += `      Settings:\n`
+	yaml += `        Custom-Model-Data: ${formatted.settings['Custom-Model-Data'] ?? -1}\n`
+	yaml += `        Model:\n`
+	yaml += `          Namespace: "${formatted.settings.Model.Namespace}"\n`
+	yaml += `          Id: "${formatted.settings.Model.Id}"\n`
+
+	// Add other settings if present
+	if (formatted.settings['Max-Pulls']) {
+		yaml += `        Max-Pulls: ${formatted.settings['Max-Pulls']}\n`
+	}
+	if (formatted.settings['Mob-Type']) {
+		yaml += `        Mob-Type: ${formatted.settings['Mob-Type']}\n`
+	}
+	if (formatted.settings['RGB']) {
+		yaml += `        RGB: "${formatted.settings['RGB']}"\n`
+	}
+	if (formatted.settings['Color']) {
+		yaml += `        Color: ${formatted.settings['Color']}\n`
+	}
+	if (formatted.settings['Broadcast']) {
+		yaml += `        Broadcast:\n`
+		yaml += `          Toggle: ${formatted.settings['Broadcast'].Toggle}\n`
+		if (
+			formatted.settings['Broadcast'].Messages &&
+			formatted.settings['Broadcast'].Messages.length > 0
+		) {
+			yaml += `          Messages:\n`
+			formatted.settings['Broadcast'].Messages.forEach((message) => {
+				yaml += `            - "${message}"\n`
+			})
+		}
+		if (formatted.settings['Broadcast'].Permission) {
+			yaml += `          Permission: "${formatted.settings['Broadcast'].Permission}"\n`
+		}
+	}
 	yaml += `      DisplayAmount: ${formatted.displayAmount}\n`
 	yaml += `      Weight: ${formatted.weight}\n`
 

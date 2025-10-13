@@ -46,7 +46,7 @@ const db = useFirestore()
 //   display_name: string (custom display name)
 //   display_item: string (material_id for display)
 //   display_amount: number (amount to show in GUI)
-//   custom_model_data: number (optional)
+//   settings: object (optional, contains Custom-Model-Data, Model, etc.)
 //   enchantments: object (optional, for enchanted items)
 //   created_at: timestamp
 //   updated_at: timestamp
@@ -150,7 +150,13 @@ export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 			display_item: itemData.display_item || itemData.item_id,
 			display_amount: itemData.display_amount || itemData.quantity || 1,
 			display_enchantments: enchantmentsArray, // Add missing display_enchantments field
-			custom_model_data: itemData.custom_model_data || -1,
+			settings: {
+				'Custom-Model-Data': itemData.custom_model_data || -1,
+				Model: {
+					Namespace: '',
+					Id: ''
+				}
+			},
 			import_source: 'manual',
 			items: [
 				{
@@ -496,7 +502,14 @@ export function formatRewardItemForYaml(rewardDoc, prizeId, allItems = []) {
 		displayItem,
 		displayAmount,
 		weight,
-		customModelData: rewardDoc.custom_model_data || -1,
+		settings: {
+			'Custom-Model-Data': -1,
+			Model: {
+				Namespace: '',
+				Id: ''
+			},
+			...rewardDoc.settings
+		},
 		displayEnchantments,
 		commands: rewardDoc.commands || [],
 		items: itemStrings,
@@ -576,9 +589,47 @@ export function generateCrazyCratesYaml(crateReward, rewardDocuments, allItems, 
 		}
 
 		yamlLines.push(`      DisplayItem: "${formattedItem.displayItem}"`)
+
+		// Add complete Settings structure
+		yamlLines.push(`      Settings:`)
 		yamlLines.push(
-			`      Settings: { Custom-Model-Data: ${formattedItem.customModelData}, Model: { Namespace: "", Id: "" } }`
+			`        Custom-Model-Data: ${formattedItem.settings['Custom-Model-Data'] ?? -1}`
 		)
+		yamlLines.push(`        Model:`)
+		yamlLines.push(`          Namespace: "${formattedItem.settings.Model.Namespace}"`)
+		yamlLines.push(`          Id: "${formattedItem.settings.Model.Id}"`)
+
+		// Add other settings if present
+		if (formattedItem.settings['Max-Pulls']) {
+			yamlLines.push(`        Max-Pulls: ${formattedItem.settings['Max-Pulls']}`)
+		}
+		if (formattedItem.settings['Mob-Type']) {
+			yamlLines.push(`        Mob-Type: ${formattedItem.settings['Mob-Type']}`)
+		}
+		if (formattedItem.settings['RGB']) {
+			yamlLines.push(`        RGB: "${formattedItem.settings['RGB']}"`)
+		}
+		if (formattedItem.settings['Color']) {
+			yamlLines.push(`        Color: ${formattedItem.settings['Color']}`)
+		}
+		if (formattedItem.settings['Broadcast']) {
+			yamlLines.push(`        Broadcast:`)
+			yamlLines.push(`          Toggle: ${formattedItem.settings['Broadcast'].Toggle}`)
+			if (
+				formattedItem.settings['Broadcast'].Messages &&
+				formattedItem.settings['Broadcast'].Messages.length > 0
+			) {
+				yamlLines.push(`          Messages:`)
+				formattedItem.settings['Broadcast'].Messages.forEach((message) => {
+					yamlLines.push(`            - "${message}"`)
+				})
+			}
+			if (formattedItem.settings['Broadcast'].Permission) {
+				yamlLines.push(
+					`          Permission: "${formattedItem.settings['Broadcast'].Permission}"`
+				)
+			}
+		}
 		yamlLines.push(`      DisplayAmount: ${formattedItem.displayAmount}`)
 		yamlLines.push(`      Weight: ${formattedItem.weight}`)
 
@@ -889,8 +940,8 @@ export function parseItemString(itemString, allItems = [], version = '1_20') {
 			custom_properties: {}
 		}
 
-		// Split by comma and parse each part
-		const parts = itemString.split(',').map((part) => part.trim())
+		// Split by comma and space and parse each part
+		const parts = itemString.split(', ').map((part) => part.trim())
 
 		for (const part of parts) {
 			if (part.startsWith('Item:') || part.startsWith('item:')) {
@@ -1218,7 +1269,13 @@ export async function importCrateRewardsFromYaml(
 					messages: prizeData.Messages || [],
 					display_patterns: prizeData.DisplayPatterns || [],
 					blacklisted_permissions: prizeData['BlackListed-Permissions'] || [],
-					custom_model_data: prizeData.Settings?.['Custom-Model-Data'] || -1,
+					settings: prizeData.Settings || {
+						'Custom-Model-Data': -1,
+						Model: {
+							Namespace: '',
+							Id: ''
+						}
+					},
 					created_at: new Date().toISOString(),
 					updated_at: new Date().toISOString(),
 					import_source: 'yaml_import',

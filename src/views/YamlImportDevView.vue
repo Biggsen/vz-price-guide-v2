@@ -320,7 +320,13 @@ function parseYaml(resetIndex = true) {
 				messages: prizeData.Messages || [], // Array of messages to send to player
 				display_patterns: prizeData.DisplayPatterns || [], // Array of display patterns
 				blacklisted_permissions: prizeData['BlackListed-Permissions'] || [], // Array of blacklisted permissions
-				custom_model_data: prizeData.Settings?.['Custom-Model-Data'] || -1,
+				settings: prizeData.Settings || {
+					'Custom-Model-Data': -1,
+					Model: {
+						Namespace: '',
+						Id: ''
+					}
+				},
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
 			}
@@ -514,7 +520,13 @@ function parseYaml(resetIndex = true) {
 				blacklisted_permissions: mappedData.blacklisted_permissions || [],
 
 				// Metadata
-				custom_model_data: mappedData.custom_model_data || -1,
+				settings: mappedData.settings || {
+					'Custom-Model-Data': -1,
+					Model: {
+						Namespace: '',
+						Id: ''
+					}
+				},
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString(),
 
@@ -763,7 +775,13 @@ async function saveCrateRewards() {
 					messages: prizeData.Messages || [],
 					display_patterns: prizeData.DisplayPatterns || [],
 					blacklisted_permissions: prizeData['BlackListed-Permissions'] || [],
-					custom_model_data: prizeData.Settings?.['Custom-Model-Data'] || -1,
+					settings: prizeData.Settings || {
+						'Custom-Model-Data': -1,
+						Model: {
+							Namespace: '',
+							Id: ''
+						}
+					},
 					created_at: new Date().toISOString(),
 					updated_at: new Date().toISOString(),
 					import_source: 'yaml_parser',
