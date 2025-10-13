@@ -334,6 +334,16 @@ function itemObjectToItemString(itemObj, allItems = []) {
 		itemString += `, Skull:${itemObj.skull_id}`
 	}
 
+	// Add armor trim material for trimmed armor
+	if (itemObj.trim_material) {
+		itemString += `, Trim-Material:${itemObj.trim_material}`
+	}
+
+	// Add armor trim pattern for trimmed armor
+	if (itemObj.trim_pattern) {
+		itemString += `, Trim-Pattern:${itemObj.trim_pattern}`
+	}
+
 	// Add enchantments if present
 	if (itemObj.enchantments && itemObj.enchantments.length > 0) {
 		// Handle new array format (post-flattening removal)
@@ -484,7 +494,9 @@ export function formatRewardItemForYaml(rewardDoc, prizeId, allItems = []) {
 		commands: rewardDoc.commands || [],
 		items: itemStrings,
 		messages: rewardDoc.messages || [],
-		player: rewardDoc.player || null // NEW: Player field for player heads
+		player: rewardDoc.player || null, // NEW: Player field for player heads
+		displayTrim: rewardDoc.display_trim || null, // NEW: DisplayTrim field for armor trims
+		displayLore: rewardDoc.display_lore || [] // NEW: DisplayLore field
 	}
 }
 
@@ -564,6 +576,21 @@ export function generateCrazyCratesYaml(crateReward, rewardDocuments, allItems, 
 		// Add Player field if present (for player heads)
 		if (formattedItem.player) {
 			yamlLines.push(`      Player: "${formattedItem.player}"`)
+		}
+
+		// Add DisplayTrim field if present (for armor trims)
+		if (formattedItem.displayTrim) {
+			yamlLines.push(`      DisplayTrim:`)
+			yamlLines.push(`        Material: "${formattedItem.displayTrim.material}"`)
+			yamlLines.push(`        Pattern: "${formattedItem.displayTrim.pattern}"`)
+		}
+
+		// Add DisplayLore field if present
+		if (formattedItem.displayLore && formattedItem.displayLore.length > 0) {
+			yamlLines.push(`      DisplayLore:`)
+			formattedItem.displayLore.forEach((lore) => {
+				yamlLines.push(`        - "${lore}"`)
+			})
 		}
 
 		// Add Items section (always present, may be empty)
@@ -835,6 +862,8 @@ export function parseItemString(itemString, allItems = [], version = '1_20') {
 			enchantments: [], // Array of enchantment item IDs (like display_enchantments)
 			player: null,
 			skull_id: null,
+			trim_material: null,
+			trim_pattern: null,
 			custom_properties: {}
 		}
 
@@ -871,6 +900,12 @@ export function parseItemString(itemString, allItems = [], version = '1_20') {
 			} else if (part.startsWith('Skull:')) {
 				// Extract skull database ID: "Skull:7129" -> "7129"
 				itemData.skull_id = part.substring(6)
+			} else if (part.startsWith('Trim-Material:')) {
+				// Extract armor trim material: "Trim-Material:quartz" -> "quartz"
+				itemData.trim_material = part.substring(14)
+			} else if (part.startsWith('Trim-Pattern:')) {
+				// Extract armor trim pattern: "Trim-Pattern:sentry" -> "sentry"
+				itemData.trim_pattern = part.substring(13)
 			} else if (part.includes(':')) {
 				// Check if this is a valid enchantment using whitelist
 				const [name, level] = part.split(':')
@@ -1104,6 +1139,19 @@ export async function importCrateRewardsFromYaml(
 					}
 				}
 
+				// Extract DisplayTrim field from items (for armor with trims)
+				// Check if any item has trim_material and trim_pattern, and if so, store at root level
+				let displayTrim = null
+				if (items.length > 0) {
+					const trimItem = items.find((item) => item.trim_material && item.trim_pattern)
+					if (trimItem) {
+						displayTrim = {
+							material: trimItem.trim_material,
+							pattern: trimItem.trim_pattern
+						}
+					}
+				}
+
 				// Find display item
 				const displayItemSlug = prizeData.DisplayItem || ''
 				const displayItemMatch = allItems.find(
@@ -1155,7 +1203,8 @@ export async function importCrateRewardsFromYaml(
 					import_timestamp: new Date().toISOString(),
 					original_yaml_key: prizeKey,
 					items: items, // NEW: Items embedded in document
-					player: playerField // NEW: Player field for player heads
+					player: playerField, // NEW: Player field for player heads
+					display_trim: displayTrim // NEW: DisplayTrim field for armor trims
 				}
 
 				// Save prize document directly to crate_reward_items collection

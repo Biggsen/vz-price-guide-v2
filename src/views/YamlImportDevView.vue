@@ -379,10 +379,16 @@ function parseYaml(resetIndex = true) {
 						itemData.quantity = parseInt(part.substring(7)) || 1
 					} else if (part.startsWith('Player:')) {
 						// Extract player head texture: "Player:1ee3126ff2c343da..." -> "1ee3126ff2c343da..."
-						itemData.player_texture = part.substring(7) // Remove "Player:"
+						itemData.player = part.substring(7) // Remove "Player:"
 					} else if (part.startsWith('Skull:')) {
 						// Extract skull database ID: "Skull:7129" -> "7129"
 						itemData.skull_id = part.substring(6) // Remove "Skull:"
+					} else if (part.startsWith('Trim-Material:')) {
+						// Extract armor trim material: "Trim-Material:quartz" -> "quartz"
+						itemData.trim_material = part.substring(14) // Remove "Trim-Material:"
+					} else if (part.startsWith('Trim-Pattern:')) {
+						// Extract armor trim pattern: "Trim-Pattern:sentry" -> "sentry"
+						itemData.trim_pattern = part.substring(13) // Remove "Trim-Pattern:"
 					} else if (part.includes(':')) {
 						// Check if this is a valid enchantment using whitelist
 						const [name, level] = part.split(':')
@@ -620,7 +626,7 @@ function parseItemString(itemString) {
 
 			// Look up item in database
 			const itemMatch = allItems.value.find((item) => item.material_id === itemSlug)
-			itemData.item_id = itemMatch ? itemMatch.id : itemSlug
+			itemData.item_id = itemMatch ? itemMatch.id : null // Don't store material_id as item_id
 			itemData.catalog_item = !!itemMatch
 			itemData.matched = !!itemMatch
 		} else if (part.startsWith('Name:')) {
@@ -631,10 +637,16 @@ function parseItemString(itemString) {
 			itemData.quantity = parseInt(part.substring(7)) || 1
 		} else if (part.startsWith('Player:')) {
 			// Extract player head texture: "Player:1ee3126ff2c343da..." -> "1ee3126ff2c343da..."
-			itemData.player_texture = part.substring(7) // Remove "Player:"
+			itemData.player = part.substring(7) // Remove "Player:"
 		} else if (part.startsWith('Skull:')) {
 			// Extract skull database ID: "Skull:7129" -> "7129"
 			itemData.skull_id = part.substring(6) // Remove "Skull:"
+		} else if (part.startsWith('Trim-Material:')) {
+			// Extract armor trim material: "Trim-Material:quartz" -> "quartz"
+			itemData.trim_material = part.substring(14) // Remove "Trim-Material:"
+		} else if (part.startsWith('Trim-Pattern:')) {
+			// Extract armor trim pattern: "Trim-Pattern:sentry" -> "sentry"
+			itemData.trim_pattern = part.substring(13) // Remove "Trim-Pattern:"
 		} else if (part.includes(':')) {
 			// Check if this is a valid enchantment using whitelist
 			const [name, level] = part.split(':')

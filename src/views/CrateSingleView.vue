@@ -1104,6 +1104,21 @@ function getYamlPreview(rewardDoc) {
 		yaml += `      Player: "${formatted.player}"\n`
 	}
 
+	// Add DisplayTrim field if present (for armor trims)
+	if (formatted.displayTrim) {
+		yaml += `      DisplayTrim:\n`
+		yaml += `        Material: "${formatted.displayTrim.material}"\n`
+		yaml += `        Pattern: "${formatted.displayTrim.pattern}"\n`
+	}
+
+	// Add DisplayLore field if present
+	if (formatted.displayLore && formatted.displayLore.length > 0) {
+		yaml += `      DisplayLore:\n`
+		formatted.displayLore.forEach((lore) => {
+			yaml += `        - "${lore}"\n`
+		})
+	}
+
 	// Add Items section (always present)
 	yaml += `      Items:\n`
 	if (formatted.items && formatted.items.length > 0) {
