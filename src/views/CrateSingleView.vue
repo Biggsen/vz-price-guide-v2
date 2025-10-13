@@ -2085,25 +2085,27 @@ watch(selectedCrate, (crate) => {
 
 				<!-- Show selected item when editing -->
 				<div
-					v-else-if="editingRewardDoc && getItemById(itemForm.item_id)"
+					v-else-if="editingRewardDoc"
 					class="p-3 bg-gray-100 border border-gray-300 rounded">
 					<div class="flex items-center justify-between">
 						<div>
 							<div class="font-medium">
-								{{ getItemById(itemForm.item_id).name }}
+								{{ stripColorCodes(getItemById(itemForm.item_id)?.name || editingRewardDoc.display_name || 'Unknown Item') }}
 							</div>
 							<div class="text-sm text-gray-600">
-								{{ getItemById(itemForm.item_id).material_id }}
+								{{ getItemById(itemForm.item_id)?.material_id || editingRewardDoc.display_item || itemForm.item_id }}
 							</div>
 						</div>
-						<div v-if="getItemById(itemForm.item_id).image" class="w-8 h-8 flex items-center justify-center">
+						<div class="w-8 h-8 flex items-center justify-center">
 							<img
+								v-if="getItemById(itemForm.item_id)?.image"
 								:src="getImageUrl(getItemById(itemForm.item_id).image)"
 								:alt="getItemById(itemForm.item_id).name"
 								loading="lazy"
 								decoding="async"
 								fetchpriority="low"
 								class="max-w-full max-h-full object-contain" />
+							<QuestionMarkCircleIcon v-else class="w-6 h-6 text-gray-600" />
 						</div>
 					</div>
 				</div>
