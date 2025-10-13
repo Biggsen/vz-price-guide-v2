@@ -404,12 +404,13 @@ function getItemName(itemId, rewardItem = null) {
 // ===== DOCUMENT-BASED HELPER FUNCTIONS =====
 
 function getRewardDocValue(rewardDoc) {
-	if (!rewardDoc.items || !rewardDoc.items.length || !allItems.value) return 0
-
-	// Check for custom value first
+	// Check for custom value first (works for both item-based and itemless rewards)
 	if (rewardDoc.value_source === 'custom' && rewardDoc.custom_value) {
 		return rewardDoc.custom_value
 	}
+
+	// For catalog-based pricing, we need items
+	if (!rewardDoc.items || !rewardDoc.items.length || !allItems.value) return 0
 
 	let totalValue = 0
 	rewardDoc.items.forEach((item) => {
@@ -707,8 +708,10 @@ async function saveItem() {
 	try {
 		if (editingRewardDoc.value) {
 			console.log('Editing existing reward document...')
-			// Update existing reward document
-			const singleItem = editingRewardDoc.value.items[0]
+			// Check if reward has items
+			const hasItems = editingRewardDoc.value.items && editingRewardDoc.value.items.length > 0
+			const singleItem = hasItems ? editingRewardDoc.value.items[0] : null
+			console.log('hasItems:', hasItems)
 			console.log('singleItem:', singleItem)
 
 			// Check if this is a catalog item or unknown item
@@ -725,7 +728,14 @@ async function saveItem() {
 					editingRewardDoc.value.display_name
 						? editingRewardDoc.value.display_name // Preserve imported custom names
 						: generateDisplayName(itemForm.value), // Generate for manual items or missing display_name
-				items: [
+				value_source: itemForm.value.value_source,
+				custom_value:
+					itemForm.value.value_source === 'custom' ? itemForm.value.custom_value : null
+			}
+
+			// Handle items and enchantments only for item-based rewards
+			if (hasItems) {
+				updates.items = [
 					{
 						...singleItem,
 						// Only update item_id for catalog items, preserve original for unknown items
@@ -733,11 +743,12 @@ async function saveItem() {
 						quantity: itemForm.value.quantity,
 						enchantments: Object.keys(itemForm.value.enchantments || {})
 					}
-				],
-				display_enchantments: Object.keys(itemForm.value.enchantments || {}),
-				value_source: itemForm.value.value_source,
-				custom_value:
-					itemForm.value.value_source === 'custom' ? itemForm.value.custom_value : null
+				]
+				updates.display_enchantments = Object.keys(itemForm.value.enchantments || {})
+			} else {
+				// For itemless rewards, clear items and enchantments
+				updates.items = []
+				updates.display_enchantments = []
 			}
 
 			console.log('Prepared updates:', updates)
@@ -2184,7 +2195,7 @@ watch(selectedCrate, (crate) => {
 								{{ stripColorCodes(getItemById(itemForm.item_id)?.name || editingRewardDoc.display_name || 'Unknown Item') }}
 							</div>
 							<div class="text-sm text-gray-600">
-								{{ getItemById(itemForm.item_id)?.material_id || editingRewardDoc.display_item || itemForm.item_id }}
+								{{ getItemById(editingRewardDoc.display_item)?.material_id || editingRewardDoc.display_item || itemForm.item_id }}
 							</div>
 						</div>
 						<div class="w-8 h-8 flex items-center justify-center">
@@ -2202,7 +2213,8 @@ watch(selectedCrate, (crate) => {
 				</div>
 
 				<div class="space-y-4">
-					<div>
+					<!-- Quantity field - only show for item-based rewards -->
+					<div v-if="!editingRewardDoc || (editingRewardDoc.items && editingRewardDoc.items.length > 0)">
 						<label class="block text-sm font-medium text-gray-700 mb-1">
 							Quantity *
 						</label>
@@ -2315,8 +2327,8 @@ watch(selectedCrate, (crate) => {
 					</div>
 				</div>
 
-				<!-- Enchantments Section -->
-				<div class="mt-4">
+				<!-- Enchantments Section - only show for item-based rewards -->
+				<div v-if="!editingRewardDoc || (editingRewardDoc.items && editingRewardDoc.items.length > 0)" class="mt-4">
 					<div class="flex items-center justify-between mb-2">
 						<label class="text-sm font-medium text-gray-700">Enchantments</label>
 						<BaseButton
