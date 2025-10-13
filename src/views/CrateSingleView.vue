@@ -528,6 +528,9 @@ function cancelEditWeight() {
 // ===== DOCUMENT EDIT FUNCTIONS =====
 
 function startEditReward(rewardDoc) {
+	console.log('=== startEditReward() called ===')
+	console.log('rewardDoc:', rewardDoc)
+
 	// Only allow editing single-item rewards
 	if (!canEditReward(rewardDoc)) {
 		error.value = 'Cannot edit multi-item rewards. Please re-import from YAML to modify.'
@@ -538,6 +541,7 @@ function startEditReward(rewardDoc) {
 	if (rewardDoc.items && rewardDoc.items.length > 0) {
 		// Extract the single item
 		const singleItem = rewardDoc.items[0]
+		console.log('singleItem from rewardDoc:', singleItem)
 
 		// Convert to form format
 		itemForm.value = {
@@ -563,8 +567,10 @@ function startEditReward(rewardDoc) {
 		}
 	}
 
+	console.log('itemForm.value after setup:', itemForm.value)
 	editingRewardDoc.value = rewardDoc
 	showAddItemForm.value = true
+	console.log('Form opened for editing')
 }
 
 function confirmRemoveReward(rewardDoc) {
@@ -627,40 +633,69 @@ function stripColorCodes(text) {
 }
 
 async function saveItem() {
+	console.log('=== saveItem() called ===')
+	console.log('selectedCrateId.value:', selectedCrateId.value)
+	console.log('itemForm.value:', itemForm.value)
+	console.log('editingRewardDoc.value:', editingRewardDoc.value)
+
 	// Clear previous errors
 	addItemFormError.value = null
 
 	// Validate required fields
-	if (!selectedCrateId.value || !itemForm.value.item_id) {
+	if (!selectedCrateId.value) {
+		console.log('Validation failed: missing selectedCrateId')
+		addItemFormError.value = 'No crate selected'
+		return
+	}
+
+	// For new items, require item selection
+	if (!editingRewardDoc.value && !itemForm.value.item_id) {
+		console.log('Validation failed: missing item_id for new item')
 		addItemFormError.value = 'Please select an item'
 		return
 	}
 
 	if (!itemForm.value.quantity || itemForm.value.quantity < 1) {
+		console.log('Validation failed: invalid quantity')
 		addItemFormError.value = 'quantity'
 		return
 	}
 
 	if (!itemForm.value.weight || itemForm.value.weight < 1) {
+		console.log('Validation failed: invalid weight')
 		addItemFormError.value = 'weight'
 		return
 	}
 
+	console.log('All validations passed, starting save process...')
 	loading.value = true
 
 	try {
 		if (editingRewardDoc.value) {
+			console.log('Editing existing reward document...')
 			// Update existing reward document
 			const singleItem = editingRewardDoc.value.items[0]
+			console.log('singleItem:', singleItem)
+
+			// Check if this is a catalog item or unknown item
+			const isCatalogItem = getItemById(itemForm.value.item_id)
+			console.log('isCatalogItem:', isCatalogItem)
+			console.log('itemForm.value.item_id:', itemForm.value.item_id)
 
 			// Prepare updates for the document
 			const updates = {
 				weight: itemForm.value.weight,
-				display_name: generateDisplayName(itemForm.value),
+				// Preserve display_name for imported items, regenerate for manual items
+				display_name:
+					editingRewardDoc.value.import_source === 'yaml_import' &&
+					editingRewardDoc.value.display_name
+						? editingRewardDoc.value.display_name // Preserve imported custom names
+						: generateDisplayName(itemForm.value), // Generate for manual items or missing display_name
 				items: [
 					{
 						...singleItem,
-						item_id: itemForm.value.item_id,
+						// Only update item_id for catalog items, preserve original for unknown items
+						item_id: isCatalogItem ? itemForm.value.item_id : singleItem.item_id,
 						quantity: itemForm.value.quantity,
 						enchantments: Object.keys(itemForm.value.enchantments || {})
 					}
@@ -668,7 +703,9 @@ async function saveItem() {
 				display_enchantments: Object.keys(itemForm.value.enchantments || {})
 			}
 
+			console.log('Prepared updates:', updates)
 			await updateRewardDocument(editingRewardDoc.value, updates)
+			console.log('Successfully updated reward document')
 		} else {
 			// Add new item - pass the selected item data to avoid extra queries
 			const selectedItem = getItemById(itemForm.value.item_id)
@@ -691,9 +728,11 @@ async function saveItem() {
 			enchantments: {}
 		}
 	} catch (err) {
+		console.error('Error in saveItem:', err)
 		addItemFormError.value = 'Failed to save item: ' + err.message
 	} finally {
 		loading.value = false
+		console.log('saveItem() completed')
 	}
 }
 
