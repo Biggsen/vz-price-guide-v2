@@ -534,22 +534,33 @@ function startEditReward(rewardDoc) {
 		return
 	}
 
-	// Extract the single item
-	const singleItem = rewardDoc.items[0]
+	// Check if reward has items
+	if (rewardDoc.items && rewardDoc.items.length > 0) {
+		// Extract the single item
+		const singleItem = rewardDoc.items[0]
 
-	// Convert to form format
-	itemForm.value = {
-		item_id: singleItem.item_id,
-		quantity: singleItem.quantity,
-		weight: rewardDoc.weight,
-		enchantments: {} // Convert array to object for form
-	}
+		// Convert to form format
+		itemForm.value = {
+			item_id: singleItem.item_id,
+			quantity: singleItem.quantity,
+			weight: rewardDoc.weight,
+			enchantments: {} // Convert array to object for form
+		}
 
-	// Convert enchantments array to object for editing
-	if (singleItem.enchantments && Array.isArray(singleItem.enchantments)) {
-		singleItem.enchantments.forEach((enchId) => {
-			itemForm.value.enchantments[enchId] = 1
-		})
+		// Convert enchantments array to object for editing
+		if (singleItem.enchantments && Array.isArray(singleItem.enchantments)) {
+			singleItem.enchantments.forEach((enchId) => {
+				itemForm.value.enchantments[enchId] = 1
+			})
+		}
+	} else {
+		// Handle rewards without items (command rewards, etc.)
+		itemForm.value = {
+			item_id: null, // No item ID for command rewards
+			quantity: rewardDoc.display_amount || 1,
+			weight: rewardDoc.weight,
+			enchantments: {}
+		}
 	}
 
 	editingRewardDoc.value = rewardDoc
