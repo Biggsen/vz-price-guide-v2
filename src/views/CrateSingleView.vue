@@ -1099,6 +1099,11 @@ function getYamlPreview(rewardDoc) {
 	yaml += `      DisplayAmount: ${formatted.displayAmount}\n`
 	yaml += `      Weight: ${formatted.weight}\n`
 
+	// Add Player field if present (for player heads)
+	if (formatted.player) {
+		yaml += `      Player: "${formatted.player}"\n`
+	}
+
 	// Add Items section (always present)
 	yaml += `      Items:\n`
 	if (formatted.items && formatted.items.length > 0) {

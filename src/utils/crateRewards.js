@@ -310,12 +310,29 @@ export function calculateCrateRewardTotalValue(rewardData, allItems, version = '
 function itemObjectToItemString(itemObj, allItems = []) {
 	if (!itemObj) return ''
 
-	// Find the item document to get material_id
+	// Find the item document to get material_id, or use materialId if no match
 	const itemDoc = allItems.find((i) => i.id === itemObj.item_id)
-	if (!itemDoc) return ''
+	const materialId = itemDoc ? itemDoc.material_id : itemObj.materialId
 
-	let itemString = `item:${itemDoc.material_id}`
+	if (!materialId) return ''
+
+	let itemString = `item:${materialId}`
 	itemString += `, amount:${itemObj.quantity || 1}`
+
+	// Add custom name if present
+	if (itemObj.name) {
+		itemString += `, Name:${itemObj.name}`
+	}
+
+	// Add player texture for player heads
+	if (itemObj.player) {
+		itemString += `, Player:${itemObj.player}`
+	}
+
+	// Add skull ID for player heads
+	if (itemObj.skull_id) {
+		itemString += `, Skull:${itemObj.skull_id}`
+	}
 
 	// Add enchantments if present
 	if (itemObj.enchantments && itemObj.enchantments.length > 0) {
@@ -466,7 +483,8 @@ export function formatRewardItemForYaml(rewardDoc, prizeId, allItems = []) {
 		displayEnchantments,
 		commands: rewardDoc.commands || [],
 		items: itemStrings,
-		messages: rewardDoc.messages || []
+		messages: rewardDoc.messages || [],
+		player: rewardDoc.player || null // NEW: Player field for player heads
 	}
 }
 
@@ -542,6 +560,11 @@ export function generateCrazyCratesYaml(crateReward, rewardDocuments, allItems, 
 		)
 		yamlLines.push(`      DisplayAmount: ${formattedItem.displayAmount}`)
 		yamlLines.push(`      Weight: ${formattedItem.weight}`)
+
+		// Add Player field if present (for player heads)
+		if (formattedItem.player) {
+			yamlLines.push(`      Player: "${formattedItem.player}"`)
+		}
 
 		// Add Items section (always present, may be empty)
 		yamlLines.push(`      Items:`)
@@ -810,7 +833,7 @@ export function parseItemString(itemString, allItems = [], version = '1_20') {
 			amount: 1, // For backward compatibility
 			name: '', // Custom display name
 			enchantments: [], // Array of enchantment item IDs (like display_enchantments)
-			player_texture: null,
+			player: null,
 			skull_id: null,
 			custom_properties: {}
 		}
@@ -826,12 +849,12 @@ export function parseItemString(itemString, allItems = [], version = '1_20') {
 				// Look up item in database if available
 				if (allItems && allItems.length > 0) {
 					const itemMatch = allItems.find((item) => item.material_id === itemSlug)
-					itemData.item_id = itemMatch ? itemMatch.id : itemSlug
+					itemData.item_id = itemMatch ? itemMatch.id : null // Don't store material_id as item_id
 					itemData.materialId = itemSlug
 					itemData.catalog_item = !!itemMatch
 					itemData.matched = !!itemMatch
 				} else {
-					itemData.item_id = itemSlug
+					itemData.item_id = null // Don't store material_id as item_id
 					itemData.materialId = itemSlug
 				}
 			} else if (part.startsWith('Name:')) {
@@ -844,7 +867,7 @@ export function parseItemString(itemString, allItems = [], version = '1_20') {
 				itemData.amount = qty // For backward compatibility
 			} else if (part.startsWith('Player:')) {
 				// Extract player head texture: "Player:1ee3126ff2c343da..." -> "1ee3126ff2c343da..."
-				itemData.player_texture = part.substring(7)
+				itemData.player = part.substring(7)
 			} else if (part.startsWith('Skull:')) {
 				// Extract skull database ID: "Skull:7129" -> "7129"
 				itemData.skull_id = part.substring(6)
@@ -1071,6 +1094,16 @@ export async function importCrateRewardsFromYaml(
 				// 	continue
 				// }
 
+				// Extract Player field from items (for player heads)
+				// Check if any item has a player field, and if so, store it at root level
+				let playerField = null
+				if (items.length > 0) {
+					const playerHeadItem = items.find((item) => item.player)
+					if (playerHeadItem) {
+						playerField = playerHeadItem.player
+					}
+				}
+
 				// Find display item
 				const displayItemSlug = prizeData.DisplayItem || ''
 				const displayItemMatch = allItems.find(
@@ -1121,7 +1154,8 @@ export async function importCrateRewardsFromYaml(
 					import_source: 'yaml_import',
 					import_timestamp: new Date().toISOString(),
 					original_yaml_key: prizeKey,
-					items: items // NEW: Items embedded in document
+					items: items, // NEW: Items embedded in document
+					player: playerField // NEW: Player field for player heads
 				}
 
 				// Save prize document directly to crate_reward_items collection
