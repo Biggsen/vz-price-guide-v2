@@ -344,6 +344,13 @@ function itemObjectToItemString(itemObj, allItems = []) {
 		itemString += `, Trim-Pattern:${itemObj.trim_pattern}`
 	}
 
+	// Add custom properties
+	if (itemObj.custom_properties && Object.keys(itemObj.custom_properties).length > 0) {
+		Object.entries(itemObj.custom_properties).forEach(([key, value]) => {
+			itemString += `, ${key}:${value}`
+		})
+	}
+
 	// Add enchantments if present
 	if (itemObj.enchantments && itemObj.enchantments.length > 0) {
 		// Handle new array format (post-flattening removal)
@@ -496,7 +503,9 @@ export function formatRewardItemForYaml(rewardDoc, prizeId, allItems = []) {
 		messages: rewardDoc.messages || [],
 		player: rewardDoc.player || null, // NEW: Player field for player heads
 		displayTrim: rewardDoc.display_trim || null, // NEW: DisplayTrim field for armor trims
-		displayLore: rewardDoc.display_lore || [] // NEW: DisplayLore field
+		displayLore: rewardDoc.display_lore || [], // NEW: DisplayLore field
+		firework: rewardDoc.firework || false, // NEW: Firework field
+		displayPatterns: rewardDoc.display_patterns || [] // NEW: DisplayPatterns field
 	}
 }
 
@@ -591,6 +600,19 @@ export function generateCrazyCratesYaml(crateReward, rewardDocuments, allItems, 
 			formattedItem.displayLore.forEach((lore) => {
 				yamlLines.push(`        - "${lore}"`)
 			})
+		}
+
+		// Add DisplayPatterns field if present
+		if (formattedItem.displayPatterns && formattedItem.displayPatterns.length > 0) {
+			yamlLines.push(`      DisplayPatterns:`)
+			formattedItem.displayPatterns.forEach((pattern) => {
+				yamlLines.push(`        - "${pattern}"`)
+			})
+		}
+
+		// Add Firework field if present
+		if (formattedItem.firework) {
+			yamlLines.push(`      Firework: true`)
 		}
 
 		// Add Items section (always present, may be empty)

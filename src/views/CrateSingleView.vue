@@ -1119,6 +1119,19 @@ function getYamlPreview(rewardDoc) {
 		})
 	}
 
+	// Add DisplayPatterns field if present
+	if (formatted.displayPatterns && formatted.displayPatterns.length > 0) {
+		yaml += `      DisplayPatterns:\n`
+		formatted.displayPatterns.forEach((pattern) => {
+			yaml += `        - "${pattern}"\n`
+		})
+	}
+
+	// Add Firework field if present
+	if (formatted.firework) {
+		yaml += `      Firework: true\n`
+	}
+
 	// Add Items section (always present)
 	yaml += `      Items:\n`
 	if (formatted.items && formatted.items.length > 0) {
