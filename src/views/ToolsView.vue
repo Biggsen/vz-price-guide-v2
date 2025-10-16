@@ -239,8 +239,8 @@ function closeCrateRewardsModal() {
 				<div class="p-6 border-2 border-white rounded-lg">
 					<h3 class="text-xl font-semibold text-gray-900 mb-2">Need a specific tool?</h3>
 					<p class="text-heavy-metal mb-4 max-w-2xl">
-						Have an idea for a tool that would help with your Minecraft economy
-						management? We're always looking for ways to improve the platform.
+						Have an idea for a tool that would help with your Minecraft server
+						management? I'm always looking for ways to improve the platform.
 					</p>
 					<div class="flex flex-col sm:flex-row gap-4">
 						<router-link v-if="user?.email" to="/suggestions">

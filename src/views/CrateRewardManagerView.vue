@@ -389,14 +389,7 @@ function cancelDuplicateImport() {
 </script>
 
 <template>
-	<!-- Testing Notice Banner -->
-	<div class="p-4 max-w-2xl">
-		<NotificationBanner
-			type="info"
-			title="Crate Rewards - Limitations"
-			message="This tool has a limit of 2 crates for the moment. When the tires have been kicked enough - bugs fixed and functionality fine-tuned - I'll increase the limit." />
-	</div>
-	<div class="p-4 pt-2">
+	<div class="p-4 pt-8">
 		<!-- Header -->
 		<div class="mb-8">
 			<div class="flex items-center justify-between mb-4">
