@@ -323,9 +323,9 @@ const router = createRouter({
 			name: 'visual-gallery',
 			component: () => import('../views/VisualGalleryView.vue'),
 			meta: {
-				requiresAuth: false,
-				requiresVerification: false,
-				requiresAdmin: false,
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
 				title: "Visual Gallery - verzion's economy price guide for Minecraft"
 			}
 		},
