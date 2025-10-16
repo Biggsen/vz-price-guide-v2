@@ -88,11 +88,11 @@ service cloud.firestore {
           exists(/databases/$(database)/documents/crate_rewards/$(resource.data.crate_reward_id)) &&
           get(/databases/$(database)/documents/crate_rewards/$(resource.data.crate_reward_id)).data.user_id == request.auth.uid));
       allow create: if request.auth != null && request.auth.token.email_verified == true &&
-        request.resource.data.keys().hasAll(['crate_reward_id', 'item_id', 'quantity', 'weight', 'created_at', 'updated_at']) &&
+        request.resource.data.keys().hasAll(['crate_reward_id', 'weight', 'created_at', 'updated_at', 'items']) &&
         request.resource.data.crate_reward_id is string &&
-        request.resource.data.item_id is string &&
-        request.resource.data.quantity is number &&
         request.resource.data.weight is number &&
+        request.resource.data.items is list &&
+        request.resource.data.items.size() > 0 &&
         exists(/databases/$(database)/documents/crate_rewards/$(request.resource.data.crate_reward_id)) &&
         get(/databases/$(database)/documents/crate_rewards/$(request.resource.data.crate_reward_id)).data.user_id == request.auth.uid;
     }
