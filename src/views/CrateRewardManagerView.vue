@@ -30,14 +30,12 @@ const db = useFirestore()
 
 // Reactive state
 const showCreateForm = ref(false)
-const showEditForm = ref(false)
 const showImportModal = ref(false)
 const loading = ref(false)
 const error = ref(null)
 
 // Modal-specific error states
 const createFormError = ref(null)
-const editFormError = ref(null)
 const importModalError = ref(null)
 
 // Form validation states
@@ -182,36 +180,6 @@ async function createNewCrateReward() {
 	}
 }
 
-async function updateCrateRewardData() {
-	if (!crateForm.value.name.trim()) {
-		editFormError.value = 'Crate reward name is required'
-		return
-	}
-
-	// Determine which crate to update
-	const crateId = crateForm.value.crateId
-	if (!crateId) {
-		editFormError.value = 'No crate selected for update'
-		return
-	}
-
-	loading.value = true
-	editFormError.value = null
-
-	try {
-		await updateCrateReward(crateId, crateForm.value)
-		showEditForm.value = false
-		// Clear the crateId from form after successful update
-		if (crateForm.value.crateId) {
-			delete crateForm.value.crateId
-		}
-	} catch (err) {
-		editFormError.value = 'Failed to update crate reward: ' + err.message
-	} finally {
-		loading.value = false
-	}
-}
-
 function confirmDeleteCrateFromCard(crate) {
 	crateToDelete.value = { id: crate.id, name: crate.name }
 	showDeleteModal.value = true
@@ -244,17 +212,6 @@ function startCreateCrate() {
 	createFormError.value = null
 	nameValidationError.value = null
 	showCreateForm.value = true
-}
-
-function startEditCrateFromCard(crate) {
-	crateForm.value = {
-		crateId: crate.id, // Store the crate ID for updating
-		name: crate.name,
-		description: crate.description || '',
-		minecraft_version: crate.minecraft_version
-	}
-	editFormError.value = null
-	showEditForm.value = true
 }
 
 // Import functions
@@ -627,87 +584,6 @@ function cancelDuplicateImport() {
 							variant="primary"
 							data-cy="crate-submit-button">
 							{{ loading ? 'Creating...' : 'Create' }}
-						</BaseButton>
-					</div>
-				</div>
-			</template>
-		</BaseModal>
-
-		<!-- Edit Crate Reward Modal -->
-		<!-- prettier-ignore -->
-		<BaseModal
-			:isOpen="showEditForm"
-			title="Edit Crate Reward"
-			maxWidth="max-w-md"
-			@close="showEditForm = false; editFormError = null">
-			<!-- Error Display -->
-			<div v-if="editFormError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-				<div class="flex items-center">
-					<ExclamationTriangleIcon class="w-5 h-5 text-red-600 mr-2" />
-					<span class="text-red-800">{{ editFormError }}</span>
-				</div>
-			</div>
-
-			<form @submit.prevent="updateCrateRewardData" class="space-y-4">
-				<div>
-					<label
-						for="edit-crate-name"
-						class="block text-sm font-medium text-gray-700 mb-1">
-						Name *
-					</label>
-					<input
-						id="edit-crate-name"
-						v-model="crateForm.name"
-						type="text"
-						required
-						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
-				</div>
-
-				<div>
-					<label
-						for="edit-crate-description"
-						class="block text-sm font-medium text-gray-700 mb-1">
-						Description
-					</label>
-					<textarea
-						id="edit-crate-description"
-						v-model="crateForm.description"
-						rows="3"
-						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>
-				</div>
-
-				<div>
-					<label
-						for="edit-crate-version"
-						class="block text-sm font-medium text-gray-700 mb-1">
-						Minecraft Version
-					</label>
-					<select
-						id="edit-crate-version"
-						v-model="crateForm.minecraft_version"
-						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
-						<option v-for="version in versions" :key="version" :value="version">
-							{{ version }}
-						</option>
-					</select>
-				</div>
-			</form>
-
-			<template #footer>
-				<div class="flex items-center justify-end">
-					<div class="flex space-x-3">
-						<!-- prettier-ignore -->
-						<button
-							type="button"
-							@click="showEditForm = false; editFormError = null"
-							class="btn-secondary--outline">
-							Cancel
-						</button>
-						<BaseButton
-							@click="updateCrateRewardData"
-							:disabled="loading"
-							variant="primary">
-							{{ loading ? 'Updating...' : 'Update' }}
 						</BaseButton>
 					</div>
 				</div>
