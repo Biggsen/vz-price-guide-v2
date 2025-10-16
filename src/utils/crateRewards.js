@@ -1323,6 +1323,19 @@ export async function importCrateRewardsFromYaml(
 					}
 				}
 
+				// Fallback: If DisplayEnchantments is missing but we have items with enchantments,
+				// extract enchantments from the first item to populate display_enchantments
+				if (displayEnchantments.length === 0 && items.length > 0) {
+					const firstItem = items[0]
+					if (firstItem.enchantments && firstItem.enchantments.length > 0) {
+						// Copy enchantments from the item to display_enchantments
+						displayEnchantments.push(...firstItem.enchantments)
+						console.log(
+							`✅ Fallback: Extracted ${firstItem.enchantments.length} display enchantments from Items array for ${firstItem.materialId}`
+						)
+					}
+				}
+
 				// Build complete prize document with NEW structure (embedded items)
 				const prizeDocument = {
 					crate_reward_id: targetCrateId,

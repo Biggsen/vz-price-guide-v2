@@ -6,43 +6,6 @@ This document tracks bugs, regressions, and issues discovered during development
 
 ## Active Issues
 
-### Enchantment Books Not Separated When Adding Crate Items
-
-**Status**: 🔴 Active  
-**Priority**: High  
-**Type**: Regression  
-**Discovered**: 2025-10-12
-
-**Description**:
-When adding items for a crate, enchanted books are not being added as separate book and enchantment entities. The system should split enchanted books into their base book item and the enchantment as separate entries, but this functionality is broken.
-
-**Expected Behavior**:
-
--   Enchanted book should be split into:
-    1. Book item entry
-    2. Enchantment entry with appropriate level
-
-**Actual Behavior**:
-
--   Enchanted books are being added as a single item without separation
-
-**Impact**:
-
--   Affects crate reward pricing accuracy
--   Breaks enchantment book pricing workflow
--   Users cannot properly value enchanted books in crates
-
-**Files Potentially Affected**:
-
--   `src/utils/crateRewards.js`
--   `src/views/CrateSingleView.vue`
--   Related item/enchantment handling utilities
-
-**Notes**:
-
--   This was working previously, indicating a regression
--   May be related to recent changes in crate management workflow
-
 ### Duplicate Crate Names When Importing Same File
 
 **Status**: 🔴 Active  
@@ -120,7 +83,32 @@ The total value calculation for crates is incorrect and appears to not be consid
 
 ## Resolved Issues
 
-_No resolved issues yet._
+### Enchantment Books Not Separated When Adding Crate Items
+
+**Status**: ✅ Resolved  
+**Priority**: High  
+**Type**: Regression  
+**Discovered**: 2025-10-12  
+**Resolved**: 2025-01-27
+
+**Description**:
+When adding items for a crate, enchanted books are not being added as separate book and enchantment entities. The system should split enchanted books into their base book item and the enchantment as separate entries, but this functionality is broken.
+
+**Root Cause**:
+The issue occurred when importing YAML files from older CrazyCrates versions that don't include the `DisplayEnchantments` field. The system was only parsing display enchantments from the `DisplayEnchantments` array, but when this field was missing, it failed to extract enchantments from the `Items` array.
+
+**Solution Implemented**:
+Added fallback logic in `importCrateRewardsFromYaml()` function to extract display enchantments from the `Items` array when `DisplayEnchantments` is missing. This ensures backward compatibility with older export formats.
+
+**Files Modified**:
+
+-   `src/utils/crateRewards.js` - Added fallback logic for missing DisplayEnchantments
+
+**Notes**:
+
+-   Fix ensures both old and new export formats work correctly
+-   Maintains backward compatibility with older CrazyCrates versions
+-   Enchantment book separation now works regardless of export version
 
 ---
 

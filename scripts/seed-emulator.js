@@ -2526,6 +2526,74 @@ const TEST_DATA = {
 					output_count: 1
 				}
 			}
+		},
+		{
+			id: 'Thorns3SeedItem2024',
+			material_id: 'enchanted_book_thorns_3',
+			name: 'enchanted book (thorns iii)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'armor',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 700.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'Smite5SeedItem2024',
+			material_id: 'enchanted_book_smite_5',
+			name: 'enchanted book (smite v)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'weapons',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 700.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'FireProtection4SeedItem2024',
+			material_id: 'enchanted_book_fire_protection_4',
+			name: 'enchanted book (fire protection iv)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'armor',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 600.0
+			},
+			recipes_by_version: {}
+		},
+		{
+			id: 'Sharpness3SeedItem2024',
+			material_id: 'enchanted_book_sharpness_3',
+			name: 'enchanted book (sharpness iii)',
+			image: '/images/items/enchanted_book.webp',
+			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
+			stack: 64,
+			category: 'enchantments',
+			subcategory: 'weapons',
+			version: '1.16',
+			version_removed: null,
+			pricing_type: 'static',
+			prices_by_version: {
+				'1_16': 720.0
+			},
+			recipes_by_version: {}
 		}
 	],
 	shop_items: [
