@@ -239,21 +239,6 @@ onUnmounted(() => {
 				</div>
 			</RouterLink>
 
-			<button
-				@click="handleSuggestionsClick"
-				:class="[
-					'block px-3 py-2 transition-colors w-full text-left',
-					route.path === '/suggestions' || route.path === '/suggestions/all'
-						? 'bg-gray-700 text-white'
-						: 'hover:bg-gray-700 hover:text-white'
-				]"
-				v-if="user?.email">
-				<div class="flex items-center gap-2">
-					<LightBulbIcon class="w-4 h-4" />
-					<span>Suggestions</span>
-				</div>
-			</button>
-
 			<RouterLink
 				to="/tools"
 				@click="
@@ -273,6 +258,21 @@ onUnmounted(() => {
 					<span>Tools</span>
 				</div>
 			</RouterLink>
+
+			<button
+				@click="handleSuggestionsClick"
+				:class="[
+					'block px-3 py-2 transition-colors w-full text-left',
+					route.path === '/suggestions' || route.path === '/suggestions/all'
+						? 'bg-gray-700 text-white'
+						: 'hover:bg-gray-700 hover:text-white'
+				]"
+				v-if="user?.email">
+				<div class="flex items-center gap-2">
+					<LightBulbIcon class="w-4 h-4" />
+					<span>Suggestions</span>
+				</div>
+			</button>
 
 			<RouterLink
 				to="/updates"
@@ -433,20 +433,6 @@ onUnmounted(() => {
 				<span>Price Guide</span>
 			</div>
 		</RouterLink>
-		<button
-			@click="handleSuggestionsClick"
-			:class="[
-				'px-3 py-2 rounded transition-colors',
-				route.path === '/suggestions' || route.path === '/suggestions/all'
-					? 'bg-gray-700 text-white'
-					: 'hover:bg-gray-700 hover:text-white'
-			]"
-			v-if="user?.email">
-			<div class="flex items-center gap-2">
-				<LightBulbIcon class="w-4 h-4" />
-				<span>Suggestions</span>
-			</div>
-		</button>
 		<RouterLink
 			to="/tools"
 			@click="
@@ -468,6 +454,20 @@ onUnmounted(() => {
 				<span>Tools</span>
 			</div>
 		</RouterLink>
+		<button
+			@click="handleSuggestionsClick"
+			:class="[
+				'px-3 py-2 rounded transition-colors',
+				route.path === '/suggestions' || route.path === '/suggestions/all'
+					? 'bg-gray-700 text-white'
+					: 'hover:bg-gray-700 hover:text-white'
+			]"
+			v-if="user?.email">
+			<div class="flex items-center gap-2">
+				<LightBulbIcon class="w-4 h-4" />
+				<span>Suggestions</span>
+			</div>
+		</button>
 		<RouterLink
 			to="/updates"
 			@click="
