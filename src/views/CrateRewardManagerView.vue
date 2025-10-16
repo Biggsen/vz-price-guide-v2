@@ -794,12 +794,12 @@ function cancelDuplicateImport() {
 			<div class="space-y-6">
 				<div>
 					<p class="text-gray-700 mb-4">
-						The Crate Rewards Tool lets you quickly create and balance crate rewards for
+						The Crate Rewards Tool lets you quickly create and balance crate prizes for
 						the CrazyCrates plugin using an easy, visual interface. You can import
-						existing crates or build new ones from scratch — set item quantities,
-						weights (drop chances), and enchantments — then export them directly in
-						CrazyCrates YAML format for fast use on your server. You can also simulate
-						rewards to preview what players might get.
+						existing crates or build new ones from scratch — set prize quantities,
+						weights (drop chances), values, and enchantments — then export them directly
+						in CrazyCrates YAML format for fast use on your server. You can also
+						simulate rewards to preview what players might get.
 					</p>
 					<p class="text-gray-700 mb-4">
 						This tool focuses on simplicity and speed, not full configuration coverage.
@@ -807,69 +807,28 @@ function cancelDuplicateImport() {
 				</div>
 
 				<div>
-					<h3 class="text-lg font-semibold text-gray-900 mb-3">What This Tool Exports</h3>
+					<h3 class="text-lg font-semibold text-gray-900 mb-3">
+						Import & Export Details
+					</h3>
 					<p class="text-gray-700 mb-3">
-						CrazyCrates has many configuration options — this tool only exports the
-						Prizes section of a crate, with a limited set of fields:
+						CrazyCrates offers extensive configuration options — this tool focuses on
+						the Prizes section. It now handles most common prize fields, allowing you to
+						safely import, adjust, and export both simple and highly configured prizes.
 					</p>
-					<ul class="space-y-2 text-gray-700 text-sm">
-						<li class="flex items-start">
-							<span class="font-mono bg-gray-100 px-2 py-1 rounded mr-2 text-xs">
-								DisplayName
-							</span>
-							<span>
-								– Item name, exported in white ("
-								<!-- prettier-ignore -->
-								<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">&lt;white&gt;Item Name</span>
-								").
-							</span>
-						</li>
-						<li class="flex items-start">
-							<span class="font-mono bg-gray-100 px-2 py-1 rounded mr-2 text-xs">
-								DisplayItem
-							</span>
-							<span>
-								– Correct item ID (e.g.
-								<!-- prettier-ignore -->
-								<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">iron_ingot</span>
-								).
-							</span>
-						</li>
-						<li class="flex items-start">
-							<span class="font-mono bg-gray-100 px-2 py-1 rounded mr-2 text-xs">
-								Settings
-							</span>
-							<span>
-								– Default values:
-								<!-- prettier-ignore -->
-								<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">{ Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }</span>
-								.
-							</span>
-						</li>
-						<li class="flex items-start">
-							<span class="font-mono bg-gray-100 px-2 py-1 rounded mr-2 text-xs">
-								DisplayAmount
-							</span>
-							<span>– Quantity you set for the reward item.</span>
-						</li>
-						<li class="flex items-start">
-							<span class="font-mono bg-gray-100 px-2 py-1 rounded mr-2 text-xs">
-								Weight
-							</span>
-							<span>– The weight (chance) you assigned to the reward item.</span>
-						</li>
-						<li class="flex items-start">
-							<span class="font-mono bg-gray-100 px-2 py-1 rounded mr-2 text-xs">
-								Items
-							</span>
-							<span>
-								– The reward item(s), amount, and any enchantments (e.g. -
-								<!-- prettier-ignore -->
-								<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">"item:iron_sword, amount:1, sharpness:5"</span>
-								).
-							</span>
-						</li>
-					</ul>
+					<p class="text-gray-700 mb-3">
+						Custom prizes with detailed settings (like
+						<!-- prettier-ignore -->
+						<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">DisplayLore</span>
+						,
+						<!-- prettier-ignore -->
+						<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">DisplayPattern</span>
+						, trims, or model data) should import faithfully and be exported as-is. You
+						can still edit key balancing factors — such as quantity, weight, value, and
+						enchantments — directly in the tool.
+					</p>
+					<p class="text-gray-700 mb-3">
+						Note: Prizes with multiple items are not supported for import.
+					</p>
 				</div>
 
 				<div>
@@ -885,14 +844,16 @@ function cancelDuplicateImport() {
 						,
 						<!-- prettier-ignore -->
 						<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">CrateType</span>
-						, or custom items (e.g. keys).
+						, or
+						<!-- prettier-ignore -->
+						<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">PhysicalKey</span>
+						.
 					</p>
 					<p class="text-gray-700 mb-3">
-						After exporting, you may still want to edit the YAML manually to fine-tune
-						advanced settings such as
-						<!-- prettier-ignore -->
-						<span class="font-mono bg-gray-100 px-1 py-0.5 rounded text-xs">DisplayLore</span>
-						or custom models.
+						After exporting, you should review the YAML to ensure everything is intact
+						and accurate. While imports and exports aim to be faithful, the process
+						isn’t guaranteed to be fully robust — always double-check that your prizes
+						appear as expected before using them in-game.
 					</p>
 				</div>
 
