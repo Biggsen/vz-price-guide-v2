@@ -13,6 +13,7 @@ import {
 	getUniqueCrateName
 } from '../utils/crateRewards.js'
 import { versions } from '../constants.js'
+import { useAdmin } from '../utils/admin.js'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import NotificationBanner from '../components/NotificationBanner.vue'
@@ -29,6 +30,7 @@ import { XCircleIcon } from '@heroicons/vue/20/solid'
 const user = useCurrentUser()
 const router = useRouter()
 const db = useFirestore()
+const { isAdmin } = useAdmin()
 
 // Reactive state
 const showCreateForm = ref(false)
@@ -169,7 +171,7 @@ async function createNewCrateReward() {
 	createFormError.value = null
 
 	try {
-		const newCrate = await createCrateReward(user.value.uid, crateForm.value)
+		const newCrate = await createCrateReward(user.value.uid, crateForm.value, isAdmin.value)
 		router.push(`/crate-rewards/${newCrate.id}`)
 		showCreateForm.value = false
 		crateForm.value = {
@@ -208,8 +210,8 @@ async function executeDelete() {
 }
 
 function startCreateCrate() {
-	// Check if user has reached the crate limit
-	if (crateRewards.value.length >= 2) {
+	// Check if user has reached the crate limit (admins have unlimited)
+	if (!isAdmin.value && crateRewards.value.length >= 2) {
 		showLimitReachedModal.value = true
 		return
 	}
@@ -226,8 +228,8 @@ function startCreateCrate() {
 }
 
 function startImportYaml() {
-	// Check if user has reached the crate limit
-	if (crateRewards.value.length >= 2) {
+	// Check if user has reached the crate limit (admins have unlimited)
+	if (!isAdmin.value && crateRewards.value.length >= 2) {
 		showLimitReachedModal.value = true
 		return
 	}
@@ -280,7 +282,8 @@ async function importYamlFile() {
 			allItems.value,
 			fileName,
 			user.value.uid,
-			validation.prizesToSkip // prizesToSkip
+			validation.prizesToSkip, // prizesToSkip
+			isAdmin.value // isAdmin
 		)
 
 		// Combine validation warnings with import warnings

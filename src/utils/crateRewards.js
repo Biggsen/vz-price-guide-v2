@@ -93,26 +93,27 @@ export async function getUniqueCrateName(userId, proposedName) {
 }
 
 /**
- * Check if user has reached the crate limit (2 crates during testing)
+ * Check if user has reached the crate limit (2 crates during testing, unlimited for admins)
  * @param {string} userId - User ID to check
+ * @param {boolean} isAdmin - Whether the user is an admin
  * @returns {Object} Object with canCreate, currentCount, and limit
  */
-export async function checkCrateLimit(userId) {
+export async function checkCrateLimit(userId, isAdmin = false) {
 	try {
 		// Get user's current crate count
 		const cratesQuery = query(collection(db, 'crate_rewards'), where('user_id', '==', userId))
 		const querySnapshot = await getDocs(cratesQuery)
 		const currentCount = querySnapshot.docs.length
 
-		// Hard limit of 2 during testing
-		const limit = 2
-		const canCreate = currentCount < limit
+		// Admins have unlimited crates, regular users have limit of 2 during testing
+		const limit = isAdmin ? Infinity : 2
+		const canCreate = isAdmin || currentCount < limit
 
 		return {
 			canCreate,
 			currentCount,
 			limit,
-			remaining: Math.max(0, limit - currentCount)
+			remaining: isAdmin ? Infinity : Math.max(0, limit - currentCount)
 		}
 	} catch (error) {
 		console.error('Error checking crate limit:', error)
@@ -120,8 +121,8 @@ export async function checkCrateLimit(userId) {
 		return {
 			canCreate: true,
 			currentCount: 0,
-			limit: 2,
-			remaining: 2
+			limit: isAdmin ? Infinity : 2,
+			remaining: isAdmin ? Infinity : 2
 		}
 	}
 }
@@ -129,10 +130,10 @@ export async function checkCrateLimit(userId) {
 /**
  * Create a new crate reward
  */
-export async function createCrateReward(userId, crateData) {
+export async function createCrateReward(userId, crateData, isAdmin = false) {
 	try {
 		// Check crate limit before creating
-		const limitCheck = await checkCrateLimit(userId)
+		const limitCheck = await checkCrateLimit(userId, isAdmin)
 
 		if (!limitCheck.canCreate) {
 			throw new Error(
@@ -1281,7 +1282,8 @@ export async function importCrateRewardsFromYaml(
 	allItems,
 	crateName = null,
 	userId = null,
-	prizesToSkip = []
+	prizesToSkip = [],
+	isAdmin = false
 ) {
 	try {
 		let targetCrateId = crateId
@@ -1290,7 +1292,7 @@ export async function importCrateRewardsFromYaml(
 		let duplicateInfo = null
 		if (!targetCrateId && crateName && userId) {
 			// Check crate limit first
-			const limitCheck = await checkCrateLimit(userId)
+			const limitCheck = await checkCrateLimit(userId, isAdmin)
 			if (!limitCheck.canCreate) {
 				return {
 					success: false,
@@ -1326,11 +1328,15 @@ export async function importCrateRewardsFromYaml(
 			}
 
 			// No duplicate, proceed with crate creation
-			const newCrate = await createCrateReward(userId, {
-				name: uniqueName,
-				description: `Imported from YAML file`,
-				minecraft_version: '1.20'
-			})
+			const newCrate = await createCrateReward(
+				userId,
+				{
+					name: uniqueName,
+					description: `Imported from YAML file`,
+					minecraft_version: '1.20'
+				},
+				isAdmin
+			)
 			targetCrateId = newCrate.id
 		}
 

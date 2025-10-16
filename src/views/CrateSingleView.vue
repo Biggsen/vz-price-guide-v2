@@ -47,7 +47,7 @@ const user = useCurrentUser()
 const router = useRouter()
 const route = useRoute()
 const db = useFirestore()
-const { canEditItems } = useAdmin()
+const { canEditItems, isAdmin } = useAdmin()
 
 // Reactive state
 const selectedCrateId = ref('')
@@ -1544,7 +1544,8 @@ async function importYamlFile() {
 			allItems.value,
 			null, // crateName
 			null, // userId
-			validation.prizesToSkip // prizesToSkip
+			validation.prizesToSkip, // prizesToSkip
+			isAdmin.value // isAdmin
 		)
 
 		// Combine validation warnings with import warnings
