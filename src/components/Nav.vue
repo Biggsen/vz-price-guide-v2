@@ -423,7 +423,7 @@ onUnmounted(() => {
 				}
 			"
 			:class="[
-				'px-3 py-2 rounded transition-colors',
+				'px-3 py-2 rounded transition-colors whitespace-nowrap',
 				route.path === '/' || route.path.startsWith('/edit/')
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
@@ -442,7 +442,7 @@ onUnmounted(() => {
 				}
 			"
 			:class="[
-				'px-3 py-2 rounded transition-colors',
+				'px-3 py-2 rounded transition-colors whitespace-nowrap',
 				route.path === '/tools' ||
 				route.path === '/crate-rewards' ||
 				route.path.startsWith('/crate-rewards/')
@@ -457,7 +457,7 @@ onUnmounted(() => {
 		<button
 			@click="handleSuggestionsClick"
 			:class="[
-				'px-3 py-2 rounded transition-colors',
+				'px-3 py-2 rounded transition-colors whitespace-nowrap',
 				route.path === '/suggestions' || route.path === '/suggestions/all'
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
@@ -477,7 +477,7 @@ onUnmounted(() => {
 				}
 			"
 			:class="[
-				'px-3 py-2 rounded transition-colors',
+				'px-3 py-2 rounded transition-colors whitespace-nowrap',
 				route.path === '/updates'
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
@@ -493,7 +493,7 @@ onUnmounted(() => {
 			v-if="isAdmin"
 			to="/admin"
 			:class="[
-				'px-3 py-2 rounded transition-colors',
+				'px-3 py-2 rounded transition-colors whitespace-nowrap',
 				activeMainNav === 'admin'
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
@@ -510,7 +510,7 @@ onUnmounted(() => {
 				to="/signin"
 				@click="handleSignInClickDesktop"
 				:class="[
-					'px-3 py-2 rounded transition-colors',
+					'px-3 py-2 rounded transition-colors whitespace-nowrap',
 					route.path === '/signin'
 						? 'bg-gray-700 text-white'
 						: 'hover:bg-gray-700 hover:text-white'
@@ -524,7 +524,7 @@ onUnmounted(() => {
 				to="/signup"
 				@click="handleSignUpClickDesktop"
 				:class="[
-					'px-3 py-2 rounded transition-colors',
+					'px-3 py-2 rounded transition-colors whitespace-nowrap',
 					route.path === '/signup'
 						? 'bg-gray-700 text-white'
 						: 'hover:bg-gray-700 hover:text-white'
