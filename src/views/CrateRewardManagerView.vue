@@ -32,6 +32,25 @@ const router = useRouter()
 const db = useFirestore()
 const { isAdmin } = useAdmin()
 
+// Define which versions are currently available for regular users
+const baseEnabledVersions = ['1.16', '1.17', '1.18', '1.19', '1.20']
+
+// Computed property for enabled versions based on user type
+const enabledVersions = computed(() => {
+	try {
+		// Admin users can access all versions (but only if admin status is fully loaded)
+		if (user.value?.email && isAdmin.value === true) {
+			return [...(versions || ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21'])]
+		}
+		// Regular users only get base enabled versions
+		return [...baseEnabledVersions]
+	} catch (error) {
+		// Fallback to base enabled versions if anything goes wrong
+		console.warn('Error in enabledVersions computed:', error)
+		return [...baseEnabledVersions]
+	}
+})
+
 // Reactive state
 const showCreateForm = ref(false)
 const showImportModal = ref(false)
@@ -586,8 +605,8 @@ function cancelDuplicateImport() {
 						v-model="crateForm.minecraft_version"
 						data-cy="crate-version-select"
 						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
-						<option v-for="version in versions" :key="version" :value="version">
-							{{ version }}
+						<option v-for="version in versions" :key="version" :value="version" :disabled="!enabledVersions.includes(version)">
+							{{ version }}{{ !enabledVersions.includes(version) ? ' (Coming soon)' : '' }}
 						</option>
 					</select>
 				</div>
