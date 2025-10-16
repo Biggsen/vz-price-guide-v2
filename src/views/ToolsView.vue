@@ -195,8 +195,9 @@ function closeCrateRewardsModal() {
 				setup and manage my own Minecraft servers.
 			</p>
 		</div>
-		<!-- New Asparagus Card -->
-		<div class="mb-12 w-1/3">
+		<!-- Tools Grid -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-12">
+			<!-- Crate Rewards Tool Card -->
 			<div
 				class="bg-norway rounded-lg shadow-md border-2 border-gray-asparagus overflow-hidden">
 				<img
@@ -208,7 +209,7 @@ function closeCrateRewardsModal() {
 					CrazyCrates Crate Rewards
 				</h3>
 				<div class="text-left p-4 border-2 border-white rounded-b-lg">
-					<p class="text-heavy-metal mb-4 max-w-2xl mx-auto">
+					<p class="text-heavy-metal mb-4">
 						Build up crate prizes one item at a time, set their weights, and see their
 						values. Export your configuration as CrazyCrates Prizes format for easy
 						integration into your server.
@@ -231,14 +232,12 @@ function closeCrateRewardsModal() {
 					</BaseButton>
 				</div>
 			</div>
-		</div>
 
-		<!-- Call to Action -->
-		<div class="mt-12 text-left w-1/3">
+			<!-- Call to Action Card -->
 			<div class="bg-saltpan rounded-lg shadow-md border-2 border-highland">
-				<div class="p-6 border-2 border-white rounded-lg">
+				<div class="p-6 border-2 border-white rounded-lg h-full flex flex-col">
 					<h3 class="text-xl font-semibold text-gray-900 mb-2">Need a specific tool?</h3>
-					<p class="text-heavy-metal mb-4 max-w-2xl">
+					<p class="text-heavy-metal mb-4 flex-grow">
 						Have an idea for a tool that would help with your Minecraft server
 						management? I'm always looking for ways to improve the platform.
 					</p>
