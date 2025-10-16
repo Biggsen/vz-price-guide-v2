@@ -119,7 +119,7 @@ const showAlert = ref(true)
 
 function dismissAlert() {
 	showAlert.value = false
-	localStorage.setItem('exportFeatureAlertDismissed', 'true')
+	localStorage.setItem('crateRewardsToolAlertDismissed', 'true')
 }
 
 // Helper function to compare version strings (e.g., "1.16" vs "1.17")
@@ -593,7 +593,7 @@ onMounted(() => {
 	initializeFromQuery()
 
 	// Check if alert was previously dismissed
-	const dismissed = localStorage.getItem('exportFeatureAlertDismissed')
+	const dismissed = localStorage.getItem('crateRewardsToolAlertDismissed')
 	if (dismissed === 'true') {
 		showAlert.value = false
 	}
@@ -713,13 +713,16 @@ watch(
 			<div class="flex items-center">
 				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					<ArrowDownTrayIcon class="w-4 h-4 inline" />
-					New export feature! You can now export the price list in JSON or YAML format.
-					Check
+					<strong>New Crate Rewards Tool!</strong>
+					Build, manage and balance CrazyCrates prizes with ease.
+					<router-link to="/tools" class="underline hover:text-gray-asparagus">
+						<span>Try it out</span>
+					</router-link>
+					or check
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
 						<span>Updates</span>
 					</router-link>
-					for more details.
+					for details.
 				</span>
 			</div>
 			<button

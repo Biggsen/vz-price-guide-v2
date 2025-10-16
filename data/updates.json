@@ -1,5 +1,24 @@
 [
 	{
+		"id": 25,
+		"title": "Crate Rewards Tool 📦🔧",
+		"date": "2025-10-16",
+		"type": "Tool",
+		"hidden": false,
+		"description": "I wanted to do something a little bit different and expand what this site offers beyond just the price guide. So I thought, how about some of the tools I've been building for myself?\n\nThe Crate Rewards Tool is the first of these - it's what I use to build and manage my own CrazyCrates configurations. Build custom crate rewards with items, weights, and enchantments, then export them directly to YAML format for your server.\n\nI also took the opportunity to clean up a few other things while I was at it - added some icons to the main navigation, changed 'Home' to 'Price Guide' for clarity, and cleaned up the styling on this page.\n\nCrate Rewards Tool features:",
+		"changes": [
+			"New Crate Rewards Tool for CrazyCrates plugin configuration",
+			"Build crate prizes one item at a time with custom quantities and weights",
+			"See the value of each prize to help balance your crate rewards",
+			"Import existing crate configurations from YAML files",
+			"Export your crates in CrazyCrates Prizes YAML format for easy server integration",
+			"Set custom values and enchantments for each reward",
+			"Simulate rewards to test your crate configurations",
+			"Support for all Minecraft versions (1.16 through 1.20)",
+			"Note: The tool might be a bit wonky on mobile - I'm still working on that part!"
+		]
+	},
+	{
 		"id": 24,
 		"title": "Homepage Performance Boost & Search Enhancements",
 		"date": "2025-10-03",
