@@ -1956,7 +1956,8 @@ watch(selectedCrate, (crate) => {
 														@click="startEditWeight(rewardDoc)"
 														class="flex items-center justify-center px-1 py-1 text-center cursor-pointer bg-norway hover:bg-saltpan transition-colors min-w-[2.5rem] border-r-2 border-gray-asparagus">
 														<span
-															class="text-base font-bold text-heavy-metal">
+															class="text-base font-bold text-heavy-metal"
+															data-cy="item-weight-display">
 															{{ rewardDoc.weight }}
 														</span>
 													</div>
