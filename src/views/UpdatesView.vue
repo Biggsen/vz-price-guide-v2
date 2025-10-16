@@ -195,7 +195,7 @@ function formatCompletionDate(dateString) {
 						</span>
 						<h3 class="text-xl font-semibold text-gray-800">{{ update.title }}</h3>
 					</div>
-					<p class="text-gray-700">{{ update.description }}</p>
+					<p class="text-gray-700 whitespace-pre-line">{{ update.description }}</p>
 					<div v-if="update.link" class="mt-3">
 						<a
 							:href="update.link"
