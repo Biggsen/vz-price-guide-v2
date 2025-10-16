@@ -1285,7 +1285,7 @@ const TEST_DATA = {
 		},
 		{
 			id: 'EwjxmRjFilwMmdfUSbSp',
-			material_id: 'enchanted_book_silk_touch',
+			material_id: 'enchanted_book_silk_touch_1',
 			name: 'enchanted book (silk touch)',
 			image: '/images/items/enchanted_book.webp',
 			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
@@ -1336,7 +1336,7 @@ const TEST_DATA = {
 		},
 		{
 			id: 'yenIYinEBMQeblFmSWdK',
-			material_id: 'enchanted_book_aqua_affinity',
+			material_id: 'enchanted_book_aqua_affinity_1',
 			name: 'enchanted book (aqua affinity)',
 			image: '/images/items/enchanted_book.webp',
 			url: 'https://minecraft.fandom.com/wiki/Enchanted_Book',
