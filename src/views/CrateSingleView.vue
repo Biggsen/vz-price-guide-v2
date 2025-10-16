@@ -1611,7 +1611,8 @@ watch(selectedCrate, (crate) => {
 							<button
 								@click="startEditCrate"
 								class="text-gray-900 hover:text-gray-600 transition-colors"
-								title="Edit crate">
+								title="Edit crate"
+								data-cy="edit-crate-button">
 								<PencilIcon class="w-5 h-5" />
 							</button>
 						</div>
@@ -2076,19 +2077,20 @@ watch(selectedCrate, (crate) => {
 						Name *
 					</label>
 					<div class="relative">
-						<input
-							id="edit-crate-name"
-							v-model="crateForm.name"
-							type="text"
-							required
-							:class="[
-								'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans pr-10',
-								editNameValidationError 
-									? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
-									: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
-							]"
-							@blur="checkEditCrateNameAvailability(crateForm.name)"
-							@input="editNameValidationError = null; editFormError = null" />
+					<input
+						id="edit-crate-name"
+						v-model="crateForm.name"
+						type="text"
+						required
+						data-cy="crate-name-input"
+						:class="[
+							'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans pr-10',
+							editNameValidationError 
+								? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+						]"
+						@blur="checkEditCrateNameAvailability(crateForm.name)"
+						@input="editNameValidationError = null; editFormError = null" />
 						
 						<!-- Loading spinner -->
 						<div v-if="isCheckingEditName" class="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -2109,11 +2111,12 @@ watch(selectedCrate, (crate) => {
 						class="block text-sm font-medium text-gray-700 mb-1">
 						Description
 					</label>
-					<textarea
-						id="edit-crate-description"
-						v-model="crateForm.description"
-						rows="3"
-						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>
+				<textarea
+					id="edit-crate-description"
+					v-model="crateForm.description"
+					rows="3"
+					data-cy="crate-description-input"
+					class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>
 				</div>
 
 				<div>
@@ -2122,10 +2125,11 @@ watch(selectedCrate, (crate) => {
 						class="block text-sm font-medium text-gray-700 mb-1">
 						Minecraft Version
 					</label>
-					<select
-						id="edit-crate-version"
-						v-model="crateForm.minecraft_version"
-						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
+				<select
+					id="edit-crate-version"
+					v-model="crateForm.minecraft_version"
+					data-cy="crate-version-select"
+					class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
 						<option v-for="version in versions" :key="version" :value="version">
 							{{ version }}
 						</option>
@@ -2146,7 +2150,8 @@ watch(selectedCrate, (crate) => {
 						<BaseButton
 							@click="updateCrateRewardData"
 							:disabled="loading"
-							variant="primary">
+							variant="primary"
+							data-cy="crate-update-button">
 							{{ loading ? 'Updating...' : 'Update' }}
 						</BaseButton>
 					</div>
