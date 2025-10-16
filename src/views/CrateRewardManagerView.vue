@@ -707,19 +707,9 @@ function cancelDuplicateImport() {
 		<!-- Import YAML Modal -->
 		<BaseModal
 			:isOpen="showImportModal"
-			title="Import Crate Rewards"
+			title="Import Crate"
 			maxWidth="max-w-md"
 			@close="closeImportModal">
-			<!-- Error Display -->
-			<div
-				v-if="importModalError"
-				class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-				<div class="flex items-center">
-					<ExclamationTriangleIcon class="w-5 h-5 text-red-600 mr-2" />
-					<span class="text-red-800">{{ importModalError }}</span>
-				</div>
-			</div>
-
 			<div class="space-y-4">
 				<div>
 					<label
@@ -734,11 +724,23 @@ function cancelDuplicateImport() {
 						@change="handleFileSelect"
 						class="block w-full pr-3 py-1 mt-2 mb-2 text-gray-900 font-sans" />
 					<p class="text-xs text-gray-500 mt-1">
-						Upload a complete Crazy Crates YAML file with
+						Upload a complete CrazyCrates YAML file with
 						<code>Crate: { Prizes: {} }</code>
 						format. A new crate will be created with the filename as the crate name.
-						Export the file directly from your server's CrazyCrates plugin folder.
 					</p>
+				</div>
+
+				<!-- Error Display -->
+				<div v-if="importModalError" class="p-3 bg-red-50 border-l-4 border-l-red-500">
+					<div class="flex items-start">
+						<ExclamationTriangleIcon class="w-6 h-6 text-red-600 mr-2 flex-shrink-0" />
+						<div>
+							<div class="text-heavy-metal font-medium">Import failed</div>
+							<div class="text-heavy-metal text-sm mt-1">
+								{{ importModalError.replace('Import failed: ', '') }}
+							</div>
+						</div>
+					</div>
 				</div>
 
 				<!-- Import Results -->
