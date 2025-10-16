@@ -162,10 +162,7 @@ watch(
 	rewardDocuments,
 	(newRewardDocuments) => {
 		if (newRewardDocuments && newRewardDocuments.length > 0) {
-			console.log('Loaded rewardDocuments:', newRewardDocuments)
-			newRewardDocuments.forEach((rewardDoc, index) => {
-				console.log(`rewardDoc[${index}]:`, rewardDoc)
-			})
+			// Reward documents loaded successfully
 		}
 	},
 	{ immediate: true }
@@ -599,8 +596,7 @@ function cancelEditWeight() {
 // ===== DOCUMENT EDIT FUNCTIONS =====
 
 function startEditReward(rewardDoc) {
-	console.log('=== startEditReward() called ===')
-	console.log('rewardDoc:', rewardDoc)
+	// Start editing reward document
 
 	// Only allow editing single-item rewards
 	if (!canEditReward(rewardDoc)) {
@@ -612,7 +608,6 @@ function startEditReward(rewardDoc) {
 	if (rewardDoc.items && rewardDoc.items.length > 0) {
 		// Extract the single item
 		const singleItem = rewardDoc.items[0]
-		console.log('singleItem from rewardDoc:', singleItem)
 
 		// Convert to form format
 		itemForm.value = {
@@ -642,10 +637,8 @@ function startEditReward(rewardDoc) {
 		}
 	}
 
-	console.log('itemForm.value after setup:', itemForm.value)
 	editingRewardDoc.value = rewardDoc
 	showAddItemForm.value = true
-	console.log('Form opened for editing')
 }
 
 function confirmRemoveReward(rewardDoc) {
@@ -708,36 +701,29 @@ function stripColorCodes(text) {
 }
 
 async function saveItem() {
-	console.log('=== saveItem() called ===')
-	console.log('selectedCrateId.value:', selectedCrateId.value)
-	console.log('itemForm.value:', itemForm.value)
-	console.log('editingRewardDoc.value:', editingRewardDoc.value)
+	// Save item to crate reward
 
 	// Clear previous errors
 	addItemFormError.value = null
 
 	// Validate required fields
 	if (!selectedCrateId.value) {
-		console.log('Validation failed: missing selectedCrateId')
 		addItemFormError.value = 'No crate selected'
 		return
 	}
 
 	// For new items, require item selection
 	if (!editingRewardDoc.value && !itemForm.value.item_id) {
-		console.log('Validation failed: missing item_id for new item')
 		addItemFormError.value = 'Please select an item'
 		return
 	}
 
 	if (!itemForm.value.quantity || itemForm.value.quantity < 1) {
-		console.log('Validation failed: invalid quantity')
 		addItemFormError.value = 'quantity'
 		return
 	}
 
 	if (!itemForm.value.weight || itemForm.value.weight < 1) {
-		console.log('Validation failed: invalid weight')
 		addItemFormError.value = 'weight'
 		return
 	}
@@ -747,27 +733,22 @@ async function saveItem() {
 		itemForm.value.value_source === 'custom' &&
 		(!itemForm.value.custom_value || itemForm.value.custom_value < 0)
 	) {
-		console.log('Validation failed: invalid custom value')
 		addItemFormError.value = 'custom_value'
 		return
 	}
 
-	console.log('All validations passed, starting save process...')
+	// All validations passed, starting save process
 	loading.value = true
 
 	try {
 		if (editingRewardDoc.value) {
-			console.log('Editing existing reward document...')
+			// Editing existing reward document
 			// Check if reward has items
 			const hasItems = editingRewardDoc.value.items && editingRewardDoc.value.items.length > 0
 			const singleItem = hasItems ? editingRewardDoc.value.items[0] : null
-			console.log('hasItems:', hasItems)
-			console.log('singleItem:', singleItem)
 
 			// Check if this is a catalog item or unknown item
 			const isCatalogItem = getItemById(itemForm.value.item_id)
-			console.log('isCatalogItem:', isCatalogItem)
-			console.log('itemForm.value.item_id:', itemForm.value.item_id)
 
 			// Prepare updates for the document
 			const updates = {
@@ -801,9 +782,7 @@ async function saveItem() {
 				updates.display_enchantments = []
 			}
 
-			console.log('Prepared updates:', updates)
 			await updateRewardDocument(editingRewardDoc.value, updates)
-			console.log('Successfully updated reward document')
 		} else {
 			// Add new item - pass the selected item data to avoid extra queries
 			const selectedItem = getItemById(itemForm.value.item_id)
@@ -832,7 +811,7 @@ async function saveItem() {
 		addItemFormError.value = 'Failed to save item: ' + err.message
 	} finally {
 		loading.value = false
-		console.log('saveItem() completed')
+		// saveItem() completed
 	}
 }
 

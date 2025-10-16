@@ -969,13 +969,13 @@ export function parseCrateRewardsYaml(yamlContent) {
 		}
 
 		const prizesSection = parsedYaml.Crate.Prizes
-		console.log('✅ Detected valid Crazy Crates format: Crate.Prizes')
+		// Detected valid Crazy Crates format: Crate.Prizes
 
 		// Step 4: Convert prizes object to array format
 		const prizes = []
 		for (const [prizeId, prizeData] of Object.entries(prizesSection)) {
 			if (!prizeData || typeof prizeData !== 'object') {
-				console.warn(`Prize ${prizeId} has invalid data, skipping`)
+				// Prize has invalid data, skipping
 				continue
 			}
 
@@ -993,7 +993,7 @@ export function parseCrateRewardsYaml(yamlContent) {
 			throw new Error('No valid prizes found in crate file')
 		}
 
-		console.log(`✅ Successfully parsed ${prizes.length} prizes`)
+		// Successfully parsed prizes
 		return prizes
 	} catch (error) {
 		console.error('Error parsing crate YAML:', error)
@@ -1011,7 +1011,7 @@ export function parseCrateRewardsYaml(yamlContent) {
  */
 export function parseItemString(itemString, allItems = [], version = '1_20') {
 	try {
-		console.log(`Parsing item string: ${itemString}`)
+		// Parsing item string
 
 		const itemData = {
 			item_id: null, // Will be looked up in items collection
@@ -1088,16 +1088,14 @@ export function parseItemString(itemString, allItems = [], version = '1_20') {
 								itemData.enchantments = []
 							}
 							itemData.enchantments.push(enchantmentItem.id)
-							console.log(
-								`✅ Found enchantment for book: ${name}:${enchantLevel} -> ${enchantmentItem.id}`
-							)
+							// Found enchantment for book
 						} else {
 							// Fallback to material_id format if document ID not found
 							if (!Array.isArray(itemData.enchantments)) {
 								itemData.enchantments = []
 							}
 							itemData.enchantments.push(enchantmentMaterialId)
-							console.log(`⚠️ Enchantment not in catalog: ${enchantmentMaterialId}`)
+							// Enchantment not in catalog
 						}
 					} else {
 						// For other items, find the enchantment document ID by material_id
@@ -1112,29 +1110,26 @@ export function parseItemString(itemString, allItems = [], version = '1_20') {
 								itemData.enchantments = []
 							}
 							itemData.enchantments.push(enchantmentItem.id)
-							console.log(
-								`✅ Found enchantment item: ${name}:${enchantLevel} -> ${enchantmentItem.id}`
-							)
+							// Found enchantment item
 						} else {
 							// Fallback to material_id format if document ID not found
 							if (!Array.isArray(itemData.enchantments)) {
 								itemData.enchantments = []
 							}
 							itemData.enchantments.push(enchantmentMaterialId)
-							console.log(`⚠️ Enchantment not in catalog: ${enchantmentMaterialId}`)
+							// Enchantment not in catalog
 						}
 					}
 				} else if (name && level) {
 					// Not a valid enchantment - store as custom property (skip 'amount' since we have quantity)
 					if (name.toLowerCase() !== 'amount') {
 						itemData.custom_properties[name] = level
-						console.log(`📋 Found custom property: ${name}:${level}`)
+						// Found custom property
 					}
 				}
 			}
 		}
 
-		console.log('Parsed item data:', itemData)
 		return itemData
 	} catch (error) {
 		console.error('Error parsing item string:', error)
@@ -1458,9 +1453,7 @@ export async function importCrateRewardsFromYaml(
 					if (firstItem.enchantments && firstItem.enchantments.length > 0) {
 						// Copy enchantments from the item to display_enchantments
 						displayEnchantments.push(...firstItem.enchantments)
-						console.log(
-							`✅ Fallback: Extracted ${firstItem.enchantments.length} display enchantments from Items array for ${firstItem.materialId}`
-						)
+						// Fallback: Extracted display enchantments from Items array
 					}
 				}
 
