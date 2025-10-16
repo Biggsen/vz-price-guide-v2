@@ -929,17 +929,27 @@ function copyRewardList() {
 				} - Chance: ${chance}% (${rewardDoc.items.length} items)`
 			} else {
 				// For single-item rewards, show details
-				const singleItem = rewardDoc.items[0]
-				const itemData = getItemById(singleItem.item_id)
-				if (!itemData)
-					return `${stripColorCodes(
-						rewardDoc.display_name || 'Unknown'
-					)} - Value: Unknown`
-
-				const value = getRewardDocValue(rewardDoc)
+				const singleItem = rewardDoc.items?.[0]
 				const chance = getRewardDocChance(rewardDoc).toFixed(1)
 
-				return `${singleItem.quantity}x ${stripColorCodes(
+				if (!singleItem) {
+					return `${stripColorCodes(
+						rewardDoc.display_name || 'Unknown'
+					)} - Value: Unknown (No items) - Weight: ${
+						rewardDoc.weight
+					} - Chance: ${chance}%`
+				}
+
+				const itemData = getItemById(singleItem.item_id)
+				if (!itemData) {
+					return `${stripColorCodes(
+						rewardDoc.display_name || 'Unknown'
+					)} - Value: Unknown (Item not found) - Weight: ${
+						rewardDoc.weight
+					} - Chance: ${chance}%`
+				}
+
+				return `${singleItem.quantity || 1}x ${stripColorCodes(
 					itemData.name
 				)} - Value: ${getValueDisplay(rewardDoc)} - Weight: ${
 					rewardDoc.weight
@@ -2783,24 +2793,14 @@ watch(selectedCrate, (crate) => {
 										decoding="async"
 										fetchpriority="low"
 										class="max-w-6 max-h-6 object-contain" />
-									<QuestionMarkCircleIcon v-else class="w-6 h-6 text-white" />
+									<QuestionMarkCircleIcon v-else class="w-6 h-6 text-gray-400" />
 									<div class="flex-1 min-w-0">
 										<div class="text-xs font-medium text-gray-900 truncate">
 											{{
-												result.item.display_name ||
-												result.itemData?.name ||
+												stripColorCodes(result.item.display_name) ||
+												stripColorCodes(result.itemData?.name) ||
 												'Unknown'
 											}}
-											<span
-												v-if="
-													result.item.display_enchantments &&
-													getEnchantmentIds(
-														result.item.display_enchantments
-													).length > 0
-												"
-												class="text-blue-600">
-												(enchanted)
-											</span>
 										</div>
 										<div class="text-xs text-gray-500">
 											{{ getRewardDocChance(result.item).toFixed(1) }}% chance
