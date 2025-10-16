@@ -93,10 +93,54 @@ export async function getUniqueCrateName(userId, proposedName) {
 }
 
 /**
+ * Check if user has reached the crate limit (2 crates during testing)
+ * @param {string} userId - User ID to check
+ * @returns {Object} Object with canCreate, currentCount, and limit
+ */
+export async function checkCrateLimit(userId) {
+	try {
+		// Get user's current crate count
+		const cratesQuery = query(collection(db, 'crate_rewards'), where('user_id', '==', userId))
+		const querySnapshot = await getDocs(cratesQuery)
+		const currentCount = querySnapshot.docs.length
+
+		// Hard limit of 2 during testing
+		const limit = 2
+		const canCreate = currentCount < limit
+
+		return {
+			canCreate,
+			currentCount,
+			limit,
+			remaining: Math.max(0, limit - currentCount)
+		}
+	} catch (error) {
+		console.error('Error checking crate limit:', error)
+		// Fallback to allowing creation if check fails
+		return {
+			canCreate: true,
+			currentCount: 0,
+			limit: 2,
+			remaining: 2
+		}
+	}
+}
+
+/**
  * Create a new crate reward
  */
 export async function createCrateReward(userId, crateData) {
 	try {
+		// Check crate limit before creating
+		const limitCheck = await checkCrateLimit(userId)
+
+		if (!limitCheck.canCreate) {
+			throw new Error(
+				`Crate limit reached! You have ${limitCheck.currentCount}/${limitCheck.limit} crates. ` +
+					'This feature is currently in testing with a 2 crate limit. More features and higher limits coming soon!'
+			)
+		}
+
 		const now = new Date().toISOString()
 		const crateReward = {
 			user_id: userId,
@@ -1245,6 +1289,23 @@ export async function importCrateRewardsFromYaml(
 		// If no crateId provided, check for duplicates BEFORE creating crate
 		let duplicateInfo = null
 		if (!targetCrateId && crateName && userId) {
+			// Check crate limit first
+			const limitCheck = await checkCrateLimit(userId)
+			if (!limitCheck.canCreate) {
+				return {
+					success: false,
+					importedCount: 0,
+					totalPrizes: 0,
+					errorCount: 0,
+					warningCount: 0,
+					errors: [
+						'Crate limit reached! You have reached the 2 crate limit during testing.'
+					],
+					warnings: [],
+					limitReached: true
+				}
+			}
+
 			// Check for duplicate names and get unique name
 			const { uniqueName, isDuplicate } = await getUniqueCrateName(userId, crateName)
 

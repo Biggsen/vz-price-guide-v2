@@ -15,12 +15,14 @@ import {
 import { versions } from '../constants.js'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
+import NotificationBanner from '../components/NotificationBanner.vue'
 import {
 	PlusIcon,
 	TrashIcon,
 	ArrowUpTrayIcon,
 	CheckCircleIcon,
-	ExclamationTriangleIcon
+	ExclamationTriangleIcon,
+	TrophyIcon
 } from '@heroicons/vue/24/outline'
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 
@@ -52,6 +54,9 @@ const showInfoModal = ref(false)
 // Duplicate crate warning modal state
 const showDuplicateWarning = ref(false)
 const duplicateWarningData = ref(null)
+
+// Limit reached modal state
+const showLimitReachedModal = ref(false)
 
 // Form data
 const crateForm = ref({
@@ -203,6 +208,12 @@ async function executeDelete() {
 }
 
 function startCreateCrate() {
+	// Check if user has reached the crate limit
+	if (crateRewards.value.length >= 2) {
+		showLimitReachedModal.value = true
+		return
+	}
+
 	// Clear the form to ensure it's always empty when creating new
 	crateForm.value = {
 		name: '',
@@ -212,6 +223,16 @@ function startCreateCrate() {
 	createFormError.value = null
 	nameValidationError.value = null
 	showCreateForm.value = true
+}
+
+function startImportYaml() {
+	// Check if user has reached the crate limit
+	if (crateRewards.value.length >= 2) {
+		showLimitReachedModal.value = true
+		return
+	}
+
+	showImportModal.value = true
 }
 
 // Import functions
@@ -368,7 +389,14 @@ function cancelDuplicateImport() {
 </script>
 
 <template>
-	<div class="p-4 pt-8">
+	<!-- Testing Notice Banner -->
+	<div class="p-4 max-w-2xl">
+		<NotificationBanner
+			type="info"
+			title="Crate Rewards - Limitations"
+			message="This tool has a limit of 2 crates for the moment. When the tires have been kicked enough - bugs fixed and functionality fine-tuned - I'll increase the limit." />
+	</div>
+	<div class="p-4 pt-2">
 		<!-- Header -->
 		<div class="mb-8">
 			<div class="flex items-center justify-between mb-4">
@@ -377,7 +405,7 @@ function cancelDuplicateImport() {
 					<div>
 						<h1 class="text-3xl font-bold text-gray-900 mb-2">Crate Rewards Manager</h1>
 						<p class="text-gray-600">
-							Create and manage crate rewards for Crazy Crates plugin
+							Create and manage crate rewards for CrazyCrates plugin
 						</p>
 						<div class="mt-2">
 							<button
@@ -407,7 +435,7 @@ function cancelDuplicateImport() {
 								</template>
 								New Crate
 							</BaseButton>
-							<BaseButton @click="showImportModal = true" variant="secondary">
+							<BaseButton @click="startImportYaml" variant="secondary">
 								<template #left-icon>
 									<ArrowUpTrayIcon class="w-4 h-4" />
 								</template>
@@ -433,6 +461,7 @@ function cancelDuplicateImport() {
 				class="text-2xl font-semibold mb-6 text-gray-700 border-b-2 border-gray-asparagus pb-2">
 				Your Crates
 			</h2>
+
 			<div v-if="crateRewardsPending" class="text-gray-600">Loading crate rewards...</div>
 			<div v-else-if="!hasCrateRewards" class="text-gray-600" data-cy="empty-crates-message">
 				No crate rewards found. Create your first one to get started.
@@ -910,6 +939,70 @@ function cancelDuplicateImport() {
 					</BaseButton>
 					<BaseButton @click="confirmDuplicateImport" variant="primary">
 						Yes, that's fine
+					</BaseButton>
+				</div>
+			</template>
+		</BaseModal>
+
+		<!-- Limit Reached Modal -->
+		<BaseModal
+			:isOpen="showLimitReachedModal"
+			title="Crate limit of 2 reached"
+			maxWidth="max-w-lg"
+			@close="showLimitReachedModal = false">
+			<div class="space-y-4">
+				<div class="flex items-start">
+					<ExclamationTriangleIcon
+						class="h-6 w-6 text-heavy-metal mr-3 flex-shrink-0 mt-0.5" />
+					<div>
+						<h3 class="text-lg font-medium text-gray-900 mb-3 flex items-center gap-2">
+							Limited crates until tool is shiny good!
+							<TrophyIcon class="h-5 w-5 text-heavy-metal" />
+						</h3>
+						<div class="text-gray-600 space-y-3">
+							<p>
+								I know you'd love to create more crates, and I totally get it! While
+								this tool is still in its early stages, I'm keeping it to 2 crates
+								per user to make sure everything works smoothly.
+							</p>
+							<p>
+								The sooner I feel this tool is ready for prime time, the sooner I'll
+								increase the limit. You can help me get there faster by:
+							</p>
+							<ul class="list-disc list-inside space-y-1 ml-2">
+								<li>
+									Giving me
+									<router-link
+										to="/suggestions"
+										class="inline-block text-heavy-metal hover:text-gray-asparagus underline">
+										suggestions
+									</router-link>
+									for improvements
+								</li>
+								<li>
+									Joining the
+									<a
+										href="https://discord.gg/bz6ckxGZKw"
+										target="_blank"
+										class="inline-block text-heavy-metal hover:text-gray-asparagus underline">
+										Discord
+									</a>
+									to chat about any issues
+								</li>
+								<li>Letting me know what's working and what isn't</li>
+							</ul>
+							<p class="text-sm text-gray-500">
+								Thanks for being patient while I polish this up! 🙏
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<template #footer>
+				<div class="flex items-center justify-end">
+					<BaseButton @click="showLimitReachedModal = false" variant="primary">
+						Got it
 					</BaseButton>
 				</div>
 			</template>
