@@ -6,44 +6,6 @@ This document tracks bugs, regressions, and issues discovered during development
 
 ## Active Issues
 
-### Duplicate Crate Names When Importing Same File
-
-**Status**: 🔴 Active  
-**Priority**: Medium  
-**Type**: UX Issue  
-**Discovered**: 2025-01-27
-
-**Description**:
-When importing the same crate YAML file multiple times, the crates have identical names making it impossible to distinguish between them in the crate list. This creates confusion for users managing multiple versions or iterations of the same crate.
-
-**Expected Behavior**:
-
--   System should either automatically rename duplicate crates (e.g., "VillageCrate (2)", "VillageCrate (3)")
--   Or warn the user that a crate with this name already exists before importing
-
-**Actual Behavior**:
-
--   Multiple crates with identical names are created without any differentiation
--   Users cannot distinguish between different versions of the same crate
-
-**Impact**:
-
--   Poor user experience when managing multiple versions of crates
--   Risk of accidentally managing the wrong crate
--   Confusion in the crate management interface
-
-**Potential Solutions**:
-
--   Auto-append a number suffix to duplicate crate names
--   Show a confirmation dialog warning about existing crate names
--   Allow users to specify a custom name during import
-
-**Files Potentially Affected**:
-
--   Import functionality in crate management
--   YAML import handlers
--   Crate naming/validation logic
-
 ### Crate Total Value Incorrect - Not Considering Enchantments
 
 **Status**: 🔴 Active  
@@ -82,6 +44,39 @@ The total value calculation for crates is incorrect and appears to not be consid
 -   Need to verify if enchantment prices are being fetched correctly
 
 ## Resolved Issues
+
+### Duplicate Crate Names When Importing Same File
+
+**Status**: ✅ Resolved  
+**Priority**: Medium  
+**Type**: UX Issue  
+**Discovered**: 2025-01-27  
+**Resolved**: 2025-01-27
+
+**Description**:
+When importing the same crate YAML file multiple times, the crates have identical names making it impossible to distinguish between them in the crate list. This creates confusion for users managing multiple versions or iterations of the same crate.
+
+**Root Cause**:
+The `createCrateReward` function had no duplicate name checking, allowing multiple crates with identical names to be created when importing the same YAML file multiple times.
+
+**Solution Implemented**:
+
+1. **Added duplicate checking function** (`getUniqueCrateName`) that queries existing crates and generates unique names with suffixes
+2. **Added warning dialog** that appears when a duplicate name is detected, asking the user if they want to proceed with a unique name
+3. **Auto-append number suffixes** (e.g., "VillageCrate (2)", "VillageCrate (3)") when user confirms the import
+4. **Updated import logic** to handle duplicate detection and user confirmation flow
+
+**Files Modified**:
+
+-   `src/utils/crateRewards.js` - Added `getUniqueCrateName` function and updated import logic
+-   `src/views/CrateRewardManagerView.vue` - Added duplicate warning dialog and confirmation flow
+
+**User Experience**:
+
+-   Users are warned when importing a crate with an existing name
+-   They can choose to proceed with a unique name or cancel the import
+-   Multiple versions of the same crate can be managed with clear naming
+-   No accidental overwrites or confusion between crate versions
 
 ### Enchantment Books Not Separated When Adding Crate Items
 

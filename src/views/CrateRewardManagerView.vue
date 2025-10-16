@@ -9,7 +9,8 @@ import {
 	updateCrateReward,
 	deleteCrateReward,
 	importCrateRewardsFromYaml,
-	validateYamlForMultipleItems
+	validateYamlForMultipleItems,
+	getUniqueCrateName
 } from '../utils/crateRewards.js'
 import { versions } from '../constants.js'
 import BaseButton from '../components/BaseButton.vue'
@@ -21,6 +22,7 @@ import {
 	CheckCircleIcon,
 	ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
+import { XCircleIcon } from '@heroicons/vue/20/solid'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -38,12 +40,20 @@ const createFormError = ref(null)
 const editFormError = ref(null)
 const importModalError = ref(null)
 
+// Form validation states
+const nameValidationError = ref(null)
+const isCheckingName = ref(false)
+
 // Delete confirmation modal state
 const showDeleteModal = ref(false)
 const crateToDelete = ref(null)
 
 // Info modal state
 const showInfoModal = ref(false)
+
+// Duplicate crate warning modal state
+const showDuplicateWarning = ref(false)
+const duplicateWarningData = ref(null)
 
 // Form data
 const crateForm = ref({
@@ -114,9 +124,41 @@ function getCrateTotalWeight(crateId) {
 }
 
 // Methods
+async function checkCrateNameAvailability(name) {
+	if (!name.trim()) {
+		nameValidationError.value = null
+		return
+	}
+
+	isCheckingName.value = true
+	nameValidationError.value = null
+
+	try {
+		const { isDuplicate } = await getUniqueCrateName(user.value.uid, name.trim())
+		if (isDuplicate) {
+			nameValidationError.value = 'Already a crate with this name'
+		}
+	} catch (err) {
+		console.error('Error checking crate name:', err)
+		// Don't show error to user for validation failures
+	} finally {
+		isCheckingName.value = false
+	}
+}
+
 async function createNewCrateReward() {
 	if (!crateForm.value.name.trim()) {
-		createFormError.value = 'Crate reward name is required'
+		nameValidationError.value = 'Crate name is required'
+		return
+	}
+
+	// Check for duplicate name before creating (in case user didn't blur the field)
+	if (!nameValidationError.value) {
+		await checkCrateNameAvailability(crateForm.value.name)
+	}
+
+	// Check for duplicate name before creating
+	if (nameValidationError.value) {
 		return
 	}
 
@@ -132,6 +174,7 @@ async function createNewCrateReward() {
 			description: '',
 			minecraft_version: '1.20'
 		}
+		nameValidationError.value = null
 	} catch (err) {
 		createFormError.value = 'Failed to create crate reward: ' + err.message
 	} finally {
@@ -199,6 +242,7 @@ function startCreateCrate() {
 		minecraft_version: '1.20'
 	}
 	createFormError.value = null
+	nameValidationError.value = null
 	showCreateForm.value = true
 }
 
@@ -263,13 +307,24 @@ async function importYamlFile() {
 
 		// Combine validation warnings with import warnings
 		result.warnings = [...(validation.warnings || []), ...(result.warnings || [])]
-		importResult.value = result
 
-		if (result.success && result.importedCount > 0) {
-			// Clear the file input
-			importFile.value = null
-			const fileInput = document.getElementById('yaml-file-input')
-			if (fileInput) fileInput.value = ''
+		// Check if duplicate was detected and show warning
+		if (result.duplicateDetected) {
+			duplicateWarningData.value = {
+				originalName: result.originalName,
+				uniqueName: result.uniqueName,
+				importFile: importFile.value // Store the file for re-import
+			}
+			showDuplicateWarning.value = true
+		} else {
+			importResult.value = result
+
+			if (result.success && result.importedCount > 0) {
+				// Clear the file input
+				importFile.value = null
+				const fileInput = document.getElementById('yaml-file-input')
+				if (fileInput) fileInput.value = ''
+			}
 		}
 	} catch (err) {
 		importModalError.value = 'Failed to import YAML file: ' + err.message
@@ -292,6 +347,66 @@ function closeImportModal() {
 	importFile.value = null
 	importResult.value = null
 	importModalError.value = null
+}
+
+// Duplicate warning dialog functions
+async function confirmDuplicateImport() {
+	if (duplicateWarningData.value) {
+		// Re-import with the unique name
+		try {
+			isImporting.value = true
+
+			// Read file content again
+			const fileContent = await readFileContent(duplicateWarningData.value.importFile)
+
+			// Validate for multiple item rewards and get prizes to skip
+			const validation = validateYamlForMultipleItems(fileContent)
+			if (!validation.success) {
+				importModalError.value = `Import failed: ${validation.errors.join(', ')}`
+				return
+			}
+
+			// Import with the unique name
+			const result = await importCrateRewardsFromYaml(
+				null, // No existing crate ID, will create new one
+				fileContent,
+				allItems.value,
+				duplicateWarningData.value.uniqueName, // Use the unique name
+				user.value.uid,
+				validation.prizesToSkip
+			)
+
+			// Combine validation warnings with import warnings
+			result.warnings = [...(validation.warnings || []), ...(result.warnings || [])]
+			importResult.value = result
+
+			if (result.success && result.importedCount > 0) {
+				// Clear the file input
+				importFile.value = null
+				const fileInput = document.getElementById('yaml-file-input')
+				if (fileInput) fileInput.value = ''
+			}
+		} catch (err) {
+			importModalError.value = 'Failed to import YAML file: ' + err.message
+		} finally {
+			isImporting.value = false
+		}
+	}
+
+	// Close the warning dialog
+	showDuplicateWarning.value = false
+	duplicateWarningData.value = null
+}
+
+function cancelDuplicateImport() {
+	// Close the warning dialog without importing
+	showDuplicateWarning.value = false
+	duplicateWarningData.value = null
+
+	// Clear the file input
+	importFile.value = null
+	const fileInput = document.getElementById('yaml-file-input')
+	if (fileInput) fileInput.value = ''
 }
 </script>
 
@@ -356,7 +471,7 @@ function closeImportModal() {
 		<div class="mb-8">
 			<h2
 				class="text-2xl font-semibold mb-6 text-gray-700 border-b-2 border-gray-asparagus pb-2">
-				Your Crate Rewards
+				Your Crates
 			</h2>
 			<div v-if="crateRewardsPending" class="text-gray-600">Loading crate rewards...</div>
 			<div v-else-if="!hasCrateRewards" class="text-gray-600">
@@ -422,28 +537,41 @@ function closeImportModal() {
 		<!-- prettier-ignore -->
 		<BaseModal
 			:isOpen="showCreateForm"
-			title="Create New Crate Reward"
+			title="Create New Crate"
 			maxWidth="max-w-md"
-			@close="showCreateForm = false; createFormError = null">
-			<!-- Error Display -->
-			<div v-if="createFormError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-				<div class="flex items-center">
-					<ExclamationTriangleIcon class="w-5 h-5 text-red-600 mr-2" />
-					<span class="text-red-800">{{ createFormError }}</span>
-				</div>
-			</div>
+			@close="showCreateForm = false; createFormError = null; nameValidationError = null">
 
 			<form @submit.prevent="createNewCrateReward" class="space-y-4">
 				<div>
 					<label for="crate-name" class="block text-sm font-medium text-gray-700 mb-1">
 						Name *
 					</label>
-					<input
-						id="crate-name"
-						v-model="crateForm.name"
-						type="text"
-						required
-						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
+					<div class="relative">
+						<input
+							id="crate-name"
+							v-model="crateForm.name"
+							type="text"
+							required
+							:class="[
+								'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans pr-10',
+								nameValidationError 
+									? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+									: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+							]"
+							@blur="checkCrateNameAvailability(crateForm.name)"
+							@input="nameValidationError = null; createFormError = null" />
+						
+						<!-- Loading spinner -->
+						<div v-if="isCheckingName" class="absolute right-3 top-1/2 transform -translate-y-1/2">
+							<div class="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600"></div>
+						</div>
+					</div>
+					
+					<!-- Name validation error -->
+					<div v-if="nameValidationError" class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+						<XCircleIcon class="w-4 h-4" />
+						{{ nameValidationError }}
+					</div>
 				</div>
 
 				<div>
@@ -480,7 +608,7 @@ function closeImportModal() {
 						<!-- prettier-ignore -->
 						<button
 							type="button"
-							@click="showCreateForm = false; createFormError = null"
+							@click="showCreateForm = false; createFormError = null; nameValidationError = null"
 							class="btn-secondary--outline">
 							Cancel
 						</button>
@@ -861,6 +989,38 @@ function closeImportModal() {
 			<template #footer>
 				<div class="flex items-center justify-end">
 					<BaseButton @click="showInfoModal = false" variant="primary">Got it</BaseButton>
+				</div>
+			</template>
+		</BaseModal>
+
+		<!-- Duplicate Crate Name Warning Modal -->
+		<BaseModal
+			:isOpen="showDuplicateWarning"
+			title="Duplicate Crate Name Detected"
+			maxWidth="max-w-md"
+			@close="cancelDuplicateImport">
+			<div class="space-y-4">
+				<div class="flex items-start">
+					<ExclamationTriangleIcon
+						class="w-6 h-6 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
+					<div>
+						<p class="text-gray-900 font-medium mb-2">
+							A crate with the name "{{ duplicateWarningData?.originalName }}" already
+							exists.
+						</p>
+						<p class="text-gray-700 mb-3">Would you like to create another one?</p>
+					</div>
+				</div>
+			</div>
+
+			<template #footer>
+				<div class="flex items-center justify-end space-x-3">
+					<BaseButton @click="cancelDuplicateImport" variant="tertiary">
+						Cancel
+					</BaseButton>
+					<BaseButton @click="confirmDuplicateImport" variant="primary">
+						Yes, that's fine
+					</BaseButton>
 				</div>
 			</template>
 		</BaseModal>

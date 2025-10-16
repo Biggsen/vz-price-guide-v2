@@ -2,7 +2,7 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useCurrentUser, useFirestore, useCollection, useDocument } from 'vuefire'
 import { useRouter, useRoute } from 'vue-router'
-import { query, collection, orderBy, doc, updateDoc } from 'firebase/firestore'
+import { query, collection, orderBy, doc, updateDoc, where, getDocs } from 'firebase/firestore'
 import {
 	useCrateReward,
 	useCrateRewardItems,
@@ -13,7 +13,8 @@ import {
 	downloadCrateRewardYaml,
 	formatRewardItemForYaml,
 	importCrateRewardsFromYaml,
-	validateYamlForMultipleItems
+	validateYamlForMultipleItems,
+	getUniqueCrateName
 } from '../utils/crateRewards.js'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { getImageUrl } from '../utils/image.js'
@@ -65,6 +66,10 @@ const showYamlPreview = ref(false)
 const editFormError = ref(null)
 const addItemFormError = ref(null)
 const importModalError = ref(null)
+
+// Edit form validation states
+const editNameValidationError = ref(null)
+const isCheckingEditName = ref(false)
 
 // Delete confirmation modal state
 const showDeleteModal = ref(false)
@@ -312,9 +317,52 @@ watch(
 )
 
 // Methods
+async function checkEditCrateNameAvailability(name) {
+	if (!name.trim()) {
+		editNameValidationError.value = null
+		return
+	}
+
+	isCheckingEditName.value = true
+	editNameValidationError.value = null
+
+	try {
+		// Get all crates except the current one being edited
+		const cratesQuery = query(
+			collection(db, 'crate_rewards'),
+			where('user_id', '==', user.value.uid),
+			orderBy('name')
+		)
+		const querySnapshot = await getDocs(cratesQuery)
+
+		const existingNames = querySnapshot.docs
+			.filter((doc) => doc.id !== selectedCrateId.value)
+			.map((doc) => doc.data().name)
+
+		if (existingNames.includes(name.trim())) {
+			editNameValidationError.value = 'Already a crate with this name'
+		}
+	} catch (err) {
+		console.error('Error checking edit crate name:', err)
+		// Don't show error to user for validation failures
+	} finally {
+		isCheckingEditName.value = false
+	}
+}
+
 async function updateCrateRewardData() {
 	if (!crateForm.value.name.trim()) {
-		editFormError.value = 'Crate reward name is required'
+		editNameValidationError.value = 'Crate name is required'
+		return
+	}
+
+	// Check for duplicate name before updating (in case user didn't blur the field)
+	if (!editNameValidationError.value) {
+		await checkEditCrateNameAvailability(crateForm.value.name)
+	}
+
+	// Check for duplicate name before updating
+	if (editNameValidationError.value) {
 		return
 	}
 
@@ -329,6 +377,7 @@ async function updateCrateRewardData() {
 	try {
 		await updateCrateReward(selectedCrateId.value, crateForm.value)
 		showEditForm.value = false
+		editNameValidationError.value = null
 	} catch (err) {
 		editFormError.value = 'Failed to update crate reward: ' + err.message
 	} finally {
@@ -1550,7 +1599,7 @@ watch(selectedCrate, (crate) => {
 								<template #left-icon>
 									<ArrowLeftIcon class="w-4 h-4" />
 								</template>
-								Back to Crate Rewards Manager
+								Back to Crates
 							</BaseButton>
 						</div>
 
@@ -2007,16 +2056,9 @@ watch(selectedCrate, (crate) => {
 		<!-- prettier-ignore -->
 		<BaseModal
 			:isOpen="showEditForm"
-			title="Edit Crate Reward"
+			title="Edit Crate"
 			maxWidth="max-w-md"
-			@close="showEditForm = false; editFormError = null">
-			<!-- Error Display -->
-			<div v-if="editFormError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-				<div class="flex items-center">
-					<ExclamationTriangleIcon class="w-5 h-5 text-red-600 mr-2" />
-					<span class="text-red-800">{{ editFormError }}</span>
-				</div>
-			</div>
+			@close="showEditForm = false; editFormError = null; editNameValidationError = null">
 
 			<form @submit.prevent="updateCrateRewardData" class="space-y-4">
 				<div>
@@ -2025,12 +2067,32 @@ watch(selectedCrate, (crate) => {
 						class="block text-sm font-medium text-gray-700 mb-1">
 						Name *
 					</label>
-					<input
-						id="edit-crate-name"
-						v-model="crateForm.name"
-						type="text"
-						required
-						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
+					<div class="relative">
+						<input
+							id="edit-crate-name"
+							v-model="crateForm.name"
+							type="text"
+							required
+							:class="[
+								'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans pr-10',
+								editNameValidationError 
+									? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+									: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+							]"
+							@blur="checkEditCrateNameAvailability(crateForm.name)"
+							@input="editNameValidationError = null; editFormError = null" />
+						
+						<!-- Loading spinner -->
+						<div v-if="isCheckingEditName" class="absolute right-3 top-1/2 transform -translate-y-1/2">
+							<div class="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600"></div>
+						</div>
+					</div>
+					
+					<!-- Name validation error -->
+					<div v-if="editNameValidationError" class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+						<XCircleIcon class="w-4 h-4" />
+						{{ editNameValidationError }}
+					</div>
 				</div>
 
 				<div>
@@ -2069,7 +2131,7 @@ watch(selectedCrate, (crate) => {
 						<!-- prettier-ignore -->
 						<button
 							type="button"
-							@click="showEditForm = false; editFormError = null"
+							@click="showEditForm = false; editFormError = null; editNameValidationError = null"
 							class="btn-secondary--outline">
 							Cancel
 						</button>

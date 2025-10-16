@@ -53,6 +53,46 @@ const db = useFirestore()
 // }
 
 /**
+ * Check if a crate name already exists and generate a unique name with suffix if needed
+ * @param {string} userId - User ID to check crates for
+ * @param {string} proposedName - The proposed crate name
+ * @returns {Object} Object with uniqueName and isDuplicate flag
+ */
+export async function getUniqueCrateName(userId, proposedName) {
+	try {
+		// Query existing crates for this user
+		const cratesQuery = query(
+			collection(db, 'crate_rewards'),
+			where('user_id', '==', userId),
+			orderBy('name')
+		)
+		const querySnapshot = await getDocs(cratesQuery)
+
+		const existingNames = querySnapshot.docs.map((doc) => doc.data().name)
+
+		// Check if the proposed name already exists
+		if (!existingNames.includes(proposedName)) {
+			return { uniqueName: proposedName, isDuplicate: false }
+		}
+
+		// Generate unique name with suffix
+		let counter = 2
+		let uniqueName = `${proposedName} (${counter})`
+
+		while (existingNames.includes(uniqueName)) {
+			counter++
+			uniqueName = `${proposedName} (${counter})`
+		}
+
+		return { uniqueName, isDuplicate: true }
+	} catch (error) {
+		console.error('Error checking crate name uniqueness:', error)
+		// Fallback to original name if checking fails
+		return { uniqueName: proposedName, isDuplicate: false }
+	}
+}
+
+/**
  * Create a new crate reward
  */
 export async function createCrateReward(userId, crateData) {
@@ -1202,10 +1242,31 @@ export async function importCrateRewardsFromYaml(
 	try {
 		let targetCrateId = crateId
 
-		// If no crateId provided, create a new crate first
+		// If no crateId provided, check for duplicates BEFORE creating crate
+		let duplicateInfo = null
 		if (!targetCrateId && crateName && userId) {
+			// Check for duplicate names and get unique name
+			const { uniqueName, isDuplicate } = await getUniqueCrateName(userId, crateName)
+
+			// If duplicate detected, return early with duplicate info for UI handling
+			if (isDuplicate) {
+				return {
+					success: false,
+					importedCount: 0,
+					totalPrizes: 0,
+					errorCount: 0,
+					warningCount: 0,
+					errors: [],
+					warnings: [],
+					duplicateDetected: true,
+					originalName: crateName,
+					uniqueName: uniqueName
+				}
+			}
+
+			// No duplicate, proceed with crate creation
 			const newCrate = await createCrateReward(userId, {
-				name: crateName,
+				name: uniqueName,
 				description: `Imported from YAML file`,
 				minecraft_version: '1.20'
 			})
