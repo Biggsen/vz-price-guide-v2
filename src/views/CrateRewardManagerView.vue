@@ -8,7 +8,8 @@ import {
 	createCrateReward,
 	updateCrateReward,
 	deleteCrateReward,
-	importCrateRewardsFromYaml
+	importCrateRewardsFromYaml,
+	validateYamlForMultipleItems
 } from '../utils/crateRewards.js'
 import { versions } from '../constants.js'
 import BaseButton from '../components/BaseButton.vue'
@@ -240,18 +241,28 @@ async function importYamlFile() {
 		// Read file content
 		const fileContent = await readFileContent(importFile.value)
 
+		// Validate for multiple item rewards and get prizes to skip
+		const validation = validateYamlForMultipleItems(fileContent)
+		if (!validation.success) {
+			importModalError.value = `Import failed: ${validation.errors.join(', ')}`
+			return
+		}
+
 		// Extract crate name from filename (remove extension)
 		const fileName = importFile.value.name.replace(/\.(yml|yaml)$/i, '')
 
-		// Import the crate rewards - this creates a new crate
+		// Import the crate rewards - this creates a new crate, skipping problematic prizes
 		const result = await importCrateRewardsFromYaml(
 			null, // No existing crate ID, will create new one
 			fileContent,
 			allItems.value,
 			fileName,
-			user.value.uid
+			user.value.uid,
+			validation.prizesToSkip // prizesToSkip
 		)
 
+		// Combine validation warnings with import warnings
+		result.warnings = [...(validation.warnings || []), ...(result.warnings || [])]
 		importResult.value = result
 
 		if (result.success && result.importedCount > 0) {

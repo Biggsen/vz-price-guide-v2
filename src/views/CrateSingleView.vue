@@ -12,7 +12,8 @@ import {
 	deleteCrateRewardItem,
 	downloadCrateRewardYaml,
 	formatRewardItemForYaml,
-	importCrateRewardsFromYaml
+	importCrateRewardsFromYaml,
+	validateYamlForMultipleItems
 } from '../utils/crateRewards.js'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { getImageUrl } from '../utils/image.js'
@@ -1470,13 +1471,25 @@ async function importYamlFile() {
 		// Read file content
 		const fileContent = await readFileContent(importFile.value)
 
-		// Import the crate rewards
+		// Validate for multiple item rewards and get prizes to skip
+		const validation = validateYamlForMultipleItems(fileContent)
+		if (!validation.success) {
+			importModalError.value = `Import failed: ${validation.errors.join(', ')}`
+			return
+		}
+
+		// Import the crate rewards, skipping problematic prizes
 		const result = await importCrateRewardsFromYaml(
 			selectedCrateId.value,
 			fileContent,
-			allItems.value
+			allItems.value,
+			null, // crateName
+			null, // userId
+			validation.prizesToSkip // prizesToSkip
 		)
 
+		// Combine validation warnings with import warnings
+		result.warnings = [...(validation.warnings || []), ...(result.warnings || [])]
 		importResult.value = result
 
 		if (result.success && result.importedCount > 0) {

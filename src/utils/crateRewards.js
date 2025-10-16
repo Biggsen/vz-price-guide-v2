@@ -1125,6 +1125,62 @@ export function findMatchingItem(parsedItem, allItems) {
 }
 
 /**
+ * Validate YAML content and identify prizes with multiple items to skip
+ * @param {string} yamlContent - Raw YAML content
+ * @returns {Object} Validation result with prizes to skip and warnings
+ */
+export function validateYamlForMultipleItems(yamlContent) {
+	try {
+		// Parse YAML to check for multiple items
+		const yamlContent_cleaned = yamlContent
+			.split('\n')
+			.filter((line) => !line.trim().startsWith('#'))
+			.join('\n')
+		const parsedYaml = yaml.load(yamlContent_cleaned)
+		const allPrizes = parsedYaml?.Crate?.Prizes || {}
+
+		if (!allPrizes || Object.keys(allPrizes).length === 0) {
+			return {
+				success: false,
+				errors: ['No prizes found in YAML file'],
+				prizesToSkip: [],
+				warnings: []
+			}
+		}
+
+		const errors = []
+		const warnings = []
+		const prizesToSkip = []
+
+		// Check each prize for multiple items
+		for (const [prizeKey, prizeData] of Object.entries(allPrizes)) {
+			if (prizeData.Items && Array.isArray(prizeData.Items) && prizeData.Items.length > 1) {
+				prizesToSkip.push(prizeKey)
+				warnings.push(
+					`Prize ${prizeKey}: Skipped (contains ${prizeData.Items.length} items - multiple item rewards not supported)`
+				)
+			}
+		}
+
+		return {
+			success: true, // Always allow import, just skip problematic prizes
+			errors,
+			warnings,
+			prizesToSkip,
+			totalPrizes: Object.keys(allPrizes).length,
+			skippablePrizes: prizesToSkip.length
+		}
+	} catch (error) {
+		return {
+			success: false,
+			errors: [`Failed to validate YAML: ${error.message}`],
+			prizesToSkip: [],
+			warnings: []
+		}
+	}
+}
+
+/**
  * Import crate rewards from YAML content using NEW structure (items embedded)
  * Each prize becomes ONE document in crate_reward_items with items array embedded
  * @param {string} crateId - Target crate ID (or null to create new)
@@ -1132,6 +1188,7 @@ export function findMatchingItem(parsedItem, allItems) {
  * @param {Array} allItems - All items from database
  * @param {string} crateName - Name for new crate (if creating)
  * @param {string} userId - User ID (if creating new crate)
+ * @param {Array} prizesToSkip - Array of prize keys to skip during import
  * @returns {Object} Import result with success, counts, errors, and warnings
  */
 export async function importCrateRewardsFromYaml(
@@ -1139,7 +1196,8 @@ export async function importCrateRewardsFromYaml(
 	yamlContent,
 	allItems,
 	crateName = null,
-	userId = null
+	userId = null,
+	prizesToSkip = []
 ) {
 	try {
 		let targetCrateId = crateId
@@ -1177,6 +1235,14 @@ export async function importCrateRewardsFromYaml(
 		// Process each prize
 		for (const [prizeKey, prizeData] of Object.entries(allPrizes)) {
 			try {
+				// Skip prizes that have multiple items
+				if (prizesToSkip.includes(prizeKey)) {
+					warnings.push(
+						`Prize ${prizeKey}: Skipped (contains multiple items - not supported)`
+					)
+					continue
+				}
+
 				// Validate prize has weight
 				const weight = prizeData.Weight || 50
 				if (!prizeData.Weight || prizeData.Weight < 1) {
