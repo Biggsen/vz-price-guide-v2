@@ -223,7 +223,10 @@ function closeCrateRewardsModal() {
 							<span class="underline">CrazyCrates</span>
 						</a>
 					</div>
-					<BaseButton @click="handleCrateRewardsClick" variant="primary">
+					<BaseButton
+						@click="handleCrateRewardsClick"
+						variant="primary"
+						data-cy="crate-rewards-tool">
 						{{ isAuthenticated ? 'Open Crate Rewards' : 'Try Crate Rewards' }}
 					</BaseButton>
 				</div>

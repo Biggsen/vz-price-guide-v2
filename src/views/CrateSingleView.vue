@@ -340,7 +340,7 @@ async function checkEditCrateNameAvailability(name) {
 			.map((doc) => doc.data().name)
 
 		if (existingNames.includes(name.trim())) {
-			editNameValidationError.value = 'Already a crate with this name'
+			editNameValidationError.value = 'A crate with this name already exists'
 		}
 	} catch (err) {
 		console.error('Error checking edit crate name:', err)
@@ -1595,7 +1595,8 @@ watch(selectedCrate, (crate) => {
 							<BaseButton
 								variant="tertiary"
 								@click="router.push('/crate-rewards')"
-								class="text-sm">
+								class="text-sm"
+								data-cy="back-button">
 								<template #left-icon>
 									<ArrowLeftIcon class="w-4 h-4" />
 								</template>
@@ -1700,7 +1701,7 @@ watch(selectedCrate, (crate) => {
 		<div
 			v-if="selectedCrate && rewardDocuments && rewardDocuments.length > 0"
 			class="flex items-center justify-between gap-4 mb-4">
-			<BaseButton @click="startAddItem" variant="primary">
+			<BaseButton @click="startAddItem" variant="primary" data-cy="add-item-button">
 				<template #left-icon>
 					<PlusIcon class="w-4 h-4" />
 				</template>
@@ -1711,6 +1712,7 @@ watch(selectedCrate, (crate) => {
 				<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
 					<button
 						@click="setSortBy('value')"
+						data-cy="sort-by-value"
 						:class="[
 							sortBy === 'value'
 								? 'bg-gray-asparagus text-white pl-3 pr-2 hover:bg-highland'
@@ -1727,6 +1729,7 @@ watch(selectedCrate, (crate) => {
 					</button>
 					<button
 						@click="setSortBy('weight')"
+						data-cy="sort-by-weight"
 						:class="[
 							sortBy === 'weight'
 								? 'bg-gray-asparagus text-white pl-3 pr-2 hover:bg-highland'
@@ -1774,7 +1777,7 @@ watch(selectedCrate, (crate) => {
 		<!-- Selected Crate Reward -->
 		<div v-if="selectedCrate" class="space-y-6">
 			<!-- Reward Items -->
-			<div v-if="rewardDocuments?.length" class="bg-white rounded-lg">
+			<div v-if="rewardDocuments?.length" class="bg-white rounded-lg" data-cy="item-list">
 				<div class="px-6 py-4 bg-gray-asparagus border-b-2 border-white">
 					<h3 class="text-xl font-semibold text-white">Reward Items</h3>
 				</div>
@@ -1787,7 +1790,8 @@ watch(selectedCrate, (crate) => {
 						<div
 							v-for="rewardDoc in sortedRewardDocuments"
 							:key="rewardDoc.id"
-							class="pr-6 bg-norway">
+							class="pr-6 bg-norway"
+							data-cy="item-row">
 							<!-- Multi-item indicator badge -->
 							<div
 								v-if="isMultiItemReward(rewardDoc)"
@@ -1997,7 +2001,8 @@ watch(selectedCrate, (crate) => {
 										v-if="canEditReward(rewardDoc)"
 										@click="startEditReward(rewardDoc)"
 										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-										title="Edit reward">
+										title="Edit reward"
+										data-cy="edit-item-button">
 										<PencilIcon class="w-4 h-4" />
 									</button>
 									<button
@@ -2010,7 +2015,8 @@ watch(selectedCrate, (crate) => {
 									<button
 										@click="confirmRemoveReward(rewardDoc)"
 										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-										title="Delete reward">
+										title="Delete reward"
+										data-cy="delete-item-button">
 										<TrashIcon class="w-4 h-4" />
 									</button>
 								</div>
@@ -2024,7 +2030,8 @@ watch(selectedCrate, (crate) => {
 		<!-- Empty State Message -->
 		<div
 			v-if="selectedCrate && !rewardItemsPending && !rewardDocuments?.length"
-			class="bg-white rounded-lg pt-6 pr-6 pb-6">
+			class="bg-white rounded-lg pt-6 pr-6 pb-6"
+			data-cy="empty-items-message">
 			<div class="text-gray-600">
 				<p class="text-lg font-medium mb-2">No items added yet</p>
 				<p class="text-sm">Click "Add Item" to get started with your crate rewards.</p>
@@ -2033,7 +2040,7 @@ watch(selectedCrate, (crate) => {
 
 		<!-- Add Item Button -->
 		<div v-if="selectedCrate" class="mt-4 flex justify-start">
-			<BaseButton @click="startAddItem" variant="primary">
+			<BaseButton @click="startAddItem" variant="primary" data-cy="add-item-button">
 				<template #left-icon>
 					<PlusIcon class="w-5 h-5" />
 				</template>
@@ -2046,7 +2053,8 @@ watch(selectedCrate, (crate) => {
 			<button
 				@click="showClearAllConfirmation"
 				:disabled="loading"
-				class="inline-flex items-center text-sm text-gray-600 hover:text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+				class="inline-flex items-center text-sm text-gray-600 hover:text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+				data-cy="clear-all-items-button">
 				<TrashIcon class="w-4 h-4 mr-1" />
 				Clear all items
 			</button>
@@ -2172,12 +2180,14 @@ watch(selectedCrate, (crate) => {
 							@keydown="handleKeyDown"
 							type="text"
 							placeholder="Search items by name, material ID, or category..."
+							data-cy="item-search-input"
 							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
 
 						<!-- Error message for item selection -->
 						<div
 							v-if="addItemFormError && addItemFormError === 'Please select an item'"
-							class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+							class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1"
+							data-cy="item-search-error">
 							<XCircleIcon class="w-4 h-4" />
 							{{ addItemFormError }}
 						</div>
@@ -2186,7 +2196,8 @@ watch(selectedCrate, (crate) => {
 						<div
 							v-if="searchQuery && filteredItems.length > 0"
 							ref="dropdownContainer"
-							class="max-h-64 overflow-y-auto border-2 border-gray-asparagus rounded-md bg-white">
+							class="max-h-64 overflow-y-auto border-2 border-gray-asparagus rounded-md bg-white"
+							data-cy="item-search-results">
 							<template
 								v-for="(categoryItems, category) in itemsByCategory"
 								:key="category">
@@ -2300,6 +2311,7 @@ watch(selectedCrate, (crate) => {
 								type="number"
 								min="1"
 								required
+								data-cy="item-quantity-input"
 								:class="[
 									'w-20 rounded border-2 px-3 py-1 text-gray-900 focus:ring-2 font-sans',
 									addItemFormError && addItemFormError.includes('quantity') 
@@ -2319,7 +2331,8 @@ watch(selectedCrate, (crate) => {
 						</div>
 						<div
 							v-if="addItemFormError && addItemFormError.includes('quantity')"
-							class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+							class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1"
+							data-cy="item-quantity-error">
 							<XCircleIcon class="w-4 h-4" />
 							Quantity must be at least 1
 						</div>
@@ -2336,6 +2349,7 @@ watch(selectedCrate, (crate) => {
 							type="number"
 							min="1"
 							required
+							data-cy="item-weight-input"
 							:class="[
 								'block w-20 rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
 								addItemFormError && addItemFormError.includes('weight') 
@@ -2344,7 +2358,8 @@ watch(selectedCrate, (crate) => {
 							]" />
 						<div
 							v-if="addItemFormError && addItemFormError.includes('weight')"
-							class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+							class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1"
+							data-cy="item-weight-error">
 							<XCircleIcon class="w-4 h-4" />
 							Weight must be at least 1
 						</div>
@@ -2442,7 +2457,7 @@ watch(selectedCrate, (crate) => {
 							class="btn-secondary--outline">
 							Cancel
 						</button>
-						<BaseButton @click="saveItem" :disabled="loading" variant="primary">
+						<BaseButton @click="saveItem" :disabled="loading" variant="primary" data-cy="item-submit-button">
 							{{ loading ? 'Saving...' : editingRewardDoc ? 'Update' : 'Add' }}
 						</BaseButton>
 					</div>
@@ -2624,14 +2639,16 @@ watch(selectedCrate, (crate) => {
 						<button
 							type="button"
 							@click="showDeleteModal = false; itemToDelete = null"
-							class="btn-secondary--outline">
+							class="btn-secondary--outline"
+							data-cy="cancel-delete-item-button">
 							Cancel
 						</button>
 						<BaseButton
 							@click="executeDelete"
 							:disabled="loading"
 							variant="primary"
-							class="bg-semantic-danger hover:bg-opacity-90">
+							class="bg-semantic-danger hover:bg-opacity-90"
+							data-cy="confirm-delete-item-button">
 							{{ loading ? 'Deleting...' : 'Delete' }}
 						</BaseButton>
 					</div>
@@ -2665,14 +2682,16 @@ watch(selectedCrate, (crate) => {
 						<button
 							type="button"
 							@click="showClearAllModal = false"
-							class="btn-secondary--outline">
+							class="btn-secondary--outline"
+							data-cy="cancel-clear-all-button">
 							Cancel
 						</button>
 						<BaseButton
 							@click="clearAllRewards"
 							:disabled="loading"
 							variant="primary"
-							class="bg-semantic-danger hover:bg-opacity-90">
+							class="bg-semantic-danger hover:bg-opacity-90"
+							data-cy="confirm-clear-all-button">
 							{{ loading ? 'Clearing...' : 'Clear All' }}
 						</BaseButton>
 					</div>

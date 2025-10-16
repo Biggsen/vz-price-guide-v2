@@ -136,7 +136,7 @@ async function checkCrateNameAvailability(name) {
 	try {
 		const { isDuplicate } = await getUniqueCrateName(user.value.uid, name.trim())
 		if (isDuplicate) {
-			nameValidationError.value = 'Already a crate with this name'
+			nameValidationError.value = 'A crate with this name already exists'
 		}
 	} catch (err) {
 		console.error('Error checking crate name:', err)
@@ -441,7 +441,10 @@ function cancelDuplicateImport() {
 							</button>
 						</div>
 						<div class="mt-6 flex gap-2">
-							<BaseButton @click="startCreateCrate" variant="primary">
+							<BaseButton
+								@click="startCreateCrate"
+								variant="primary"
+								data-cy="create-crate-button">
 								<template #left-icon>
 									<PlusIcon class="w-4 h-4" />
 								</template>
@@ -474,7 +477,7 @@ function cancelDuplicateImport() {
 				Your Crates
 			</h2>
 			<div v-if="crateRewardsPending" class="text-gray-600">Loading crate rewards...</div>
-			<div v-else-if="!hasCrateRewards" class="text-gray-600">
+			<div v-else-if="!hasCrateRewards" class="text-gray-600" data-cy="empty-crates-message">
 				No crate rewards found. Create your first one to get started.
 			</div>
 			<div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -488,7 +491,8 @@ function cancelDuplicateImport() {
 						<div class="flex items-center justify-between">
 							<h3
 								@click="router.push(`/crate-rewards/${crate.id}`)"
-								class="text-xl font-semibold text-heavy-metal hover:text-gray-asparagus cursor-pointer flex-1">
+								class="text-xl font-semibold text-heavy-metal hover:text-gray-asparagus cursor-pointer flex-1"
+								data-cy="crate-name">
 								{{ crate.name }}
 							</h3>
 							<!-- Action Buttons -->
@@ -496,7 +500,8 @@ function cancelDuplicateImport() {
 								<button
 									@click.stop="confirmDeleteCrateFromCard(crate)"
 									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-									title="Delete crate">
+									title="Delete crate"
+									data-cy="delete-crate-button">
 									<TrashIcon class="w-4 h-4" />
 								</button>
 							</div>
@@ -524,7 +529,8 @@ function cancelDuplicateImport() {
 						<div class="mt-4 flex-shrink-0">
 							<BaseButton
 								@click="router.push(`/crate-rewards/${crate.id}`)"
-								variant="primary">
+								variant="primary"
+								data-cy="manage-crate-button">
 								Manage
 							</BaseButton>
 						</div>
@@ -552,6 +558,7 @@ function cancelDuplicateImport() {
 							v-model="crateForm.name"
 							type="text"
 							required
+							data-cy="crate-name-input"
 							:class="[
 								'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans pr-10',
 								nameValidationError 
@@ -568,7 +575,7 @@ function cancelDuplicateImport() {
 					</div>
 					
 					<!-- Name validation error -->
-					<div v-if="nameValidationError" class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+					<div v-if="nameValidationError" class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1" data-cy="crate-name-error">
 						<XCircleIcon class="w-4 h-4" />
 						{{ nameValidationError }}
 					</div>
@@ -584,6 +591,7 @@ function cancelDuplicateImport() {
 						id="crate-description"
 						v-model="crateForm.description"
 						rows="3"
+						data-cy="crate-description-input"
 						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>
 				</div>
 
@@ -594,6 +602,7 @@ function cancelDuplicateImport() {
 					<select
 						id="crate-version"
 						v-model="crateForm.minecraft_version"
+						data-cy="crate-version-select"
 						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
 						<option v-for="version in versions" :key="version" :value="version">
 							{{ version }}
@@ -615,7 +624,8 @@ function cancelDuplicateImport() {
 						<BaseButton
 							@click="createNewCrateReward"
 							:disabled="loading"
-							variant="primary">
+							variant="primary"
+							data-cy="crate-submit-button">
 							{{ loading ? 'Creating...' : 'Create' }}
 						</BaseButton>
 					</div>
@@ -853,14 +863,16 @@ function cancelDuplicateImport() {
 						<button
 							type="button"
 							@click="showDeleteModal = false; crateToDelete = null"
-							class="btn-secondary--outline">
+							class="btn-secondary--outline"
+							data-cy="cancel-delete-button">
 							Cancel
 						</button>
 						<BaseButton
 							@click="executeDelete"
 							:disabled="loading"
 							variant="primary"
-							class="bg-semantic-danger hover:bg-opacity-90">
+							class="bg-semantic-danger hover:bg-opacity-90"
+							data-cy="confirm-delete-button">
 							{{ loading ? 'Deleting...' : 'Delete' }}
 						</BaseButton>
 					</div>
