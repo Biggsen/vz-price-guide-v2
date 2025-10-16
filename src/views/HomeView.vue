@@ -708,7 +708,7 @@ watch(
 	<!-- Dismissible Info Alert -->
 	<div
 		v-if="!disableAlert && showAlert"
-		class="bg-norway bg-opacity-20 border-l-4 border-laurel text-heavy-metal p-2 sm:p-4 relative mb-4">
+		class="bg-semantic-info-light border-l-4 border-l-semantic-info text-heavy-metal p-2 sm:p-4 relative mb-4 mt-2">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
 				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
