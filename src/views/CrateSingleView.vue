@@ -187,7 +187,7 @@ watch(
 // Computed properties
 const selectedCrate = computed(() => crateReward.value)
 const currentVersion = computed(() => {
-	const version = selectedCrate.value?.minecraft_version || '1.20'
+	const version = selectedCrate.value?.minecraft_version || '1.21'
 	return version.replace('.', '_')
 })
 

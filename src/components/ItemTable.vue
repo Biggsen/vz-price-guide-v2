@@ -54,7 +54,7 @@ const props = defineProps({
 const priceMultiplier = computed(() => props.economyConfig.priceMultiplier)
 const sellMargin = computed(() => props.economyConfig.sellMargin)
 const roundToWhole = computed(() => props.economyConfig.roundToWhole)
-const currentVersion = computed(() => props.economyConfig.version || '1.18')
+const currentVersion = computed(() => props.economyConfig.version || '1.21')
 
 // Check if sorting is enabled (only in list view)
 const sortingEnabled = computed(() => props.viewMode === 'list')
