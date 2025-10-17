@@ -63,14 +63,13 @@ const itemsQuery = computed(() => {
 	// Firestore limit is around 10-15 categories, so let's be safe with 10
 	const maxCategoriesForDB = 10
 	if (enabledCategories.length <= maxCategoriesForDB) {
-		filters.push(where('category', 'in', enabledCategories))
-
-		// Apply visible categories filter only if it's a subset and we're doing DB filtering
 		if (
 			visibleCategories.value.length < enabledCategories.length &&
 			visibleCategories.value.length > 0
 		) {
 			filters.push(where('category', 'in', visibleCategories.value))
+		} else {
+			filters.push(where('category', 'in', enabledCategories))
 		}
 	}
 	// If we have too many categories, we'll filter them client-side to avoid disjunction limit
@@ -82,8 +81,8 @@ const itemsQuery = computed(() => {
 	// So we'll do this filtering client-side for now
 
 	// Add ordering
-	filters.push(orderBy('version', 'asc'))
 	filters.push(orderBy('category', 'asc'))
+	filters.push(orderBy('subcategory', 'asc'))
 	filters.push(orderBy('name', 'asc'))
 
 	return query(baseQuery, ...filters)
@@ -107,8 +106,8 @@ const allItemsForCountsQuery = computed(() => {
 	}
 	// If we have too many categories, we'll filter them client-side to avoid disjunction limit
 
-	filters.push(orderBy('version', 'asc'))
 	filters.push(orderBy('category', 'asc'))
+	filters.push(orderBy('subcategory', 'asc'))
 	filters.push(orderBy('name', 'asc'))
 
 	return query(baseQuery, ...filters)
