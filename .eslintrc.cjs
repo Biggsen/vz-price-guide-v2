@@ -27,6 +27,13 @@ module.exports = {
 				process: 'readonly',
 				__dirname: 'readonly'
 			}
+		},
+		{
+			files: ['cypress/**/*.js'],
+			env: {
+				'cypress/globals': true
+			},
+			extends: ['plugin:cypress/recommended']
 		}
 	],
 	rules: {
