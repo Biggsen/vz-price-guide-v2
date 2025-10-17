@@ -59,7 +59,6 @@ function loadSettings() {
 	const savedSellMargin = localStorage.getItem('sellMargin')
 	const savedRoundToWhole = localStorage.getItem('roundToWhole')
 	const savedSelectedVersion = localStorage.getItem('selectedVersion')
-	const savedShowZeroPricedItems = localStorage.getItem('showZeroPricedItems')
 	const savedShowStackSize = localStorage.getItem('showStackSize')
 
 	// Check URL query parameters first for version
@@ -79,9 +78,6 @@ function loadSettings() {
 	if (savedRoundToWhole !== null) {
 		roundToWhole.value = savedRoundToWhole === 'true'
 	}
-	if (savedShowZeroPricedItems !== null) {
-		showZeroPricedItems.value = savedShowZeroPricedItems === 'true'
-	}
 	if (savedShowStackSize !== null) {
 		showStackSize.value = savedShowStackSize === 'true'
 	}
@@ -93,7 +89,6 @@ function saveSettings() {
 	localStorage.setItem('sellMargin', sellMargin.value.toString())
 	localStorage.setItem('roundToWhole', roundToWhole.value.toString())
 	localStorage.setItem('selectedVersion', selectedVersion.value)
-	localStorage.setItem('showZeroPricedItems', showZeroPricedItems.value.toString())
 	localStorage.setItem('showStackSize', showStackSize.value.toString())
 
 	// Emit settings to parent component
@@ -102,7 +97,6 @@ function saveSettings() {
 		priceMultiplier: priceMultiplier.value,
 		sellMargin: sellMargin.value,
 		roundToWhole: roundToWhole.value,
-		showZeroPricedItems: showZeroPricedItems.value,
 		showStackSize: showStackSize.value
 	})
 }
@@ -248,16 +242,6 @@ defineExpose({
 			</div>
 
 			<!-- Show Zero Priced Items (admin only) -->
-			<div v-if="canEditItems" class="flex items-center gap-2 mt-2">
-				<input
-					id="showZeroPricedItems"
-					v-model="showZeroPricedItems"
-					type="checkbox"
-					class="checkbox-input" />
-				<label for="showZeroPricedItems" class="text-sm text-gray-700">
-					Show zero priced items
-				</label>
-			</div>
 
 			<!-- Show Stack Size -->
 			<div class="flex items-center gap-2 mt-2">

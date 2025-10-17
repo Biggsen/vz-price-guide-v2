@@ -2,20 +2,14 @@
 import { useFirestore, useCollection } from 'vuefire'
 import { query, collection, orderBy, where } from 'firebase/firestore'
 import { computed, ref, watch, onMounted, shallowRef } from 'vue'
-import { useCurrentUser } from 'vuefire'
 import { useRoute, useRouter } from 'vue-router'
 import ItemTable from '../components/ItemTable.vue'
 import ExportModal from '../components/ExportModal.vue'
 import SettingsModal from '../components/SettingsModal.vue'
 import BaseButton from '../components/BaseButton.vue'
-import { categories, enabledCategories, versions, baseEnabledVersions } from '../constants.js'
+import { enabledCategories, versions, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
-import {
-	getEffectivePrice,
-	getEffectivePriceMemoized,
-	clearPriceCache,
-	getCacheStats
-} from '../utils/pricing.js'
+import { getEffectivePriceMemoized, clearPriceCache, getCacheStats } from '../utils/pricing.js'
 import {
 	RocketLaunchIcon,
 	EyeIcon,
@@ -24,7 +18,6 @@ import {
 	Cog6ToothIcon,
 	ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
-import { Cog6ToothIcon as Cog6ToothIconSolid, UsersIcon } from '@heroicons/vue/16/solid'
 
 const db = useFirestore()
 const route = useRoute()
@@ -66,6 +59,10 @@ const itemsQuery = computed(() => {
 	// Add version filtering - only get items available in selected version
 	filters.push(where('version', '<=', selectedVersion.value))
 
+	// Keep category filtering, but handle price filtering client-side
+	// filters.push(where('price', '>', 0)) // Removed - some items might have price: 0 but effective price > 0
+	filters.push(where('category', 'in', enabledCategories))
+
 	// Add category filtering - only get items from visible categories
 	// Only apply category filter if not all categories are selected (optimization)
 	if (
@@ -96,8 +93,10 @@ const allItemsForCountsQuery = computed(() => {
 	const baseQuery = collection(db, 'items')
 	const filters = []
 
-	// Only filter by version for counts
+	// Keep category filtering, but handle price filtering client-side
 	filters.push(where('version', '<=', selectedVersion.value))
+	// filters.push(where('price', '>', 0)) // Removed - some items might have price: 0 but effective price > 0
+	filters.push(where('category', 'in', enabledCategories))
 	filters.push(orderBy('version', 'asc'))
 	filters.push(orderBy('category', 'asc'))
 	filters.push(orderBy('name', 'asc'))
@@ -131,21 +130,6 @@ function isVersionLessOrEqual(itemVersion, targetVersion) {
 	return itemMinor <= targetMinor
 }
 
-// Helper function to check if item should be shown for selected version
-function shouldShowItemForVersion(item, selectedVersion) {
-	// Item must have a version and be <= selected version
-	if (!item.version || !isVersionLessOrEqual(item.version, selectedVersion)) {
-		return false
-	}
-
-	// If item has version_removed and it's <= selected version, don't show it
-	if (item.version_removed && isVersionLessOrEqual(item.version_removed, selectedVersion)) {
-		return false
-	}
-
-	return true
-}
-
 // Helper computed for version-filtered items
 // Now we only need to filter version_removed client-side since version is filtered at DB level
 const versionFilteredItems = computed(() => {
@@ -170,12 +154,17 @@ const itemsWithImages = computed(() => {
 	return items.filter((item) => item.image && item.image.trim() !== '')
 })
 
-// Helper computed for items with valid prices
+// Helper computed for items with valid prices and categories
 const itemsWithValidPrices = computed(() => {
 	const items = itemsWithImages.value
-	if (showZeroPricedItems.value) return items
 
 	return items.filter((item) => {
+		// Filter out items with null/empty categories (client-side filtering)
+		if (!item.category || item.category.trim() === '') {
+			return false
+		}
+
+		// Filter out items with 0 prices
 		const effectivePrice = getEffectivePriceMemoized(
 			item,
 			selectedVersion.value.replace('.', '_')
@@ -217,37 +206,6 @@ const totalCategoryCounts = computed(() => {
 	}, {})
 })
 
-// Helper computed for uncategorized items
-const uncategorizedItems = computed(() => {
-	const items = itemsWithValidPrices.value
-	return items.filter((item) => !item.category || !categories.includes(item.category))
-})
-
-const uncategorizedItemsByVersion = computed(() => {
-	const items = uncategorizedItems.value
-	const uncatByVersion = {}
-
-	items.forEach((item) => {
-		if (item.version) {
-			if (!uncatByVersion[item.version]) {
-				uncatByVersion[item.version] = []
-			}
-			uncatByVersion[item.version].push(item)
-		}
-	})
-
-	return uncatByVersion
-})
-
-// Get all uncategorized items as a flat array (for backwards compatibility)
-const uncategorizedItemsFlat = computed(() => {
-	const allUncategorized = []
-	Object.values(uncategorizedItemsByVersion.value).forEach((versionItems) => {
-		allUncategorized.push(...versionItems)
-	})
-	return allUncategorized
-})
-
 const searchQuery = ref('')
 
 // Make economyConfig reactive with localStorage persistence
@@ -259,19 +217,10 @@ const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
 
 // Admin-only option to show zero-priced items
-const showZeroPricedItems = ref(false)
 
 // Modal states
 const showExportModal = ref(false)
 const showSettingsModal = ref(false)
-
-// Computed property for percentage display (30 instead of 0.3)
-const sellMarginPercentage = computed({
-	get: () => Math.round(sellMargin.value * 100),
-	set: (value) => {
-		sellMargin.value = value / 100
-	}
-})
 
 const economyConfig = computed(() => ({
 	priceMultiplier: priceMultiplier.value,
@@ -289,7 +238,6 @@ function loadEconomyConfig() {
 	const savedViewMode = localStorage.getItem('viewMode')
 	const savedLayout = localStorage.getItem('layout')
 	const savedSelectedVersion = localStorage.getItem('selectedVersion')
-	const savedShowZeroPricedItems = localStorage.getItem('showZeroPricedItems')
 	const savedShowStackSize = localStorage.getItem('showStackSize')
 
 	if (savedPriceMultiplier !== null) {
@@ -315,9 +263,6 @@ function loadEconomyConfig() {
 	if (savedSelectedVersion !== null && !versionParam) {
 		selectedVersion.value = savedSelectedVersion
 	}
-	if (savedShowZeroPricedItems !== null) {
-		showZeroPricedItems.value = savedShowZeroPricedItems === 'true'
-	}
 }
 
 // Save config to localStorage
@@ -328,22 +273,12 @@ function saveEconomyConfig() {
 	localStorage.setItem('viewMode', viewMode.value)
 	localStorage.setItem('layout', layout.value)
 	localStorage.setItem('selectedVersion', selectedVersion.value)
-	localStorage.setItem('showZeroPricedItems', showZeroPricedItems.value.toString())
 	localStorage.setItem('showStackSize', showStackSize.value.toString())
 }
 
 // Watch for changes and save to localStorage
 watch(
-	[
-		priceMultiplier,
-		sellMargin,
-		roundToWhole,
-		viewMode,
-		layout,
-		selectedVersion,
-		showZeroPricedItems,
-		showStackSize
-	],
+	[priceMultiplier, sellMargin, roundToWhole, viewMode, layout, selectedVersion, showStackSize],
 	() => {
 		saveEconomyConfig()
 		// Clear price cache when economy config changes
@@ -351,13 +286,6 @@ watch(
 	},
 	{ deep: true }
 )
-
-// Reset to defaults
-function resetEconomyConfig() {
-	priceMultiplier.value = 1
-	sellMargin.value = 0.3
-	roundToWhole.value = false
-}
 
 // Helper function for search term processing
 function processSearchTerms(query) {
@@ -411,50 +339,17 @@ const allCategoriesWithSearch = computed(() => {
 			// Apply price/image filtering (mirroring itemsWithValidPrices logic)
 			if (user.value?.email) return true // Admin users see all items
 			if (!item.image || item.image.trim() === '') return false // Non-admin users need images
-			if (!showZeroPricedItems.value) {
-				const effectivePrice = getEffectivePriceMemoized(
-					item,
-					selectedVersion.value.replace('.', '_')
-				)
-				if (!effectivePrice || effectivePrice === 0) return false
-			}
+			// Always filter out zero-priced items
+			const effectivePrice = getEffectivePriceMemoized(
+				item,
+				selectedVersion.value.replace('.', '_')
+			)
+			if (!effectivePrice || effectivePrice === 0) return false
 			return true
 		})
 		acc[cat] = filterItemsBySearch(versionAndPriceFilteredItems, searchTerms)
 		return acc
 	}, {})
-})
-
-const filteredUncategorizedItemsByVersion = computed(() => {
-	if (!allItemsCollection.value) return {}
-	const query = searchQuery.value.trim().toLowerCase()
-	const searchTerms = processSearchTerms(query)
-	const result = {}
-
-	Object.entries(uncategorizedItemsByVersion.value).forEach(([version, items]) => {
-		result[version] = filterItemsBySearch(items, searchTerms)
-	})
-
-	return result
-})
-
-// Get sorted versions for uncategorized items display
-const uncategorizedVersions = computed(() => {
-	return Object.keys(uncategorizedItemsByVersion.value).sort((a, b) => {
-		const [aMajor, aMinor] = a.split('.').map(Number)
-		const [bMajor, bMinor] = b.split('.').map(Number)
-
-		if (aMajor !== bMajor) return aMajor - bMajor
-		return aMinor - bMinor
-	})
-})
-
-const filteredUncategorizedItems = computed(() => {
-	if (!allItemsCollection.value) return []
-	const query = searchQuery.value.trim().toLowerCase()
-	const searchTerms = processSearchTerms(query)
-	const items = uncategorizedItemsFlat.value
-	return filterItemsBySearch(items, searchTerms)
 })
 
 // Flat list view combining all visible items
@@ -469,14 +364,6 @@ const allVisibleItems = computed(() => {
 		items.push(...categoryItems)
 	}
 
-	// Add uncategorized items if shown AND user is admin
-	if (showUncategorised.value && user.value?.email) {
-		// Add all uncategorized items from all versions
-		Object.values(filteredUncategorizedItemsByVersion.value).forEach((versionItems) => {
-			items.push(...versionItems)
-		})
-	}
-
 	// Sort alphabetically by name
 	return items.sort((a, b) => {
 		const nameA = a.name?.toLowerCase() || ''
@@ -485,7 +372,6 @@ const allVisibleItems = computed(() => {
 	})
 })
 
-const showUncategorised = ref(true)
 const showCategoryFilters = ref(false) // Hidden by default on mobile
 
 // Computed property to show category filters on desktop
@@ -493,18 +379,9 @@ const shouldShowCategoryFilters = computed(() => {
 	return showCategoryFilters.value || window.innerWidth >= 640
 })
 
-// Version filter functions
-function selectVersion(version) {
-	// Only allow selecting enabled versions
-	if (enabledVersions.value.includes(version)) {
-		selectedVersion.value = version
-	}
-}
-
 // Initialize from URL query parameters
 function initializeFromQuery() {
 	const catParam = route.query.cat
-	const uncatParam = route.query.uncat
 	const versionParam = route.query.version
 
 	if (catParam !== undefined) {
@@ -520,11 +397,6 @@ function initializeFromQuery() {
 				visibleCategories.value = selectedCategories
 			}
 		}
-	}
-
-	// Only process uncat param for admin users
-	if (uncatParam !== undefined && user.value?.email) {
-		showUncategorised.value = uncatParam === 'true' || uncatParam === '1'
 	}
 
 	if (versionParam && enabledVersions.value.includes(versionParam)) {
@@ -544,11 +416,6 @@ function updateQuery() {
 		query.cat = visibleCategories.value.join(',')
 	}
 
-	// Always add uncat param for admin users to ensure filter state is preserved
-	if (user.value?.email) {
-		query.uncat = showUncategorised.value ? 'true' : 'false'
-	}
-
 	// Only add version param if not the default version (latest enabled)
 	if (selectedVersion.value !== enabledVersions.value[enabledVersions.value.length - 1]) {
 		query.version = selectedVersion.value
@@ -560,29 +427,11 @@ function updateQuery() {
 
 // Watch for changes and update URL
 watch(
-	[visibleCategories, showUncategorised, selectedVersion],
+	[visibleCategories, selectedVersion],
 	() => {
 		updateQuery()
 	},
 	{ deep: true }
-)
-
-// Hide Uncategorised by default for not logged in users
-watch(
-	user,
-	(val) => {
-		if (!val?.email) {
-			showUncategorised.value = false
-		} else {
-			showUncategorised.value = true
-			// Re-initialize from query when user logs in, in case there's an uncat param
-			const uncatParam = route.query.uncat
-			if (uncatParam !== undefined) {
-				showUncategorised.value = uncatParam === 'true' || uncatParam === '1'
-			}
-		}
-	},
-	{ immediate: true }
 )
 
 // Initialize from query on mount
@@ -626,9 +475,6 @@ function toggleCategory(cat) {
 		visibleCategories.value = [...visibleCategories.value, cat]
 	}
 }
-function toggleUncategorised() {
-	showUncategorised.value = !showUncategorised.value
-}
 
 function toggleCategoryFilters() {
 	showCategoryFilters.value = !showCategoryFilters.value
@@ -636,15 +482,13 @@ function toggleCategoryFilters() {
 
 function showAllCategories() {
 	visibleCategories.value = [...enabledCategories]
-	showUncategorised.value = true
 }
 function hideAllCategories() {
 	visibleCategories.value = []
-	showUncategorised.value = false
 }
 
 function toggleAllCategories() {
-	if (allVisible.value && showUncategorised.value) {
+	if (allVisible.value) {
 		hideAllCategories()
 	} else {
 		showAllCategories()
@@ -652,7 +496,6 @@ function toggleAllCategories() {
 }
 function resetCategories() {
 	visibleCategories.value = [...enabledCategories]
-	showUncategorised.value = true
 	searchQuery.value = ''
 }
 
@@ -678,7 +521,6 @@ function handleSaveSettings(settings) {
 	priceMultiplier.value = settings.priceMultiplier
 	sellMargin.value = settings.sellMargin
 	roundToWhole.value = settings.roundToWhole
-	showZeroPricedItems.value = settings.showZeroPricedItems
 	showStackSize.value = settings.showStackSize
 
 	// Close the modal
@@ -800,19 +642,6 @@ watch(
 						: totalCategoryCounts[cat] || 0
 				}})
 			</button>
-			<button
-				v-if="user?.email"
-				@click="toggleUncategorised"
-				:class="[
-					showUncategorised
-						? 'bg-gray-asparagus text-white'
-						: 'bg-norway text-heavy-metal',
-					'rounded-xl px-2.5 py-1 transition text-xs sm:text-sm',
-					filteredUncategorizedItems.length === 0 ? 'cursor-not-allowed opacity-40' : ''
-				]"
-				:disabled="filteredUncategorizedItems.length === 0">
-				Uncategorised ({{ filteredUncategorizedItems.length }})
-			</button>
 		</div>
 
 		<!-- Toggle All Categories Link (Inside category filters section) -->
@@ -925,21 +754,6 @@ watch(
 				v-if="visibleCategories.includes(cat)"
 				:collection="filteredGroupedItems[cat] || []"
 				:category="cat"
-				:categories="enabledCategories"
-				:economyConfig="economyConfig"
-				:viewMode="viewMode"
-				:layout="layout"
-				:showStackSize="showStackSize" />
-		</template>
-		<template v-for="version in uncategorizedVersions" :key="`uncat-${version}`">
-			<ItemTable
-				v-if="
-					user?.email &&
-					showUncategorised &&
-					filteredUncategorizedItemsByVersion[version]?.length > 0
-				"
-				:collection="filteredUncategorizedItemsByVersion[version]"
-				:category="`Uncategorised ${version}`"
 				:categories="enabledCategories"
 				:economyConfig="economyConfig"
 				:viewMode="viewMode"
