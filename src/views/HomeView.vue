@@ -779,7 +779,8 @@ watch(
 			:categories="enabledCategories"
 			:economyConfig="economyConfig"
 			:viewMode="viewMode"
-			:layout="layout" />
+			:layout="layout"
+			:showStackSize="showStackSize" />
 
 		<!-- Empty state for list view -->
 		<div v-if="allVisibleItems.length === 0" class="text-center py-12">
