@@ -115,6 +115,39 @@ const allItemsForCountsQuery = computed(() => {
 
 const allItemsForCounts = useCollection(allItemsForCountsQuery)
 
+// Loading state - true when data is initially loading
+const isLoading = ref(true)
+const hasInitiallyLoaded = ref(false)
+const loadingStartTime = ref(Date.now())
+
+// Watch for when data actually loads
+watch(
+	[allItemsCollection, allItemsForCounts],
+	([items, counts]) => {
+		// Data is loaded when both collections have been populated (even if empty)
+		if (items !== null && counts !== null && !hasInitiallyLoaded.value) {
+			const loadTime = Date.now() - loadingStartTime.value
+			// If data loads very quickly (< 100ms), add a minimum delay to prevent flash
+			const delay = loadTime < 100 ? 300 : 100
+
+			setTimeout(() => {
+				isLoading.value = false
+				hasInitiallyLoaded.value = true
+			}, delay)
+		}
+	},
+	{ immediate: true }
+)
+
+// Also reset loading state when version changes
+watch(selectedVersion, () => {
+	if (hasInitiallyLoaded.value) {
+		isLoading.value = true
+		hasInitiallyLoaded.value = false
+		loadingStartTime.value = Date.now()
+	}
+})
+
 // Feature flags
 const showExportFeature = ref(true) // Set to true to enable export functionality
 const disableAlert = ref(false) // Set to true to disable all alerts regardless of showAlert state
@@ -703,15 +736,18 @@ watch(
 		</div>
 
 		<div class="mb-4 text-sm text-gray-asparagus font-medium">
-			Showing {{ allVisibleItems.length }} item{{
-				allVisibleItems.length === 1 ? '' : 's'
-			}}
-			from {{ selectedVersion }}
-			<span v-if="canEditItems" class="ml-4 text-xs text-gray-500">
-				Cache: {{ getCacheStats().hits }}/{{
-					getCacheStats().hits + getCacheStats().misses
+			<span v-if="isLoading">Loading price guide...</span>
+			<span v-else>
+				Showing {{ allVisibleItems.length }} item{{
+					allVisibleItems.length === 1 ? '' : 's'
 				}}
-				hits ({{ getCacheStats().size }} entries)
+				from {{ selectedVersion }}
+				<span v-if="canEditItems" class="ml-4 text-xs text-gray-500">
+					Cache: {{ getCacheStats().hits }}/{{
+						getCacheStats().hits + getCacheStats().misses
+					}}
+					hits ({{ getCacheStats().size }} entries)
+				</span>
 			</span>
 		</div>
 
@@ -789,8 +825,14 @@ watch(
 				:showStackSize="showStackSize" />
 		</template>
 
+		<!-- Loading state for categories view -->
+		<div v-if="isLoading" class="text-center py-12">
+			<div class="text-gray-asparagus text-lg mb-2">Loading price guide...</div>
+			<div class="text-sm text-gray-500">Please wait while we fetch the latest prices</div>
+		</div>
+
 		<!-- Empty state for categories view -->
-		<div v-if="allVisibleItems.length === 0" class="text-center py-12">
+		<div v-else-if="allVisibleItems.length === 0" class="text-center py-12">
 			<div class="text-gray-asparagus text-lg mb-2">No items found</div>
 			<div class="text-sm text-gray-500">
 				Try adjusting your search terms or category filters
@@ -810,8 +852,14 @@ watch(
 			:layout="layout"
 			:showStackSize="showStackSize" />
 
+		<!-- Loading state for list view -->
+		<div v-if="isLoading" class="text-center py-12">
+			<div class="text-gray-asparagus text-lg mb-2">Loading price guide...</div>
+			<div class="text-sm text-gray-500">Please wait while we fetch the latest prices</div>
+		</div>
+
 		<!-- Empty state for list view -->
-		<div v-if="allVisibleItems.length === 0" class="text-center py-12">
+		<div v-else-if="allVisibleItems.length === 0" class="text-center py-12">
 			<div class="text-gray-asparagus text-lg mb-2">No items found</div>
 			<div class="text-sm text-gray-500">
 				Try adjusting your search terms or category filters
