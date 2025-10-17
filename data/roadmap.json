@@ -333,5 +333,41 @@
 			{ "name": "Set and adjust diamond-to-money conversion ratios", "completed": false },
 			{ "name": "Display all prices in the selected currency", "completed": false }
 		]
+	},
+	{
+		"id": 15,
+		"title": "Add all 1.21 items and recipes",
+		"status": "In Development",
+		"description": "Add all new items introduced in Minecraft 1.21 (Tricky Trials Update) including tuff blocks, resin blocks, copper variants, pale oak wood set, trial chambers items, and other miscellaneous items, along with their crafting recipes. This is around 150 items.",
+		"features": [
+			{
+				"name": "Pale oak wood set - Complete wood type with logs, planks, stairs, slabs, doors, signs, boats, fences, and all variants (19 items)",
+				"completed": false
+			},
+			{
+				"name": "New block types - Tuff blocks and variants, resin blocks and variants, chiseled copper variants, and copper bulb variants (36 items)",
+				"completed": false
+			},
+			{
+				"name": "Copper building blocks - Doors, trapdoors, and grates in all oxidation states and waxed variants (24 items)",
+				"completed": false
+			},
+			{
+				"name": "Trial chambers content - Trial keys, ominous trial keys, ominous bottles, and heavy cores (4 items)",
+				"completed": false
+			},
+			{
+				"name": "New items and tools - Mace, wind charge, wolf armor, armadillo scute, breeze rod, creaking heart, dried ghast, and other new items (8 items)",
+				"completed": false
+			},
+			{
+				"name": "Bundle and harness variants - All 16 colors of bundles and harnesses (33 items)",
+				"completed": false
+			},
+			{
+				"name": "Decorative and utility items - Banner patterns, music discs, smithing templates, plants, and eggs (25 items)",
+				"completed": false
+			}
+		]
 	}
 ]
