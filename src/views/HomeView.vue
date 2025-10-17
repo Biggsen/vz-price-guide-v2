@@ -59,18 +59,21 @@ const itemsQuery = computed(() => {
 	// Add version filtering - only get items available in selected version
 	filters.push(where('version', '<=', selectedVersion.value))
 
-	// Keep category filtering, but handle price filtering client-side
-	// filters.push(where('price', '>', 0)) // Removed - some items might have price: 0 but effective price > 0
-	filters.push(where('category', 'in', enabledCategories))
+	// Only do category filtering at DB level if we have few enough categories
+	// Firestore limit is around 10-15 categories, so let's be safe with 10
+	const maxCategoriesForDB = 10
+	if (enabledCategories.length <= maxCategoriesForDB) {
+		filters.push(where('category', 'in', enabledCategories))
 
-	// Add category filtering - only get items from visible categories
-	// Only apply category filter if not all categories are selected (optimization)
-	if (
-		visibleCategories.value.length < enabledCategories.length &&
-		visibleCategories.value.length > 0
-	) {
-		filters.push(where('category', 'in', visibleCategories.value))
+		// Apply visible categories filter only if it's a subset and we're doing DB filtering
+		if (
+			visibleCategories.value.length < enabledCategories.length &&
+			visibleCategories.value.length > 0
+		) {
+			filters.push(where('category', 'in', visibleCategories.value))
+		}
 	}
+	// If we have too many categories, we'll filter them client-side to avoid disjunction limit
 
 	// Note: We can't filter version_removed at DB level because:
 	// 1. Firestore doesn't support != null queries
@@ -93,10 +96,17 @@ const allItemsForCountsQuery = computed(() => {
 	const baseQuery = collection(db, 'items')
 	const filters = []
 
-	// Keep category filtering, but handle price filtering client-side
+	// Keep version filtering at DB level (performance optimization)
 	filters.push(where('version', '<=', selectedVersion.value))
-	// filters.push(where('price', '>', 0)) // Removed - some items might have price: 0 but effective price > 0
-	filters.push(where('category', 'in', enabledCategories))
+
+	// Only do category filtering at DB level if we have few enough categories
+	// Use same limit as main query to avoid disjunction limit
+	const maxCategoriesForDB = 10
+	if (enabledCategories.length <= maxCategoriesForDB) {
+		filters.push(where('category', 'in', enabledCategories))
+	}
+	// If we have too many categories, we'll filter them client-side to avoid disjunction limit
+
 	filters.push(orderBy('version', 'asc'))
 	filters.push(orderBy('category', 'asc'))
 	filters.push(orderBy('name', 'asc'))
@@ -175,7 +185,17 @@ const itemsWithValidPrices = computed(() => {
 
 const groupedItems = computed(() => {
 	const items = itemsWithValidPrices.value
-	return items.reduce((acc, item) => {
+
+	// If we have more than 10 categories, filter by enabled categories client-side
+	// to avoid Firestore disjunction limit
+	const maxCategoriesForDB = 10
+	const shouldFilterByCategory = enabledCategories.length > maxCategoriesForDB
+
+	const filteredItems = shouldFilterByCategory
+		? items.filter((item) => enabledCategories.includes(item.category))
+		: items
+
+	return filteredItems.reduce((acc, item) => {
 		if (!acc[item.category]) acc[item.category] = []
 		acc[item.category].push(item)
 		return acc
@@ -186,7 +206,16 @@ const groupedItems = computed(() => {
 const totalCategoryCounts = computed(() => {
 	if (!allItemsForCounts.value) return {}
 	// Use allItemsForCounts directly, not versionFilteredItems (which is already filtered)
-	const items = allItemsForCounts.value
+	let items = allItemsForCounts.value
+
+	// If we have more than 10 categories, filter by enabled categories client-side
+	// to avoid Firestore disjunction limit
+	const maxCategoriesForDB = 10
+	const shouldFilterByCategory = enabledCategories.length > maxCategoriesForDB
+
+	if (shouldFilterByCategory) {
+		items = items.filter((item) => enabledCategories.includes(item.category))
+	}
 
 	return enabledCategories.reduce((acc, cat) => {
 		const categoryItems = items.filter((item) => {
