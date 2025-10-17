@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { ArrowDownTrayIcon, UserPlusIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { UserIcon } from '@heroicons/vue/24/solid'
-import { enabledCategories } from '../constants.js'
+import { enabledCategories, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { useRouter } from 'vue-router'
@@ -40,9 +40,6 @@ const isAuthenticated = computed(() => {
 const isSignedInButNotVerified = computed(() => {
 	return user.value?.email && !user.value?.emailVerified
 })
-
-// Define which versions are currently available for regular users
-const baseEnabledVersions = ['1.16', '1.17', '1.18', '1.19', '1.20']
 
 // Computed property for enabled versions based on user type
 const enabledVersions = computed(() => {

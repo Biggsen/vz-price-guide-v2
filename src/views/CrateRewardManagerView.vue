@@ -12,7 +12,7 @@ import {
 	validateYamlForMultipleItems,
 	getUniqueCrateName
 } from '../utils/crateRewards.js'
-import { versions } from '../constants.js'
+import { versions, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
@@ -31,9 +31,6 @@ const user = useCurrentUser()
 const router = useRouter()
 const db = useFirestore()
 const { isAdmin } = useAdmin()
-
-// Define which versions are currently available for regular users
-const baseEnabledVersions = ['1.16', '1.17', '1.18', '1.19', '1.20']
 
 // Computed property for enabled versions based on user type
 const enabledVersions = computed(() => {

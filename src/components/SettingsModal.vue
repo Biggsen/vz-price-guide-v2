@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useAdmin } from '../utils/admin.js'
-import { versions } from '../constants.js'
+import { versions, baseEnabledVersions } from '../constants.js'
 import { useRoute } from 'vue-router'
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
@@ -20,9 +20,6 @@ const route = useRoute()
 
 // Admin access
 const { user, canEditItems } = useAdmin()
-
-// Define which versions are currently available for regular users
-const baseEnabledVersions = ['1.16', '1.17', '1.18', '1.19', '1.20']
 
 // Computed property for enabled versions based on user type
 const enabledVersions = computed(() => {

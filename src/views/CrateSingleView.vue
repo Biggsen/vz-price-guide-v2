@@ -18,7 +18,7 @@ import {
 } from '../utils/crateRewards.js'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { getImageUrl } from '../utils/image.js'
-import { versions, enabledCategories } from '../constants.js'
+import { versions, enabledCategories, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
@@ -48,9 +48,6 @@ const router = useRouter()
 const route = useRoute()
 const db = useFirestore()
 const { canEditItems, isAdmin } = useAdmin()
-
-// Define which versions are currently available for regular users
-const baseEnabledVersions = ['1.16', '1.17', '1.18', '1.19', '1.20']
 
 // Computed property for enabled versions based on user type
 const enabledVersions = computed(() => {

@@ -8,7 +8,7 @@ import ItemTable from '../components/ItemTable.vue'
 import ExportModal from '../components/ExportModal.vue'
 import SettingsModal from '../components/SettingsModal.vue'
 import BaseButton from '../components/BaseButton.vue'
-import { categories, enabledCategories, versions } from '../constants.js'
+import { categories, enabledCategories, versions, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import {
 	getEffectivePrice,
@@ -30,9 +30,6 @@ const db = useFirestore()
 const route = useRoute()
 const router = useRouter()
 const { user, canEditItems } = useAdmin()
-
-// Define which versions are currently available for regular users
-const baseEnabledVersions = ['1.16', '1.17', '1.18', '1.19', '1.20']
 
 // Ensure versions array is available as fallback
 const fallbackVersions = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
