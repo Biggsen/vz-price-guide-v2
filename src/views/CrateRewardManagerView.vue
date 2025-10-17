@@ -616,7 +616,8 @@ function cancelDuplicateImport() {
 						<button
 							type="button"
 							@click="showCreateForm = false; createFormError = null; nameValidationError = null"
-							class="btn-secondary--outline">
+							class="btn-secondary--outline"
+							data-cy="cancel-crate-button">
 							Cancel
 						</button>
 						<BaseButton

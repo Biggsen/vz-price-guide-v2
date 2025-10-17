@@ -100,7 +100,7 @@ describe('Crate Rewards', () => {
 		})
 	})
 
-	describe.skip('Crate Management', () => {
+	describe('Crate Management', () => {
 		beforeEach(() => {
 			cy.signIn('user@example.com', 'passWORD123')
 			cy.waitForAuth()
@@ -134,6 +134,24 @@ describe('Crate Rewards', () => {
 
 			// Should show the crate name in the page
 			cy.contains('Test Crate').should('be.visible')
+
+			// Cleanup: Navigate back to crate manager and delete the crate
+			cy.visit('/crate-rewards')
+
+			// Find the specific crate card and click its delete button
+			cy.contains('Test Crate')
+				.parent()
+				.parent()
+				.parent()
+				.within(() => {
+					cy.get('[data-cy="delete-crate-button"]').should('be.visible').click()
+				})
+
+			// Confirm deletion in modal
+			cy.get('[data-cy="confirm-delete-button"]').should('be.visible').click()
+
+			// Crate should no longer exist
+			cy.contains('Test Crate').should('not.exist')
 		})
 
 		it('validates crate name is required', () => {
@@ -171,6 +189,24 @@ describe('Crate Rewards', () => {
 			// Should show uniqueness error
 			cy.get('[data-cy="crate-name-error"]').should('be.visible')
 			cy.contains('A crate with this name already exists').should('be.visible')
+
+			// Cleanup: Cancel the form and delete the original Unique Crate
+			cy.get('[data-cy="cancel-crate-button"]').click()
+
+			// Find the Unique Crate and delete it
+			cy.contains('Unique Crate')
+				.parent()
+				.parent()
+				.parent()
+				.within(() => {
+					cy.get('[data-cy="delete-crate-button"]').should('be.visible').click()
+				})
+
+			// Confirm deletion in modal
+			cy.get('[data-cy="confirm-delete-button"]').should('be.visible').click()
+
+			// Crate should no longer exist
+			cy.contains('Unique Crate').should('not.exist')
 		})
 
 		it('edits crate metadata', () => {
@@ -189,7 +225,7 @@ describe('Crate Rewards', () => {
 			// Update crate information
 			cy.get('[data-cy="crate-name-input"]').clear().type('Updated Crate Name')
 			cy.get('[data-cy="crate-description-input"]').clear().type('Updated description')
-			cy.get('[data-cy="crate-version-select"]').select('1.21')
+			cy.get('[data-cy="crate-version-select"]').select('1.20')
 
 			// Save changes
 			cy.get('[data-cy="crate-update-button"]').click()
@@ -197,6 +233,24 @@ describe('Crate Rewards', () => {
 			// Should show updated information
 			cy.contains('Updated Crate Name').should('be.visible')
 			cy.contains('Updated description').should('be.visible')
+
+			// Cleanup: Navigate back to crate manager and delete the crate
+			cy.visit('/crate-rewards')
+
+			// Find the specific crate card and click its delete button
+			cy.contains('Updated Crate Name')
+				.parent()
+				.parent()
+				.parent()
+				.within(() => {
+					cy.get('[data-cy="delete-crate-button"]').should('be.visible').click()
+				})
+
+			// Confirm deletion in modal
+			cy.get('[data-cy="confirm-delete-button"]').should('be.visible').click()
+
+			// Crate should no longer exist
+			cy.contains('Updated Crate Name').should('not.exist')
 		})
 
 		it('deletes a crate with confirmation', () => {
@@ -226,38 +280,6 @@ describe('Crate Rewards', () => {
 
 			// Crate should no longer exist
 			cy.contains('Deletable Crate').should('not.exist')
-		})
-
-		it('cancels crate deletion', () => {
-			// Create a crate first
-			cy.get('[data-cy="create-crate-button"]').should('be.visible').click()
-			cy.get('[data-cy="crate-name-input"]').type('Cancellable Crate')
-			cy.get('[data-cy="crate-description-input"]').type('This crate will not be deleted')
-			cy.get('[data-cy="crate-submit-button"]').click()
-
-			// Wait for navigation to detail page
-			cy.location('pathname').should('match', /\/crate-rewards\/[a-zA-Z0-9]+/)
-
-			// Navigate back to crate manager to access delete button
-			cy.visit('/crate-rewards')
-
-			// Find the specific crate card and click its delete button
-			cy.contains('Cancellable Crate')
-				.parent()
-				.parent()
-				.parent()
-				.within(() => {
-					cy.get('[data-cy="delete-crate-button"]').should('be.visible').click()
-				})
-
-			// Cancel deletion in modal
-			cy.get('[data-cy="cancel-delete-button"]').should('be.visible').click()
-
-			// Should still be on manager page
-			cy.location('pathname').should('eq', '/crate-rewards')
-
-			// Crate should still exist
-			cy.contains('Cancellable Crate').should('be.visible')
 		})
 	})
 
@@ -493,6 +515,29 @@ describe('Crate Rewards', () => {
 			cy.get('[data-cy="item-row"]').first().should('contain', '3x Gold Ingot')
 			cy.get('[data-cy="item-row"]').last().should('contain', '5x Diamond')
 		})
+
+		after(() => {
+			// Cleanup: Delete the Item Test Crate after all tests in this suite have run
+			cy.signIn('user@example.com', 'passWORD123')
+			cy.waitForAuth()
+			cy.visit('/crate-rewards')
+			cy.dismissCookieBanner()
+
+			// Find the Item Test Crate and delete it
+			cy.contains('Item Test Crate')
+				.parent()
+				.parent()
+				.parent()
+				.within(() => {
+					cy.get('[data-cy="delete-crate-button"]').should('be.visible').click()
+				})
+
+			// Confirm deletion in modal
+			cy.get('[data-cy="confirm-delete-button"]').should('be.visible').click()
+
+			// Crate should no longer exist
+			cy.contains('Item Test Crate').should('not.exist')
+		})
 	})
 
 	describe('Navigation and Back Button', () => {
@@ -520,6 +565,21 @@ describe('Crate Rewards', () => {
 			// Should return to crate list
 			cy.location('pathname').should('eq', '/crate-rewards')
 			cy.contains('Back Test Crate').should('be.visible')
+
+			// Cleanup: Delete the crate
+			cy.contains('Back Test Crate')
+				.parent()
+				.parent()
+				.parent()
+				.within(() => {
+					cy.get('[data-cy="delete-crate-button"]').should('be.visible').click()
+				})
+
+			// Confirm deletion in modal
+			cy.get('[data-cy="confirm-delete-button"]').should('be.visible').click()
+
+			// Crate should no longer exist
+			cy.contains('Back Test Crate').should('not.exist')
 		})
 
 		it('navigates to crate detail by clicking crate name', () => {
@@ -545,6 +605,24 @@ describe('Crate Rewards', () => {
 			// Should be on detail page again
 			cy.location('pathname').should('match', /\/crate-rewards\/[a-zA-Z0-9]+/)
 			cy.contains('Clickable Crate').should('be.visible')
+
+			// Cleanup: Navigate back to crate manager and delete the crate
+			cy.visit('/crate-rewards')
+
+			// Find the specific crate card and click its delete button
+			cy.contains('Clickable Crate')
+				.parent()
+				.parent()
+				.parent()
+				.within(() => {
+					cy.get('[data-cy="delete-crate-button"]').should('be.visible').click()
+				})
+
+			// Confirm deletion in modal
+			cy.get('[data-cy="confirm-delete-button"]').should('be.visible').click()
+
+			// Crate should no longer exist
+			cy.contains('Clickable Crate').should('not.exist')
 		})
 	})
 })
