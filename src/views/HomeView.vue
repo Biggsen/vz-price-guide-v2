@@ -846,8 +846,11 @@ watch(
 		</div>
 
 		<div class="mb-4 text-sm text-gray-asparagus font-medium">
-			Showing {{ allVisibleItems.length }} item{{ allVisibleItems.length === 1 ? '' : 's' }}
-			<span v-if="user?.email" class="ml-4 text-xs text-gray-500">
+			Showing {{ allVisibleItems.length }} item{{
+				allVisibleItems.length === 1 ? '' : 's'
+			}}
+			from {{ selectedVersion }}
+			<span v-if="canEditItems" class="ml-4 text-xs text-gray-500">
 				Cache: {{ getCacheStats().hits }}/{{
 					getCacheStats().hits + getCacheStats().misses
 				}}
