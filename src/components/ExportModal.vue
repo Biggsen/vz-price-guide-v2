@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ArrowDownTrayIcon, UserPlusIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { UserIcon } from '@heroicons/vue/24/solid'
 import { enabledCategories, baseEnabledVersions } from '../constants.js'
@@ -21,6 +21,10 @@ const props = defineProps({
 	economyConfig: {
 		type: Object,
 		default: () => ({})
+	},
+	selectedVersion: {
+		type: String,
+		required: true
 	}
 })
 
@@ -58,10 +62,18 @@ const enabledVersions = computed(() => {
 })
 
 // Export configuration
-const selectedVersion = ref('1.20') // Internal version state for export modal
+const selectedVersion = ref(props.selectedVersion) // Internal version state for export modal
 const selectedCategories = ref([])
 const selectedPriceFields = ref(['unit_buy', 'unit_sell', 'stack_buy', 'stack_sell'])
 const includeMetadata = ref(false)
+
+// Watch for prop changes and update local state
+watch(
+	() => props.selectedVersion,
+	(newVersion) => {
+		selectedVersion.value = newVersion
+	}
+)
 
 // Available price fields
 const priceFields = [

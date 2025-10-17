@@ -6,10 +6,14 @@ import { useRoute } from 'vue-router'
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
 
-defineProps({
+const props = defineProps({
 	isOpen: {
 		type: Boolean,
 		default: false
+	},
+	selectedVersion: {
+		type: String,
+		required: true
 	}
 })
 
@@ -38,12 +42,19 @@ const enabledVersions = computed(() => {
 })
 
 // Settings state
-const selectedVersion = ref('1.20')
+const selectedVersion = ref(props.selectedVersion)
 const priceMultiplier = ref(1)
 const sellMargin = ref(0.3)
 const roundToWhole = ref(false)
-const showZeroPricedItems = ref(false)
 const showStackSize = ref(true)
+
+// Watch for prop changes and update local state
+watch(
+	() => props.selectedVersion,
+	(newVersion) => {
+		selectedVersion.value = newVersion
+	}
+)
 
 // Computed property for percentage display (30 instead of 0.3)
 const sellMarginPercentage = computed({

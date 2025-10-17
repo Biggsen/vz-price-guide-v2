@@ -795,11 +795,13 @@ watch(
 		:isOpen="showExportModal"
 		:items="allItemsForCounts"
 		:economyConfig="economyConfig"
+		:selectedVersion="selectedVersion"
 		@close="closeExportModal" />
 
 	<!-- Settings Modal -->
 	<SettingsModal
 		:isOpen="showSettingsModal"
+		:selectedVersion="selectedVersion"
 		@close="closeSettingsModal"
 		@save-settings="handleSaveSettings" />
 </template>
