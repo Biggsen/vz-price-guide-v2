@@ -283,7 +283,7 @@ const searchQuery = ref('')
 const priceMultiplier = ref(1)
 const sellMargin = ref(0.3)
 const roundToWhole = ref(false)
-const showStackSize = ref(true)
+const showStackSize = ref(false)
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
 
