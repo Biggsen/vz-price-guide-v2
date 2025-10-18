@@ -2,6 +2,7 @@ export const categories = [
 	'ores',
 	'stone',
 	'brick',
+	'copper',
 	'earth',
 	'sand',
 	'wood',
