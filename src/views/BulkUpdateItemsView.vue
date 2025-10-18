@@ -13,8 +13,10 @@ import {
 	ArrowDownIcon,
 	PencilIcon,
 	TrashIcon,
-	ArrowPathIcon
+	ArrowPathIcon,
+	Squares2X2Icon
 } from '@heroicons/vue/24/outline'
+import { Squares2X2Icon as Squares2X2IconSolid } from '@heroicons/vue/24/solid'
 
 const db = useFirestore()
 const route = useRoute()
@@ -47,12 +49,104 @@ const activeTab = ref('categories') // Add active tab state
 const showDeleteModal = ref(false)
 const itemToDelete = ref(null)
 
+// localStorage key for bulk update settings
+const BULK_UPDATE_STORAGE_KEY = 'bulkUpdateSettings'
+
+// Default settings
+const defaultSettings = {
+	searchQuery: '',
+	selectedVersion: 'all',
+	selectedCategories: [],
+	showOnlyNoCategory: false,
+	showCategoryColumns: true,
+	showImageColumn: true,
+	showNameColumn: true,
+	showVersionColumn: false,
+	showUrlColumn: false,
+	showPriceColumn: true,
+	showDocumentIdColumn: false
+}
+
+// Load settings from localStorage
+function loadSettings() {
+	try {
+		const saved = localStorage.getItem(BULK_UPDATE_STORAGE_KEY)
+		if (saved) {
+			const settings = JSON.parse(saved)
+			// Apply loaded settings to reactive refs
+			searchQuery.value = settings.searchQuery || defaultSettings.searchQuery
+			selectedVersion.value = settings.selectedVersion || defaultSettings.selectedVersion
+			selectedCategories.value =
+				settings.selectedCategories || defaultSettings.selectedCategories
+			showOnlyNoCategory.value =
+				settings.showOnlyNoCategory ?? defaultSettings.showOnlyNoCategory
+			showCategoryColumns.value =
+				settings.showCategoryColumns ?? defaultSettings.showCategoryColumns
+			showImageColumn.value = settings.showImageColumn ?? defaultSettings.showImageColumn
+			showNameColumn.value = settings.showNameColumn ?? defaultSettings.showNameColumn
+			showVersionColumn.value =
+				settings.showVersionColumn ?? defaultSettings.showVersionColumn
+			showUrlColumn.value = settings.showUrlColumn ?? defaultSettings.showUrlColumn
+			showPriceColumn.value = settings.showPriceColumn ?? defaultSettings.showPriceColumn
+			showDocumentIdColumn.value =
+				settings.showDocumentIdColumn ?? defaultSettings.showDocumentIdColumn
+		}
+	} catch (error) {
+		console.error('Error loading bulk update settings:', error)
+	}
+}
+
+// Save settings to localStorage
+function saveSettings() {
+	try {
+		const settings = {
+			searchQuery: searchQuery.value,
+			selectedVersion: selectedVersion.value,
+			selectedCategories: selectedCategories.value,
+			showOnlyNoCategory: showOnlyNoCategory.value,
+			showCategoryColumns: showCategoryColumns.value,
+			showImageColumn: showImageColumn.value,
+			showNameColumn: showNameColumn.value,
+			showVersionColumn: showVersionColumn.value,
+			showUrlColumn: showUrlColumn.value,
+			showPriceColumn: showPriceColumn.value,
+			showDocumentIdColumn: showDocumentIdColumn.value
+		}
+		localStorage.setItem(BULK_UPDATE_STORAGE_KEY, JSON.stringify(settings))
+	} catch (error) {
+		console.error('Error saving bulk update settings:', error)
+	}
+}
+
+// Clear all settings (for Reset button)
+function clearSettings() {
+	try {
+		localStorage.removeItem(BULK_UPDATE_STORAGE_KEY)
+		// Reset to default values
+		searchQuery.value = defaultSettings.searchQuery
+		selectedVersion.value = defaultSettings.selectedVersion
+		selectedCategories.value = defaultSettings.selectedCategories
+		showOnlyNoCategory.value = defaultSettings.showOnlyNoCategory
+		showCategoryColumns.value = defaultSettings.showCategoryColumns
+		showImageColumn.value = defaultSettings.showImageColumn
+		showNameColumn.value = defaultSettings.showNameColumn
+		showVersionColumn.value = defaultSettings.showVersionColumn
+		showUrlColumn.value = defaultSettings.showUrlColumn
+		showPriceColumn.value = defaultSettings.showPriceColumn
+		showDocumentIdColumn.value = defaultSettings.showDocumentIdColumn
+		selectedItems.value = [] // Also clear selected items
+	} catch (error) {
+		console.error('Error clearing bulk update settings:', error)
+	}
+}
+
 async function loadDbItems() {
 	const snapshot = await getDocs(collection(db, 'items'))
 	dbItems.value = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
 }
 
 onMounted(async () => {
+	loadSettings() // Load settings before loading items
 	await loadDbItems()
 	loading.value = false
 })
@@ -63,6 +157,19 @@ watch(selectedCategories, (newCategories) => {
 		showOnlyNoCategory.value = false
 	}
 })
+
+// Add watchers to save settings when they change
+watch(searchQuery, saveSettings)
+watch(selectedVersion, saveSettings)
+watch(selectedCategories, saveSettings, { deep: true })
+watch(showOnlyNoCategory, saveSettings)
+watch(showCategoryColumns, saveSettings)
+watch(showImageColumn, saveSettings)
+watch(showNameColumn, saveSettings)
+watch(showVersionColumn, saveSettings)
+watch(showUrlColumn, saveSettings)
+watch(showPriceColumn, saveSettings)
+watch(showDocumentIdColumn, saveSettings)
 
 const filteredItems = computed(() => {
 	const query = searchQuery.value.trim().toLowerCase()
@@ -393,10 +500,7 @@ async function executeDelete() {
 }
 
 function resetSearch() {
-	searchQuery.value = ''
-	selectedVersion.value = 'all'
-	selectedCategories.value = []
-	selectedItems.value = []
+	clearSettings()
 }
 </script>
 
@@ -899,9 +1003,9 @@ function resetSearch() {
 									<th
 										v-if="showPriceColumn"
 										@click="setSort('price')"
-										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
-										<div class="flex items-center gap-1">
-											Price
+										class="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200 w-18">
+										<div class="flex items-center justify-end gap-1">
+											$
 											{{
 												selectedVersion !== 'all'
 													? `(${selectedVersion})`
@@ -916,7 +1020,7 @@ function resetSearch() {
 										</div>
 									</th>
 									<th
-										class="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+										class="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-20">
 										Actions
 									</th>
 								</tr>
@@ -997,15 +1101,30 @@ function resetSearch() {
 									</td>
 									<td
 										v-if="showPriceColumn"
-										class="px-2 py-2 text-gray-900 border-r border-gray-200">
-										{{
-											getPriceForVersion(item, selectedVersion) !== null
-												? getPriceForVersion(item, selectedVersion)
-												: ''
-										}}
+										class="px-2 py-2 text-right text-gray-900 border-r border-gray-200 w-18">
+										<div
+											:class="[
+												'flex items-center',
+												item.pricing_type === 'dynamic'
+													? 'justify-between'
+													: 'justify-end'
+											]">
+											<Squares2X2IconSolid
+												v-if="item.pricing_type === 'dynamic'"
+												class="w-3 h-3 text-gray-300"
+												title="Dynamic pricing" />
+											<span>
+												{{
+													getPriceForVersion(item, selectedVersion) !==
+													null
+														? getPriceForVersion(item, selectedVersion)
+														: ''
+												}}
+											</span>
+										</div>
 									</td>
-									<td class="px-2 py-2 text-center border-r border-gray-200">
-										<div class="flex items-center justify-center gap-2">
+									<td class="px-2 py-2 text-center border-r border-gray-200 w-20">
+										<div class="flex items-center justify-center gap-1">
 											<RouterLink
 												:to="{
 													path: `/edit/${item.id}`,
