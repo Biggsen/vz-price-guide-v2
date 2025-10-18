@@ -213,11 +213,21 @@ function formatCompletionDate(dateString) {
 							{{ change }}
 						</li>
 					</ul>
-					<div class="mt-3">
-						<span
-							class="px-3 py-1 rounded-full text-[10px] font-medium bg-white border border-laurel text-gray-asparagus uppercase">
-							{{ update.type }}
-						</span>
+					<div class="mt-3 flex flex-wrap gap-1">
+						<template v-if="update.types">
+							<span
+								v-for="type in update.types"
+								:key="type"
+								class="px-3 py-1 rounded-full text-[10px] font-medium bg-white border border-laurel text-gray-asparagus uppercase">
+								{{ type }}
+							</span>
+						</template>
+						<template v-else>
+							<span
+								class="px-3 py-1 rounded-full text-[10px] font-medium bg-white border border-laurel text-gray-asparagus uppercase">
+								{{ update.type }}
+							</span>
+						</template>
 					</div>
 				</div>
 			</div>

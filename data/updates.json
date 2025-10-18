@@ -1,7 +1,23 @@
 [
 	{
+		"id": 26,
+		"title": "Minecraft 1.21 Support & Interface Improvements",
+		"date": "2025-10-18",
+		"types": ["Enhancement", "Content"],
+		"hidden": false,
+		"description": "OK! Time to get those 1.21 items in. I've enabled it with a handful of items, with a lot more to come in the next week or so. The category filtering system has been redesigned to be more intuitive, and the homepage code has been streamlined for better performance.",
+		"changes": [
+			"Added Minecraft 1.21 version support with a few items (more items coming soon)",
+			"Streamlined category filtering system for better user experience",
+			"Replaced 'Unselect/Select categories' with more intuitive 'All categories' filter",
+			"Removed unnecessary 'Uncategorised' selector from category filters",
+			"Prominently display Minecraft version for better catalog identification",
+			"Reduced homepage code complexity for improved performance and maintainability"
+		]
+	},
+	{
 		"id": 25,
-		"title": "Crate Rewards Tool 📦🔧",
+		"title": "Crate Rewards Tool",
 		"date": "2025-10-16",
 		"type": "Tool",
 		"hidden": false,
