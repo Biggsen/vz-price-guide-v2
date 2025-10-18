@@ -12,7 +12,8 @@ import {
 	ArrowUpIcon,
 	ArrowDownIcon,
 	PencilIcon,
-	TrashIcon
+	TrashIcon,
+	ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 
 const db = useFirestore()
@@ -390,6 +391,13 @@ async function executeDelete() {
 		itemToDelete.value = null
 	}
 }
+
+function resetSearch() {
+	searchQuery.value = ''
+	selectedVersion.value = 'all'
+	selectedCategories.value = []
+	selectedItems.value = []
+}
 </script>
 
 <template>
@@ -424,12 +432,18 @@ async function executeDelete() {
 			<!-- Search and filters (always visible) -->
 			<div class="mb-6">
 				<!-- Search input -->
-				<div class="mb-4">
+				<div class="mb-4 flex gap-2">
 					<input
 						type="text"
 						v-model="searchQuery"
 						placeholder="Search for an item..."
-						class="border-2 border-gray-asparagus rounded px-3 py-1 w-full max-w-md" />
+						class="border-2 border-gray-asparagus rounded px-3 py-1 flex-1 max-w-md" />
+					<button
+						@click="resetSearch"
+						class="inline-flex items-center px-3 py-1 border-2 border-gray-asparagus rounded text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+						<ArrowPathIcon class="w-4 h-4 mr-1" />
+						Reset
+					</button>
 				</div>
 
 				<!-- Version filter -->

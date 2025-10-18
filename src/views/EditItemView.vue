@@ -355,8 +355,8 @@ async function updateItem() {
 		...editItem.value
 	})
 		.then(() => {
-			// Navigate back to home with preserved query parameters
-			router.push({ path: '/', query: homeQuery.value })
+			// Navigate to bulk update page
+			router.push('/bulk-update')
 		})
 		.catch((error) => {
 			console.log(error)
@@ -637,7 +637,7 @@ function isBaseVersion(versionKey) {
 				</button>
 				<button
 					type="button"
-					@click="router.push({ path: '/', query: homeQuery })"
+					@click="router.push('/bulk-update')"
 					class="rounded-md bg-white text-gray-700 border-2 border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 transition">
 					Cancel
 				</button>
