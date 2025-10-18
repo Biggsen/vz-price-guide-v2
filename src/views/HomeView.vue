@@ -777,10 +777,7 @@ watch(
 		<div class="mb-4 text-sm text-gray-asparagus font-medium">
 			<span v-if="isLoading">Loading price guide...</span>
 			<span v-else>
-				Showing {{ allVisibleItems.length }} item{{
-					allVisibleItems.length === 1 ? '' : 's'
-				}}
-				from {{ selectedVersion }}
+				<span class="text-xl text-heavy-metal font-bold">MC {{ selectedVersion }}</span>
 				<span v-if="canEditItems" class="ml-4 text-xs text-gray-500">
 					Cache: {{ getCacheStats().hits }}/{{
 						getCacheStats().hits + getCacheStats().misses
