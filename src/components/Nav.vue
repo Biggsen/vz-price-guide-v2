@@ -21,6 +21,7 @@ import { useAdmin } from '../utils/admin.js'
 import { userProfileExists } from '../utils/userProfile.js'
 import { getFirestore, doc, getDoc } from 'firebase/firestore'
 import { navigationHandlers } from '../utils/analytics.js'
+import updatesData from '../../data/updates.json'
 
 const props = defineProps({
 	activeMainNav: {
@@ -35,6 +36,30 @@ const user = useCurrentUser()
 const route = useRoute()
 const router = useRouter()
 const { isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAdmin()
+
+// Get the latest update ID
+const latestUpdateId = updatesData[0]?.id || null
+
+// Check if user has seen the latest update
+const hasSeenLatestUpdate = ref(false)
+
+// Check localStorage on mount
+onMounted(() => {
+	const lastSeenUpdateId = localStorage.getItem('lastSeenUpdateId')
+	hasSeenLatestUpdate.value = lastSeenUpdateId === latestUpdateId?.toString()
+})
+
+// Watch for route changes to hide notification when visiting updates
+watch(
+	() => route.path,
+	(newPath) => {
+		if (newPath === '/updates') {
+			// Mark the latest update as seen
+			localStorage.setItem('lastSeenUpdateId', latestUpdateId?.toString() || '')
+			hasSeenLatestUpdate.value = true
+		}
+	}
+)
 
 // User profile state
 const userProfile = ref(null)
@@ -283,14 +308,20 @@ onUnmounted(() => {
 					}
 				"
 				:class="[
-					'block px-3 py-2 transition-colors',
+					'block px-3 py-2 transition-colors relative',
 					route.path === '/updates'
 						? 'bg-gray-700 text-white'
 						: 'hover:bg-gray-700 hover:text-white'
 				]">
 				<div class="flex items-center gap-2">
 					<RocketLaunchIcon class="w-4 h-4" />
-					<span>Updates</span>
+					<span class="relative">
+						Updates
+						<!-- Notification dot -->
+						<div
+							v-if="!hasSeenLatestUpdate"
+							class="w-2 h-2 bg-red-500 rounded-full absolute top-0.5 -right-2 animate-pulse"></div>
+					</span>
 				</div>
 			</RouterLink>
 
@@ -477,14 +508,20 @@ onUnmounted(() => {
 				}
 			"
 			:class="[
-				'px-3 py-2 rounded transition-colors whitespace-nowrap',
+				'px-3 py-2 rounded transition-colors whitespace-nowrap relative',
 				route.path === '/updates'
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
 			<div class="flex items-center gap-2">
 				<RocketLaunchIcon class="w-4 h-4" />
-				<span>Updates</span>
+				<span class="relative">
+					Updates
+					<!-- Notification dot -->
+					<div
+						v-if="!hasSeenLatestUpdate"
+						class="w-2 h-2 bg-red-500 rounded-full absolute top-0.5 -right-2 animate-pulse"></div>
+				</span>
 			</div>
 		</RouterLink>
 
