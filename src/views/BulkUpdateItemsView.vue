@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
@@ -25,14 +25,14 @@ const sortKey = ref('name')
 const sortAsc = ref(true)
 const showOnlyNoCategory = ref(false)
 const showCategoryColumns = ref(true)
-const showImageColumn = ref(false)
-const showMaterialIdColumn = ref(true)
+const showImageColumn = ref(true)
 const showNameColumn = ref(true)
 const showVersionColumn = ref(false)
 const showUrlColumn = ref(false)
-const showPriceColumn = ref(false)
+const showPriceColumn = ref(true)
 const showDocumentIdColumn = ref(false)
 const selectedVersion = ref('all')
+const selectedCategories = ref([])
 const activeTab = ref('categories') // Add active tab state
 
 async function loadDbItems() {
@@ -43,6 +43,13 @@ async function loadDbItems() {
 onMounted(async () => {
 	await loadDbItems()
 	loading.value = false
+})
+
+// Watch for category filter changes to reset "show only no category" checkbox
+watch(selectedCategories, (newCategories) => {
+	if (newCategories.length > 0 && showOnlyNoCategory.value) {
+		showOnlyNoCategory.value = false
+	}
 })
 
 const filteredItems = computed(() => {
@@ -57,8 +64,18 @@ const filteredItems = computed(() => {
 		})
 	}
 
+	// Filter by categories
+	if (selectedCategories.value.length > 0) {
+		items = items.filter((item) => {
+			// Check if the item's category is in the selected categories
+			return selectedCategories.value.includes(item.category)
+		})
+	}
+
 	if (showOnlyNoCategory.value) {
 		items = items.filter((item) => !item.category || item.category === '')
+		// Override category filter when showing only items without category
+		selectedCategories.value = []
 	}
 	if (sortKey.value) {
 		items = [...items].sort((a, b) => {
@@ -128,6 +145,54 @@ const allSelected = computed(() => {
 
 const anySelected = computed(() => selectedItems.value.length > 0)
 
+function toggleCategory(category) {
+	const index = selectedCategories.value.indexOf(category)
+	if (index > -1) {
+		selectedCategories.value.splice(index, 1)
+	} else {
+		selectedCategories.value.push(category)
+	}
+}
+
+function isCategorySelected(category) {
+	return selectedCategories.value.includes(category)
+}
+
+function clearAllCategories() {
+	selectedCategories.value = []
+}
+
+function getCategoryItemCount(category) {
+	// Get items that match current filters (search, version) but without category filter
+	const query = searchQuery.value.trim().toLowerCase()
+	let items = dbItems.value.filter((item) => item.name && item.name.toLowerCase().includes(query))
+
+	// Filter by version
+	if (selectedVersion.value !== 'all') {
+		items = items.filter((item) => {
+			return item.version === selectedVersion.value
+		})
+	}
+
+	// Count items in this specific category
+	return items.filter((item) => item.category === category).length
+}
+
+function getTotalItemCount() {
+	// Get items that match current filters (search, version) but without category filter
+	const query = searchQuery.value.trim().toLowerCase()
+	let items = dbItems.value.filter((item) => item.name && item.name.toLowerCase().includes(query))
+
+	// Filter by version
+	if (selectedVersion.value !== 'all') {
+		items = items.filter((item) => {
+			return item.version === selectedVersion.value
+		})
+	}
+
+	return items.length
+}
+
 function getPriceForVersion(item, version) {
 	if (version === 'all' || !item.prices_by_version) return null
 	const versionKey = version.replace('.', '_')
@@ -189,10 +254,16 @@ async function updateSelectedImages() {
 	updateResult.value = null
 	let updated = 0,
 		failed = 0
+
+	// Prepend /images/items/ if the image doesn't already start with it
+	const imageUrl = newImage.value.startsWith('/images/items/')
+		? newImage.value
+		: `/images/items/${newImage.value}`
+
 	for (const id of selectedItems.value) {
 		try {
 			await updateDoc(doc(db, 'items', id), {
-				image: newImage.value
+				image: imageUrl
 			})
 			updated++
 		} catch (e) {
@@ -318,7 +389,7 @@ async function updateSelectedPrices() {
 				</div>
 
 				<!-- Version filter -->
-				<div class="mb-12">
+				<div class="mb-4">
 					<div class="flex flex-wrap gap-2">
 						<button
 							@click="selectedVersion = 'all'"
@@ -328,7 +399,7 @@ async function updateSelectedPrices() {
 									? 'bg-blue-600 text-white'
 									: 'bg-gray-200 text-gray-700 hover:bg-gray-300'
 							]">
-							All items
+							All versions
 						</button>
 						<button
 							v-for="version in versions"
@@ -342,6 +413,39 @@ async function updateSelectedPrices() {
 							]">
 							{{ version }}
 						</button>
+					</div>
+				</div>
+
+				<!-- Category filter -->
+				<div class="mb-12">
+					<div class="flex flex-wrap gap-2 items-center">
+						<button
+							@click="clearAllCategories"
+							:class="[
+								'px-3 py-1 rounded-full text-sm font-medium transition-colors',
+								selectedCategories.length === 0
+									? 'bg-green-600 text-white'
+									: 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+							]">
+							All categories ({{ getTotalItemCount() }})
+						</button>
+						<button
+							v-for="category in categories"
+							:key="category"
+							@click="toggleCategory(category)"
+							:class="[
+								'px-3 py-1 rounded-full text-sm font-medium transition-colors',
+								isCategorySelected(category)
+									? 'bg-green-600 text-white'
+									: 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+							]">
+							{{ category }} ({{ getCategoryItemCount(category) }})
+						</button>
+						<span
+							v-if="selectedCategories.length > 0"
+							class="text-sm text-gray-600 ml-2">
+							({{ selectedCategories.length }} selected)
+						</span>
 					</div>
 				</div>
 			</div>
@@ -486,7 +590,7 @@ async function updateSelectedPrices() {
 						<input
 							type="text"
 							v-model="newImage"
-							placeholder="Image URL"
+							placeholder="Image"
 							class="border-2 border-gray-asparagus rounded px-3 py-1 w-80" />
 						<button
 							@click="updateSelectedImages"
@@ -553,19 +657,9 @@ async function updateSelectedPrices() {
 						<label class="inline-flex items-center">
 							<input
 								type="checkbox"
-								v-model="showDocumentIdColumn"
+								v-model="showImageColumn"
 								class="mr-2 checkbox-input" />
-							Show Document ID column
-						</label>
-					</div>
-
-					<div class="mb-2">
-						<label class="inline-flex items-center">
-							<input
-								type="checkbox"
-								v-model="showMaterialIdColumn"
-								class="mr-2 checkbox-input" />
-							Show Material ID column
+							Show Image column
 						</label>
 					</div>
 
@@ -576,6 +670,16 @@ async function updateSelectedPrices() {
 								v-model="showNameColumn"
 								class="mr-2 checkbox-input" />
 							Show Name column
+						</label>
+					</div>
+
+					<div class="mb-2">
+						<label class="inline-flex items-center">
+							<input
+								type="checkbox"
+								v-model="showDocumentIdColumn"
+								class="mr-2 checkbox-input" />
+							Show Document ID column
 						</label>
 					</div>
 
@@ -596,16 +700,6 @@ async function updateSelectedPrices() {
 								v-model="showCategoryColumns"
 								class="mr-2 checkbox-input" />
 							Show Categories columns
-						</label>
-					</div>
-
-					<div class="mb-2">
-						<label class="inline-flex items-center">
-							<input
-								type="checkbox"
-								v-model="showImageColumn"
-								class="mr-2 checkbox-input" />
-							Show Image column
 						</label>
 					</div>
 
@@ -638,7 +732,7 @@ async function updateSelectedPrices() {
 							<thead class="bg-gray-50">
 								<tr>
 									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+										class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-12">
 										<input
 											type="checkbox"
 											:checked="allSelected"
@@ -649,7 +743,7 @@ async function updateSelectedPrices() {
 									<th
 										v-if="showDocumentIdColumn"
 										@click="setSort('id')"
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
 										<div class="flex items-center gap-1">
 											Document ID
 											<ArrowUpIcon
@@ -661,25 +755,25 @@ async function updateSelectedPrices() {
 										</div>
 									</th>
 									<th
-										v-if="showMaterialIdColumn"
-										@click="setSort('material_id')"
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
-										<div class="flex items-center gap-1">
-											Material ID
+										v-if="showImageColumn"
+										@click="setSort('image')"
+										class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200 w-16">
+										<div class="flex items-center justify-center gap-1">
+											Image
 											<ArrowUpIcon
-												v-if="getSortIcon('material_id') === 'up'"
-												class="w-4 h-4 text-gray-700" />
+												v-if="getSortIcon('image') === 'up'"
+												class="w-3 h-3 text-gray-700" />
 											<ArrowDownIcon
-												v-else-if="getSortIcon('material_id') === 'down'"
-												class="w-4 h-4 text-gray-700" />
+												v-else-if="getSortIcon('image') === 'down'"
+												class="w-3 h-3 text-gray-700" />
 										</div>
 									</th>
 									<th
 										v-if="showNameColumn"
 										@click="setSort('name')"
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
 										<div class="flex items-center gap-1">
-											Name
+											Name / Material ID
 											<ArrowUpIcon
 												v-if="getSortIcon('name') === 'up'"
 												class="w-4 h-4 text-gray-700" />
@@ -691,7 +785,7 @@ async function updateSelectedPrices() {
 									<th
 										v-if="showVersionColumn"
 										@click="setSort('version')"
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
 										<div class="flex items-center gap-1">
 											Version
 											<ArrowUpIcon
@@ -705,7 +799,7 @@ async function updateSelectedPrices() {
 									<th
 										v-if="showCategoryColumns"
 										@click="setSort('category')"
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
 										<div class="flex items-center gap-1">
 											Category
 											<ArrowUpIcon
@@ -719,7 +813,7 @@ async function updateSelectedPrices() {
 									<th
 										v-if="showCategoryColumns"
 										@click="setSort('subcategory')"
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
 										<div class="flex items-center gap-1">
 											Subcategory
 											<ArrowUpIcon
@@ -731,23 +825,9 @@ async function updateSelectedPrices() {
 										</div>
 									</th>
 									<th
-										v-if="showImageColumn"
-										@click="setSort('image')"
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
-										<div class="flex items-center gap-1">
-											Image
-											<ArrowUpIcon
-												v-if="getSortIcon('image') === 'up'"
-												class="w-4 h-4 text-gray-700" />
-											<ArrowDownIcon
-												v-else-if="getSortIcon('image') === 'down'"
-												class="w-4 h-4 text-gray-700" />
-										</div>
-									</th>
-									<th
 										v-if="showUrlColumn"
 										@click="setSort('url')"
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
 										<div class="flex items-center gap-1">
 											URL
 											<ArrowUpIcon
@@ -761,7 +841,7 @@ async function updateSelectedPrices() {
 									<th
 										v-if="showPriceColumn"
 										@click="setSort('price')"
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
+										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
 										<div class="flex items-center gap-1">
 											Price
 											{{
@@ -786,7 +866,7 @@ async function updateSelectedPrices() {
 									:class="{
 										'bg-green-50': isSelected(item.id)
 									}">
-									<td class="px-4 py-3 border-r border-gray-200">
+									<td class="px-2 py-3 text-center border-r border-gray-200 w-12">
 										<input
 											type="checkbox"
 											:checked="isSelected(item.id)"
@@ -795,50 +875,65 @@ async function updateSelectedPrices() {
 									</td>
 									<td
 										v-if="showDocumentIdColumn"
-										class="px-4 py-3 text-gray-900 border-r border-gray-200"
+										class="px-2 py-2 text-gray-900 border-r border-gray-200"
 										:title="item.id">
 										<div class="font-mono text-sm">{{ item.id }}</div>
 									</td>
 									<td
-										v-if="showMaterialIdColumn"
-										class="px-4 py-3 text-gray-900 border-r border-gray-200"
-										:title="item.material_id">
-										<div class="font-medium">{{ item.material_id }}</div>
+										v-if="showImageColumn"
+										class="px-1 py-2 text-center border-r border-gray-200 w-16">
+										<img
+											v-if="item.image"
+											:src="item.image"
+											:alt="item.name"
+											class="w-10 h-10 object-cover rounded mx-auto"
+											@error="$event.target.style.display = 'none'"
+											@load="$event.target.style.display = 'block'" />
+										<div
+											v-else
+											class="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500 mx-auto">
+											?
+										</div>
 									</td>
 									<td
 										v-if="showNameColumn"
-										class="px-4 py-3 text-gray-900 border-r border-gray-200"
+										class="px-2 py-2 text-gray-900 border-r border-gray-200"
 										:title="item.name">
-										<div class="font-medium">{{ item.name }}</div>
+										<div class="font-medium">
+											<a
+												:href="`https://minecraft.wiki/w/${item.material_id}`"
+												target="_blank"
+												rel="noopener noreferrer"
+												class="text-gray-900 hover:text-gray-asparagus hover:underline">
+												{{ item.name }}
+											</a>
+										</div>
+										<div class="text-sm text-gray-500 font-mono">
+											{{ item.material_id }}
+										</div>
 									</td>
 									<td
 										v-if="showVersionColumn"
-										class="px-4 py-3 text-gray-900 border-r border-gray-200">
+										class="px-2 py-2 text-gray-900 border-r border-gray-200">
 										{{ item.version }}
 									</td>
 									<td
 										v-if="showCategoryColumns"
-										class="px-4 py-3 text-gray-500 border-r border-gray-200">
+										class="px-2 py-2 text-gray-500 border-r border-gray-200">
 										{{ item.category }}
 									</td>
 									<td
 										v-if="showCategoryColumns"
-										class="px-4 py-3 text-gray-500 border-r border-gray-200">
+										class="px-2 py-2 text-gray-500 border-r border-gray-200">
 										{{ item.subcategory }}
 									</td>
 									<td
-										v-if="showImageColumn"
-										class="px-4 py-3 text-gray-500 border-r border-gray-200"
-										:title="item.image || ''">
-										<div class="truncate max-w-xs">{{ item.image || '' }}</div>
-									</td>
-									<td
 										v-if="showUrlColumn"
-										class="px-4 py-3 text-gray-500 border-r border-gray-200"
+										class="px-2 py-2 text-gray-500 border-r border-gray-200"
 										:title="item.url || ''">
 										<div class="truncate max-w-xs">{{ item.url || '' }}</div>
 									</td>
-									<td v-if="showPriceColumn" class="px-4 py-3 text-gray-900">
+									<td v-if="showPriceColumn" class="px-2 py-2 text-gray-900">
 										{{
 											getPriceForVersion(item, selectedVersion) !== null
 												? getPriceForVersion(item, selectedVersion)
