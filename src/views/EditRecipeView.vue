@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { useFirestore } from 'vuefire'
-import { doc, updateDoc, getDoc, collection, getDocs } from 'firebase/firestore'
+import { doc, updateDoc, getDoc, collection, getDocs, deleteField } from 'firebase/firestore'
 import { versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { validateIngredientsInDatabase } from '../utils/recipes.js'
@@ -335,15 +335,19 @@ async function deleteRecipe() {
 		const versionKey = selectedVersion.value.replace('.', '_')
 		const itemRef = doc(db, 'items', item.value.id)
 
-		// Remove the recipe for this version
-		const updateData = {}
-		updateData[`recipes_by_version.${versionKey}`] = null
-
-		// If no recipes remain, set pricing type to static
+		// Check if this is the only recipe version
 		const remainingRecipes = { ...item.value.recipes_by_version }
 		delete remainingRecipes[versionKey]
+		const hasOtherRecipes = Object.keys(remainingRecipes).length > 0
 
-		if (Object.keys(remainingRecipes).length === 0) {
+		const updateData = {}
+
+		if (hasOtherRecipes) {
+			// Remove just this version key
+			updateData[`recipes_by_version.${versionKey}`] = deleteField()
+		} else {
+			// Remove the entire recipes_by_version field since it will be empty
+			updateData.recipes_by_version = deleteField()
 			updateData.pricing_type = 'static'
 		}
 
