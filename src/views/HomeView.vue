@@ -47,7 +47,9 @@ const enabledVersions = computed(() => {
 const selectedVersion = ref(baseEnabledVersions[baseEnabledVersions.length - 1]) // Default to latest base enabled version
 
 // Category filtering state - declare before itemsQuery
-const visibleCategories = shallowRef([...enabledCategories])
+// Empty array means "all categories" (default state)
+// Non-empty array means "only these specific categories"
+const visibleCategories = shallowRef([])
 
 // Create reactive query based on selected version and categories
 const itemsQuery = computed(() => {
@@ -63,12 +65,12 @@ const itemsQuery = computed(() => {
 	// Firestore limit is around 10-15 categories, so let's be safe with 10
 	const maxCategoriesForDB = 10
 	if (enabledCategories.length <= maxCategoriesForDB) {
-		if (
-			visibleCategories.value.length < enabledCategories.length &&
-			visibleCategories.value.length > 0
-		) {
+		// If visibleCategories is empty, show all categories (no filter)
+		// If visibleCategories has items, only show those specific categories
+		if (visibleCategories.value.length > 0) {
 			filters.push(where('category', 'in', visibleCategories.value))
 		} else {
+			// Empty array means all categories - add filter for all enabled categories
 			filters.push(where('category', 'in', enabledCategories))
 		}
 	}
@@ -223,9 +225,17 @@ const groupedItems = computed(() => {
 	const maxCategoriesForDB = 10
 	const shouldFilterByCategory = enabledCategories.length > maxCategoriesForDB
 
-	const filteredItems = shouldFilterByCategory
+	let filteredItems = shouldFilterByCategory
 		? items.filter((item) => enabledCategories.includes(item.category))
 		: items
+
+	// Apply category filtering based on visibleCategories
+	// Empty array means show all categories, non-empty means show only selected categories
+	if (visibleCategories.value.length > 0) {
+		filteredItems = filteredItems.filter((item) =>
+			visibleCategories.value.includes(item.category)
+		)
+	}
 
 	return filteredItems.reduce((acc, item) => {
 		if (!acc[item.category]) acc[item.category] = []
@@ -414,13 +424,16 @@ const allCategoriesWithSearch = computed(() => {
 })
 
 // Flat list view combining all visible items
-// Since categories are now filtered at database level, we can simplify this
 const allVisibleItems = computed(() => {
 	if (!allItemsCollection.value) return []
 	let items = []
 
-	// Add items from visible categories only
-	for (const cat of visibleCategories.value) {
+	// If visibleCategories is empty, show all categories
+	// If visibleCategories has items, show only those specific categories
+	const categoriesToShow =
+		visibleCategories.value.length > 0 ? visibleCategories.value : enabledCategories
+
+	for (const cat of categoriesToShow) {
 		const categoryItems = filteredGroupedItems.value[cat] || []
 		items.push(...categoryItems)
 	}
@@ -447,16 +460,15 @@ function initializeFromQuery() {
 
 	if (catParam !== undefined) {
 		if (catParam === '') {
-			// Empty cat param means no categories selected
+			// Empty cat param means no categories selected (show all)
 			visibleCategories.value = []
 		} else {
 			const selectedCategories = catParam
 				.split(',')
 				.map((c) => c.trim())
 				.filter((c) => enabledCategories.includes(c))
-			if (selectedCategories.length > 0) {
-				visibleCategories.value = selectedCategories
-			}
+			// Set to selected categories (non-empty array means specific categories)
+			visibleCategories.value = selectedCategories
 		}
 	}
 
@@ -469,11 +481,9 @@ function initializeFromQuery() {
 function updateQuery() {
 	const query = {}
 
-	// Always add cat param except when all categories are selected
-	if (visibleCategories.value.length === enabledCategories.length) {
-		// All categories selected - don't add cat param
-	} else {
-		// Some or no categories selected - add cat param (empty string if none selected)
+	// Add cat param only when specific categories are selected (non-empty array)
+	// Empty array means "all categories" so no cat param needed
+	if (visibleCategories.value.length > 0) {
 		query.cat = visibleCategories.value.join(',')
 	}
 
@@ -524,8 +534,6 @@ watch(
 	{ immediate: true }
 )
 
-const allVisible = computed(() => visibleCategories.value.length === enabledCategories.length)
-
 function toggleCategory(cat) {
 	const idx = visibleCategories.value.indexOf(cat)
 	if (idx !== -1) {
@@ -541,22 +549,51 @@ function toggleCategoryFilters() {
 	showCategoryFilters.value = !showCategoryFilters.value
 }
 
-function showAllCategories() {
-	visibleCategories.value = [...enabledCategories]
+function getTotalItemCount() {
+	// Get items that match current filters (search, version) but without category filter
+	const query = searchQuery.value.trim().toLowerCase()
+	const searchTerms = processSearchTerms(query)
+
+	// Start with all items for counts
+	let items = allItemsForCounts.value || []
+
+	// Filter to only enabled categories first
+	items = items.filter((item) => enabledCategories.includes(item.category))
+
+	// Apply search filtering if there's a search query
+	if (searchTerms.length > 0) {
+		items = filterItemsBySearch(items, searchTerms)
+	}
+
+	// Apply version and price filtering (mirroring the logic from allCategoriesWithSearch)
+	const filteredItems = items.filter((item) => {
+		// Apply version_removed filtering (client-side)
+		if (
+			item.version_removed &&
+			isVersionLessOrEqual(item.version_removed, selectedVersion.value)
+		) {
+			return false
+		}
+		// Apply price/image filtering (mirroring itemsWithValidPrices logic)
+		if (user.value?.email) return true // Admin users see all items
+		if (!item.image || item.image.trim() === '') return false // Non-admin users need images
+		// Always filter out zero-priced items
+		const effectivePrice = getEffectivePriceMemoized(
+			item,
+			selectedVersion.value.replace('.', '_')
+		)
+		if (!effectivePrice || effectivePrice === 0) return false
+		return true
+	})
+
+	return filteredItems.length
 }
-function hideAllCategories() {
+function clearAllCategories() {
 	visibleCategories.value = []
 }
 
-function toggleAllCategories() {
-	if (allVisible.value) {
-		hideAllCategories()
-	} else {
-		showAllCategories()
-	}
-}
 function resetCategories() {
-	visibleCategories.value = [...enabledCategories]
+	visibleCategories.value = []
 	searchQuery.value = ''
 }
 
@@ -675,6 +712,19 @@ watch(
 		</div>
 
 		<div v-show="shouldShowCategoryFilters" class="flex flex-wrap gap-2 mb-4 justify-start">
+			<!-- All Categories Button -->
+			<button
+				@click="clearAllCategories"
+				:class="[
+					'rounded-xl px-2.5 py-1 transition text-xs sm:text-sm font-medium',
+					visibleCategories.length === 0
+						? 'bg-gray-asparagus text-white'
+						: 'bg-norway text-heavy-metal hover:bg-amulet'
+				]">
+				All categories ({{ getTotalItemCount() }})
+			</button>
+
+			<!-- Individual Category Buttons -->
 			<button
 				v-for="cat in enabledCategories"
 				:key="cat"
@@ -702,17 +752,6 @@ watch(
 						? allCategoriesWithSearch[cat]?.length || 0
 						: totalCategoryCounts[cat] || 0
 				}})
-			</button>
-		</div>
-
-		<!-- Toggle All Categories Link (Inside category filters section) -->
-		<div v-show="shouldShowCategoryFilters" class="mb-4">
-			<button
-				@click="toggleAllCategories"
-				class="text-gray-asparagus hover:text-heavy-metal underline text-sm flex items-center gap-1">
-				<EyeSlashIcon v-if="allVisible" class="w-4 h-4" />
-				<EyeIcon v-else class="w-4 h-4" />
-				{{ allVisible ? 'Unselect all categories' : 'Select all categories' }}
 			</button>
 		</div>
 
@@ -815,7 +854,7 @@ watch(
 	<template v-if="viewMode === 'categories'">
 		<template v-for="cat in enabledCategories" :key="cat">
 			<ItemTable
-				v-if="visibleCategories.includes(cat)"
+				v-if="visibleCategories.length === 0 || visibleCategories.includes(cat)"
 				:collection="filteredGroupedItems[cat] || []"
 				:category="cat"
 				:categories="enabledCategories"
