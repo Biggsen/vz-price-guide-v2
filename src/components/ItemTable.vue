@@ -11,7 +11,7 @@ import {
 	getEffectivePriceMemoized
 } from '../utils/pricing.js'
 import { useAdmin } from '../utils/admin.js'
-import { getImageUrl } from '../utils/image.js'
+import { getImageUrl, getWikiUrl } from '../utils/image.js'
 import { computed, ref, watch } from 'vue'
 import { Squares2X2Icon } from '@heroicons/vue/16/solid'
 
@@ -209,12 +209,9 @@ function getItemEffectivePrice(item) {
 				<th width="50%" class="text-left">
 					<div class="flex items-center gap-1">
 						<a
-							:href="
-								item.url && item.url.trim() !== ''
-									? item.url
-									: `https://minecraft.fandom.com/wiki/${item.material_id}`
-							"
+							:href="getWikiUrl(item)"
 							target="_blank"
+							rel="noopener noreferrer"
 							class="font-normal hover:text-gray-asparagus hover:underline">
 							{{ item.name }}
 						</a>

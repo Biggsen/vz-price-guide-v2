@@ -5,6 +5,7 @@ import { useFirestore } from 'vuefire'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
 import { categories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
+import { getWikiUrl } from '../utils/image.js'
 import { NoSymbolIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
 
 const db = useFirestore()
@@ -901,7 +902,7 @@ async function updateSelectedPrices() {
 										:title="item.name">
 										<div class="font-medium">
 											<a
-												:href="`https://minecraft.wiki/w/${item.material_id}`"
+												:href="getWikiUrl(item)"
 												target="_blank"
 												rel="noopener noreferrer"
 												class="text-gray-900 hover:text-gray-asparagus hover:underline">

@@ -16,3 +16,52 @@ export function getImageUrl(imageUrl, options = {}) {
 
 	return imageUrl
 }
+
+/**
+ * Extract enchantment name from enchanted book material_id
+ * @param {string} materialId - The material_id (e.g., "enchanted_book_unbreaking_1")
+ * @returns {string|null} - The enchantment name (e.g., "unbreaking") or null if not an enchanted book
+ */
+export function extractEnchantmentName(materialId) {
+	if (!materialId || !materialId.startsWith('enchanted_book_')) {
+		return null
+	}
+
+	// Remove "enchanted_book_" prefix
+	const enchantmentPart = materialId.replace('enchanted_book_', '')
+
+	// Try to extract enchantment with level first (e.g., "unbreaking_1" -> "unbreaking")
+	const enchantWithLevelMatch = enchantmentPart.match(/^(.+)_(\d+)$/)
+	if (enchantWithLevelMatch) {
+		return enchantWithLevelMatch[1] // Return just the enchantment name
+	}
+
+	// Try to extract enchantment without level (e.g., "silk_touch" -> "silk_touch")
+	const enchantWithoutLevelMatch = enchantmentPart.match(/^(.+)$/)
+	if (enchantWithoutLevelMatch) {
+		return enchantWithoutLevelMatch[1]
+	}
+
+	return null
+}
+
+/**
+ * Generate the appropriate wiki URL for an item
+ * @param {Object} item - The item object with material_id
+ * @returns {string} - The wiki URL
+ */
+export function getWikiUrl(item) {
+	if (!item?.material_id) {
+		return '#'
+	}
+
+	// Check if this is an enchanted book
+	const enchantmentName = extractEnchantmentName(item.material_id)
+	if (enchantmentName) {
+		// For enchanted books, link to the enchantment page
+		return `https://minecraft.wiki/w/${enchantmentName}`
+	}
+
+	// For regular items, use the material_id
+	return `https://minecraft.wiki/w/${item.material_id}`
+}
