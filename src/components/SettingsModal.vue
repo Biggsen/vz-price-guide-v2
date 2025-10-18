@@ -159,7 +159,7 @@ defineExpose({
 <template>
 	<BaseModal :isOpen="isOpen" title="Settings" @close="closeModal">
 		<!-- Version Selection -->
-		<div>
+		<div class="mb-6">
 			<label class="block text-sm font-medium text-gray-700 mb-2">Minecraft Version:</label>
 
 			<!-- Desktop: Button Pills -->
@@ -194,13 +194,6 @@ defineExpose({
 					{{ version }}{{ !enabledVersions.includes(version) ? ' (Admin only)' : '' }}
 				</option>
 			</select>
-
-			<div class="text-sm text-gray-600 mt-1">
-				<span v-if="user?.email && canEditItems">
-					All versions available for admin users
-				</span>
-				<span v-else>Grayed out versions will be available soon</span>
-			</div>
 		</div>
 
 		<!-- Price Configuration -->
