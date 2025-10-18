@@ -46,7 +46,7 @@ const selectedVersion = ref(props.selectedVersion)
 const priceMultiplier = ref(1)
 const sellMargin = ref(0.3)
 const roundToWhole = ref(false)
-const showStackSize = ref(true)
+const showStackSize = ref(false)
 
 // Watch for prop changes and update local state
 watch(

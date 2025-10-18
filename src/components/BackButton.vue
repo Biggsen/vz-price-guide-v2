@@ -42,8 +42,13 @@ onMounted(() => {
 })
 
 function goBack() {
-	// Navigate back to home with or without query parameters based on context
-	router.push({ path: '/', query: homeQuery.value })
+	// For Edit pages, go back to bulk update page; otherwise go to home
+	if (isEditPage) {
+		router.push({ path: '/bulk-update' })
+	} else {
+		// Navigate back to home with or without query parameters based on context
+		router.push({ path: '/', query: homeQuery.value })
+	}
 }
 </script>
 

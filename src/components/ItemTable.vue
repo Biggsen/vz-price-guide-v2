@@ -1,7 +1,4 @@
 <script setup>
-import { useFirestore } from 'vuefire'
-import { useRoute, RouterLink } from 'vue-router'
-import { doc, deleteDoc } from 'firebase/firestore'
 import {
 	buyUnitPrice,
 	sellUnitPrice,
@@ -15,9 +12,7 @@ import { getImageUrl, getWikiUrl } from '../utils/image.js'
 import { computed, ref, watch } from 'vue'
 import { Squares2X2Icon } from '@heroicons/vue/16/solid'
 
-const { user, canEditItems } = useAdmin()
-const db = useFirestore()
-const route = useRoute()
+const { canEditItems } = useAdmin()
 
 // Sorting state
 const sortField = ref('')
@@ -116,22 +111,6 @@ function toggleSort(field) {
 	}
 }
 
-// Create the redirect URL with current query parameters
-function getEditLinkQuery() {
-	// Use the current route's query object directly to avoid double-encoding
-	const queryString = new URLSearchParams(route.query).toString()
-	const redirectPath = route.path + (queryString ? `?${queryString}` : '')
-	return {
-		redirect: redirectPath
-	}
-}
-
-async function deleteItem(itemId) {
-	if (confirm('Are you sure you want to delete this item?')) {
-		await deleteDoc(doc(db, 'items', itemId))
-	}
-}
-
 // Helper function to get effective price for template use
 function getItemEffectivePrice(item) {
 	const versionKey = currentVersion.value.replace('.', '_')
@@ -180,7 +159,6 @@ function getItemEffectivePrice(item) {
 					<span class="hidden min-[330px]:inline">Stack Size</span>
 					<span class="min-[330px]:hidden">Size</span>
 				</th>
-				<th rowspan="2" v-if="canEditItems">Actions</th>
 			</tr>
 			<tr>
 				<th
@@ -273,20 +251,6 @@ function getItemEffectivePrice(item) {
 					}}
 				</td>
 				<td v-if="showStackSize" class="text-center px-1 py-0.5 w-16">{{ item.stack }}</td>
-				<td v-if="canEditItems">
-					<RouterLink
-						:to="{ path: `/edit/${item.id}`, query: getEditLinkQuery() }"
-						class="text-gray-asparagus underline hover:text-heavy-metal px-1 py-0">
-						Edit
-					</RouterLink>
-					<span class="mx-1">|</span>
-					<a
-						href="#"
-						@click.prevent="deleteItem(item.id)"
-						class="text-red-600 underline hover:text-red-800 px-1 py-0">
-						Delete
-					</a>
-				</td>
 			</tr>
 		</tbody>
 	</table>

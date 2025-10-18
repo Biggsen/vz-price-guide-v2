@@ -8,6 +8,7 @@ import { useAdmin } from '../utils/admin.js'
 import { useCollection } from 'vuefire'
 import { calculateRecipePrice, getEffectivePrice } from '../utils/pricing.js'
 import { orderBy } from 'firebase/firestore'
+import NotificationBanner from '../components/NotificationBanner.vue'
 
 const db = useFirestore()
 const { user, canAddItems } = useAdmin()
@@ -43,6 +44,7 @@ const newItem = ref({
 const recalculationStatus = ref({})
 const pendingPricingTypeChange = ref(null)
 const originalPricingType = ref('static')
+const successMessage = ref('')
 
 // Fetch all items for recipe calculations
 const allItemsQuery = query(
@@ -71,7 +73,7 @@ const hasRecipes = computed(() => {
 const versionPrices = computed(() => {
 	return availableVersions.value.map((version) => {
 		const versionKey = version.replace('.', '_')
-		const price = newItem.value.prices_by_version[versionKey]
+		const price = newItem.value.prices_by_version?.[versionKey]
 		const hasExplicitPrice = price !== undefined
 		const effectivePrice = hasExplicitPrice ? price : getInheritedPrice(versionKey)
 
@@ -89,7 +91,7 @@ function getInheritedPrice(versionKey) {
 	const currentVersionIndex = versions.findIndex((v) => v.replace('.', '_') === versionKey)
 	for (let i = currentVersionIndex - 1; i >= 0; i--) {
 		const checkVersionKey = versions[i].replace('.', '_')
-		if (newItem.value.prices_by_version[checkVersionKey] !== undefined) {
+		if (newItem.value.prices_by_version?.[checkVersionKey] !== undefined) {
 			return newItem.value.prices_by_version[checkVersionKey]
 		}
 	}
@@ -98,11 +100,16 @@ function getInheritedPrice(versionKey) {
 
 function addVersionPrice(versionKey) {
 	const inheritedPrice = getInheritedPrice(versionKey)
+	if (!newItem.value.prices_by_version) {
+		newItem.value.prices_by_version = {}
+	}
 	newItem.value.prices_by_version[versionKey] = inheritedPrice
 }
 
 function removeVersionPrice(versionKey) {
-	delete newItem.value.prices_by_version[versionKey]
+	if (newItem.value.prices_by_version) {
+		delete newItem.value.prices_by_version[versionKey]
+	}
 }
 
 function onPricingTypeChange(newType) {
@@ -195,7 +202,12 @@ async function addItem() {
 		...newItem.value
 	})
 	if (newDoc.id) {
+		successMessage.value = `Item "${newItem.value.name}" has been successfully added to the price guide.`
 		newItem.value = { ...newItemInitial.value }
+		// Auto-hide notification after 5 seconds
+		setTimeout(() => {
+			successMessage.value = ''
+		}, 5000)
 	}
 }
 
@@ -204,7 +216,7 @@ function getInheritedPriceAndSource(versionKey) {
 	const currentVersionIndex = versions.findIndex((v) => v.replace('.', '_') === versionKey)
 	for (let i = currentVersionIndex - 1; i >= 0; i--) {
 		const checkVersionKey = versions[i].replace('.', '_')
-		if (newItem.value.prices_by_version[checkVersionKey] !== undefined) {
+		if (newItem.value.prices_by_version?.[checkVersionKey] !== undefined) {
 			return {
 				price: newItem.value.prices_by_version[checkVersionKey],
 				source: versions[i]
@@ -234,6 +246,14 @@ function getInheritedPriceAndSource(versionKey) {
 		</div>
 
 		<h1 class="text-3xl font-bold text-gray-900 mb-6">Add Item</h1>
+
+		<!-- Success Notification -->
+		<div v-if="successMessage" class="mb-6">
+			<NotificationBanner
+				type="success"
+				title="Item Added Successfully"
+				:message="successMessage" />
+		</div>
 		<form @submit.prevent="addItem">
 			<fieldset class="mb-10">
 				<legend

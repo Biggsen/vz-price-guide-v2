@@ -1,14 +1,22 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { useFirestore } from 'vuefire'
-import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
+import { collection, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore'
 import { categories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { getWikiUrl } from '../utils/image.js'
-import { NoSymbolIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
+import BaseModal from '../components/BaseModal.vue'
+import {
+	NoSymbolIcon,
+	ArrowUpIcon,
+	ArrowDownIcon,
+	PencilIcon,
+	TrashIcon
+} from '@heroicons/vue/24/outline'
 
 const db = useFirestore()
+const route = useRoute()
 const { user, canBulkUpdate } = useAdmin()
 const dbItems = ref([])
 const loading = ref(true)
@@ -35,6 +43,8 @@ const showDocumentIdColumn = ref(false)
 const selectedVersion = ref('all')
 const selectedCategories = ref([])
 const activeTab = ref('categories') // Add active tab state
+const showDeleteModal = ref(false)
+const itemToDelete = ref(null)
 
 async function loadDbItems() {
 	const snapshot = await getDocs(collection(db, 'items'))
@@ -346,6 +356,39 @@ async function updateSelectedPrices() {
 	updating.value = false
 	selectedItems.value = []
 	newPrice.value = ''
+}
+
+// Create the redirect URL with current query parameters
+function getEditLinkQuery() {
+	// Use the current route's query object directly to avoid double-encoding
+	const queryString = new URLSearchParams(route.query).toString()
+	const redirectPath = route.path + (queryString ? `?${queryString}` : '')
+	return {
+		redirect: redirectPath
+	}
+}
+
+function deleteItem(itemId) {
+	const item = dbItems.value.find((item) => item.id === itemId)
+	if (item) {
+		itemToDelete.value = item
+		showDeleteModal.value = true
+	}
+}
+
+async function executeDelete() {
+	if (!itemToDelete.value) return
+
+	try {
+		await deleteDoc(doc(db, 'items', itemToDelete.value.id))
+		// Reload items after deletion
+		await loadDbItems()
+	} catch (error) {
+		console.error('Error deleting item:', error)
+	} finally {
+		showDeleteModal.value = false
+		itemToDelete.value = null
+	}
 }
 </script>
 
@@ -842,7 +885,7 @@ async function updateSelectedPrices() {
 									<th
 										v-if="showPriceColumn"
 										@click="setSort('price')"
-										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
+										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
 										<div class="flex items-center gap-1">
 											Price
 											{{
@@ -857,6 +900,10 @@ async function updateSelectedPrices() {
 												v-else-if="getSortIcon('price') === 'down'"
 												class="w-4 h-4 text-gray-700" />
 										</div>
+									</th>
+									<th
+										class="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+										Actions
 									</th>
 								</tr>
 							</thead>
@@ -934,12 +981,34 @@ async function updateSelectedPrices() {
 										:title="item.url || ''">
 										<div class="truncate max-w-xs">{{ item.url || '' }}</div>
 									</td>
-									<td v-if="showPriceColumn" class="px-2 py-2 text-gray-900">
+									<td
+										v-if="showPriceColumn"
+										class="px-2 py-2 text-gray-900 border-r border-gray-200">
 										{{
 											getPriceForVersion(item, selectedVersion) !== null
 												? getPriceForVersion(item, selectedVersion)
 												: ''
 										}}
+									</td>
+									<td class="px-2 py-2 text-center border-r border-gray-200">
+										<div class="flex items-center justify-center gap-2">
+											<RouterLink
+												:to="{
+													path: `/edit/${item.id}`,
+													query: getEditLinkQuery()
+												}"
+												class="text-gray-asparagus hover:text-heavy-metal p-1 rounded transition-colors"
+												title="Edit item">
+												<PencilIcon class="w-4 h-4" />
+											</RouterLink>
+											<a
+												href="#"
+												@click.prevent="deleteItem(item.id)"
+												class="text-gray-asparagus hover:text-heavy-metal p-1 rounded transition-colors"
+												title="Delete item">
+												<TrashIcon class="w-4 h-4" />
+											</a>
+										</div>
 									</td>
 								</tr>
 							</tbody>
@@ -956,6 +1025,44 @@ async function updateSelectedPrices() {
 			<RouterLink to="/" class="text-blue-600 hover:underline">Return to Home</RouterLink>
 		</div>
 	</div>
+
+	<!-- Delete Confirmation Modal -->
+	<!-- prettier-ignore -->
+	<BaseModal
+		:isOpen="showDeleteModal"
+		title="Delete Item"
+		size="small"
+		@close="showDeleteModal = false; itemToDelete = null">
+		<div class="space-y-4">
+			<div>
+				<h3 class="font-normal text-gray-900">
+					Are you sure you want to delete
+					<span class="font-semibold">{{ itemToDelete?.name }}</span>
+					?
+				</h3>
+				<p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
+			</div>
+		</div>
+
+		<template #footer>
+			<div class="flex items-center justify-end p-4">
+				<div class="flex space-x-3">
+					<!-- prettier-ignore -->
+					<button
+						type="button"
+						@click="showDeleteModal = false; itemToDelete = null"
+						class="btn-secondary--outline">
+						Cancel
+					</button>
+					<button
+						@click="executeDelete"
+						class="bg-semantic-danger hover:bg-opacity-90 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+						Delete
+					</button>
+				</div>
+			</div>
+		</template>
+	</BaseModal>
 </template>
 
 <style scoped>
