@@ -1,5 +1,25 @@
 [
 	{
+		"id": 27,
+		"title": "Minecraft 1.21 Tricky Trials - Complete Item Catalog! ",
+		"date": "2025-10-19",
+		"types": ["Content"],
+		"hidden": false,
+		"description": "🎉 The Tricky Trials Update is now fully integrated! Added all 1.21 items with comprehensive pricing and crafting recipes. The catalog now features over 150 new items including the complete pale oak wood set, copper building blocks, trial chambers content, and much more. I've also created a dedicated 'Copper' category to better organize the extensive copper item collection. This update covers Minecraft 1.21.8 and does not include the recent 'Copper Age' 1.21.9 items (coming soon, promise!).",
+		"changes": [
+			"Completed all 1.21 items including pale oak wood set, tuff blocks, resin blocks, and copper variants",
+			"Added comprehensive pricing for all 1.21 content (150+ new items)",
+			"Added all crafting recipes for 1.21 items to the recipe database",
+			"Created new 'Copper' category for all copper-related items and building blocks",
+			"Added trial chambers content including trial keys, ominous trial keys, and trial spawners",
+			"Added new tools and items including mace, wind charge, wolf armor, and armadillo scute",
+			"Added copper building blocks including doors, trapdoors, grates, and bulbs in all oxidation states",
+			"Added bundle and harness variants in all 16 colors",
+			"Added decorative items including banner patterns, music discs, and smithing templates",
+			"Updated external resource links to use minecraft.wiki instead of minecraft.fandom"
+		]
+	},
+	{
 		"id": 26,
 		"title": "Minecraft 1.21 Support & Interface Improvements",
 		"date": "2025-10-18",

@@ -159,7 +159,7 @@ const showAlert = ref(true)
 
 function dismissAlert() {
 	showAlert.value = false
-	localStorage.setItem('crateRewardsToolAlertDismissed', 'true')
+	localStorage.setItem('minecraft121AlertDismissed', 'true')
 }
 
 // Helper function to compare version strings (e.g., "1.16" vs "1.17")
@@ -510,7 +510,7 @@ onMounted(() => {
 	initializeFromQuery()
 
 	// Check if alert was previously dismissed
-	const dismissed = localStorage.getItem('crateRewardsToolAlertDismissed')
+	const dismissed = localStorage.getItem('minecraft121AlertDismissed')
 	if (dismissed === 'true') {
 		showAlert.value = false
 	}
@@ -650,16 +650,12 @@ watch(
 			<div class="flex items-center">
 				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					<strong>New Crate Rewards Tool!</strong>
-					Build, manage and balance CrazyCrates prizes with ease.
-					<router-link to="/tools" class="underline hover:text-gray-asparagus">
-						<span>Try it out</span>
-					</router-link>
-					or check
+					<strong>Minecraft 1.21 Tricky Trials - Complete!</strong>
+					All 1.21 items now available with comprehensive pricing. New Copper category
+					added!
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
-						<span>Updates</span>
+						<span>View details</span>
 					</router-link>
-					for details.
 				</span>
 			</div>
 			<button
