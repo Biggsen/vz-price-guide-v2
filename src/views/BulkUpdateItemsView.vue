@@ -396,6 +396,36 @@ async function updateSelectedImages() {
 	newImage.value = ''
 }
 
+async function updateSelectedImagesAsMaterialId() {
+	if (!anySelected.value) return
+	updating.value = true
+	updateResult.value = null
+	let updated = 0,
+		failed = 0
+
+	for (const id of selectedItems.value) {
+		try {
+			// Find the item to get its material_id
+			const item = dbItems.value.find((item) => item.id === id)
+			if (item && item.material_id) {
+				const imageUrl = `/images/items/${item.material_id}.png`
+				await updateDoc(doc(db, 'items', id), {
+					image: imageUrl
+				})
+				updated++
+			} else {
+				failed++
+			}
+		} catch (e) {
+			failed++
+		}
+	}
+	updateResult.value = `Images set to material_id: ${updated}, Failed: ${failed}`
+	await loadDbItems()
+	updating.value = false
+	selectedItems.value = []
+}
+
 async function updateSelectedVersions() {
 	if (!newVersion.value || !anySelected.value) return
 	updating.value = true
@@ -759,6 +789,14 @@ function resetSearch() {
 							:disabled="!anySelected || !newImage || updating"
 							class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50">
 							Update Image
+						</button>
+					</div>
+					<div class="mt-2">
+						<button
+							@click="updateSelectedImagesAsMaterialId"
+							:disabled="!anySelected || updating"
+							class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50">
+							Save image(s) as material id
 						</button>
 					</div>
 				</div>
