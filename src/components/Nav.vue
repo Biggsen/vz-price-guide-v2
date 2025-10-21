@@ -227,7 +227,12 @@ onUnmounted(() => {
 				<CubeIcon
 					class="w-6 h-6 text-white drop-shadow [filter:_drop-shadow(2px_2px_2px_#000)]" />
 				<span class="font-semibold text-sm text-white [text-shadow:_2px_2px_2px_#000]">
-					vz's price guide for Minecraft
+					<span class="block max-[399px]:block min-[400px]:hidden">
+						vz's price guide for Minecraft
+					</span>
+					<span class="hidden max-[399px]:hidden min-[400px]:block">
+						verzion's economy price guide for Minecraft
+					</span>
 				</span>
 			</button>
 
