@@ -6,7 +6,50 @@ This document tracks bugs, regressions, and issues discovered during development
 
 ## Active Issues
 
-_No active issues at this time._
+### Admin Subnav Inconsistency Between Mobile and Desktop
+
+**Status**: 🔴 Active  
+**Priority**: Medium  
+**Type**: UX Issue  
+**Discovered**: 2025-01-27
+
+**Description**:
+The admin subnav for mobile and desktop displays different links and should be identical. Currently, the mobile and desktop admin navigation show different sets of links, creating an inconsistent user experience.
+
+**Expected Behavior**:
+Both mobile and desktop admin subnav should show the same navigation options:
+
+-   Price Guide
+-   Shop Manager
+-   Design
+-   Community
+
+**Current Behavior**:
+
+-   Mobile subnav: Shows collapsible sections with different link structures
+-   Desktop subnav: Shows horizontal navigation with different link sets
+
+**Impact**:
+
+-   Inconsistent navigation experience across devices
+-   Users may not find expected admin features on different screen sizes
+-   Confusing UX for admins switching between mobile and desktop
+
+**Files Involved**:
+
+-   `src/components/SubNav.vue` - Contains both mobile and desktop admin navigation logic
+
+**Reproduction Steps**:
+
+1. Log in as an admin user
+2. Navigate to any admin page to trigger the admin subnav
+3. Compare the mobile view (narrow screen) with desktop view (wide screen)
+4. Observe the different navigation options available
+
+**Notes**:
+
+-   This affects the admin navigation consistency
+-   Should be fixed to ensure uniform admin experience across all devices
 
 ## Resolved Issues
 
