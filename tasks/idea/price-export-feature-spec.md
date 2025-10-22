@@ -4,7 +4,33 @@
 
 Enable authenticated users to export the price list as JSON, YAML, and spreadsheet formats (CSV/XLSX). Users can choose which price fields to include (unit buy/sell, stack buy/sell), filter by categories, and target a specific Minecraft version. Keys in JSON/YAML exports are the Minecraft `material_id` for each item.
 
-**Status**: 💡 IDEA (User-requested)
+**Status**: ✅ **PARTIALLY IMPLEMENTED** - Core functionality complete, enhancements needed
+
+## ✅ **Implementation Status**
+
+### **Completed Features**
+
+-   ✅ **Authentication Gating** - Only logged-in users can export
+-   ✅ **Version Selection** - Choose Minecraft version (1.16-1.21)
+-   ✅ **Category Filtering** - Multi-select categories with "all" option
+-   ✅ **Price Field Selection** - Choose unit_buy, unit_sell, stack_buy, stack_sell
+-   ✅ **Metadata Inclusion** - Optional name, category, stack size
+-   ✅ **JSON Export** - Full JSON export with proper formatting
+-   ✅ **YAML Export** - Working YAML export (uses custom generation)
+-   ✅ **Preview Functionality** - Shows first 3 items before export
+-   ✅ **File Naming** - Proper timestamp-based naming
+-   ✅ **Integration** - Used in HomeView with export button
+
+### **Missing Features** (See `tasks/enhancement/price-export-enhancements.md`)
+
+-   ❌ **CSV/XLSX Export** - Only JSON and YAML implemented
+-   ❌ **Proper YAML Library** - Currently using custom YAML generation (works but could be improved)
+-   ❌ **Stack Size Override** - No option to override stack sizes
+-   ❌ **Currency Format Toggle** - No raw vs formatted option
+-   ❌ **Dedicated Export Route** - Currently only modal, no `/export` route
+-   ❌ **Rate Limiting** - No rate limiting implemented
+-   ❌ **Export Logging** - No audit trail
+-   ❌ **Cloud Function Support** - No server-side export for large datasets
 
 ---
 
@@ -117,30 +143,36 @@ iron_ingot,Iron Ingot,ores,10,7,640,448
 
 ## 9) 🧱 Architecture & Implementation
 
-### Phase 1: Client-Only Export (MVP)
+### ✅ **Phase 1: Client-Only Export (MVP) - COMPLETED**
 
--   Fetch items from Firestore with:
-    -   `where('version', '<=', selectedVersion)` to exclude items introduced later
-    -   Category filter: if ≤10 categories, use `in`; else fetch all then client-filter
--   Compute prices client-side using existing utils.
--   Generate files in-browser:
-    -   JSON: `JSON.stringify`
-    -   YAML: `js-yaml`
-    -   CSV: build CSV manually or use lightweight helper
--   Trigger downloads via blob URLs.
+**Current Implementation** (`src/components/ExportModal.vue`):
 
-### Phase 2: XLSX Support
+-   ✅ Fetch items from Firestore with proper version filtering
+-   ✅ Category filtering with client-side fallback for >10 categories
+-   ✅ Compute prices client-side using existing `getEffectivePrice()` utility
+-   ✅ Generate files in-browser:
+    -   ✅ JSON: `JSON.stringify` with proper formatting
+    -   ⚠️ YAML: Custom generation (needs js-yaml library)
+    -   ❌ CSV: Not implemented
+-   ✅ Trigger downloads via blob URLs with proper file naming
 
--   Add SheetJS (`xlsx`) for workbook generation.
--   Produce a single worksheet named `prices_<versionKey>`.
+### 🔄 **Phase 2: XLSX Support - PENDING**
 
-### Phase 3: Optional Cloud Function Export (Large Datasets / Governance)
+**Missing Implementation**:
 
--   HTTPS function `exportPrices`:
-    -   Input: `{ version: '1_21', categories: string[], fields: string[], stackOverride?: number, includeMetadata?: boolean, currencyFormat?: 'raw'|'formatted' }`
-    -   Output: `application/json` or `text/yaml` depending on requested format
-    -   Enforce auth, rate limiting, and input validation
--   Frontend calls function and downloads response; still keep client mode as fallback.
+-   ❌ Add SheetJS (`xlsx`) for workbook generation
+-   ❌ Produce a single worksheet named `prices_<versionKey>`
+-   ❌ CSV export functionality
+
+### 🔄 **Phase 3: Optional Cloud Function Export (Large Datasets / Governance) - PENDING**
+
+**Missing Implementation**:
+
+-   ❌ HTTPS function `exportPrices`:
+    -   ❌ Input: `{ version: '1_21', categories: string[], fields: string[], stackOverride?: number, includeMetadata?: boolean, currencyFormat?: 'raw'|'formatted' }`
+    -   ❌ Output: `application/json` or `text/yaml` depending on requested format
+    -   ❌ Enforce auth, rate limiting, and input validation
+-   ❌ Frontend calls function and downloads response; still keep client mode as fallback
 
 ---
 
@@ -153,11 +185,26 @@ iron_ingot,Iron Ingot,ores,10,7,640,448
 
 ## 11) 🧪 Acceptance Criteria
 
--   Authenticated user can export JSON and YAML keyed by `material_id` with selected price fields and categories.
--   Version filter respects underscore keys and fallback pricing for missing versions.
--   Rounding rules applied consistently; stack prices reflect item stack or override.
--   CSV export opens correctly in spreadsheet tools; XLSX (Phase 2) contains expected columns.
--   No data is sourced from `/resource/`; only Firestore data is used.
+### ✅ **Completed Criteria**
+
+-   ✅ Authenticated user can export JSON keyed by `material_id` with selected price fields and categories
+-   ✅ Authenticated user can export YAML keyed by `material_id` with selected price fields and categories
+-   ✅ Version filter respects underscore keys and fallback pricing for missing versions
+-   ✅ Rounding rules applied consistently; stack prices reflect item stack size
+-   ✅ No data is sourced from `/resource/`; only Firestore data is used
+-   ✅ Export modal integrates properly with HomeView
+-   ✅ File naming follows specified format with timestamps
+
+### 🔄 **Pending Criteria**
+
+-   ❌ YAML export uses proper js-yaml library formatting (currently uses custom generation)
+-   ❌ CSV export opens correctly in spreadsheet tools
+-   ❌ XLSX export contains expected columns and worksheet structure
+-   ❌ Stack size override option works correctly
+-   ❌ Currency format toggle produces expected output
+-   ❌ Dedicated `/export` route works independently
+-   ❌ Rate limiting prevents excessive exports
+-   ❌ Export logging captures audit trail
 
 ---
 
