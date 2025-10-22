@@ -2594,6 +2594,53 @@ const TEST_DATA = {
 				'1_16': 720.0
 			},
 			recipes_by_version: {}
+		},
+		{
+			id: 'CopperBootsSeedItem2024',
+			material_id: 'copper_boots',
+			name: 'copper boots',
+			image: '/images/items/copper_boots.png',
+			url: 'https://minecraft.fandom.com/wiki/Copper_Boots',
+			stack: 1,
+			category: 'armor',
+			subcategory: 'boots',
+			version: '1.21',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_21': 12.0
+			},
+			recipes_by_version: {
+				'1_21': {
+					ingredients: [{ material_id: 'copper_ingot', quantity: 4 }],
+					output_count: 1
+				}
+			}
+		},
+		{
+			id: 'CopperSwordSeedItem2024',
+			material_id: 'copper_sword',
+			name: 'copper sword',
+			image: '/images/items/copper_sword.png',
+			url: 'https://minecraft.fandom.com/wiki/Copper_Sword',
+			stack: 1,
+			category: 'weapons',
+			subcategory: 'sword',
+			version: '1.21',
+			version_removed: null,
+			pricing_type: 'dynamic',
+			prices_by_version: {
+				'1_21': 12.0
+			},
+			recipes_by_version: {
+				'1_21': {
+					ingredients: [
+						{ material_id: 'copper_ingot', quantity: 2 },
+						{ material_id: 'stick', quantity: 1 }
+					],
+					output_count: 1
+				}
+			}
 		}
 	],
 	shop_items: [
