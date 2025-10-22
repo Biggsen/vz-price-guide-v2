@@ -53,105 +53,164 @@
 				Previous Suggestions
 			</h2>
 			<div v-if="suggestions.length === 0" class="text-gray-500">No suggestions yet.</div>
-			<ul v-else class="space-y-4">
-				<li
+			<div v-else class="space-y-6">
+				<div
 					v-for="s in suggestions"
 					:key="s.id"
-					class="border border-gray-200 bg-gray-50 rounded p-4 relative">
+					class="bg-sea-mist rounded-lg shadow-md border-2 border-amulet h-full overflow-hidden flex flex-col">
 					<template v-if="editingId === s.id">
-						<form @submit.prevent="saveEdit(s)">
-							<input
-								v-model="editForm.title"
-								maxlength="80"
-								class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-bold"
-								required />
-							<textarea
-								v-model="editForm.body"
-								maxlength="1000"
-								class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus min-h-[140px]"
-								required></textarea>
-							<div class="flex gap-2 mb-2">
-								<button
-									type="submit"
-									class="px-3 py-1 bg-semantic-success text-white rounded hover:bg-opacity-80 text-sm">
-									Save
-								</button>
-								<button
-									type="button"
-									@click="cancelEdit"
-									class="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm">
-									Cancel
-								</button>
+						<!-- Card Header -->
+						<div
+							class="bg-amulet py-2 px-3 pl-4 border-x-2 border-t-2 border-white rounded-t-lg">
+							<div class="flex items-center justify-between">
+								<input
+									v-model="editForm.title"
+									maxlength="80"
+									class="text-gray-900 bg-white border-2 border-gray-asparagus rounded px-3 py-1 flex-1 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus"
+									placeholder="Edit Suggestion"
+									required />
 							</div>
-						</form>
+						</div>
+						<!-- Card Body -->
+						<div
+							class="bg-norway p-4 border-x-2 border-b-2 border-white rounded-b-lg flex-1 flex flex-col">
+							<form @submit.prevent="saveEdit(s)" class="flex-1 flex flex-col">
+								<textarea
+									v-model="editForm.body"
+									maxlength="1000"
+									class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus min-h-[140px] flex-1"
+									required></textarea>
+								<div class="flex gap-2 mt-2">
+									<BaseButton type="submit" variant="primary">Save</BaseButton>
+									<BaseButton
+										type="button"
+										@click="cancelEdit"
+										variant="secondary">
+										Cancel
+									</BaseButton>
+								</div>
+							</form>
+						</div>
 					</template>
 					<template v-else>
-						<div class="text-lg font-bold text-gray-900 mb-2">{{ s.title }}</div>
-						<div class="text-gray-700 mb-2 whitespace-pre-line">{{ s.body }}</div>
-						<button
-							v-if="editingId !== s.id && s.status === 'open'"
-							class="text-sm text-gray-700 hover:text-gray-900 underline inline-flex items-center mb-2"
-							@click="startEdit(s)">
-							<PencilSquareIcon class="w-4 h-4 mr-1" />
-							Edit
-						</button>
-						<hr class="border-t border-gray-200 my-2" />
-						<div class="text-sm text-gray-600 mb-2">
-							Submitted:
-							{{
-								s.createdAt?.toDate ? s.createdAt.toDate().toLocaleDateString() : ''
-							}}
+						<!-- Card Header -->
+						<div
+							class="bg-amulet py-2 px-3 pl-4 border-x-2 border-t-2 border-white rounded-t-lg">
+							<div class="flex items-center justify-between">
+								<input
+									v-if="editingId === s.id"
+									v-model="editForm.title"
+									maxlength="80"
+									class="text-xl font-semibold text-heavy-metal bg-transparent border-none outline-none flex-1 placeholder:text-heavy-metal/70"
+									placeholder="Edit Suggestion"
+									required />
+								<h3
+									v-else
+									class="text-xl font-semibold text-heavy-metal hover:text-gray-asparagus cursor-pointer flex-1">
+									{{ s.title }}
+								</h3>
+								<!-- Action Buttons -->
+								<div class="flex gap-2 ml-3">
+									<button
+										v-if="s.status === 'open'"
+										@click="startEdit(s)"
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
+										title="Edit suggestion">
+										<PencilIcon class="w-4 h-4" />
+									</button>
+									<button
+										@click="confirmDeleteSuggestion(s)"
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
+										title="Delete suggestion">
+										<TrashIcon class="w-4 h-4" />
+									</button>
+								</div>
+							</div>
 						</div>
-						<div class="text-sm text-gray-600 mb-2 flex items-center gap-1">
-							Status:
-							<span v-if="s.status === 'open'" class="inline-flex items-center">
-								<InboxIcon class="w-4 h-4 mr-1 align-middle -mt-0.5" />
-								{{ statusLabel(s.status) }}
-							</span>
-							<span
-								v-else-if="s.status === 'in progress'"
-								class="inline-flex items-center">
-								<EyeIcon class="w-4 h-4 mr-1 align-middle -mt-0.5" />
-								{{ statusLabel(s.status) }}
-							</span>
-							<span
-								v-else-if="s.status === 'closed'"
-								class="inline-flex items-center">
-								<CheckIcon class="w-4 h-4 mr-1 align-middle -mt-0.5" />
-								{{ statusLabel(s.status) }}
-							</span>
-							<span v-else>{{ statusLabel(s.status) }}</span>
-						</div>
-						<div class="flex items-center justify-between mt-4">
-							<div>
-								<template v-if="deleteConfirmId === s.id">
-									<span class="text-sm mr-2">Are you sure?</span>
-									<button
-										@click="softDeleteSuggestion(s.id)"
-										class="px-3 py-1 text-sm bg-semantic-danger text-white rounded hover:bg-opacity-80 transition-colors mr-2">
-										Yes
-									</button>
-									<button
-										@click="deleteConfirmId = null"
-										class="px-3 py-1 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors">
-										No
-									</button>
-								</template>
-								<template v-else>
-									<button
-										@click="deleteConfirmId = s.id"
-										class="text-sm text-gray-700 hover:text-gray-900 underline inline-flex items-center">
-										<TrashIcon class="w-4 h-4 mr-1" />
-										Delete
-									</button>
-								</template>
+						<!-- Card Body -->
+						<div
+							class="bg-norway p-4 border-x-2 border-b-2 border-white rounded-b-lg flex-1 flex flex-col">
+							<div class="flex-1">
+								<p class="text-heavy-metal mb-3 whitespace-pre-line">
+									{{ s.body }}
+								</p>
+								<div class="text-sm text-heavy-metal space-y-1">
+									<div>
+										<span class="font-medium">Submitted:</span>
+										{{
+											s.createdAt?.toDate
+												? s.createdAt.toDate().toLocaleDateString()
+												: ''
+										}}
+									</div>
+									<div>
+										<span class="font-medium">Status:</span>
+										<span
+											v-if="s.status === 'open'"
+											class="inline-flex items-center">
+											<InboxIcon class="w-4 h-4 mr-1 align-middle -mt-0.5" />
+											{{ statusLabel(s.status) }}
+										</span>
+										<span
+											v-else-if="s.status === 'in progress'"
+											class="inline-flex items-center">
+											<EyeIcon class="w-4 h-4 mr-1 align-middle -mt-0.5" />
+											{{ statusLabel(s.status) }}
+										</span>
+										<span
+											v-else-if="s.status === 'closed'"
+											class="inline-flex items-center">
+											<CheckIcon class="w-4 h-4 mr-1 align-middle -mt-0.5" />
+											{{ statusLabel(s.status) }}
+										</span>
+										<span v-else>{{ statusLabel(s.status) }}</span>
+									</div>
+								</div>
 							</div>
 						</div>
 					</template>
-				</li>
-			</ul>
+				</div>
+			</div>
 		</div>
 	</div>
+
+	<!-- Delete Confirmation Modal -->
+	<!-- prettier-ignore -->
+	<BaseModal
+		:isOpen="showDeleteModal"
+		title="Delete Suggestion"
+		size="small"
+		@close="showDeleteModal = false; suggestionToDelete = null">
+		<div class="space-y-4">
+			<div>
+				<h3 class="font-normal text-gray-900">
+					Are you sure you want to delete
+					<span class="font-semibold">{{ suggestionToDelete?.title }}</span>
+					?
+				</h3>
+				<p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
+			</div>
+		</div>
+
+		<template #footer>
+			<div class="flex items-center justify-end p-4">
+				<div class="flex space-x-3">
+					<BaseButton
+						@click="showDeleteModal = false; suggestionToDelete = null"
+						variant="secondary">
+						Cancel
+					</BaseButton>
+					<BaseButton
+						@click="executeDelete"
+						:disabled="loading"
+						variant="primary"
+						class="bg-semantic-danger hover:bg-opacity-90">
+						{{ loading ? 'Deleting...' : 'Delete' }}
+					</BaseButton>
+				</div>
+			</div>
+		</template>
+	</BaseModal>
 </template>
 
 <script setup>
@@ -170,9 +229,10 @@ import { useFirebaseAuth, useFirestore, useCollection } from 'vuefire'
 import { useUserProfile } from '../utils/userProfile.js'
 import { InboxIcon } from '@heroicons/vue/20/solid'
 import { EyeIcon } from '@heroicons/vue/24/outline'
-import { TrashIcon, PencilSquareIcon, CheckIcon } from '@heroicons/vue/20/solid'
+import { TrashIcon, PencilIcon, CheckIcon } from '@heroicons/vue/24/outline'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/BaseButton.vue'
+import BaseModal from '@/components/BaseModal.vue'
 
 const auth = useFirebaseAuth()
 const db = useFirestore()
@@ -188,7 +248,8 @@ const userName = computed(
 		auth.currentUser?.email?.split('@')[0] ||
 		'there'
 )
-const deleteConfirmId = ref(null)
+const showDeleteModal = ref(false)
+const suggestionToDelete = ref(null)
 const editingId = ref(null)
 const editForm = ref({ title: '', body: '' })
 const isVerified = computed(() => auth.currentUser?.emailVerified)
@@ -248,9 +309,16 @@ async function submitSuggestion() {
 	loading.value = false
 }
 
-async function softDeleteSuggestion(id) {
-	await updateDoc(firestoreDoc(db, 'suggestions', id), { deleted: true })
-	deleteConfirmId.value = null
+function confirmDeleteSuggestion(suggestion) {
+	suggestionToDelete.value = suggestion
+	showDeleteModal.value = true
+}
+
+async function executeDelete() {
+	if (!suggestionToDelete.value) return
+	await updateDoc(firestoreDoc(db, 'suggestions', suggestionToDelete.value.id), { deleted: true })
+	showDeleteModal.value = false
+	suggestionToDelete.value = null
 	// No need to manually fetch - useCollection will update automatically
 }
 
