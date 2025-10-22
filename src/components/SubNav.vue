@@ -11,6 +11,7 @@ const route = useRoute()
 const isPriceGuideExpanded = ref(false)
 const isShopManagerExpanded = ref(false)
 const isDesignExpanded = ref(false)
+const isCommunityExpanded = ref(false)
 const isToolsExpanded = ref(false)
 
 // Computed properties for active states
@@ -36,6 +37,10 @@ const isShopManagerActive = computed(() => {
 
 const isDesignActive = computed(() => {
 	return ['/design', '/styleguide', '/visual-gallery'].includes(route.path)
+})
+
+const isCommunityActive = computed(() => {
+	return ['/admin/community', '/admin/suggestions'].includes(route.path)
 })
 
 const isToolsActive = computed(() => {
@@ -79,6 +84,10 @@ const expandedSection = computed(() => {
 		else if (['/design', '/styleguide', '/visual-gallery'].includes(currentPath)) {
 			return 'design'
 		}
+		// Community routes
+		else if (['/admin/community', '/admin/suggestions'].includes(currentPath)) {
+			return 'community'
+		}
 	} else if (activeMainNav === 'tools') {
 		// Tools routes
 		const currentPath = window.location.pathname
@@ -104,6 +113,7 @@ watch(
 			isPriceGuideExpanded.value = false
 			isShopManagerExpanded.value = false
 			isDesignExpanded.value = false
+			isCommunityExpanded.value = false
 			isToolsExpanded.value = false
 
 			// Expand the appropriate section
@@ -128,6 +138,8 @@ watch(
 				isShopManagerExpanded.value = true
 			} else if (['/design', '/styleguide', '/visual-gallery'].includes(currentPath)) {
 				isDesignExpanded.value = true
+			} else if (['/admin/community', '/admin/suggestions'].includes(currentPath)) {
+				isCommunityExpanded.value = true
 			}
 		} else if (newSection === 'tools') {
 			const currentPath = window.location.pathname
@@ -136,6 +148,7 @@ watch(
 			isPriceGuideExpanded.value = false
 			isShopManagerExpanded.value = false
 			isDesignExpanded.value = false
+			isCommunityExpanded.value = false
 			isToolsExpanded.value = false
 
 			// Expand tools section
@@ -151,6 +164,7 @@ watch(
 			isPriceGuideExpanded.value = false
 			isShopManagerExpanded.value = false
 			isDesignExpanded.value = false
+			isCommunityExpanded.value = false
 			isToolsExpanded.value = false
 		}
 	},
@@ -164,6 +178,8 @@ function toggleSection(section) {
 		isShopManagerExpanded.value = !isShopManagerExpanded.value
 	} else if (section === 'design') {
 		isDesignExpanded.value = !isDesignExpanded.value
+	} else if (section === 'community') {
+		isCommunityExpanded.value = !isCommunityExpanded.value
 	} else if (section === 'tools') {
 		isToolsExpanded.value = !isToolsExpanded.value
 	}
@@ -243,6 +259,34 @@ function toggleSection(section) {
 				</RouterLink>
 			</div>
 
+			<!-- Community Section -->
+			<button
+				@click="toggleSection('community')"
+				class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-600 transition-colors">
+				<span class="font-medium">Community</span>
+				<span
+					class="text-sm transition-transform"
+					:class="{ 'rotate-180': isCommunityExpanded }">
+					▼
+				</span>
+			</button>
+
+			<!-- Community Content -->
+			<div v-show="isCommunityExpanded" class="border-t border-gray-600">
+				<RouterLink
+					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
+					active-class="bg-blue-600 text-white"
+					to="/admin/community">
+					Dashboard
+				</RouterLink>
+				<RouterLink
+					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
+					active-class="bg-blue-600 text-white"
+					to="/admin/suggestions">
+					Suggestions
+				</RouterLink>
+			</div>
+
 			<div class="px-6 py-2">
 				<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
 			</div>
@@ -267,6 +311,12 @@ function toggleSection(section) {
 				:class="{ 'underline font-semibold': isDesignActive }"
 				to="/design">
 				Design
+			</RouterLink>
+			<RouterLink
+				class="hover:underline"
+				:class="{ 'underline font-semibold': isCommunityActive }"
+				to="/admin/community">
+				Community
 			</RouterLink>
 			<div class="ml-auto">
 				<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>

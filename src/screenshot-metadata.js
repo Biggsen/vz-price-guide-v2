@@ -247,9 +247,15 @@ export const screenshotToViewMap = {
 		type: 'admin',
 		description: 'Edit existing recipe form'
 	},
+	'community-dashboard-default': {
+		viewFile: 'src/views/CommunityView.vue',
+		route: '/admin/community',
+		type: 'admin',
+		description: 'Community dashboard for managing user engagement and feedback'
+	},
 	'suggestions-admin-default': {
 		viewFile: 'src/views/SuggestionsAdminView.vue',
-		route: '/suggestions/all',
+		route: '/admin/suggestions',
 		type: 'admin',
 		description: 'Admin interface for managing user suggestions'
 	},

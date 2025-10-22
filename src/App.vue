@@ -39,7 +39,11 @@ function updateActiveMainNav() {
 	// Tools-related routes (for authenticated users)
 	const toolsRoutes = ['/tools', '/crate-rewards']
 
-	if (adminRoutes.includes(route.path) || route.path.startsWith('/edit-recipe/')) {
+	if (
+		adminRoutes.includes(route.path) ||
+		route.path.startsWith('/edit-recipe/') ||
+		route.path.startsWith('/admin/')
+	) {
 		activeMainNav.value = 'admin'
 	} else if (toolsRoutes.includes(route.path) || route.path.startsWith('/crate-rewards/')) {
 		activeMainNav.value = 'tools'

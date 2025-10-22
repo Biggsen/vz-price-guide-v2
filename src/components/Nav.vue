@@ -157,15 +157,6 @@ function isSubnavExpanded(section) {
 	return expandedSections.value.has(section)
 }
 
-function handleSuggestionsClick() {
-	if (isAdmin.value) {
-		router.push('/suggestions/all')
-	} else {
-		router.push('/suggestions')
-	}
-	closeMenu()
-}
-
 // Navigation handlers using externalized analytics
 const handleSignInClickMobile = () => navigationHandlers.signInMobile(closeMenu)
 const handleSignUpClickMobile = () => navigationHandlers.signUpMobile(closeMenu)
@@ -289,11 +280,17 @@ onUnmounted(() => {
 				</div>
 			</RouterLink>
 
-			<button
-				@click="handleSuggestionsClick"
+			<RouterLink
+				to="/suggestions"
+				@click="
+					() => {
+						handleNavigationClick('Suggestions')
+						setActiveMainNav(null)
+					}
+				"
 				:class="[
-					'block px-3 py-2 transition-colors w-full text-left',
-					route.path === '/suggestions' || route.path === '/suggestions/all'
+					'block px-3 py-2 transition-colors',
+					route.path === '/suggestions'
 						? 'bg-gray-700 text-white'
 						: 'hover:bg-gray-700 hover:text-white'
 				]"
@@ -302,7 +299,7 @@ onUnmounted(() => {
 					<LightBulbIcon class="w-4 h-4" />
 					<span>Suggestions</span>
 				</div>
-			</button>
+			</RouterLink>
 
 			<RouterLink
 				to="/updates"
@@ -377,6 +374,12 @@ onUnmounted(() => {
 						@click="closeMenu"
 						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
 						Styleguide
+					</RouterLink>
+					<RouterLink
+						to="/admin/community"
+						@click="closeMenu"
+						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
+						Community
 					</RouterLink>
 				</div>
 			</div>
@@ -490,11 +493,17 @@ onUnmounted(() => {
 				<span>Tools</span>
 			</div>
 		</RouterLink>
-		<button
-			@click="handleSuggestionsClick"
+		<RouterLink
+			to="/suggestions"
+			@click="
+				() => {
+					handleNavigationClick('Suggestions')
+					setActiveMainNav(null)
+				}
+			"
 			:class="[
 				'px-3 py-2 rounded transition-colors whitespace-nowrap',
-				route.path === '/suggestions' || route.path === '/suggestions/all'
+				route.path === '/suggestions'
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
 			]"
@@ -503,7 +512,7 @@ onUnmounted(() => {
 				<LightBulbIcon class="w-4 h-4" />
 				<span>Suggestions</span>
 			</div>
-		</button>
+		</RouterLink>
 		<RouterLink
 			to="/updates"
 			@click="

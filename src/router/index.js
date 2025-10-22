@@ -346,13 +346,25 @@ const router = createRouter({
 			}
 		},
 		{
-			path: '/suggestions/all',
-			name: 'suggestions-all',
+			path: '/admin/community',
+			name: 'admin-community',
+			component: () => import('../views/CommunityView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: "Community Dashboard - verzion's economy price guide for Minecraft"
+			}
+		},
+		{
+			path: '/admin/suggestions',
+			name: 'admin-suggestions',
 			component: () => import('../views/SuggestionsAdminView.vue'),
 			meta: {
 				requiresAuth: true,
+				requiresVerification: true,
 				requiresAdmin: true,
-				title: "All Suggestions - verzion's economy price guide for Minecraft"
+				title: "Admin Suggestions - verzion's economy price guide for Minecraft"
 			}
 		},
 		{
