@@ -66,12 +66,19 @@ service cloud.firestore {
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
         request.resource.data.keys().hasAll(['userId', 'userDisplayName', 'createdAt', 'status', 'title', 'body']) &&
         request.resource.data.title is string &&
+        request.resource.data.title.size() > 0 &&
+        request.resource.data.title.size() <= 80 &&
         request.resource.data.body is string &&
+        request.resource.data.body.size() > 0 &&
+        request.resource.data.body.size() <= 500 &&
         request.resource.data.status in ['open', 'in progress', 'closed', 'rejected'];
     }
-    // Suggestion Messages: Allow authenticated users to read all messages, users can write their own
+    // Suggestion Messages: Users can only read messages for their own suggestions, admins can read all
     match /suggestions/{suggestionId}/suggestionMessages/{messageId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && (
+        request.auth.token.admin == true ||
+        get(/databases/$(database)/documents/suggestions/$(suggestionId)).data.userId == request.auth.uid
+      );
       allow write: if request.auth != null && request.auth.uid == resource.data.userId;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
         request.resource.data.keys().hasAll(['userId', 'userDisplayName', 'body', 'createdAt']) &&
