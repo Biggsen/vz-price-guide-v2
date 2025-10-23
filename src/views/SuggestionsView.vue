@@ -37,10 +37,11 @@
 					id="body"
 					v-model="form.body"
 					required
-					maxlength="1000"
+					maxlength="500"
 					class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus min-h-[140px]"
 					placeholder="Describe your suggestion..."
 					:disabled="!isVerified"></textarea>
+				<div class="text-sm text-gray-500 mt-1">{{ form.body.length }}/500 characters</div>
 			</div>
 			<div v-if="error" class="text-red-600 text-sm">{{ error }}</div>
 			<BaseButton type="submit" variant="primary" :disabled="loading || !isVerified">
@@ -238,9 +239,12 @@
 					id="edit-body"
 					v-model="editForm.body"
 					required
-					maxlength="1000"
+					maxlength="500"
 					class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus min-h-[140px]"
 					placeholder="Describe your suggestion..."></textarea>
+				<div class="text-sm text-gray-500 mt-1">
+					{{ editForm.body.length }}/500 characters
+				</div>
 			</div>
 		</div>
 
@@ -398,7 +402,7 @@ async function submitSuggestion() {
 		error.value = 'Title and details are required.'
 		return
 	}
-	if (form.value.title.length > 80 || form.value.body.length > 1000) {
+	if (form.value.title.length > 80 || form.value.body.length > 500) {
 		error.value = 'Title or details too long.'
 		return
 	}
