@@ -79,18 +79,30 @@ service cloud.firestore {
         request.auth.token.admin == true ||
         get(/databases/$(database)/documents/suggestions/$(suggestionId)).data.userId == request.auth.uid
       );
-      allow write: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
+      allow write: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.token.admin == true
+      );
+      allow create: if request.auth != null && (
+        (request.resource.data.userId == request.auth.uid) ||
+        (request.auth.token.admin == true)
+      ) &&
         request.resource.data.keys().hasAll(['userId', 'userDisplayName', 'body', 'createdAt']) &&
         request.resource.data.body is string &&
         request.resource.data.body.size() > 0 &&
         request.resource.data.body.size() <= 500;
-      allow update: if request.auth != null && request.auth.uid == resource.data.userId &&
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.token.admin == true
+      ) &&
         request.resource.data.keys().hasAll(['userId', 'userDisplayName', 'body', 'createdAt', 'editedAt']) &&
         request.resource.data.body is string &&
         request.resource.data.body.size() > 0 &&
         request.resource.data.body.size() <= 500;
-      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.token.admin == true
+      );
     }
     // Crate Rewards: Allow verified users to access their own crates, admins can access all
     match /crate_rewards/{crateId} {
