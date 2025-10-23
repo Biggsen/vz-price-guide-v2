@@ -57,7 +57,10 @@
 				<div
 					v-for="s in suggestions"
 					:key="s.id"
-					class="bg-sea-mist rounded-lg shadow-md border-2 border-amulet h-full overflow-hidden flex flex-col">
+					:class="[
+						'bg-sea-mist rounded-lg shadow-md border-2 border-amulet h-full overflow-hidden flex flex-col transition-opacity duration-300',
+						deletingSuggestionId === s.id ? 'opacity-0' : 'opacity-100'
+					]">
 					<!-- Card Header -->
 					<div
 						class="bg-amulet py-2 px-3 pl-4 border-x-2 border-t-2 border-white rounded-t-lg">
@@ -294,6 +297,7 @@ const userName = computed(
 )
 const showDeleteModal = ref(false)
 const suggestionToDelete = ref(null)
+const deletingSuggestionId = ref(null)
 const editingId = ref(null)
 const editForm = ref({ title: '', body: '' })
 const showCommentForm = ref({})
@@ -394,10 +398,30 @@ function confirmDeleteSuggestion(suggestion) {
 
 async function executeDelete() {
 	if (!suggestionToDelete.value) return
-	await updateDoc(firestoreDoc(db, 'suggestions', suggestionToDelete.value.id), { deleted: true })
-	showDeleteModal.value = false
-	suggestionToDelete.value = null
-	// No need to manually fetch - useCollection will update automatically
+
+	loading.value = true
+	const suggestionIdToDelete = suggestionToDelete.value.id
+
+	try {
+		// Start fade-out animation
+		deletingSuggestionId.value = suggestionIdToDelete
+
+		// Wait for animation to complete (300ms)
+		await new Promise((resolve) => setTimeout(resolve, 300))
+
+		// Actually delete the suggestion
+		await updateDoc(firestoreDoc(db, 'suggestions', suggestionIdToDelete), { deleted: true })
+		showDeleteModal.value = false
+		suggestionToDelete.value = null
+		deletingSuggestionId.value = null
+		// No need to manually fetch - useCollection will update automatically
+	} catch (error) {
+		console.error('Error deleting suggestion:', error)
+		// Reset animation state on error
+		deletingSuggestionId.value = null
+	} finally {
+		loading.value = false
+	}
 }
 
 // Removed deleteSuggestion function as it's not used in the template
