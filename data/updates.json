@@ -1,5 +1,18 @@
 [
 	{
+		"id": 28,
+		"title": "Suggestion System Updates",
+		"date": "2025-10-23",
+		"types": ["Enhancement", "Community"],
+		"hidden": false,
+		"description": "Made some improvements to the suggestion system. Updated the interface to be more consistent with the rest of the site and added a messaging feature so I can discuss your suggestion with you.",
+		"changes": [
+			"Updated suggestion interface styling",
+			"Added messaging system for suggestion discussions",
+			"Improved suggestion form and admin interface"
+		]
+	},
+	{
 		"id": 27,
 		"title": "Minecraft 1.21 Tricky Trials - Complete Item Catalog! ",
 		"date": "2025-10-19",
