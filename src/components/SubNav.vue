@@ -302,6 +302,12 @@ function toggleSection(section) {
 			</RouterLink>
 			<RouterLink
 				class="hover:underline"
+				:class="{ 'underline font-semibold': isCommunityActive }"
+				to="/admin/community">
+				Community
+			</RouterLink>
+			<RouterLink
+				class="hover:underline"
 				:class="{ 'underline font-semibold': isShopManagerActive }"
 				to="/shop-manager">
 				Shop Manager
@@ -311,12 +317,6 @@ function toggleSection(section) {
 				:class="{ 'underline font-semibold': isDesignActive }"
 				to="/design">
 				Design
-			</RouterLink>
-			<RouterLink
-				class="hover:underline"
-				:class="{ 'underline font-semibold': isCommunityActive }"
-				to="/admin/community">
-				Community
 			</RouterLink>
 			<div class="ml-auto">
 				<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
