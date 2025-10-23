@@ -159,10 +159,10 @@ const deletingMessageId = ref(null)
 const currentUserId = computed(() => auth.currentUser?.uid)
 
 function formatMessageBody(text) {
-	// Simple URL regex that matches http/https URLs
-	const urlRegex = /(https?:\/\/[^\s]+)/g
+	// Only allow Discord invite links
+	const discordUrlRegex = /(https?:\/\/discord\.gg\/[^\s]+)/gi
 	return text.replace(
-		urlRegex,
+		discordUrlRegex,
 		'<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>'
 	)
 }
