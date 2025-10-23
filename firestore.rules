@@ -69,6 +69,22 @@ service cloud.firestore {
         request.resource.data.body is string &&
         request.resource.data.status in ['open', 'in progress', 'closed', 'rejected'];
     }
+    // Suggestion Comments: Allow authenticated users to read all comments, users can write their own
+    match /suggestions/{suggestionId}/comments/{commentId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['userId', 'userDisplayName', 'body', 'createdAt']) &&
+        request.resource.data.body is string &&
+        request.resource.data.body.size() > 0 &&
+        request.resource.data.body.size() <= 500;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId &&
+        request.resource.data.keys().hasAll(['userId', 'userDisplayName', 'body', 'createdAt', 'editedAt']) &&
+        request.resource.data.body is string &&
+        request.resource.data.body.size() > 0 &&
+        request.resource.data.body.size() <= 500;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
     // Crate Rewards: Allow verified users to access their own crates, admins can access all
     match /crate_rewards/{crateId} {
       allow read, write: if request.auth != null && 

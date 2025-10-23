@@ -119,6 +119,39 @@
 							Delete
 						</button>
 					</div>
+
+					<!-- Comments Section -->
+					<div class="mt-4 pt-4 border-t border-gray-200">
+						<div class="flex items-center justify-between mb-3">
+							<h4 class="text-sm font-medium text-gray-700">Comments</h4>
+							<button
+								@click="toggleCommentForm(s.id)"
+								class="text-sm text-gray-600 hover:text-gray-800 underline">
+								{{
+									showCommentForm[s.id]
+										? 'Cancel'
+										: commentsData[s.id] && commentsData[s.id].length > 0
+										? 'Reply'
+										: 'Add Comment'
+								}}
+							</button>
+						</div>
+
+						<!-- Comments List -->
+						<CommentList
+							v-if="commentsData[s.id] && commentsData[s.id].length > 0"
+							:comments="commentsData[s.id]"
+							:suggestion-id="s.id"
+							@comment-updated="handleCommentUpdated(s.id)"
+							@comment-deleted="handleCommentDeleted(s.id)" />
+
+						<!-- Comment Form -->
+						<AdminCommentForm
+							v-if="showCommentForm[s.id]"
+							:suggestion-id="s.id"
+							@comment-added="handleCommentAdded(s.id)"
+							@cancel="showCommentForm[s.id] = false" />
+					</div>
 				</div>
 			</div>
 		</div>
@@ -126,7 +159,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import {
 	getFirestore,
 	collection,
@@ -138,6 +171,11 @@ import {
 	getDoc as getFirestoreDoc,
 	deleteDoc
 } from 'firebase/firestore'
+import CommentForm from '@/components/CommentForm.vue'
+import AdminCommentForm from '@/components/AdminCommentForm.vue'
+import CommentList from '@/components/CommentList.vue'
+import { getCommentsQuery } from '@/utils/comments.js'
+import { useAdmin } from '@/utils/admin.js'
 
 function formatDate(date) {
 	if (!date) return ''
@@ -154,6 +192,9 @@ const db = getFirestore()
 const suggestions = ref([])
 const loading = ref(true)
 const tab = ref('active')
+const showCommentForm = ref({})
+const commentsData = ref({})
+const { isAdmin } = useAdmin()
 
 const statusOptions = [
 	{ value: 'open', label: 'Open' },
@@ -182,6 +223,23 @@ async function fetchUserProfile(userId, fallbackEmail) {
 		}
 	} catch {}
 	return { displayName: fallbackEmail, minecraftUsername: '', email: fallbackEmail }
+}
+
+// Load comments for a specific suggestion
+async function loadComments(suggestionId) {
+	try {
+		const commentsQuery = getCommentsQuery(suggestionId)
+		const { getDocs } = await import('firebase/firestore')
+		const snapshot = await getDocs(commentsQuery)
+		const comments = snapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data()
+		}))
+		commentsData.value[suggestionId] = comments
+	} catch (error) {
+		console.error('Error loading comments:', error)
+		commentsData.value[suggestionId] = []
+	}
 }
 
 async function fetchSuggestions() {
@@ -220,6 +278,42 @@ const filteredSuggestions = computed(() => {
 		? suggestions.value.filter((s) => !s.deleted)
 		: suggestions.value.filter((s) => s.deleted)
 })
+
+// Comment handling functions
+function toggleCommentForm(suggestionId) {
+	showCommentForm.value[suggestionId] = !showCommentForm.value[suggestionId]
+}
+
+function handleCommentAdded(suggestionId) {
+	showCommentForm.value[suggestionId] = false
+	// Reload comments to show the new one
+	loadComments(suggestionId)
+}
+
+function handleCommentUpdated(suggestionId) {
+	// Reload comments to show updates
+	loadComments(suggestionId)
+}
+
+function handleCommentDeleted(suggestionId) {
+	// Reload comments to show updates
+	loadComments(suggestionId)
+}
+
+// Load comments when suggestions change
+watch(
+	suggestions,
+	(newSuggestions) => {
+		if (newSuggestions.length > 0) {
+			newSuggestions.forEach((suggestion) => {
+				if (!commentsData.value[suggestion.id]) {
+					loadComments(suggestion.id)
+				}
+			})
+		}
+	},
+	{ immediate: true }
+)
 
 onMounted(() => {
 	fetchSuggestions()
