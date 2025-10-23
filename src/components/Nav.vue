@@ -21,6 +21,7 @@ import { useAdmin } from '../utils/admin.js'
 import { userProfileExists } from '../utils/userProfile.js'
 import { getFirestore, doc, getDoc } from 'firebase/firestore'
 import { navigationHandlers } from '../utils/analytics.js'
+import { checkSuggestionUpdates, markSuggestionsAsSeen } from '../utils/suggestionNotifications.js'
 import updatesData from '../../data/updates.json'
 
 const props = defineProps({
@@ -43,13 +44,16 @@ const latestUpdateId = updatesData[0]?.id || null
 // Check if user has seen the latest update
 const hasSeenLatestUpdate = ref(false)
 
+// Check if user has unseen suggestion updates
+const hasUnseenSuggestions = ref(false)
+
 // Check localStorage on mount
 onMounted(() => {
 	const lastSeenUpdateId = localStorage.getItem('lastSeenUpdateId')
 	hasSeenLatestUpdate.value = lastSeenUpdateId === latestUpdateId?.toString()
 })
 
-// Watch for route changes to hide notification when visiting updates
+// Watch for route changes to hide notification when visiting updates or suggestions
 watch(
 	() => route.path,
 	(newPath) => {
@@ -57,6 +61,12 @@ watch(
 			// Mark the latest update as seen
 			localStorage.setItem('lastSeenUpdateId', latestUpdateId?.toString() || '')
 			hasSeenLatestUpdate.value = true
+		} else if (newPath === '/suggestions') {
+			// Mark suggestions as seen
+			if (user.value?.uid) {
+				markSuggestionsAsSeen(user.value.uid)
+				hasUnseenSuggestions.value = false
+			}
 		}
 	}
 )
@@ -98,8 +108,12 @@ watch(
 	async (newUser) => {
 		if (newUser?.uid) {
 			await loadUserProfile(newUser.uid)
+			// Check for suggestion updates on login
+			const hasUpdates = await checkSuggestionUpdates(newUser.uid)
+			hasUnseenSuggestions.value = hasUpdates
 		} else {
 			userProfile.value = null
+			hasUnseenSuggestions.value = false
 		}
 	},
 	{ immediate: true }
@@ -289,7 +303,7 @@ onUnmounted(() => {
 					}
 				"
 				:class="[
-					'block px-3 py-2 transition-colors',
+					'block px-3 py-2 transition-colors relative',
 					route.path === '/suggestions'
 						? 'bg-gray-700 text-white'
 						: 'hover:bg-gray-700 hover:text-white'
@@ -297,7 +311,13 @@ onUnmounted(() => {
 				v-if="user?.email">
 				<div class="flex items-center gap-2">
 					<LightBulbIcon class="w-4 h-4" />
-					<span>Suggestions</span>
+					<span class="relative">
+						Suggestions
+						<!-- Notification dot -->
+						<div
+							v-if="hasUnseenSuggestions"
+							class="w-2 h-2 bg-red-500 rounded-full absolute top-0.5 -right-2 animate-pulse"></div>
+					</span>
 				</div>
 			</RouterLink>
 
@@ -502,7 +522,7 @@ onUnmounted(() => {
 				}
 			"
 			:class="[
-				'px-3 py-2 rounded transition-colors whitespace-nowrap',
+				'px-3 py-2 rounded transition-colors whitespace-nowrap relative',
 				route.path === '/suggestions'
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
@@ -510,7 +530,13 @@ onUnmounted(() => {
 			v-if="user?.email">
 			<div class="flex items-center gap-2">
 				<LightBulbIcon class="w-4 h-4" />
-				<span>Suggestions</span>
+				<span class="relative">
+					Suggestions
+					<!-- Notification dot -->
+					<div
+						v-if="hasUnseenSuggestions"
+						class="w-2 h-2 bg-red-500 rounded-full absolute top-0.5 -right-2 animate-pulse"></div>
+				</span>
 			</div>
 		</RouterLink>
 		<RouterLink
