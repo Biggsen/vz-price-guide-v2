@@ -84,7 +84,7 @@
 	<BaseModal
 		:isOpen="editingMessageId !== null"
 		title="Edit Message"
-		size="medium"
+		size="normal"
 		:closeOnBackdrop="false"
 		@close="cancelEditMessage">
 		<div class="space-y-4">
