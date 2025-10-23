@@ -113,11 +113,19 @@
 								{{ option.label }}
 							</button>
 						</div>
-						<button
-							@click="hardDeleteSuggestion(s.id)"
-							class="ml-4 bg-semantic-danger text-white rounded px-3 py-1 text-sm shadow-sm focus:outline-none hover:bg-opacity-80">
-							Delete
-						</button>
+						<div class="flex gap-2 ml-4">
+							<button
+								v-if="s.deleted"
+								@click="confirmRestore(s)"
+								class="bg-semantic-success text-white rounded px-3 py-1 text-sm shadow-sm focus:outline-none hover:bg-opacity-80">
+								Restore
+							</button>
+							<button
+								@click="confirmPermanentDelete(s)"
+								class="bg-semantic-danger text-white rounded px-3 py-1 text-sm shadow-sm focus:outline-none hover:bg-opacity-80">
+								{{ s.deleted ? 'Permanently Delete' : 'Delete' }}
+							</button>
+						</div>
 					</div>
 
 					<!-- Messages Section -->
@@ -160,6 +168,86 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- Restore Confirmation Modal -->
+	<!-- prettier-ignore -->
+	<BaseModal
+		:isOpen="showRestoreModal"
+		title="Restore Suggestion"
+		size="small"
+		@close="showRestoreModal = false; suggestionToRestore = null">
+		<div class="space-y-4">
+			<div>
+				<h3 class="font-normal text-gray-900">
+					Are you sure you want to restore
+					<span class="font-semibold">{{ suggestionToRestore?.title }}</span>
+					?
+				</h3>
+				<p class="text-sm text-gray-600 mt-2">
+					This will make the suggestion active again.
+				</p>
+			</div>
+		</div>
+
+		<template #footer>
+			<div class="flex items-center justify-end p-4">
+				<div class="flex space-x-3">
+					<!-- prettier-ignore -->
+					<BaseButton
+						@click="showRestoreModal = false; suggestionToRestore = null"
+						variant="secondary">
+						Cancel
+					</BaseButton>
+					<BaseButton
+						@click="executeRestore"
+						:disabled="loading"
+						variant="primary"
+						class="bg-semantic-success hover:bg-opacity-90">
+						{{ loading ? 'Restoring...' : 'Restore' }}
+					</BaseButton>
+				</div>
+			</div>
+		</template>
+	</BaseModal>
+
+	<!-- Permanently Delete Confirmation Modal -->
+	<!-- prettier-ignore -->
+	<BaseModal
+		:isOpen="showPermanentDeleteModal"
+		title="Permanently Delete Suggestion"
+		size="small"
+		@close="showPermanentDeleteModal = false; suggestionToPermanentlyDelete = null">
+		<div class="space-y-4">
+			<div>
+				<h3 class="font-normal text-gray-900">
+					Are you sure you want to permanently delete
+					<span class="font-semibold">{{ suggestionToPermanentlyDelete?.title }}</span>
+					?
+				</h3>
+				<p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
+			</div>
+		</div>
+
+		<template #footer>
+			<div class="flex items-center justify-end p-4">
+				<div class="flex space-x-3">
+					<!-- prettier-ignore -->
+					<BaseButton
+						@click="showPermanentDeleteModal = false; suggestionToPermanentlyDelete = null"
+						variant="secondary">
+						Cancel
+					</BaseButton>
+					<BaseButton
+						@click="executePermanentDelete"
+						:disabled="loading"
+						variant="primary"
+						class="bg-semantic-danger hover:bg-opacity-90">
+						{{ loading ? 'Deleting...' : 'Permanently Delete' }}
+					</BaseButton>
+				</div>
+			</div>
+		</template>
+	</BaseModal>
 </template>
 
 <script setup>
@@ -180,6 +268,8 @@ import {
 import SuggestionMessageForm from '@/components/SuggestionMessageForm.vue'
 import AdminSuggestionMessageForm from '@/components/AdminSuggestionMessageForm.vue'
 import SuggestionMessageList from '@/components/SuggestionMessageList.vue'
+import BaseButton from '@/components/BaseButton.vue'
+import BaseModal from '@/components/BaseModal.vue'
 import { getSuggestionMessagesQuery } from '@/utils/suggestionMessages.js'
 import { useAdmin } from '@/utils/admin.js'
 
@@ -203,6 +293,12 @@ const messagesData = ref({})
 const messageUnsubscribers = ref({})
 const suggestionsUnsubscribe = ref(null)
 const { isAdmin } = useAdmin()
+
+// Modal state
+const showRestoreModal = ref(false)
+const suggestionToRestore = ref(null)
+const showPermanentDeleteModal = ref(false)
+const suggestionToPermanentlyDelete = ref(null)
 
 const statusOptions = [
 	{ value: 'open', label: 'Open' },
@@ -302,15 +398,49 @@ async function updateStatus(suggestion) {
 	})
 }
 
-async function hardDeleteSuggestion(id) {
-	if (
-		!confirm(
-			'Are you sure you want to permanently delete this suggestion? This cannot be undone.'
-		)
-	)
-		return
-	await deleteDoc(doc(db, 'suggestions', id))
-	await fetchSuggestions()
+function confirmRestore(suggestion) {
+	suggestionToRestore.value = suggestion
+	showRestoreModal.value = true
+}
+
+async function executeRestore() {
+	if (!suggestionToRestore.value) return
+
+	loading.value = true
+	try {
+		await updateDoc(doc(db, 'suggestions', suggestionToRestore.value.id), {
+			deleted: null,
+			lastActivityAt: serverTimestamp()
+		})
+		showRestoreModal.value = false
+		suggestionToRestore.value = null
+	} catch (error) {
+		console.error('Error restoring suggestion:', error)
+		alert('Failed to restore suggestion. Please try again.')
+	} finally {
+		loading.value = false
+	}
+}
+
+function confirmPermanentDelete(suggestion) {
+	suggestionToPermanentlyDelete.value = suggestion
+	showPermanentDeleteModal.value = true
+}
+
+async function executePermanentDelete() {
+	if (!suggestionToPermanentlyDelete.value) return
+
+	loading.value = true
+	try {
+		await deleteDoc(doc(db, 'suggestions', suggestionToPermanentlyDelete.value.id))
+		showPermanentDeleteModal.value = false
+		suggestionToPermanentlyDelete.value = null
+	} catch (error) {
+		console.error('Error permanently deleting suggestion:', error)
+		alert('Failed to permanently delete suggestion. Please try again.')
+	} finally {
+		loading.value = false
+	}
 }
 
 const filteredSuggestions = computed(() => {
