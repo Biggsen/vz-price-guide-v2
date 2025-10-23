@@ -355,6 +355,22 @@ const suggestionsQuery = computed(() => {
 // Use reactive collection
 const { data: rawSuggestions } = useCollection(suggestionsQuery)
 
+// Watch rawSuggestions directly to ensure we load messages when data first becomes available
+watch(
+	rawSuggestions,
+	(newRawSuggestions) => {
+		if (newRawSuggestions && newRawSuggestions.length > 0) {
+			// Load messages for all suggestions that don't have listeners yet
+			newRawSuggestions.forEach((suggestion) => {
+				if (!suggestion.deleted && !messageUnsubscribers.value[suggestion.id]) {
+					loadMessages(suggestion.id)
+				}
+			})
+		}
+	},
+	{ immediate: true }
+)
+
 // Filter out deleted suggestions
 const suggestions = computed(() => {
 	if (!rawSuggestions.value) return []
