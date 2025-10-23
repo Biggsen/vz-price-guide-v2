@@ -6,12 +6,12 @@
 			or feedback to make this site better, I'd love to hear from you.
 			<span class="block mt-2">- verzion</span>
 		</p>
-		<div
+		<NotificationBanner
 			v-if="!isVerified"
-			class="mb-6 flex items-center gap-3 bg-yellow-100 border-2 border-yellow-400 text-yellow-800 rounded p-4 text-base font-medium">
-			<ExclamationTriangleIcon class="w-6 h-6 flex-shrink-0 text-yellow-500" />
-			<span>You must verify your email before you can submit suggestions.</span>
-		</div>
+			type="warning"
+			title="Email Verification Required"
+			message="You must verify your email before you can submit suggestions."
+			class="mb-6" />
 		<form
 			@submit.prevent="submitSuggestion"
 			class="space-y-6 mb-8"
