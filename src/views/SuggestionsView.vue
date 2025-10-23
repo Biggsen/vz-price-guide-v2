@@ -134,37 +134,37 @@
 							</div>
 						</div>
 
-						<!-- Comments Section -->
+						<!-- Messages Section -->
 						<div
-							v-if="commentsData[s.id] && commentsData[s.id].length > 0"
+							v-if="messagesData[s.id] && messagesData[s.id].length > 0"
 							class="mt-4 pt-4">
 							<div class="flex items-center justify-between mb-3">
-								<h4 class="text-sm font-medium text-heavy-metal">Comments</h4>
+								<h4 class="text-sm font-medium text-heavy-metal">Discussion</h4>
 							</div>
 
-							<!-- Comments List -->
-							<CommentList
-								:comments="commentsData[s.id]"
+							<!-- Messages List -->
+							<SuggestionMessageList
+								:messages="messagesData[s.id]"
 								:suggestion-id="s.id"
-								@comment-updated="handleCommentUpdated(s.id)"
-								@comment-deleted="handleCommentDeleted(s.id)" />
+								@suggestion-message-updated="handleMessageUpdated(s.id)"
+								@suggestion-message-deleted="handleMessageDeleted(s.id)" />
 
 							<!-- Reply Button (only show if admin has commented) -->
 							<div v-if="isVerified" class="mt-3 text-right">
 								<BaseButton
-									@click="toggleCommentForm(s.id)"
+									@click="toggleMessageForm(s.id)"
 									variant="secondary"
 									class="text-sm">
-									{{ showCommentForm[s.id] ? 'Cancel' : 'Reply' }}
+									{{ showMessageForm[s.id] ? 'Cancel' : 'Reply' }}
 								</BaseButton>
 							</div>
 
-							<!-- Comment Form -->
-							<CommentForm
-								v-if="showCommentForm[s.id]"
+							<!-- Message Form -->
+							<SuggestionMessageForm
+								v-if="showMessageForm[s.id]"
 								:suggestion-id="s.id"
-								@comment-added="handleCommentAdded(s.id)"
-								@cancel="showCommentForm[s.id] = false" />
+								@suggestion-message-added="handleMessageAdded(s.id)"
+								@cancel="showMessageForm[s.id] = false" />
 						</div>
 					</div>
 				</div>
@@ -258,7 +258,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import {
 	collection,
 	addDoc,
@@ -267,7 +267,8 @@ import {
 	orderBy,
 	serverTimestamp,
 	doc as firestoreDoc,
-	updateDoc
+	updateDoc,
+	onSnapshot
 } from 'firebase/firestore'
 import { useFirebaseAuth, useFirestore, useCollection } from 'vuefire'
 import { useUserProfile } from '../utils/userProfile.js'
@@ -276,10 +277,10 @@ import { EyeIcon } from '@heroicons/vue/24/outline'
 import { TrashIcon, PencilIcon, CheckCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseModal from '@/components/BaseModal.vue'
-import CommentForm from '@/components/CommentForm.vue'
-import CommentList from '@/components/CommentList.vue'
+import SuggestionMessageForm from '@/components/SuggestionMessageForm.vue'
+import SuggestionMessageList from '@/components/SuggestionMessageList.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'
-import { getCommentsQuery } from '@/utils/comments.js'
+import { getSuggestionMessagesQuery } from '@/utils/suggestionMessages.js'
 
 const auth = useFirebaseAuth()
 const db = useFirestore()
@@ -300,24 +301,37 @@ const suggestionToDelete = ref(null)
 const deletingSuggestionId = ref(null)
 const editingId = ref(null)
 const editForm = ref({ title: '', body: '' })
-const showCommentForm = ref({})
-const commentsData = ref({})
+const showMessageForm = ref({})
+const messagesData = ref({})
+const messageUnsubscribers = ref({})
 const isVerified = computed(() => auth.currentUser?.emailVerified)
 
-// Load comments for a specific suggestion
-async function loadComments(suggestionId) {
+// Load messages for a specific suggestion with real-time updates
+function loadMessages(suggestionId) {
 	try {
-		const commentsQuery = getCommentsQuery(suggestionId)
-		const { getDocs } = await import('firebase/firestore')
-		const snapshot = await getDocs(commentsQuery)
-		const comments = snapshot.docs.map((doc) => ({
-			id: doc.id,
-			...doc.data()
-		}))
-		commentsData.value[suggestionId] = comments
+		const messagesQuery = getSuggestionMessagesQuery(suggestionId)
+
+		// Set up real-time listener
+		const unsubscribe = onSnapshot(
+			messagesQuery,
+			(snapshot) => {
+				const messages = snapshot.docs.map((doc) => ({
+					id: doc.id,
+					...doc.data()
+				}))
+				messagesData.value[suggestionId] = messages
+			},
+			(error) => {
+				console.error('Error loading messages:', error)
+				messagesData.value[suggestionId] = []
+			}
+		)
+
+		// Store unsubscribe function for cleanup
+		messageUnsubscribers.value[suggestionId] = unsubscribe
 	} catch (error) {
-		console.error('Error loading comments:', error)
-		commentsData.value[suggestionId] = []
+		console.error('Error setting up message listener:', error)
+		messagesData.value[suggestionId] = []
 	}
 }
 
@@ -343,14 +357,30 @@ const suggestions = computed(() => {
 	return rawSuggestions.value.filter((s) => !s.deleted)
 })
 
-// Load comments when suggestions change
+// Load messages when suggestions change
 watch(
 	suggestions,
-	(newSuggestions) => {
+	(newSuggestions, oldSuggestions) => {
+		// Clean up listeners for suggestions that are no longer visible
+		if (oldSuggestions) {
+			const oldIds = oldSuggestions.map((s) => s.id)
+			const newIds = newSuggestions.map((s) => s.id)
+			const removedIds = oldIds.filter((id) => !newIds.includes(id))
+
+			removedIds.forEach((id) => {
+				if (messageUnsubscribers.value[id]) {
+					messageUnsubscribers.value[id]()
+					delete messageUnsubscribers.value[id]
+					delete messagesData.value[id]
+				}
+			})
+		}
+
+		// Set up listeners for new suggestions
 		if (newSuggestions.length > 0) {
 			newSuggestions.forEach((suggestion) => {
-				if (!commentsData.value[suggestion.id]) {
-					loadComments(suggestion.id)
+				if (!messageUnsubscribers.value[suggestion.id]) {
+					loadMessages(suggestion.id)
 				}
 			})
 		}
@@ -463,26 +493,30 @@ function statusLabel(status) {
 	return status
 }
 
-// Comment handling functions
-function toggleCommentForm(suggestionId) {
-	showCommentForm.value[suggestionId] = !showCommentForm.value[suggestionId]
+// Message handling functions
+function toggleMessageForm(suggestionId) {
+	showMessageForm.value[suggestionId] = !showMessageForm.value[suggestionId]
 }
 
-function handleCommentAdded(suggestionId) {
-	showCommentForm.value[suggestionId] = false
-	// Reload comments to show the new one
-	loadComments(suggestionId)
+function handleMessageAdded(suggestionId) {
+	showMessageForm.value[suggestionId] = false
+	// No need to reload - real-time listener will update automatically
 }
 
-function handleCommentUpdated(suggestionId) {
-	// Reload comments to show updates
-	loadComments(suggestionId)
+function handleMessageUpdated(suggestionId) {
+	// No need to reload - real-time listener will update automatically
 }
 
-function handleCommentDeleted(suggestionId) {
-	// Reload comments to show updates
-	loadComments(suggestionId)
+function handleMessageDeleted(suggestionId) {
+	// No need to reload - real-time listener will update automatically
 }
 
-// No need for onMounted since useCollection handles reactivity automatically
+// Cleanup listeners when component unmounts
+onUnmounted(() => {
+	Object.values(messageUnsubscribers.value).forEach((unsubscribe) => {
+		if (typeof unsubscribe === 'function') {
+			unsubscribe()
+		}
+	})
+})
 </script>

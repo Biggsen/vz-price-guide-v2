@@ -1,45 +1,45 @@
 <template>
-	<div v-if="comments.length > 0" class="mt-4 space-y-3">
+	<div v-if="messages.length > 0" class="mt-4 space-y-3">
 		<div
-			v-for="comment in comments"
-			:key="comment.id"
+			v-for="message in messages"
+			:key="message.id"
 			:class="[
 				'bg-saltpan rounded p-3 transition-opacity duration-300',
-				deletingCommentId === comment.id ? 'opacity-0' : 'opacity-100'
+				deletingMessageId === message.id ? 'opacity-0' : 'opacity-100'
 			]">
 			<div class="flex items-start justify-between">
 				<div class="flex-1">
 					<div class="flex items-center gap-2 mb-2">
 						<img
-							v-if="comment.minecraftUsername"
-							:src="`https://mc-heads.net/avatar/${comment.minecraftUsername}/24`"
-							:alt="comment.minecraftUsername"
+							v-if="message.minecraftUsername"
+							:src="`https://mc-heads.net/avatar/${message.minecraftUsername}/24`"
+							:alt="message.minecraftUsername"
 							class="w-6 h-6 rounded" />
 						<div>
 							<div class="font-medium text-gray-900 text-sm">
-								{{ comment.userDisplayName }}
+								{{ message.userDisplayName }}
 							</div>
 							<div class="text-xs text-gray-500">
-								{{ formatCommentTime(comment.createdAt) }}
-								<span v-if="comment.editedAt">(edited)</span>
+								{{ formatSuggestionMessageTime(message.createdAt) }}
+								<span v-if="message.editedAt">(edited)</span>
 							</div>
 						</div>
 					</div>
-					<div class="text-gray-700 text-sm whitespace-pre-line">
-						{{ comment.body }}
-					</div>
+					<div
+						class="text-gray-700 text-sm whitespace-pre-line"
+						v-html="formatMessageBody(message.body)"></div>
 				</div>
-				<div v-if="canEditComment(comment)" class="flex gap-1 ml-2">
+				<div v-if="canEditMessage(message)" class="flex gap-1 ml-2">
 					<button
-						@click="startEditComment(comment)"
+						@click="startEditMessage(message)"
 						class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-						title="Edit comment">
+						title="Edit message">
 						<PencilIcon class="w-4 h-4" />
 					</button>
 					<button
-						@click="confirmDeleteComment(comment)"
+						@click="confirmDeleteMessage(message)"
 						class="p-1 text-gray-400 hover:text-red-600 transition-colors"
-						title="Delete comment">
+						title="Delete message">
 						<TrashIcon class="w-4 h-4" />
 					</button>
 				</div>
@@ -50,13 +50,13 @@
 	<!-- Delete Confirmation Modal -->
 	<BaseModal
 		:isOpen="deleteConfirmId !== null"
-		title="Delete Comment"
+		title="Delete Message"
 		size="small"
 		@close="deleteConfirmId = null">
 		<div class="space-y-4">
 			<div>
 				<h3 class="font-normal text-gray-900">
-					Are you sure you want to delete this comment?
+					Are you sure you want to delete this message?
 				</h3>
 				<p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
 			</div>
@@ -69,7 +69,7 @@
 						Cancel
 					</BaseButton>
 					<BaseButton
-						@click="executeDeleteComment"
+						@click="executeDeleteMessage"
 						:disabled="loading"
 						variant="primary"
 						class="bg-semantic-danger hover:bg-opacity-90">
@@ -80,29 +80,30 @@
 		</template>
 	</BaseModal>
 
-	<!-- Edit Comment Modal -->
+	<!-- Edit Message Modal -->
 	<BaseModal
-		:isOpen="editingCommentId !== null"
-		title="Edit Reply"
+		:isOpen="editingMessageId !== null"
+		title="Edit Message"
 		size="medium"
-		@close="cancelEditComment">
+		:closeOnBackdrop="false"
+		@close="cancelEditMessage">
 		<div class="space-y-4">
 			<div>
 				<label
-					for="edit-comment"
+					for="edit-message"
 					class="block text-base font-medium leading-6 text-gray-900">
-					Reply *
+					Message *
 				</label>
 				<textarea
-					id="edit-comment"
-					v-model="editCommentText"
-					placeholder="Edit your reply..."
+					id="edit-message"
+					v-model="editMessageText"
+					placeholder="Edit your message..."
 					maxlength="500"
 					class="block w-full rounded border-2 border-gray-asparagus px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus resize-none"
-					rows="8"
+					rows="4"
 					required></textarea>
 				<div class="text-sm text-gray-500 mt-1">
-					{{ editCommentText.length }}/500 characters
+					{{ editMessageText.length }}/500 characters
 				</div>
 			</div>
 		</div>
@@ -110,10 +111,10 @@
 		<template #footer>
 			<div class="flex items-center justify-end">
 				<div class="flex space-x-3">
-					<BaseButton @click="cancelEditComment" variant="secondary">Cancel</BaseButton>
+					<BaseButton @click="cancelEditMessage" variant="secondary">Cancel</BaseButton>
 					<BaseButton
-						@click="saveEditComment"
-						:disabled="loading || !editCommentText.trim()"
+						@click="saveEditMessage"
+						:disabled="loading || !editMessageText.trim()"
 						variant="primary">
 						{{ loading ? 'Saving...' : 'Save Changes' }}
 					</BaseButton>
@@ -125,14 +126,18 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { updateComment, deleteComment, formatCommentTime } from '@/utils/comments.js'
+import {
+	updateSuggestionMessage,
+	deleteSuggestionMessage,
+	formatSuggestionMessageTime
+} from '@/utils/suggestionMessages.js'
 import { useFirebaseAuth } from 'vuefire'
 import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseModal from '@/components/BaseModal.vue'
 
 const props = defineProps({
-	comments: {
+	messages: {
 		type: Array,
 		required: true
 	},
@@ -142,78 +147,87 @@ const props = defineProps({
 	}
 })
 
-const emit = defineEmits(['comment-updated', 'comment-deleted'])
+const emit = defineEmits(['suggestion-message-updated', 'suggestion-message-deleted'])
 
 const auth = useFirebaseAuth()
-const editingCommentId = ref(null)
-const editCommentText = ref('')
+const editingMessageId = ref(null)
+const editMessageText = ref('')
 const loading = ref(false)
 const deleteConfirmId = ref(null)
-const deletingCommentId = ref(null)
+const deletingMessageId = ref(null)
 
 const currentUserId = computed(() => auth.currentUser?.uid)
 
-function canEditComment(comment) {
-	return currentUserId.value === comment.userId
+function formatMessageBody(text) {
+	// Simple URL regex that matches http/https URLs
+	const urlRegex = /(https?:\/\/[^\s]+)/g
+	return text.replace(
+		urlRegex,
+		'<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>'
+	)
 }
 
-function startEditComment(comment) {
-	editingCommentId.value = comment.id
-	editCommentText.value = comment.body
+function canEditMessage(message) {
+	return currentUserId.value === message.userId
 }
 
-function cancelEditComment() {
-	editingCommentId.value = null
-	editCommentText.value = ''
+function startEditMessage(message) {
+	editingMessageId.value = message.id
+	editMessageText.value = message.body
 }
 
-async function saveEditComment() {
-	if (!editCommentText.value.trim() || loading.value) return
+function cancelEditMessage() {
+	editingMessageId.value = null
+	editMessageText.value = ''
+}
+
+async function saveEditMessage() {
+	if (!editMessageText.value.trim() || loading.value) return
 
 	loading.value = true
 
 	try {
-		await updateComment(props.suggestionId, editingCommentId.value, {
-			body: editCommentText.value.trim()
+		await updateSuggestionMessage(props.suggestionId, editingMessageId.value, {
+			body: editMessageText.value.trim()
 		})
 
-		editingCommentId.value = null
-		editCommentText.value = ''
-		emit('comment-updated')
+		editingMessageId.value = null
+		editMessageText.value = ''
+		emit('suggestion-message-updated')
 	} catch (error) {
-		console.error('Error updating comment:', error)
+		console.error('Error updating message:', error)
 		// You might want to show an error message to the user
 	} finally {
 		loading.value = false
 	}
 }
 
-function confirmDeleteComment(comment) {
-	deleteConfirmId.value = comment.id
+function confirmDeleteMessage(message) {
+	deleteConfirmId.value = message.id
 }
 
-async function executeDeleteComment() {
+async function executeDeleteMessage() {
 	if (!deleteConfirmId.value || loading.value) return
 
 	loading.value = true
-	const commentIdToDelete = deleteConfirmId.value
+	const messageIdToDelete = deleteConfirmId.value
 
 	try {
 		// Start fade-out animation
-		deletingCommentId.value = commentIdToDelete
+		deletingMessageId.value = messageIdToDelete
 
 		// Wait for animation to complete (300ms)
 		await new Promise((resolve) => setTimeout(resolve, 300))
 
-		// Actually delete the comment
-		await deleteComment(props.suggestionId, commentIdToDelete)
+		// Actually delete the message
+		await deleteSuggestionMessage(props.suggestionId, messageIdToDelete)
 		deleteConfirmId.value = null
-		deletingCommentId.value = null
-		emit('comment-deleted')
+		deletingMessageId.value = null
+		emit('suggestion-message-deleted')
 	} catch (error) {
-		console.error('Error deleting comment:', error)
+		console.error('Error deleting message:', error)
 		// Reset animation state on error
-		deletingCommentId.value = null
+		deletingMessageId.value = null
 	} finally {
 		loading.value = false
 	}
@@ -221,6 +235,6 @@ async function executeDeleteComment() {
 
 // Expose the delete function for the parent component
 defineExpose({
-	executeDeleteComment
+	executeDeleteMessage
 })
 </script>

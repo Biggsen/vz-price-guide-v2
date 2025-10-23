@@ -120,37 +120,41 @@
 						</button>
 					</div>
 
-					<!-- Comments Section -->
+					<!-- Messages Section -->
 					<div class="mt-4 pt-4 border-t border-gray-200">
 						<div class="flex items-center justify-between mb-3">
-							<h4 class="text-sm font-medium text-gray-700">Comments</h4>
+							<h4 class="text-sm font-medium text-gray-700">Discussion</h4>
+						</div>
+
+						<!-- Messages List -->
+						<SuggestionMessageList
+							v-if="messagesData[s.id] && messagesData[s.id].length > 0"
+							:messages="messagesData[s.id]"
+							:suggestion-id="s.id"
+							@suggestion-message-updated="handleMessageUpdated(s.id)"
+							@suggestion-message-deleted="handleMessageDeleted(s.id)" />
+
+						<!-- Reply Button -->
+						<div class="mt-3 text-right">
 							<button
-								@click="toggleCommentForm(s.id)"
+								@click="toggleMessageForm(s.id)"
 								class="text-sm text-gray-600 hover:text-gray-800 underline">
 								{{
-									showCommentForm[s.id]
+									showMessageForm[s.id]
 										? 'Cancel'
-										: commentsData[s.id] && commentsData[s.id].length > 0
+										: messagesData[s.id] && messagesData[s.id].length > 0
 										? 'Reply'
-										: 'Add Comment'
+										: 'Reply'
 								}}
 							</button>
 						</div>
 
-						<!-- Comments List -->
-						<CommentList
-							v-if="commentsData[s.id] && commentsData[s.id].length > 0"
-							:comments="commentsData[s.id]"
+						<!-- Message Form -->
+						<AdminSuggestionMessageForm
+							v-if="showMessageForm[s.id]"
 							:suggestion-id="s.id"
-							@comment-updated="handleCommentUpdated(s.id)"
-							@comment-deleted="handleCommentDeleted(s.id)" />
-
-						<!-- Comment Form -->
-						<AdminCommentForm
-							v-if="showCommentForm[s.id]"
-							:suggestion-id="s.id"
-							@comment-added="handleCommentAdded(s.id)"
-							@cancel="showCommentForm[s.id] = false" />
+							@suggestion-message-added="handleMessageAdded(s.id)"
+							@cancel="showMessageForm[s.id] = false" />
 					</div>
 				</div>
 			</div>
@@ -159,7 +163,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 import {
 	getFirestore,
 	collection,
@@ -169,12 +173,14 @@ import {
 	orderBy,
 	query,
 	getDoc as getFirestoreDoc,
-	deleteDoc
+	deleteDoc,
+	serverTimestamp,
+	onSnapshot
 } from 'firebase/firestore'
-import CommentForm from '@/components/CommentForm.vue'
-import AdminCommentForm from '@/components/AdminCommentForm.vue'
-import CommentList from '@/components/CommentList.vue'
-import { getCommentsQuery } from '@/utils/comments.js'
+import SuggestionMessageForm from '@/components/SuggestionMessageForm.vue'
+import AdminSuggestionMessageForm from '@/components/AdminSuggestionMessageForm.vue'
+import SuggestionMessageList from '@/components/SuggestionMessageList.vue'
+import { getSuggestionMessagesQuery } from '@/utils/suggestionMessages.js'
 import { useAdmin } from '@/utils/admin.js'
 
 function formatDate(date) {
@@ -192,8 +198,10 @@ const db = getFirestore()
 const suggestions = ref([])
 const loading = ref(true)
 const tab = ref('active')
-const showCommentForm = ref({})
-const commentsData = ref({})
+const showMessageForm = ref({})
+const messagesData = ref({})
+const messageUnsubscribers = ref({})
+const suggestionsUnsubscribe = ref(null)
 const { isAdmin } = useAdmin()
 
 const statusOptions = [
@@ -225,41 +233,73 @@ async function fetchUserProfile(userId, fallbackEmail) {
 	return { displayName: fallbackEmail, minecraftUsername: '', email: fallbackEmail }
 }
 
-// Load comments for a specific suggestion
-async function loadComments(suggestionId) {
+// Load messages for a specific suggestion with real-time updates
+function loadMessages(suggestionId) {
 	try {
-		const commentsQuery = getCommentsQuery(suggestionId)
-		const { getDocs } = await import('firebase/firestore')
-		const snapshot = await getDocs(commentsQuery)
-		const comments = snapshot.docs.map((doc) => ({
-			id: doc.id,
-			...doc.data()
-		}))
-		commentsData.value[suggestionId] = comments
+		const messagesQuery = getSuggestionMessagesQuery(suggestionId)
+
+		// Set up real-time listener
+		const unsubscribe = onSnapshot(
+			messagesQuery,
+			(snapshot) => {
+				const messages = snapshot.docs.map((doc) => ({
+					id: doc.id,
+					...doc.data()
+				}))
+				messagesData.value[suggestionId] = messages
+			},
+			(error) => {
+				console.error('Error loading messages:', error)
+				messagesData.value[suggestionId] = []
+			}
+		)
+
+		// Store unsubscribe function for cleanup
+		messageUnsubscribers.value[suggestionId] = unsubscribe
 	} catch (error) {
-		console.error('Error loading comments:', error)
-		commentsData.value[suggestionId] = []
+		console.error('Error setting up message listener:', error)
+		messagesData.value[suggestionId] = []
 	}
 }
 
-async function fetchSuggestions() {
+function setupSuggestionsListener() {
 	loading.value = true
-	const q = query(collection(db, 'suggestions'), orderBy('createdAt', 'desc'))
-	const snap = await getDocs(q)
-	const rawSuggestions = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-	// Fetch user profiles for each suggestion
-	const withProfiles = await Promise.all(
-		rawSuggestions.map(async (s) => {
-			const profile = await fetchUserProfile(s.userId, s.userEmail || '')
-			return { ...s, ...profile }
-		})
+	const q = query(collection(db, 'suggestions'))
+
+	suggestionsUnsubscribe.value = onSnapshot(
+		q,
+		async (snapshot) => {
+			const rawSuggestions = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+
+			// Sort by lastActivityAt (fallback to createdAt for older suggestions)
+			rawSuggestions.sort((a, b) => {
+				const aTime = a.lastActivityAt || a.createdAt
+				const bTime = b.lastActivityAt || b.createdAt
+				return bTime.toDate() - aTime.toDate()
+			})
+
+			// Fetch user profiles for each suggestion
+			const withProfiles = await Promise.all(
+				rawSuggestions.map(async (s) => {
+					const profile = await fetchUserProfile(s.userId, s.userEmail || '')
+					return { ...s, ...profile }
+				})
+			)
+			suggestions.value = withProfiles
+			loading.value = false
+		},
+		(error) => {
+			console.error('Error loading suggestions:', error)
+			loading.value = false
+		}
 	)
-	suggestions.value = withProfiles
-	loading.value = false
 }
 
 async function updateStatus(suggestion) {
-	await updateDoc(doc(db, 'suggestions', suggestion.id), { status: suggestion.status })
+	await updateDoc(doc(db, 'suggestions', suggestion.id), {
+		status: suggestion.status,
+		lastActivityAt: serverTimestamp()
+	})
 }
 
 async function hardDeleteSuggestion(id) {
@@ -279,35 +319,48 @@ const filteredSuggestions = computed(() => {
 		: suggestions.value.filter((s) => s.deleted)
 })
 
-// Comment handling functions
-function toggleCommentForm(suggestionId) {
-	showCommentForm.value[suggestionId] = !showCommentForm.value[suggestionId]
+// Message handling functions
+function toggleMessageForm(suggestionId) {
+	showMessageForm.value[suggestionId] = !showMessageForm.value[suggestionId]
 }
 
-function handleCommentAdded(suggestionId) {
-	showCommentForm.value[suggestionId] = false
-	// Reload comments to show the new one
-	loadComments(suggestionId)
+function handleMessageAdded(suggestionId) {
+	showMessageForm.value[suggestionId] = false
+	// No need to reload - real-time listener will update automatically
 }
 
-function handleCommentUpdated(suggestionId) {
-	// Reload comments to show updates
-	loadComments(suggestionId)
+function handleMessageUpdated(suggestionId) {
+	// No need to reload - real-time listener will update automatically
 }
 
-function handleCommentDeleted(suggestionId) {
-	// Reload comments to show updates
-	loadComments(suggestionId)
+function handleMessageDeleted(suggestionId) {
+	// No need to reload - real-time listener will update automatically
 }
 
-// Load comments when suggestions change
+// Load messages when suggestions change
 watch(
 	suggestions,
-	(newSuggestions) => {
+	(newSuggestions, oldSuggestions) => {
+		// Clean up listeners for suggestions that are no longer visible
+		if (oldSuggestions) {
+			const oldIds = oldSuggestions.map((s) => s.id)
+			const newIds = newSuggestions.map((s) => s.id)
+			const removedIds = oldIds.filter((id) => !newIds.includes(id))
+
+			removedIds.forEach((id) => {
+				if (messageUnsubscribers.value[id]) {
+					messageUnsubscribers.value[id]()
+					delete messageUnsubscribers.value[id]
+					delete messagesData.value[id]
+				}
+			})
+		}
+
+		// Set up listeners for new suggestions
 		if (newSuggestions.length > 0) {
 			newSuggestions.forEach((suggestion) => {
-				if (!commentsData.value[suggestion.id]) {
-					loadComments(suggestion.id)
+				if (!messageUnsubscribers.value[suggestion.id]) {
+					loadMessages(suggestion.id)
 				}
 			})
 		}
@@ -315,7 +368,22 @@ watch(
 	{ immediate: true }
 )
 
+// Cleanup listeners when component unmounts
+onUnmounted(() => {
+	// Clean up suggestions listener
+	if (suggestionsUnsubscribe.value) {
+		suggestionsUnsubscribe.value()
+	}
+
+	// Clean up message listeners
+	Object.values(messageUnsubscribers.value).forEach((unsubscribe) => {
+		if (typeof unsubscribe === 'function') {
+			unsubscribe()
+		}
+	})
+})
+
 onMounted(() => {
-	fetchSuggestions()
+	setupSuggestionsListener()
 })
 </script>
