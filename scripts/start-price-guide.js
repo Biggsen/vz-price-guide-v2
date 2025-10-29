@@ -45,13 +45,7 @@ function runCommandBackground(command, args = [], options = {}) {
 async function startPriceGuide() {
 	try {
 		console.log('1️⃣ Starting Firebase emulators...')
-		const emulatorProcess = runCommandBackground('firebase', [
-			'emulators:start',
-			'--only',
-			'firestore,auth',
-			'--project',
-			'demo-vz-price-guide'
-		])
+		const emulatorProcess = runCommandBackground('npm', ['run', 'emulators'])
 
 		// Wait a moment for emulators to start
 		console.log('   ⏳ Waiting for emulators to initialize...')
