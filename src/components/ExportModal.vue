@@ -498,7 +498,7 @@ function selectVersion(version) {
 				<div class="flex items-center space-x-4">
 					<select
 						v-model="sortField"
-						class="border-2 border-gray-asparagus rounded px-3 py-1 text-sm">
+						class="border-2 border-gray-asparagus rounded px-2 py-1 text-sm">
 						<option value="default">Default Order</option>
 						<option value="name">Name</option>
 						<option value="buy">Buy Price</option>
@@ -506,7 +506,7 @@ function selectVersion(version) {
 					<select
 						v-model="sortDirection"
 						v-if="sortField !== 'default'"
-						class="border-2 border-gray-asparagus rounded px-3 py-1 text-sm">
+						class="border-2 border-gray-asparagus rounded px-2 py-1 text-sm">
 						<option value="asc">Ascending</option>
 						<option value="desc">Descending</option>
 					</select>
