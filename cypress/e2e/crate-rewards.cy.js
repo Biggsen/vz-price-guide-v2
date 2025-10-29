@@ -10,7 +10,7 @@ describe('Crate Rewards', () => {
 		cy.ensureSignedOut()
 	})
 
-	describe.skip('Navigation', () => {
+	describe('Navigation', () => {
 		it('redirects unauthenticated users to signin when directly accessing crate rewards', () => {
 			cy.visit('/crate-rewards')
 			cy.location('pathname').should('eq', '/signin')
