@@ -1,5 +1,18 @@
 [
 	{
+		"id": 30,
+		"title": "Crafting Ingredients Tooltip - A Little Extra Help!",
+		"date": "2025-10-29",
+		"types": ["Enhancement"],
+		"hidden": false,
+		"description": "I added a little something extra that I think you'll find pretty handy. For items with dynamic pricing (the ones calculated from crafting ingredients), you can now click the little 4-square icon to see exactly what ingredients go into making them. It's like having a mini ingredient list right there in the price guide! Just a small quality-of-life improvement to make the price guide a bit more useful.",
+		"changes": [
+			"Added crafting ingredients hover panels for dynamically priced items - click the 4-square icon to see ingredients",
+			"Shows ingredient icons, quantities, and names in a clean, easy-to-read format",
+			"Layout-responsive design - larger and more spacious in 'Comfortable' mode, compact in 'Condensed' mode"
+		]
+	},
+	{
 		"id": 29,
 		"title": "Export Price List Update - Sort Order & Rounding Options",
 		"date": "2025-10-29",
