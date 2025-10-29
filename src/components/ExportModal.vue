@@ -4,7 +4,13 @@ import { ArrowDownTrayIcon, UserPlusIcon, CheckCircleIcon } from '@heroicons/vue
 import { UserIcon } from '@heroicons/vue/24/solid'
 import { enabledCategories, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
-import { getEffectivePrice } from '../utils/pricing.js'
+import {
+	getEffectivePrice,
+	buyUnitPriceRaw,
+	sellUnitPriceRaw,
+	buyStackPriceRaw,
+	sellStackPriceRaw
+} from '../utils/pricing.js'
 import { useRouter } from 'vue-router'
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
@@ -67,12 +73,26 @@ const selectedCategories = ref([])
 const selectedPriceFields = ref(['unit_buy', 'unit_sell', 'stack_buy', 'stack_sell'])
 const includeMetadata = ref(false)
 
+// Sorting - 'default' uses curated order, others override
+const sortField = ref('default') // 'default', 'name', 'buy', 'sell'
+const sortDirection = ref('asc') // 'asc', 'desc' (only used when sortField !== 'default')
+const roundToWhole = ref(false) // Round to whole numbers
+
 // Watch for prop changes and update local state
 watch(
 	() => props.selectedVersion,
 	(newVersion) => {
 		selectedVersion.value = newVersion
 	}
+)
+
+// Initialize roundToWhole from economy config
+watch(
+	() => props.economyConfig.roundToWhole,
+	(newValue) => {
+		roundToWhole.value = newValue || false
+	},
+	{ immediate: true }
 )
 
 // Available price fields
@@ -138,11 +158,46 @@ const filteredItems = computed(() => {
 	return filtered
 })
 
-// Generate export data
+// Sorted items - default preserves curated order, others override
+const sortedFilteredItems = computed(() => {
+	// Default sort preserves curated order (category, subcategory, name from Firestore)
+	if (sortField.value === 'default') {
+		return filteredItems.value
+	}
+
+	// Apply custom sorting
+	return [...filteredItems.value].sort((a, b) => {
+		let valueA, valueB
+
+		if (sortField.value === 'name') {
+			valueA = a.name?.toLowerCase() || ''
+			valueB = b.name?.toLowerCase() || ''
+			const comparison = valueA.localeCompare(valueB)
+			return sortDirection.value === 'asc' ? comparison : -comparison
+		}
+
+		if (sortField.value === 'buy') {
+			const versionKey = selectedVersion.value.replace('.', '_')
+			const basePriceA = getEffectivePrice(a, versionKey)
+			const basePriceB = getEffectivePrice(b, versionKey)
+
+			valueA = basePriceA * priceMultiplier.value
+			valueB = basePriceB * priceMultiplier.value
+
+			const comparison = valueA - valueB
+			return sortDirection.value === 'asc' ? comparison : -comparison
+		}
+
+		return 0
+	})
+})
+
+// Generate export data - always flat structure
 const exportData = computed(() => {
+	const itemsToProcess = sortedFilteredItems.value
 	const data = {}
 
-	filteredItems.value.forEach((item) => {
+	itemsToProcess.forEach((item) => {
 		const versionKey = selectedVersion.value.replace('.', '_')
 		const basePrice = getEffectivePrice(item, versionKey)
 		const stackSize = item.stack || 64
@@ -156,19 +211,37 @@ const exportData = computed(() => {
 			itemData.stack = stackSize
 		}
 
-		// Add selected price fields (using raw numeric values for export)
+		// Add selected price fields using same logic as main interface (raw numbers for export)
 		if (selectedPriceFields.value.includes('unit_buy')) {
-			itemData.unit_buy = Math.round(basePrice * priceMultiplier.value)
+			itemData.unit_buy = buyUnitPriceRaw(
+				basePrice,
+				priceMultiplier.value,
+				roundToWhole.value
+			)
 		}
 		if (selectedPriceFields.value.includes('unit_sell')) {
-			itemData.unit_sell = Math.round(basePrice * priceMultiplier.value * sellMargin.value)
+			itemData.unit_sell = sellUnitPriceRaw(
+				basePrice,
+				priceMultiplier.value,
+				sellMargin.value,
+				roundToWhole.value
+			)
 		}
 		if (selectedPriceFields.value.includes('stack_buy')) {
-			itemData.stack_buy = Math.round(basePrice * stackSize * priceMultiplier.value)
+			itemData.stack_buy = buyStackPriceRaw(
+				basePrice,
+				stackSize,
+				priceMultiplier.value,
+				roundToWhole.value
+			)
 		}
 		if (selectedPriceFields.value.includes('stack_sell')) {
-			itemData.stack_sell = Math.round(
-				basePrice * stackSize * priceMultiplier.value * sellMargin.value
+			itemData.stack_sell = sellStackPriceRaw(
+				basePrice,
+				stackSize,
+				priceMultiplier.value,
+				sellMargin.value,
+				roundToWhole.value
 			)
 		}
 
@@ -181,9 +254,12 @@ const exportData = computed(() => {
 		url: 'https://minecraft-economy-price-guide.net',
 		version: selectedVersion.value,
 		export_date: new Date().toISOString(),
-		item_count: filteredItems.value.length,
+		item_count: itemsToProcess.length,
 		price_multiplier: priceMultiplier.value,
-		sell_margin: sellMargin.value
+		sell_margin: sellMargin.value,
+		round_to_whole: roundToWhole.value,
+		sort_field: sortField.value,
+		sort_direction: sortField.value === 'default' ? 'curated' : sortDirection.value
 	}
 
 	return data
@@ -401,6 +477,27 @@ function selectVersion(version) {
 				</div>
 			</div>
 
+			<!-- Sort Order -->
+			<div class="mb-6">
+				<label class="block text-sm font-medium text-gray-700 mb-2">Sort Order</label>
+				<div class="flex items-center space-x-4">
+					<select
+						v-model="sortField"
+						class="border border-gray-300 rounded px-3 py-1 text-sm">
+						<option value="default">Default Order</option>
+						<option value="name">Name</option>
+						<option value="buy">Buy Price</option>
+					</select>
+					<select
+						v-model="sortDirection"
+						v-if="sortField !== 'default'"
+						class="border border-gray-300 rounded px-3 py-1 text-sm">
+						<option value="asc">Ascending</option>
+						<option value="desc">Descending</option>
+					</select>
+				</div>
+			</div>
+
 			<!-- Price Fields Selection -->
 			<div class="mb-6">
 				<label class="block text-sm font-medium text-gray-700 mb-2">Price Fields</label>
@@ -415,6 +512,12 @@ function selectVersion(version) {
 							@change="togglePriceField(field.key)"
 							class="checkbox-input" />
 						<span class="text-sm">{{ field.label }}</span>
+					</label>
+
+					<!-- Round to Whole Numbers -->
+					<label class="flex items-center space-x-2">
+						<input type="checkbox" v-model="roundToWhole" class="checkbox-input" />
+						<span class="text-sm">Round to whole numbers</span>
 					</label>
 				</div>
 			</div>
