@@ -9,7 +9,7 @@
 		"changes": [
 			"Added crafting ingredients hover panels for dynamically priced items - click the 4-square icon to see ingredients",
 			"Shows ingredient icons, quantities, and names in a clean, easy-to-read format",
-			"Layout-responsive design - larger and more spacious in 'Comfortable' mode, compact in 'Condensed' mode"
+			"Layout-responsive design - larger and more spacious in 'Comfortable' mode, smaller in 'Compact' mode"
 		]
 	},
 	{
