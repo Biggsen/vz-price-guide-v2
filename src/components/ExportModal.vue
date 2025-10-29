@@ -433,19 +433,34 @@ function selectVersion(version) {
 				<label class="block text-sm font-medium text-gray-700 mb-2">
 					Minecraft Version:
 				</label>
-				<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-					<button
-						v-for="version in enabledVersions"
-						:key="version"
-						@click="selectVersion(version)"
-						:class="[
-							selectedVersion === version
-								? 'bg-gray-asparagus text-white'
-								: 'bg-norway text-heavy-metal hover:bg-gray-100',
-							'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
-						]">
-						{{ version }}
-					</button>
+
+				<!-- Mobile: Dropdown -->
+				<div class="block mobile-only">
+					<select
+						v-model="selectedVersion"
+						class="border-2 border-gray-asparagus rounded px-3 py-1 text-sm focus:outline-none focus:border-black">
+						<option v-for="version in enabledVersions" :key="version" :value="version">
+							{{ version }}
+						</option>
+					</select>
+				</div>
+
+				<!-- Desktop: Button Group -->
+				<div class="hidden desktop-only">
+					<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+						<button
+							v-for="version in enabledVersions"
+							:key="version"
+							@click="selectVersion(version)"
+							:class="[
+								selectedVersion === version
+									? 'bg-gray-asparagus text-white'
+									: 'bg-norway text-heavy-metal hover:bg-gray-100',
+								'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+							]">
+							{{ version }}
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -588,5 +603,24 @@ function selectVersion(version) {
 .checkbox-input {
 	@apply w-4 h-4 rounded;
 	accent-color: theme('colors.gray-asparagus');
+}
+
+/* Custom breakpoint at 400px */
+@media (max-width: 399px) {
+	.mobile-only {
+		display: block !important;
+	}
+	.desktop-only {
+		display: none !important;
+	}
+}
+
+@media (min-width: 400px) {
+	.mobile-only {
+		display: none !important;
+	}
+	.desktop-only {
+		display: block !important;
+	}
 }
 </style>
