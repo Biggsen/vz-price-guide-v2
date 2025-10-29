@@ -19,7 +19,8 @@ const sortField = ref('')
 const sortDirection = ref('asc') // 'asc' or 'desc'
 
 // Track if user has clicked on any recipe icon (like a dismissible banner)
-const hasClickedRecipe = ref(false)
+// Check localStorage on component mount
+const hasClickedRecipe = ref(localStorage.getItem('hasClickedRecipe') === 'true')
 
 const props = defineProps({
 	collection: {
@@ -136,6 +137,7 @@ function getItemEffectivePrice(item) {
 function handleToggleHoverPanel(itemId, event) {
 	event.stopPropagation()
 	hasClickedRecipe.value = true // Stop animation after first click
+	localStorage.setItem('hasClickedRecipe', 'true') // Persist to localStorage
 	props.toggleHoverPanel(itemId)
 }
 
@@ -144,18 +146,18 @@ function getItemRecipe(item) {
 	if (!item.recipes_by_version || !currentVersion.value) {
 		return null
 	}
-	
+
 	const versionKey = currentVersion.value.replace('.', '_')
 	const availableVersions = Object.keys(item.recipes_by_version)
-	
+
 	// First try to get the exact version
 	if (item.recipes_by_version[versionKey]) {
 		return item.recipes_by_version[versionKey]
 	}
-	
+
 	// If no exact match, find the latest available version that's <= current version
 	const sortedVersions = availableVersions
-		.map(v => v.replace('_', '.'))
+		.map((v) => v.replace('_', '.'))
 		.sort((a, b) => {
 			const aParts = a.split('.').map(Number)
 			const bParts = b.split('.').map(Number)
@@ -166,18 +168,20 @@ function getItemRecipe(item) {
 			}
 			return 0
 		})
-		.filter(v => {
+		.filter((v) => {
 			const vParts = v.split('.').map(Number)
 			const currentParts = currentVersion.value.split('.').map(Number)
-			return vParts[0] < currentParts[0] || 
-				   (vParts[0] === currentParts[0] && vParts[1] <= currentParts[1])
+			return (
+				vParts[0] < currentParts[0] ||
+				(vParts[0] === currentParts[0] && vParts[1] <= currentParts[1])
+			)
 		})
-	
+
 	if (sortedVersions.length > 0) {
 		const fallbackVersion = sortedVersions[0].replace('.', '_')
 		return item.recipes_by_version[fallbackVersion]
 	}
-	
+
 	return null
 }
 </script>
@@ -268,39 +272,54 @@ function getItemRecipe(item) {
 								v-if="item.pricing_type === 'dynamic'"
 								class="text-highland text-xs cursor-pointer ml-auto relative"
 								@click="handleToggleHoverPanel(item.id, $event)">
-								<Squares2X2Icon :class="[
-									'w-3 h-3 sm:w-4 sm:h-4',
-									!hasClickedRecipe ? 'gentle-pulse' : ''
-								]" />
+								<Squares2X2Icon
+									:class="[
+										'w-3 h-3 sm:w-4 sm:h-4',
+										!hasClickedRecipe ? 'gentle-pulse' : ''
+									]" />
 								<!-- Hover Panel -->
 								<div
 									v-if="props.openHoverPanel === item.id"
 									:class="[
-										'absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-white border border-gray-300 rounded-lg shadow-lg z-50 w-max cursor-default',
+										'absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-sea-mist border-2 border-highland rounded-lg shadow-md z-50 w-max cursor-default',
 										layout === 'comfortable' ? 'px-4 py-3' : 'px-3 py-2'
 									]"
 									@click.stop>
 									<!-- Speech bubble pointer -->
-									<div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-300"></div>
-									<div class="absolute top-full left-1/2 transform -translate-x-1/2 -mt-px w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
+									<div
+										class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-highland"></div>
+									<div
+										class="absolute top-full left-1/2 transform -translate-x-1/2 -mt-px w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-sea-mist"></div>
 									<div class="text-sm">
 										<div v-if="getItemRecipe(item)" class="space-y-1">
 											<div
-												v-for="ingredient in getItemRecipe(item).ingredients"
+												v-for="ingredient in getItemRecipe(item)
+													.ingredients"
 												:key="ingredient.material_id"
 												:class="[
 													'flex items-center gap-2 whitespace-nowrap',
 													layout === 'comfortable' ? 'text-sm' : 'text-xs'
 												]">
 												<img
-													:src="getImageUrl(`/images/items/${ingredient.material_id}.png`)"
+													:src="
+														getImageUrl(
+															`/images/items/${ingredient.material_id}.png`
+														)
+													"
 													:alt="ingredient.material_id.replace(/_/g, ' ')"
-													:class="layout === 'comfortable' ? 'w-5 h-5' : 'w-4 h-4'"
+													:class="
+														layout === 'comfortable'
+															? 'w-5 h-5'
+															: 'w-4 h-4'
+													"
 													loading="lazy" />
-												<span :class="[
-													'text-gray-800',
-													layout === 'comfortable' ? 'font-medium' : ''
-												]">
+												<span
+													:class="[
+														'text-gray-800',
+														layout === 'comfortable'
+															? 'font-medium'
+															: ''
+													]">
 													<span>{{ ingredient.quantity }}</span>
 													{{ ingredient.material_id.replace(/_/g, ' ') }}
 												</span>
