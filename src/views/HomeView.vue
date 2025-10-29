@@ -46,6 +46,9 @@ const enabledVersions = computed(() => {
 // Version filtering state - declare before itemsQuery
 const selectedVersion = ref(baseEnabledVersions[baseEnabledVersions.length - 1]) // Default to latest base enabled version
 
+// Shared hover panel state - only one recipe panel can be open at a time across all ItemTables
+const openHoverPanel = ref(null) // Track which item has hover panel open (item.id)
+
 // Category filtering state - declare before itemsQuery
 // Empty array means "all categories" (default state)
 // Non-empty array means "only these specific categories"
@@ -160,6 +163,19 @@ const showAlert = ref(true)
 function dismissAlert() {
 	showAlert.value = false
 	localStorage.setItem('minecraft121AlertDismissed', 'true')
+}
+
+// Functions to manage shared hover panel state
+function toggleHoverPanel(itemId) {
+	if (openHoverPanel.value === itemId) {
+		openHoverPanel.value = null
+	} else {
+		openHoverPanel.value = itemId
+	}
+}
+
+function closeHoverPanel() {
+	openHoverPanel.value = null
 }
 
 // Helper function to compare version strings (e.g., "1.16" vs "1.17")
@@ -854,7 +870,10 @@ watch(
 				:economyConfig="economyConfig"
 				:viewMode="viewMode"
 				:layout="layout"
-				:showStackSize="showStackSize" />
+				:showStackSize="showStackSize"
+				:openHoverPanel="openHoverPanel"
+				:toggleHoverPanel="toggleHoverPanel"
+				:closeHoverPanel="closeHoverPanel" />
 		</template>
 
 		<!-- Loading state for categories view -->
@@ -882,7 +901,10 @@ watch(
 			:economyConfig="economyConfig"
 			:viewMode="viewMode"
 			:layout="layout"
-			:showStackSize="showStackSize" />
+			:showStackSize="showStackSize"
+			:openHoverPanel="openHoverPanel"
+			:toggleHoverPanel="toggleHoverPanel"
+			:closeHoverPanel="closeHoverPanel" />
 
 		<!-- Loading state for list view -->
 		<div v-if="isLoading" class="text-center py-12">
