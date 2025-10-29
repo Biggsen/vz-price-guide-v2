@@ -53,6 +53,45 @@ export function sellStackPrice(price, stack, priceMultiplier, sellMargin, roundT
 	return formatCurrency(price * stack * priceMultiplier * sellMargin, roundToWhole)
 }
 
+// Raw number versions for export (no formatting)
+// Matches formatCurrency logic exactly: preserve decimals when roundToWhole is false
+
+// Helper function for rounding raw prices for export
+function roundPriceForExport(rawPrice, roundToWhole = false) {
+	if (rawPrice < 1) {
+		return parseFloat(rawPrice.toFixed(2)) // Always show decimals for small prices
+	}
+	if (rawPrice < 1000) {
+		if (roundToWhole) {
+			return Math.round(rawPrice)
+		}
+		// Preserve decimals like formatCurrency does
+		return parseFloat(rawPrice.toFixed(2))
+	}
+	// For large numbers (>= 1000), always round
+	return Math.round(rawPrice)
+}
+
+export function buyUnitPriceRaw(price, priceMultiplier, roundToWhole = false) {
+	const rawPrice = price * priceMultiplier
+	return roundPriceForExport(rawPrice, roundToWhole)
+}
+
+export function sellUnitPriceRaw(price, priceMultiplier, sellMargin, roundToWhole = false) {
+	const rawPrice = price * priceMultiplier * sellMargin
+	return roundPriceForExport(rawPrice, roundToWhole)
+}
+
+export function buyStackPriceRaw(price, stack, priceMultiplier, roundToWhole = false) {
+	const rawPrice = price * stack * priceMultiplier
+	return roundPriceForExport(rawPrice, roundToWhole)
+}
+
+export function sellStackPriceRaw(price, stack, priceMultiplier, sellMargin, roundToWhole = false) {
+	const rawPrice = price * stack * priceMultiplier * sellMargin
+	return roundPriceForExport(rawPrice, roundToWhole)
+}
+
 /**
  * Get the effective price for an item with version inheritance support
  * @param {Object} item - The item object
