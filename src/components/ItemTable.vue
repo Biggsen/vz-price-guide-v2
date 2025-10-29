@@ -18,6 +18,9 @@ const { canEditItems } = useAdmin()
 const sortField = ref('')
 const sortDirection = ref('asc') // 'asc' or 'desc'
 
+// Track if user has clicked on any recipe icon (like a dismissible banner)
+const hasClickedRecipe = ref(false)
+
 const props = defineProps({
 	collection: {
 		type: Object
@@ -132,6 +135,7 @@ function getItemEffectivePrice(item) {
 // Wrapper for toggle hover panel that stops event propagation
 function handleToggleHoverPanel(itemId, event) {
 	event.stopPropagation()
+	hasClickedRecipe.value = true // Stop animation after first click
 	props.toggleHoverPanel(itemId)
 }
 
@@ -264,7 +268,10 @@ function getItemRecipe(item) {
 								v-if="item.pricing_type === 'dynamic'"
 								class="text-highland text-xs cursor-pointer ml-auto relative"
 								@click="handleToggleHoverPanel(item.id, $event)">
-								<Squares2X2Icon class="w-3 h-3 sm:w-4 sm:h-4" />
+								<Squares2X2Icon :class="[
+									'w-3 h-3 sm:w-4 sm:h-4',
+									!hasClickedRecipe ? 'gentle-pulse' : ''
+								]" />
 								<!-- Hover Panel -->
 								<div
 									v-if="props.openHoverPanel === item.id"
@@ -413,5 +420,23 @@ td {
 	tbody tr {
 		@apply leading-tight;
 	}
+}
+
+// Gentle pulse animation for recipe icons
+@keyframes gentlePulse {
+	0%,
+	95% {
+		transform: scale(1);
+	}
+	97.5% {
+		transform: scale(1.25);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+.gentle-pulse {
+	animation: gentlePulse 10s ease-in-out infinite;
 }
 </style>
