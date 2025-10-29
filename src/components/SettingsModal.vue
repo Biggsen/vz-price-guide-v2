@@ -143,6 +143,16 @@ watch(
 	{ immediate: true }
 )
 
+// Watch for modal open/close state and load settings when opening
+watch(
+	() => props.isOpen,
+	(isOpen) => {
+		if (isOpen) {
+			loadSettings()
+		}
+	}
+)
+
 // Save settings when modal closes
 function handleClose() {
 	saveSettings()

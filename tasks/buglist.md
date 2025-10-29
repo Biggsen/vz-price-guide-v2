@@ -53,52 +53,37 @@ Both mobile and desktop admin subnav should show the same navigation options:
 
 ### Settings Price Modifiers Not Persisting in UI
 
-**Status**: 🔴 Active  
+**Status**: ✅ Resolved  
 **Priority**: Medium  
 **Type**: UI Bug  
-**Discovered**: 2025-01-27
+**Discovered**: 2025-01-27  
+**Resolved**: 2025-01-27
 
 **Description**:
-In the settings modal, the price modifiers (Buy X and Sell %) are refreshing back to their default values (1 and 30) even after being changed by the user. The custom values are not being persisted in the UI, though the price guide still reflects the custom values correctly.
+In the settings modal, the price modifiers (Buy X and Sell %) were refreshing back to their default values (1 and 30) even after being changed by the user. The custom values were not being persisted in the UI, though the price guide still reflected the custom values correctly.
 
-**Expected Behavior**:
+**Root Cause**:
+The `loadSettings()` function was only called when `handleOpen()` was explicitly called, but the parent component never called this method. The modal opened with default values instead of loading saved values from localStorage.
 
--   User changes Buy X multiplier and Sell % in settings
--   UI should retain the custom values when settings modal is reopened
--   Values should persist across page refreshes/navigation
+**Solution Implemented**:
+Added a watcher in `SettingsModal.vue` that monitors the `isOpen` prop and calls `loadSettings()` whenever the modal opens. This ensures that saved settings are loaded from localStorage and displayed in the UI when the modal is opened.
 
-**Current Behavior**:
+**Files Modified**:
 
--   Settings UI resets to default values (Buy X: 1, Sell %: 30)
--   Price guide calculations use the correct custom values
--   Disconnect between UI display and actual functionality
+-   `src/components/SettingsModal.vue` - Added watcher for `isOpen` prop to load settings on modal open
 
-**Impact**:
+**User Experience**:
 
--   Confusing user experience - users think their settings aren't saved
--   Users may repeatedly try to set the same values
--   UI doesn't reflect the actual state of the application
-
-**Files Involved**:
-
--   `src/components/SettingsModal.vue` - Settings UI component
--   Settings-related utility functions for value persistence
-
-**Reproduction Steps**:
-
-1. Open the settings modal
-2. Change the Buy X multiplier to a custom value (e.g., 2.5)
-3. Change the Sell % to a custom value (e.g., 80)
-4. Save settings and close modal
-5. Reopen the settings modal
-6. Observe that values have reset to defaults (1 and 30)
-7. Check that price guide still shows correct calculations with custom values
+-   Settings UI now correctly displays saved values when modal is reopened
+-   No more disconnect between UI display and actual functionality
+-   Users can see their custom price modifiers reflected in the settings modal
+-   Settings persist correctly across page refreshes and navigation
 
 **Notes**:
 
--   This appears to be a UI state management issue
--   The underlying functionality works correctly
--   Need to investigate how settings values are being loaded and displayed
+-   The underlying functionality was working correctly - only the UI loading was broken
+-   Settings are now properly loaded from localStorage when modal opens
+-   No changes needed to the save functionality as it was already working
 
 ## Resolved Issues
 
