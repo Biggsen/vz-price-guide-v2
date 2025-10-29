@@ -51,6 +51,55 @@ Both mobile and desktop admin subnav should show the same navigation options:
 -   This affects the admin navigation consistency
 -   Should be fixed to ensure uniform admin experience across all devices
 
+### Settings Price Modifiers Not Persisting in UI
+
+**Status**: 🔴 Active  
+**Priority**: Medium  
+**Type**: UI Bug  
+**Discovered**: 2025-01-27
+
+**Description**:
+In the settings modal, the price modifiers (Buy X and Sell %) are refreshing back to their default values (1 and 30) even after being changed by the user. The custom values are not being persisted in the UI, though the price guide still reflects the custom values correctly.
+
+**Expected Behavior**:
+
+-   User changes Buy X multiplier and Sell % in settings
+-   UI should retain the custom values when settings modal is reopened
+-   Values should persist across page refreshes/navigation
+
+**Current Behavior**:
+
+-   Settings UI resets to default values (Buy X: 1, Sell %: 30)
+-   Price guide calculations use the correct custom values
+-   Disconnect between UI display and actual functionality
+
+**Impact**:
+
+-   Confusing user experience - users think their settings aren't saved
+-   Users may repeatedly try to set the same values
+-   UI doesn't reflect the actual state of the application
+
+**Files Involved**:
+
+-   `src/components/SettingsModal.vue` - Settings UI component
+-   Settings-related utility functions for value persistence
+
+**Reproduction Steps**:
+
+1. Open the settings modal
+2. Change the Buy X multiplier to a custom value (e.g., 2.5)
+3. Change the Sell % to a custom value (e.g., 80)
+4. Save settings and close modal
+5. Reopen the settings modal
+6. Observe that values have reset to defaults (1 and 30)
+7. Check that price guide still shows correct calculations with custom values
+
+**Notes**:
+
+-   This appears to be a UI state management issue
+-   The underlying functionality works correctly
+-   Need to investigate how settings values are being loaded and displayed
+
 ## Resolved Issues
 
 ### Crate Total Value Incorrect - Not Considering Enchantments
