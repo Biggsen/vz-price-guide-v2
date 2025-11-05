@@ -233,6 +233,46 @@ function closeCrateRewardsModal() {
 				</div>
 			</div>
 
+			<!-- Minecraft Region Forge Tool Card -->
+			<div
+				class="bg-norway rounded-lg shadow-md border-2 border-gray-asparagus overflow-hidden flex flex-col">
+				<img
+					src="/images/tools/region-forge.png"
+					alt="Region Forge"
+					class="w-full h-36 object-cover object-top border-t-2 border-x-2 border-white rounded-t-lg" />
+				<h3
+					class="text-xl font-semibold text-white bg-gray-asparagus px-4 py-2 w-full border-x-2 border-white">
+					Region Forge
+				</h3>
+				<div class="text-left p-4 border-2 border-white rounded-b-lg flex flex-col h-full">
+					<p class="text-heavy-metal mb-4">
+						Draw, edit, and manage WorldGuard regions on an interactive Map Canvas. Export
+						ready-to-use regions.yml files with Minecraft Region Forge.
+					</p>
+					<div class="mb-6 text-heavy-metal">
+						<span class="font-bold">Plugin:</span>
+						<a
+							href="https://dev.bukkit.org/projects/worldguard"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="text-heavy-metal hover:text-gray-asparagus ml-2">
+							<span class="underline">WorldGuard</span>
+						</a>
+					</div>
+					<a
+						href="https://www.minecraftregionforge.com/"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="mt-auto">
+						<BaseButton
+							variant="primary"
+							data-cy="region-forge-tool">
+							Try Region Forge
+						</BaseButton>
+					</a>
+				</div>
+			</div>
+
 			<!-- Call to Action Card -->
 			<div class="bg-saltpan rounded-lg shadow-md border-2 border-highland">
 				<div class="p-6 border-2 border-white rounded-lg h-full flex flex-col">

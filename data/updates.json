@@ -1,5 +1,23 @@
 [
 	{
+		"id": 31,
+		"title": "Region Forge Tool",
+		"date": "2025-11-05",
+		"type": "Tool",
+		"hidden": false,
+		"description": "Added Region Forge to the Tools page! Draw, edit, and manage WorldGuard regions on an interactive Map Canvas, and then export to regions.yml to use on your server. I've been dreaming of being able to make regions for unexplored worlds for world building purposes, so I ended up building my own tool. It's quite unique and powerful, and a joy to use.",
+		"link": "https://www.minecraftregionforge.com/",
+		"linkText": "Minecraft Region Forge for WorldGuard",
+		"changes": [
+			"Generate map images from Minecraft seeds (2k–16k) or load your own via URL",
+			"Create regions by clicking points or drawing freehand—click to place vertices or hold and drag for smooth curves",
+			"Edit region shapes by dragging points, move entire regions, split them along two points, resize them, and simplify or adjust complexity",
+			"Save complete projects to a single file and load them to restore everything",
+			"Export all regions to WorldGuard regions.yml file with configurable greeting/farewell messages, ready to use in your server",
+			"Pan by holding Space and dragging, zoom with the mouse wheel, adjust map opacity, and toggle grid overlay and region highlights"
+		]
+	},
+	{
 		"id": 30,
 		"title": "Crafting Ingredients Tooltip - A Little Extra Help!",
 		"date": "2025-10-29",

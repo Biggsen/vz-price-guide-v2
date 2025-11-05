@@ -16,7 +16,8 @@ import {
 	EyeSlashIcon,
 	ArrowPathIcon,
 	Cog6ToothIcon,
-	ArrowDownTrayIcon
+	ArrowDownTrayIcon,
+	WrenchScrewdriverIcon
 } from '@heroicons/vue/24/outline'
 
 const db = useFirestore()
@@ -162,7 +163,7 @@ const showAlert = ref(true)
 
 function dismissAlert() {
 	showAlert.value = false
-	localStorage.setItem('minecraft121AlertDismissed', 'true')
+	localStorage.setItem('regionForgeAlertDismissed', 'true')
 }
 
 // Functions to manage shared hover panel state
@@ -526,7 +527,7 @@ onMounted(() => {
 	initializeFromQuery()
 
 	// Check if alert was previously dismissed
-	const dismissed = localStorage.getItem('minecraft121AlertDismissed')
+	const dismissed = localStorage.getItem('regionForgeAlertDismissed')
 	if (dismissed === 'true') {
 		showAlert.value = false
 	}
@@ -664,13 +665,21 @@ watch(
 		class="bg-semantic-info-light border-l-4 border-l-semantic-info text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
-				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
+				<WrenchScrewdriverIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					<strong>Minecraft 1.21 Tricky Trials - Complete!</strong>
-					All 1.21 items now available with comprehensive pricing. New Copper category
-					added!
+					<strong>New Region Forge Tool!</strong>
+					Draw, edit, and manage WorldGuard regions on an interactive Map Canvas. Export
+					ready-to-use regions.yml files.
+					<a
+						href="https://www.minecraftregionforge.com/"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="underline hover:text-gray-asparagus">
+						<span>Try Region Forge</span>
+					</a>
+					<span> or </span>
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
-						<span>View details</span>
+						<span>view more details</span>
 					</router-link>
 				</span>
 			</div>
