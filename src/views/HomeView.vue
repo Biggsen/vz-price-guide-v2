@@ -16,8 +16,7 @@ import {
 	EyeSlashIcon,
 	ArrowPathIcon,
 	Cog6ToothIcon,
-	ArrowDownTrayIcon,
-	WrenchScrewdriverIcon
+	ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
 
 const db = useFirestore()
@@ -159,11 +158,12 @@ const showExportFeature = ref(true) // Set to true to enable export functionalit
 const disableAlert = ref(false) // Set to true to disable all alerts regardless of showAlert state
 
 // Info alert state
+const alertStorageKey = 'copperAgeUpdateAlertDismissed'
 const showAlert = ref(true)
 
 function dismissAlert() {
 	showAlert.value = false
-	localStorage.setItem('regionForgeAlertDismissed', 'true')
+	localStorage.setItem(alertStorageKey, 'true')
 }
 
 // Functions to manage shared hover panel state
@@ -527,7 +527,7 @@ onMounted(() => {
 	initializeFromQuery()
 
 	// Check if alert was previously dismissed
-	const dismissed = localStorage.getItem('regionForgeAlertDismissed')
+	const dismissed = localStorage.getItem(alertStorageKey)
 	if (dismissed === 'true') {
 		showAlert.value = false
 	}
@@ -665,21 +665,14 @@ watch(
 		class="bg-semantic-info-light border-l-4 border-l-semantic-info text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
-				<WrenchScrewdriverIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
+				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					<strong>New Region Forge Tool!</strong>
-					Draw, edit, and manage WorldGuard regions on an interactive Map Canvas. Export
-					ready-to-use regions.yml files.
-					<a
-						href="https://www.minecraftregionforge.com/"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="underline hover:text-gray-asparagus">
-						<span>Try Region Forge</span>
-					</a>
-					<span> or </span>
+					<strong>Copper Age content is live!</strong>
+					Added all Minecraft 1.21.9 Copper Age items and launched a Transport category for boats,
+					minecarts, saddles, harnesses, and elytra.
+					<span> </span>
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
-						<span>view more details</span>
+						<span>Read the release notes</span>
 					</router-link>
 				</span>
 			</div>

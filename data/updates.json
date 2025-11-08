@@ -1,5 +1,19 @@
 [
 	{
+		"id": 32,
+		"title": "Copper Age 1.21.9 Items + Transport Category",
+		"date": "2025-11-08",
+		"types": ["Content"],
+		"hidden": false,
+		"description": "Added all Copper Age (Minecraft 1.21.9) items to the catalog and reorganized mobility gear into a dedicated Transport category.",
+		"changes": [
+			"Copper gear set: copper tools, weapons, armor, and horse armor",
+			"Copper structures & lighting: bars, chains, chest, torch, lantern, and every oxidized/waxed variant",
+			"Additional items: decorative storage shelves, copper golem statue, oxidized lightning rod variant, copper nugget",
+			"Created new Transport category featuring boats, minecarts, saddle, harnesses, and elytra"
+		]
+	},
+	{
 		"id": 31,
 		"title": "Region Forge Tool",
 		"date": "2025-11-05",
