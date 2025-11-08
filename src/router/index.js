@@ -3,6 +3,46 @@ import HomeView from '../views/HomeView.vue'
 import { getCurrentUser } from 'vuefire'
 import { isAdmin } from '../constants'
 
+const siteName = "verzion's economy price guide for Minecraft"
+
+const defaultSeo = {
+	title: siteName,
+	description:
+		'Comprehensive, searchable and exportable Minecraft economy price guide with unit and stack prices for over 1400 items from versions 1.16-1.21',
+	keywords:
+		'minecraft, price guide, economy, items, unit price, stack price, minecraft server economy, ores, stone, brick, copper, earth, sand, wood, drops, food, utility, light, plants, redstone, tools, weapons, armor, enchantments, ocean, nether, end, deep dark, archaeology, ice, dyed, discs',
+	ogImage: 'https://minecraft-economy-price-guide.net/cube.png',
+	ogUrl: 'https://minecraft-economy-price-guide.net'
+}
+
+function setMetaTag(name, content) {
+	if (!content) return
+
+	let tag = document.head.querySelector(`meta[name="${name}"]`)
+
+	if (!tag) {
+		tag = document.createElement('meta')
+		tag.setAttribute('name', name)
+		document.head.appendChild(tag)
+	}
+
+	tag.setAttribute('content', content)
+}
+
+function setPropertyMeta(property, content) {
+	if (!content) return
+
+	let tag = document.head.querySelector(`meta[property="${property}"]`)
+
+	if (!tag) {
+		tag = document.createElement('meta')
+		tag.setAttribute('property', property)
+		document.head.appendChild(tag)
+	}
+
+	tag.setAttribute('content', content)
+}
+
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
 	scrollBehavior(to, from, savedPosition) {
@@ -22,20 +62,28 @@ const router = createRouter({
 			path: '/',
 			name: 'home',
 			component: HomeView,
-			meta: { title: "verzion's economy price guide for Minecraft" }
+			meta: {
+				title: siteName
+			}
 		},
 
 		{
 			path: '/signin',
 			name: 'signin',
 			component: () => import('../views/SignInView.vue'),
-			meta: { title: "Sign In - verzion's economy price guide for Minecraft" }
+			meta: {
+				title: `Sign In - ${siteName}`,
+				description: `Access your ${siteName} account.`
+			}
 		},
 		{
 			path: '/signup',
 			name: 'signup',
 			component: () => import('../views/SignUpView.vue'),
-			meta: { title: "Create Account - verzion's economy price guide for Minecraft" }
+			meta: {
+				title: `Create Account - ${siteName}`,
+				description: `Create an account on ${siteName} to export the price guide or make suggestions.`
+			}
 		},
 		{
 			path: '/verify-email',
@@ -44,7 +92,8 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				requiresVerification: false,
-				title: "Verify Email - verzion's economy price guide for Minecraft"
+				title: `Verify Email - ${siteName}`,
+				description: `Confirm your email so you can keep on using ${siteName}.`
 			}
 		},
 		{
@@ -60,27 +109,36 @@ const router = createRouter({
 					next({ path: '/' })
 				}
 			},
-			meta: { title: "Account Action - verzion's economy price guide for Minecraft" }
+			meta: {
+				title: `Account Action - ${siteName}`
+			}
 		},
 		{
 			path: '/verify-email-success',
 			name: 'verify-email-success',
 			component: () => import('../views/VerifyEmailSuccessView.vue'),
 			meta: {
-				title: "Email Verified - verzion's economy price guide for Minecraft"
+				title: `Email Verified - ${siteName}`,
+				description: `Your email is verified. You can now enjoy full access to ${siteName}.`
 			}
 		},
 		{
 			path: '/reset-password',
 			name: 'reset-password',
 			component: () => import('../views/ResetPasswordView.vue'),
-			meta: { title: "Reset Password - verzion's economy price guide for Minecraft" }
+			meta: {
+				title: `Reset Password - ${siteName}`,
+				description: `Start a secure password reset to regain access to your ${siteName} account.`
+			}
 		},
 		{
 			path: '/reset-password-confirm',
 			name: 'reset-password-confirm',
 			component: () => import('../views/ResetPasswordConfirmView.vue'),
-			meta: { title: "Reset Password - verzion's economy price guide for Minecraft" }
+			meta: {
+				title: `Reset Password - ${siteName}`,
+				description: `Choose a new password and restore access to your ${siteName} account.`
+			}
 		},
 		{
 			path: '/account',
@@ -89,7 +147,7 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				requiresVerification: false,
-				title: "Account - verzion's economy price guide for Minecraft"
+				title: `Account - ${siteName}`
 			}
 		},
 		{
@@ -99,7 +157,7 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				requiresVerification: false,
-				title: "Change Password - verzion's economy price guide for Minecraft"
+				title: `Change Password - ${siteName}`
 			}
 		},
 		{
@@ -110,7 +168,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Admin Dashboard - verzion's economy price guide for Minecraft"
+				title: `Admin Dashboard - ${siteName}`
 			}
 		},
 		{
@@ -121,7 +179,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Shop Manager - verzion's economy price guide for Minecraft"
+				title: `Shop Manager - ${siteName}`
 			}
 		},
 		{
@@ -132,7 +190,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Add Item - verzion's economy price guide for Minecraft"
+				title: `Add Item - ${siteName}`
 			}
 		},
 		{
@@ -143,7 +201,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Edit Item - verzion's economy price guide for Minecraft"
+				title: `Edit Item - ${siteName}`
 			}
 		},
 		{
@@ -154,7 +212,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Missing Items - verzion's economy price guide for Minecraft"
+				title: `Missing Items - ${siteName}`
 			}
 		},
 		{
@@ -165,7 +223,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Bulk Update - verzion's economy price guide for Minecraft"
+				title: `Bulk Update - ${siteName}`
 			}
 		},
 		{
@@ -176,7 +234,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "My Servers - verzion's economy price guide for Minecraft"
+				title: `My Servers - ${siteName}`
 			}
 		},
 		{
@@ -187,7 +245,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "My Shops - verzion's economy price guide for Minecraft"
+				title: `My Shops - ${siteName}`
 			}
 		},
 		{
@@ -198,7 +256,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Shop Items - verzion's economy price guide for Minecraft"
+				title: `Shop Items - ${siteName}`
 			}
 		},
 		{
@@ -209,7 +267,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Market Overview - verzion's economy price guide for Minecraft"
+				title: `Market Overview - ${siteName}`
 			}
 		},
 		{
@@ -230,7 +288,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Import Recipes - verzion's economy price guide for Minecraft"
+				title: `Import Recipes - ${siteName}`
 			}
 		},
 		{
@@ -241,7 +299,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Manage Recipes - verzion's economy price guide for Minecraft"
+				title: `Manage Recipes - ${siteName}`
 			}
 		},
 		{
@@ -252,7 +310,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Recalculate Prices - verzion's economy price guide for Minecraft"
+				title: `Recalculate Prices - ${siteName}`
 			}
 		},
 		{
@@ -263,38 +321,56 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Edit Recipe - verzion's economy price guide for Minecraft"
+				title: `Edit Recipe - ${siteName}`
 			}
 		},
 		{
 			path: '/tools',
 			name: 'tools',
 			component: () => import('../views/ToolsView.vue'),
-			meta: { title: "Tools - verzion's economy price guide for Minecraft" }
+			meta: {
+				title: "Tools - verzion's economy price guide for Minecraft",
+				description:
+					'A growing list of tools verzion has built to set up and run his own Minecraft servers.'
+			}
 		},
 		{
 			path: '/updates',
 			name: 'updates',
 			component: () => import('../views/UpdatesView.vue'),
-			meta: { title: "Updates and Roadmap - verzion's economy price guide for Minecraft" }
+			meta: {
+				title: `Updates and Roadmap - ${siteName}`,
+				description: `Read release notes and roadmap updates to stay current on ${siteName}.`
+			}
 		},
 		{
 			path: '/privacy-policy',
 			name: 'privacy-policy',
 			component: () => import('../views/PrivacyPolicyView.vue'),
-			meta: { title: "Privacy Policy - verzion's economy price guide for Minecraft" }
+			meta: {
+				title: `Privacy Policy - ${siteName}`,
+				description:
+					'This policy explains what information we collect, how we use it, and the privacy choices available to you.'
+			}
 		},
 		{
 			path: '/cookie-policy',
 			name: 'cookie-policy',
 			component: () => import('../views/CookiePolicyView.vue'),
-			meta: { title: "Cookie Policy - verzion's economy price guide for Minecraft" }
+			meta: {
+				title: `Cookie Policy - ${siteName}`,
+				description:
+					'This policy outlines the cookies we use, why we use them, and how you can manage your preferences.'
+			}
 		},
 		{
 			path: '/terms-of-use',
 			name: 'terms-of-use',
 			component: () => import('../views/TermsOfUseView.vue'),
-			meta: { title: "Terms of Use - verzion's economy price guide for Minecraft" }
+			meta: {
+				title: `Terms of Use - ${siteName}`,
+				description: `Understand the rules and responsibilities for using ${siteName}.`
+			}
 		},
 		{
 			path: '/design',
@@ -304,7 +380,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Design Dashboard - verzion's economy price guide for Minecraft"
+				title: `Design Dashboard - ${siteName}`
 			}
 		},
 		{
@@ -315,7 +391,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Design System & Styleguide - verzion's economy price guide for Minecraft"
+				title: `Design System & Styleguide - ${siteName}`
 			}
 		},
 		{
@@ -326,14 +402,18 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Visual Gallery - verzion's economy price guide for Minecraft"
+				title: `Visual Gallery - ${siteName}`
 			}
 		},
 		{
 			path: '/restricted',
 			name: 'RestrictedAccess',
 			component: () => import('../views/RestrictedAccessView.vue'),
-			meta: { title: "Restricted Access - verzion's economy price guide for Minecraft" }
+			meta: {
+				title: `Restricted Access - ${siteName}`,
+				description:
+					'This area requires elevated permissions or a verified account before you can continue.'
+			}
 		},
 		{
 			path: '/suggestions',
@@ -342,7 +422,7 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				requiresVerification: false,
-				title: "Suggestions - verzion's economy price guide for Minecraft"
+				title: `Suggestions - ${siteName}`
 			}
 		},
 		{
@@ -353,7 +433,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Community Dashboard - verzion's economy price guide for Minecraft"
+				title: `Community Dashboard - ${siteName}`
 			}
 		},
 		{
@@ -364,7 +444,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "Admin Suggestions - verzion's economy price guide for Minecraft"
+				title: `Admin Suggestions - ${siteName}`
 			}
 		},
 		{
@@ -374,7 +454,7 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				requiresVerification: true,
-				title: "Crate Rewards - verzion's economy price guide for Minecraft"
+				title: `Crate Rewards - ${siteName}`
 			}
 		},
 		{
@@ -384,7 +464,7 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				requiresVerification: true,
-				title: "Manage Crate Reward - verzion's economy price guide for Minecraft"
+				title: `Manage Crate Reward - ${siteName}`
 			}
 		},
 		{
@@ -395,23 +475,36 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: "YAML Import Dev - verzion's economy price guide for Minecraft"
+				title: `YAML Import Dev - ${siteName}`
 			}
 		},
 		{
 			path: '/:pathMatch(.*)*',
 			name: 'not-found',
 			component: () => import('../views/NotFoundView.vue'),
-			meta: { title: "Page Not Found - verzion's economy price guide for Minecraft" }
+			meta: {
+				title: `Page Not Found - ${siteName}`,
+				description: `The page you requested is missing. Return to ${siteName}.`
+			}
 		}
 	]
 })
 
 router.beforeEach(async (to, from, next) => {
-	// Update document title based on route meta
-	if (to.meta.title) {
-		document.title = to.meta.title
+	const seo = {
+		...defaultSeo,
+		...to.meta
 	}
+
+	document.title = seo.title
+
+	setMetaTag('description', seo.description)
+	setMetaTag('keywords', seo.keywords)
+
+	setPropertyMeta('og:title', seo.ogTitle || seo.title)
+	setPropertyMeta('og:description', seo.ogDescription || seo.description)
+	setPropertyMeta('og:image', seo.ogImage)
+	setPropertyMeta('og:url', seo.ogUrl)
 
 	const authPages = ['signin', 'signup', 'reset-password']
 	const user = await getCurrentUser()
