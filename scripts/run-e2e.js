@@ -26,7 +26,7 @@ async function pickPort(preferredPort, fallbacks = []) {
 }
 
 async function run() {
-	const port = await pickPort(5173, [5174, 5175])
+	const port = await pickPort(5180, [5181, 5182])
 	const host = '127.0.0.1'
 	const url = `http://${host}:${port}`
 

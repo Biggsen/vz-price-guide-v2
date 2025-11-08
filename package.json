@@ -3,7 +3,7 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"dev": "vite --port 5173 --strictPort",
+		"dev": "vite --port 5180 --strictPort",
 		"build": "vite build",
 		"preview": "vite preview",
 		"lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
@@ -20,8 +20,8 @@
 		"test:e2e:emu:seeded": "cross-env GCLOUD_PROJECT=demo-vz-price-guide VITE_FIREBASE_EMULATORS=1 firebase emulators:exec --only firestore,auth --project demo-vz-price-guide --import=./.emulator-data \"node scripts/seed-emulator.js && node scripts/run-e2e.js\"",
 		"visual:tests": "cross-env GCLOUD_PROJECT=demo-vz-price-guide FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 VITE_FIREBASE_EMULATORS=1 node scripts/run-visual-tests.js",
 		"visual:serve": "node scripts/serve-screenshots.js",
-		"dev:prod": "cross-env VITE_FIREBASE_EMULATORS=0 vite --port 5173 --strictPort --mode production",
-		"dev:prod:confirm": "cross-env VITE_FIREBASE_EMULATORS=0 VITE_CONFIRM_PROD=true vite --port 5173 --strictPort --mode production",
+		"dev:prod": "cross-env VITE_FIREBASE_EMULATORS=0 vite --port 5180 --strictPort --mode production",
+		"dev:prod:confirm": "cross-env VITE_FIREBASE_EMULATORS=0 VITE_CONFIRM_PROD=true vite --port 5180 --strictPort --mode production",
 		"start": "node scripts/start-price-guide.js"
 	},
 	"dependencies": {

@@ -38,7 +38,7 @@ module.exports = defineConfig({
 	// Run in headless mode by default for faster execution
 	headless: true,
 	e2e: {
-		baseUrl: 'http://localhost:5173',
+		baseUrl: 'http://localhost:5180',
 		specPattern: 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}',
 		supportFile: 'cypress/support/e2e.js',
 		// Performance optimizations
@@ -116,7 +116,7 @@ module.exports = defineConfig({
 
 						// Generate a password reset code using Firebase Admin SDK
 						const resetCode = await adminApp.auth().generatePasswordResetLink(email, {
-							url: 'http://localhost:5173/reset-password-confirm'
+							url: 'http://localhost:5180/reset-password-confirm'
 						})
 
 						// Extract oobCode from the reset link
