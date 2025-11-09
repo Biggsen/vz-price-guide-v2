@@ -22,7 +22,8 @@
 		"visual:serve": "node scripts/serve-screenshots.js",
 		"dev:prod": "cross-env VITE_FIREBASE_EMULATORS=0 vite --port 5180 --strictPort --mode production",
 		"dev:prod:confirm": "cross-env VITE_FIREBASE_EMULATORS=0 VITE_CONFIRM_PROD=true vite --port 5180 --strictPort --mode production",
-		"start": "node scripts/start-price-guide.js"
+		"start": "node scripts/start-price-guide.js",
+		"media:migrate": "node scripts/migratePublicImagesToBlobs.js"
 	},
 	"dependencies": {
 		"@heroicons/vue": "^2.2.0",

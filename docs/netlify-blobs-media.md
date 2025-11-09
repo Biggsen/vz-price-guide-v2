@@ -74,6 +74,26 @@ All stored paths are normalized to the `items/*` namespace; the Media Manager en
 
 ---
 
+## Migrating Existing Assets
+
+Legacy item images live under `public/images/items`. Run the helper script once to copy them into Netlify Blobs:
+
+```
+ADMIN_MEDIA_KEY=<your token> \
+MEDIA_UPLOAD_BASE_URL=https://your-site.netlify.app \
+node scripts/migratePublicImagesToBlobs.js
+```
+
+Options:
+
+- Set `DRY_RUN=true` to preview without uploading.
+- Override `MEDIA_SOURCE_DIR` if the files live somewhere else.
+- When testing against `netlify dev`, omit `MEDIA_UPLOAD_BASE_URL` (defaults to `http://localhost:8888`).
+
+After migration, update Firestore `image` fields to reference the new keys (e.g. `items/wood/1_21/oak_log.webp`) so the frontend serves them from the blob store.
+
+---
+
 ## Frontend Usage
 
 - Store Firestore `image` fields as blob keys (`items/.../some.webp`)
