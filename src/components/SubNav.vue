@@ -22,6 +22,7 @@ const isPriceGuideActive = computed(() => {
 			'/missing-items',
 			'/add',
 			'/bulk-update',
+			'/admin/media',
 			'/recipes/import',
 			'/recipes/manage',
 			'/recipes/recalculate'
@@ -64,6 +65,7 @@ const expandedSection = computed(() => {
 				'/missing-items',
 				'/add',
 				'/bulk-update',
+				'/admin/media',
 				'/recipes/import',
 				'/recipes/manage',
 				'/recipes/recalculate'
@@ -123,6 +125,7 @@ watch(
 					'/missing-items',
 					'/add',
 					'/bulk-update',
+					'/admin/media',
 					'/recipes/import',
 					'/recipes/manage',
 					'/recipes/recalculate'

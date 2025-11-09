@@ -6,6 +6,41 @@ This document tracks bugs, regressions, and issues discovered during development
 
 ## Active Issues
 
+### ESLint Violations Across Codebase
+
+**Status**: 🔴 Active  
+**Priority**: Medium  
+**Type**: Maintenance  
+**Discovered**: 2025-11-09
+
+**Description**:
+`npm run lint` reports outstanding ESLint violations that block clean builds and make it hard to confidently ship changes. The codebase needs a pass to resolve all lint errors and warnings so automated checks stay green.
+
+**Expected Behavior**:
+- `npm run lint` completes without errors or warnings
+- CI lint step passes consistently
+
+**Current Behavior**:
+- Local lint runs fail with existing violations
+- CI lint checks are red until issues are fixed
+
+**Impact**:
+- Slows down development and PR reviews
+- Risks masking new lint regressions behind existing failures
+- Prevents automated enforcement of code style rules
+
+**Files Involved**:
+- To be audited; run `npm run lint` to view the current failure list
+
+**Reproduction Steps**:
+1. Install dependencies if needed: `npm install`
+2. Run the linter: `npm run lint`
+3. Observe the reported violations
+
+**Notes**:
+- Fixes should respect the repository's ESLint and Prettier configuration  
+- Address warnings where feasible to avoid future promotions to errors
+
 ### Admin Subnav Inconsistency Between Mobile and Desktop
 
 **Status**: 🔴 Active  
