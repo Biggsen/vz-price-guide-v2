@@ -110,7 +110,8 @@ export async function listMedia(prefix = 'items/') {
 	}
 
 	const response = await fetch(`/api/list-media?${params.toString()}`, {
-		headers: withAdminHeaders()
+		headers: withAdminHeaders(),
+		cache: 'no-store'
 	})
 
 	if (!response.ok) {
