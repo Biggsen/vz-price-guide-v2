@@ -62,11 +62,11 @@ async function startPriceGuide() {
 		await new Promise((resolve) => setTimeout(resolve, 3000))
 
 		console.log('4️⃣ Opening browser...')
-		await runCommand('start', ['http://localhost:5173'])
+		await runCommand('start', ['http://localhost:5180'])
 
 		console.log('\n✅ Price Guide is now running!')
-		console.log('   🌐 App: http://localhost:5173')
-		console.log('   🔥 Emulator UI: http://127.0.0.1:4000')
+		console.log('   🌐 App: http://localhost:5180')
+		console.log('   🔥 Emulator UI: http://127.0.0.1:4080')
 		console.log('\n📝 To stop all services, press Ctrl+C')
 
 		// Keep the script running

@@ -32,7 +32,7 @@ This document describes how to run Cypress end‑to‑end tests locally and in C
 -   `firebase.json` includes:
     -   `emulators.firestore.port: 8080`
     -   `emulators.auth.port: 9099`
-    -   `emulators.ui.port: 4000` (optional UI)
+-   `emulators.ui.port: 4080` (optional UI)
 
 ### Seeding and resetting data
 

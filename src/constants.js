@@ -9,6 +9,7 @@ export const categories = [
 	'drops',
 	'food',
 	'utility',
+	'transport',
 	'light',
 	'plants',
 	'redstone',

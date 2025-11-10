@@ -1,5 +1,37 @@
 [
 	{
+		"id": 32,
+		"title": "Copper Age 1.21.9 Items + Transport Category",
+		"date": "2025-11-08",
+		"types": ["Content"],
+		"hidden": false,
+		"description": "Added all Copper Age (Minecraft 1.21.9) items to the catalog and reorganized mobility gear into a dedicated Transport category.",
+		"changes": [
+			"Copper gear set: copper tools, weapons, armor, and horse armor",
+			"Copper structures & lighting: bars, chains, chest, torch, lantern, and every oxidized/waxed variant",
+			"Additional items: decorative storage shelves, copper golem statue, oxidized lightning rod variant, copper nugget",
+			"Created new Transport category featuring boats, minecarts, saddle, harnesses, and elytra"
+		]
+	},
+	{
+		"id": 31,
+		"title": "Region Forge Tool",
+		"date": "2025-11-05",
+		"type": "Tool",
+		"hidden": false,
+		"description": "Added Region Forge to the Tools page! Draw, edit, and manage WorldGuard regions on an interactive Map Canvas, and then export to regions.yml to use on your server. I've been dreaming of being able to make regions for unexplored worlds for world building purposes, so I ended up building my own tool. It's quite unique and powerful, and a joy to use.",
+		"link": "https://www.minecraftregionforge.com/",
+		"linkText": "Minecraft Region Forge for WorldGuard",
+		"changes": [
+			"Generate map images from Minecraft seeds (2k–16k) or load your own via URL",
+			"Create regions by clicking points or drawing freehand—click to place vertices or hold and drag for smooth curves",
+			"Edit region shapes by dragging points, move entire regions, split them along two points, resize them, and simplify or adjust complexity",
+			"Save complete projects to a single file and load them to restore everything",
+			"Export all regions to WorldGuard regions.yml file with configurable greeting/farewell messages, ready to use in your server",
+			"Pan by holding Space and dragging, zoom with the mouse wheel, adjust map opacity, and toggle grid overlay and region highlights"
+		]
+	},
+	{
 		"id": 30,
 		"title": "Crafting Ingredients Tooltip - A Little Extra Help!",
 		"date": "2025-10-29",
@@ -18,7 +50,7 @@
 		"date": "2025-10-29",
 		"types": ["Enhancement"],
 		"hidden": false,
-		"description": "Added sort order and rounding options to the export modal based on user feedback from jmstassen. You can now choose how items are ordered in exports and control whether prices are rounded to whole numbers, matching the functionality available in the main price guide interface.",
+		"description": "Added sort order and rounding options to the export modal based on user feedback from noobieX4231. You can now choose how items are ordered in exports and control whether prices are rounded to whole numbers, matching the functionality available in the main price guide interface.",
 		"changes": [
 			"Added sort order options: Default Order, Name, and Buy Price with ascending/descending options",
 			"Added 'Round to whole numbers' checkbox to control price precision in exports"

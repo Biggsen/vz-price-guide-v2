@@ -4,6 +4,8 @@
 
 The Suggestions MVP is live (submission, user list, admin list, status updates, soft/hard delete). This document tracks outstanding capabilities not included in the MVP and optional enhancements for a richer workflow.
 
+> ⚠️ **Reality check – 2025-11-09:** The shipped implementation already supports one-to-one comment threads between an admin and the suggestion author. Messages live in a `suggestionMessages` subcollection (hard delete on removal, no `deleted` flag today) and editing/deleting is restricted to the original author. There is no multi-user forum context; each thread stays private to the originating player plus staff. Any further enhancements should revisit the assumptions below before execution so the plan aligns with how the feature now operates.
+
 ## Scope
 
 -   Comment threads (admin ↔ user)

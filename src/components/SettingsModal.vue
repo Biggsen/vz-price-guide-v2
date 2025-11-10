@@ -47,6 +47,7 @@ const priceMultiplier = ref(1)
 const sellMargin = ref(0.3)
 const roundToWhole = ref(false)
 const showStackSize = ref(false)
+const showFullNumbers = ref(false)
 
 // Watch for prop changes and update local state
 watch(
@@ -71,6 +72,7 @@ function loadSettings() {
 	const savedRoundToWhole = localStorage.getItem('roundToWhole')
 	const savedSelectedVersion = localStorage.getItem('selectedVersion')
 	const savedShowStackSize = localStorage.getItem('showStackSize')
+	const savedShowFullNumbers = localStorage.getItem('showFullNumbers')
 
 	// Check URL query parameters first for version
 	const versionParam = route.query.version
@@ -92,6 +94,9 @@ function loadSettings() {
 	if (savedShowStackSize !== null) {
 		showStackSize.value = savedShowStackSize === 'true'
 	}
+	if (savedShowFullNumbers !== null) {
+		showFullNumbers.value = savedShowFullNumbers === 'true'
+	}
 }
 
 // Save settings to localStorage and emit to parent
@@ -101,6 +106,7 @@ function saveSettings() {
 	localStorage.setItem('roundToWhole', roundToWhole.value.toString())
 	localStorage.setItem('selectedVersion', selectedVersion.value)
 	localStorage.setItem('showStackSize', showStackSize.value.toString())
+	localStorage.setItem('showFullNumbers', showFullNumbers.value.toString())
 
 	// Emit settings to parent component
 	emit('save-settings', {
@@ -108,7 +114,8 @@ function saveSettings() {
 		priceMultiplier: priceMultiplier.value,
 		sellMargin: sellMargin.value,
 		roundToWhole: roundToWhole.value,
-		showStackSize: showStackSize.value
+		showStackSize: showStackSize.value,
+		showFullNumbers: showFullNumbers.value
 	})
 }
 
@@ -253,6 +260,17 @@ defineExpose({
 					type="checkbox"
 					class="checkbox-input" />
 				<label for="roundToWhole" class="text-sm text-gray-700">Round to whole</label>
+			</div>
+
+			<div class="flex items-center gap-2 mt-2">
+				<input
+					id="showFullNumbers"
+					v-model="showFullNumbers"
+					type="checkbox"
+					class="checkbox-input" />
+				<label for="showFullNumbers" class="text-sm text-gray-700">
+					Show full numbers (1000 instead of 1k)
+				</label>
 			</div>
 
 			<!-- Show Zero Priced Items (admin only) -->

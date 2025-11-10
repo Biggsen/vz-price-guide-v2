@@ -20,7 +20,11 @@ export function formatNumber(num) {
 	return num.toString()
 }
 
-export function formatCurrency(num, roundToWhole = false) {
+export function formatCurrency(
+	num,
+	roundToWhole = false,
+	useSmartNumberFormatting = true
+) {
 	if (num === undefined || num === null || typeof num !== 'number' || isNaN(num)) {
 		return '0'
 	}
@@ -34,23 +38,67 @@ export function formatCurrency(num, roundToWhole = false) {
 		// Show up to 2 decimal places, but remove trailing zeros
 		return parseFloat(num.toFixed(2)).toString()
 	}
-	return formatNumber(Math.round(num))
+	const rounded = Math.round(num)
+	if (!useSmartNumberFormatting) {
+		return rounded.toString()
+	}
+	return formatNumber(rounded)
 }
 
-export function buyUnitPrice(price, priceMultiplier, roundToWhole = false) {
-	return formatCurrency(price * priceMultiplier, roundToWhole)
+export function buyUnitPrice(
+	price,
+	priceMultiplier,
+	roundToWhole = false,
+	useSmartNumberFormatting = true
+) {
+	return formatCurrency(
+		price * priceMultiplier,
+		roundToWhole,
+		useSmartNumberFormatting
+	)
 }
 
-export function sellUnitPrice(price, priceMultiplier, sellMargin, roundToWhole = false) {
-	return formatCurrency(price * priceMultiplier * sellMargin, roundToWhole)
+export function sellUnitPrice(
+	price,
+	priceMultiplier,
+	sellMargin,
+	roundToWhole = false,
+	useSmartNumberFormatting = true
+) {
+	return formatCurrency(
+		price * priceMultiplier * sellMargin,
+		roundToWhole,
+		useSmartNumberFormatting
+	)
 }
 
-export function buyStackPrice(price, stack, priceMultiplier, roundToWhole = false) {
-	return formatCurrency(price * stack * priceMultiplier, roundToWhole)
+export function buyStackPrice(
+	price,
+	stack,
+	priceMultiplier,
+	roundToWhole = false,
+	useSmartNumberFormatting = true
+) {
+	return formatCurrency(
+		price * stack * priceMultiplier,
+		roundToWhole,
+		useSmartNumberFormatting
+	)
 }
 
-export function sellStackPrice(price, stack, priceMultiplier, sellMargin, roundToWhole = false) {
-	return formatCurrency(price * stack * priceMultiplier * sellMargin, roundToWhole)
+export function sellStackPrice(
+	price,
+	stack,
+	priceMultiplier,
+	sellMargin,
+	roundToWhole = false,
+	useSmartNumberFormatting = true
+) {
+	return formatCurrency(
+		price * stack * priceMultiplier * sellMargin,
+		roundToWhole,
+		useSmartNumberFormatting
+	)
 }
 
 // Raw number versions for export (no formatting)
