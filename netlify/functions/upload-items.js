@@ -47,7 +47,7 @@ export default async (req, context) => {
 
 	try {
 		await store.set(pathValue, file, {
-			access: 'public',
+			visibility: 'public',
 			metadata: {
 				contentType: file.type || 'application/octet-stream',
 				size: file.size ?? undefined
