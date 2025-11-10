@@ -301,6 +301,7 @@ const priceMultiplier = ref(1)
 const sellMargin = ref(0.3)
 const roundToWhole = ref(false)
 const showStackSize = ref(false)
+const showFullNumbers = ref(false)
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
 
@@ -315,6 +316,7 @@ const economyConfig = computed(() => ({
 	sellMargin: sellMargin.value,
 	roundToWhole: roundToWhole.value,
 	showStackSize: showStackSize.value,
+	showFullNumbers: showFullNumbers.value,
 	version: selectedVersion.value
 }))
 
@@ -327,6 +329,7 @@ function loadEconomyConfig() {
 	const savedLayout = localStorage.getItem('layout')
 	const savedSelectedVersion = localStorage.getItem('selectedVersion')
 	const savedShowStackSize = localStorage.getItem('showStackSize')
+	const savedShowFullNumbers = localStorage.getItem('showFullNumbers')
 
 	if (savedPriceMultiplier !== null) {
 		priceMultiplier.value = parseFloat(savedPriceMultiplier)
@@ -346,6 +349,9 @@ function loadEconomyConfig() {
 	if (savedShowStackSize !== null) {
 		showStackSize.value = savedShowStackSize === 'true'
 	}
+	if (savedShowFullNumbers !== null) {
+		showFullNumbers.value = savedShowFullNumbers === 'true'
+	}
 	// Only load from localStorage if there's no version query parameter
 	const versionParam = route.query.version
 	if (savedSelectedVersion !== null && !versionParam) {
@@ -362,11 +368,21 @@ function saveEconomyConfig() {
 	localStorage.setItem('layout', layout.value)
 	localStorage.setItem('selectedVersion', selectedVersion.value)
 	localStorage.setItem('showStackSize', showStackSize.value.toString())
+	localStorage.setItem('showFullNumbers', showFullNumbers.value.toString())
 }
 
 // Watch for changes and save to localStorage
 watch(
-	[priceMultiplier, sellMargin, roundToWhole, viewMode, layout, selectedVersion, showStackSize],
+	[
+		priceMultiplier,
+		sellMargin,
+		roundToWhole,
+		viewMode,
+		layout,
+		selectedVersion,
+		showStackSize,
+		showFullNumbers
+	],
 	() => {
 		saveEconomyConfig()
 		// Clear price cache when economy config changes
@@ -637,6 +653,7 @@ function handleSaveSettings(settings) {
 	sellMargin.value = settings.sellMargin
 	roundToWhole.value = settings.roundToWhole
 	showStackSize.value = settings.showStackSize
+	showFullNumbers.value = settings.showFullNumbers === true
 
 	// Close the modal
 	showSettingsModal.value = false
