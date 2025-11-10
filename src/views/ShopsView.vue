@@ -4,6 +4,19 @@ import { useCurrentUser } from 'vuefire'
 import { useRouter } from 'vue-router'
 import { useShops, createShop, updateShop, deleteShop } from '../utils/shopProfile.js'
 import { useServers } from '../utils/serverProfile.js'
+import BaseButton from '../components/BaseButton.vue'
+import BaseModal from '../components/BaseModal.vue'
+import {
+	ArrowLeftIcon,
+	PlusIcon,
+	PencilSquareIcon,
+	TrashIcon,
+	MapPinIcon,
+	BanknotesIcon,
+	CalendarDaysIcon,
+	Squares2X2Icon,
+	ShoppingBagIcon
+} from '@heroicons/vue/20/solid'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -162,12 +175,6 @@ const isFormValid = computed(() => {
 	return shopForm.value.name.trim() && shopForm.value.server_id
 })
 
-// Helper function to get server name
-function getServerName(serverId) {
-	const server = servers.value?.find((s) => s.id === serverId)
-	return server ? server.name : 'Unknown Server'
-}
-
 // Handle owner funds input
 function handleFundsInput(event) {
 	const value = event.target.value
@@ -181,28 +188,36 @@ function handleFundsInput(event) {
 </script>
 
 <template>
-	<div class="p-4 pt-8">
+	<div class="p-4 pt-8 space-y-8">
 		<!-- Back Button -->
-		<div class="mb-4">
-			<RouterLink
-				to="/shop-manager"
-				class="inline-flex items-center rounded-md bg-white text-gray-700 border-2 border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 transition">
-				<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-				</svg>
+		<div>
+			<BaseButton variant="tertiary" @click="router.push('/shop-manager')">
+				<template #left-icon>
+					<ArrowLeftIcon />
+				</template>
 				Back to Shop Manager
-			</RouterLink>
+			</BaseButton>
 		</div>
 
-		<div class="mb-6">
+		<div>
 			<h1 class="text-3xl font-bold text-gray-900 mb-2">Shops</h1>
 			<p class="text-gray-600">
 				Manage your shops and competitor shops for price tracking and comparison.
 			</p>
+		</div>
+
+		<!-- Create button -->
+		<div class="flex justify-start">
+			<BaseButton
+				type="button"
+				variant="primary"
+				:disabled="!hasServers"
+				@click="showCreateShopForm()">
+				<template #left-icon>
+					<PlusIcon />
+				</template>
+				Add Shop
+			</BaseButton>
 		</div>
 
 		<!-- Error message -->
@@ -230,16 +245,16 @@ function handleFundsInput(event) {
 			</p>
 		</div>
 
-		<!-- Create/Edit shop form -->
-		<div v-if="showCreateForm" class="mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50">
-			<h2 class="text-xl font-semibold mb-4">
-				{{ editingShop ? 'Edit Shop' : 'Add New Shop' }}
-			</h2>
-
+		<!-- Create/Edit shop modal -->
+		<BaseModal
+			:isOpen="showCreateForm"
+			:title="editingShop ? 'Edit Shop' : 'Add New Shop'"
+			maxWidth="max-w-2xl"
+			@close="cancelForm">
 			<form @submit.prevent="handleSubmit" class="space-y-4">
 				<!-- Shop name -->
 				<div>
-					<label for="shop-name" class="block text-sm font-medium text-gray-700 mb-1">
+					<label for="shop-name" class="block text-sm font-medium text-gray-700">
 						Shop Name *
 					</label>
 					<input
@@ -248,19 +263,19 @@ function handleFundsInput(event) {
 						type="text"
 						required
 						placeholder="e.g., verzion's shop"
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+						class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
 				</div>
 
 				<!-- Server selection -->
 				<div>
-					<label for="server-id" class="block text-sm font-medium text-gray-700 mb-1">
+					<label for="server-id" class="block text-sm font-medium text-gray-700">
 						Server *
 					</label>
 					<select
 						id="server-id"
 						v-model="shopForm.server_id"
 						required
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+						class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus">
 						<option value="">Select a server</option>
 						<option v-for="server in servers" :key="server.id" :value="server.id">
 							{{ server.name }}
@@ -270,7 +285,7 @@ function handleFundsInput(event) {
 
 				<!-- Location -->
 				<div>
-					<label for="location" class="block text-sm font-medium text-gray-700 mb-1">
+					<label for="location" class="block text-sm font-medium text-gray-700">
 						Location
 					</label>
 					<input
@@ -278,12 +293,12 @@ function handleFundsInput(event) {
 						v-model="shopForm.location"
 						type="text"
 						placeholder="e.g., /warp shops, coordinates, etc."
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+						class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
 				</div>
 
 				<!-- Description -->
 				<div>
-					<label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+					<label for="description" class="block text-sm font-medium text-gray-700">
 						Description
 					</label>
 					<textarea
@@ -291,12 +306,12 @@ function handleFundsInput(event) {
 						v-model="shopForm.description"
 						rows="3"
 						placeholder="Optional description for this shop..."
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+						class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus"></textarea>
 				</div>
 
 				<!-- Owner Funds -->
 				<div>
-					<label for="owner-funds" class="block text-sm font-medium text-gray-700 mb-1">
+					<label for="owner-funds" class="block text-sm font-medium text-gray-700">
 						Owner Funds
 					</label>
 					<input
@@ -307,147 +322,161 @@ function handleFundsInput(event) {
 						step="0.01"
 						min="0"
 						placeholder="0.00"
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-					<p class="text-xs text-gray-500 mt-1">
+						class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
+					<p class="text-xs text-gray-500 mt-2">
 						Available money for buying items from players (affects sell prices)
 					</p>
 				</div>
 
 				<!-- Shop type -->
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Shop Type</label>
-					<div class="flex gap-4">
-						<div class="flex items-center">
+					<label class="block text-sm font-medium text-gray-700">Shop Type</label>
+					<div class="mt-3 flex flex-wrap gap-6">
+						<label class="flex items-center gap-2 text-sm text-gray-700">
 							<input
 								id="competitor-shop"
 								v-model="shopForm.is_own_shop"
 								:value="false"
 								type="radio"
 								class="radio-input" />
-							<label for="competitor-shop" class="ml-2 block text-sm text-gray-700">
-								Competitor
-							</label>
-						</div>
-						<div class="flex items-center">
+							<span>Competitor</span>
+						</label>
+						<label class="flex items-center gap-2 text-sm text-gray-700">
 							<input
 								id="my-shop"
 								v-model="shopForm.is_own_shop"
 								:value="true"
 								type="radio"
 								class="radio-input" />
-							<label for="my-shop" class="ml-2 block text-sm text-gray-700">
-								My Shop
-							</label>
-						</div>
+							<span>My Shop</span>
+						</label>
 					</div>
 				</div>
 
 				<!-- Form actions -->
-				<div class="flex gap-2">
-					<button
+				<div class="flex justify-end gap-3 pt-2">
+					<BaseButton type="button" variant="tertiary" @click="cancelForm">
+						Cancel
+					</BaseButton>
+					<BaseButton
 						type="submit"
 						:disabled="!isFormValid || loading"
-						class="bg-semantic-info text-white px-4 py-2 rounded hover:bg-opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+						variant="primary">
+						<template #left-icon>
+							<component :is="editingShop ? PencilSquareIcon : PlusIcon" />
+						</template>
 						{{ editingShop ? 'Update Shop' : 'Create Shop' }}
-					</button>
-					<button
-						type="button"
-						@click="cancelForm"
-						class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 transition-colors">
-						Cancel
-					</button>
+					</BaseButton>
 				</div>
 			</form>
-		</div>
+		</BaseModal>
 
 		<!-- Shops list grouped by server -->
-		<div v-if="hasServers" class="space-y-6">
+		<div
+			v-if="hasServers"
+			class="space-y-8">
 			<div
 				v-for="(serverGroup, serverId) in shopsByServer"
 				:key="serverId"
-				class="border border-gray-200 rounded-lg overflow-hidden">
-				<!-- Server header -->
-				<div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
-					<div class="flex justify-between items-center">
-						<div>
-							<h3 class="text-lg font-semibold text-gray-900">
-								{{ serverGroup.server.name }}
-							</h3>
-							<p class="text-sm text-gray-500">
-								{{ serverGroup.shops.length }} shop{{
-									serverGroup.shops.length !== 1 ? 's' : ''
-								}}
-							</p>
-						</div>
-						<button
-							@click="showCreateShopForm(serverGroup.server.id)"
-							class="bg-semantic-info text-white px-3 py-1.5 rounded text-sm hover:bg-opacity-80 transition-colors font-medium">
-							+ Add Shop
-						</button>
-					</div>
-				</div>
+				class="space-y-4">
+				<h2
+					class="flex items-center gap-2 text-2xl font-semibold text-gray-700 border-b-2 border-gray-asparagus pb-2">
+					{{ serverGroup.server.name }}
+					<span class="text-sm font-normal text-heavy-metal flex items-center gap-1">
+						<Squares2X2Icon class="w-4 h-4" />
+						{{ serverGroup.shops.length }} shop{{
+							serverGroup.shops.length !== 1 ? 's' : ''
+						}}
+					</span>
+				</h2>
 
-				<!-- Shops in this server -->
-				<div class="divide-y divide-gray-200">
+				<div
+					v-if="serverGroup.shops.length"
+					class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
 					<div
 						v-for="shop in serverGroup.shops"
 						:key="shop.id"
 						v-show="!editingShop || editingShop.id !== shop.id"
-						class="p-4 bg-white hover:bg-gray-50 transition-colors">
-						<div class="flex justify-between items-start">
-							<div class="flex-1">
-								<div class="flex items-center gap-2 mb-2">
-									<h4 class="text-lg font-medium text-gray-900">
+						class="bg-sea-mist rounded-lg shadow-md border-2 border-amulet overflow-hidden flex flex-col">
+						<!-- Card Header -->
+						<div class="bg-amulet px-4 py-3 border-x-2 border-t-2 border-white">
+							<div class="flex flex-wrap items-center justify-between gap-3">
+								<div class="flex flex-wrap items-center gap-2">
+									<h3 class="text-xl font-semibold text-heavy-metal">
 										{{ shop.name }}
-									</h4>
+									</h3>
 									<span
 										v-if="shop.is_own_shop"
-										class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+										class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
 										My Shop
 									</span>
 									<span
 										v-else
-										class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+										class="inline-flex items-center rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-heavy-metal">
 										Competitor
 									</span>
 								</div>
-								<p v-if="shop.location" class="text-sm text-gray-600 mb-1">
-									📍 {{ shop.location }}
-								</p>
-								<p v-if="shop.description" class="text-gray-600 mb-2">
-									{{ shop.description }}
-								</p>
-								<p
-									v-if="
-										shop.owner_funds !== null && shop.owner_funds !== undefined
-									"
-									class="text-sm text-gray-600 mb-1">
-									💰 Available funds: {{ shop.owner_funds.toFixed(2) }}
-								</p>
-								<p class="text-xs text-gray-400">
-									Created: {{ new Date(shop.created_at).toLocaleDateString() }}
-								</p>
+								<div class="flex gap-2">
+									<button
+										type="button"
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
+										@click="showEditShopForm(shop)">
+										<PencilSquareIcon class="w-4 h-4" />
+										<span class="sr-only">Edit</span>
+									</button>
+									<button
+										type="button"
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
+										@click="handleDelete(shop)">
+										<TrashIcon class="w-4 h-4" />
+										<span class="sr-only">Delete</span>
+									</button>
+								</div>
+							</div>
+						</div>
+
+						<!-- Card Body -->
+						<div class="bg-norway p-4 border-x-2 border-b-2 border-white flex-1 flex flex-col gap-4">
+							<p v-if="shop.description" class="text-sm text-heavy-metal">
+								{{ shop.description }}
+							</p>
+
+							<div class="space-y-2 text-sm text-heavy-metal">
+								<div
+									v-if="shop.location"
+									class="flex items-center gap-2">
+									<MapPinIcon class="w-4 h-4" />
+									<span>{{ shop.location }}</span>
+								</div>
+								<div
+									v-if="shop.owner_funds !== null && shop.owner_funds !== undefined"
+									class="flex items-center gap-2">
+									<BanknotesIcon class="w-4 h-4" />
+									<span>Available funds: {{ shop.owner_funds.toFixed(2) }}</span>
+								</div>
+								<div class="flex items-center gap-2 text-xs text-gray-500">
+									<CalendarDaysIcon class="w-4 h-4" />
+									<span>{{ new Date(shop.created_at).toLocaleDateString() }}</span>
+								</div>
 							</div>
 
-							<div class="flex gap-2 ml-4">
-								<router-link
+							<div class="mt-auto flex justify-end">
+								<RouterLink
 									:to="{ path: '/shop-items', query: { shop: shop.id } }"
-									class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+									class="inline-flex items-center gap-2 rounded-md bg-gray-asparagus px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-highland">
+									<ShoppingBagIcon class="w-4 h-4" />
 									Manage Items
-								</router-link>
-								<button
-									@click="showEditShopForm(shop)"
-									class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-									Edit
-								</button>
-								<button
-									@click="handleDelete(shop)"
-									class="text-red-600 hover:text-red-800 text-sm font-medium">
-									Delete
-								</button>
+								</RouterLink>
 							</div>
 						</div>
 					</div>
+				</div>
+
+				<div
+					v-else
+					class="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-gray-asparagus/40 bg-norway/70 px-4 py-6 text-center text-heavy-metal">
+					<ShoppingBagIcon class="w-8 h-8 text-gray-asparagus" />
+					<p class="text-sm">No shops for this server yet.</p>
 				</div>
 			</div>
 		</div>
