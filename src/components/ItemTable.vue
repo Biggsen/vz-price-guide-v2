@@ -7,12 +7,9 @@ import {
 	getEffectivePrice,
 	getEffectivePriceMemoized
 } from '../utils/pricing.js'
-import { useAdmin } from '../utils/admin.js'
 import { getImageUrl, getWikiUrl } from '../utils/image.js'
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Squares2X2Icon } from '@heroicons/vue/16/solid'
-
-const { canEditItems } = useAdmin()
 
 // Sorting state
 const sortField = ref('')
@@ -65,6 +62,8 @@ const props = defineProps({
 const priceMultiplier = computed(() => props.economyConfig.priceMultiplier)
 const sellMargin = computed(() => props.economyConfig.sellMargin)
 const roundToWhole = computed(() => props.economyConfig.roundToWhole)
+const showFullNumbers = computed(() => props.economyConfig.showFullNumbers === true)
+const useSmartNumberFormatting = computed(() => !showFullNumbers.value)
 const currentVersion = computed(() => props.economyConfig.version || '1.21')
 
 // Check if sorting is enabled (only in list view)
@@ -348,7 +347,12 @@ function getItemRecipe(item) {
 					</td>
 					<td class="text-center">
 						{{
-							buyUnitPrice(getItemEffectivePrice(item), priceMultiplier, roundToWhole)
+							buyUnitPrice(
+								getItemEffectivePrice(item),
+								priceMultiplier,
+								roundToWhole,
+								useSmartNumberFormatting
+							)
 						}}
 					</td>
 
@@ -358,7 +362,8 @@ function getItemRecipe(item) {
 								getItemEffectivePrice(item),
 								priceMultiplier,
 								sellMargin,
-								roundToWhole
+								roundToWhole,
+								useSmartNumberFormatting
 							)
 						}}
 					</td>
@@ -369,7 +374,8 @@ function getItemRecipe(item) {
 								getItemEffectivePrice(item),
 								item.stack,
 								priceMultiplier,
-								roundToWhole
+								roundToWhole,
+								useSmartNumberFormatting
 							)
 						}}
 					</td>
@@ -380,7 +386,8 @@ function getItemRecipe(item) {
 								item.stack,
 								priceMultiplier,
 								sellMargin,
-								roundToWhole
+								roundToWhole,
+								useSmartNumberFormatting
 							)
 						}}
 					</td>

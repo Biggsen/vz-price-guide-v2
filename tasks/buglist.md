@@ -120,6 +120,39 @@ Added a watcher in `SettingsModal.vue` that monitors the `isOpen` prop and calls
 -   Settings are now properly loaded from localStorage when modal opens
 -   No changes needed to the save functionality as it was already working
 
+### Price Guide vs Export Item Count Discrepancy
+
+**Status**: 🔴 Active  
+**Priority**: High  
+**Type**: Data Integrity  
+**Discovered**: 2025-11-10
+
+**Description**:
+The admin price guide reports `1,473` items, while the export summary indicates only `1,471` items will be exported. Two items are missing from the export output, revealing a mismatch between the inventory view and export pipeline.
+
+**Expected Behavior**:
+The export pipeline should include every item displayed in the price guide. Total item counts must stay in sync across views.
+
+**Current Behavior**:
+The price guide displays `1,473` items, but the export flow only includes `1,471` items.
+
+**Impact**:
+
+-   Incomplete export files for admins and downstream tooling
+-   Possible loss of pricing data for the missing items
+-   Reduces confidence in export accuracy
+
+**Reproduction Steps**:
+
+1. Open the admin price guide and note the total item count.
+2. Initiate the export flow and view the export summary count.
+3. Observe the mismatch between the price guide (`1,473`) and export (`1,471`) totals.
+
+**Notes**:
+
+-   Determine which items are excluded during export and why
+-   Confirm whether other metadata differs between the two items and the export schema
+
 ## Resolved Issues
 
 ### Crate Total Value Incorrect - Not Considering Enchantments

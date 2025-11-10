@@ -50,7 +50,7 @@
 		"date": "2025-10-29",
 		"types": ["Enhancement"],
 		"hidden": false,
-		"description": "Added sort order and rounding options to the export modal based on user feedback from jmstassen. You can now choose how items are ordered in exports and control whether prices are rounded to whole numbers, matching the functionality available in the main price guide interface.",
+		"description": "Added sort order and rounding options to the export modal based on user feedback from noobieX4231. You can now choose how items are ordered in exports and control whether prices are rounded to whole numbers, matching the functionality available in the main price guide interface.",
 		"changes": [
 			"Added sort order options: Default Order, Name, and Buy Price with ascending/descending options",
 			"Added 'Round to whole numbers' checkbox to control price precision in exports"
