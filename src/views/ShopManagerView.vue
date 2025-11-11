@@ -127,79 +127,54 @@ const ownShopServer = computed(() => {
 			</h2>
 		</div>
 
-		<!-- Navigation Cards -->
+		<!-- Support Cards -->
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-			<!-- My Servers -->
 			<RouterLink
 				to="/servers"
-				class="bg-norway rounded-lg shadow-md border-2 border-gray-asparagus overflow-hidden hover:shadow-lg transition-shadow">
-				<h3
-					class="text-xl font-semibold text-white bg-gray-asparagus px-4 py-2 w-full border-x-2 border-t-2 border-white rounded-t-lg">
-					My Servers
-				</h3>
-				<div class="p-4 border-2 border-white rounded-b-lg">
-					<p class="text-heavy-metal mb-4">
-						Configure and manage your Minecraft servers with custom pricing settings and
-						economy multipliers.
-					</p>
-					<button class="bg-gray-asparagus text-white px-4 py-2 rounded hover:bg-opacity-80 transition-colors">
+				class="rounded-xl border border-gray-asparagus/60 bg-saltpan px-5 py-6 shadow-sm transition hover:shadow-md">
+				<div class="space-y-4">
+					<div>
+						<h3 class="text-lg font-semibold text-heavy-metal">My Servers</h3>
+						<p class="mt-2 text-sm text-gray-600">
+							Configure and manage your Minecraft servers with custom pricing settings and
+							economy multipliers.
+						</p>
+					</div>
+					<button class="rounded border border-gray-asparagus bg-norway px-3 py-1.5 text-sm font-medium text-heavy-metal transition hover:bg-sea-mist">
 						Manage Servers
 					</button>
 				</div>
 			</RouterLink>
 
-			<!-- My Shops -->
 			<RouterLink
 				to="/shops"
-				class="bg-norway rounded-lg shadow-md border-2 border-gray-asparagus overflow-hidden hover:shadow-lg transition-shadow">
-				<h3
-					class="text-xl font-semibold text-white bg-gray-asparagus px-4 py-2 w-full border-x-2 border-t-2 border-white rounded-t-lg">
-					My Shops
-				</h3>
-				<div class="p-4 border-2 border-white rounded-b-lg">
-					<p class="text-heavy-metal mb-4">
-						Set up and manage your economy shops with detailed item pricing, inventory
-						tracking, and location information.
-					</p>
-					<button class="bg-gray-asparagus text-white px-4 py-2 rounded hover:bg-opacity-80 transition-colors">
+				class="rounded-xl border border-gray-asparagus/60 bg-saltpan px-5 py-6 shadow-sm transition hover:shadow-md">
+				<div class="space-y-4">
+					<div>
+						<h3 class="text-lg font-semibold text-heavy-metal">My Shops</h3>
+						<p class="mt-2 text-sm text-gray-600">
+							Set up and manage your economy shops with detailed item pricing, inventory
+							tracking, and location information.
+						</p>
+					</div>
+					<button class="rounded border border-gray-asparagus bg-norway px-3 py-1.5 text-sm font-medium text-heavy-metal transition hover:bg-sea-mist">
 						Manage Shops
 					</button>
 				</div>
 			</RouterLink>
 
-			<!-- Shop Items -->
 			<RouterLink
 				to="/shop-items"
-				class="bg-norway rounded-lg shadow-md border-2 border-gray-asparagus overflow-hidden hover:shadow-lg transition-shadow">
-				<h3
-					class="text-xl font-semibold text-white bg-gray-asparagus px-4 py-2 w-full border-x-2 border-t-2 border-white rounded-t-lg">
-					Shop Items
-				</h3>
-				<div class="p-4 border-2 border-white rounded-b-lg">
-					<p class="text-heavy-metal mb-4">
-						Add, edit, and manage the items sold in your shops with real-time pricing
-						updates and inventory management.
-					</p>
-					<button class="bg-gray-asparagus text-white px-4 py-2 rounded hover:bg-opacity-80 transition-colors">
-						Manage Items
-					</button>
-				</div>
-			</RouterLink>
-
-			<!-- Market Overview -->
-			<RouterLink
-				to="/market-overview"
-				class="bg-norway rounded-lg shadow-md border-2 border-gray-asparagus overflow-hidden hover:shadow-lg transition-shadow">
-				<h3
-					class="text-xl font-semibold text-white bg-gray-asparagus px-4 py-2 w-full border-x-2 border-t-2 border-white rounded-t-lg">
-					Market Overview
-				</h3>
-				<div class="p-4 border-2 border-white rounded-b-lg">
-					<p class="text-heavy-metal mb-4">
-						View comprehensive market analysis with price comparisons, trading
-						opportunities, and competitor insights across all your servers.
-					</p>
-					<button class="bg-gray-asparagus text-white px-4 py-2 rounded hover:bg-opacity-80 transition-colors">
+				class="rounded-xl border border-gray-asparagus/60 bg-saltpan px-5 py-6 shadow-sm transition hover:shadow-md">
+				<div class="space-y-4">
+					<div>
+						<h3 class="text-lg font-semibold text-heavy-metal">Market Overview</h3>
+						<p class="mt-2 text-sm text-gray-600">
+							View comprehensive market analysis with price comparisons, trading
+							opportunities, and competitor insights across all your servers.
+						</p>
+					</div>
+					<button class="rounded border border-gray-asparagus bg-norway px-3 py-1.5 text-sm font-medium text-heavy-metal transition hover:bg-sea-mist">
 						View Market
 					</button>
 				</div>
