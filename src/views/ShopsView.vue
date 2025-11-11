@@ -152,16 +152,24 @@ async function handleSubmit() {
 	}
 }
 
-async function handleDelete(shop) {
-	if (!confirm(`Are you sure you want to delete "${shop.name}"? This action cannot be undone.`)) {
-		return
-	}
+const showDeleteModal = ref(false)
+const shopPendingDelete = ref(null)
+
+function requestDeleteShop(shop) {
+	shopPendingDelete.value = shop
+	showDeleteModal.value = true
+}
+
+async function confirmDeleteShop() {
+	if (!shopPendingDelete.value) return
 
 	loading.value = true
 	error.value = null
 
 	try {
-		await deleteShop(shop.id)
+		await deleteShop(shopPendingDelete.value.id)
+		showDeleteModal.value = false
+		shopPendingDelete.value = null
 	} catch (err) {
 		console.error('Error deleting shop:', err)
 		error.value = err.message || 'Failed to delete shop. Please try again.'
@@ -427,7 +435,7 @@ function handleFundsInput(event) {
 									<button
 										type="button"
 										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-										@click="handleDelete(shop)">
+										@click="requestDeleteShop(shop)">
 										<TrashIcon class="w-4 h-4" />
 										<span class="sr-only">Delete</span>
 									</button>
@@ -481,6 +489,43 @@ function handleFundsInput(event) {
 			</div>
 		</div>
 	</div>
+
+	<BaseModal
+		:isOpen="showDeleteModal"
+		title="Delete Shop"
+		size="small"
+		@close="showDeleteModal = false; shopPendingDelete = null">
+		<div class="space-y-4">
+			<div>
+				<h3 class="font-normal text-gray-900">
+					Are you sure you want to delete
+					<span class="font-semibold">{{ shopPendingDelete?.name }}</span>?
+				</h3>
+				<p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
+			</div>
+		</div>
+
+		<template #footer>
+			<div class="flex items-center justify-end p-4">
+				<div class="flex space-x-3">
+					<button
+						type="button"
+						class="btn-secondary--outline"
+						@click="showDeleteModal = false; shopPendingDelete = null">
+						Cancel
+					</button>
+					<BaseButton
+						type="button"
+						variant="primary"
+						class="bg-semantic-danger hover:bg-opacity-90"
+						:disabled="loading"
+						@click="confirmDeleteShop">
+						{{ loading ? 'Deleting...' : 'Delete' }}
+					</BaseButton>
+				</div>
+			</div>
+		</template>
+	</BaseModal>
 </template>
 
 <style scoped>
