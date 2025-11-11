@@ -14,6 +14,11 @@ const props = defineProps({
 	server: {
 		type: Object,
 		required: true
+	},
+	displayVariant: {
+		type: String,
+		default: 'card',
+		validator: (value) => ['card', 'modal'].includes(value)
 	}
 })
 
@@ -107,6 +112,8 @@ watch(
 const selectedItem = computed(
 	() => props.availableItems.find((item) => item.id === formData.value.item_id) || null
 )
+
+const isModalVariant = computed(() => props.displayVariant === 'modal')
 
 // Filter items based on search query and exclude zero-priced items
 const filteredItems = computed(() => {
@@ -390,17 +397,22 @@ defineExpose({
 </script>
 
 <template>
-	<div class="mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50">
-		<h2 class="text-xl font-semibold mb-4">
+	<div :class="isModalVariant ? 'space-y-4' : 'mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50'">
+		<h2 v-if="!isModalVariant" class="text-xl font-semibold mb-4">
 			{{ editingItem ? 'Edit Shop Item' : 'Add New Shop Item' }}
 		</h2>
 
 		<!-- Error message -->
-		<div v-if="error" class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+		<div
+			v-if="error"
+			class="p-3 bg-red-50 border border-red-200 text-red-700 rounded">
 			{{ error }}
 		</div>
 
-		<form @submit.prevent="handleSubmit" @keydown="handleFormKeyDown" class="space-y-4">
+		<form
+			@submit.prevent="handleSubmit"
+			@keydown="handleFormKeyDown"
+			class="space-y-4">
 			<!-- Item selection -->
 			<div v-if="!editingItem">
 				<!-- Show search input when no item is selected -->
@@ -416,13 +428,13 @@ defineExpose({
 						@keydown="handleKeyDown"
 						type="text"
 						placeholder="Search items by name, material ID, or category..."
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2" />
+						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
 
 					<!-- Item selection dropdown -->
 					<div
 						v-if="searchQuery && filteredItems.length > 0"
 						ref="dropdownContainer"
-						class="max-h-64 overflow-y-auto border border-gray-300 rounded-md bg-white">
+						class="max-h-64 overflow-y-auto border-2 border-gray-asparagus rounded-md bg-white">
 						<template
 							v-for="(categoryItems, category) in itemsByCategory"
 							:key="category">
@@ -440,8 +452,8 @@ defineExpose({
 								:class="[
 									'px-3 py-2 cursor-pointer border-b border-gray-100 flex items-center justify-between',
 									getItemVisualIndex(category, categoryIndex) === highlightedIndex
-										? 'bg-blue-100 text-blue-900'
-										: 'hover:bg-blue-50'
+										? 'bg-norway text-heavy-metal'
+										: 'hover:bg-sea-mist'
 								]">
 								<div>
 									<div class="font-medium">{{ item.name }}</div>
@@ -462,10 +474,10 @@ defineExpose({
 				<div v-else>
 					<label class="block text-sm font-medium text-gray-700 mb-1">Item *</label>
 					<div
-						class="p-3 bg-green-50 border border-green-200 rounded flex items-center justify-between">
+						class="px-3 py-2 bg-norway border-2 border-gray-asparagus rounded flex items-center justify-between">
 						<div>
-							<div class="font-medium text-green-800">{{ selectedItem.name }}</div>
-							<div class="text-sm text-green-600">{{ selectedItem.material_id }}</div>
+							<div class="font-medium text-heavy-metal">{{ selectedItem.name }}</div>
+							<div class="text-sm text-gray-asparagus">{{ selectedItem.material_id }}</div>
 						</div>
 						<div v-if="selectedItem.image" class="w-8 h-8">
 							<img
@@ -486,7 +498,7 @@ defineExpose({
 			<!-- Show selected item when editing -->
 			<div
 				v-else-if="editingItem && editingItem.itemData"
-				class="p-3 bg-gray-100 border border-gray-300 rounded">
+					class="px-3 py-2 bg-norway border-2 border-gray-asparagus rounded">
 				<div class="flex items-center justify-between">
 					<div>
 						<div class="font-medium">{{ editingItem.itemData.name }}</div>
@@ -517,8 +529,8 @@ defineExpose({
 						step="0.01"
 						min="0"
 						placeholder="0.00"
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-					<p class="text-xs text-gray-500 mt-1">Leave empty if you don't buy this item</p>
+						class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
+					<p class="text-xs text-gray-500 mt-1">Leave blank if you don't buy this item</p>
 				</div>
 
 				<div>
@@ -533,9 +545,9 @@ defineExpose({
 						step="0.01"
 						min="0"
 						placeholder="0.00"
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+						class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
 					<p class="text-xs text-gray-500 mt-1">
-						Leave empty if you don't sell this item
+						Leave blank if you don't sell this item
 					</p>
 				</div>
 			</div>
@@ -544,9 +556,9 @@ defineExpose({
 			<div>
 				<label class="flex items-center">
 					<input v-model="formData.stock_full" type="checkbox" class="checkbox-input" />
-					<span class="ml-2 text-sm text-gray-700">Stock Full</span>
+					<span class="ml-2 text-sm text-gray-700">Stock full</span>
 				</label>
-				<p class="text-xs text-gray-500 mt-1">Check if chest is full (can't buy more)</p>
+				<p class="text-xs text-gray-500 mt-1">Mark when you can't buy more from players</p>
 			</div>
 
 			<!-- Show more link -->
@@ -575,7 +587,7 @@ defineExpose({
 						type="number"
 						min="0"
 						placeholder="64"
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+						class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
 					<p class="text-xs text-gray-500 mt-1">Current stock amount</p>
 				</div>
 
@@ -589,25 +601,25 @@ defineExpose({
 						v-model="formData.notes"
 						rows="3"
 						placeholder="Add any notes about this item, pricing, or stock..."
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+						class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>
 				</div>
 			</div>
 
 			<!-- Form actions -->
-			<div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+			<div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
 				<button
 					type="button"
 					@click="handleCancel"
-					class="px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-opacity-80 transition-colors">
+					class="px-4 py-2 text-sm font-medium text-heavy-metal bg-norway border-2 border-gray-asparagus rounded hover:bg-sea-mist transition-colors">
 					Cancel
 				</button>
 				<button
 					type="submit"
 					:disabled="!isFormValid"
 					:class="[
-						'px-4 py-2 rounded transition-colors font-medium',
+						'px-4 py-2 text-sm font-semibold rounded transition-colors',
 						isFormValid
-							? 'bg-semantic-info text-white hover:bg-opacity-80'
+							? 'bg-gray-asparagus text-white hover:bg-highland'
 							: 'bg-gray-300 text-gray-500 cursor-not-allowed'
 					]">
 					{{ editingItem ? 'Update Item' : 'Add Item' }}

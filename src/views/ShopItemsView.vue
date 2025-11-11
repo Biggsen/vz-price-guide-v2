@@ -14,6 +14,16 @@ import {
 } from '../utils/shopItems.js'
 import ShopItemForm from '../components/ShopItemForm.vue'
 import ShopItemTable from '../components/ShopItemTable.vue'
+import BaseButton from '../components/BaseButton.vue'
+import BaseModal from '../components/BaseModal.vue'
+import {
+	ArrowLeftIcon,
+	PlusIcon,
+	MapPinIcon,
+	BanknotesIcon,
+	CalendarDaysIcon,
+	Squares2X2Icon
+} from '@heroicons/vue/20/solid'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -232,7 +242,7 @@ watch(
 
 // Form handlers
 function showAddItemForm() {
-	if (!selectedShopId.value) {
+	if (!selectedShopId.value || !selectedServer.value) {
 		error.value = 'Please select a shop first'
 		return
 	}
@@ -305,21 +315,24 @@ async function handleItemSubmit(itemData) {
 	}
 }
 
-async function handleItemDelete(shopItem) {
-	const itemName = shopItem.itemData?.name || 'this item'
-	if (
-		!confirm(
-			`Are you sure you want to remove "${itemName}" from your shop? This action cannot be undone.`
-		)
-	) {
-		return
-	}
+const showDeleteItemModal = ref(false)
+const itemPendingDelete = ref(null)
+
+function handleItemDelete(shopItem) {
+	itemPendingDelete.value = shopItem
+	showDeleteItemModal.value = true
+}
+
+async function confirmDeleteItem() {
+	if (!itemPendingDelete.value) return
 
 	loading.value = true
 	error.value = null
 
 	try {
-		await deleteShopItem(shopItem.id)
+		await deleteShopItem(itemPendingDelete.value.id)
+		showDeleteItemModal.value = false
+		itemPendingDelete.value = null
 	} catch (err) {
 		console.error('Error deleting shop item:', err)
 		error.value = err.message || 'Failed to delete shop item. Please try again.'
@@ -406,24 +419,18 @@ function getServerName(serverId) {
 </script>
 
 <template>
-	<div class="p-4 pt-8">
+	<div class="p-4 pt-8 space-y-8">
 		<!-- Back Button -->
-		<div class="mb-4">
-			<RouterLink
-				to="/shop-manager"
-				class="inline-flex items-center rounded-md bg-white text-gray-700 border-2 border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 transition">
-				<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-				</svg>
+		<div>
+			<BaseButton variant="tertiary" @click="router.push('/shop-manager')">
+				<template #left-icon>
+					<ArrowLeftIcon />
+				</template>
 				Back to Shop Manager
-			</RouterLink>
+			</BaseButton>
 		</div>
 
-		<div class="mb-6">
+		<div>
 			<h1 class="text-3xl font-bold text-gray-900 mb-2">Shop Items</h1>
 			<p class="text-gray-600">
 				Manage your shop inventory with buy/sell prices and stock tracking.
@@ -431,25 +438,27 @@ function getServerName(serverId) {
 		</div>
 
 		<!-- Error message -->
-		<div v-if="error" class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+		<div
+			v-if="error"
+			class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
 			{{ error }}
 		</div>
 
 		<!-- Loading state -->
 		<div
 			v-if="loading"
-			class="mb-4 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded">
+			class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-blue-700">
 			Processing...
 		</div>
 
 		<!-- No servers warning -->
 		<div
 			v-if="!hasServers && !loading"
-			class="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-			<p class="font-medium">No servers found</p>
+			class="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-4 text-yellow-800">
+			<p class="font-semibold">No servers found</p>
 			<p class="text-sm mt-1">
-				You need to create a server first before managing shop items.
-				<router-link to="/servers" class="text-blue-600 hover:text-blue-800 underline">
+				Create a server before managing shop items.
+				<router-link to="/servers" class="text-yellow-900 underline">
 					Go to Servers
 				</router-link>
 			</p>
@@ -458,27 +467,25 @@ function getServerName(serverId) {
 		<!-- No shops warning -->
 		<div
 			v-else-if="!hasShops && !loading"
-			class="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-			<p class="font-medium">No shops found</p>
+			class="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-4 text-yellow-800">
+			<p class="font-semibold">No shops found</p>
 			<p class="text-sm mt-1">
-				You need to create a shop first before managing shop items.
-				<router-link to="/shops" class="text-blue-600 hover:text-blue-800 underline">
-					Go to Shops
-				</router-link>
+				Create a shop before managing items.
+				<router-link to="/shops" class="text-yellow-900 underline">Go to Shops</router-link>
 			</p>
 		</div>
 
 		<!-- Main content -->
-		<div v-else-if="hasShops && hasServers">
+		<div v-else-if="hasShops && hasServers" class="space-y-8">
 			<!-- Shop selector -->
-			<div class="mb-6">
+			<div>
 				<label for="shop-select" class="block text-sm font-medium text-gray-700 mb-2">
 					Select Shop
 				</label>
 				<select
 					id="shop-select"
 					v-model="selectedShopId"
-					class="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+					class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans md:w-1/3">
 					<option value="">Choose a shop...</option>
 					<option v-for="shop in shops" :key="shop.id" :value="shop.id">
 						{{ shop.name }} ({{ getServerName(shop.server_id) }})
@@ -486,124 +493,148 @@ function getServerName(serverId) {
 				</select>
 			</div>
 
-			<!-- Shop info and actions -->
-			<div v-if="selectedShop && selectedServer" class="mb-6">
-				<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-					<div class="flex flex-col md:flex-row md:items-center md:justify-between">
+			<!-- Shop info -->
+			<div
+				v-if="selectedShop && selectedServer"
+				class="bg-sea-mist rounded-lg shadow-md border-2 border-amulet overflow-hidden">
+				<div class="bg-amulet px-4 py-3 border-x-2 border-t-2 border-white flex flex-wrap items-center justify-between gap-4">
+					<div>
+						<h2 class="text-xl font-semibold text-heavy-metal flex items-center gap-2">
+							<Squares2X2Icon class="w-5 h-5" />
+							{{ selectedShop.name }}
+						</h2>
+						<p class="text-sm text-heavy-metal mt-1">
+							{{ getServerName(selectedShop.server_id) }} • Minecraft
+							{{ selectedServer.minecraft_version }}
+						</p>
+					</div>
+				</div>
+
+				<div class="bg-norway border-x-2 border-b-2 border-white px-4 py-5">
+					<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+						<div class="flex items-center gap-3 text-sm text-heavy-metal">
+							<MapPinIcon class="w-5 h-5 flex-shrink-0 text-gray-asparagus" />
+							<span>
+								<span class="font-medium">Location:</span>
+								{{ selectedShop.location || 'Not set' }}
+							</span>
+						</div>
+						<div class="flex items-center gap-3 text-sm text-heavy-metal">
+							<BanknotesIcon class="w-5 h-5 flex-shrink-0 text-gray-asparagus" />
+							<span>
+								<span class="font-medium">Funds:</span>
+								{{
+									selectedShop.owner_funds !== null &&
+									selectedShop.owner_funds !== undefined
+										? selectedShop.owner_funds.toFixed(2)
+										: 'Auto'
+								}}
+							</span>
+						</div>
+						<div
+							v-if="selectedShop.created_at"
+							class="flex items-center gap-3 text-sm text-heavy-metal">
+							<CalendarDaysIcon class="w-5 h-5 flex-shrink-0 text-gray-asparagus" />
+							<span>
+								<span class="font-medium">Created:</span>
+								{{ new Date(selectedShop.created_at).toLocaleDateString() }}
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Inventory -->
+			<div v-if="selectedShopId" class="space-y-6">
+				<div>
+					<h2 class="text-2xl font-semibold text-heavy-metal">Inventory</h2>
+					<p class="text-sm text-gray-600">
+						{{ shopItems.length }} item{{ shopItems.length === 1 ? '' : 's' }} tracked
+					</p>
+				</div>
+
+				<div class="flex flex-wrap items-center justify-between gap-3">
+					<div
+						v-if="shopItems.length > 0"
+						class="flex flex-wrap items-center gap-6">
 						<div>
-							<h2 class="text-xl font-semibold text-gray-900">
-								{{ selectedShop.name }}
-							</h2>
-							<p class="text-gray-600">
-								{{ getServerName(selectedShop.server_id) }} • Minecraft
-								{{ selectedServer.minecraft_version }}
-							</p>
-							<p v-if="selectedShop.location" class="text-sm text-gray-500 mt-1">
-								📍 {{ selectedShop.location }}
-							</p>
+							<span class="text-sm font-medium text-gray-700 block">View as:</span>
+							<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
+								<button
+									@click="viewMode = 'categories'"
+									:class="[
+										viewMode === 'categories'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-sea-mist',
+										'px-3 py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
+									]">
+									Categories
+								</button>
+								<button
+									@click="viewMode = 'list'"
+									:class="[
+										viewMode === 'list'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-sea-mist',
+										'px-3 py-1 text-sm font-medium transition'
+									]">
+									List
+								</button>
+							</div>
 						</div>
-						<div class="mt-4 md:mt-0">
-							<button
-								@click="showAddItemForm"
-								class="bg-semantic-info text-white px-4 py-2 rounded hover:bg-opacity-80 transition-colors font-medium">
-								+ Add Item
-							</button>
-						</div>
-					</div>
-				</div>
-			</div>
 
-			<!-- View Mode and Layout Toggle -->
-			<div v-if="selectedShopId && shopItems.length > 0" class="mb-6">
-				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-8">
-					<!-- View Mode -->
-					<div>
-						<span class="text-sm font-medium text-gray-700 mb-2 block">View as:</span>
-						<div class="inline-flex border-2 border-gray-300 rounded overflow-hidden">
-							<button
-								@click="viewMode = 'categories'"
-								:class="[
-									viewMode === 'categories'
-										? 'bg-blue-600 text-white'
-										: 'bg-white text-gray-700 hover:bg-gray-100',
-									'px-3 py-1 text-sm font-medium transition border-r border-gray-300 last:border-r-0'
-								]">
-								Categories
-							</button>
-							<button
-								@click="viewMode = 'list'"
-								:class="[
-									viewMode === 'list'
-										? 'bg-blue-600 text-white'
-										: 'bg-white text-gray-700 hover:bg-gray-100',
-									'px-3 py-1 text-sm font-medium transition'
-								]">
-								List
-							</button>
-						</div>
-					</div>
-
-					<!-- Layout -->
-					<div>
-						<span class="text-sm font-medium text-gray-700 mb-2 block">Layout:</span>
-						<div class="inline-flex border-2 border-gray-300 rounded overflow-hidden">
-							<button
-								@click="layout = 'comfortable'"
-								:class="[
-									layout === 'comfortable'
-										? 'bg-blue-600 text-white'
-										: 'bg-white text-gray-700 hover:bg-gray-100',
-									'px-3 py-1 text-sm font-medium transition border-r border-gray-300 last:border-r-0'
-								]">
-								Comfortable
-							</button>
-							<button
-								@click="layout = 'condensed'"
-								:class="[
-									layout === 'condensed'
-										? 'bg-blue-600 text-white'
-										: 'bg-white text-gray-700 hover:bg-gray-100',
-									'px-3 py-1 text-sm font-medium transition'
-								]">
-								Condensed
-							</button>
+						<div>
+							<span class="text-sm font-medium text-gray-700 block">Layout:</span>
+							<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
+								<button
+									@click="layout = 'comfortable'"
+									:class="[
+										layout === 'comfortable'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-sea-mist',
+										'px-3 py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
+									]">
+									Comfortable
+								</button>
+								<button
+									@click="layout = 'condensed'"
+									:class="[
+										layout === 'condensed'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-sea-mist',
+										'px-3 py-1 text-sm font-medium transition'
+									]">
+									Condensed
+								</button>
+							</div>
 						</div>
 					</div>
-				</div>
-			</div>
 
-			<!-- Add/Edit item form -->
-			<ShopItemForm
-				v-if="showAddForm"
-				ref="shopItemForm"
-				:available-items="availableItemsForAdding"
-				:editing-item="editingItem"
-				:server="selectedServer"
-				@submit="handleItemSubmit"
-				@cancel="cancelForm" />
-
-			<!-- Shop items display -->
-			<div v-if="selectedShopId && shopItems">
-				<div v-if="shopItems.length === 0" class="text-center py-12 bg-gray-50 rounded-lg">
-					<div class="text-gray-500 text-lg mb-2">No items in this shop yet</div>
-					<div class="text-sm text-gray-400 mb-4">
-						Add your first item to start tracking prices and inventory
-					</div>
-					<button
+					<BaseButton
+						type="button"
+						variant="primary"
 						@click="showAddItemForm"
-						class="bg-semantic-info text-white px-6 py-3 rounded hover:bg-opacity-80 transition-colors font-medium">
-						+ Add Your First Item
-					</button>
+						:disabled="!selectedShopId">
+						<template #left-icon>
+							<PlusIcon />
+						</template>
+						Add Item
+					</BaseButton>
 				</div>
 
-				<!-- Categories View -->
-				<template v-else-if="viewMode === 'categories'">
-					<div class="space-y-6">
+				<div v-if="shopItems && shopItems.length > 0" class="space-y-4">
+					<div class="text-sm text-heavy-metal">
+						Showing {{ allVisibleShopItems.length }} item{{
+							allVisibleShopItems.length === 1 ? '' : 's'
+						}}
+					</div>
+
+					<template v-if="viewMode === 'categories'">
 						<div
 							v-for="(categoryItems, category) in shopItemsByCategory"
-							:key="category">
-							<h3
-								class="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
+							:key="category"
+							class="space-y-3">
+							<h3 class="text-lg font-semibold text-heavy-metal uppercase tracking-wide">
 								{{ category }}
 							</h3>
 							<ShopItemTable
@@ -612,33 +643,103 @@ function getServerName(serverId) {
 								:shop="selectedShop"
 								:view-mode="viewMode"
 								:layout="layout"
+								appearance="guide"
 								@edit="showEditItemForm"
 								@delete="handleItemDelete"
 								@bulk-update="handleBulkUpdate"
 								@quick-edit="handleQuickEdit" />
 						</div>
-					</div>
-				</template>
+					</template>
 
-				<!-- List View -->
-				<template v-else-if="viewMode === 'list'">
-					<div class="mb-4 text-sm text-gray-600">
-						Showing {{ allVisibleShopItems.length }} item{{
-							allVisibleShopItems.length === 1 ? '' : 's'
-						}}
-					</div>
-					<ShopItemTable
-						:items="allVisibleShopItems"
-						:server="selectedServer"
-						:shop="selectedShop"
-						:view-mode="viewMode"
-						:layout="layout"
-						@edit="showEditItemForm"
-						@delete="handleItemDelete"
-						@bulk-update="handleBulkUpdate"
-						@quick-edit="handleQuickEdit" />
-				</template>
+					<template v-else>
+						<ShopItemTable
+							:items="allVisibleShopItems"
+							:server="selectedServer"
+							:shop="selectedShop"
+							:view-mode="viewMode"
+							:layout="layout"
+							appearance="guide"
+							@edit="showEditItemForm"
+							@delete="handleItemDelete"
+							@bulk-update="handleBulkUpdate"
+							@quick-edit="handleQuickEdit" />
+					</template>
+				</div>
+
+				<div
+					v-else
+					class="bg-norway border-2 border-dashed border-gray-asparagus/40 rounded-lg px-6 py-10 text-center text-heavy-metal space-y-3">
+					<div class="text-xl font-semibold">No items in this shop yet</div>
+					<p class="text-sm text-gray-600">
+						Add your first item to start tracking prices and inventory.
+					</p>
+					<BaseButton
+						type="button"
+						variant="primary"
+						@click="showAddItemForm"
+						:disabled="!selectedShopId">
+						<template #left-icon>
+							<PlusIcon />
+						</template>
+						Add Your First Item
+					</BaseButton>
+				</div>
 			</div>
 		</div>
 	</div>
+
+	<BaseModal
+		:isOpen="showAddForm"
+		:title="editingItem ? 'Edit Shop Item' : 'Add Shop Item'"
+		maxWidth="max-w-3xl"
+		@close="cancelForm">
+		<ShopItemForm
+			ref="shopItemForm"
+			:available-items="availableItemsForAdding"
+			:editing-item="editingItem"
+			:server="selectedServer"
+			display-variant="modal"
+			@submit="handleItemSubmit"
+			@cancel="cancelForm" />
+	</BaseModal>
+
+	<BaseModal
+		:isOpen="showDeleteItemModal"
+		title="Delete Item"
+		size="small"
+		@close="showDeleteItemModal = false; itemPendingDelete = null">
+		<div class="space-y-4">
+			<div>
+				<h3 class="font-normal text-gray-900">
+					Remove
+					<span class="font-semibold">
+						{{ itemPendingDelete?.itemData?.name || 'this item' }}
+					</span>
+					from your shop?
+				</h3>
+				<p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
+			</div>
+		</div>
+
+		<template #footer>
+			<div class="flex items-center justify-end p-4">
+				<div class="flex space-x-3">
+					<button
+						type="button"
+						class="btn-secondary--outline"
+						@click="showDeleteItemModal = false; itemPendingDelete = null">
+						Cancel
+					</button>
+					<BaseButton
+						type="button"
+						variant="primary"
+						class="bg-semantic-danger hover:bg-opacity-90"
+						:disabled="loading"
+						@click="confirmDeleteItem">
+						{{ loading ? 'Deleting...' : 'Delete' }}
+					</BaseButton>
+				</div>
+			</div>
+		</template>
+	</BaseModal>
 </template>

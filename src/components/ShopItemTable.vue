@@ -33,6 +33,11 @@ const props = defineProps({
 		type: String,
 		default: 'comfortable',
 		validator: (value) => ['comfortable', 'condensed'].includes(value)
+	},
+	appearance: {
+		type: String,
+		default: 'card',
+		validator: (value) => ['card', 'embedded', 'guide'].includes(value)
 	}
 })
 
@@ -129,6 +134,59 @@ const layoutClasses = computed(() => {
 			props.layout === 'condensed' ? 'w-16 px-1 py-0.5 text-xs' : 'w-20 px-2 py-1 text-sm'
 	}
 })
+
+const isGuide = computed(() => props.appearance === 'guide')
+
+const tableClass = computed(() => {
+	return props.appearance === 'guide' ? 'w-full table-guide' : 'w-full'
+})
+
+const outerContainerClass = computed(() => {
+	if (props.appearance === 'guide') {
+		return 'rounded-lg overflow-hidden'
+	}
+	if (props.appearance === 'embedded') {
+		return 'rounded-lg overflow-hidden border-white border-0 shadow-none bg-transparent'
+	}
+	return 'bg-white rounded-lg shadow-md overflow-hidden'
+})
+
+function headerClass(field = null, sortable = false) {
+	const classes = [
+		layoutClasses.value.headerPadding,
+		'text-left text-xs uppercase tracking-wider'
+	]
+
+	if (sortable) {
+		classes.push('cursor-pointer transition-colors')
+	}
+
+	if (isGuide.value) {
+		classes.push('font-semibold text-norway')
+		if (sortable) {
+			classes.push('hover:bg-gray-asparagus/90')
+		}
+	} else {
+		classes.push('font-medium text-gray-500')
+		if (sortable) {
+			classes.push('hover:bg-gray-100')
+		}
+	}
+
+	if (!isGuide.value && sortable && field && sortField.value === field) {
+		classes.push('bg-blue-50')
+	}
+
+	return classes
+}
+
+function cellClass(additional = '') {
+	const parts = [layoutClasses.value.cellPadding, additional]
+	if (isGuide.value) {
+		parts.push('border-2 border-white bg-norway text-heavy-metal')
+	}
+	return parts.filter(Boolean).join(' ')
+}
 
 // Check if this is the first occurrence of an item
 function isFirstOccurrence(item, index) {
@@ -411,7 +469,7 @@ function navigateToShopItems(shopId) {
 </script>
 
 <template>
-	<div class="bg-white rounded-lg shadow-md overflow-hidden">
+	<div :class="outerContainerClass">
 		<!-- Bulk actions toolbar -->
 		<div
 			v-if="hasSelected && !readOnly"
@@ -438,10 +496,10 @@ function navigateToShopItems(shopId) {
 
 		<!-- Table -->
 		<div class="overflow-x-auto">
-			<table class="w-full">
-				<thead class="bg-gray-50">
+			<table :class="tableClass">
+				<thead :class="isGuide ? '' : 'bg-gray-50'">
 					<tr>
-						<th v-if="!readOnly" :class="[layoutClasses.headerPadding, 'text-left']">
+						<th v-if="!readOnly" :class="headerClass(null, false)">
 							<input
 								type="checkbox"
 								:checked="allSelected"
@@ -451,113 +509,86 @@ function navigateToShopItems(shopId) {
 						</th>
 						<th
 							@click="setSortField('name')"
-							:class="[
-								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors',
-								sortField.value === 'name' ? 'bg-blue-50' : ''
-							]">
+							:class="headerClass('name', true)">
 							<div class="flex items-center gap-1">
 								<span>Item</span>
 								<ArrowUpIcon
 									v-if="getSortIcon('name') === 'up'"
-									class="w-4 h-4 text-gray-700" />
+									:class="['w-4 h-4', isGuide ? 'text-norway' : 'text-gray-700']" />
 								<ArrowDownIcon
 									v-else-if="getSortIcon('name') === 'down'"
-									class="w-4 h-4 text-gray-700" />
+									:class="['w-4 h-4', isGuide ? 'text-norway' : 'text-gray-700']" />
 							</div>
 						</th>
 						<th
 							v-if="showShopNames"
 							@click="setSortField('shop_name')"
-							:class="[
-								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors',
-								sortField.value === 'shop_name' ? 'bg-blue-50' : ''
-							]">
+							:class="headerClass('shop_name', true)">
 							<div class="flex items-center gap-1">
 								<span>Shop</span>
 								<ArrowUpIcon
 									v-if="getSortIcon('shop_name') === 'up'"
-									class="w-4 h-4 text-gray-700" />
+									:class="['w-4 h-4', isGuide ? 'text-norway' : 'text-gray-700']" />
 								<ArrowDownIcon
 									v-else-if="getSortIcon('shop_name') === 'down'"
-									class="w-4 h-4 text-gray-700" />
+									:class="['w-4 h-4', isGuide ? 'text-norway' : 'text-gray-700']" />
 							</div>
 						</th>
 						<th
 							@click="setSortField('buy_price')"
-							:class="[
-								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors',
-								sortField.value === 'buy_price' ? 'bg-blue-50' : ''
-							]">
+							:class="headerClass('buy_price', true)">
 							<div class="flex items-center gap-1">
 								<span>Buy Price</span>
 								<ArrowUpIcon
 									v-if="getSortIcon('buy_price') === 'up'"
-									class="w-4 h-4 text-gray-700" />
+									:class="['w-4 h-4', isGuide ? 'text-norway' : 'text-gray-700']" />
 								<ArrowDownIcon
 									v-else-if="getSortIcon('buy_price') === 'down'"
-									class="w-4 h-4 text-gray-700" />
+									:class="['w-4 h-4', isGuide ? 'text-norway' : 'text-gray-700']" />
 							</div>
 						</th>
 						<th
 							@click="setSortField('sell_price')"
-							:class="[
-								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors',
-								sortField.value === 'sell_price' ? 'bg-blue-50' : ''
-							]">
+							:class="headerClass('sell_price', true)">
 							<div class="flex items-center gap-1">
 								<span>Sell Price</span>
 								<ArrowUpIcon
 									v-if="getSortIcon('sell_price') === 'up'"
-									class="w-4 h-4 text-gray-700" />
+									:class="['w-4 h-4', isGuide ? 'text-norway' : 'text-gray-700']" />
 								<ArrowDownIcon
 									v-else-if="getSortIcon('sell_price') === 'down'"
-									class="w-4 h-4 text-gray-700" />
+									:class="['w-4 h-4', isGuide ? 'text-norway' : 'text-gray-700']" />
 							</div>
 						</th>
 						<th
 							@click="setSortField('profit_margin')"
-							:class="[
-								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors',
-								sortField.value === 'profit_margin' ? 'bg-blue-50' : ''
-							]">
+							:class="headerClass('profit_margin', true)">
 							<div class="flex items-center gap-1">
 								<span>Profit Margin</span>
 								<ArrowUpIcon
 									v-if="getSortIcon('profit_margin') === 'up'"
-									class="w-4 h-4 text-gray-700" />
+									:class="['w-4 h-4', isGuide ? 'text-norway' : 'text-gray-700']" />
 								<ArrowDownIcon
 									v-else-if="getSortIcon('profit_margin') === 'down'"
-									class="w-4 h-4 text-gray-700" />
+									:class="['w-4 h-4', isGuide ? 'text-norway' : 'text-gray-700']" />
 							</div>
 						</th>
 						<th
 							@click="setSortField('last_updated')"
-							:class="[
-								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors',
-								sortField.value === 'last_updated' ? 'bg-blue-50' : ''
-							]">
+							:class="headerClass('last_updated', true)">
 							<div class="flex items-center gap-1">
 								<span>Last Updated</span>
 								<ArrowUpIcon
 									v-if="getSortIcon('last_updated') === 'up'"
-									class="w-4 h-4 text-gray-700" />
+									:class="['w-4 h-4', isGuide ? 'text-norway' : 'text-gray-700']" />
 								<ArrowDownIcon
 									v-else-if="getSortIcon('last_updated') === 'down'"
-									class="w-4 h-4 text-gray-700" />
+									:class="['w-4 h-4', isGuide ? 'text-norway' : 'text-gray-700']" />
 							</div>
 						</th>
 						<th
 							v-if="!readOnly"
-							:class="[
-								layoutClasses.headerPadding,
-								'text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-							]">
+							:class="headerClass(null, false)">
 							Actions
 						</th>
 					</tr>
@@ -566,16 +597,15 @@ function navigateToShopItems(shopId) {
 					<tr
 						v-for="(item, index) in sortedItems"
 						:key="item.id"
-						:class="{
-							'bg-yellow-50 border-yellow-200': isEditing(item.id) && !readOnly,
-							'bg-blue-50': isSelected(item.id) && !readOnly && !isEditing(item.id),
-							'bg-green-50':
-								item.shopData?.is_own_shop &&
-								!isSelected(item.id) &&
-								!isEditing(item.id)
-						}">
+						:class="[
+							!isGuide && isEditing(item.id) && !readOnly ? 'bg-yellow-50 border-yellow-200' : '',
+							!isGuide && isSelected(item.id) && !readOnly && !isEditing(item.id) ? 'bg-blue-50' : '',
+							!isGuide && item.shopData?.is_own_shop && !isSelected(item.id) && !isEditing(item.id)
+								? 'bg-green-50'
+								: ''
+						]">
 						<!-- Selection checkbox -->
-						<td v-if="!readOnly" :class="layoutClasses.cellPadding">
+						<td v-if="!readOnly" :class="cellClass()">
 							<input
 								type="checkbox"
 								:checked="isSelected(item.id)"
@@ -584,7 +614,7 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Item info -->
-						<td :class="layoutClasses.cellPadding">
+						<td :class="cellClass()">
 							<div class="flex items-center">
 								<div
 									v-if="item.itemData?.image"
@@ -606,7 +636,7 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Shop name (only when showing shop names) -->
-						<td v-if="showShopNames" :class="layoutClasses.cellPadding">
+						<td v-if="showShopNames" :class="cellClass()">
 							<div
 								@click="navigateToShopItems(item.shopData?.id)"
 								class="text-sm text-gray-900 cursor-pointer hover:text-blue-600 transition-colors">
@@ -618,7 +648,7 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Buy price -->
-						<td :class="layoutClasses.cellPadding">
+						<td :class="cellClass()">
 							<div v-if="isEditing(item.id) && !readOnly">
 								<input
 									:value="editingValues.buy_price"
@@ -644,7 +674,7 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Sell price -->
-						<td :class="layoutClasses.cellPadding">
+						<td :class="cellClass()">
 							<div v-if="isEditing(item.id) && !readOnly">
 								<div class="flex items-start gap-2">
 									<input
@@ -717,7 +747,7 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Profit Margin -->
-						<td :class="layoutClasses.cellPadding">
+						<td :class="cellClass()">
 							<span
 								v-if="calculateMargin(item) !== null"
 								class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
@@ -727,14 +757,14 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Last updated -->
-						<td :class="layoutClasses.cellPadding">
+						<td :class="cellClass()">
 							<div class="text-sm text-gray-900">
 								{{ formatDate(item.last_updated) }}
 							</div>
 						</td>
 
 						<!-- Actions -->
-						<td v-if="!readOnly" :class="layoutClasses.cellPadding">
+						<td v-if="!readOnly" :class="cellClass()">
 							<div v-if="isEditing(item.id)" class="flex space-x-2">
 								<button
 									@click="saveEdit"
@@ -794,5 +824,23 @@ input[type='checkbox']:indeterminate {
 .checkbox-input {
 	@apply w-4 h-4 rounded;
 	accent-color: theme('colors.gray-asparagus');
+}
+
+.table-guide {
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+.table-guide :deep(thead th) {
+	@apply bg-gray-asparagus text-norway border-2 border-white;
+}
+
+.table-guide :deep(tbody th),
+.table-guide :deep(tbody td) {
+	@apply bg-norway text-heavy-metal border-2 border-white;
+}
+
+.table-guide :deep(tbody tr:hover td) {
+	@apply bg-sea-mist;
 }
 </style>
