@@ -179,7 +179,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: `Shop Manager - ${siteName}`
+				title: `Player Shop Manager - ${siteName}`
 			}
 		},
 		{

@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import BaseButton from '../components/BaseButton.vue'
+import { GlobeAltIcon, BuildingStorefrontIcon, CurrencyDollarIcon } from '@heroicons/vue/24/outline'
 import { useAdmin } from '../utils/admin.js'
 import { useShops } from '../utils/shopProfile.js'
 import { useServers } from '../utils/serverProfile.js'
@@ -22,21 +24,45 @@ const ownShopServer = computed(() => {
 	if (!ownShop.value || !servers.value) return null
 	return servers.value.find((server) => server.id === ownShop.value.server_id)
 })
+
 </script>
 
 <template>
 	<div class="p-4 pt-8">
 		<!-- Header -->
 		<div class="mb-8">
-			<div class="flex items-center justify-between mb-4">
+			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
 				<div>
-					<!-- Dashboard Header -->
-					<div>
-						<h1 class="text-3xl font-bold text-gray-900 mb-2">Shop Manager</h1>
-						<p class="text-gray-600">
-							Manage your player shops and track pricing data.
-						</p>
-					</div>
+						<h1 class="text-3xl font-bold text-gray-900 mb-2">Player Shop Manager</h1>
+					<p class="text-gray-600">
+						Manage your player shops and track pricing data.
+					</p>
+				</div>
+				<div class="flex flex-wrap items-center gap-3 md:gap-4">
+					<RouterLink to="/servers">
+						<BaseButton variant="secondary">
+							<template #left-icon>
+								<GlobeAltIcon />
+							</template>
+							Manage Servers
+						</BaseButton>
+					</RouterLink>
+					<RouterLink to="/shops">
+						<BaseButton variant="secondary">
+							<template #left-icon>
+								<BuildingStorefrontIcon />
+							</template>
+							Manage Shops
+						</BaseButton>
+					</RouterLink>
+					<RouterLink to="/market-overview">
+						<BaseButton variant="secondary">
+							<template #left-icon>
+								<CurrencyDollarIcon />
+							</template>
+							View Market
+						</BaseButton>
+					</RouterLink>
 				</div>
 			</div>
 		</div>
@@ -55,7 +81,8 @@ const ownShopServer = computed(() => {
 					class="bg-amulet py-2 px-3 pl-4 border-x-2 border-t-2 border-white rounded-t-lg">
 					<div class="flex items-center justify-between">
 						<h3
-							class="text-xl font-semibold text-heavy-metal hover:text-gray-asparagus cursor-pointer flex-1">
+							class="text-xl font-semibold text-heavy-metal hover:text-gray-asparagus cursor-pointer flex-1 inline-flex items-center gap-2">
+							<BuildingStorefrontIcon class="w-5 h-5" />
 							{{ ownShop.name }}
 						</h3>
 						<!-- Action Buttons -->
@@ -97,21 +124,23 @@ const ownShopServer = computed(() => {
 						</div>
 					</div>
 					<div class="mt-4 flex-shrink-0">
-						<RouterLink
-							:to="`/shop-items?shop=${ownShop.id}`"
-							class="inline-flex items-center px-4 py-2 bg-gray-asparagus text-white font-medium rounded hover:bg-opacity-80 transition-colors">
-							<svg
-								class="w-4 h-4 mr-2"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-							</svg>
-							Manage Items
+						<RouterLink :to="`/shop-items?shop=${ownShop.id}`">
+							<BaseButton variant="primary">
+								<template #left-icon>
+									<svg
+										class="w-4 h-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+									</svg>
+								</template>
+								Manage Items
+							</BaseButton>
 						</RouterLink>
 					</div>
 				</div>
@@ -121,64 +150,96 @@ const ownShopServer = computed(() => {
 
 		<!-- Other Section -->
 		<div class="mb-8">
-			<h2
-				class="text-2xl font-semibold mb-6 text-gray-700 border-b-2 border-gray-asparagus pb-2">
-				Other Section
+			<h2 class="text-2xl font-semibold text-gray-700 border-b-2 border-gray-asparagus pb-2">
+				Servers and Shops
 			</h2>
 		</div>
 
 		<!-- Support Cards -->
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-			<RouterLink
-				to="/servers"
-				class="rounded-xl border border-gray-asparagus/60 bg-saltpan px-5 py-6 shadow-sm transition hover:shadow-md">
-				<div class="space-y-4">
-					<div>
-						<h3 class="text-lg font-semibold text-heavy-metal">My Servers</h3>
-						<p class="mt-2 text-sm text-gray-600">
-							Configure and manage your Minecraft servers with custom pricing settings and
-							economy multipliers.
-						</p>
-					</div>
-					<button class="rounded border border-gray-asparagus bg-norway px-3 py-1.5 text-sm font-medium text-heavy-metal transition hover:bg-sea-mist">
-						Manage Servers
-					</button>
-				</div>
-			</RouterLink>
+		<div class="space-y-6">
+			<div
+				v-if="servers?.length"
+				class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				<div
+					v-for="server in servers"
+					:key="server.id"
+					class="bg-saltpan rounded-lg shadow-md border-2 border-highland h-full">
+					<div class="p-6 border-2 border-white rounded-lg h-full flex flex-col space-y-4">
+						<div>
+						<h3 class="text-lg font-semibold text-heavy-metal flex items-center gap-2">
+							<GlobeAltIcon class="w-5 h-5" />
+							{{ server.name }}
+						</h3>
+							<p class="mt-1 text-xs text-gray-500">
+								Version {{ server.minecraft_version || 'n/a' }}
+							</p>
 
-			<RouterLink
-				to="/shops"
-				class="rounded-xl border border-gray-asparagus/60 bg-saltpan px-5 py-6 shadow-sm transition hover:shadow-md">
-				<div class="space-y-4">
-					<div>
-						<h3 class="text-lg font-semibold text-heavy-metal">My Shops</h3>
-						<p class="mt-2 text-sm text-gray-600">
-							Set up and manage your economy shops with detailed item pricing, inventory
-							tracking, and location information.
-						</p>
-					</div>
-					<button class="rounded border border-gray-asparagus bg-norway px-3 py-1.5 text-sm font-medium text-heavy-metal transition hover:bg-sea-mist">
-						Manage Shops
-					</button>
-				</div>
-			</RouterLink>
+							<div
+								v-if="(shops || []).some((s) => s.server_id === server.id)"
+								class="mt-3 space-y-3">
+								<div>
+									<h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-asparagus/40 pb-1 w-full">
+										My Shops
+									</h4>
+									<ul class="mt-1 space-y-1 text-sm text-gray-600">
+										<li
+											v-for="shop in (shops || [])
+												.filter((s) => s.server_id === server.id && s.is_own_shop)"
+											:key="shop.id"
+											class="flex items-center gap-3">
+											<RouterLink
+												:to="{ path: '/shop-items', query: { shop: shop.id } }"
+												class="text-base font-semibold text-heavy-metal hover:text-gray-asparagus transition">
+												{{ shop.name }}
+											</RouterLink>
+										</li>
+										<li
+											v-if="!(shops || []).some((s) => s.server_id === server.id && s.is_own_shop)"
+											class="text-sm italic text-gray-500">
+											No personal shops yet.
+										</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-asparagus/40 pb-1 w-full">
+										Competitors
+									</h4>
+									<ul class="mt-1 space-y-1 text-sm text-gray-600">
+										<li
+											v-for="shop in (shops || [])
+												.filter((s) => s.server_id === server.id && !s.is_own_shop)"
+											:key="shop.id"
+											class="flex items-center gap-3">
+											<RouterLink
+												:to="{ path: '/shop-items', query: { shop: shop.id } }"
+												class="text-base font-semibold text-heavy-metal hover:text-gray-asparagus transition">
+												{{ shop.name }}
+											</RouterLink>
+										</li>
+										<li
+											v-if="!(shops || []).some((s) => s.server_id === server.id && !s.is_own_shop)"
+											class="text-sm italic text-gray-500">
+											No competitor shops tracked.
+										</li>
+									</ul>
+								</div>
+							</div>
+							<p
+								v-else
+								class="mt-3 text-sm italic text-gray-500">
+								No shops yet for this server.
+							</p>
+						</div>
 
-			<RouterLink
-				to="/shop-items"
-				class="rounded-xl border border-gray-asparagus/60 bg-saltpan px-5 py-6 shadow-sm transition hover:shadow-md">
-				<div class="space-y-4">
-					<div>
-						<h3 class="text-lg font-semibold text-heavy-metal">Market Overview</h3>
-						<p class="mt-2 text-sm text-gray-600">
-							View comprehensive market analysis with price comparisons, trading
-							opportunities, and competitor insights across all your servers.
-						</p>
 					</div>
-					<button class="rounded border border-gray-asparagus bg-norway px-3 py-1.5 text-sm font-medium text-heavy-metal transition hover:bg-sea-mist">
-						View Market
-					</button>
 				</div>
-			</RouterLink>
+			</div>
+
+			<div
+				v-else
+				class="rounded-xl border border-dashed border-gray-asparagus/50 bg-saltpan px-6 py-10 text-center text-sm text-gray-600">
+				<p>No servers yet. Use the Manage Servers button above to add your first server.</p>
+			</div>
 		</div>
 	</div>
 </template>
