@@ -49,8 +49,8 @@ const variantStyles = computed(() => {
 					? 'border-t-2 border-x-2 border-white rounded-t-lg overflow-hidden'
 					: '',
 				headerContainer: hasMedia
-					? 'bg-saltpan px-4 pt-2 flex items-center'
-					: 'bg-saltpan px-4 pt-2 border-x-2 border-t-2 border-white rounded-t-lg flex items-center',
+					? 'bg-saltpan px-4 pt-3 flex items-center'
+					: 'bg-saltpan px-4 pt-3 border-x-2 border-t-2 border-white rounded-t-lg flex items-center',
 				header: 'text-xl font-semibold text-heavy-metal',
 				actions: '',
 				body: hasMedia

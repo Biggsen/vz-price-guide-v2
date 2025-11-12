@@ -2,7 +2,13 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import BaseButton from '../components/BaseButton.vue'
-import { GlobeAltIcon, BuildingStorefrontIcon, CurrencyDollarIcon } from '@heroicons/vue/24/outline'
+import BaseCard from '../components/BaseCard.vue'
+import {
+	GlobeAltIcon,
+	BuildingStorefrontIcon,
+	CurrencyDollarIcon,
+	CubeIcon
+} from '@heroicons/vue/24/outline'
 import { useAdmin } from '../utils/admin.js'
 import { useShops } from '../utils/shopProfile.js'
 import { useServers } from '../utils/serverProfile.js'
@@ -13,17 +19,16 @@ const { user, userProfile } = useAdmin()
 const { shops } = useShops(computed(() => user.value?.uid))
 const { servers } = useServers(computed(() => user.value?.uid))
 
-// Find the user's own shop (marked with is_own_shop flag)
-const ownShop = computed(() => {
-	if (!shops.value) return null
-	return shops.value.find((shop) => shop.is_own_shop === true)
+// Find all shops owned by the user (marked with is_own_shop flag)
+const ownShops = computed(() => {
+	if (!shops.value) return []
+	return shops.value.filter((shop) => shop.is_own_shop === true)
 })
 
-// Get the server info for the own shop
-const ownShopServer = computed(() => {
-	if (!ownShop.value || !servers.value) return null
-	return servers.value.find((server) => server.id === ownShop.value.server_id)
-})
+function getServerForShop(shop) {
+	if (!shop || !servers.value) return null
+	return servers.value.find((server) => server.id === shop.server_id) || null
+}
 
 </script>
 
@@ -68,83 +73,56 @@ const ownShopServer = computed(() => {
 		</div>
 
 		<!-- Your Shops Section -->
-		<div v-if="ownShop" class="mb-8">
+		<div v-if="ownShops.length" class="mb-8">
 			<h2
 				class="text-2xl font-semibold mb-6 text-gray-700 border-b-2 border-gray-asparagus pb-2">
-				Your Shops
+				My Shops
 			</h2>
 			<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-				<div
-					class="bg-sea-mist rounded-lg shadow-md border-2 border-amulet h-full overflow-hidden flex flex-col">
-				<!-- Card Header -->
-				<div
-					class="bg-amulet py-2 px-3 pl-4 border-x-2 border-t-2 border-white rounded-t-lg">
-					<div class="flex items-center justify-between">
+				<BaseCard
+					v-for="shop in ownShops"
+					:key="shop.id"
+					variant="secondary">
+					<template #header>
 						<h3
-							class="text-xl font-semibold text-heavy-metal hover:text-gray-asparagus cursor-pointer flex-1 inline-flex items-center gap-2">
+							class="text-xl font-semibold text-heavy-metal hover:text-gray-asparagus cursor-pointer inline-flex items-center gap-2">
 							<BuildingStorefrontIcon class="w-5 h-5" />
-							{{ ownShop.name }}
+							{{ shop.name }}
 						</h3>
-						<!-- Action Buttons -->
-						<div class="flex gap-2 ml-3">
-							<RouterLink
-								:to="`/shop-items?shop=${ownShop.id}`"
-								class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
-								<svg
-									class="w-4 h-4"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-								</svg>
+					</template>
+					<template #actions>
+						<RouterLink
+							:to="`/shop-items?shop=${shop.id}`"
+							class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+							<CubeIcon class="w-4 h-4" />
+						</RouterLink>
+					</template>
+					<template #body>
+						<div class="flex flex-col gap-4 w-full">
+							<p v-if="shop.description">
+								{{ shop.description }}
+							</p>
+							<div class="text-sm text-heavy-metal">
+								<span class="font-medium">Server:</span>
+								{{ getServerForShop(shop)?.name || 'Unknown Server' }}
+								<span class="mx-2"></span>
+								<span class="font-medium">Version:</span>
+								{{ getServerForShop(shop)?.minecraft_version || 'Unknown' }}
+								<span v-if="shop.location" class="mx-2"></span>
+								<span v-if="shop.location" class="font-medium">Location:</span>
+								<span v-if="shop.location">📍 {{ shop.location }}</span>
+							</div>
+							<RouterLink :to="`/shop-items?shop=${shop.id}`" class="mt-auto w-fit">
+								<BaseButton variant="primary">
+									<template #left-icon>
+										<CubeIcon class="w-4 h-4" />
+									</template>
+									Manage Items
+								</BaseButton>
 							</RouterLink>
 						</div>
-					</div>
-				</div>
-				<!-- Card Body -->
-				<div
-					class="bg-norway p-4 border-x-2 border-b-2 border-white rounded-b-lg flex-1 flex flex-col">
-					<div class="flex-1">
-						<p class="text-heavy-metal mb-3">
-							{{ ownShop.description || 'Your main economy shop for managing item prices and inventory.' }}
-						</p>
-						<div class="text-sm text-heavy-metal">
-							<span class="font-medium">Server:</span>
-							{{ ownShopServer?.name || 'Unknown Server' }}
-							<span class="mx-2"></span>
-							<span class="font-medium">Version:</span>
-							{{ ownShopServer?.minecraft_version || 'Unknown' }}
-							<span v-if="ownShop.location" class="mx-2"></span>
-							<span v-if="ownShop.location" class="font-medium">Location:</span>
-							<span v-if="ownShop.location">📍 {{ ownShop.location }}</span>
-						</div>
-					</div>
-					<div class="mt-4 flex-shrink-0">
-						<RouterLink :to="`/shop-items?shop=${ownShop.id}`">
-							<BaseButton variant="primary">
-								<template #left-icon>
-									<svg
-										class="w-4 h-4"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-									</svg>
-								</template>
-								Manage Items
-							</BaseButton>
-						</RouterLink>
-					</div>
-				</div>
-			</div>
+					</template>
+				</BaseCard>
 		</div>
 		</div>
 
@@ -160,23 +138,27 @@ const ownShopServer = computed(() => {
 			<div
 				v-if="servers?.length"
 				class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-				<div
+				<BaseCard
 					v-for="server in servers"
 					:key="server.id"
-					class="bg-saltpan rounded-lg shadow-md border-2 border-highland h-full">
-					<div class="p-6 border-2 border-white rounded-lg h-full flex flex-col space-y-4">
-						<div>
-						<h3 class="text-lg font-semibold text-heavy-metal flex items-center gap-2">
-							<GlobeAltIcon class="w-5 h-5" />
-							{{ server.name }}
-						</h3>
-							<p class="mt-1 text-xs text-gray-500">
+					variant="tertiary"
+					class="h-full">
+					<template #header>
+						<div class="flex flex-col gap-1">
+							<h3 class="text-lg font-semibold text-heavy-metal flex items-center gap-2">
+								<GlobeAltIcon class="w-5 h-5" />
+								{{ server.name }}
+							</h3>
+							<p class="text-xs text-gray-500">
 								Version {{ server.minecraft_version || 'n/a' }}
 							</p>
-
+						</div>
+					</template>
+					<template #body>
+						<div class="flex flex-col gap-4">
 							<div
 								v-if="(shops || []).some((s) => s.server_id === server.id)"
-								class="mt-3 space-y-3">
+								class="space-y-4">
 								<div>
 									<h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-asparagus/40 pb-1 w-full">
 										My Shops
@@ -201,7 +183,7 @@ const ownShopServer = computed(() => {
 									</ul>
 								</div>
 								<div>
-									<h4 class="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-asparagus/40 pb-1 w-full">
+									<h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-asparagus/40 pb-1 w-full">
 										Competitors
 									</h4>
 									<ul class="mt-1 space-y-1 text-sm text-gray-600">
@@ -226,13 +208,12 @@ const ownShopServer = computed(() => {
 							</div>
 							<p
 								v-else
-								class="mt-3 text-sm italic text-gray-500">
+								class="text-sm italic text-gray-500">
 								No shops yet for this server.
 							</p>
 						</div>
-
-					</div>
-				</div>
+					</template>
+				</BaseCard>
 			</div>
 
 			<div
