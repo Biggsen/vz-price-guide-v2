@@ -29,9 +29,12 @@ service cloud.firestore {
         request.auth.uid == resource.data.owner_id ||
         request.auth.token.admin == true
       );
-      allow write: if request.auth != null && request.auth.uid == resource.data.owner_id &&
+      allow update: if request.auth != null &&
+        request.auth.uid == resource.data.owner_id &&
+        request.resource.data.owner_id == resource.data.owner_id &&
         (request.resource.data.owner_funds == null || 
          (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0));
+      allow delete: if request.auth != null && request.auth.uid == resource.data.owner_id;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.owner_id &&
         request.resource.data.keys().hasAll(['name', 'server_id', 'owner_id', 'is_own_shop']) &&
         request.resource.data.name is string &&

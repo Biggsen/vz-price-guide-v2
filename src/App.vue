@@ -26,7 +26,6 @@ function updateActiveMainNav() {
 		'/styleguide',
 		'/visual-gallery',
 		'/shop-manager',
-		'/shops',
 		'/shop',
 		'/market-overview',
 		'/recipes',

@@ -485,7 +485,9 @@ function getServerName(serverId) {
 			<p class="font-semibold">No shops found</p>
 			<p class="text-sm mt-1">
 				Create a shop before managing items.
-				<router-link to="/shops" class="text-yellow-900 underline">Go to Shops</router-link>
+				<router-link to="/shop-manager" class="text-yellow-900 underline">
+					Go to Shop Manager
+				</router-link>
 			</p>
 		</div>
 

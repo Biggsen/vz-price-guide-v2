@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, TransitionGroup } from 'vue'
 import { RouterLink } from 'vue-router'
 import BaseButton from '../components/BaseButton.vue'
 import BaseCard from '../components/BaseCard.vue'
@@ -15,7 +15,7 @@ import {
 	PlusIcon
 } from '@heroicons/vue/24/outline'
 import { useAdmin } from '../utils/admin.js'
-import { useShops } from '../utils/shopProfile.js'
+import { useShops, createShop, updateShop, deleteShop } from '../utils/shopProfile.js'
 import {
 	useServers,
 	createServer,
@@ -29,6 +29,8 @@ const { user, userProfile } = useAdmin()
 // Get user's shops and servers
 const { shops } = useShops(computed(() => user.value?.uid))
 const { servers } = useServers(computed(() => user.value?.uid))
+
+const hasServers = computed(() => servers.value && servers.value.length > 0)
 
 const showCreateForm = ref(false)
 const showEditForm = ref(false)
@@ -49,6 +51,30 @@ const serverForm = ref({
 	name: '',
 	minecraft_version: defaultVersion,
 	description: ''
+})
+
+const showShopForm = ref(false)
+const showShopDeleteModal = ref(false)
+const editingShop = ref(null)
+const shopToDelete = ref(null)
+const shopLoading = ref(false)
+const shopError = ref(null)
+const shopCreateError = ref(null)
+const shopEditError = ref(null)
+const shopNameValidationError = ref(null)
+const shopServerValidationError = ref(null)
+
+const shopForm = ref({
+	name: '',
+	server_id: '',
+	location: '',
+	description: '',
+	is_own_shop: false,
+	owner_funds: null
+})
+
+const isShopFormValid = computed(() => {
+	return shopForm.value.name.trim() && shopForm.value.server_id
 })
 
 // Find all shops owned by the user (marked with is_own_shop flag)
@@ -164,6 +190,135 @@ async function executeDeleteServer() {
 	}
 }
 
+function resetShopForm() {
+	shopForm.value = {
+		name: '',
+		server_id: '',
+		location: '',
+		description: '',
+		is_own_shop: false,
+		owner_funds: null
+	}
+}
+
+function showCreateShopForm(serverId = '') {
+	showShopForm.value = true
+	editingShop.value = null
+	resetShopForm()
+	if (serverId) {
+		shopForm.value.server_id = serverId
+	}
+	shopCreateError.value = null
+	shopEditError.value = null
+	shopNameValidationError.value = null
+	shopServerValidationError.value = null
+	shopError.value = null
+}
+
+function showEditShopForm(shop) {
+	editingShop.value = shop
+	showShopForm.value = true
+	shopForm.value = {
+		name: shop.name,
+		server_id: shop.server_id,
+		location: shop.location || '',
+		description: shop.description || '',
+		is_own_shop: Boolean(shop.is_own_shop),
+		owner_funds:
+			shop.owner_funds === null || shop.owner_funds === undefined ? null : shop.owner_funds
+	}
+	shopCreateError.value = null
+	shopEditError.value = null
+	shopNameValidationError.value = null
+	shopServerValidationError.value = null
+	shopError.value = null
+}
+
+function closeShopModals() {
+	showShopForm.value = false
+	showShopDeleteModal.value = false
+	editingShop.value = null
+	shopToDelete.value = null
+	shopLoading.value = false
+	shopCreateError.value = null
+	shopEditError.value = null
+	shopNameValidationError.value = null
+	shopServerValidationError.value = null
+	shopError.value = null
+	resetShopForm()
+}
+
+async function handleShopSubmit() {
+	if (!user.value?.uid) return
+
+	if (!shopForm.value.name.trim()) {
+		shopNameValidationError.value = 'Shop name is required'
+		return
+	}
+
+	if (!shopForm.value.server_id) {
+		shopServerValidationError.value = 'Server selection is required'
+		return
+	}
+
+	shopLoading.value = true
+	shopCreateError.value = null
+	shopEditError.value = null
+	shopNameValidationError.value = null
+	shopServerValidationError.value = null
+
+	try {
+		if (editingShop.value) {
+			await updateShop(editingShop.value.id, shopForm.value)
+		} else {
+			await createShop(user.value.uid, shopForm.value)
+		}
+		closeShopModals()
+	} catch (err) {
+		console.error('Error saving shop:', err)
+		if (editingShop.value) {
+			shopEditError.value = err.message || 'Failed to save shop. Please try again.'
+		} else {
+			shopCreateError.value = err.message || 'Failed to save shop. Please try again.'
+		}
+	} finally {
+		shopLoading.value = false
+	}
+}
+
+function requestDeleteShop(shop) {
+	shopToDelete.value = { id: shop.id, name: shop.name }
+	showShopDeleteModal.value = true
+	shopError.value = null
+}
+
+async function executeDeleteShop() {
+	if (!shopToDelete.value) return
+
+	shopLoading.value = true
+	shopError.value = null
+
+	try {
+		await deleteShop(shopToDelete.value.id)
+		closeShopModals()
+	} catch (err) {
+		console.error('Error deleting shop:', err)
+		shopError.value = err.message || 'Failed to delete shop. Please try again.'
+	} finally {
+		shopLoading.value = false
+	}
+}
+
+function handleShopFundsInput(event) {
+	const value = event.target.value
+	if (value === '' || value === null) {
+		shopForm.value.owner_funds = null
+	} else {
+		const numValue = parseFloat(value)
+		shopForm.value.owner_funds = Number.isNaN(numValue) ? null : numValue
+	}
+}
+
 function getServerForShop(shop) {
 	if (!shop || !servers.value) return null
 	return servers.value.find((server) => server.id === shop.server_id) || null
@@ -189,14 +344,15 @@ function getServerForShop(shop) {
 						</template>
 						Add Server
 					</BaseButton>
-					<RouterLink to="/shops">
-						<BaseButton variant="secondary">
-							<template #left-icon>
-								<BuildingStorefrontIcon />
-							</template>
-							Manage Shops
-						</BaseButton>
-					</RouterLink>
+					<BaseButton
+						@click="showCreateShopForm()"
+						variant="secondary"
+						:disabled="!hasServers || shopLoading">
+						<template #left-icon>
+							<BuildingStorefrontIcon />
+						</template>
+						Add Shop
+					</BaseButton>
 					<RouterLink to="/market-overview">
 						<BaseButton variant="secondary">
 							<template #left-icon>
@@ -215,7 +371,15 @@ function getServerForShop(shop) {
 				class="text-2xl font-semibold mb-6 text-gray-700 border-b-2 border-gray-asparagus pb-2">
 				My Shops
 			</h2>
-			<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+			<div
+				v-if="shopError"
+				class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+				{{ shopError }}
+			</div>
+			<TransitionGroup
+				name="fade"
+				tag="div"
+				class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 				<BaseCard
 					v-for="shop in ownShops"
 					:key="shop.id"
@@ -228,11 +392,30 @@ function getServerForShop(shop) {
 						</h3>
 					</template>
 					<template #actions>
-						<RouterLink
-							:to="{ name: 'shop', params: { shopId: shop.id } }"
-							class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
-							<CubeIcon class="w-4 h-4" />
-						</RouterLink>
+						<div class="flex items-center gap-2 ml-3">
+							<RouterLink
+								:to="{ name: 'shop', params: { shopId: shop.id } }"
+								class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+								<CubeIcon class="w-4 h-4" />
+								<span class="sr-only">Manage Items</span>
+							</RouterLink>
+							<button
+								type="button"
+								@click.stop="showEditShopForm(shop)"
+								:disabled="shopLoading"
+								class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded disabled:opacity-60 disabled:cursor-not-allowed">
+								<PencilSquareIcon class="w-4 h-4" />
+								<span class="sr-only">Edit Shop</span>
+							</button>
+							<button
+								type="button"
+								@click.stop="requestDeleteShop(shop)"
+								:disabled="shopLoading"
+								class="p-1 bg-semantic-danger text-white hover:bg-opacity-80 transition-colors rounded disabled:opacity-60 disabled:cursor-not-allowed">
+								<TrashIcon class="w-4 h-4" />
+								<span class="sr-only">Delete Shop</span>
+							</button>
+						</div>
 					</template>
 					<template #body>
 						<div class="flex flex-col gap-4 w-full">
@@ -260,7 +443,7 @@ function getServerForShop(shop) {
 						</div>
 					</template>
 				</BaseCard>
-		</div>
+			</TransitionGroup>
 		</div>
 
 		<!-- Other Section -->
@@ -277,13 +460,10 @@ function getServerForShop(shop) {
 				class="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
 				{{ error }}
 			</div>
-			<div
-				v-if="loading"
-				class="p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded">
-				Processing...
-			</div>
-			<div
+			<TransitionGroup
 				v-if="servers?.length"
+				name="fade"
+				tag="div"
 				class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				<BaseCard
 					v-for="server in servers"
@@ -377,7 +557,7 @@ function getServerForShop(shop) {
 						</div>
 					</template>
 				</BaseCard>
-			</div>
+			</TransitionGroup>
 
 			<div
 				v-else
@@ -385,6 +565,191 @@ function getServerForShop(shop) {
 				<p>No servers yet. Use the Add Server button above to add your first server.</p>
 			</div>
 		</div>
+
+		<BaseModal
+			:isOpen="showShopForm"
+			:title="editingShop ? 'Edit Shop' : 'Add New Shop'"
+			maxWidth="max-w-2xl"
+			@close="closeShopModals">
+			<form @submit.prevent="handleShopSubmit" class="space-y-4">
+				<div>
+					<label for="shop-name" class="block text-sm font-medium text-gray-700 mb-1">
+						Shop Name *
+					</label>
+					<input
+						id="shop-name"
+						v-model="shopForm.name"
+						type="text"
+						required
+						placeholder="e.g., verzion's shop"
+						@input="shopNameValidationError = null; shopCreateError = null; shopEditError = null"
+						class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
+					<div
+						v-if="shopNameValidationError"
+						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+						<XCircleIcon class="w-4 h-4" />
+						{{ shopNameValidationError }}
+					</div>
+				</div>
+
+				<div>
+					<label for="shop-server" class="block text-sm font-medium text-gray-700 mb-1">
+						Server *
+					</label>
+					<select
+						id="shop-server"
+						v-model="shopForm.server_id"
+						required
+						@change="shopServerValidationError = null; shopCreateError = null; shopEditError = null"
+						class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus">
+						<option value="">Select a server</option>
+						<option v-for="server in servers" :key="server.id" :value="server.id">
+							{{ server.name }}
+						</option>
+					</select>
+					<div
+						v-if="shopServerValidationError"
+						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+						<XCircleIcon class="w-4 h-4" />
+						{{ shopServerValidationError }}
+					</div>
+				</div>
+
+				<div>
+					<label for="shop-location" class="block text-sm font-medium text-gray-700 mb-1">
+						Location
+					</label>
+					<input
+						id="shop-location"
+						v-model="shopForm.location"
+						type="text"
+						placeholder="e.g., /warp shops, coordinates, etc."
+						class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
+				</div>
+
+				<div>
+					<label for="shop-description" class="block text-sm font-medium text-gray-700 mb-1">
+						Description
+					</label>
+					<textarea
+						id="shop-description"
+						v-model="shopForm.description"
+						rows="3"
+						placeholder="Optional description for this shop..."
+						class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus"></textarea>
+				</div>
+
+				<div>
+					<label for="owner-funds" class="block text-sm font-medium text-gray-700 mb-1">
+						Owner Funds
+					</label>
+					<input
+						id="owner-funds"
+						:value="shopForm.owner_funds"
+						@input="handleShopFundsInput"
+						type="number"
+						step="0.01"
+						min="0"
+						placeholder="0.00"
+						class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
+					<p class="text-xs text-gray-500 mt-1">
+						Available money for buying items from players (affects sell prices)
+					</p>
+				</div>
+
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Shop Type</label>
+					<div class="mt-3 flex flex-wrap gap-6">
+						<label class="flex items-center gap-2 text-sm text-gray-700">
+							<input
+								id="shop-type-competitor"
+								v-model="shopForm.is_own_shop"
+								:value="false"
+								type="radio"
+								class="radio-input" />
+							<span>Competitor</span>
+						</label>
+						<label class="flex items-center gap-2 text-sm text-gray-700">
+							<input
+								id="shop-type-own"
+								v-model="shopForm.is_own_shop"
+								:value="true"
+								type="radio"
+								class="radio-input" />
+							<span>My Shop</span>
+						</label>
+					</div>
+				</div>
+
+				<div
+					v-if="shopCreateError && !editingShop"
+					class="text-sm text-red-600 font-semibold flex items-center gap-1 bg-red-100 border border-red-300 px-3 py-2 rounded">
+					<XCircleIcon class="w-4 h-4" />
+					{{ shopCreateError }}
+				</div>
+				<div
+					v-if="shopEditError && editingShop"
+					class="text-sm text-red-600 font-semibold flex items-center gap-1 bg-red-100 border border-red-300 px-3 py-2 rounded">
+					<XCircleIcon class="w-4 h-4" />
+					{{ shopEditError }}
+				</div>
+			</form>
+
+			<template #footer>
+				<div class="flex items-center justify-end">
+					<div class="flex space-x-3">
+						<button
+							type="button"
+							@click="closeShopModals"
+							class="btn-secondary--outline">
+							Cancel
+						</button>
+						<BaseButton
+							@click="handleShopSubmit"
+							:disabled="shopLoading || !isShopFormValid"
+							variant="primary">
+							{{ shopLoading ? (editingShop ? 'Updating...' : 'Creating...') : editingShop ? 'Update Shop' : 'Create Shop' }}
+						</BaseButton>
+					</div>
+				</div>
+			</template>
+		</BaseModal>
+
+		<BaseModal
+			:isOpen="showShopDeleteModal"
+			title="Delete Shop"
+			size="small"
+			@close="closeShopModals">
+			<div class="space-y-4">
+				<div>
+					<h3 class="font-normal text-gray-900">
+						Are you sure you want to delete
+						<span class="font-semibold">{{ shopToDelete?.name }}</span>?
+					</h3>
+					<p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
+				</div>
+			</div>
+
+			<template #footer>
+				<div class="flex items-center justify-end p-4">
+					<div class="flex space-x-3">
+						<button
+							type="button"
+							@click="closeShopModals"
+							class="btn-secondary--outline">
+							Cancel
+						</button>
+						<BaseButton
+							@click="executeDeleteShop"
+							:disabled="shopLoading"
+							variant="primary"
+							class="bg-semantic-danger hover:bg-opacity-90">
+							{{ shopLoading ? 'Deleting...' : 'Delete' }}
+						</BaseButton>
+					</div>
+				</div>
+			</template>
+		</BaseModal>
 
 		<BaseModal
 			:isOpen="showCreateForm"
@@ -624,3 +989,25 @@ function getServerForShop(shop) {
 		</BaseModal>
 	</div>
 </template>
+
+<style scoped>
+.radio-input {
+	@apply w-5 h-5;
+	accent-color: theme('colors.gray-asparagus');
+}
+
+.fade-enter-active,
+.fade-leave-active {
+	transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+	opacity: 0;
+	transform: scale(0.98);
+}
+
+.fade-move {
+	transition: transform 0.2s ease;
+}
+</style>

@@ -227,17 +227,6 @@ const router = createRouter({
 			}
 		},
 		{
-			path: '/shops',
-			name: 'shops',
-			component: () => import('../views/ShopsView.vue'),
-			meta: {
-				requiresAuth: true,
-				requiresVerification: true,
-				requiresAdmin: true,
-				title: `My Shops - ${siteName}`
-			}
-		},
-		{
 			path: '/shop/:shopId?',
 			name: 'shop',
 			component: () => import('../views/ShopItemsView.vue'),
