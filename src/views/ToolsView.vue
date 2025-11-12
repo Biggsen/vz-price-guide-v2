@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useCurrentUser } from 'vuefire'
 import { useRouter } from 'vue-router'
 import BaseButton from '../components/BaseButton.vue'
+import BaseCard from '../components/BaseCard.vue'
 import BaseModal from '../components/BaseModal.vue'
 import {
 	CalculatorIcon,
@@ -198,109 +199,110 @@ function closeCrateRewardsModal() {
 		<!-- Tools Grid -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-12">
 			<!-- Crate Rewards Tool Card -->
-			<div
-				class="bg-norway rounded-lg shadow-md border-2 border-gray-asparagus overflow-hidden">
-				<img
-					src="/images/tools/crate-rewards.png"
-					alt="Crate Rewards"
-					class="w-full h-36 object-cover object-top border-t-2 border-x-2 border-white rounded-t-lg" />
-				<h3
-					class="text-xl font-semibold text-white bg-gray-asparagus px-4 py-2 w-full border-x-2 border-white">
-					CrazyCrates Crate Rewards
-				</h3>
-				<div class="text-left p-4 border-2 border-white rounded-b-lg">
-					<p class="text-heavy-metal mb-4">
-						Build up crate prizes one item at a time, set their weights, and see their
-						values. Export your configuration as CrazyCrates Prizes format for easy
-						integration into your server.
-					</p>
-					<div class="mb-6 text-heavy-metal">
-						<span class="font-bold">Plugin:</span>
-						<a
-							href="https://modrinth.com/plugin/crazycrates"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="text-heavy-metal hover:text-gray-asparagus ml-2">
-							<span class="underline">CrazyCrates</span>
-						</a>
+			<BaseCard variant="primary">
+				<template #media>
+					<img
+						src="/images/tools/crate-rewards.png"
+						alt="Crate Rewards"
+						class="w-full h-36 object-cover object-top" />
+				</template>
+				<template #header>CrazyCrates Crate Rewards</template>
+				<template #body>
+					<div class="flex flex-col text-left h-full">
+						<p class="mb-4">
+							Build up crate prizes one item at a time, set their weights, and see
+							their values. Export your configuration as CrazyCrates Prizes format for
+							easy integration into your server.
+						</p>
+						<div class="mb-6">
+							<span class="font-bold">Plugin:</span>
+							<a
+								href="https://modrinth.com/plugin/crazycrates"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="ml-2 text-heavy-metal hover:text-gray-asparagus">
+								<span class="underline">CrazyCrates</span>
+							</a>
+						</div>
+						<BaseButton
+							@click="handleCrateRewardsClick"
+							variant="primary"
+							data-cy="crate-rewards-tool"
+							class="self-start">
+							{{ isAuthenticated ? 'Open Crate Rewards' : 'Try Crate Rewards' }}
+						</BaseButton>
 					</div>
-					<BaseButton
-						@click="handleCrateRewardsClick"
-						variant="primary"
-						data-cy="crate-rewards-tool">
-						{{ isAuthenticated ? 'Open Crate Rewards' : 'Try Crate Rewards' }}
-					</BaseButton>
-				</div>
-			</div>
+				</template>
+			</BaseCard>
 
 			<!-- Minecraft Region Forge Tool Card -->
-			<div
-				class="bg-norway rounded-lg shadow-md border-2 border-gray-asparagus overflow-hidden flex flex-col">
-				<img
-					src="/images/tools/region-forge.png"
-					alt="Region Forge"
-					class="w-full h-36 object-cover object-top border-t-2 border-x-2 border-white rounded-t-lg" />
-				<h3
-					class="text-xl font-semibold text-white bg-gray-asparagus px-4 py-2 w-full border-x-2 border-white">
-					Region Forge
-				</h3>
-				<div class="text-left p-4 border-2 border-white rounded-b-lg flex flex-col h-full">
-					<p class="text-heavy-metal mb-4">
-						Draw, edit, and manage WorldGuard regions on an interactive Map Canvas. Export
-						ready-to-use regions.yml files with Minecraft Region Forge.
-					</p>
-					<div class="mb-6 text-heavy-metal">
-						<span class="font-bold">Plugin:</span>
+			<BaseCard variant="primary">
+				<template #media>
+					<img
+						src="/images/tools/region-forge.png"
+						alt="Region Forge"
+						class="w-full h-36 object-cover object-top" />
+				</template>
+				<template #header>Region Forge</template>
+				<template #body>
+					<div class="flex flex-col text-left h-full">
+						<p class="mb-4">
+							Draw, edit, and manage WorldGuard regions on an interactive Map Canvas.
+							Export ready-to-use regions.yml files with Minecraft Region Forge.
+						</p>
+						<div class="mb-6">
+							<span class="font-bold">Plugin:</span>
+							<a
+								href="https://dev.bukkit.org/projects/worldguard"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="ml-2 text-heavy-metal hover:text-gray-asparagus">
+								<span class="underline">WorldGuard</span>
+							</a>
+						</div>
 						<a
-							href="https://dev.bukkit.org/projects/worldguard"
+							href="https://www.minecraftregionforge.com/"
 							target="_blank"
 							rel="noopener noreferrer"
-							class="text-heavy-metal hover:text-gray-asparagus ml-2">
-							<span class="underline">WorldGuard</span>
+							class="mt-auto">
+							<BaseButton variant="primary" data-cy="region-forge-tool">
+								Try Region Forge
+							</BaseButton>
 						</a>
 					</div>
-					<a
-						href="https://www.minecraftregionforge.com/"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="mt-auto">
-						<BaseButton
-							variant="primary"
-							data-cy="region-forge-tool">
-							Try Region Forge
-						</BaseButton>
-					</a>
-				</div>
-			</div>
+				</template>
+			</BaseCard>
 
 			<!-- Call to Action Card -->
-			<div class="bg-saltpan rounded-lg shadow-md border-2 border-highland">
-				<div class="p-6 border-2 border-white rounded-lg h-full flex flex-col">
-					<h3 class="text-xl font-semibold text-gray-900 mb-2">Need a specific tool?</h3>
-					<p class="text-heavy-metal mb-4 flex-grow">
-						Have an idea for a tool that would help with your Minecraft server
-						management? I'm always looking for ways to improve the platform.
-					</p>
-					<div class="flex flex-col sm:flex-row gap-4">
-						<router-link v-if="user?.email" to="/suggestions">
-							<BaseButton variant="secondary">
-								<template #left-icon>
-									<LightBulbIcon />
-								</template>
-								Suggest a Tool
-							</BaseButton>
-						</router-link>
-						<router-link v-else to="/signup">
-							<BaseButton variant="secondary">
-								<template #left-icon>
-									<LightBulbIcon />
-								</template>
-								Sign Up to Suggest
-							</BaseButton>
-						</router-link>
+			<BaseCard variant="tertiary">
+				<template #header>Need a specific tool?</template>
+				<template #body>
+					<div class="flex flex-col h-full">
+						<p class="mb-4 flex-grow">
+							Have an idea for a tool that would help with your Minecraft server
+							management? I'm always looking for ways to improve the platform.
+						</p>
+						<div class="flex flex-col sm:flex-row gap-4">
+							<router-link v-if="user?.email" to="/suggestions">
+								<BaseButton variant="secondary">
+									<template #left-icon>
+										<LightBulbIcon />
+									</template>
+									Suggest a Tool
+								</BaseButton>
+							</router-link>
+							<router-link v-else to="/signup">
+								<BaseButton variant="secondary">
+									<template #left-icon>
+										<LightBulbIcon />
+									</template>
+									Sign Up to Suggest
+								</BaseButton>
+							</router-link>
+						</div>
 					</div>
-				</div>
-			</div>
+				</template>
+			</BaseCard>
 		</div>
 	</div>
 

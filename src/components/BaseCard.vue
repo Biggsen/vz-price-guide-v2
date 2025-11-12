@@ -9,13 +9,13 @@ const props = defineProps({
 	variant: {
 		type: String,
 		default: 'primary',
-		validator: value => ['primary', 'secondary', 'tertiary'].includes(value)
+		validator: (value) => ['primary', 'secondary', 'tertiary'].includes(value)
 	}
 })
 
 const slots = useSlots()
 
-const hasSlot = name => Boolean(slots[name])
+const hasSlot = (name) => Boolean(slots[name])
 
 const propsMediaExists = computed(() => props.variant === 'primary' && hasSlot('media'))
 
@@ -35,16 +35,19 @@ const variantStyles = computed(() => {
 					: 'bg-amulet py-2 px-3 pl-4 border-x-2 border-t-2 border-white rounded-t-lg flex items-center',
 				header: 'text-xl font-semibold text-heavy-metal flex-1',
 				actions: 'flex items-center gap-2 ml-3',
-				body: 'bg-norway px-4 pb-4 pt-2 border-x-2 border-b-2 border-white rounded-b-lg flex-1 flex flex-col text-heavy-metal',
+				body: 'bg-norway p-4 border-x-2 border-b-2 border-white rounded-b-lg flex-1 flex flex-col text-heavy-metal',
 				footer: 'mt-4 flex-shrink-0'
 			}
 		}
 		case 'tertiary': {
 			const hasMedia = hasSlot('media')
 			return {
-				container: 'bg-saltpan rounded-lg shadow-md border-2 border-highland h-full overflow-hidden flex flex-col',
+				container:
+					'bg-saltpan rounded-lg shadow-md border-2 border-highland h-full overflow-hidden flex flex-col',
 				inner: 'flex flex-col h-full',
-				mediaWrapper: hasMedia ? 'border-t-2 border-x-2 border-white rounded-t-lg overflow-hidden' : '',
+				mediaWrapper: hasMedia
+					? 'border-t-2 border-x-2 border-white rounded-t-lg overflow-hidden'
+					: '',
 				headerContainer: hasMedia
 					? 'bg-saltpan px-4 pt-2 flex items-center'
 					: 'bg-saltpan px-4 pt-2 border-x-2 border-t-2 border-white rounded-t-lg flex items-center',
@@ -65,15 +68,14 @@ const variantStyles = computed(() => {
 				mediaWrapper: propsMediaExists.value
 					? 'border-t-2 border-x-2 border-white rounded-t-lg overflow-hidden'
 					: '',
-				headerContainer:
-					propsMediaExists.value
-						? 'bg-gray-asparagus px-4 py-2 w-full border-x-2 border-white flex items-center'
-						: 'bg-gray-asparagus px-4 py-2 w-full border-2 border-white rounded-t-lg flex items-center',
+				headerContainer: propsMediaExists.value
+					? 'bg-gray-asparagus px-4 py-2 w-full border-x-2 border-white flex items-center'
+					: 'bg-gray-asparagus px-4 py-2 w-full border-2 border-white rounded-t-lg flex items-center',
 				header: 'text-xl font-semibold text-white flex-1',
 				actions: '',
 				body: propsMediaExists.value
-					? 'px-4 pb-4 pt-2 border-2 border-white rounded-b-lg text-heavy-metal'
-					: 'px-4 pb-4 pt-2 border-x-2 border-b-2 border-white rounded-b-lg text-heavy-metal',
+					? 'p-4 border-2 border-white rounded-b-lg text-heavy-metal flex-1 flex flex-col items-start'
+					: 'p-4 border-x-2 border-b-2 border-white rounded-b-lg text-heavy-metal flex-1 flex flex-col items-start',
 				footer: 'mt-4'
 			}
 	}
@@ -87,7 +89,9 @@ const variantStyles = computed(() => {
 				<slot name="media" />
 			</div>
 
-			<div v-if="hasSlot('header') || hasSlot('actions')" :class="variantStyles.headerContainer">
+			<div
+				v-if="hasSlot('header') || hasSlot('actions')"
+				:class="variantStyles.headerContainer">
 				<div :class="variantStyles.header">
 					<slot name="header" />
 				</div>
@@ -107,4 +111,3 @@ const variantStyles = computed(() => {
 		</div>
 	</div>
 </template>
-

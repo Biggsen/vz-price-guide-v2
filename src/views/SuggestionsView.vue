@@ -55,43 +55,37 @@
 			</h2>
 			<div v-if="suggestions.length === 0" class="text-gray-500">No suggestions yet.</div>
 			<div v-else class="space-y-6">
-				<div
+				<BaseCard
 					v-for="s in suggestions"
 					:key="s.id"
+					variant="secondary"
 					:class="[
-						'bg-sea-mist rounded-lg shadow-md border-2 border-amulet h-full overflow-hidden flex flex-col transition-opacity duration-300',
+						'transition-opacity duration-300',
 						deletingSuggestionId === s.id ? 'opacity-0' : 'opacity-100'
 					]">
-					<!-- Card Header -->
-					<div
-						class="bg-amulet py-2 px-3 pl-4 border-x-2 border-t-2 border-white rounded-t-lg">
-						<div class="flex items-center justify-between">
-							<h3 class="text-xl font-semibold text-heavy-metal flex-1">
-								{{ s.title }}
-							</h3>
-							<!-- Action Buttons -->
-							<div class="flex gap-2 ml-3">
-								<button
-									v-if="s.status === 'open'"
-									@click="startEdit(s)"
-									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-									title="Edit suggestion">
-									<PencilIcon class="w-4 h-4" />
-								</button>
-								<button
-									@click="confirmDeleteSuggestion(s)"
-									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-									title="Delete suggestion">
-									<TrashIcon class="w-4 h-4" />
-								</button>
-							</div>
-						</div>
-					</div>
-					<!-- Card Body -->
-					<div
-						class="bg-norway p-4 border-x-2 border-b-2 border-white rounded-b-lg flex-1 flex flex-col">
-						<div class="flex-1">
-							<p class="text-heavy-metal mb-3 whitespace-pre-line">
+					<template #header>
+						<h3 class="text-xl font-semibold text-heavy-metal">
+							{{ s.title }}
+						</h3>
+					</template>
+					<template #actions>
+						<button
+							v-if="s.status === 'open'"
+							@click="startEdit(s)"
+							class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
+							title="Edit suggestion">
+							<PencilIcon class="w-4 h-4" />
+						</button>
+						<button
+							@click="confirmDeleteSuggestion(s)"
+							class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
+							title="Delete suggestion">
+							<TrashIcon class="w-4 h-4" />
+						</button>
+					</template>
+					<template #body>
+						<div class="flex flex-col gap-3 flex-1 w-full">
+							<p class="whitespace-pre-line">
 								{{ s.body }}
 							</p>
 							<div class="text-sm text-heavy-metal space-y-1">
@@ -105,9 +99,7 @@
 								</div>
 								<div class="flex items-center">
 									<span class="font-medium mr-1">Status:</span>
-									<span
-										v-if="s.status === 'open'"
-										class="inline-flex items-center">
+									<span v-if="s.status === 'open'" class="inline-flex items-center">
 										<InboxIcon class="w-4 h-4 mr-1 align-middle -mt-0.5" />
 										{{ statusLabel(s.status) }}
 									</span>
@@ -120,8 +112,7 @@
 									<span
 										v-else-if="s.status === 'closed'"
 										class="inline-flex items-center">
-										<CheckCircleIcon
-											class="w-4 h-4 mr-1 align-middle -mt-0.5" />
+										<CheckCircleIcon class="w-4 h-4 mr-1 align-middle -mt-0.5" />
 										{{ statusLabel(s.status) }}
 									</span>
 									<span
@@ -133,42 +124,42 @@
 									<span v-else>{{ statusLabel(s.status) }}</span>
 								</div>
 							</div>
-						</div>
 
-						<!-- Messages Section -->
-						<div
-							v-if="messagesData[s.id] && messagesData[s.id].length > 0"
-							class="mt-4 pt-4">
-							<div class="flex items-center justify-between mb-3">
-								<h4 class="text-sm font-medium text-heavy-metal">Discussion</h4>
+							<!-- Messages Section -->
+							<div
+								v-if="messagesData[s.id] && messagesData[s.id].length > 0"
+								class="pt-4">
+								<div class="flex items-center justify-between mb-3">
+									<h4 class="text-sm font-medium text-heavy-metal">Discussion</h4>
+								</div>
+
+								<!-- Messages List -->
+								<SuggestionMessageList
+									:messages="messagesData[s.id]"
+									:suggestion-id="s.id"
+									@suggestion-message-updated="handleMessageUpdated(s.id)"
+									@suggestion-message-deleted="handleMessageDeleted(s.id)" />
+
+								<!-- Reply Button (only show if admin has commented) -->
+								<div v-if="isVerified" class="mt-3 text-right">
+									<BaseButton
+										@click="toggleMessageForm(s.id)"
+										variant="secondary"
+										class="text-sm">
+										{{ showMessageForm[s.id] ? 'Cancel' : 'Reply' }}
+									</BaseButton>
+								</div>
+
+								<!-- Message Form -->
+								<SuggestionMessageForm
+									v-if="showMessageForm[s.id]"
+									:suggestion-id="s.id"
+									@suggestion-message-added="handleMessageAdded(s.id)"
+									@cancel="showMessageForm[s.id] = false" />
 							</div>
-
-							<!-- Messages List -->
-							<SuggestionMessageList
-								:messages="messagesData[s.id]"
-								:suggestion-id="s.id"
-								@suggestion-message-updated="handleMessageUpdated(s.id)"
-								@suggestion-message-deleted="handleMessageDeleted(s.id)" />
-
-							<!-- Reply Button (only show if admin has commented) -->
-							<div v-if="isVerified" class="mt-3 text-right">
-								<BaseButton
-									@click="toggleMessageForm(s.id)"
-									variant="secondary"
-									class="text-sm">
-									{{ showMessageForm[s.id] ? 'Cancel' : 'Reply' }}
-								</BaseButton>
-							</div>
-
-							<!-- Message Form -->
-							<SuggestionMessageForm
-								v-if="showMessageForm[s.id]"
-								:suggestion-id="s.id"
-								@suggestion-message-added="handleMessageAdded(s.id)"
-								@cancel="showMessageForm[s.id] = false" />
 						</div>
-					</div>
-				</div>
+					</template>
+				</BaseCard>
 			</div>
 		</div>
 	</div>
@@ -280,6 +271,7 @@ import { InboxIcon } from '@heroicons/vue/20/solid'
 import { EyeIcon } from '@heroicons/vue/24/outline'
 import { TrashIcon, PencilIcon, CheckCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/BaseButton.vue'
+import BaseCard from '@/components/BaseCard.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import SuggestionMessageForm from '@/components/SuggestionMessageForm.vue'
 import SuggestionMessageList from '@/components/SuggestionMessageList.vue'
