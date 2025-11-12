@@ -470,7 +470,7 @@ function handleFundsInput(event) {
 
 							<div class="mt-auto flex justify-end">
 								<RouterLink
-									:to="{ path: '/shop-items', query: { shop: shop.id } }"
+									:to="{ name: 'shop', params: { shopId: shop.id } }"
 									class="inline-flex items-center gap-2 rounded-md bg-gray-asparagus px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-highland">
 									<ShoppingBagIcon class="w-4 h-4" />
 									Manage Items

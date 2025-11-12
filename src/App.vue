@@ -28,7 +28,7 @@ function updateActiveMainNav() {
 		'/shop-manager',
 		'/servers',
 		'/shops',
-		'/shop-items',
+		'/shop',
 		'/market-overview',
 		'/recipes',
 		'/recipes/import',
@@ -42,7 +42,8 @@ function updateActiveMainNav() {
 	if (
 		adminRoutes.includes(route.path) ||
 		route.path.startsWith('/edit-recipe/') ||
-		route.path.startsWith('/admin/')
+		route.path.startsWith('/admin/') ||
+		route.path.startsWith('/shop/')
 	) {
 		activeMainNav.value = 'admin'
 	} else if (toolsRoutes.includes(route.path) || route.path.startsWith('/crate-rewards/')) {

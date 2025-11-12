@@ -284,9 +284,9 @@ describe('Visual Screenshots - All Pages and States', () => {
 		})
 
 		it('should capture shop items page', () => {
-			cy.visit('/shop-items')
+			cy.visit('/shop')
 			waitForPageReady()
-			takeScreenshot('shop-items', 'default')
+			takeScreenshot('shop', 'default')
 		})
 
 		it('should capture market overview page', () => {

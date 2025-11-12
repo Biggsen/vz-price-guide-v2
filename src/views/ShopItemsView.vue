@@ -181,7 +181,7 @@ function saveViewSettings() {
 
 // Initialize from URL parameters
 onMounted(() => {
-	const shopId = route.params.shopId || route.query.shop
+	const shopId = route.params.shopId
 	if (shopId) {
 		selectedShopId.value = shopId
 	}
@@ -189,6 +189,16 @@ onMounted(() => {
 	// Load view settings
 	loadViewSettings()
 })
+
+watch(
+	() => route.params.shopId,
+	shopId => {
+		if (shopId && shopId !== selectedShopId.value) {
+			selectedShopId.value = shopId
+		}
+	},
+	{ immediate: false }
+)
 
 // Watch for user changes - redirect if not logged in
 watch(
@@ -225,9 +235,13 @@ watch(shops, (newShops) => {
 })
 
 // Update URL when shop selection changes
-watch(selectedShopId, (newShopId) => {
-	if (newShopId && route.query.shop !== newShopId) {
-		router.replace({ query: { ...route.query, shop: newShopId } })
+watch(selectedShopId, newShopId => {
+	if (newShopId && route.params.shopId !== newShopId) {
+		router.replace({
+			name: 'shop',
+			params: { shopId: newShopId },
+			query: { ...route.query }
+		})
 	}
 })
 

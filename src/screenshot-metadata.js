@@ -211,9 +211,9 @@ export const screenshotToViewMap = {
 		type: 'admin',
 		description: 'Shop listing and management'
 	},
-	'shop-items-default': {
+	'shop-default': {
 		viewFile: 'src/views/ShopItemsView.vue',
-		route: '/shop-items',
+		route: '/shop',
 		type: 'admin',
 		description: 'Shop items management interface'
 	},

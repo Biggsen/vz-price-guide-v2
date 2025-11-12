@@ -462,8 +462,8 @@ function hasInsufficientFunds(item) {
 // Navigation methods
 function navigateToShopItems(shopId) {
 	router.push({
-		path: '/shop-items',
-		query: { shop: shopId }
+		name: 'shop',
+		params: { shopId }
 	})
 }
 </script>

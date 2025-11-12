@@ -92,7 +92,7 @@ function getServerForShop(shop) {
 					</template>
 					<template #actions>
 						<RouterLink
-							:to="`/shop-items?shop=${shop.id}`"
+							:to="{ name: 'shop', params: { shopId: shop.id } }"
 							class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
 							<CubeIcon class="w-4 h-4" />
 						</RouterLink>
@@ -112,7 +112,7 @@ function getServerForShop(shop) {
 								<span v-if="shop.location" class="font-medium">Location:</span>
 								<span v-if="shop.location">📍 {{ shop.location }}</span>
 							</div>
-							<RouterLink :to="`/shop-items?shop=${shop.id}`" class="mt-auto w-fit">
+							<RouterLink :to="{ name: 'shop', params: { shopId: shop.id } }" class="mt-auto w-fit">
 								<BaseButton variant="primary">
 									<template #left-icon>
 										<CubeIcon class="w-4 h-4" />
@@ -170,7 +170,7 @@ function getServerForShop(shop) {
 											:key="shop.id"
 											class="flex items-center gap-3">
 											<RouterLink
-												:to="{ path: '/shop-items', query: { shop: shop.id } }"
+												:to="{ name: 'shop', params: { shopId: shop.id } }"
 												class="text-base font-semibold text-heavy-metal hover:text-gray-asparagus transition">
 												{{ shop.name }}
 											</RouterLink>
@@ -193,7 +193,7 @@ function getServerForShop(shop) {
 											:key="shop.id"
 											class="flex items-center gap-3">
 											<RouterLink
-												:to="{ path: '/shop-items', query: { shop: shop.id } }"
+												:to="{ name: 'shop', params: { shopId: shop.id } }"
 												class="text-base font-semibold text-heavy-metal hover:text-gray-asparagus transition">
 												{{ shop.name }}
 											</RouterLink>

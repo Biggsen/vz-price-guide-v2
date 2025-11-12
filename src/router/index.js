@@ -249,8 +249,8 @@ const router = createRouter({
 			}
 		},
 		{
-			path: '/shop-items',
-			name: 'shop-items',
+			path: '/shop/:shopId?',
+			name: 'shop',
 			component: () => import('../views/ShopItemsView.vue'),
 			meta: {
 				requiresAuth: true,

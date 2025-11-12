@@ -603,7 +603,7 @@ const priceAnalysis = computed(() => {
 						Shops on this server haven't added any items yet
 					</div>
 					<router-link
-						to="/shop-items"
+						:to="{ name: 'shop' }"
 						class="bg-semantic-info text-white px-6 py-3 rounded hover:bg-opacity-80 transition-colors font-medium inline-block">
 						Manage Your Shop Items
 					</router-link>
