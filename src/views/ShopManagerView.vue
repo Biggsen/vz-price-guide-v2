@@ -144,18 +144,16 @@ function getServerForShop(shop) {
 					variant="tertiary"
 					class="h-full">
 					<template #header>
-						<div class="flex flex-col gap-1">
-							<h3 class="text-lg font-semibold text-heavy-metal flex items-center gap-2">
-								<GlobeAltIcon class="w-5 h-5" />
-								{{ server.name }}
-							</h3>
-							<p class="text-xs text-gray-500">
-								Version {{ server.minecraft_version || 'n/a' }}
-							</p>
-						</div>
+						<h3 class="text-lg font-semibold text-heavy-metal flex items-center gap-2">
+							<GlobeAltIcon class="w-5 h-5" />
+							{{ server.name }}
+						</h3>
 					</template>
 					<template #body>
 						<div class="flex flex-col gap-4">
+							<div class="text-xs uppercase tracking-wide text-gray-500">
+								Version {{ server.minecraft_version || 'n/a' }}
+							</div>
 							<div
 								v-if="(shops || []).some((s) => s.server_id === server.id)"
 								class="space-y-4">
