@@ -15,6 +15,7 @@ import {
 import { versions, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import BaseButton from '../components/BaseButton.vue'
+import BaseCard from '../components/BaseCard.vue'
 import BaseModal from '../components/BaseModal.vue'
 import NotificationBanner from '../components/NotificationBanner.vue'
 import {
@@ -479,38 +480,30 @@ function cancelDuplicateImport() {
 				No crate rewards found. Create your first one to get started.
 			</div>
 			<div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-				<div
+				<BaseCard
 					v-for="crate in crateRewards"
 					:key="crate.id"
-					class="bg-sea-mist rounded-lg shadow-md border-2 border-amulet h-full overflow-hidden flex flex-col">
-					<!-- Card Header -->
-					<div
-						class="bg-amulet py-2 px-3 pl-4 border-x-2 border-t-2 border-white rounded-t-lg">
-						<div class="flex items-center justify-between">
-							<h3
-								@click="router.push(`/crate-rewards/${crate.id}`)"
-								class="text-xl font-semibold text-heavy-metal hover:text-gray-asparagus cursor-pointer flex-1"
-								data-cy="crate-name">
-								{{ crate.name }}
-							</h3>
-							<!-- Action Buttons -->
-							<div class="flex gap-2 ml-3">
-								<button
-									@click.stop="confirmDeleteCrateFromCard(crate)"
-									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-									title="Delete crate"
-									data-cy="delete-crate-button">
-									<TrashIcon class="w-4 h-4" />
-								</button>
-							</div>
-						</div>
-					</div>
-
-					<!-- Card Body -->
-					<div
-						class="bg-norway p-4 border-x-2 border-b-2 border-white rounded-b-lg flex-1 flex flex-col">
-						<div class="flex-1">
-							<p v-if="crate.description" class="text-heavy-metal mb-3">
+					variant="secondary">
+					<template #header>
+						<h3
+							@click="router.push(`/crate-rewards/${crate.id}`)"
+							class="text-xl font-semibold text-heavy-metal hover:text-gray-asparagus cursor-pointer"
+							data-cy="crate-name">
+							{{ crate.name }}
+						</h3>
+					</template>
+					<template #actions>
+						<button
+							@click.stop="confirmDeleteCrateFromCard(crate)"
+							class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
+							title="Delete crate"
+							data-cy="delete-crate-button">
+							<TrashIcon class="w-4 h-4" />
+						</button>
+					</template>
+					<template #body>
+						<div class="flex flex-col gap-3 flex-1 w-full">
+							<p v-if="crate.description">
 								{{ crate.description }}
 							</p>
 							<div class="text-sm text-heavy-metal">
@@ -523,17 +516,16 @@ function cancelDuplicateImport() {
 								<span class="font-medium">Weight:</span>
 								{{ getCrateTotalWeight(crate.id) }}
 							</div>
-						</div>
-						<div class="mt-4 flex-shrink-0">
 							<BaseButton
 								@click="router.push(`/crate-rewards/${crate.id}`)"
 								variant="primary"
-								data-cy="manage-crate-button">
+								data-cy="manage-crate-button"
+								class="self-start mt-auto">
 								Manage
 							</BaseButton>
 						</div>
-					</div>
-				</div>
+					</template>
+				</BaseCard>
 			</div>
 		</div>
 

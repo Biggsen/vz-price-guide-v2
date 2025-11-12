@@ -10,6 +10,7 @@ import {
 	XMarkIcon
 } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/BaseButton.vue'
+import BaseCard from '@/components/BaseCard.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'
 
 defineOptions({
@@ -815,83 +816,181 @@ function isSelected(index) {
 		<!-- Cards & Containers -->
 		<section class="mb-12">
 			<h2 class="text-2xl font-bold text-gray-900 mb-6">Cards & Containers</h2>
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-				<!-- Navigation Card (Norway Background) -->
-				<div
-					class="bg-norway rounded-lg shadow-md border-2 border-gray-asparagus overflow-hidden">
-					<img
-						src="https://picsum.photos/400/128"
-						alt="Navigation Card Image"
-						class="w-full h-32 object-cover border-t-2 border-x-2 border-white rounded-t-lg" />
-					<h3
-						class="text-xl font-semibold text-white bg-gray-asparagus px-4 py-2 w-full border-x-2 border-white">
-						Navigation Card
-					</h3>
-					<div class="p-4 border-2 border-white rounded-b-lg">
-						<p class="text-heavy-metal mb-4">
-							This is a navigation card for leading users to a tool or a section of
-							the application.
-						</p>
-						<BaseButton variant="primary">Action</BaseButton>
-					</div>
-				</div>
-
-				<!-- Support Card (Saltpan Background) -->
-				<div class="bg-saltpan rounded-lg shadow-md border-2 border-highland h-full">
-					<div class="p-6 border-2 border-white rounded-lg h-full flex flex-col">
-						<h3 class="text-xl font-semibold text-gray-900 mb-2">Support Card</h3>
-						<p class="text-heavy-metal mb-4 flex-grow">
-							This is a support card for contextual help or suggestions.
-						</p>
-						<BaseButton variant="secondary" class="self-start">Action</BaseButton>
-					</div>
-				</div>
-
-				<!-- Object Card (Crate Reward Style) -->
-				<div
-					class="bg-sea-mist rounded-lg shadow-md border-2 border-amulet h-full overflow-hidden flex flex-col">
-					<!-- Card Header -->
-					<div
-						class="bg-amulet py-2 px-3 pl-4 border-x-2 border-t-2 border-white rounded-t-lg">
-						<div class="flex items-center justify-between">
-							<h3
-								class="text-xl font-semibold text-heavy-metal hover:text-gray-asparagus cursor-pointer flex-1">
-								Object Name
-							</h3>
-							<!-- Action Buttons -->
-							<div class="flex gap-2 ml-3">
-								<button
-									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
-									<PencilIcon class="w-4 h-4" />
-								</button>
-								<button
-									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
-									<TrashIcon class="w-4 h-4" />
-								</button>
-							</div>
-						</div>
-					</div>
-					<!-- Card Body -->
-					<div
-						class="bg-norway p-4 border-x-2 border-b-2 border-white rounded-b-lg flex-1 flex flex-col">
-						<div class="flex-1">
-							<p class="text-heavy-metal mb-3">
-								This is a description of the object or item being displayed in this
-								card.
+			<div class="space-y-8">
+				<div class="flex flex-col lg:flex-row lg:space-x-8 space-y-8 lg:space-y-0">
+					<div class="lg:w-1/3">
+						<div class="space-y-3">
+							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+								BaseCard (Primary Variant)
 							</p>
-							<div class="text-sm text-heavy-metal">
-								<span class="font-medium">Type:</span>
-								Example
-								<span class="mx-2"></span>
-								<span class="font-medium">Count:</span>
-								12
-								<span class="mx-2"></span>
-								<span class="font-medium">Value:</span>
-								100
-							</div>
+							<BaseCard variant="primary">
+								<template #media>
+									<img
+										class="w-full h-32 object-cover"
+										src="https://picsum.photos/400/128"
+										alt="Navigation Card Image" />
+								</template>
+								<template #header>Primary Card</template>
+								<template #body>
+									<p class="mb-4">
+										Use the primary card to highlight a key action or destination.
+									</p>
+									<BaseButton variant="primary">Action</BaseButton>
+								</template>
+							</BaseCard>
 						</div>
-						<div class="mt-4 flex-shrink-0">
-							<BaseButton variant="primary">Action</BaseButton>
+					</div>
+
+					<div class="lg:w-1/3">
+						<div class="space-y-3">
+							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+								BaseCard (Primary Variant - No Media)
+							</p>
+							<BaseCard variant="primary">
+								<template #header>Primary Card (No Media)</template>
+								<template #body>
+									<p class="mb-4">
+										Use the primary card without an image for streamlined content blocks.
+									</p>
+									<BaseButton variant="primary">Action</BaseButton>
+								</template>
+							</BaseCard>
+						</div>
+					</div>
+				</div>
+
+				<div class="flex flex-col lg:flex-row lg:space-x-8 space-y-8 lg:space-y-0">
+					<div class="lg:w-1/3">
+						<div class="space-y-3">
+							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+								BaseCard (Secondary Variant)
+							</p>
+							<BaseCard variant="secondary">
+								<template #media>
+									<img
+										class="w-full h-32 object-cover"
+										src="https://picsum.photos/400/128?grayscale"
+										alt="Secondary Card Media" />
+								</template>
+								<template #header>
+									<span class="cursor-pointer hover:text-gray-asparagus transition-colors">Secondary Card</span>
+								</template>
+								<template #actions>
+									<button class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+										<PencilIcon class="w-4 h-4" />
+									</button>
+									<button class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+										<TrashIcon class="w-4 h-4" />
+									</button>
+								</template>
+								<template #body>
+									<div class="flex-1">
+										<p class="mb-3">
+											Use the secondary card when additional actions or metadata are required.
+										</p>
+										<div class="text-sm">
+											<span class="font-medium">Detail:</span>
+											Supporting metadata
+											<span class="mx-2"></span>
+											<span class="font-medium">Status:</span>
+											Active
+											<span class="mx-2"></span>
+											<span class="font-medium">Priority:</span>
+											High
+										</div>
+									</div>
+								</template>
+								<template #footer>
+									<BaseButton variant="primary">Action</BaseButton>
+								</template>
+							</BaseCard>
+						</div>
+					</div>
+
+					<div class="lg:w-1/3">
+						<div class="space-y-3">
+							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+								BaseCard (Secondary Variant - No Media)
+							</p>
+							<BaseCard variant="secondary">
+								<template #header>
+									Secondary Card (No Media)
+								</template>
+								<template #actions>
+									<button class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+										<PencilIcon class="w-4 h-4" />
+									</button>
+									<button class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+										<TrashIcon class="w-4 h-4" />
+									</button>
+								</template>
+								<template #body>
+									<div class="flex-1">
+										<p class="mb-3">
+											Use the secondary card with compact layout when no media is needed.
+										</p>
+										<div class="text-sm">
+											<span class="font-medium">Detail:</span>
+											Supporting metadata
+											<span class="mx-2"></span>
+											<span class="font-medium">Status:</span>
+											Active
+											<span class="mx-2"></span>
+											<span class="font-medium">Priority:</span>
+											High
+										</div>
+									</div>
+								</template>
+								<template #footer>
+									<BaseButton variant="primary">Action</BaseButton>
+								</template>
+							</BaseCard>
+						</div>
+					</div>
+				</div>
+
+				<div class="flex flex-col lg:flex-row lg:space-x-8 space-y-8 lg:space-y-0">
+					<div class="lg:w-1/3">
+						<div class="space-y-3">
+							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+								BaseCard (Tertiary Variant)
+							</p>
+							<BaseCard variant="tertiary">
+								<template #media>
+									<img
+										class="w-full h-32 object-cover"
+										src="https://picsum.photos/400/128?blur"
+										alt="Tertiary Card Media" />
+								</template>
+								<template #header>Tertiary Card</template>
+								<template #body>
+									<p class="mb-4">
+										Use the tertiary card for contextual information or secondary content.
+									</p>
+								</template>
+								<template #footer>
+									<BaseButton variant="secondary" class="self-start">Action</BaseButton>
+								</template>
+							</BaseCard>
+						</div>
+					</div>
+
+					<div class="lg:w-1/3">
+						<div class="space-y-3">
+							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+								BaseCard (Tertiary Variant - No Media)
+							</p>
+							<BaseCard variant="tertiary">
+								<template #header>Tertiary Card (No Media)</template>
+								<template #body>
+									<p class="mb-4">
+										Use the tertiary card without media for compact callouts.
+									</p>
+								</template>
+								<template #footer>
+									<BaseButton variant="secondary" class="self-start">Action</BaseButton>
+								</template>
+							</BaseCard>
 						</div>
 					</div>
 				</div>
