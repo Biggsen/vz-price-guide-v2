@@ -227,17 +227,6 @@ const router = createRouter({
 			}
 		},
 		{
-			path: '/servers',
-			name: 'servers',
-			component: () => import('../views/ServersView.vue'),
-			meta: {
-				requiresAuth: true,
-				requiresVerification: true,
-				requiresAdmin: true,
-				title: `My Servers - ${siteName}`
-			}
-		},
-		{
 			path: '/shops',
 			name: 'shops',
 			component: () => import('../views/ShopsView.vue'),

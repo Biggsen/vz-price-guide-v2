@@ -393,8 +393,8 @@ const priceAnalysis = computed(() => {
 			<p class="font-medium">No servers found</p>
 			<p class="text-sm mt-1">
 				You need to create a server first to view market data.
-				<router-link to="/servers" class="text-blue-600 hover:text-blue-800 underline">
-					Go to Servers
+				<router-link to="/shop-manager" class="text-blue-600 hover:text-blue-800 underline">
+					Go to Shop Manager
 				</router-link>
 			</p>
 		</div>

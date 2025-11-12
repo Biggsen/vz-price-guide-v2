@@ -31,7 +31,7 @@ const isPriceGuideActive = computed(() => {
 
 const isShopManagerActive = computed(() => {
 	return (
-		['/shop-manager', '/market-overview', '/shops', '/servers', '/shop'].includes(route.path) ||
+		['/shop-manager', '/market-overview', '/shops', '/shop'].includes(route.path) ||
 		route.path.startsWith('/shop/')
 	)
 })
@@ -75,9 +75,7 @@ const expandedSection = computed(() => {
 		}
 		// Shop Manager routes
 		else if (
-			['/shop-manager', '/market-overview', '/shops', '/servers', '/shop'].includes(
-				currentPath
-			) ||
+			['/shop-manager', '/market-overview', '/shops', '/shop'].includes(currentPath) ||
 			currentPath.startsWith('/shop/')
 		) {
 			return 'shop-manager'
@@ -133,9 +131,7 @@ watch(
 			) {
 				isPriceGuideExpanded.value = true
 			} else if (
-				['/shop-manager', '/market-overview', '/shops', '/servers', '/shop'].includes(
-					currentPath
-				) ||
+				['/shop-manager', '/market-overview', '/shops', '/shop'].includes(currentPath) ||
 				currentPath.startsWith('/shop/')
 			) {
 				isShopManagerExpanded.value = true

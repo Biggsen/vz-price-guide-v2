@@ -199,12 +199,6 @@ export const screenshotToViewMap = {
 		type: 'admin',
 		description: 'Bulk item update interface'
 	},
-	'servers-default': {
-		viewFile: 'src/views/ServersView.vue',
-		route: '/servers',
-		type: 'admin',
-		description: 'Server management interface'
-	},
 	'shops-default': {
 		viewFile: 'src/views/ShopsView.vue',
 		route: '/shops',

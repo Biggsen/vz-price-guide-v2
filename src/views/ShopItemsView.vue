@@ -472,8 +472,8 @@ function getServerName(serverId) {
 			<p class="font-semibold">No servers found</p>
 			<p class="text-sm mt-1">
 				Create a server before managing shop items.
-				<router-link to="/servers" class="text-yellow-900 underline">
-					Go to Servers
+				<router-link to="/shop-manager" class="text-yellow-900 underline">
+					Go to Shop Manager
 				</router-link>
 			</p>
 		</div>
