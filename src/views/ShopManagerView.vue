@@ -9,7 +9,6 @@ import {
 	GlobeAltIcon,
 	BuildingStorefrontIcon,
 	CurrencyDollarIcon,
-	CubeIcon,
 	PencilIcon,
 	TrashIcon,
 	XCircleIcon,
@@ -333,6 +332,14 @@ function getServerForShop(shop) {
 	return servers.value.find((server) => server.id === shop.server_id) || null
 }
 
+const serverDeleteShopCount = computed(() => {
+	if (!serverToDelete.value) return 0
+	return (shops.value || []).filter((shop) => shop.server_id === serverToDelete.value.id)
+		.length
+})
+
+const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
+
 </script>
 
 <template>
@@ -353,15 +360,6 @@ function getServerForShop(shop) {
 						</template>
 						Add Server
 					</BaseButton>
-					<BaseButton
-						@click="showCreateShopForm()"
-						variant="secondary"
-						:disabled="!hasServers || shopLoading">
-						<template #left-icon>
-							<BuildingStorefrontIcon />
-						</template>
-						Add Shop
-					</BaseButton>
 					<RouterLink to="/market-overview">
 						<BaseButton variant="secondary">
 							<template #left-icon>
@@ -374,91 +372,12 @@ function getServerForShop(shop) {
 			</div>
 		</div>
 
-		<!-- Your Shops Section -->
-		<div v-if="ownShops.length" class="mb-8">
-			<h2
-				class="text-2xl font-semibold mb-6 text-gray-700 border-b-2 border-gray-asparagus pb-2">
-				My Shops
-			</h2>
-			<div
-				v-if="shopError"
-				class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-				{{ shopError }}
-			</div>
-			<TransitionGroup
-				name="fade"
-				tag="div"
-				class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-				<BaseCard
-					v-for="shop in ownShops"
-					:key="shop.id"
-					variant="secondary">
-					<template #header>
-						<h3
-							class="text-xl font-semibold text-heavy-metal hover:text-gray-asparagus cursor-pointer inline-flex items-center gap-2">
-							<BuildingStorefrontIcon class="w-5 h-5" />
-							{{ shop.name }}
-						</h3>
-					</template>
-					<template #actions>
-						<div class="flex items-center gap-2 ml-3">
-							<RouterLink
-								:to="{ name: 'shop', params: { shopId: shop.id } }"
-								class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
-								<CubeIcon class="w-4 h-4" />
-								<span class="sr-only">Manage Items</span>
-							</RouterLink>
-							<button
-								type="button"
-								@click.stop="showEditShopForm(shop)"
-								:disabled="shopLoading"
-								class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded disabled:opacity-60 disabled:cursor-not-allowed">
-								<PencilIcon class="w-4 h-4" />
-								<span class="sr-only">Edit Shop</span>
-							</button>
-							<button
-								type="button"
-								@click.stop="requestDeleteShop(shop)"
-								:disabled="shopLoading"
-								class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded disabled:opacity-60 disabled:cursor-not-allowed">
-								<TrashIcon class="w-4 h-4" />
-								<span class="sr-only">Delete Shop</span>
-							</button>
-						</div>
-					</template>
-					<template #body>
-						<div class="flex flex-col gap-4 w-full">
-							<p v-if="shop.description">
-								{{ shop.description }}
-							</p>
-							<div class="text-sm text-heavy-metal">
-								<span class="font-medium">Server:</span>
-								{{ getServerForShop(shop)?.name || 'Unknown Server' }}
-								<span class="mx-2"></span>
-								<span class="font-medium">Version:</span>
-								{{ getServerForShop(shop)?.minecraft_version || 'Unknown' }}
-								<span v-if="shop.location" class="mx-2"></span>
-								<span v-if="shop.location" class="font-medium">Location:</span>
-								<span v-if="shop.location">📍 {{ shop.location }}</span>
-							</div>
-							<RouterLink :to="{ name: 'shop', params: { shopId: shop.id } }" class="mt-auto w-fit">
-								<BaseButton variant="primary">
-									<template #left-icon>
-										<CubeIcon class="w-4 h-4" />
-									</template>
-									Manage Items
-								</BaseButton>
-							</RouterLink>
-						</div>
-					</template>
-				</BaseCard>
-			</TransitionGroup>
-		</div>
+		<!-- My Shops section removed per request -->
 
 		<!-- Other Section -->
 		<div class="mb-8">
 			<h2 class="text-2xl font-semibold text-gray-700 border-b-2 border-gray-asparagus pb-2">
-				Servers and Shops
+				My Servers and Shops
 			</h2>
 		</div>
 
@@ -995,7 +914,13 @@ function getServerForShop(shop) {
 					<h3 class="font-normal text-gray-900">
 						Are you sure you want to delete <span class="font-semibold">{{ serverToDelete?.name }}</span>?
 					</h3>
-					<p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
+					<p
+						v-if="serverDeleteHasShops"
+						class="text-sm text-gray-600 mt-2 font-medium">
+							This server has {{ serverDeleteShopCount }}
+							{{ serverDeleteShopCount === 1 ? 'shop' : 'shops' }}. Deleting the server will also permanently delete those shops.
+						</p>
+					<p v-else class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
 				</div>
 			</div>
 

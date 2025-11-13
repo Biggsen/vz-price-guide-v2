@@ -10,7 +10,10 @@ import {
 	deleteDoc,
 	query,
 	where,
-	orderBy
+	orderBy,
+	limit,
+	getDocs,
+	writeBatch
 } from 'firebase/firestore'
 import { ref, computed, unref } from 'vue'
 
@@ -81,6 +84,24 @@ export async function deleteServer(serverId) {
 
 	try {
 		const db = getFirestore()
+		const shopsQuery = query(
+			collection(db, 'shops'),
+			where('server_id', '==', serverId),
+			limit(50)
+		)
+
+		let snapshot
+		do {
+			snapshot = await getDocs(shopsQuery)
+			if (!snapshot.empty) {
+				const batch = writeBatch(db)
+				snapshot.forEach((shopDoc) => {
+					batch.delete(shopDoc.ref)
+				})
+				await batch.commit()
+			}
+		} while (!snapshot.empty)
+
 		const docRef = doc(db, 'servers', serverId)
 		await deleteDoc(docRef)
 		return true
