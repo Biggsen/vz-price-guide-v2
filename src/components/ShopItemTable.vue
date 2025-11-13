@@ -41,7 +41,7 @@ const props = defineProps({
 	}
 })
 
-const emit = defineEmits(['edit', 'delete', 'bulk-update', 'quick-edit'])
+const emit = defineEmits(['edit', 'delete', 'quick-edit'])
 
 // Router setup
 const router = useRouter()
@@ -49,7 +49,6 @@ const router = useRouter()
 // Table state
 const sortField = ref('')
 const sortDirection = ref('asc')
-const selectedItems = ref([])
 const editingItemId = ref(null)
 const editingValues = ref({})
 
@@ -99,18 +98,6 @@ const sortedItems = computed(() => {
 	})
 })
 
-const allSelected = computed(() => {
-	return props.items.length > 0 && selectedItems.value.length === props.items.length
-})
-
-const someSelected = computed(() => {
-	return selectedItems.value.length > 0 && selectedItems.value.length < props.items.length
-})
-
-const hasSelected = computed(() => {
-	return selectedItems.value.length > 0
-})
-
 // Track first occurrence of each item for grouping
 const firstOccurrenceMap = computed(() => {
 	const map = new Map()
@@ -143,18 +130,18 @@ const tableClass = computed(() => {
 
 const outerContainerClass = computed(() => {
 	if (props.appearance === 'guide') {
-		return 'rounded-lg overflow-hidden'
+		return 'overflow-hidden'
 	}
 	if (props.appearance === 'embedded') {
-		return 'rounded-lg overflow-hidden border-white border-0 shadow-none bg-transparent'
+		return 'overflow-hidden border-white border-0 shadow-none bg-transparent'
 	}
-	return 'bg-white rounded-lg shadow-md overflow-hidden'
+	return 'bg-white shadow-md overflow-hidden'
 })
 
 function headerClass(field = null, sortable = false) {
 	const classes = [
 		layoutClasses.value.headerPadding,
-		'text-left text-xs uppercase tracking-wider'
+		'text-left text-md tracking-normal'
 	]
 
 	if (sortable) {
@@ -183,7 +170,7 @@ function headerClass(field = null, sortable = false) {
 function cellClass(additional = '') {
 	const parts = [layoutClasses.value.cellPadding, additional]
 	if (isGuide.value) {
-		parts.push('border-2 border-white bg-norway text-heavy-metal')
+		parts.push('border border-white bg-norway text-heavy-metal')
 	}
 	return parts.filter(Boolean).join(' ')
 }
@@ -210,27 +197,6 @@ function getSortIcon(field) {
 }
 
 // Selection methods
-function toggleSelectAll() {
-	if (allSelected.value) {
-		selectedItems.value = []
-	} else {
-		selectedItems.value = props.items.map((item) => item.id)
-	}
-}
-
-function toggleSelectItem(itemId) {
-	const index = selectedItems.value.indexOf(itemId)
-	if (index > -1) {
-		selectedItems.value.splice(index, 1)
-	} else {
-		selectedItems.value.push(itemId)
-	}
-}
-
-function isSelected(itemId) {
-	return selectedItems.value.includes(itemId)
-}
-
 // Inline editing methods
 function startEdit(item) {
 	// Cancel any existing edit first
@@ -395,15 +361,6 @@ function getPriceChangeIcon(current, previous) {
 	return '➡️'
 }
 
-// Bulk operations
-function bulkUpdateSelected() {
-	if (!hasSelected.value) return
-
-	const selectedItemsData = props.items.filter((item) => selectedItems.value.includes(item.id))
-	emit('bulk-update', selectedItemsData)
-	selectedItems.value = []
-}
-
 // Event handlers
 function handleEdit(item) {
 	emit('edit', item)
@@ -470,43 +427,11 @@ function navigateToShopItems(shopId) {
 
 <template>
 	<div :class="outerContainerClass">
-		<!-- Bulk actions toolbar -->
-		<div
-			v-if="hasSelected && !readOnly"
-			:class="['bg-blue-50 border-b border-blue-200', layoutClasses.bulkToolbarPadding]">
-			<div class="flex items-center justify-between">
-				<span class="text-sm text-blue-700">
-					{{ selectedItems.length }} item{{ selectedItems.length !== 1 ? 's' : '' }}
-					selected
-				</span>
-				<div class="space-x-2">
-					<button
-						@click="bulkUpdateSelected"
-						class="px-3 py-1 text-sm bg-semantic-info text-white rounded hover:bg-opacity-80 transition-colors">
-						Bulk Update
-					</button>
-					<button
-						@click="selectedItems = []"
-						class="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-opacity-80 transition-colors">
-						Clear Selection
-					</button>
-				</div>
-			</div>
-		</div>
-
 		<!-- Table -->
 		<div class="overflow-x-auto">
 			<table :class="tableClass">
 				<thead :class="isGuide ? '' : 'bg-gray-50'">
 					<tr>
-						<th v-if="!readOnly" :class="headerClass(null, false)">
-							<input
-								type="checkbox"
-								:checked="allSelected"
-								:indeterminate="someSelected"
-								@change="toggleSelectAll"
-								class="checkbox-input" />
-						</th>
 						<th
 							@click="setSortField('name')"
 							:class="headerClass('name', true)">
@@ -599,19 +524,10 @@ function navigateToShopItems(shopId) {
 						:key="item.id"
 						:class="[
 							!isGuide && isEditing(item.id) && !readOnly ? 'bg-yellow-50 border-yellow-200' : '',
-							!isGuide && isSelected(item.id) && !readOnly && !isEditing(item.id) ? 'bg-blue-50' : '',
-							!isGuide && item.shopData?.is_own_shop && !isSelected(item.id) && !isEditing(item.id)
+							!isGuide && item.shopData?.is_own_shop && !isEditing(item.id)
 								? 'bg-green-50'
 								: ''
 						]">
-						<!-- Selection checkbox -->
-						<td v-if="!readOnly" :class="cellClass()">
-							<input
-								type="checkbox"
-								:checked="isSelected(item.id)"
-								@change="toggleSelectItem(item.id)"
-								class="checkbox-input" />
-						</td>
 
 						<!-- Item info -->
 						<td :class="cellClass()">
@@ -639,7 +555,7 @@ function navigateToShopItems(shopId) {
 						<td v-if="showShopNames" :class="cellClass()">
 							<div
 								@click="navigateToShopItems(item.shopData?.id)"
-								class="text-sm text-gray-900 cursor-pointer hover:text-blue-600 transition-colors">
+								class="text-md text-gray-900 cursor-pointer hover:text-blue-600 transition-colors">
 								{{ item.shopData?.name || 'Unknown Shop' }}
 							</div>
 							<div v-if="item.shopData?.location" class="text-xs text-gray-500">
@@ -648,7 +564,7 @@ function navigateToShopItems(shopId) {
 						</td>
 
 						<!-- Buy price -->
-						<td :class="cellClass()">
+						<td :class="cellClass('text-right')">
 							<div v-if="isEditing(item.id) && !readOnly">
 								<input
 									:value="editingValues.buy_price"
@@ -659,12 +575,12 @@ function navigateToShopItems(shopId) {
 									class="w-20 px-2 py-1.5 text-base border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" />
 							</div>
 							<div v-else>
-								<div class="text-sm text-gray-900">
+								<div class="text-md text-gray-900">
 									{{ formatPrice(item.buy_price) }}
 								</div>
 								<div
 									v-if="hasPriceChanged(item.buy_price, item.previous_buy_price)"
-									class="text-xs text-gray-500">
+									class="text-xs text-gray-500 text-right">
 									{{
 										getPriceChangeIcon(item.buy_price, item.previous_buy_price)
 									}}
@@ -706,9 +622,9 @@ function navigateToShopItems(shopId) {
 								</div>
 							</div>
 							<div v-else>
-								<div class="flex items-center gap-1">
+								<div class="flex items-center justify-end gap-1 text-md">
 									<span
-										class="text-sm"
+										class=""
 										:class="
 											hasInsufficientFunds(item) || item.stock_full
 												? 'text-gray-400 line-through'
@@ -734,7 +650,7 @@ function navigateToShopItems(shopId) {
 										!item.stock_full &&
 										hasPriceChanged(item.sell_price, item.previous_sell_price)
 									"
-									class="text-xs text-gray-500">
+									class="text-xs text-gray-500 text-right">
 									{{
 										getPriceChangeIcon(
 											item.sell_price,
@@ -758,7 +674,7 @@ function navigateToShopItems(shopId) {
 
 						<!-- Last updated -->
 						<td :class="cellClass()">
-							<div class="text-sm text-gray-900">
+							<div class="text-md text-gray-900">
 								{{ formatDate(item.last_updated) }}
 							</div>
 						</td>
@@ -821,23 +737,18 @@ input[type='checkbox']:indeterminate {
 	}
 }
 
-.checkbox-input {
-	@apply w-4 h-4 rounded;
-	accent-color: theme('colors.gray-asparagus');
-}
-
 .table-guide {
 	border-collapse: separate;
 	border-spacing: 0;
 }
 
 .table-guide :deep(thead th) {
-	@apply bg-gray-asparagus text-norway border-2 border-white;
+	@apply bg-gray-asparagus text-norway border border-white;
 }
 
 .table-guide :deep(tbody th),
 .table-guide :deep(tbody td) {
-	@apply bg-norway text-heavy-metal border-2 border-white;
+	@apply bg-norway text-heavy-metal border border-white;
 }
 
 .table-guide :deep(tbody tr:hover td) {

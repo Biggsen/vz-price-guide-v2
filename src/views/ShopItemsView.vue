@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
 import { useRouter, useRoute } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
-import { useShops } from '../utils/shopProfile.js'
+import { useShops, updateShop } from '../utils/shopProfile.js'
 import { useServers } from '../utils/serverProfile.js'
 import {
 	useShopItems,
@@ -16,14 +16,8 @@ import ShopItemForm from '../components/ShopItemForm.vue'
 import ShopItemTable from '../components/ShopItemTable.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
-import {
-	ArrowLeftIcon,
-	PlusIcon,
-	MapPinIcon,
-	BanknotesIcon,
-	CalendarDaysIcon,
-	Squares2X2Icon
-} from '@heroicons/vue/20/solid'
+import { ArrowLeftIcon, PlusIcon } from '@heroicons/vue/20/solid'
+import { PencilIcon } from '@heroicons/vue/24/outline'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -41,6 +35,22 @@ const shopItemForm = ref(null)
 // View mode settings
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
+
+// Edit shop modal state
+const showEditShopModal = ref(false)
+const editingShop = ref(null)
+const shopFormLoading = ref(false)
+const shopFormError = ref(null)
+const shopNameValidationError = ref(null)
+const shopServerValidationError = ref(null)
+const shopForm = ref({
+	name: '',
+	server_id: '',
+	location: '',
+	description: '',
+	is_own_shop: false,
+	owner_funds: null
+})
 
 // Get user's shops and servers
 const { shops } = useShops(computed(() => user.value?.uid))
@@ -79,6 +89,7 @@ const selectedServer = computed(() =>
 		? servers.value.find((s) => s.id === selectedShop.value.server_id)
 		: null
 )
+const isShopFormValid = computed(() => shopForm.value.name.trim() && shopForm.value.server_id)
 
 // Get all items from the main collection for the item selector
 const allItemsQuery = computed(() => {
@@ -256,8 +267,8 @@ watch(
 
 // Form handlers
 function showAddItemForm() {
-	if (!selectedShopId.value || !selectedServer.value) {
-		error.value = 'Please select a shop first'
+	if (!selectedShop.value || !selectedShopId.value || !selectedServer.value) {
+		error.value = 'Shop is unavailable. Return to the Shop Manager and try again.'
 		return
 	}
 	showAddForm.value = true
@@ -422,6 +433,100 @@ async function handleQuickEdit(updatedItem) {
 	}
 }
 
+function resetShopForm() {
+	shopForm.value = {
+		name: '',
+		server_id: '',
+		location: '',
+		description: '',
+		is_own_shop: false,
+		owner_funds: null
+	}
+}
+
+function openEditShopModal() {
+	if (!selectedShop.value) return
+
+	editingShop.value = selectedShop.value
+	showEditShopModal.value = true
+	shopFormError.value = null
+	shopNameValidationError.value = null
+	shopServerValidationError.value = null
+	shopFormLoading.value = false
+	shopForm.value = {
+		name: selectedShop.value.name,
+		server_id: selectedShop.value.server_id,
+		location: selectedShop.value.location || '',
+		description: selectedShop.value.description || '',
+		is_own_shop: Boolean(selectedShop.value.is_own_shop),
+		owner_funds:
+			selectedShop.value.owner_funds === null ||
+			selectedShop.value.owner_funds === undefined
+				? null
+				: selectedShop.value.owner_funds
+	}
+}
+
+function closeEditShopModal() {
+	showEditShopModal.value = false
+	editingShop.value = null
+	shopFormError.value = null
+	shopNameValidationError.value = null
+	shopServerValidationError.value = null
+	shopFormLoading.value = false
+	resetShopForm()
+}
+
+function handleShopFundsInput(event) {
+	const value = event.target.value
+	if (value === '' || value === null) {
+		shopForm.value.owner_funds = null
+	} else {
+		const numValue = parseFloat(value)
+		shopForm.value.owner_funds = Number.isNaN(numValue) ? null : numValue
+	}
+}
+
+async function submitEditShop() {
+	if (!editingShop.value) return
+
+	shopNameValidationError.value = null
+	shopServerValidationError.value = null
+	shopFormError.value = null
+
+	if (!shopForm.value.name.trim()) {
+		shopNameValidationError.value = 'Shop name is required'
+		return
+	}
+
+	if (!shopForm.value.server_id) {
+		shopServerValidationError.value = 'Server is required'
+		return
+	}
+
+	shopFormLoading.value = true
+
+	try {
+		await updateShop(editingShop.value.id, {
+			name: shopForm.value.name.trim(),
+			server_id: shopForm.value.server_id,
+			location: shopForm.value.location?.trim() || '',
+			description: shopForm.value.description?.trim() || '',
+			is_own_shop: Boolean(shopForm.value.is_own_shop),
+			owner_funds:
+				shopForm.value.owner_funds === null
+					? null
+					: Number(parseFloat(shopForm.value.owner_funds.toString()).toFixed(2))
+		})
+		closeEditShopModal()
+	} catch (err) {
+		console.error('Error updating shop:', err)
+		shopFormError.value = err.message || 'Failed to update shop. Please try again.'
+	} finally {
+		shopFormLoading.value = false
+	}
+}
+
 // Helper functions
 function getShopName(shopId) {
 	return shops.value?.find((shop) => shop.id === shopId)?.name || 'Unknown Shop'
@@ -433,9 +538,9 @@ function getServerName(serverId) {
 </script>
 
 <template>
-	<div class="p-4 pt-8 space-y-8">
+	<div class="p-4 pt-8">
 		<!-- Back Button -->
-		<div>
+		<div class="mb-4">
 			<BaseButton variant="tertiary" @click="router.push('/shop-manager')">
 				<template #left-icon>
 					<ArrowLeftIcon />
@@ -445,10 +550,57 @@ function getServerName(serverId) {
 		</div>
 
 		<div>
-			<h1 class="text-3xl font-bold text-gray-900 mb-2">Shop Items</h1>
-			<p class="text-gray-600">
-				Manage your shop inventory with buy/sell prices and stock tracking.
-			</p>
+			<div v-if="selectedShop && selectedServer">
+				<div class="flex items-center gap-3">
+					<h1 class="text-3xl font-bold text-gray-900">
+						{{ selectedShop.name }}
+					</h1>
+					<button
+						type="button"
+						@click="openEditShopModal"
+						class="text-gray-700 hover:text-gray-900 transition-colors"
+						aria-label="Edit shop">
+						<PencilIcon class="w-5 h-5" />
+					</button>
+				</div>
+				<p
+					v-if="selectedShop.description"
+					class="text-gray-600 mt-1 max-w-2xl">
+					{{ selectedShop.description }}
+				</p>
+				<div class="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500">
+					<span>
+						<span class="font-medium">Server:</span>
+						{{ getServerName(selectedShop.server_id) }}
+					</span>
+					<span>
+						<span class="font-medium">Version:</span>
+						{{ selectedServer.minecraft_version }}
+					</span>
+					<span v-if="selectedShop.location">
+						<span class="font-medium">Location:</span>
+						{{ selectedShop.location }}
+					</span>
+					<span>
+						<span class="font-medium">Funds:</span>
+						{{
+							selectedShop.owner_funds !== null && selectedShop.owner_funds !== undefined
+								? selectedShop.owner_funds.toFixed(2)
+								: 'Auto'
+						}}
+					</span>
+					<span v-if="selectedShop.created_at">
+						<span class="font-medium">Created:</span>
+						{{ new Date(selectedShop.created_at).toLocaleDateString() }}
+					</span>
+				</div>
+			</div>
+			<div v-else>
+				<h1 class="text-3xl font-bold text-gray-900 mb-2">Shop Items</h1>
+				<p class="text-gray-600">
+					This shop couldn't be found. Return to the manager to pick another one.
+				</p>
+			</div>
 		</div>
 
 		<!-- Error message -->
@@ -491,77 +643,23 @@ function getServerName(serverId) {
 			</p>
 		</div>
 
+		<div
+			v-else-if="hasShops && hasServers && !selectedShop"
+			class="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-4 text-yellow-800">
+			<p class="font-semibold">Shop unavailable</p>
+			<p class="text-sm mt-1">
+				We couldn't find this shop in your list. Head back to
+				<router-link to="/shop-manager" class="text-yellow-900 underline">
+					Shop Manager
+				</router-link>
+				to choose another.
+			</p>
+		</div>
+
 		<!-- Main content -->
-		<div v-else-if="hasShops && hasServers" class="space-y-8">
-			<!-- Shop selector -->
-			<div>
-				<label for="shop-select" class="block text-sm font-medium text-gray-700 mb-2">
-					Select Shop
-				</label>
-				<select
-					id="shop-select"
-					v-model="selectedShopId"
-					class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans md:w-1/3">
-					<option value="">Choose a shop...</option>
-					<option v-for="shop in shops" :key="shop.id" :value="shop.id">
-						{{ shop.name }} ({{ getServerName(shop.server_id) }})
-					</option>
-				</select>
-			</div>
-
-			<!-- Shop info -->
-			<div
-				v-if="selectedShop && selectedServer"
-				class="bg-sea-mist rounded-lg shadow-md border-2 border-amulet overflow-hidden">
-				<div class="bg-amulet px-4 py-3 border-x-2 border-t-2 border-white flex flex-wrap items-center justify-between gap-4">
-					<div>
-						<h2 class="text-xl font-semibold text-heavy-metal flex items-center gap-2">
-							<Squares2X2Icon class="w-5 h-5" />
-							{{ selectedShop.name }}
-						</h2>
-						<p class="text-sm text-heavy-metal mt-1">
-							{{ getServerName(selectedShop.server_id) }} • Minecraft
-							{{ selectedServer.minecraft_version }}
-						</p>
-					</div>
-				</div>
-
-				<div class="bg-norway border-x-2 border-b-2 border-white px-4 py-5">
-					<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-						<div class="flex items-center gap-3 text-sm text-heavy-metal">
-							<MapPinIcon class="w-5 h-5 flex-shrink-0 text-gray-asparagus" />
-							<span>
-								<span class="font-medium">Location:</span>
-								{{ selectedShop.location || 'Not set' }}
-							</span>
-						</div>
-						<div class="flex items-center gap-3 text-sm text-heavy-metal">
-							<BanknotesIcon class="w-5 h-5 flex-shrink-0 text-gray-asparagus" />
-							<span>
-								<span class="font-medium">Funds:</span>
-								{{
-									selectedShop.owner_funds !== null &&
-									selectedShop.owner_funds !== undefined
-										? selectedShop.owner_funds.toFixed(2)
-										: 'Auto'
-								}}
-							</span>
-						</div>
-						<div
-							v-if="selectedShop.created_at"
-							class="flex items-center gap-3 text-sm text-heavy-metal">
-							<CalendarDaysIcon class="w-5 h-5 flex-shrink-0 text-gray-asparagus" />
-							<span>
-								<span class="font-medium">Created:</span>
-								{{ new Date(selectedShop.created_at).toLocaleDateString() }}
-							</span>
-						</div>
-					</div>
-				</div>
-			</div>
-
+		<div v-else-if="hasShops && hasServers && selectedShop" class="space-y-8">
 			<!-- Inventory -->
-			<div v-if="selectedShopId" class="space-y-6">
+			<div class="mt-8 space-y-6">
 				<div>
 					<h2 class="text-2xl font-semibold text-heavy-metal">Inventory</h2>
 					<p class="text-sm text-gray-600">
@@ -630,7 +728,7 @@ function getServerName(serverId) {
 						type="button"
 						variant="primary"
 						@click="showAddItemForm"
-						:disabled="!selectedShopId">
+						:disabled="!selectedShop">
 						<template #left-icon>
 							<PlusIcon />
 						</template>
@@ -693,7 +791,7 @@ function getServerName(serverId) {
 						type="button"
 						variant="primary"
 						@click="showAddItemForm"
-						:disabled="!selectedShopId">
+						:disabled="!selectedShop">
 						<template #left-icon>
 							<PlusIcon />
 						</template>
@@ -703,6 +801,147 @@ function getServerName(serverId) {
 			</div>
 		</div>
 	</div>
+
+	<BaseModal
+		:isOpen="showEditShopModal"
+		title="Edit Shop"
+		maxWidth="max-w-2xl"
+		@close="closeEditShopModal">
+		<form @submit.prevent="submitEditShop" class="space-y-4">
+			<div>
+				<label for="edit-shop-name" class="block text-sm font-medium text-gray-700 mb-1">
+					Shop Name *
+				</label>
+				<input
+					id="edit-shop-name"
+					v-model="shopForm.name"
+					type="text"
+					required
+					placeholder="e.g., vz market"
+					@input="shopNameValidationError = null; shopFormError = null"
+					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
+				<div
+					v-if="shopNameValidationError"
+					class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+					<span>{{ shopNameValidationError }}</span>
+				</div>
+			</div>
+
+			<div>
+				<label for="edit-shop-server" class="block text-sm font-medium text-gray-700 mb-1">
+					Server *
+				</label>
+				<select
+					id="edit-shop-server"
+					v-model="shopForm.server_id"
+					required
+					@change="shopServerValidationError = null; shopFormError = null"
+					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus">
+					<option value="">Select a server</option>
+					<option v-for="server in servers" :key="server.id" :value="server.id">
+						{{ server.name }}
+					</option>
+				</select>
+				<div
+					v-if="shopServerValidationError"
+					class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+					<span>{{ shopServerValidationError }}</span>
+				</div>
+			</div>
+
+			<div>
+				<label for="edit-shop-location" class="block text-sm font-medium text-gray-700 mb-1">
+					Location
+				</label>
+				<input
+					id="edit-shop-location"
+					v-model="shopForm.location"
+					type="text"
+					placeholder="e.g., /warp shops"
+					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
+			</div>
+
+			<div>
+				<label for="edit-shop-description" class="block text-sm font-medium text-gray-700 mb-1">
+					Description
+				</label>
+				<textarea
+					id="edit-shop-description"
+					v-model="shopForm.description"
+					rows="3"
+					placeholder="Optional description for this shop..."
+					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus"></textarea>
+			</div>
+
+			<div>
+				<label for="edit-owner-funds" class="block text-sm font-medium text-gray-700 mb-1">
+					Owner Funds
+				</label>
+				<input
+					id="edit-owner-funds"
+					:value="shopForm.owner_funds ?? ''"
+					@input="handleShopFundsInput"
+					type="number"
+					step="0.01"
+					min="0"
+					placeholder="0.00"
+					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
+				<p class="text-xs text-gray-500 mt-1">
+					Available funds for buying items from players.
+				</p>
+			</div>
+
+			<div>
+				<span class="block text-sm font-medium text-gray-700">Shop Type</span>
+				<div class="mt-3 flex flex-wrap gap-6">
+					<label class="flex items-center gap-2 text-sm text-gray-700">
+						<input
+							id="edit-shop-type-competitor"
+							v-model="shopForm.is_own_shop"
+							type="radio"
+							:value="false"
+							class="radio-input" />
+						<span>Competitor</span>
+					</label>
+					<label class="flex items-center gap-2 text-sm text-gray-700">
+						<input
+							id="edit-shop-type-own"
+							v-model="shopForm.is_own_shop"
+							type="radio"
+							:value="true"
+							class="radio-input" />
+						<span>My Shop</span>
+					</label>
+				</div>
+			</div>
+
+			<div
+				v-if="shopFormError"
+				class="text-sm text-red-600 font-semibold bg-red-100 border border-red-300 px-3 py-2 rounded">
+				{{ shopFormError }}
+			</div>
+		</form>
+
+		<template #footer>
+			<div class="flex items-center justify-end">
+				<div class="flex space-x-3">
+					<button
+						type="button"
+						class="btn-secondary--outline"
+						@click="closeEditShopModal">
+						Cancel
+					</button>
+					<BaseButton
+						type="button"
+						@click="submitEditShop"
+						:disabled="shopFormLoading || !isShopFormValid"
+						variant="primary">
+						{{ shopFormLoading ? 'Updating...' : 'Update Shop' }}
+					</BaseButton>
+				</div>
+			</div>
+		</template>
+	</BaseModal>
 
 	<BaseModal
 		:isOpen="showAddForm"
