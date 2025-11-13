@@ -4,12 +4,13 @@ import { RouterLink } from 'vue-router'
 import BaseButton from '../components/BaseButton.vue'
 import BaseCard from '../components/BaseCard.vue'
 import BaseModal from '../components/BaseModal.vue'
+import LinkWithActions from '../components/LinkWithActions.vue'
 import {
 	GlobeAltIcon,
 	BuildingStorefrontIcon,
 	CurrencyDollarIcon,
 	CubeIcon,
-	PencilSquareIcon,
+	PencilIcon,
 	TrashIcon,
 	XCircleIcon,
 	PlusIcon
@@ -63,6 +64,9 @@ const shopCreateError = ref(null)
 const shopEditError = ref(null)
 const shopNameValidationError = ref(null)
 const shopServerValidationError = ref(null)
+
+const presetServerId = ref(null)
+const presetShopType = ref(null)
 
 const shopForm = ref({
 	name: '',
@@ -201,13 +205,14 @@ function resetShopForm() {
 	}
 }
 
-function showCreateShopForm(serverId = '') {
+function showCreateShopForm(serverId = '', isOwnShop = null) {
 	showShopForm.value = true
 	editingShop.value = null
 	resetShopForm()
-	if (serverId) {
-		shopForm.value.server_id = serverId
-	}
+	presetServerId.value = serverId || null
+	presetShopType.value = typeof isOwnShop === 'boolean' ? isOwnShop : null
+	if (serverId) shopForm.value.server_id = serverId
+	if (typeof isOwnShop === 'boolean') shopForm.value.is_own_shop = isOwnShop
 	shopCreateError.value = null
 	shopEditError.value = null
 	shopNameValidationError.value = null
@@ -218,6 +223,8 @@ function showCreateShopForm(serverId = '') {
 function showEditShopForm(shop) {
 	editingShop.value = shop
 	showShopForm.value = true
+	presetServerId.value = null
+	presetShopType.value = null
 	shopForm.value = {
 		name: shop.name,
 		server_id: shop.server_id,
@@ -239,6 +246,8 @@ function closeShopModals() {
 	showShopDeleteModal.value = false
 	editingShop.value = null
 	shopToDelete.value = null
+	presetServerId.value = null
+	presetShopType.value = null
 	shopLoading.value = false
 	shopCreateError.value = null
 	shopEditError.value = null
@@ -404,14 +413,14 @@ function getServerForShop(shop) {
 								@click.stop="showEditShopForm(shop)"
 								:disabled="shopLoading"
 								class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded disabled:opacity-60 disabled:cursor-not-allowed">
-								<PencilSquareIcon class="w-4 h-4" />
+								<PencilIcon class="w-4 h-4" />
 								<span class="sr-only">Edit Shop</span>
 							</button>
 							<button
 								type="button"
 								@click.stop="requestDeleteShop(shop)"
 								:disabled="shopLoading"
-								class="p-1 bg-semantic-danger text-white hover:bg-opacity-80 transition-colors rounded disabled:opacity-60 disabled:cursor-not-allowed">
+								class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded disabled:opacity-60 disabled:cursor-not-allowed">
 								<TrashIcon class="w-4 h-4" />
 								<span class="sr-only">Delete Shop</span>
 							</button>
@@ -483,13 +492,13 @@ function getServerForShop(shop) {
 								@click="showEditServerForm(server)"
 								:disabled="loading"
 								class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded disabled:opacity-60 disabled:cursor-not-allowed">
-								<PencilSquareIcon class="w-4 h-4" />
+								<PencilIcon class="w-4 h-4" />
 							</button>
 							<button
 								type="button"
 								@click="confirmDeleteServer(server)"
 								:disabled="loading"
-								class="p-1 bg-semantic-danger text-white hover:bg-opacity-80 transition-colors rounded disabled:opacity-60 disabled:cursor-not-allowed">
+								class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded disabled:opacity-60 disabled:cursor-not-allowed">
 								<TrashIcon class="w-4 h-4" />
 							</button>
 						</div>
@@ -499,54 +508,77 @@ function getServerForShop(shop) {
 							<div class="text-xs uppercase tracking-wide text-gray-500">
 								Version {{ server.minecraft_version || 'n/a' }}
 							</div>
+							<p
+								v-if="server.description"
+								class="text-sm text-gray-600">
+								{{ server.description }}
+							</p>
 							<div
 								v-if="(shops || []).some((s) => s.server_id === server.id)"
 								class="space-y-4">
 								<div>
-									<h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-asparagus/40 pb-1 w-full">
+									<h4 class="text-sm font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-asparagus/40 pb-1 w-full">
 										My Shops
 									</h4>
 									<ul class="mt-1 space-y-1 text-sm text-gray-600">
-										<li
+										<LinkWithActions
 											v-for="shop in (shops || [])
 												.filter((s) => s.server_id === server.id && s.is_own_shop)"
 											:key="shop.id"
-											class="flex items-center gap-3">
-											<RouterLink
-												:to="{ name: 'shop', params: { shopId: shop.id } }"
-												class="text-base font-semibold text-heavy-metal hover:text-gray-asparagus transition">
-												{{ shop.name }}
-											</RouterLink>
-										</li>
+											:to="{ name: 'shop', params: { shopId: shop.id } }"
+											:label="shop.name"
+											:loading="shopLoading"
+											@edit="showEditShopForm(shop)"
+											@delete="requestDeleteShop(shop)" />
 										<li
 											v-if="!(shops || []).some((s) => s.server_id === server.id && s.is_own_shop)"
 											class="text-sm italic text-gray-500">
 											No personal shops yet.
 										</li>
 									</ul>
+									<div class="mt-3 flex">
+										<BaseButton
+											variant="secondary"
+											:disabled="shopLoading"
+											@click="showCreateShopForm(server.id, true)">
+											<template #left-icon>
+												<PlusIcon class="w-4 h-4" />
+											</template>
+											Add Shop
+										</BaseButton>
+									</div>
 								</div>
 								<div>
-									<h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-asparagus/40 pb-1 w-full">
+									<h4 class="text-sm font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-asparagus/40 pb-1 w-full">
 										Competitors
 									</h4>
 									<ul class="mt-1 space-y-1 text-sm text-gray-600">
-										<li
+										<LinkWithActions
 											v-for="shop in (shops || [])
 												.filter((s) => s.server_id === server.id && !s.is_own_shop)"
 											:key="shop.id"
-											class="flex items-center gap-3">
-											<RouterLink
-												:to="{ name: 'shop', params: { shopId: shop.id } }"
-												class="text-base font-semibold text-heavy-metal hover:text-gray-asparagus transition">
-												{{ shop.name }}
-											</RouterLink>
-										</li>
+											:to="{ name: 'shop', params: { shopId: shop.id } }"
+											:label="shop.name"
+											:loading="shopLoading"
+											@edit="showEditShopForm(shop)"
+											@delete="requestDeleteShop(shop)" />
 										<li
 											v-if="!(shops || []).some((s) => s.server_id === server.id && !s.is_own_shop)"
 											class="text-sm italic text-gray-500">
 											No competitor shops tracked.
 										</li>
 									</ul>
+									<div class="mt-3 flex">
+										<BaseButton
+											variant="secondary"
+											:disabled="shopLoading"
+											@click="showCreateShopForm(server.id, false)">
+											<template #left-icon>
+												<PlusIcon class="w-4 h-4" />
+											</template>
+											Add Competitor Shop
+										</BaseButton>
+									</div>
 								</div>
 							</div>
 							<p
@@ -592,7 +624,7 @@ function getServerForShop(shop) {
 					</div>
 				</div>
 
-				<div>
+				<div v-if="!presetServerId">
 					<label for="shop-server" class="block text-sm font-medium text-gray-700 mb-1">
 						Server *
 					</label>
@@ -657,7 +689,7 @@ function getServerForShop(shop) {
 					</p>
 				</div>
 
-				<div>
+				<div v-if="presetShopType === null">
 					<label class="block text-sm font-medium text-gray-700">Shop Type</label>
 					<div class="mt-3 flex flex-wrap gap-6">
 						<label class="flex items-center gap-2 text-sm text-gray-700">
