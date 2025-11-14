@@ -172,6 +172,17 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/admin/media',
+			name: 'admin-media',
+			component: () => import('../views/AdminMediaView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: `Media Manager - ${siteName}`
+			}
+		},
+		{
 			path: '/shop-manager',
 			name: 'shop-manager',
 			component: () => import('../views/ShopManagerView.vue'),

@@ -22,6 +22,7 @@ function updateActiveMainNav() {
 		'/missing-items',
 		'/add',
 		'/bulk-update',
+		'/admin/media',
 		'/design',
 		'/styleguide',
 		'/visual-gallery',

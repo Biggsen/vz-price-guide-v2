@@ -22,6 +22,7 @@ const isPriceGuideActive = computed(() => {
 			'/missing-items',
 			'/add',
 			'/bulk-update',
+			'/admin/media',
 			'/recipes/import',
 			'/recipes/manage',
 			'/recipes/recalculate'
@@ -64,6 +65,7 @@ const expandedSection = computed(() => {
 				'/missing-items',
 				'/add',
 				'/bulk-update',
+				'/admin/media',
 				'/recipes/import',
 				'/recipes/manage',
 				'/recipes/recalculate'
@@ -123,6 +125,7 @@ watch(
 					'/missing-items',
 					'/add',
 					'/bulk-update',
+					'/admin/media',
 					'/recipes/import',
 					'/recipes/manage',
 					'/recipes/recalculate'
@@ -213,6 +216,12 @@ function toggleSection(section) {
 					to="/admin">
 					Dashboard
 				</RouterLink>
+				<RouterLink
+					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
+					active-class="bg-blue-600 text-white"
+					to="/admin/media">
+					Media Manager
+				</RouterLink>
 			</div>
 
 			<!-- Shop Manager Section -->
@@ -299,6 +308,12 @@ function toggleSection(section) {
 				:class="{ 'underline font-semibold': isPriceGuideActive }"
 				to="/admin">
 				Price Guide
+			</RouterLink>
+			<RouterLink
+				class="hover:underline"
+				:class="{ 'underline font-semibold': route.path === '/admin/media' }"
+				to="/admin/media">
+				Media Manager
 			</RouterLink>
 			<RouterLink
 				class="hover:underline"

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { getEffectivePrice } from '../utils/pricing.js'
+import { getImageUrl } from '../utils/image.js'
 
 const props = defineProps({
 	availableItems: {
@@ -449,7 +450,7 @@ defineExpose({
 								</div>
 								<div v-if="item.image" class="w-8 h-8">
 									<img
-										:src="item.image"
+										:src="getImageUrl(item.image, { width: 64 })"
 										:alt="item.name"
 										class="w-full h-full object-contain" />
 								</div>
@@ -469,7 +470,7 @@ defineExpose({
 						</div>
 						<div v-if="selectedItem.image" class="w-8 h-8">
 							<img
-								:src="selectedItem.image"
+								:src="getImageUrl(selectedItem.image, { width: 64 })"
 								:alt="selectedItem.name"
 								class="w-full h-full object-contain" />
 						</div>
@@ -496,7 +497,7 @@ defineExpose({
 					</div>
 					<div v-if="editingItem.itemData.image" class="w-8 h-8">
 						<img
-							:src="editingItem.itemData.image"
+							:src="getImageUrl(editingItem.itemData.image, { width: 64 })"
 							:alt="editingItem.itemData.name"
 							class="w-full h-full object-contain" />
 					</div>

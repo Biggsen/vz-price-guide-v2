@@ -8,10 +8,39 @@
  * @returns {string} The processed image URL
  */
 export function getImageUrl(imageUrl, options = {}) {
-	const { width = 64, format = 'webp', quality = 90 } = options
+	if (!imageUrl) return ''
 
-	if (process.env.NODE_ENV === 'production') {
-		return `/.netlify/images?url=${imageUrl}&w=${width}&fm=${format}&q=${quality}`
+	const { width = 64, format = 'webp', quality = 90 } = options
+	const sourceUrl = resolveSourceUrl(imageUrl)
+
+	if (import.meta.env.PROD) {
+		return `/.netlify/images?url=${encodeURIComponent(sourceUrl)}&w=${width}&fm=${format}&q=${quality}`
+	}
+
+	return sourceUrl
+}
+
+function resolveSourceUrl(imageUrl) {
+	if (!imageUrl) return ''
+
+	if (
+		imageUrl.startsWith('http://') ||
+		imageUrl.startsWith('https://') ||
+		imageUrl.startsWith('//')
+	) {
+		return imageUrl
+	}
+
+	if (imageUrl.startsWith('/.netlify/blob/')) {
+		return imageUrl
+	}
+
+	if (imageUrl.startsWith('/images/')) {
+		return imageUrl
+	}
+
+	if (imageUrl.startsWith('items/')) {
+		return `/.netlify/blob/media/${imageUrl}`
 	}
 
 	return imageUrl
