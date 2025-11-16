@@ -11,52 +11,86 @@ import {
 } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseCard from '@/components/BaseCard.vue'
+import BaseTable from '@/components/BaseTable.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'
 
 defineOptions({
 	name: 'StyleguideView'
 })
 
-// Sample data for demonstrations
-const sampleItems = ref([
-	{ name: 'Diamond Sword', price: 1000, category: 'weapons' },
-	{ name: 'Iron Pickaxe', price: 500, category: 'tools' },
-	{ name: 'Golden Apple', price: 250, category: 'food' }
-])
-
 const viewMode = ref('categories')
 const layout = ref('comfortable')
 const searchQuery = ref('')
 
-// Grid table selection state
-const selectedItems = ref([])
-const allSelected = ref(false)
+const baseTableColumns = [
+	{ key: 'item', label: 'Item' },
+	{ key: 'buyPrice', label: 'Buy Price', align: 'right' },
+	{ key: 'sellPrice', label: 'Sell Price', align: 'right' },
+	{ key: 'profitMargin', label: 'Profit Margin', align: 'center' },
+	{ key: 'lastUpdated', label: 'Last Updated' },
+	{ key: 'actions', label: 'Actions', align: 'center' }
+]
 
-// Selection methods
-function toggleSelectAll() {
-	if (allSelected.value) {
-		selectedItems.value = []
-		allSelected.value = false
-	} else {
-		selectedItems.value = sampleItems.value.map((item, index) => index)
-		allSelected.value = true
+const baseTableRows = [
+	{
+		id: 'coal',
+		icon: '🪨',
+		item: 'coal',
+		server: 'Rails & Riches',
+		buyPrice: '15.00',
+		sellPrice: '5.00',
+		profitMargin: '66.7%',
+		lastUpdated: 'Today'
+	},
+	{
+		id: 'copper_ingot',
+		icon: '🧱',
+		item: 'copper ingot',
+		server: 'Rails & Riches',
+		buyPrice: '10.00',
+		previousBuyPrice: '12.00',
+		sellPrice: '3.00',
+		previousSellPrice: '4.00',
+		profitMargin: '70.0%',
+		lastUpdated: 'Today'
+	},
+	{
+		id: 'diamond',
+		icon: '💎',
+		item: 'diamond',
+		server: 'Rails & Riches',
+		buyPrice: '250.00',
+		previousBuyPrice: '200.00',
+		sellPrice: '75.00',
+		previousSellPrice: '65.00',
+		profitMargin: '70.0%',
+		lastUpdated: 'Today'
+	},
+	{
+		id: 'gold_ingot',
+		icon: '🥇',
+		item: 'gold ingot',
+		server: 'Rails & Riches',
+		buyPrice: '50.00',
+		previousBuyPrice: '60.00',
+		sellPrice: '15.00',
+		previousSellPrice: '20.00',
+		profitMargin: '70.0%',
+		lastUpdated: 'Today'
+	},
+	{
+		id: 'iron_ingot',
+		icon: '⚙️',
+		item: 'iron ingot',
+		server: 'Rails & Riches',
+		buyPrice: '30.00',
+		previousBuyPrice: '35.00',
+		sellPrice: '10.00',
+		previousSellPrice: '12.50',
+		profitMargin: '66.7%',
+		lastUpdated: 'Today'
 	}
-}
-
-function toggleSelectItem(index) {
-	const itemIndex = selectedItems.value.indexOf(index)
-	if (itemIndex > -1) {
-		selectedItems.value.splice(itemIndex, 1)
-		allSelected.value = false
-	} else {
-		selectedItems.value.push(index)
-		allSelected.value = selectedItems.value.length === sampleItems.value.length
-	}
-}
-
-function isSelected(index) {
-	return selectedItems.value.includes(index)
-}
+]
 </script>
 
 <template>
@@ -820,7 +854,8 @@ function isSelected(index) {
 				<div class="flex flex-col lg:flex-row lg:space-x-8 space-y-8 lg:space-y-0">
 					<div class="lg:w-1/3">
 						<div class="space-y-3">
-							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
 								BaseCard (Primary Variant)
 							</p>
 							<BaseCard variant="primary">
@@ -833,7 +868,8 @@ function isSelected(index) {
 								<template #header>Primary Card</template>
 								<template #body>
 									<p class="mb-4">
-										Use the primary card to highlight a key action or destination.
+										Use the primary card to highlight a key action or
+										destination.
 									</p>
 									<BaseButton variant="primary">Action</BaseButton>
 								</template>
@@ -843,14 +879,16 @@ function isSelected(index) {
 
 					<div class="lg:w-1/3">
 						<div class="space-y-3">
-							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
 								BaseCard (Primary Variant - No Media)
 							</p>
 							<BaseCard variant="primary">
 								<template #header>Primary Card (No Media)</template>
 								<template #body>
 									<p class="mb-4">
-										Use the primary card without an image for streamlined content blocks.
+										Use the primary card without an image for streamlined
+										content blocks.
 									</p>
 									<BaseButton variant="primary">Action</BaseButton>
 								</template>
@@ -862,7 +900,8 @@ function isSelected(index) {
 				<div class="flex flex-col lg:flex-row lg:space-x-8 space-y-8 lg:space-y-0">
 					<div class="lg:w-1/3">
 						<div class="space-y-3">
-							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
 								BaseCard (Secondary Variant)
 							</p>
 							<BaseCard variant="secondary">
@@ -873,20 +912,26 @@ function isSelected(index) {
 										alt="Secondary Card Media" />
 								</template>
 								<template #header>
-									<span class="cursor-pointer hover:text-gray-asparagus transition-colors">Secondary Card</span>
+									<span
+										class="cursor-pointer hover:text-gray-asparagus transition-colors">
+										Secondary Card
+									</span>
 								</template>
 								<template #actions>
-									<button class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+									<button
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
 										<PencilIcon class="w-4 h-4" />
 									</button>
-									<button class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+									<button
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
 										<TrashIcon class="w-4 h-4" />
 									</button>
 								</template>
 								<template #body>
 									<div class="flex-1">
 										<p class="mb-3">
-											Use the secondary card when additional actions or metadata are required.
+											Use the secondary card when additional actions or
+											metadata are required.
 										</p>
 										<div class="text-sm">
 											<span class="font-medium">Detail:</span>
@@ -909,25 +954,27 @@ function isSelected(index) {
 
 					<div class="lg:w-1/3">
 						<div class="space-y-3">
-							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
 								BaseCard (Secondary Variant - No Media)
 							</p>
 							<BaseCard variant="secondary">
-								<template #header>
-									Secondary Card (No Media)
-								</template>
+								<template #header>Secondary Card (No Media)</template>
 								<template #actions>
-									<button class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+									<button
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
 										<PencilIcon class="w-4 h-4" />
 									</button>
-									<button class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+									<button
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
 										<TrashIcon class="w-4 h-4" />
 									</button>
 								</template>
 								<template #body>
 									<div class="flex-1">
 										<p class="mb-3">
-											Use the secondary card with compact layout when no media is needed.
+											Use the secondary card with compact layout when no media
+											is needed.
 										</p>
 										<div class="text-sm">
 											<span class="font-medium">Detail:</span>
@@ -952,7 +999,8 @@ function isSelected(index) {
 				<div class="flex flex-col lg:flex-row lg:space-x-8 space-y-8 lg:space-y-0">
 					<div class="lg:w-1/3">
 						<div class="space-y-3">
-							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
 								BaseCard (Tertiary Variant)
 							</p>
 							<BaseCard variant="tertiary">
@@ -965,11 +1013,14 @@ function isSelected(index) {
 								<template #header>Tertiary Card</template>
 								<template #body>
 									<p class="mb-4">
-										Use the tertiary card for contextual information or secondary content.
+										Use the tertiary card for contextual information or
+										secondary content.
 									</p>
 								</template>
 								<template #footer>
-									<BaseButton variant="secondary" class="self-start">Action</BaseButton>
+									<BaseButton variant="secondary" class="self-start">
+										Action
+									</BaseButton>
 								</template>
 							</BaseCard>
 						</div>
@@ -977,7 +1028,8 @@ function isSelected(index) {
 
 					<div class="lg:w-1/3">
 						<div class="space-y-3">
-							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
 								BaseCard (Tertiary Variant - No Media)
 							</p>
 							<BaseCard variant="tertiary">
@@ -988,7 +1040,9 @@ function isSelected(index) {
 									</p>
 								</template>
 								<template #footer>
-									<BaseButton variant="secondary" class="self-start">Action</BaseButton>
+									<BaseButton variant="secondary" class="self-start">
+										Action
+									</BaseButton>
 								</template>
 							</BaseCard>
 						</div>
@@ -999,146 +1053,90 @@ function isSelected(index) {
 
 		<!-- Tables -->
 		<section class="mb-12">
-			<h2 class="text-2xl font-bold text-gray-900 mb-6">Tables</h2>
-			<div class="space-y-6">
-				<!-- Standard Table -->
-				<h3 class="text-lg font-semibold text-gray-900">Standard Table</h3>
-				<div class="bg-white rounded-lg shadow-md overflow-hidden">
-					<div class="overflow-x-auto">
-						<table class="min-w-full divide-y divide-gray-200">
-							<thead class="bg-gray-50">
-								<tr>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Item
-									</th>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
-										<div class="flex items-center gap-1">
-											Price
-											<ArrowDownIcon class="w-4 h-4 text-gray-700" />
-										</div>
-									</th>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Category
-									</th>
-								</tr>
-							</thead>
-							<tbody class="bg-white divide-y divide-gray-200">
-								<tr v-for="item in sampleItems" :key="item.name">
-									<td class="px-4 py-3">
-										<div class="font-medium text-gray-900">{{ item.name }}</div>
-									</td>
-									<td class="px-4 py-3 text-gray-900">{{ item.price }}</td>
-									<td class="px-4 py-3 text-gray-500">{{ item.category }}</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
+			<h2 class="text-2xl font-bold text-gray-900 mb-4">Tables</h2>
+			<p class="text-gray-600 mb-6 max-w-3xl">
+				`BaseTable` provides a consistent data table foundation with the Rails & Riches
+				look: dark headers, soft green rows, white grid lines, and subtle hover feedback.
+				Use column slots to customise content, icons, or actions while keeping the shell
+				styling identical.
+			</p>
 
-				<!-- Condensed Table -->
-				<h3 class="text-lg font-semibold text-gray-900">Condensed Table</h3>
-				<div class="bg-white rounded-lg shadow-md overflow-hidden">
-					<div class="overflow-x-auto">
-						<table class="min-w-full divide-y divide-gray-200">
-							<thead class="bg-gray-50">
-								<tr>
-									<th
-										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Item
-									</th>
-									<th
-										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Price
-									</th>
-									<th
-										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Category
-									</th>
-								</tr>
-							</thead>
-							<tbody class="bg-white divide-y divide-gray-200">
-								<tr v-for="item in sampleItems" :key="item.name">
-									<td class="px-2 py-1">
-										<div class="font-medium text-gray-900 text-sm">
-											{{ item.name }}
-										</div>
-									</td>
-									<td class="px-2 py-1 text-gray-900 text-sm">
-										{{ item.price }}
-									</td>
-									<td class="px-2 py-1 text-gray-500 text-sm">
-										{{ item.category }}
-									</td>
-								</tr>
-							</tbody>
-						</table>
+			<BaseTable :columns="baseTableColumns" :rows="baseTableRows" row-key="id">
+				<template #cell-item="{ row }">
+					<div class="flex items-center gap-3 text-left">
+						<span class="text-xl">{{ row.icon }}</span>
+						<div>
+							<div class="font-semibold text-heavy-metal capitalize text-base">
+								{{ row.item }}
+							</div>
+							<div class="text-xs text-gray-500">{{ row.server }}</div>
+						</div>
 					</div>
-				</div>
+				</template>
 
-				<!-- Grid Table -->
-				<h3 class="text-lg font-semibold text-gray-900">Grid Table</h3>
-				<div class="bg-white rounded-lg shadow-md overflow-hidden">
-					<div class="overflow-x-auto">
-						<table class="min-w-full divide-y divide-gray-200 border border-gray-200">
-							<thead class="bg-gray-50">
-								<tr>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-										<input
-											type="checkbox"
-											:checked="allSelected"
-											@change="toggleSelectAll"
-											class="checkbox-input" />
-									</th>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-										Item
-									</th>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 cursor-pointer hover:bg-gray-100 select-none">
-										<div class="flex items-center gap-1">
-											Price
-											<ArrowDownIcon class="w-4 h-4 text-gray-700" />
-										</div>
-									</th>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Category
-									</th>
-								</tr>
-							</thead>
-							<tbody class="bg-white divide-y divide-gray-200">
-								<tr
-									v-for="(item, index) in sampleItems"
-									:key="item.name"
-									:class="{
-										'bg-green-50': isSelected(index)
-									}">
-									<td class="px-4 py-3 border-r border-gray-200">
-										<input
-											type="checkbox"
-											:checked="isSelected(index)"
-											@change="toggleSelectItem(index)"
-											class="checkbox-input" />
-									</td>
-									<td class="px-4 py-3 border-r border-gray-200">
-										<div class="font-medium text-gray-900">{{ item.name }}</div>
-									</td>
-									<td class="px-4 py-3 border-r border-gray-200 text-gray-900">
-										{{ item.price }}
-									</td>
-									<td class="px-4 py-3 text-gray-500">
-										{{ item.category }}
-									</td>
-								</tr>
-							</tbody>
-						</table>
+				<template #cell-buyPrice="{ row }">
+					<div class="space-y-1 text-right">
+						<div class="font-semibold text-heavy-metal text-base">
+							{{ row.buyPrice }}
+						</div>
+						<div
+							v-if="row.previousBuyPrice"
+							class="text-xs text-gray-500 flex items-center gap-1 justify-end">
+							<span>⬇</span>
+							<span>was {{ row.previousBuyPrice }}</span>
+						</div>
 					</div>
-				</div>
-			</div>
+				</template>
+
+				<template #cell-sellPrice="{ row }">
+					<div class="space-y-1 text-right">
+						<div class="font-semibold text-heavy-metal text-base">
+							{{ row.sellPrice }}
+						</div>
+						<div
+							v-if="row.previousSellPrice"
+							class="text-xs text-gray-500 flex items-center gap-1 justify-end">
+							<span>⬇</span>
+							<span>was {{ row.previousSellPrice }}</span>
+						</div>
+					</div>
+				</template>
+
+				<template #cell-profitMargin="{ row }">
+					<div class="flex justify-center">
+						<span
+							class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-semantic-warning-light text-semantic-warning">
+							{{ row.profitMargin }}
+						</span>
+					</div>
+				</template>
+
+				<template #cell-lastUpdated="{ row }">
+					<span class="font-medium text-heavy-metal text-base">
+						{{ row.lastUpdated }}
+					</span>
+				</template>
+
+				<template #cell-actions="{ row }">
+					<div class="flex items-center justify-center gap-2">
+						<button
+							type="button"
+							class="px-3 py-1 text-xs font-semibold rounded bg-semantic-info text-white hover:bg-opacity-90 transition-colors">
+							Quick Edit
+						</button>
+						<button
+							type="button"
+							class="px-3 py-1 text-xs font-semibold rounded bg-gray-600 text-white hover:bg-opacity-90 transition-colors">
+							Edit
+						</button>
+						<button
+							type="button"
+							class="px-3 py-1 text-xs font-semibold rounded bg-semantic-danger text-white hover:bg-opacity-90 transition-colors">
+							Delete
+						</button>
+					</div>
+				</template>
+			</BaseTable>
 		</section>
 
 		<!-- Navigation -->
