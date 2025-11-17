@@ -11,6 +11,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseCard from '@/components/BaseCard.vue'
+import BaseIconButton from '@/components/BaseIconButton.vue'
 import BaseTable from '@/components/BaseTable.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'
 
@@ -749,6 +750,110 @@ const baseTableRows = [
 			</div>
 		</section>
 
+		<!-- Icon Buttons -->
+		<section class="mb-12">
+			<h2 class="text-2xl font-bold text-gray-900 mb-6">Icon Buttons</h2>
+			<div class="space-y-8">
+				<!-- Primary Icon Buttons -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">
+						Primary Icon Buttons (BaseIconButton Component)
+					</h3>
+					<div class="flex flex-wrap gap-4 items-center">
+						<BaseIconButton variant="primary" aria-label="Edit item">
+							<PencilIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="primary" aria-label="Delete item">
+							<TrashIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="primary" aria-label="Settings">
+							<Cog6ToothIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="primary" aria-label="Close">
+							<XMarkIcon />
+						</BaseIconButton>
+					</div>
+				</div>
+
+				<!-- Secondary Icon Buttons -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">
+						Secondary Icon Buttons (BaseIconButton Component)
+					</h3>
+					<div class="flex flex-wrap gap-4 items-center">
+						<BaseIconButton variant="secondary" aria-label="Edit item">
+							<PencilIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="secondary" aria-label="Delete item">
+							<TrashIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="secondary" aria-label="Settings">
+							<Cog6ToothIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="secondary" aria-label="Close">
+							<XMarkIcon />
+						</BaseIconButton>
+					</div>
+				</div>
+
+				<!-- Ghost Icon Buttons -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">
+						Ghost Icon Buttons (BaseIconButton Component)
+					</h3>
+					<div class="flex flex-wrap gap-4 items-center">
+						<BaseIconButton variant="ghost" aria-label="Edit item">
+							<PencilIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="ghost" aria-label="Delete item">
+							<TrashIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="ghost" aria-label="Settings">
+							<Cog6ToothIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="ghost" aria-label="Close">
+							<XMarkIcon />
+						</BaseIconButton>
+					</div>
+				</div>
+
+				<!-- States -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Icon Button States</h3>
+					<div class="space-y-4">
+						<div>
+							<h4 class="text-md font-medium text-gray-700 mb-2">Disabled State</h4>
+							<div class="flex flex-wrap gap-4 items-center">
+								<BaseIconButton
+									variant="primary"
+									disabled
+									aria-label="Disabled edit">
+									<PencilIcon />
+								</BaseIconButton>
+								<BaseIconButton
+									variant="secondary"
+									disabled
+									aria-label="Disabled delete">
+									<TrashIcon />
+								</BaseIconButton>
+							</div>
+						</div>
+						<div>
+							<h4 class="text-md font-medium text-gray-700 mb-2">Loading State</h4>
+							<div class="flex flex-wrap gap-4 items-center">
+								<BaseIconButton variant="primary" loading aria-label="Loading">
+									<PencilIcon />
+								</BaseIconButton>
+								<BaseIconButton variant="secondary" loading aria-label="Loading">
+									<TrashIcon />
+								</BaseIconButton>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
 		<!-- Form Elements -->
 		<section class="mb-12">
 			<h2 class="text-2xl font-bold text-gray-900 mb-6">Form Elements</h2>
@@ -1048,82 +1153,7 @@ const baseTableRows = [
 				styling identical.
 			</p>
 
-			<BaseTable :columns="baseTableColumns" :rows="baseTableRows" row-key="id">
-				<template #cell-item="{ row }">
-					<div class="flex items-center gap-3 text-left">
-						<span class="text-xl">{{ row.icon }}</span>
-						<div>
-							<div class="font-semibold text-heavy-metal capitalize text-base">
-								{{ row.item }}
-							</div>
-							<div class="text-xs text-gray-500">{{ row.server }}</div>
-						</div>
-					</div>
-				</template>
-
-				<template #cell-buyPrice="{ row }">
-					<div class="space-y-1 text-right">
-						<div class="font-semibold text-heavy-metal text-base">
-							{{ row.buyPrice }}
-						</div>
-						<div
-							v-if="row.previousBuyPrice"
-							class="text-xs text-gray-500 flex items-center gap-1 justify-end">
-							<span>⬇</span>
-							<span>was {{ row.previousBuyPrice }}</span>
-						</div>
-					</div>
-				</template>
-
-				<template #cell-sellPrice="{ row }">
-					<div class="space-y-1 text-right">
-						<div class="font-semibold text-heavy-metal text-base">
-							{{ row.sellPrice }}
-						</div>
-						<div
-							v-if="row.previousSellPrice"
-							class="text-xs text-gray-500 flex items-center gap-1 justify-end">
-							<span>⬇</span>
-							<span>was {{ row.previousSellPrice }}</span>
-						</div>
-					</div>
-				</template>
-
-				<template #cell-profitMargin="{ row }">
-					<div class="flex justify-center">
-						<span
-							class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-semantic-warning-light text-semantic-warning">
-							{{ row.profitMargin }}
-						</span>
-					</div>
-				</template>
-
-				<template #cell-lastUpdated="{ row }">
-					<span class="font-medium text-heavy-metal text-base">
-						{{ row.lastUpdated }}
-					</span>
-				</template>
-
-				<template #cell-actions="{ row }">
-					<div class="flex items-center justify-center gap-2">
-						<button
-							type="button"
-							class="px-3 py-1 text-xs font-semibold rounded bg-semantic-info text-white hover:bg-opacity-90 transition-colors">
-							Quick Edit
-						</button>
-						<button
-							type="button"
-							class="px-3 py-1 text-xs font-semibold rounded bg-gray-600 text-white hover:bg-opacity-90 transition-colors">
-							Edit
-						</button>
-						<button
-							type="button"
-							class="px-3 py-1 text-xs font-semibold rounded bg-semantic-danger text-white hover:bg-opacity-90 transition-colors">
-							Delete
-						</button>
-					</div>
-				</template>
-			</BaseTable>
+			<BaseTable :columns="baseTableColumns" :rows="baseTableRows" row-key="id" />
 		</section>
 
 		<!-- Navigation -->
