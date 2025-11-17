@@ -1194,7 +1194,8 @@ const baseTableRows = [
 						:columns="baseTableColumns"
 						:rows="baseTableRows"
 						row-key="id"
-						layout="comfortable">
+						layout="comfortable"
+						caption="Example table with caption">
 						<template #cell-item="{ row, layout }">
 							<div class="flex items-center">
 								<div

@@ -23,6 +23,10 @@ const props = defineProps({
 		type: String,
 		default: 'comfortable',
 		validator: (value) => ['comfortable', 'condensed'].includes(value)
+	},
+	caption: {
+		type: String,
+		default: null
 	}
 })
 
@@ -142,6 +146,14 @@ function resolveRowKey(row, index) {
 <template>
 	<div class="overflow-hidden">
 		<table class="w-full border-collapse" :class="{ 'table-fixed': hasFixedWidthColumns }">
+			<caption
+				v-if="caption"
+				:class="[
+					'bg-gray-asparagus text-white font-semibold text-center px-4 mb-0 border-2 border-white border-b-0',
+					layout === 'comfortable' ? 'text-xl py-2' : 'text-lg py-1.5'
+				]">
+				{{ caption }}
+			</caption>
 			<thead>
 				<tr>
 					<th
