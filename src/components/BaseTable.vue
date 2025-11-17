@@ -16,7 +16,7 @@ const props = defineProps({
 	},
 	hoverable: {
 		type: Boolean,
-		default: true
+		default: false
 	}
 })
 
@@ -50,14 +50,14 @@ function resolveRowKey(row, index) {
 </script>
 
 <template>
-	<div class="base-table__wrapper" :class="{ 'base-table__wrapper--hoverable': hoverable }">
-		<table class="base-table">
+	<div class="overflow-hidden">
+		<table class="w-full border-collapse">
 			<thead>
 				<tr>
 					<th
 						v-for="column in columns"
 						:key="column.key"
-						class="base-table__header-cell"
+						class="bg-gray-asparagus text-norway border-2 border-white px-4 py-3 text-base font-bold hover:bg-gray-asparagus"
 						:class="alignmentClasses[column.key]">
 						<slot :name="`header-${column.key}`" :column="column">
 							{{ column.label }}
@@ -66,12 +66,15 @@ function resolveRowKey(row, index) {
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-for="(row, rowIndex) in rows" :key="resolveRowKey(row, rowIndex)" class="base-table__row">
+				<tr v-for="(row, rowIndex) in rows" :key="resolveRowKey(row, rowIndex)">
 					<td
 						v-for="column in columns"
 						:key="column.key"
-						class="base-table__cell"
-						:class="alignmentClasses[column.key]">
+						class="bg-norway text-heavy-metal border-2 border-white px-4 py-3 text-base"
+						:class="[
+							alignmentClasses[column.key],
+							hoverable ? 'hover:bg-sea-mist' : ''
+						]">
 						<slot :name="`cell-${column.key}`" :row="row" :column="column">
 							<slot name="cell" :row="row" :column="column">
 								{{ row?.[column.key] ?? '—' }}
@@ -80,7 +83,9 @@ function resolveRowKey(row, index) {
 					</td>
 				</tr>
 				<tr v-if="rows.length === 0">
-					<td :colspan="columns.length" class="base-table__empty">
+					<td
+						:colspan="columns.length"
+						class="bg-norway text-heavy-metal px-6 py-8 text-center text-sm border-2 border-white">
 						<slot name="empty">No records found.</slot>
 					</td>
 				</tr>
@@ -88,30 +93,3 @@ function resolveRowKey(row, index) {
 		</table>
 	</div>
 </template>
-
-<style scoped>
-.base-table__wrapper {
-	@apply overflow-hidden border border-white;
-}
-
-.base-table {
-	@apply w-full border-collapse;
-}
-
-.base-table__header-cell {
-	@apply bg-gray-asparagus text-norway border border-white px-4 py-3 text-base font-bold;
-}
-
-.base-table__cell {
-	@apply bg-norway text-heavy-metal border border-white px-4 py-3 text-base;
-}
-
-.base-table__wrapper--hoverable :deep(tbody tr:hover td) {
-	@apply bg-sea-mist;
-}
-
-.base-table__empty {
-	@apply bg-norway text-heavy-metal px-6 py-8 text-center text-sm border border-white;
-}
-</style>
-

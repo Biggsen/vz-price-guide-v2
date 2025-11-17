@@ -34,61 +34,48 @@ const baseTableColumns = [
 const baseTableRows = [
 	{
 		id: 'coal',
-		icon: '🪨',
-		item: 'coal',
-		server: 'Rails & Riches',
+		item: 'Coal',
 		buyPrice: '15.00',
 		sellPrice: '5.00',
 		profitMargin: '66.7%',
-		lastUpdated: 'Today'
+		lastUpdated: 'Today',
+		actions: 'View'
 	},
 	{
 		id: 'copper_ingot',
-		icon: '🧱',
-		item: 'copper ingot',
-		server: 'Rails & Riches',
+		item: 'Copper Ingot',
 		buyPrice: '10.00',
-		previousBuyPrice: '12.00',
 		sellPrice: '3.00',
-		previousSellPrice: '4.00',
 		profitMargin: '70.0%',
-		lastUpdated: 'Today'
+		lastUpdated: 'Today',
+		actions: 'View'
 	},
 	{
 		id: 'diamond',
-		icon: '💎',
-		item: 'diamond',
-		server: 'Rails & Riches',
+		item: 'Diamond',
 		buyPrice: '250.00',
-		previousBuyPrice: '200.00',
 		sellPrice: '75.00',
-		previousSellPrice: '65.00',
 		profitMargin: '70.0%',
-		lastUpdated: 'Today'
+		lastUpdated: 'Today',
+		actions: 'View'
 	},
 	{
 		id: 'gold_ingot',
-		icon: '🥇',
-		item: 'gold ingot',
-		server: 'Rails & Riches',
+		item: 'Gold Ingot',
 		buyPrice: '50.00',
-		previousBuyPrice: '60.00',
 		sellPrice: '15.00',
-		previousSellPrice: '20.00',
 		profitMargin: '70.0%',
-		lastUpdated: 'Today'
+		lastUpdated: 'Today',
+		actions: 'View'
 	},
 	{
 		id: 'iron_ingot',
-		icon: '⚙️',
-		item: 'iron ingot',
-		server: 'Rails & Riches',
+		item: 'Iron Ingot',
 		buyPrice: '30.00',
-		previousBuyPrice: '35.00',
 		sellPrice: '10.00',
-		previousSellPrice: '12.50',
 		profitMargin: '66.7%',
-		lastUpdated: 'Today'
+		lastUpdated: 'Today',
+		actions: 'View'
 	}
 ]
 </script>
