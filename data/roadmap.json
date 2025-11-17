@@ -87,20 +87,21 @@
 	{
 		"id": 5,
 		"title": "Add Brewing Category & 1.16 Potions",
-		"status": "Pending",
+		"status": "Completed",
+		"completedDate": "2025-11-17",
 		"description": "Create a comprehensive brewing category with all potions, splash potions, lingering potions, and tipped arrows for Minecraft 1.16",
 		"features": [
 			{
 				"name": "Base potions (water bottle, awkward potion, mundane potion, thick potion) (4 items)",
-				"completed": false
+				"completed": true
 			},
 			{
 				"name": "Effect potions - all variants (healing, harming, poison, regeneration, strength, etc.) (45+ items)",
-				"completed": false
+				"completed": true
 			},
-			{ "name": "Splash potion variants (45+ items)", "completed": false },
-			{ "name": "Lingering potion variants (45+ items)", "completed": false },
-			{ "name": "Tipped arrows with all potion effects (45+ items)", "completed": false }
+			{ "name": "Splash potion variants (45+ items)", "completed": true },
+			{ "name": "Lingering potion variants (45+ items)", "completed": true },
+			{ "name": "Tipped arrows with all potion effects (45+ items)", "completed": true }
 		]
 	},
 	{
