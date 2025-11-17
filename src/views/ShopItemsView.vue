@@ -14,10 +14,13 @@ import {
 } from '../utils/shopItems.js'
 import ShopItemForm from '../components/ShopItemForm.vue'
 import ShopItemTable from '../components/ShopItemTable.vue'
+import BaseTable from '../components/BaseTable.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
+import BaseIconButton from '../components/BaseIconButton.vue'
 import { ArrowLeftIcon, PlusIcon } from '@heroicons/vue/20/solid'
-import { PencilIcon } from '@heroicons/vue/24/outline'
+import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { getImageUrl } from '../utils/image.js'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -161,6 +164,112 @@ const allVisibleShopItems = computed(() => {
 			const nameB = b.itemData?.name?.toLowerCase() || ''
 			return nameA.localeCompare(nameB)
 		})
+})
+
+// BaseTable column definitions
+const baseTableColumns = computed(() => [
+	{ key: 'item', label: 'Item', sortable: true, headerAlign: 'center' },
+	{ key: 'buyPrice', label: 'Buy Price', align: 'right', headerAlign: 'center', sortable: true, width: 'w-32' },
+	{ key: 'sellPrice', label: 'Sell Price', align: 'right', headerAlign: 'center', sortable: true, width: 'w-32' },
+	{
+		key: 'profitMargin',
+		label: 'Profit %',
+		align: 'center',
+		headerAlign: 'center',
+		sortable: true,
+		width: 'w-32',
+		sortFn: (a, b) => {
+			// Extract numeric value from formatted string (e.g., "66.7%" -> 66.7)
+			const valueA = a.profitMargin === '—' ? -Infinity : parseFloat(a.profitMargin) || 0
+			const valueB = b.profitMargin === '—' ? -Infinity : parseFloat(b.profitMargin) || 0
+			return valueA - valueB
+		}
+	},
+	{ key: 'notes', label: 'Notes', sortable: true, headerAlign: 'center' },
+	{
+		key: 'lastUpdated',
+		label: 'Last Updated',
+		sortable: true,
+		headerAlign: 'center',
+		width: 'w-32',
+		sortFn: (a, b) => {
+			// Sort by timestamp
+			const valueA = a._lastUpdatedTimestamp || 0
+			const valueB = b._lastUpdatedTimestamp || 0
+			return valueA - valueB
+		}
+	},
+	{ key: 'actions', label: '', align: 'center', headerAlign: 'center', width: 'w-24' }
+])
+
+// Calculate profit margin helper
+function calculateProfitMargin(buyPrice, sellPrice) {
+	if (!buyPrice || !sellPrice || buyPrice === 0) {
+		return null
+	}
+	const profit = buyPrice - sellPrice
+	const margin = (profit / buyPrice) * 100
+	return margin
+}
+
+// Format date helper (same as ShopItemTable)
+function formatDate(dateString) {
+	if (!dateString) return '—'
+
+	const date = new Date(dateString)
+	const now = new Date()
+	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+	const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+	const diffTime = today.getTime() - itemDate.getTime()
+	const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+	if (diffDays === 0) {
+		return 'Today'
+	} else if (diffDays === 1) {
+		return 'Yesterday'
+	} else {
+		return `${diffDays} days ago`
+	}
+}
+
+// Transform shop items for BaseTable
+function transformShopItemForTable(shopItem) {
+	const profitMargin = calculateProfitMargin(shopItem.buy_price, shopItem.sell_price)
+	const lastUpdatedTimestamp = shopItem.last_updated ? new Date(shopItem.last_updated).getTime() : 0
+	return {
+		id: shopItem.id,
+		item: shopItem.itemData?.name || 'Unknown Item',
+		image: shopItem.itemData?.image || null,
+		buyPrice: shopItem.buy_price?.toFixed(2) || '0.00',
+		sellPrice: shopItem.sell_price?.toFixed(2) || '0.00',
+		profitMargin: profitMargin !== null ? `${profitMargin.toFixed(1)}%` : '—',
+		notes: shopItem.notes || '',
+		lastUpdated: formatDate(shopItem.last_updated),
+		_lastUpdatedTimestamp: lastUpdatedTimestamp,
+		actions: '',
+		_originalItem: shopItem // Keep reference to original item for actions
+	}
+}
+
+// BaseTable rows for list view
+const baseTableRows = computed(() => {
+	if (!allVisibleShopItems.value) return []
+	
+	return allVisibleShopItems.value.map(transformShopItemForTable)
+})
+
+// BaseTable rows grouped by category
+const baseTableRowsByCategory = computed(() => {
+	if (!shopItemsByCategory.value || !availableItems.value) return {}
+	
+	const grouped = {}
+	
+	Object.entries(shopItemsByCategory.value).forEach(([category, categoryItems]) => {
+		grouped[category] = categoryItems.map(transformShopItemForTable)
+	})
+	
+	return grouped
 })
 
 // Load and save view settings from localStorage
@@ -741,6 +850,96 @@ function getServerName(serverId) {
 						Showing {{ allVisibleShopItems.length }} item{{
 							allVisibleShopItems.length === 1 ? '' : 's'
 						}}
+					</div>
+
+					<!-- BaseTable Implementation (New) -->
+					<div class="mb-8">
+						<h3 class="text-lg font-semibold text-heavy-metal mb-4">BaseTable Implementation</h3>
+						
+						<template v-if="viewMode === 'categories'">
+							<div
+								v-for="(categoryRows, category) in baseTableRowsByCategory"
+								:key="category"
+								class="mb-6">
+								<BaseTable
+									:columns="baseTableColumns"
+									:rows="categoryRows"
+									row-key="id"
+									:layout="layout"
+									:caption="category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()">
+									<template #cell-item="{ row, layout }">
+										<div class="flex items-center">
+											<div v-if="row.image" :class="[layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8', 'mr-3 flex-shrink-0']">
+												<img
+													:src="getImageUrl(row.image)"
+													:alt="row.item"
+													class="w-full h-full object-contain"
+													loading="lazy" />
+											</div>
+											<div class="font-medium text-gray-900">{{ row.item }}</div>
+										</div>
+									</template>
+									<template #cell-actions="{ row }">
+										<div class="flex items-center justify-end gap-2">
+											<BaseIconButton
+												variant="primary"
+												aria-label="Edit item"
+												@click="showEditItemForm(row._originalItem)">
+												<PencilIcon />
+											</BaseIconButton>
+											<BaseIconButton
+												variant="primary"
+												aria-label="Delete item"
+												@click="handleItemDelete(row._originalItem)">
+												<TrashIcon />
+											</BaseIconButton>
+										</div>
+									</template>
+								</BaseTable>
+							</div>
+						</template>
+
+						<template v-else>
+							<BaseTable
+								:columns="baseTableColumns"
+								:rows="baseTableRows"
+								row-key="id"
+								:layout="layout">
+								<template #cell-item="{ row, layout }">
+									<div class="flex items-center">
+										<div v-if="row.image" :class="[layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8', 'mr-3 flex-shrink-0']">
+											<img
+												:src="getImageUrl(row.image)"
+												:alt="row.item"
+												class="w-full h-full object-contain"
+												loading="lazy" />
+										</div>
+										<div class="font-medium text-gray-900">{{ row.item }}</div>
+									</div>
+								</template>
+								<template #cell-actions="{ row }">
+									<div class="flex items-center justify-end gap-2">
+										<BaseIconButton
+											variant="primary"
+											aria-label="Edit item"
+											@click="showEditItemForm(row._originalItem)">
+											<PencilIcon />
+										</BaseIconButton>
+										<BaseIconButton
+											variant="primary"
+											aria-label="Delete item"
+											@click="handleItemDelete(row._originalItem)">
+											<TrashIcon />
+										</BaseIconButton>
+									</div>
+								</template>
+							</BaseTable>
+						</template>
+					</div>
+
+					<!-- Original ShopItemTable (Existing) -->
+					<div class="mb-8">
+						<h3 class="text-lg font-semibold text-heavy-metal mb-4">Original ShopItemTable</h3>
 					</div>
 
 					<template v-if="viewMode === 'categories'">
