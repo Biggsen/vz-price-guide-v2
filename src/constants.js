@@ -17,6 +17,7 @@ export const categories = [
 	'weapons',
 	'armor',
 	'enchantments',
+	'brewing',
 	'ocean',
 	'nether',
 	'end',
