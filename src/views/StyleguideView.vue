@@ -14,6 +14,7 @@ import BaseCard from '@/components/BaseCard.vue'
 import BaseIconButton from '@/components/BaseIconButton.vue'
 import BaseTable from '@/components/BaseTable.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'
+import { getImageUrl } from '@/utils/image.js'
 
 defineOptions({
 	name: 'StyleguideView'
@@ -24,57 +25,89 @@ const layout = ref('comfortable')
 const searchQuery = ref('')
 
 const baseTableColumns = [
-	{ key: 'item', label: 'Item' },
-	{ key: 'buyPrice', label: 'Buy Price', align: 'right' },
-	{ key: 'sellPrice', label: 'Sell Price', align: 'right' },
-	{ key: 'profitMargin', label: 'Profit Margin', align: 'center' },
-	{ key: 'lastUpdated', label: 'Last Updated' },
-	{ key: 'actions', label: 'Actions', align: 'center' }
+	{ key: 'item', label: 'Item', sortable: true, headerAlign: 'center' },
+	{
+		key: 'buyPrice',
+		label: 'Buy Price',
+		align: 'right',
+		headerAlign: 'center',
+		sortable: true,
+		width: 'w-32'
+	},
+	{
+		key: 'sellPrice',
+		label: 'Sell Price',
+		align: 'right',
+		headerAlign: 'center',
+		sortable: true,
+		width: 'w-32'
+	},
+	{
+		key: 'profitMargin',
+		label: 'Profit %',
+		align: 'center',
+		headerAlign: 'center',
+		sortable: true,
+		width: 'w-32'
+	},
+	{ key: 'notes', label: 'Notes', sortable: true, headerAlign: 'center' },
+	{ key: 'lastUpdated', label: 'Last Updated', sortable: true, headerAlign: 'center' },
+	{ key: 'actions', label: '', align: 'center', headerAlign: 'center', width: 'w-24' }
 ]
 
 const baseTableRows = [
 	{
 		id: 'coal',
 		item: 'Coal',
+		image: '/images/items/coal.png',
 		buyPrice: '15.00',
 		sellPrice: '5.00',
 		profitMargin: '66.7%',
+		notes: 'Common resource',
 		lastUpdated: 'Today',
 		actions: 'View'
 	},
 	{
 		id: 'copper_ingot',
 		item: 'Copper Ingot',
+		image: '/images/items/copper_ingot.png',
 		buyPrice: '10.00',
 		sellPrice: '3.00',
 		profitMargin: '70.0%',
+		notes: '',
 		lastUpdated: 'Today',
 		actions: 'View'
 	},
 	{
 		id: 'diamond',
 		item: 'Diamond',
+		image: '/images/items/diamond.png',
 		buyPrice: '250.00',
 		sellPrice: '75.00',
 		profitMargin: '70.0%',
+		notes: 'High value item',
 		lastUpdated: 'Today',
 		actions: 'View'
 	},
 	{
 		id: 'gold_ingot',
 		item: 'Gold Ingot',
+		image: '/images/items/gold_ingot.png',
 		buyPrice: '50.00',
 		sellPrice: '15.00',
 		profitMargin: '70.0%',
+		notes: '',
 		lastUpdated: 'Today',
 		actions: 'View'
 	},
 	{
 		id: 'iron_ingot',
 		item: 'Iron Ingot',
+		image: '/images/items/iron_ingot.png',
 		buyPrice: '30.00',
 		sellPrice: '10.00',
 		profitMargin: '66.7%',
+		notes: 'Essential crafting material',
 		lastUpdated: 'Today',
 		actions: 'View'
 	}
@@ -1153,7 +1186,83 @@ const baseTableRows = [
 				styling identical.
 			</p>
 
-			<BaseTable :columns="baseTableColumns" :rows="baseTableRows" row-key="id" />
+			<div class="space-y-8">
+				<!-- Comfortable Layout (Default) -->
+				<div>
+					<h3 class="text-lg font-semibold text-gray-800 mb-4">Comfortable Layout</h3>
+					<BaseTable
+						:columns="baseTableColumns"
+						:rows="baseTableRows"
+						row-key="id"
+						layout="comfortable">
+						<template #cell-item="{ row, layout }">
+							<div class="flex items-center">
+								<div
+									v-if="row.image"
+									:class="[
+										layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8',
+										'mr-3 flex-shrink-0'
+									]">
+									<img
+										:src="getImageUrl(row.image)"
+										:alt="row.item"
+										class="w-full h-full object-contain"
+										loading="lazy" />
+								</div>
+								<div class="font-medium text-gray-900">{{ row.item }}</div>
+							</div>
+						</template>
+						<template #cell-actions>
+							<div class="flex items-center justify-end gap-2">
+								<BaseIconButton variant="primary" aria-label="Edit item">
+									<PencilIcon />
+								</BaseIconButton>
+								<BaseIconButton variant="primary" aria-label="Delete item">
+									<TrashIcon />
+								</BaseIconButton>
+							</div>
+						</template>
+					</BaseTable>
+				</div>
+
+				<!-- Condensed Layout -->
+				<div>
+					<h3 class="text-lg font-semibold text-gray-800 mb-4">Condensed Layout</h3>
+					<BaseTable
+						:columns="baseTableColumns"
+						:rows="baseTableRows"
+						row-key="id"
+						layout="condensed">
+						<template #cell-item="{ row, layout }">
+							<div class="flex items-center">
+								<div
+									v-if="row.image"
+									:class="[
+										layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8',
+										'mr-3 flex-shrink-0'
+									]">
+									<img
+										:src="getImageUrl(row.image)"
+										:alt="row.item"
+										class="w-full h-full object-contain"
+										loading="lazy" />
+								</div>
+								<div class="font-medium text-gray-900">{{ row.item }}</div>
+							</div>
+						</template>
+						<template #cell-actions>
+							<div class="flex items-center justify-end gap-2">
+								<BaseIconButton variant="primary" aria-label="Edit item">
+									<PencilIcon />
+								</BaseIconButton>
+								<BaseIconButton variant="primary" aria-label="Delete item">
+									<TrashIcon />
+								</BaseIconButton>
+							</div>
+						</template>
+					</BaseTable>
+				</div>
+			</div>
 		</section>
 
 		<!-- Navigation -->
