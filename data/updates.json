@@ -1,5 +1,20 @@
 [
 	{
+		"id": 33,
+		"title": "New Brewing Category - Complete Potion Catalog Added",
+		"date": "2025-11-17",
+		"types": ["Content"],
+		"hidden": false,
+		"description": "Added a new Brewing category to organize all the potion stuff! This update adds 173 items including base potions, effect potions, splash potions, lingering potions, and tipped arrows - all with accurate pricing.",
+		"changes": [
+			"Base potions (water bottle, awkward potions, mundane potion, thick potion)",
+			"Effect potions - all variants (healing, harming, poison, regeneration, strength, etc.)",
+			"Splash potion variants",
+			"Lingering potion variants",
+			"Tipped arrows with all potion effects"
+		]
+	},
+	{
 		"id": 32,
 		"title": "Copper Age 1.21.9 Items + Transport Category",
 		"date": "2025-11-08",

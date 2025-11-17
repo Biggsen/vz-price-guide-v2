@@ -11,7 +11,9 @@ import { enabledCategories, versions, baseEnabledVersions } from '../constants.j
 import { useAdmin } from '../utils/admin.js'
 import { getEffectivePriceMemoized, clearPriceCache, getCacheStats } from '../utils/pricing.js'
 import {
-	RocketLaunchIcon,
+	BeakerIcon
+} from '@heroicons/vue/24/solid'
+import {
 	EyeIcon,
 	EyeSlashIcon,
 	ArrowPathIcon,
@@ -158,7 +160,7 @@ const showExportFeature = ref(true) // Set to true to enable export functionalit
 const disableAlert = ref(false) // Set to true to disable all alerts regardless of showAlert state
 
 // Info alert state
-const alertStorageKey = 'copperAgeUpdateAlertDismissed'
+const alertStorageKey = 'brewingCategoryUpdateAlertDismissed'
 const showAlert = ref(true)
 
 function dismissAlert() {
@@ -682,11 +684,10 @@ watch(
 		class="bg-semantic-info-light border-l-4 border-l-semantic-info text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
-				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
+				<BeakerIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					<strong>Copper Age content is live!</strong>
-					Added all Minecraft 1.21.9 Copper Age items and launched a Transport category for boats,
-					minecarts, saddles, harnesses, and elytra.
+					<strong>New Brewing category is live!</strong>
+					Added 173 brewing items including base potions, effect potions, splash potions, lingering potions, and tipped arrows - all with accurate pricing.
 					<span> </span>
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
 						<span>Read the release notes</span>
