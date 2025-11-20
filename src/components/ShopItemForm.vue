@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { getEffectivePrice } from '../utils/pricing.js'
+import BaseButton from './BaseButton.vue'
+import { XCircleIcon } from '@heroicons/vue/20/solid'
 
 const props = defineProps({
 	availableItems: {
@@ -35,7 +37,7 @@ const formData = ref({
 })
 
 // Form state
-const error = ref(null)
+const formError = ref(null)
 const searchQuery = ref('')
 const showMoreFields = ref(false)
 const highlightedIndex = ref(-1)
@@ -60,7 +62,7 @@ function resetForm() {
 		notes: ''
 	}
 	searchQuery.value = ''
-	error.value = null
+	formError.value = null
 	highlightedIndex.value = -1
 }
 
@@ -115,6 +117,20 @@ const selectedItem = computed(
 
 const isModalVariant = computed(() => props.displayVariant === 'modal')
 
+// Calculate profit margin when both prices are available
+const profitMargin = computed(() => {
+	const buyPrice = formData.value.buy_price
+	const sellPrice = formData.value.sell_price
+
+	if (!buyPrice || !sellPrice || buyPrice === 0) {
+		return null
+	}
+
+	const profit = buyPrice - sellPrice
+	const margin = (profit / buyPrice) * 100
+	return margin
+})
+
 // Filter items based on search query and exclude zero-priced items
 const filteredItems = computed(() => {
 	if (!props.availableItems) return []
@@ -127,10 +143,16 @@ const filteredItems = computed(() => {
 		return effectivePrice > 0
 	})
 
-	const query = searchQuery.value.toLowerCase().trim()
-	if (!query) return nonZeroItems
+	// Filter out uncategorized items
+	const categorizedItems = nonZeroItems.filter((item) => {
+		const category = item.category?.trim()
+		return category && category !== 'Uncategorized' && category !== ''
+	})
 
-	return nonZeroItems.filter(
+	const query = searchQuery.value.toLowerCase().trim()
+	if (!query) return categorizedItems
+
+	return categorizedItems.filter(
 		(item) =>
 			item.name?.toLowerCase().includes(query) ||
 			item.material_id?.toLowerCase().includes(query) ||
@@ -207,29 +229,42 @@ const isFormValid = computed(() => {
 
 // Form handlers
 function handleSubmit() {
-	error.value = null
+	formError.value = null
 
-	console.log('=== FORM SUBMIT DEBUG ===')
-	console.log('EditingItem prop:', props.editingItem)
-	console.log('Form data:', formData.value)
-	console.log('Form valid:', isFormValid.value)
-
+	// Validate item selection
 	if (!formData.value.item_id) {
-		console.log('ERROR: item_id is missing')
-		error.value = 'Item ID is required'
+		formError.value = 'item_id'
 		return
 	}
 
+	// Validate at least one price
 	if (!formData.value.buy_price && !formData.value.sell_price) {
-		console.log('ERROR: both prices are missing')
-		error.value = 'At least one price (buy or sell) is required'
+		formError.value = 'prices'
 		return
 	}
 
-	if (!isFormValid.value) {
-		console.log('ERROR: form validation failed')
-		error.value = 'Please fill in all required fields with valid values'
-		return
+	// Validate buy price if provided
+	if (
+		formData.value.buy_price !== null &&
+		formData.value.buy_price !== undefined &&
+		formData.value.buy_price !== ''
+	) {
+		if (isNaN(formData.value.buy_price) || formData.value.buy_price < 0) {
+			formError.value = 'buy_price'
+			return
+		}
+	}
+
+	// Validate sell price if provided
+	if (
+		formData.value.sell_price !== null &&
+		formData.value.sell_price !== undefined &&
+		formData.value.sell_price !== ''
+	) {
+		if (isNaN(formData.value.sell_price) || formData.value.sell_price < 0) {
+			formError.value = 'sell_price'
+			return
+		}
 	}
 
 	// Clean up form data before submitting
@@ -314,6 +349,9 @@ function scrollToHighlightedItem() {
 // Reset highlighted index when search changes
 function handleSearchInput() {
 	highlightedIndex.value = -1
+	if (formError.value === 'item_id') {
+		formError.value = null
+	}
 }
 
 // Form submission on Enter key
@@ -345,6 +383,9 @@ function selectItem(item) {
 	formData.value.item_id = item.id
 	searchQuery.value = '' // Clear search query when item is selected
 	highlightedIndex.value = -1 // Reset highlight
+	if (formError.value === 'item_id') {
+		formError.value = null
+	}
 }
 
 // Clear selected item
@@ -371,6 +412,10 @@ function getItemVisualIndex(targetCategory, targetCategoryIndex) {
 
 // Number input helpers
 function handlePriceInput(field, event) {
+	// Clear error for this field when user types
+	if (formError.value === field || formError.value === 'prices') {
+		formError.value = null
+	}
 	const value = event.target.value
 	if (value === '' || value === null) {
 		formData.value[field] = null
@@ -390,29 +435,24 @@ function handleQuantityInput(event) {
 	}
 }
 
-// Expose focus function for parent component
+// Expose focus function, submit method, and form validity for parent component
 defineExpose({
-	focusSearchInput
+	focusSearchInput,
+	submit: handleSubmit,
+	isFormValid
 })
 </script>
 
 <template>
-	<div :class="isModalVariant ? 'space-y-4' : 'mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50'">
+	<div
+		:class="
+			isModalVariant ? 'space-y-4' : 'mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50'
+		">
 		<h2 v-if="!isModalVariant" class="text-xl font-semibold mb-4">
 			{{ editingItem ? 'Edit Shop Item' : 'Add New Shop Item' }}
 		</h2>
 
-		<!-- Error message -->
-		<div
-			v-if="error"
-			class="p-3 bg-red-50 border border-red-200 text-red-700 rounded">
-			{{ error }}
-		</div>
-
-		<form
-			@submit.prevent="handleSubmit"
-			@keydown="handleFormKeyDown"
-			class="space-y-4">
+		<form @submit.prevent="handleSubmit" @keydown="handleFormKeyDown" class="space-y-4">
 			<!-- Item selection -->
 			<div v-if="!editingItem">
 				<!-- Show search input when no item is selected -->
@@ -427,8 +467,22 @@ defineExpose({
 						@input="handleSearchInput"
 						@keydown="handleKeyDown"
 						type="text"
+						autocomplete="off"
 						placeholder="Search items by name, material ID, or category..."
-						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
+						:class="[
+							'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
+							formError === 'item_id'
+								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+						]" />
+
+					<!-- Error message for item selection -->
+					<div
+						v-if="formError === 'item_id'"
+						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+						<XCircleIcon class="w-4 h-4" />
+						Please select an item
+					</div>
 
 					<!-- Item selection dropdown -->
 					<div
@@ -457,7 +511,6 @@ defineExpose({
 								]">
 								<div>
 									<div class="font-medium">{{ item.name }}</div>
-									<div class="text-sm text-gray-500">{{ item.material_id }}</div>
 								</div>
 								<div v-if="item.image" class="w-8 h-8">
 									<img
@@ -477,7 +530,6 @@ defineExpose({
 						class="px-3 py-2 bg-norway border-2 border-gray-asparagus rounded flex items-center justify-between">
 						<div>
 							<div class="font-medium text-heavy-metal">{{ selectedItem.name }}</div>
-							<div class="text-sm text-gray-asparagus">{{ selectedItem.material_id }}</div>
 						</div>
 						<div v-if="selectedItem.image" class="w-8 h-8">
 							<img
@@ -489,7 +541,7 @@ defineExpose({
 					<button
 						type="button"
 						@click="clearSelectedItem"
-						class="mt-2 text-sm text-blue-600 hover:text-blue-800 underline">
+						class="mt-2 text-sm text-gray-900 hover:text-gray-700 underline">
 						Select different item
 					</button>
 				</div>
@@ -498,13 +550,10 @@ defineExpose({
 			<!-- Show selected item when editing -->
 			<div
 				v-else-if="editingItem && editingItem.itemData"
-					class="px-3 py-2 bg-norway border-2 border-gray-asparagus rounded">
+				class="px-3 py-2 bg-norway border-2 border-gray-asparagus rounded">
 				<div class="flex items-center justify-between">
 					<div>
 						<div class="font-medium">{{ editingItem.itemData.name }}</div>
-						<div class="text-sm text-gray-600">
-							{{ editingItem.itemData.material_id }}
-						</div>
 					</div>
 					<div v-if="editingItem.itemData.image" class="w-8 h-8">
 						<img
@@ -516,7 +565,7 @@ defineExpose({
 			</div>
 
 			<!-- Price inputs -->
-			<div class="grid grid-cols-2 gap-4">
+			<div class="space-y-4">
 				<div>
 					<label for="buy-price" class="block text-sm font-medium text-gray-700 mb-1">
 						Buy Price
@@ -529,26 +578,55 @@ defineExpose({
 						step="0.01"
 						min="0"
 						placeholder="0.00"
-						class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
-					<p class="text-xs text-gray-500 mt-1">Leave blank if you don't buy this item</p>
+						:class="[
+							'mt-2 block w-[150px] rounded border-2 px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
+							formError === 'buy_price'
+								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+						]" />
+					<div
+						v-if="formError === 'buy_price'"
+						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+						<XCircleIcon class="w-4 h-4" />
+						Buy price must be a valid number greater than or equal to 0
+					</div>
 				</div>
 
 				<div>
 					<label for="sell-price" class="block text-sm font-medium text-gray-700 mb-1">
 						Sell Price
 					</label>
-					<input
-						id="sell-price"
-						:value="formData.sell_price"
-						@input="handlePriceInput('sell_price', $event)"
-						type="number"
-						step="0.01"
-						min="0"
-						placeholder="0.00"
-						class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
-					<p class="text-xs text-gray-500 mt-1">
-						Leave blank if you don't sell this item
-					</p>
+					<div class="flex items-center gap-2">
+						<input
+							id="sell-price"
+							:value="formData.sell_price"
+							@input="handlePriceInput('sell_price', $event)"
+							type="number"
+							step="0.01"
+							min="0"
+							placeholder="0.00"
+							:class="[
+								'mt-2 block w-[150px] rounded border-2 px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
+								formError === 'sell_price'
+									? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+									: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+							]" />
+						<span v-if="profitMargin !== null" class="mt-2 text-sm text-gray-600">
+							{{ profitMargin.toFixed(1) }}%
+						</span>
+					</div>
+					<div
+						v-if="formError === 'sell_price'"
+						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+						<XCircleIcon class="w-4 h-4" />
+						Sell price must be a valid number greater than or equal to 0
+					</div>
+					<div
+						v-if="formError === 'prices'"
+						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+						<XCircleIcon class="w-4 h-4" />
+						At least one price (buy or sell) is required
+					</div>
 				</div>
 			</div>
 
@@ -566,7 +644,7 @@ defineExpose({
 				<button
 					type="button"
 					@click="showMoreFields = !showMoreFields"
-					class="text-sm text-blue-600 hover:text-blue-800 underline">
+					class="text-sm text-gray-900 hover:text-gray-700 underline">
 					{{ showMoreFields ? 'Show less' : 'Show more' }}
 				</button>
 			</div>
@@ -587,7 +665,7 @@ defineExpose({
 						type="number"
 						min="0"
 						placeholder="64"
-						class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
+						class="mt-2 block w-[150px] rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
 					<p class="text-xs text-gray-500 mt-1">Current stock amount</p>
 				</div>
 
@@ -605,25 +683,16 @@ defineExpose({
 				</div>
 			</div>
 
-			<!-- Form actions -->
-			<div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
-				<button
-					type="button"
-					@click="handleCancel"
-					class="px-4 py-2 text-sm font-medium text-heavy-metal bg-norway border-2 border-gray-asparagus rounded hover:bg-sea-mist transition-colors">
+			<!-- Form actions (only show when not in modal mode) -->
+			<div
+				v-if="!isModalVariant"
+				class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+				<BaseButton type="button" variant="tertiary" @click="handleCancel">
 					Cancel
-				</button>
-				<button
-					type="submit"
-					:disabled="!isFormValid"
-					:class="[
-						'px-4 py-2 text-sm font-semibold rounded transition-colors',
-						isFormValid
-							? 'bg-gray-asparagus text-white hover:bg-highland'
-							: 'bg-gray-300 text-gray-500 cursor-not-allowed'
-					]">
+				</BaseButton>
+				<BaseButton type="submit" variant="primary" :disabled="!isFormValid">
 					{{ editingItem ? 'Update Item' : 'Add Item' }}
-				</button>
+				</BaseButton>
 			</div>
 		</form>
 	</div>

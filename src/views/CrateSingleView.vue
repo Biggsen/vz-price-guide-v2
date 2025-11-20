@@ -2191,6 +2191,7 @@ watch(selectedCrate, (crate) => {
 							@input="handleSearchInput"
 							@keydown="handleKeyDown"
 							type="text"
+							autocomplete="off"
 							placeholder="Search items by name, material ID, or category..."
 							data-cy="item-search-input"
 							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />

@@ -1163,7 +1163,7 @@ function getServerName(serverId) {
 	<BaseModal
 		:isOpen="showAddForm"
 		:title="editingItem ? 'Edit Shop Item' : 'Add Shop Item'"
-		maxWidth="max-w-3xl"
+		maxWidth="max-w-2xl"
 		@close="cancelForm">
 		<ShopItemForm
 			ref="shopItemForm"
@@ -1173,6 +1173,22 @@ function getServerName(serverId) {
 			display-variant="modal"
 			@submit="handleItemSubmit"
 			@cancel="cancelForm" />
+		<template #footer>
+			<div class="flex items-center justify-end">
+				<div class="flex space-x-3">
+					<BaseButton type="button" variant="tertiary" @click="cancelForm">
+						Cancel
+					</BaseButton>
+					<BaseButton
+						type="button"
+						variant="primary"
+						:disabled="loading"
+						@click="shopItemForm?.submit()">
+						{{ loading ? 'Saving...' : editingItem ? 'Update Item' : 'Add Item' }}
+					</BaseButton>
+				</div>
+			</div>
+		</template>
 	</BaseModal>
 
 	<BaseModal
