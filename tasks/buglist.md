@@ -6,6 +6,33 @@ This document tracks bugs, regressions, and issues discovered during development
 
 ## Active Issues
 
+### Crate Rewards Mobile Display Issues
+
+**Status**: 🔴 Active  
+**Priority**: High  
+**Type**: UX Issue  
+**Discovered**: 2025-01-27
+
+**Description**:
+Crate rewards display is broken or poorly formatted on mobile devices, creating a poor user experience when viewing crate information on smaller screens.
+
+**Expected Behavior**:
+Crate rewards should display properly on mobile devices with appropriate layout, spacing, and readability.
+
+**Current Behavior**:
+Crate rewards interface is a mess on mobile devices with layout, formatting, or usability issues.
+
+**Impact**:
+
+-   Poor mobile user experience when viewing crate rewards
+-   Potential usability issues on mobile devices
+-   Inconsistent experience across device types
+
+**Notes**:
+
+-   Needs investigation to identify specific mobile display issues
+-   Should be tested across different mobile screen sizes
+
 ### Admin Subnav Inconsistency Between Mobile and Desktop
 
 **Status**: 🔴 Active  
