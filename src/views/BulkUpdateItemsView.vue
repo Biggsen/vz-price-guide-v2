@@ -5,7 +5,8 @@ import { useFirestore } from 'vuefire'
 import { collection, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore'
 import { categories, versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
-import { getWikiUrl } from '../utils/image.js'
+import { getImageUrl, getWikiUrl } from '../utils/image.js'
+import { normalizeMediaPath } from '../utils/media.js'
 import BaseModal from '../components/BaseModal.vue'
 import {
 	NoSymbolIcon,
@@ -374,15 +375,20 @@ async function updateSelectedImages() {
 	let updated = 0,
 		failed = 0
 
-	// Prepend /images/items/ if the image doesn't already start with it
-	const imageUrl = newImage.value.startsWith('/images/items/')
-		? newImage.value
-		: `/images/items/${newImage.value}`
+	let imagePath
+
+	try {
+		imagePath = normalizeMediaPath(newImage.value)
+	} catch (error) {
+		updateResult.value = error.message
+		updating.value = false
+		return
+	}
 
 	for (const id of selectedItems.value) {
 		try {
 			await updateDoc(doc(db, 'items', id), {
-				image: imageUrl
+				image: imagePath
 			})
 			updated++
 		} catch (e) {
@@ -408,7 +414,14 @@ async function updateSelectedImagesAsMaterialId() {
 			// Find the item to get its material_id
 			const item = dbItems.value.find((item) => item.id === id)
 			if (item && item.material_id) {
-				const imageUrl = `/images/items/${item.material_id}.png`
+				let imageUrl
+				try {
+					imageUrl = normalizeMediaPath(`${item.material_id}.png`)
+				} catch (error) {
+					console.error('Failed to normalize image path', error)
+					failed++
+					continue
+				}
 				await updateDoc(doc(db, 'items', id), {
 					image: imageUrl
 				})
@@ -1088,7 +1101,7 @@ function resetSearch() {
 										class="px-1 py-2 text-center border-r border-gray-200 w-16">
 										<img
 											v-if="item.image"
-											:src="item.image"
+											:src="getImageUrl(item.image, { width: 96 })"
 											:alt="item.name"
 											class="w-10 h-10 object-cover rounded mx-auto"
 											@error="$event.target.style.display = 'none'"

@@ -5,7 +5,8 @@ import {
 	ExclamationTriangleIcon,
 	PlusIcon,
 	ArrowPathIcon,
-	ChartBarIcon
+	ChartBarIcon,
+	PhotoIcon
 } from '@heroicons/vue/24/outline'
 
 const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAdmin()
@@ -83,6 +84,21 @@ const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAd
 				<p class="text-gray-600 text-sm">
 					Update multiple items at once with batch operations for efficient database
 					management.
+				</p>
+			</RouterLink>
+
+			<!-- Media Manager -->
+			<RouterLink
+				to="/admin/media"
+				class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-blue-300">
+				<div class="flex items-center mb-4">
+					<div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+						<PhotoIcon class="w-6 h-6 text-blue-600" />
+					</div>
+					<h3 class="text-lg font-semibold text-gray-900 ml-3">Media Manager</h3>
+				</div>
+				<p class="text-gray-600 text-sm">
+					Upload, browse, and delete Netlify Blob assets for item images without redeploying.
 				</p>
 			</RouterLink>
 		</div>

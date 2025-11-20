@@ -48,7 +48,7 @@ import { blobs } from '@netlify/blobs';
 export const config = { path: "/api/upload-items" };
 
 export default async (req) => {
-  if (req.headers.get('x-admin-key') !== process.env.ADMIN_KEY) {
+	if (req.headers.get('x-admin-media-key') !== process.env.ADMIN_MEDIA_KEY) {
     return new Response('Unauthorized', { status: 401 });
   }
 
@@ -77,7 +77,7 @@ import { blobs } from '@netlify/blobs';
 export const config = { path: "/api/delete-item" };
 
 export default async (req) => {
-  if (req.headers.get('x-admin-key') !== process.env.ADMIN_KEY) {
+	if (req.headers.get('x-admin-media-key') !== process.env.ADMIN_MEDIA_KEY) {
     return new Response('Unauthorized', { status: 401 });
   }
 
@@ -103,7 +103,7 @@ fd.append('path', `items/${category}/${version}/${slug}.webp`);
 
 const res = await fetch('/api/upload-items', {
   method: 'POST',
-  headers: { 'x-admin-key': import.meta.env.VITE_ADMIN_KEY },
+	headers: { 'x-admin-media-key': import.meta.env.VITE_ADMIN_MEDIA_KEY },
   body: fd
 });
 
@@ -117,7 +117,7 @@ await fetch('/api/delete-item', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-admin-key': import.meta.env.VITE_ADMIN_KEY
+		'x-admin-media-key': import.meta.env.VITE_ADMIN_MEDIA_KEY
   },
   body: JSON.stringify({ path: item.path })
 });

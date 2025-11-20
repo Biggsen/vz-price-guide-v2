@@ -390,6 +390,12 @@ onUnmounted(() => {
 						Bulk Update
 					</RouterLink>
 					<RouterLink
+						to="/admin/media"
+						@click="closeMenu"
+						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
+						Media Manager
+					</RouterLink>
+					<RouterLink
 						to="/styleguide"
 						@click="closeMenu"
 						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
