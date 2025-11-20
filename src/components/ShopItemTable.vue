@@ -500,7 +500,8 @@ function navigateToShopItems(shopId) {
 						</th>
 						<th
 							@click="setSortField('last_updated')"
-							:class="headerClass('last_updated', true)">
+							:class="headerClass('last_updated', true)"
+							class="w-40">
 							<div class="flex items-center gap-1">
 								<span>Last Updated</span>
 								<ArrowUpIcon

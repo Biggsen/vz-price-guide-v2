@@ -13,8 +13,8 @@ import {
 	bulkUpdateShopItems
 } from '../utils/shopItems.js'
 import ShopItemForm from '../components/ShopItemForm.vue'
-import ShopItemTable from '../components/ShopItemTable.vue'
 import BaseTable from '../components/BaseTable.vue'
+import InlinePriceInput from '../components/InlinePriceInput.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
@@ -38,6 +38,10 @@ const shopItemForm = ref(null)
 // View mode settings
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
+
+// Inline price editing state
+const editingPriceId = ref(null)
+const editingPriceType = ref(null) // 'buy' or 'sell'
 
 // Edit shop modal state
 const showEditShopModal = ref(false)
@@ -191,7 +195,7 @@ const baseTableColumns = computed(() => [
 		label: 'Last Updated',
 		sortable: true,
 		headerAlign: 'center',
-		width: 'w-32',
+		width: 'w-40',
 		sortFn: (a, b) => {
 			// Sort by timestamp
 			const valueA = a._lastUpdatedTimestamp || 0
@@ -542,6 +546,44 @@ async function handleQuickEdit(updatedItem) {
 	}
 }
 
+// Inline price editing functions
+function startEditPrice(itemId, priceType) {
+	editingPriceId.value = itemId
+	editingPriceType.value = priceType
+}
+
+async function savePrice(row, priceType, newPrice) {
+	if (isNaN(newPrice) || newPrice < 0) {
+		cancelEditPrice()
+		return
+	}
+
+	const originalItem = row._originalItem
+	if (!originalItem || !originalItem.id) {
+		cancelEditPrice()
+		return
+	}
+
+	// Create updated item object
+	const updatedItem = {
+		...originalItem,
+		[priceType === 'buy' ? 'buy_price' : 'sell_price']: newPrice
+	}
+
+	// Only update if value changed
+	const currentValue = priceType === 'buy' ? originalItem.buy_price : originalItem.sell_price
+	if (newPrice !== currentValue) {
+		await handleQuickEdit(updatedItem)
+	}
+
+	cancelEditPrice()
+}
+
+function cancelEditPrice() {
+	editingPriceId.value = null
+	editingPriceType.value = null
+}
+
 function resetShopForm() {
 	shopForm.value = {
 		name: '',
@@ -769,70 +811,7 @@ function getServerName(serverId) {
 		<div v-else-if="hasShops && hasServers && selectedShop" class="space-y-8">
 			<!-- Inventory -->
 			<div class="mt-8 space-y-6">
-				<div>
-					<h2 class="text-2xl font-semibold text-heavy-metal">Inventory</h2>
-					<p class="text-sm text-gray-600">
-						{{ shopItems.length }} item{{ shopItems.length === 1 ? '' : 's' }} tracked
-					</p>
-				</div>
-
-				<div class="flex flex-wrap items-center justify-between gap-3">
-					<div
-						v-if="shopItems.length > 0"
-						class="flex flex-wrap items-center gap-6">
-						<div>
-							<span class="text-sm font-medium text-gray-700 block">View as:</span>
-							<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
-								<button
-									@click="viewMode = 'categories'"
-									:class="[
-										viewMode === 'categories'
-											? 'bg-gray-asparagus text-white'
-											: 'bg-norway text-heavy-metal hover:bg-sea-mist',
-										'px-3 py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
-									]">
-									Categories
-								</button>
-								<button
-									@click="viewMode = 'list'"
-									:class="[
-										viewMode === 'list'
-											? 'bg-gray-asparagus text-white'
-											: 'bg-norway text-heavy-metal hover:bg-sea-mist',
-										'px-3 py-1 text-sm font-medium transition'
-									]">
-									List
-								</button>
-							</div>
-						</div>
-
-						<div>
-							<span class="text-sm font-medium text-gray-700 block">Layout:</span>
-							<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
-								<button
-									@click="layout = 'comfortable'"
-									:class="[
-										layout === 'comfortable'
-											? 'bg-gray-asparagus text-white'
-											: 'bg-norway text-heavy-metal hover:bg-sea-mist',
-										'px-3 py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
-									]">
-									Comfortable
-								</button>
-								<button
-									@click="layout = 'condensed'"
-									:class="[
-										layout === 'condensed'
-											? 'bg-gray-asparagus text-white'
-											: 'bg-norway text-heavy-metal hover:bg-sea-mist',
-										'px-3 py-1 text-sm font-medium transition'
-									]">
-									Condensed
-								</button>
-							</div>
-						</div>
-					</div>
-
+				<div class="mb-4">
 					<BaseButton
 						type="button"
 						variant="primary"
@@ -845,17 +824,65 @@ function getServerName(serverId) {
 					</BaseButton>
 				</div>
 
-				<div v-if="shopItems && shopItems.length > 0" class="space-y-4">
-					<div class="text-sm text-heavy-metal">
-						Showing {{ allVisibleShopItems.length }} item{{
-							allVisibleShopItems.length === 1 ? '' : 's'
-						}}
+				<div
+					v-if="shopItems.length > 0"
+					class="flex flex-wrap items-center gap-6">
+					<div>
+						<span class="text-sm font-medium text-gray-700 block">View as:</span>
+						<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
+							<button
+								@click="viewMode = 'categories'"
+								:class="[
+									viewMode === 'categories'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-sea-mist',
+									'px-3 py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
+								]">
+								Categories
+							</button>
+							<button
+								@click="viewMode = 'list'"
+								:class="[
+									viewMode === 'list'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-sea-mist',
+									'px-3 py-1 text-sm font-medium transition'
+								]">
+								List
+							</button>
+						</div>
 					</div>
 
+					<div>
+						<span class="text-sm font-medium text-gray-700 block">Layout:</span>
+						<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
+							<button
+								@click="layout = 'comfortable'"
+								:class="[
+									layout === 'comfortable'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-sea-mist',
+									'px-3 py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
+								]">
+								Comfortable
+							</button>
+							<button
+								@click="layout = 'condensed'"
+								:class="[
+									layout === 'condensed'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-sea-mist',
+									'px-3 py-1 text-sm font-medium transition'
+								]">
+								Condensed
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<div v-if="shopItems && shopItems.length > 0" class="space-y-4">
 					<!-- BaseTable Implementation (New) -->
 					<div class="mb-8">
-						<h3 class="text-lg font-semibold text-heavy-metal mb-4">BaseTable Implementation</h3>
-						
 						<template v-if="viewMode === 'categories'">
 							<div
 								v-for="(categoryRows, category) in baseTableRowsByCategory"
@@ -878,6 +905,22 @@ function getServerName(serverId) {
 											</div>
 											<div class="font-medium text-gray-900">{{ row.item }}</div>
 										</div>
+									</template>
+									<template #cell-buyPrice="{ row }">
+										<InlinePriceInput
+											:value="row._originalItem?.buy_price"
+											:is-editing="editingPriceId === row.id && editingPriceType === 'buy'"
+											@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'buy'); else cancelEditPrice() }"
+											@save="(newPrice) => savePrice(row, 'buy', newPrice)"
+											@cancel="cancelEditPrice" />
+									</template>
+									<template #cell-sellPrice="{ row }">
+										<InlinePriceInput
+											:value="row._originalItem?.sell_price"
+											:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
+											@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"
+											@save="(newPrice) => savePrice(row, 'sell', newPrice)"
+											@cancel="cancelEditPrice" />
 									</template>
 									<template #cell-actions="{ row }">
 										<div class="flex items-center justify-end gap-2">
@@ -917,6 +960,22 @@ function getServerName(serverId) {
 										<div class="font-medium text-gray-900">{{ row.item }}</div>
 									</div>
 								</template>
+								<template #cell-buyPrice="{ row }">
+									<InlinePriceInput
+										:value="row._originalItem?.buy_price"
+										:is-editing="editingPriceId === row.id && editingPriceType === 'buy'"
+										@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'buy'); else cancelEditPrice() }"
+										@save="(newPrice) => savePrice(row, 'buy', newPrice)"
+										@cancel="cancelEditPrice" />
+								</template>
+								<template #cell-sellPrice="{ row }">
+									<InlinePriceInput
+										:value="row._originalItem?.sell_price"
+										:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
+										@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"
+										@save="(newPrice) => savePrice(row, 'sell', newPrice)"
+										@cancel="cancelEditPrice" />
+								</template>
 								<template #cell-actions="{ row }">
 									<div class="flex items-center justify-end gap-2">
 										<BaseIconButton
@@ -936,47 +995,6 @@ function getServerName(serverId) {
 							</BaseTable>
 						</template>
 					</div>
-
-					<!-- Original ShopItemTable (Existing) -->
-					<div class="mb-8">
-						<h3 class="text-lg font-semibold text-heavy-metal mb-4">Original ShopItemTable</h3>
-					</div>
-
-					<template v-if="viewMode === 'categories'">
-						<div
-							v-for="(categoryItems, category) in shopItemsByCategory"
-							:key="category"
-							class="space-y-3">
-							<h3 class="text-lg font-semibold text-heavy-metal uppercase tracking-wide">
-								{{ category }}
-							</h3>
-							<ShopItemTable
-								:items="categoryItems"
-								:server="selectedServer"
-								:shop="selectedShop"
-								:view-mode="viewMode"
-								:layout="layout"
-								appearance="guide"
-								@edit="showEditItemForm"
-								@delete="handleItemDelete"
-								@bulk-update="handleBulkUpdate"
-								@quick-edit="handleQuickEdit" />
-						</div>
-					</template>
-
-					<template v-else>
-						<ShopItemTable
-							:items="allVisibleShopItems"
-							:server="selectedServer"
-							:shop="selectedShop"
-							:view-mode="viewMode"
-							:layout="layout"
-							appearance="guide"
-							@edit="showEditItemForm"
-							@delete="handleItemDelete"
-							@bulk-update="handleBulkUpdate"
-							@quick-edit="handleQuickEdit" />
-					</template>
 				</div>
 
 				<div
