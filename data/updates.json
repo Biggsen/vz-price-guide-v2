@@ -1,5 +1,13 @@
 [
 	{
+		"id": 34,
+		"title": "Early Access: Shop Manager",
+		"date": "2025-11-20",
+		"types": ["Feature"],
+		"hidden": false,
+		"description": "The new Shop Manager is nearly ready, and I'm opening a small early access group for anyone who wants to try it out before it goes live. There are 5 spots available. You'll get early access to the new features, plus the chance to help shape and refine it before the full release. If you'd like to join the early access group, DM me on Discord or email support@minecraft-economy-price-guide.net"
+	},
+	{
 		"id": 33,
 		"title": "New Brewing Category - Complete Potion Catalog Added",
 		"date": "2025-11-17",
