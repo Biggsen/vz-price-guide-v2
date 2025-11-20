@@ -179,7 +179,7 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresAdmin: true,
-				title: `Shop Manager - ${siteName}`
+				title: `Player Shop Manager - ${siteName}`
 			}
 		},
 		{
@@ -227,30 +227,8 @@ const router = createRouter({
 			}
 		},
 		{
-			path: '/servers',
-			name: 'servers',
-			component: () => import('../views/ServersView.vue'),
-			meta: {
-				requiresAuth: true,
-				requiresVerification: true,
-				requiresAdmin: true,
-				title: `My Servers - ${siteName}`
-			}
-		},
-		{
-			path: '/shops',
-			name: 'shops',
-			component: () => import('../views/ShopsView.vue'),
-			meta: {
-				requiresAuth: true,
-				requiresVerification: true,
-				requiresAdmin: true,
-				title: `My Shops - ${siteName}`
-			}
-		},
-		{
-			path: '/shop-items',
-			name: 'shop-items',
+			path: '/shop/:shopId?',
+			name: 'shop',
 			component: () => import('../views/ShopItemsView.vue'),
 			meta: {
 				requiresAuth: true,

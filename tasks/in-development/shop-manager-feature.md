@@ -2,7 +2,7 @@
 
 ## Overview
 
-Build a comprehensive Shop Manager feature to track multiple Minecraft server shops with buy/sell prices. This feature will enable users to manage their own shops and compare prices across different servers and competitors.
+Build a comprehensive Shop Manager feature to track multiple Minecraft server shops with buy/sell prices. This MVP enables users to manage their own shops across servers with streamlined inventory and price tracking.
 
 ## Inspiration
 
@@ -21,7 +21,7 @@ Servers Collection (✅ IMPLEMENTED)
 ├── created_at
 └── updated_at
 
-Shops Collection (🔄 PENDING)
+Shops Collection (✅ IMPLEMENTED)
 ├── name (e.g., "verzion's shop")
 ├── server_id (server reference)
 ├── owner_id (user reference)
@@ -66,30 +66,24 @@ The `stock_full` boolean field handles a common Minecraft shop scenario:
 
 -   When set to `true`, indicates the shop's chest is full and cannot accept more items
 -   Useful for buy prices - shop owner can't purchase more items until chest is emptied
--   Helps with shop status tracking and price comparison accuracy
+-   Helps with shop status tracking and pricing accuracy for owners
 -   Defaults to `false` for normal trading operations
 
 ### Key Features
 
 #### 1. Multi-Server Support
 
--   Track shops across different Minecraft servers
--   Filter items by server's Minecraft version
--   Server-specific item availability
+-   Track personal shops across different Minecraft servers
+-   Filter available items by the selected server's Minecraft version
+-   Maintain server-specific item availability for owner workflows
 
 #### 2. Shop Management
 
 -   Create and manage own shops
--   Track competitor shops
--   Categorize shops by type (buy/sell/both)
+-   Manage shop metadata (name, description, optional location)
+-   Control shop inventory with price history context
 
-#### 3. Price Comparison
-
--   Compare prices across shops
--   Market analysis views
--   Price history tracking
-
-#### 4. Version-Aware Items
+#### 3. Version-Aware Items
 
 -   Filter items based on server Minecraft version
 -   Use existing items collection with version field
@@ -150,7 +144,7 @@ The `stock_full` boolean field handles a common Minecraft shop scenario:
 -   [x] **Task 3.2**: Update Firestore security rules
 
     -   [x] Allow users to read/write own shops
-    -   [x] Allow reading public shops for comparison
+    -   [x] Prevent other users from accessing private shops
     -   [x] Add shop validation rules
 
 -   [x] **Task 3.3**: Create shop management composables
@@ -193,13 +187,13 @@ The `stock_full` boolean field handles a common Minecraft shop scenario:
 -   [x] **Task 5.2**: Update Firestore security rules
 
     -   [x] Allow users to read/write items for own shops
-    -   [x] Allow reading public shop items
+    -   [x] Prevent access to other users' shop items
     -   [x] Add item validation rules
 
 -   [x] **Task 5.3**: Create item management composables
     -   [x] `useShopItems(shopId)` - Shop's items
-    -   [x] `useItemAcrossShops(itemId)` - Item across shops
-    -   [x] `usePriceComparison(itemIds)` - Multi-item comparison
+-   [x] `useItemAcrossShops(itemId)` - Item across user's shops
+-   [x] `usePriceComparison(itemIds)` - Multi-shop comparison (scope to owner data)
 
 ### Phase 6: Shop Items Management (Frontend) ✅ COMPLETED
 
@@ -236,91 +230,74 @@ The `stock_full` boolean field handles a common Minecraft shop scenario:
     -   [x] Updated ShopManagerView with shop items link
     -   [x] Integrated with existing authentication flow
 
-### Phase 7: Price Comparison & Analysis
+### Phase 7: MVP Polish
 
--   [ ] **Task 7.1**: Create `PriceComparisonView.vue`
+-   [x] **Task 7.1**: Version-aware item filtering (owner scope)
 
-    -   [ ] Compare prices across shops
-    -   [ ] Filter by server
-    -   [ ] Search items
-    -   [ ] Export comparisons
+    -   [x] Filter item picker options by server Minecraft version
+    -   [x] Use existing items collection
+    -   [x] Respect resource file data
 
--   [ ] **Task 7.2**: Create `MarketAnalysisView.vue`
+-   [ ] **Task 7.2**: Search & filtering (owner scope)
 
-    -   [ ] Best buy/sell prices per item
-    -   [ ] Price trends over time
-    -   [ ] Profit opportunity calculations
-    -   [ ] Market share analysis
-
--   [ ] **Task 7.3**: Create comparison components
-    -   [ ] `PriceComparisonTable.vue`
-    -   [ ] `PriceChart.vue` (optional)
-    -   [ ] `MarketSummary.vue`
-
-### Phase 8: Integration & Polish
-
--   [ ] **Task 8.1**: Version-aware item filtering
-
-    -   [ ] Filter items by server Minecraft version
-    -   [ ] Use existing items collection
-    -   [ ] Respect resource file data
-
--   [ ] **Task 8.2**: Search & filtering
-
-    -   [ ] Search items across shops
+    -   [ ] Search items within user's shops
     -   [ ] Filter by price ranges
-    -   [ ] Sort by various criteria
+    -   [x] Sort by price, last updated, and stock status
 
--   [ ] **Task 8.3**: Import/Export functionality
+-   [ ] **Task 7.4**: Performance and UX
+    -   [ ] Pagination or virtual scrolling for large personal inventories
+    -   [ ] Cache recent queries per user session
+    -   [ ] Optimize Firestore queries for owner workflows
 
-    -   [ ] Export shop prices to CSV
-    -   [ ] Import prices from CSV
-    -   [ ] Bulk operations
+### Deferred Scope (`shop-manager-enhanced` spec)
 
--   [ ] **Task 8.4**: Performance optimization
-    -   [ ] Pagination for large datasets
-    -   [ ] Caching strategies
-    -   [ ] Optimized queries
+-   Public shop visibility and competitor tracking
+-   Price comparison dashboards and analytics
+-   Advanced search, filtering, and import/export across shops
+-   Bulk pricing operations and CSV workflows
+-   Market share and profitability analysis
+-   Performance and caching improvements for multi-shop views
 
 ## Technical Considerations
 
 ### Database Relationships
 
 -   Servers → Shops (one-to-many)
--   Shops → Shop_Prices (one-to-many)
--   Items → Shop_Prices (one-to-many)
+-   Shops → Shop_Items (one-to-many)
+-   Items → Shop_Items (one-to-many)
 
 ### Security Rules
 
 -   Users can only manage their own servers/shops
--   Price comparison requires read access to public shops
 -   Admin users can manage all data
+-   Service accounts must respect owner scoping
 
 ### UI/UX Considerations
 
 -   Mobile-responsive design
 -   Intuitive navigation between servers/shops
--   Clear visual hierarchy for price comparisons
+-   Clear visual hierarchy for price management workflows
 -   Bulk operations for efficiency
 
 ## Success Metrics
 
 -   Users can create and manage multiple servers
--   Users can track competitor shops effectively
--   Price comparison provides valuable insights
--   System handles large amounts of pricing data efficiently
+-   Users can update shop inventories quickly
+-   Price history provides clear before/after values
+-   UI remains responsive for single-owner datasets
 
 ## Future Enhancements
 
--   Real-time price updates
+-   Public shop sharing and comparison views
+-   Shop type classification and segmentation
+-   Market analytics and reporting
 -   Price alerts and notifications
--   Advanced analytics and reporting
 -   Integration with external market data
 -   Mobile app for price checking
 
 ---
 
-**Status**: 75% Complete - Phases 1, 2, 3, 4, 5 & 6 implemented, ready for Phase 7
+**Status**: 75% Complete - Phases 1-6 implemented, Phase 7 MVP polish in progress planning
 **Priority**: High
 **Estimated Timeline**: 6-8 weeks (phased approach)
 **Dependencies**: Items collection (✅ exists)
@@ -346,11 +323,11 @@ The `stock_full` boolean field handles a common Minecraft shop scenario:
 -   Vue composables for reactive price data management
 -   Comprehensive shop items UI with inline editing, bulk operations, and price history display
 
-### 🔄 **NEXT UP** (Phase 7)
+### 🔄 **NEXT UP**
 
--   **Phase 7**: Price Comparison & Analysis - Begin `PriceComparisonView.vue` and market analysis components
+-   **Phase 7**: MVP Polish tasks (search, filtering, import/export)
+-   Align implementation with owner-only scope checklist
 
-### 🔄 **PENDING** (Phases 7-8)
+### 🔁 **DEFERRED**
 
--   **Phase 7**: Price Comparison & Analysis
--   **Phase 8**: Integration & Polish
+-   Public visibility, comparisons, and analytics (see `shop-manager-enhanced` spec)

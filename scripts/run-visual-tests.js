@@ -97,7 +97,7 @@ function organizeScreenshots() {
 			screenshot.includes('bulk-update') ||
 			screenshot.includes('servers') ||
 			screenshot.includes('shops') ||
-			screenshot.includes('shop-items') ||
+			screenshot.includes('shop-default') ||
 			screenshot.includes('market-overview') ||
 			screenshot.includes('recipes') ||
 			screenshot.includes('styleguide') ||

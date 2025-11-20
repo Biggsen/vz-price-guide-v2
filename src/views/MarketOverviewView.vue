@@ -393,8 +393,8 @@ const priceAnalysis = computed(() => {
 			<p class="font-medium">No servers found</p>
 			<p class="text-sm mt-1">
 				You need to create a server first to view market data.
-				<router-link to="/servers" class="text-blue-600 hover:text-blue-800 underline">
-					Go to Servers
+				<router-link to="/shop-manager" class="text-blue-600 hover:text-blue-800 underline">
+					Go to Shop Manager
 				</router-link>
 			</p>
 		</div>
@@ -603,7 +603,7 @@ const priceAnalysis = computed(() => {
 						Shops on this server haven't added any items yet
 					</div>
 					<router-link
-						to="/shop-items"
+						:to="{ name: 'shop' }"
 						class="bg-semantic-info text-white px-6 py-3 rounded hover:bg-opacity-80 transition-colors font-medium inline-block">
 						Manage Your Shop Items
 					</router-link>

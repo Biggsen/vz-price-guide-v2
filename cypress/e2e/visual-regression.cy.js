@@ -43,8 +43,8 @@ describe('Visual Regression - All Pages and States', () => {
 		{ path: '/servers', name: 'servers', states: ['default', 'loading', 'error', 'empty'] },
 		{ path: '/shops', name: 'shops', states: ['default', 'loading', 'error', 'empty'] },
 		{
-			path: '/shop-items',
-			name: 'shop-items',
+			path: '/shop',
+			name: 'shop',
 			states: ['default', 'loading', 'error', 'empty']
 		},
 		{

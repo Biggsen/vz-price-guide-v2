@@ -49,10 +49,10 @@ const variantStyles = computed(() => {
 					? 'border-t-2 border-x-2 border-white rounded-t-lg overflow-hidden'
 					: '',
 				headerContainer: hasMedia
-					? 'bg-saltpan px-4 pt-2 flex items-center'
-					: 'bg-saltpan px-4 pt-2 border-x-2 border-t-2 border-white rounded-t-lg flex items-center',
-				header: 'text-xl font-semibold text-heavy-metal',
-				actions: '',
+					? 'bg-sea-mist px-4 py-2 border-x-2 border-white flex items-center'
+					: 'bg-sea-mist px-4 py-2 border-x-2 border-t-2 border-white rounded-t-lg flex items-center',
+				header: 'text-xl font-semibold text-heavy-metal flex-1',
+				actions: 'flex items-center gap-2 ml-auto',
 				body: hasMedia
 					? 'px-4 pb-4 pt-2 border-x-2 border-b-2 border-white rounded-b-lg text-heavy-metal flex-1 flex flex-col'
 					: 'px-4 pb-4 pt-2 border-x-2 border-b-2 border-white rounded-b-lg text-heavy-metal flex-1',

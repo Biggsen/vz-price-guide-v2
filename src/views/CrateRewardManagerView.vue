@@ -472,7 +472,7 @@ function cancelDuplicateImport() {
 		<div class="mb-8">
 			<h2
 				class="text-2xl font-semibold mb-6 text-gray-700 border-b-2 border-gray-asparagus pb-2">
-				Your Crates
+				My Crates
 			</h2>
 
 			<div v-if="crateRewardsPending" class="text-gray-600">Loading crate rewards...</div>

@@ -11,52 +11,107 @@ import {
 } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseCard from '@/components/BaseCard.vue'
+import BaseIconButton from '@/components/BaseIconButton.vue'
+import BaseTable from '@/components/BaseTable.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'
+import { getImageUrl } from '@/utils/image.js'
 
 defineOptions({
 	name: 'StyleguideView'
 })
 
-// Sample data for demonstrations
-const sampleItems = ref([
-	{ name: 'Diamond Sword', price: 1000, category: 'weapons' },
-	{ name: 'Iron Pickaxe', price: 500, category: 'tools' },
-	{ name: 'Golden Apple', price: 250, category: 'food' }
-])
-
 const viewMode = ref('categories')
 const layout = ref('comfortable')
 const searchQuery = ref('')
 
-// Grid table selection state
-const selectedItems = ref([])
-const allSelected = ref(false)
+const baseTableColumns = [
+	{ key: 'item', label: 'Item', sortable: true, headerAlign: 'center' },
+	{
+		key: 'buyPrice',
+		label: 'Buy Price',
+		align: 'right',
+		headerAlign: 'center',
+		sortable: true,
+		width: 'w-32'
+	},
+	{
+		key: 'sellPrice',
+		label: 'Sell Price',
+		align: 'right',
+		headerAlign: 'center',
+		sortable: true,
+		width: 'w-32'
+	},
+	{
+		key: 'profitMargin',
+		label: 'Profit %',
+		align: 'center',
+		headerAlign: 'center',
+		sortable: true,
+		width: 'w-32'
+	},
+	{ key: 'notes', label: 'Notes', sortable: true, headerAlign: 'center' },
+	{ key: 'lastUpdated', label: 'Last Updated', sortable: true, headerAlign: 'center' },
+	{ key: 'actions', label: '', align: 'center', headerAlign: 'center', width: 'w-24' }
+]
 
-// Selection methods
-function toggleSelectAll() {
-	if (allSelected.value) {
-		selectedItems.value = []
-		allSelected.value = false
-	} else {
-		selectedItems.value = sampleItems.value.map((item, index) => index)
-		allSelected.value = true
+const baseTableRows = [
+	{
+		id: 'coal',
+		item: 'Coal',
+		image: '/images/items/coal.png',
+		buyPrice: '15.00',
+		sellPrice: '5.00',
+		profitMargin: '66.7%',
+		notes: 'Common resource',
+		lastUpdated: 'Today',
+		actions: 'View'
+	},
+	{
+		id: 'copper_ingot',
+		item: 'Copper Ingot',
+		image: '/images/items/copper_ingot.png',
+		buyPrice: '10.00',
+		sellPrice: '3.00',
+		profitMargin: '70.0%',
+		notes: '',
+		lastUpdated: 'Today',
+		actions: 'View'
+	},
+	{
+		id: 'diamond',
+		item: 'Diamond',
+		image: '/images/items/diamond.png',
+		buyPrice: '250.00',
+		sellPrice: '75.00',
+		profitMargin: '70.0%',
+		notes: 'High value item',
+		lastUpdated: 'Today',
+		actions: 'View'
+	},
+	{
+		id: 'gold_ingot',
+		item: 'Gold Ingot',
+		image: '/images/items/gold_ingot.png',
+		buyPrice: '50.00',
+		sellPrice: '15.00',
+		profitMargin: '70.0%',
+		notes: '',
+		lastUpdated: 'Today',
+		actions: 'View'
+	},
+	{
+		id: 'iron_ingot',
+		item: 'Iron Ingot',
+		image: '/images/items/iron_ingot.png',
+		buyPrice: '30.00',
+		sellPrice: '10.00',
+		profitMargin: '66.7%',
+		notes: 'Essential crafting material',
+		lastUpdated: 'Today',
+		actions: 'View'
 	}
-}
-
-function toggleSelectItem(index) {
-	const itemIndex = selectedItems.value.indexOf(index)
-	if (itemIndex > -1) {
-		selectedItems.value.splice(itemIndex, 1)
-		allSelected.value = false
-	} else {
-		selectedItems.value.push(index)
-		allSelected.value = selectedItems.value.length === sampleItems.value.length
-	}
-}
-
-function isSelected(index) {
-	return selectedItems.value.includes(index)
-}
+]
 </script>
 
 <template>
@@ -728,6 +783,110 @@ function isSelected(index) {
 			</div>
 		</section>
 
+		<!-- Icon Buttons -->
+		<section class="mb-12">
+			<h2 class="text-2xl font-bold text-gray-900 mb-6">Icon Buttons</h2>
+			<div class="space-y-8">
+				<!-- Primary Icon Buttons -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">
+						Primary Icon Buttons (BaseIconButton Component)
+					</h3>
+					<div class="flex flex-wrap gap-4 items-center">
+						<BaseIconButton variant="primary" aria-label="Edit item">
+							<PencilIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="primary" aria-label="Delete item">
+							<TrashIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="primary" aria-label="Settings">
+							<Cog6ToothIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="primary" aria-label="Close">
+							<XMarkIcon />
+						</BaseIconButton>
+					</div>
+				</div>
+
+				<!-- Secondary Icon Buttons -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">
+						Secondary Icon Buttons (BaseIconButton Component)
+					</h3>
+					<div class="flex flex-wrap gap-4 items-center">
+						<BaseIconButton variant="secondary" aria-label="Edit item">
+							<PencilIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="secondary" aria-label="Delete item">
+							<TrashIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="secondary" aria-label="Settings">
+							<Cog6ToothIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="secondary" aria-label="Close">
+							<XMarkIcon />
+						</BaseIconButton>
+					</div>
+				</div>
+
+				<!-- Ghost Icon Buttons -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">
+						Ghost Icon Buttons (BaseIconButton Component)
+					</h3>
+					<div class="flex flex-wrap gap-4 items-center">
+						<BaseIconButton variant="ghost" aria-label="Edit item">
+							<PencilIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="ghost" aria-label="Delete item">
+							<TrashIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="ghost" aria-label="Settings">
+							<Cog6ToothIcon />
+						</BaseIconButton>
+						<BaseIconButton variant="ghost" aria-label="Close">
+							<XMarkIcon />
+						</BaseIconButton>
+					</div>
+				</div>
+
+				<!-- States -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Icon Button States</h3>
+					<div class="space-y-4">
+						<div>
+							<h4 class="text-md font-medium text-gray-700 mb-2">Disabled State</h4>
+							<div class="flex flex-wrap gap-4 items-center">
+								<BaseIconButton
+									variant="primary"
+									disabled
+									aria-label="Disabled edit">
+									<PencilIcon />
+								</BaseIconButton>
+								<BaseIconButton
+									variant="secondary"
+									disabled
+									aria-label="Disabled delete">
+									<TrashIcon />
+								</BaseIconButton>
+							</div>
+						</div>
+						<div>
+							<h4 class="text-md font-medium text-gray-700 mb-2">Loading State</h4>
+							<div class="flex flex-wrap gap-4 items-center">
+								<BaseIconButton variant="primary" loading aria-label="Loading">
+									<PencilIcon />
+								</BaseIconButton>
+								<BaseIconButton variant="secondary" loading aria-label="Loading">
+									<TrashIcon />
+								</BaseIconButton>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
 		<!-- Form Elements -->
 		<section class="mb-12">
 			<h2 class="text-2xl font-bold text-gray-900 mb-6">Form Elements</h2>
@@ -820,7 +979,8 @@ function isSelected(index) {
 				<div class="flex flex-col lg:flex-row lg:space-x-8 space-y-8 lg:space-y-0">
 					<div class="lg:w-1/3">
 						<div class="space-y-3">
-							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
 								BaseCard (Primary Variant)
 							</p>
 							<BaseCard variant="primary">
@@ -833,7 +993,8 @@ function isSelected(index) {
 								<template #header>Primary Card</template>
 								<template #body>
 									<p class="mb-4">
-										Use the primary card to highlight a key action or destination.
+										Use the primary card to highlight a key action or
+										destination.
 									</p>
 									<BaseButton variant="primary">Action</BaseButton>
 								</template>
@@ -843,14 +1004,16 @@ function isSelected(index) {
 
 					<div class="lg:w-1/3">
 						<div class="space-y-3">
-							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
 								BaseCard (Primary Variant - No Media)
 							</p>
 							<BaseCard variant="primary">
 								<template #header>Primary Card (No Media)</template>
 								<template #body>
 									<p class="mb-4">
-										Use the primary card without an image for streamlined content blocks.
+										Use the primary card without an image for streamlined
+										content blocks.
 									</p>
 									<BaseButton variant="primary">Action</BaseButton>
 								</template>
@@ -862,7 +1025,8 @@ function isSelected(index) {
 				<div class="flex flex-col lg:flex-row lg:space-x-8 space-y-8 lg:space-y-0">
 					<div class="lg:w-1/3">
 						<div class="space-y-3">
-							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
 								BaseCard (Secondary Variant)
 							</p>
 							<BaseCard variant="secondary">
@@ -873,20 +1037,26 @@ function isSelected(index) {
 										alt="Secondary Card Media" />
 								</template>
 								<template #header>
-									<span class="cursor-pointer hover:text-gray-asparagus transition-colors">Secondary Card</span>
+									<span
+										class="cursor-pointer hover:text-gray-asparagus transition-colors">
+										Secondary Card
+									</span>
 								</template>
 								<template #actions>
-									<button class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+									<button
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
 										<PencilIcon class="w-4 h-4" />
 									</button>
-									<button class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+									<button
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
 										<TrashIcon class="w-4 h-4" />
 									</button>
 								</template>
 								<template #body>
 									<div class="flex-1">
 										<p class="mb-3">
-											Use the secondary card when additional actions or metadata are required.
+											Use the secondary card when additional actions or
+											metadata are required.
 										</p>
 										<div class="text-sm">
 											<span class="font-medium">Detail:</span>
@@ -909,25 +1079,27 @@ function isSelected(index) {
 
 					<div class="lg:w-1/3">
 						<div class="space-y-3">
-							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
 								BaseCard (Secondary Variant - No Media)
 							</p>
 							<BaseCard variant="secondary">
-								<template #header>
-									Secondary Card (No Media)
-								</template>
+								<template #header>Secondary Card (No Media)</template>
 								<template #actions>
-									<button class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+									<button
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
 										<PencilIcon class="w-4 h-4" />
 									</button>
-									<button class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
+									<button
+										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded">
 										<TrashIcon class="w-4 h-4" />
 									</button>
 								</template>
 								<template #body>
 									<div class="flex-1">
 										<p class="mb-3">
-											Use the secondary card with compact layout when no media is needed.
+											Use the secondary card with compact layout when no media
+											is needed.
 										</p>
 										<div class="text-sm">
 											<span class="font-medium">Detail:</span>
@@ -952,7 +1124,8 @@ function isSelected(index) {
 				<div class="flex flex-col lg:flex-row lg:space-x-8 space-y-8 lg:space-y-0">
 					<div class="lg:w-1/3">
 						<div class="space-y-3">
-							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
 								BaseCard (Tertiary Variant)
 							</p>
 							<BaseCard variant="tertiary">
@@ -965,11 +1138,14 @@ function isSelected(index) {
 								<template #header>Tertiary Card</template>
 								<template #body>
 									<p class="mb-4">
-										Use the tertiary card for contextual information or secondary content.
+										Use the tertiary card for contextual information or
+										secondary content.
 									</p>
 								</template>
 								<template #footer>
-									<BaseButton variant="secondary" class="self-start">Action</BaseButton>
+									<BaseButton variant="secondary" class="self-start">
+										Action
+									</BaseButton>
 								</template>
 							</BaseCard>
 						</div>
@@ -977,7 +1153,8 @@ function isSelected(index) {
 
 					<div class="lg:w-1/3">
 						<div class="space-y-3">
-							<p class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
 								BaseCard (Tertiary Variant - No Media)
 							</p>
 							<BaseCard variant="tertiary">
@@ -988,7 +1165,9 @@ function isSelected(index) {
 									</p>
 								</template>
 								<template #footer>
-									<BaseButton variant="secondary" class="self-start">Action</BaseButton>
+									<BaseButton variant="secondary" class="self-start">
+										Action
+									</BaseButton>
 								</template>
 							</BaseCard>
 						</div>
@@ -999,144 +1178,90 @@ function isSelected(index) {
 
 		<!-- Tables -->
 		<section class="mb-12">
-			<h2 class="text-2xl font-bold text-gray-900 mb-6">Tables</h2>
-			<div class="space-y-6">
-				<!-- Standard Table -->
-				<h3 class="text-lg font-semibold text-gray-900">Standard Table</h3>
-				<div class="bg-white rounded-lg shadow-md overflow-hidden">
-					<div class="overflow-x-auto">
-						<table class="min-w-full divide-y divide-gray-200">
-							<thead class="bg-gray-50">
-								<tr>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Item
-									</th>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
-										<div class="flex items-center gap-1">
-											Price
-											<ArrowDownIcon class="w-4 h-4 text-gray-700" />
-										</div>
-									</th>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Category
-									</th>
-								</tr>
-							</thead>
-							<tbody class="bg-white divide-y divide-gray-200">
-								<tr v-for="item in sampleItems" :key="item.name">
-									<td class="px-4 py-3">
-										<div class="font-medium text-gray-900">{{ item.name }}</div>
-									</td>
-									<td class="px-4 py-3 text-gray-900">{{ item.price }}</td>
-									<td class="px-4 py-3 text-gray-500">{{ item.category }}</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+			<h2 class="text-2xl font-bold text-gray-900 mb-4">Tables</h2>
+			<p class="text-gray-600 mb-6 max-w-3xl">
+				`BaseTable` provides a consistent data table foundation with the Rails & Riches
+				look: dark headers, soft green rows, white grid lines, and subtle hover feedback.
+				Use column slots to customise content, icons, or actions while keeping the shell
+				styling identical.
+			</p>
+
+			<div class="space-y-8">
+				<!-- Comfortable Layout (Default) -->
+				<div>
+					<h3 class="text-lg font-semibold text-gray-800 mb-4">Comfortable Layout</h3>
+					<BaseTable
+						:columns="baseTableColumns"
+						:rows="baseTableRows"
+						row-key="id"
+						layout="comfortable"
+						caption="Example table with caption">
+						<template #cell-item="{ row, layout }">
+							<div class="flex items-center">
+								<div
+									v-if="row.image"
+									:class="[
+										layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8',
+										'mr-3 flex-shrink-0'
+									]">
+									<img
+										:src="getImageUrl(row.image)"
+										:alt="row.item"
+										class="w-full h-full object-contain"
+										loading="lazy" />
+								</div>
+								<div class="font-medium text-gray-900">{{ row.item }}</div>
+							</div>
+						</template>
+						<template #cell-actions>
+							<div class="flex items-center justify-end gap-2">
+								<BaseIconButton variant="primary" aria-label="Edit item">
+									<PencilIcon />
+								</BaseIconButton>
+								<BaseIconButton variant="primary" aria-label="Delete item">
+									<TrashIcon />
+								</BaseIconButton>
+							</div>
+						</template>
+					</BaseTable>
 				</div>
 
-				<!-- Condensed Table -->
-				<h3 class="text-lg font-semibold text-gray-900">Condensed Table</h3>
-				<div class="bg-white rounded-lg shadow-md overflow-hidden">
-					<div class="overflow-x-auto">
-						<table class="min-w-full divide-y divide-gray-200">
-							<thead class="bg-gray-50">
-								<tr>
-									<th
-										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Item
-									</th>
-									<th
-										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Price
-									</th>
-									<th
-										class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Category
-									</th>
-								</tr>
-							</thead>
-							<tbody class="bg-white divide-y divide-gray-200">
-								<tr v-for="item in sampleItems" :key="item.name">
-									<td class="px-2 py-1">
-										<div class="font-medium text-gray-900 text-sm">
-											{{ item.name }}
-										</div>
-									</td>
-									<td class="px-2 py-1 text-gray-900 text-sm">
-										{{ item.price }}
-									</td>
-									<td class="px-2 py-1 text-gray-500 text-sm">
-										{{ item.category }}
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-
-				<!-- Grid Table -->
-				<h3 class="text-lg font-semibold text-gray-900">Grid Table</h3>
-				<div class="bg-white rounded-lg shadow-md overflow-hidden">
-					<div class="overflow-x-auto">
-						<table class="min-w-full divide-y divide-gray-200 border border-gray-200">
-							<thead class="bg-gray-50">
-								<tr>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-										<input
-											type="checkbox"
-											:checked="allSelected"
-											@change="toggleSelectAll"
-											class="checkbox-input" />
-									</th>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-										Item
-									</th>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 cursor-pointer hover:bg-gray-100 select-none">
-										<div class="flex items-center gap-1">
-											Price
-											<ArrowDownIcon class="w-4 h-4 text-gray-700" />
-										</div>
-									</th>
-									<th
-										class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Category
-									</th>
-								</tr>
-							</thead>
-							<tbody class="bg-white divide-y divide-gray-200">
-								<tr
-									v-for="(item, index) in sampleItems"
-									:key="item.name"
-									:class="{
-										'bg-green-50': isSelected(index)
-									}">
-									<td class="px-4 py-3 border-r border-gray-200">
-										<input
-											type="checkbox"
-											:checked="isSelected(index)"
-											@change="toggleSelectItem(index)"
-											class="checkbox-input" />
-									</td>
-									<td class="px-4 py-3 border-r border-gray-200">
-										<div class="font-medium text-gray-900">{{ item.name }}</div>
-									</td>
-									<td class="px-4 py-3 border-r border-gray-200 text-gray-900">
-										{{ item.price }}
-									</td>
-									<td class="px-4 py-3 text-gray-500">
-										{{ item.category }}
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+				<!-- Condensed Layout -->
+				<div>
+					<h3 class="text-lg font-semibold text-gray-800 mb-4">Condensed Layout</h3>
+					<BaseTable
+						:columns="baseTableColumns"
+						:rows="baseTableRows"
+						row-key="id"
+						layout="condensed">
+						<template #cell-item="{ row, layout }">
+							<div class="flex items-center">
+								<div
+									v-if="row.image"
+									:class="[
+										layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8',
+										'mr-3 flex-shrink-0'
+									]">
+									<img
+										:src="getImageUrl(row.image)"
+										:alt="row.item"
+										class="w-full h-full object-contain"
+										loading="lazy" />
+								</div>
+								<div class="font-medium text-gray-900">{{ row.item }}</div>
+							</div>
+						</template>
+						<template #cell-actions>
+							<div class="flex items-center justify-end gap-2">
+								<BaseIconButton variant="primary" aria-label="Edit item">
+									<PencilIcon />
+								</BaseIconButton>
+								<BaseIconButton variant="primary" aria-label="Delete item">
+									<TrashIcon />
+								</BaseIconButton>
+							</div>
+						</template>
+					</BaseTable>
 				</div>
 			</div>
 		</section>
