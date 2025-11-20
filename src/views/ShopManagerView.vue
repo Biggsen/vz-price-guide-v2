@@ -346,29 +346,19 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 	<div class="p-4 pt-8">
 		<!-- Header -->
 		<div class="mb-8">
-			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
-				<div>
-						<h1 class="text-3xl font-bold text-gray-900 mb-2">Player Shop Manager</h1>
-					<p class="text-gray-600">
-						Manage your player shops and track pricing data.
-					</p>
-				</div>
-				<div class="flex flex-wrap items-center gap-3 md:gap-4">
-					<BaseButton @click="showCreateServerForm" variant="primary">
-						<template #left-icon>
-							<PlusIcon />
-						</template>
-						Add Server
-					</BaseButton>
-					<RouterLink to="/market-overview">
-						<BaseButton variant="secondary">
-							<template #left-icon>
-								<CurrencyDollarIcon />
-							</template>
-							View Market
-						</BaseButton>
-					</RouterLink>
-				</div>
+			<div>
+				<h1 class="text-3xl font-bold text-gray-900 mb-2">Player Shop Manager</h1>
+				<p class="text-gray-600">
+					Manage your player shops and track pricing data.
+				</p>
+			</div>
+			<div class="mt-4">
+				<BaseButton @click="showCreateServerForm" variant="primary">
+					<template #left-icon>
+						<PlusIcon />
+					</template>
+					Add Server
+				</BaseButton>
 			</div>
 		</div>
 
@@ -434,7 +424,17 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 							</p>
 							<div
 								v-if="(shops || []).some((s) => s.server_id === server.id)"
-								class="space-y-4">
+								class="mb-2">
+								<RouterLink :to="`/market-overview?serverId=${server.id}`">
+									<BaseButton variant="secondary">
+										<template #left-icon>
+											<CurrencyDollarIcon class="w-4 h-4" />
+										</template>
+										Market Overview
+									</BaseButton>
+								</RouterLink>
+							</div>
+							<div class="space-y-4">
 								<div>
 									<h4 class="text-sm font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-asparagus/40 pb-1 w-full">
 										My Shops
@@ -469,7 +469,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 								</div>
 								<div>
 									<h4 class="text-sm font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-asparagus/40 pb-1 w-full">
-										Competitors
+										Player Shops
 									</h4>
 									<ul class="mt-1 space-y-1 text-sm text-gray-600">
 										<LinkWithActions
@@ -484,7 +484,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 										<li
 											v-if="!(shops || []).some((s) => s.server_id === server.id && !s.is_own_shop)"
 											class="text-sm italic text-gray-500">
-											No competitor shops tracked.
+											No player shops tracked.
 										</li>
 									</ul>
 									<div class="mt-3 flex">
@@ -495,16 +495,11 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 											<template #left-icon>
 												<PlusIcon class="w-4 h-4" />
 											</template>
-											Add Competitor Shop
+											Add Player Shop
 										</BaseButton>
 									</div>
 								</div>
 							</div>
-							<p
-								v-else
-								class="text-sm italic text-gray-500">
-								No shops yet for this server.
-							</p>
 						</div>
 					</template>
 				</BaseCard>
@@ -608,7 +603,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 					</p>
 				</div>
 
-				<div v-if="presetShopType === null">
+				<div v-if="presetShopType === null && !editingShop">
 					<label class="block text-sm font-medium text-gray-700">Shop Type</label>
 					<div class="mt-3 flex flex-wrap gap-6">
 						<label class="flex items-center gap-2 text-sm text-gray-700">
@@ -618,7 +613,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 								:value="false"
 								type="radio"
 								class="radio-input" />
-							<span>Competitor</span>
+							<span>Player Shop</span>
 						</label>
 						<label class="flex items-center gap-2 text-sm text-gray-700">
 							<input

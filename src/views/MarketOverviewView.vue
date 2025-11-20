@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
 import { useShops, useServerShops } from '../utils/shopProfile.js'
 import { useServers } from '../utils/serverProfile.js'
@@ -10,10 +10,11 @@ import ShopItemTable from '../components/ShopItemTable.vue'
 
 const user = useCurrentUser()
 const router = useRouter()
+const route = useRoute()
 const db = useFirestore()
 
 // Reactive state
-const selectedServerId = ref('')
+const selectedServerId = ref(route.query.serverId || '')
 const loading = ref(false)
 const error = ref(null)
 const searchQuery = ref('')
@@ -185,7 +186,10 @@ watch(
 // Watch for servers loading - handle server selection
 watch(servers, (newServers) => {
 	if (newServers && newServers.length > 0) {
-		if (!selectedServerId.value) {
+		// If serverId from query param exists and is valid, use it
+		if (route.query.serverId && newServers.some(s => s.id === route.query.serverId)) {
+			selectedServerId.value = route.query.serverId
+		} else if (!selectedServerId.value) {
 			// Auto-select first server if none selected
 			selectedServerId.value = newServers[0].id
 		}
@@ -401,22 +405,6 @@ const priceAnalysis = computed(() => {
 
 		<!-- Main content -->
 		<div v-else-if="hasServers">
-			<!-- Server selector -->
-			<div class="mb-6">
-				<label for="server-select" class="block text-sm font-medium text-gray-700 mb-2">
-					Select Server
-				</label>
-				<select
-					id="server-select"
-					v-model="selectedServerId"
-					class="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-					<option value="">Choose a server...</option>
-					<option v-for="server in servers" :key="server.id" :value="server.id">
-						{{ server.name }} ({{ server.minecraft_version }})
-					</option>
-				</select>
-			</div>
-
 			<!-- Search input -->
 			<div v-if="selectedServerId" class="mb-6">
 				<label for="item-search" class="block text-sm font-medium text-gray-700 mb-2">
