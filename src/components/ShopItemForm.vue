@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { getEffectivePrice } from '../utils/pricing.js'
+import { disabledCategories } from '../constants.js'
 import BaseButton from './BaseButton.vue'
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 
@@ -16,6 +17,10 @@ const props = defineProps({
 	server: {
 		type: Object,
 		required: true
+	},
+	shop: {
+		type: Object,
+		default: null
 	},
 	displayVariant: {
 		type: String,
@@ -143,10 +148,12 @@ const filteredItems = computed(() => {
 		return effectivePrice > 0
 	})
 
-	// Filter out uncategorized items
+	// Filter out uncategorized items and disabled categories
 	const categorizedItems = nonZeroItems.filter((item) => {
 		const category = item.category?.trim()
-		return category && category !== 'Uncategorized' && category !== ''
+		if (!category || category === 'Uncategorized' || category === '') return false
+		// Filter out disabled categories
+		return !disabledCategories.includes(category.toLowerCase())
 	})
 
 	const query = searchQuery.value.toLowerCase().trim()
@@ -500,9 +507,6 @@ defineExpose({
 								v-for="(item, categoryIndex) in categoryItems"
 								:key="item.id"
 								@click="selectItem(item)"
-								@mouseenter="
-									highlightedIndex = getItemVisualIndex(category, categoryIndex)
-								"
 								:class="[
 									'px-3 py-2 cursor-pointer border-b border-gray-100 flex items-center justify-between',
 									getItemVisualIndex(category, categoryIndex) === highlightedIndex
@@ -527,7 +531,7 @@ defineExpose({
 				<div v-else>
 					<label class="block text-sm font-medium text-gray-700 mb-1">Item *</label>
 					<div
-						class="px-3 py-2 bg-norway border-2 border-gray-asparagus rounded flex items-center justify-between">
+						class="px-3 py-2 bg-sea-mist border-2 border-highland rounded flex items-center justify-between">
 						<div>
 							<div class="font-medium text-heavy-metal">{{ selectedItem.name }}</div>
 						</div>
@@ -550,7 +554,7 @@ defineExpose({
 			<!-- Show selected item when editing -->
 			<div
 				v-else-if="editingItem && editingItem.itemData"
-				class="px-3 py-2 bg-norway border-2 border-gray-asparagus rounded">
+				class="px-3 py-2 bg-sea-mist border-2 border-highland rounded">
 				<div class="flex items-center justify-between">
 					<div>
 						<div class="font-medium">{{ editingItem.itemData.name }}</div>
@@ -630,13 +634,26 @@ defineExpose({
 				</div>
 			</div>
 
-			<!-- Stock Full checkbox -->
-			<div>
+			<!-- Stock Full checkbox (only for competitor shops) -->
+			<div v-if="shop && !shop.is_own_shop">
 				<label class="flex items-center">
 					<input v-model="formData.stock_full" type="checkbox" class="checkbox-input" />
 					<span class="ml-2 text-sm text-gray-700">Stock full</span>
 				</label>
-				<p class="text-xs text-gray-500 mt-1">Mark when you can't buy more from players</p>
+				<p class="text-xs text-gray-500 mt-1">Mark when you can't sell any more</p>
+			</div>
+
+			<!-- Notes -->
+			<div>
+				<label for="notes" class="block text-sm font-medium text-gray-700 mb-1">
+					Notes (Optional)
+				</label>
+				<textarea
+					id="notes"
+					v-model="formData.notes"
+					rows="3"
+					placeholder="Add any notes about this item, pricing, or stock..."
+					class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>
 			</div>
 
 			<!-- Show more link -->
@@ -667,19 +684,6 @@ defineExpose({
 						placeholder="64"
 						class="mt-2 block w-[150px] rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
 					<p class="text-xs text-gray-500 mt-1">Current stock amount</p>
-				</div>
-
-				<!-- Notes -->
-				<div>
-					<label for="notes" class="block text-sm font-medium text-gray-700 mb-1">
-						Notes (Optional)
-					</label>
-					<textarea
-						id="notes"
-						v-model="formData.notes"
-						rows="3"
-						placeholder="Add any notes about this item, pricing, or stock..."
-						class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>
 				</div>
 			</div>
 

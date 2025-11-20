@@ -2222,15 +2222,12 @@ watch(selectedCrate, (crate) => {
 									v-for="(item, categoryIndex) in categoryItems"
 									:key="item.id"
 									@click="selectItem(item)"
-									@mouseenter="
-										highlightedIndex = getItemVisualIndex(category, categoryIndex)
-									"
 									:class="[
 										'px-3 py-2 cursor-pointer border-b border-gray-100 flex items-center justify-between',
 										getItemVisualIndex(category, categoryIndex) ===
 										highlightedIndex
 											? 'bg-norway text-blue-900'
-											: 'hover:bg-blue-50'
+											: 'hover:bg-sea-mist'
 									]">
 									<div>
 										<div class="font-medium text-heavy-metal">{{ item.name }}</div>
@@ -2256,7 +2253,7 @@ watch(selectedCrate, (crate) => {
 					<div v-else>
 						<label class="block text-sm font-medium text-gray-700 mb-1">Item *</label>
 						<div
-							class="px-3 py-2 bg-norway border-2 border-highland rounded flex items-center justify-between">
+							class="px-3 py-2 bg-sea-mist border-2 border-highland rounded flex items-center justify-between">
 							<div>
 								<div class="font-medium text-heavy-metal">
 									{{ selectedItem.name }}

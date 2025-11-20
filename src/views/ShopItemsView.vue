@@ -42,6 +42,8 @@ const layout = ref('comfortable') // 'comfortable' or 'condensed'
 // Inline price editing state
 const editingPriceId = ref(null)
 const editingPriceType = ref(null) // 'buy' or 'sell'
+const savingPriceId = ref(null)
+const savingPriceType = ref(null) // 'buy' or 'sell'
 
 // Edit shop modal state
 const showEditShopModal = ref(false)
@@ -509,7 +511,11 @@ async function handleQuickEdit(updatedItem) {
 
 	if (!user.value?.uid || !selectedShopId.value) return
 
-	loading.value = true
+	// Only set global loading if not a price update (price updates use per-item loading)
+	const isPriceUpdate = savingPriceId.value !== null
+	if (!isPriceUpdate) {
+		loading.value = true
+	}
 	error.value = null
 
 	try {
@@ -542,7 +548,11 @@ async function handleQuickEdit(updatedItem) {
 		console.error('Error updating shop item:', err)
 		error.value = err.message || 'Failed to update shop item. Please try again.'
 	} finally {
-		loading.value = false
+		// Only clear global loading if not a price update
+		const isPriceUpdate = savingPriceId.value !== null
+		if (!isPriceUpdate) {
+			loading.value = false
+		}
 	}
 }
 
@@ -573,7 +583,17 @@ async function savePrice(row, priceType, newPrice) {
 	// Only update if value changed
 	const currentValue = priceType === 'buy' ? originalItem.buy_price : originalItem.sell_price
 	if (newPrice !== currentValue) {
-		await handleQuickEdit(updatedItem)
+		// Set saving state for this specific price
+		savingPriceId.value = originalItem.id
+		savingPriceType.value = priceType
+		
+		try {
+			await handleQuickEdit(updatedItem)
+		} finally {
+			// Clear saving state
+			savingPriceId.value = null
+			savingPriceType.value = null
+		}
 	}
 
 	cancelEditPrice()
@@ -809,21 +829,22 @@ function getServerName(serverId) {
 
 		<!-- Main content -->
 		<div v-else-if="hasShops && hasServers && selectedShop" class="space-y-8">
+			<!-- Add Item Button (Top) -->
+			<div v-if="shopItems && shopItems.length > 0" class="mt-4 flex justify-start">
+				<BaseButton
+					type="button"
+					variant="primary"
+					@click="showAddItemForm"
+					:disabled="!selectedShop">
+					<template #left-icon>
+						<PlusIcon />
+					</template>
+					Add Item
+				</BaseButton>
+			</div>
+
 			<!-- Inventory -->
 			<div class="mt-8 space-y-6">
-				<div class="mb-4">
-					<BaseButton
-						type="button"
-						variant="primary"
-						@click="showAddItemForm"
-						:disabled="!selectedShop">
-						<template #left-icon>
-							<PlusIcon />
-						</template>
-						Add Item
-					</BaseButton>
-				</div>
-
 				<div
 					v-if="shopItems.length > 0"
 					class="flex flex-wrap items-center gap-6">
@@ -910,6 +931,7 @@ function getServerName(serverId) {
 										<InlinePriceInput
 											:value="row._originalItem?.buy_price"
 											:is-editing="editingPriceId === row.id && editingPriceType === 'buy'"
+											:is-saving="savingPriceId === row.id && savingPriceType === 'buy'"
 											@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'buy'); else cancelEditPrice() }"
 											@save="(newPrice) => savePrice(row, 'buy', newPrice)"
 											@cancel="cancelEditPrice" />
@@ -918,6 +940,7 @@ function getServerName(serverId) {
 										<InlinePriceInput
 											:value="row._originalItem?.sell_price"
 											:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
+											:is-saving="savingPriceId === row.id && savingPriceType === 'sell'"
 											@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"
 											@save="(newPrice) => savePrice(row, 'sell', newPrice)"
 											@cancel="cancelEditPrice" />
@@ -964,6 +987,7 @@ function getServerName(serverId) {
 									<InlinePriceInput
 										:value="row._originalItem?.buy_price"
 										:is-editing="editingPriceId === row.id && editingPriceType === 'buy'"
+										:is-saving="savingPriceId === row.id && savingPriceType === 'buy'"
 										@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'buy'); else cancelEditPrice() }"
 										@save="(newPrice) => savePrice(row, 'buy', newPrice)"
 										@cancel="cancelEditPrice" />
@@ -972,6 +996,7 @@ function getServerName(serverId) {
 									<InlinePriceInput
 										:value="row._originalItem?.sell_price"
 										:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
+										:is-saving="savingPriceId === row.id && savingPriceType === 'sell'"
 										@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"
 										@save="(newPrice) => savePrice(row, 'sell', newPrice)"
 										@cancel="cancelEditPrice" />
@@ -997,13 +1022,15 @@ function getServerName(serverId) {
 					</div>
 				</div>
 
-				<div
-					v-else
-					class="bg-norway border-2 border-dashed border-gray-asparagus/40 rounded-lg px-6 py-10 text-center text-heavy-metal space-y-3">
-					<div class="text-xl font-semibold">No items in this shop yet</div>
-					<p class="text-sm text-gray-600">
-						Add your first item to start tracking prices and inventory.
-					</p>
+				<div v-else class="bg-white rounded-lg pt-6 pr-6 pb-6">
+					<div class="text-gray-600">
+						<p class="text-lg font-medium mb-2">No items in this shop yet</p>
+						<p class="text-sm">Click "Add Item" to get started with your shop items.</p>
+					</div>
+				</div>
+
+				<!-- Add Item Button -->
+				<div class="mt-4 flex justify-start">
 					<BaseButton
 						type="button"
 						variant="primary"
@@ -1012,7 +1039,7 @@ function getServerName(serverId) {
 						<template #left-icon>
 							<PlusIcon />
 						</template>
-						Add Your First Item
+						Add Item
 					</BaseButton>
 				</div>
 			</div>
@@ -1170,6 +1197,7 @@ function getServerName(serverId) {
 			:available-items="availableItemsForAdding"
 			:editing-item="editingItem"
 			:server="selectedServer"
+			:shop="selectedShop"
 			display-variant="modal"
 			@submit="handleItemSubmit"
 			@cancel="cancelForm" />
