@@ -208,7 +208,10 @@ function resolveRowKey(row, index) {
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-for="(row, rowIndex) in sortedRows" :key="resolveRowKey(row, rowIndex)">
+				<tr
+					v-for="(row, rowIndex) in sortedRows"
+					:key="resolveRowKey(row, rowIndex)"
+					:class="hoverable ? 'hover:bg-sea-mist [&>td]:hover:bg-sea-mist' : ''">
 					<td
 						v-for="column in columns"
 						:key="column.key"
@@ -217,7 +220,6 @@ function resolveRowKey(row, index) {
 							layoutClasses.cellPadding,
 							layoutClasses.fontSize,
 							alignmentClasses[column.key],
-							hoverable ? 'hover:bg-sea-mist' : '',
 							column.width
 						]"
 						:style="column.widthStyle || null">

@@ -914,6 +914,7 @@ function getServerName(serverId) {
 									:rows="categoryRows"
 									row-key="id"
 									:layout="layout"
+									:hoverable="true"
 									:caption="category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()">
 									<template #cell-item="{ row, layout }">
 										<div class="flex items-center">
@@ -927,18 +928,20 @@ function getServerName(serverId) {
 											<div class="font-medium text-gray-900">{{ row.item }}</div>
 										</div>
 									</template>
-									<template #cell-buyPrice="{ row }">
+									<template #cell-buyPrice="{ row, layout }">
 										<InlinePriceInput
 											:value="row._originalItem?.buy_price"
+											:layout="layout"
 											:is-editing="editingPriceId === row.id && editingPriceType === 'buy'"
 											:is-saving="savingPriceId === row.id && savingPriceType === 'buy'"
 											@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'buy'); else cancelEditPrice() }"
 											@save="(newPrice) => savePrice(row, 'buy', newPrice)"
 											@cancel="cancelEditPrice" />
 									</template>
-									<template #cell-sellPrice="{ row }">
+									<template #cell-sellPrice="{ row, layout }">
 										<InlinePriceInput
 											:value="row._originalItem?.sell_price"
+											:layout="layout"
 											:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
 											:is-saving="savingPriceId === row.id && savingPriceType === 'sell'"
 											@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"
@@ -970,7 +973,8 @@ function getServerName(serverId) {
 								:columns="baseTableColumns"
 								:rows="baseTableRows"
 								row-key="id"
-								:layout="layout">
+								:layout="layout"
+								:hoverable="true">
 								<template #cell-item="{ row, layout }">
 									<div class="flex items-center">
 										<div v-if="row.image" :class="[layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8', 'mr-3 flex-shrink-0']">
@@ -983,18 +987,20 @@ function getServerName(serverId) {
 										<div class="font-medium text-gray-900">{{ row.item }}</div>
 									</div>
 								</template>
-								<template #cell-buyPrice="{ row }">
+								<template #cell-buyPrice="{ row, layout }">
 									<InlinePriceInput
 										:value="row._originalItem?.buy_price"
+										:layout="layout"
 										:is-editing="editingPriceId === row.id && editingPriceType === 'buy'"
 										:is-saving="savingPriceId === row.id && savingPriceType === 'buy'"
 										@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'buy'); else cancelEditPrice() }"
 										@save="(newPrice) => savePrice(row, 'buy', newPrice)"
 										@cancel="cancelEditPrice" />
 								</template>
-								<template #cell-sellPrice="{ row }">
+								<template #cell-sellPrice="{ row, layout }">
 									<InlinePriceInput
 										:value="row._originalItem?.sell_price"
+										:layout="layout"
 										:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
 										:is-saving="savingPriceId === row.id && savingPriceType === 'sell'"
 										@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"

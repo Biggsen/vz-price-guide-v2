@@ -14,6 +14,11 @@ const props = defineProps({
 	isSaving: {
 		type: Boolean,
 		default: false
+	},
+	layout: {
+		type: String,
+		default: 'comfortable',
+		validator: (value) => ['comfortable', 'condensed'].includes(value)
 	}
 })
 
@@ -91,8 +96,10 @@ function handleEscape() {
 }
 
 const displayValue = computed(() => {
-	if (props.value === null || props.value === undefined) return '0.00'
-	return parseFloat(props.value).toFixed(2)
+	if (props.value === null || props.value === undefined || props.value === '') return '—'
+	const numValue = parseFloat(props.value)
+	if (isNaN(numValue) || numValue === 0) return '—'
+	return numValue.toFixed(2)
 })
 </script>
 
@@ -117,7 +124,18 @@ const displayValue = computed(() => {
 		@blur="handleBlur"
 		@keyup.enter="handleEnter"
 		@keydown.escape="handleEscape"
-		class="w-full text-right text-sm text-heavy-metal focus:outline-none bg-norway [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+		:class="[
+			'w-full text-right text-heavy-metal focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
+			layout === 'condensed' ? 'text-sm' : 'text-base',
+			'editing-input'
+		]"
 		autofocus />
 </template>
+
+<style>
+/* Global style to target parent td when input is editing */
+td:has(.editing-input) {
+	background-color: #E3C578 !important;
+}
+</style>
 
