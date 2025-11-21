@@ -300,10 +300,20 @@ async function handleShopSubmit() {
 	shopServerValidationError.value = null
 
 	try {
+		// For own shops, use the user's Minecraft username from their profile
+		const shopData = { ...shopForm.value }
+		if (shopData.is_own_shop) {
+			// Fallback chain: minecraft_username -> display_name -> email -> empty
+			shopData.player = userProfile.value?.minecraft_username 
+				|| userProfile.value?.display_name 
+				|| user.value?.email?.split('@')[0] 
+				|| ''
+		}
+
 		if (editingShop.value) {
-			await updateShop(editingShop.value.id, shopForm.value)
+			await updateShop(editingShop.value.id, shopData)
 		} else {
-			await createShop(user.value.uid, shopForm.value)
+			await createShop(user.value.uid, shopData)
 		}
 		closeShopModals()
 	} catch (err) {
@@ -472,7 +482,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 											:label="shop.name"
 											:loading="shopLoading"
 											:avatar-url="userProfile?.minecraft_avatar_url || null"
-											:shop-name="userProfile?.minecraft_username || userProfile?.display_name || null"
+											:shop-name="shop.player || userProfile?.minecraft_username || userProfile?.display_name || user?.email?.split('@')[0] || null"
 											@edit="showEditShopForm(shop)"
 											@delete="requestDeleteShop(shop)" />
 										<li
@@ -565,7 +575,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 					</div>
 				</div>
 
-				<div>
+				<div v-if="!shopForm.is_own_shop">
 					<label for="shop-player" class="block text-sm font-medium text-gray-700 mb-1">
 						Player (Minecraft Username)
 					</label>
