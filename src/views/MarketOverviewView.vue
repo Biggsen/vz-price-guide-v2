@@ -6,7 +6,8 @@ import { query, collection, orderBy, where } from 'firebase/firestore'
 import { useShops, useServerShops } from '../utils/shopProfile.js'
 import { useServers } from '../utils/serverProfile.js'
 import { useServerShopItems } from '../utils/shopItems.js'
-import ShopItemTable from '../components/ShopItemTable.vue'
+import BaseTable from '../components/BaseTable.vue'
+import { getImageUrl } from '../utils/image.js'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -171,6 +172,116 @@ const allVisibleItems = computed(() => {
 		return nameA.localeCompare(nameB)
 	})
 })
+
+// BaseTable column definitions
+const baseTableColumns = computed(() => {
+	const columns = [
+		{ key: 'item', label: 'Item', sortable: true, headerAlign: 'center' },
+		{ key: 'shop', label: 'Shop', sortable: true, headerAlign: 'center' },
+		{ key: 'buyPrice', label: 'Buy Price', align: 'right', headerAlign: 'center', sortable: true, width: 'w-32' },
+		{ key: 'sellPrice', label: 'Sell Price', align: 'right', headerAlign: 'center', sortable: true, width: 'w-32' },
+		{
+			key: 'profitMargin',
+			label: 'Profit %',
+			align: 'center',
+			headerAlign: 'center',
+			sortable: true,
+			width: 'w-32',
+			sortFn: (a, b) => {
+				// Extract numeric value from formatted string (e.g., "66.7%" -> 66.7)
+				const valueA = a.profitMargin === '—' ? -Infinity : parseFloat(a.profitMargin) || 0
+				const valueB = b.profitMargin === '—' ? -Infinity : parseFloat(b.profitMargin) || 0
+				return valueA - valueB
+			}
+		},
+		{
+			key: 'lastUpdated',
+			label: 'Last Updated',
+			sortable: true,
+			headerAlign: 'center',
+			width: 'w-40',
+			sortFn: (a, b) => {
+				// Sort by timestamp
+				const valueA = a._lastUpdatedTimestamp || 0
+				const valueB = b._lastUpdatedTimestamp || 0
+				return valueA - valueB
+			}
+		}
+	]
+	return columns
+})
+
+// Format date helper
+function formatDate(dateString) {
+	if (!dateString) return '—'
+
+	const date = new Date(dateString)
+	const now = new Date()
+	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+	const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+	const diffTime = today.getTime() - itemDate.getTime()
+	const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+	if (diffDays === 0) {
+		return 'Today'
+	} else if (diffDays === 1) {
+		return 'Yesterday'
+	} else {
+		return `${diffDays} days ago`
+	}
+}
+
+// Calculate profit margin helper
+function calculateProfitMargin(buyPrice, sellPrice) {
+	if (!buyPrice || !sellPrice || buyPrice === 0) return null
+	const profit = buyPrice - sellPrice
+	const margin = (profit / buyPrice) * 100
+	return margin
+}
+
+// Transform shop items for BaseTable
+function transformShopItemForTable(shopItem) {
+	const profitMargin = calculateProfitMargin(shopItem.buy_price, shopItem.sell_price)
+	const lastUpdatedTimestamp = shopItem.last_updated ? new Date(shopItem.last_updated).getTime() : 0
+	return {
+		id: shopItem.id,
+		item: shopItem.itemData?.name || 'Unknown Item',
+		image: shopItem.itemData?.image || null,
+		shop: shopItem.shopData?.name || 'Unknown Shop',
+		shopLocation: shopItem.shopData?.location || null,
+		shopId: shopItem.shopData?.id || null,
+		buyPrice: shopItem.buy_price !== null && shopItem.buy_price !== undefined ? shopItem.buy_price.toFixed(2) : '—',
+		sellPrice: shopItem.sell_price !== null && shopItem.sell_price !== undefined ? shopItem.sell_price.toFixed(2) : '—',
+		profitMargin: profitMargin !== null ? `${profitMargin.toFixed(1)}%` : '—',
+		lastUpdated: formatDate(shopItem.last_updated),
+		_lastUpdatedTimestamp: lastUpdatedTimestamp,
+		_originalItem: shopItem // Keep reference to original item
+	}
+}
+
+// BaseTable rows for list view
+const baseTableRows = computed(() => {
+	if (!allVisibleItems.value) return []
+	return allVisibleItems.value.map(transformShopItemForTable)
+})
+
+// BaseTable rows grouped by category
+const baseTableRowsByCategory = computed(() => {
+	if (!filteredShopItemsByCategory.value) return {}
+	const grouped = {}
+	Object.entries(filteredShopItemsByCategory.value).forEach(([category, categoryItems]) => {
+		grouped[category] = categoryItems.map(transformShopItemForTable)
+	})
+	return grouped
+})
+
+// Navigate to shop items
+function navigateToShopItems(shopId) {
+	if (shopId) {
+		router.push({ name: 'shop', params: { shopId } })
+	}
+}
 
 // Watch for user changes - redirect if not logged in
 watch(
@@ -611,19 +722,52 @@ const priceAnalysis = computed(() => {
 					</div>
 					<div v-else class="space-y-6">
 						<div
-							v-for="(categoryItems, category) in filteredShopItemsByCategory"
-							:key="category">
-							<h3
-								class="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
-								{{ category }}
-							</h3>
-							<ShopItemTable
-								:items="categoryItems"
-								:server="selectedServer"
-								:show-shop-names="true"
-								:read-only="true"
-								:view-mode="viewMode"
-								:layout="layout" />
+							v-for="(categoryRows, category) in baseTableRowsByCategory"
+							:key="category"
+							class="mb-6">
+							<BaseTable
+								:columns="baseTableColumns"
+								:rows="categoryRows"
+								row-key="id"
+								:layout="layout"
+								:caption="category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()">
+								<template #cell-item="{ row, layout }">
+									<div class="flex items-center">
+										<div v-if="row.image" :class="[layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8', 'mr-3 flex-shrink-0']">
+											<img
+												:src="getImageUrl(row.image)"
+												:alt="row.item"
+												class="w-full h-full object-contain"
+												loading="lazy" />
+										</div>
+										<div class="font-medium text-gray-900">{{ row.item }}</div>
+									</div>
+								</template>
+								<template #cell-shop="{ row }">
+									<div>
+										<div
+											@click="navigateToShopItems(row.shopId)"
+											class="text-md text-gray-900 cursor-pointer hover:text-blue-600 transition-colors">
+											{{ row.shop }}
+										</div>
+										<div v-if="row.shopLocation" class="text-xs text-gray-500">
+											📍 {{ row.shopLocation }}
+										</div>
+									</div>
+								</template>
+								<template #cell-buyPrice="{ row }">
+									<div class="text-right">{{ row.buyPrice }}</div>
+								</template>
+								<template #cell-sellPrice="{ row }">
+									<div class="text-right">{{ row.sellPrice }}</div>
+								</template>
+								<template #cell-profitMargin="{ row }">
+									<div class="text-center">{{ row.profitMargin }}</div>
+								</template>
+								<template #cell-lastUpdated="{ row }">
+									<div class="text-center">{{ row.lastUpdated }}</div>
+								</template>
+							</BaseTable>
 						</div>
 					</div>
 				</template>
@@ -643,17 +787,49 @@ const priceAnalysis = computed(() => {
 						</div>
 					</div>
 					<div v-else>
-						<h3
-							class="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
-							All Items
-						</h3>
-						<ShopItemTable
-							:items="allVisibleItems"
-							:server="selectedServer"
-							:show-shop-names="true"
-							:read-only="true"
-							:view-mode="viewMode"
-							:layout="layout" />
+						<BaseTable
+							:columns="baseTableColumns"
+							:rows="baseTableRows"
+							row-key="id"
+							:layout="layout"
+							caption="All Items">
+							<template #cell-item="{ row, layout }">
+								<div class="flex items-center">
+									<div v-if="row.image" :class="[layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8', 'mr-3 flex-shrink-0']">
+										<img
+											:src="getImageUrl(row.image)"
+											:alt="row.item"
+											class="w-full h-full object-contain"
+											loading="lazy" />
+									</div>
+									<div class="font-medium text-gray-900">{{ row.item }}</div>
+								</div>
+							</template>
+							<template #cell-shop="{ row }">
+								<div>
+									<div
+										@click="navigateToShopItems(row.shopId)"
+										class="text-md text-gray-900 cursor-pointer hover:text-blue-600 transition-colors">
+										{{ row.shop }}
+									</div>
+									<div v-if="row.shopLocation" class="text-xs text-gray-500">
+										📍 {{ row.shopLocation }}
+									</div>
+								</div>
+							</template>
+							<template #cell-buyPrice="{ row }">
+								<div class="text-right">{{ row.buyPrice }}</div>
+							</template>
+							<template #cell-sellPrice="{ row }">
+								<div class="text-right">{{ row.sellPrice }}</div>
+							</template>
+							<template #cell-profitMargin="{ row }">
+								<div class="text-center">{{ row.profitMargin }}</div>
+							</template>
+							<template #cell-lastUpdated="{ row }">
+								<div class="text-center">{{ row.lastUpdated }}</div>
+							</template>
+						</BaseTable>
 					</div>
 				</template>
 			</div>
