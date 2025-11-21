@@ -6,8 +6,18 @@ import { query, collection, orderBy, where } from 'firebase/firestore'
 import { useShops, useServerShops } from '../utils/shopProfile.js'
 import { useServers } from '../utils/serverProfile.js'
 import { useServerShopItems } from '../utils/shopItems.js'
+import BaseStatCard from '../components/BaseStatCard.vue'
 import BaseTable from '../components/BaseTable.vue'
 import { getImageUrl } from '../utils/image.js'
+import { generateMinecraftAvatar } from '../utils/userProfile.js'
+import {
+	BuildingStorefrontIcon,
+	CheckCircleIcon,
+	FolderIcon,
+	TagIcon,
+	UserIcon,
+	UsersIcon
+} from '@heroicons/vue/24/outline'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -249,6 +259,7 @@ function transformShopItemForTable(shopItem) {
 		item: shopItem.itemData?.name || 'Unknown Item',
 		image: shopItem.itemData?.image || null,
 		shop: shopItem.shopData?.name || 'Unknown Shop',
+		shopPlayer: shopItem.shopData?.player || null,
 		shopLocation: shopItem.shopData?.location || null,
 		shopId: shopItem.shopData?.id || null,
 		buyPrice: shopItem.buy_price !== null && shopItem.buy_price !== undefined ? shopItem.buy_price.toFixed(2) : '—',
@@ -485,8 +496,51 @@ const priceAnalysis = computed(() => {
 		</div>
 
 		<div class="mb-6">
-			<h1 class="text-3xl font-bold text-gray-900 mb-2">Market Overview</h1>
-			<p class="text-gray-600">Browse and analyze items across all shops on your server.</p>
+			<h1 class="text-3xl font-bold text-gray-900 mb-2">
+				{{ selectedServer ? `${selectedServer.name} Market Overview` : 'Market Overview' }}
+			</h1>
+			<p class="text-gray-600">Browse and analyze items across all shops.</p>
+		</div>
+
+		<!-- Market stats -->
+		<div v-if="selectedServer && marketStats" class="mb-6">
+			<div class="flex flex-wrap gap-12">
+				<BaseStatCard variant="inline">
+					<template #icon>
+						<TagIcon />
+					</template>
+					<template #subheading>Items</template>
+					<template #number>{{ marketStats.totalItems }}</template>
+				</BaseStatCard>
+				<BaseStatCard variant="inline">
+					<template #icon>
+						<FolderIcon />
+					</template>
+					<template #subheading>Categories</template>
+					<template #number>{{ marketStats.categoriesCount }}</template>
+				</BaseStatCard>
+				<BaseStatCard variant="inline">
+					<template #icon>
+						<BuildingStorefrontIcon />
+					</template>
+					<template #subheading>Shops</template>
+					<template #number>{{ marketStats.totalShops }}</template>
+				</BaseStatCard>
+				<BaseStatCard variant="inline">
+					<template #icon>
+						<UserIcon />
+					</template>
+					<template #subheading>Your Shops</template>
+					<template #number>{{ marketStats.userShops }}</template>
+				</BaseStatCard>
+				<BaseStatCard variant="inline">
+					<template #icon>
+						<UsersIcon />
+					</template>
+					<template #subheading>Player shops</template>
+					<template #number>{{ marketStats.competitorShops }}</template>
+				</BaseStatCard>
+			</div>
 		</div>
 
 		<!-- Error message -->
@@ -526,7 +580,7 @@ const priceAnalysis = computed(() => {
 					type="text"
 					v-model="searchQuery"
 					placeholder="Search for items..."
-					class="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+					class="w-full md:w-1/2 border-2 border-gray-asparagus rounded px-3 py-2 mb-1 h-10" />
 				<p class="text-xs text-gray-500 mt-1">Tip: Use commas to search multiple terms</p>
 				<div v-if="searchQuery" class="mt-2 text-sm text-gray-600">
 					Showing {{ marketStats?.totalItems || 0 }} item{{
@@ -538,18 +592,18 @@ const priceAnalysis = computed(() => {
 
 			<!-- View Mode and Layout Toggle -->
 			<div v-if="selectedServerId" class="mb-6">
-				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-8">
+				<div class="flex flex-wrap items-center gap-6">
 					<!-- View Mode -->
 					<div>
-						<span class="text-sm font-medium text-gray-700 mb-2 block">View as:</span>
-						<div class="inline-flex border-2 border-gray-300 rounded overflow-hidden">
+						<span class="text-sm font-medium text-gray-700 block">View as:</span>
+						<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
 							<button
 								@click="viewMode = 'categories'"
 								:class="[
 									viewMode === 'categories'
-										? 'bg-blue-600 text-white'
-										: 'bg-white text-gray-700 hover:bg-gray-50',
-									'px-3 py-1 text-sm font-medium transition border-r border-gray-300 last:border-r-0'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-sea-mist',
+									'px-3 py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
 								]">
 								Categories
 							</button>
@@ -557,8 +611,8 @@ const priceAnalysis = computed(() => {
 								@click="viewMode = 'list'"
 								:class="[
 									viewMode === 'list'
-										? 'bg-blue-600 text-white'
-										: 'bg-white text-gray-700 hover:bg-gray-50',
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-sea-mist',
 									'px-3 py-1 text-sm font-medium transition'
 								]">
 								List
@@ -568,15 +622,15 @@ const priceAnalysis = computed(() => {
 
 					<!-- Layout -->
 					<div>
-						<span class="text-sm font-medium text-gray-700 mb-2 block">Layout:</span>
-						<div class="inline-flex border-2 border-gray-300 rounded overflow-hidden">
+						<span class="text-sm font-medium text-gray-700 block">Layout:</span>
+						<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
 							<button
 								@click="layout = 'comfortable'"
 								:class="[
 									layout === 'comfortable'
-										? 'bg-blue-600 text-white'
-										: 'bg-white text-gray-700 hover:bg-gray-50',
-									'px-3 py-1 text-sm font-medium transition border-r border-gray-300 last:border-r-0'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-sea-mist',
+									'px-3 py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
 								]">
 								Comfortable
 							</button>
@@ -584,63 +638,12 @@ const priceAnalysis = computed(() => {
 								@click="layout = 'condensed'"
 								:class="[
 									layout === 'condensed'
-										? 'bg-blue-600 text-white'
-										: 'bg-white text-gray-700 hover:bg-gray-50',
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-sea-mist',
 									'px-3 py-1 text-sm font-medium transition'
 								]">
 								Condensed
 							</button>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Market stats -->
-			<div v-if="selectedServer && marketStats" class="mb-6">
-				<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-					<div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-						<div>
-							<h2 class="text-xl font-semibold text-gray-900">
-								{{ selectedServer.name }} Market
-							</h2>
-							<p class="text-gray-600">
-								{{ selectedServer.name }} • Minecraft
-								{{ selectedServer.minecraft_version }}
-							</p>
-						</div>
-					</div>
-
-					<!-- Stats grid -->
-					<div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
-						<div class="bg-blue-50 p-3 rounded-lg">
-							<div class="text-2xl font-bold text-blue-600">
-								{{ marketStats.totalItems }}
-							</div>
-							<div class="text-sm text-gray-600">Items</div>
-						</div>
-						<div class="bg-green-50 p-3 rounded-lg">
-							<div class="text-2xl font-bold text-green-600">
-								{{ marketStats.totalShops }}
-							</div>
-							<div class="text-sm text-gray-600">Shops</div>
-						</div>
-						<div class="bg-purple-50 p-3 rounded-lg">
-							<div class="text-2xl font-bold text-purple-600">
-								{{ marketStats.userShops }}
-							</div>
-							<div class="text-sm text-gray-600">Your Shops</div>
-						</div>
-						<div class="bg-orange-50 p-3 rounded-lg">
-							<div class="text-2xl font-bold text-orange-600">
-								{{ marketStats.competitorShops }}
-							</div>
-							<div class="text-sm text-gray-600">Competitors</div>
-						</div>
-						<div class="bg-gray-50 p-3 rounded-lg">
-							<div class="text-2xl font-bold text-gray-600">
-								{{ marketStats.categoriesCount }}
-							</div>
-							<div class="text-sm text-gray-600">Categories</div>
 						</div>
 					</div>
 				</div>
@@ -730,6 +733,7 @@ const priceAnalysis = computed(() => {
 								:rows="categoryRows"
 								row-key="id"
 								:layout="layout"
+								:hoverable="true"
 								:caption="category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()">
 								<template #cell-item="{ row, layout }">
 									<div class="flex items-center">
@@ -747,8 +751,14 @@ const priceAnalysis = computed(() => {
 									<div>
 										<div
 											@click="navigateToShopItems(row.shopId)"
-											class="text-md text-gray-900 cursor-pointer hover:text-blue-600 transition-colors">
-											{{ row.shop }}
+											class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
+											<img
+												v-if="row.shopPlayer || row.shop"
+												:src="generateMinecraftAvatar(row.shopPlayer || row.shop)"
+												:alt="row.shop"
+												class="w-5 h-5 rounded mr-2 flex-shrink-0"
+												@error="$event.target.style.display = 'none'" />
+											<span>{{ row.shop }}</span>
 										</div>
 										<div v-if="row.shopLocation" class="text-xs text-gray-500">
 											📍 {{ row.shopLocation }}
@@ -792,6 +802,7 @@ const priceAnalysis = computed(() => {
 							:rows="baseTableRows"
 							row-key="id"
 							:layout="layout"
+							:hoverable="true"
 							caption="All Items">
 							<template #cell-item="{ row, layout }">
 								<div class="flex items-center">
@@ -809,8 +820,14 @@ const priceAnalysis = computed(() => {
 								<div>
 									<div
 										@click="navigateToShopItems(row.shopId)"
-										class="text-md text-gray-900 cursor-pointer hover:text-blue-600 transition-colors">
-										{{ row.shop }}
+										class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
+										<img
+											v-if="row.shopPlayer || row.shop"
+											:src="generateMinecraftAvatar(row.shopPlayer || row.shop)"
+											:alt="row.shop"
+											class="w-5 h-5 rounded mr-2 flex-shrink-0"
+											@error="$event.target.style.display = 'none'" />
+										<span>{{ row.shop }}</span>
 									</div>
 									<div v-if="row.shopLocation" class="text-xs text-gray-500">
 										📍 {{ row.shopLocation }}
