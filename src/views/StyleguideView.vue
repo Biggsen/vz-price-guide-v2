@@ -3,15 +3,19 @@ import { ref } from 'vue'
 import {
 	ArrowDownIcon,
 	ArrowDownTrayIcon,
+	ChartBarIcon,
 	Cog6ToothIcon,
+	CurrencyDollarIcon,
 	PencilIcon,
 	RocketLaunchIcon,
 	TrashIcon,
+	UsersIcon,
 	XMarkIcon
 } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseCard from '@/components/BaseCard.vue'
 import BaseIconButton from '@/components/BaseIconButton.vue'
+import BaseStatCard from '@/components/BaseStatCard.vue'
 import BaseTable from '@/components/BaseTable.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'
 import { getImageUrl } from '@/utils/image.js'
@@ -1170,6 +1174,54 @@ const baseTableRows = [
 									</BaseButton>
 								</template>
 							</BaseCard>
+						</div>
+					</div>
+				</div>
+
+				<!-- Stat Cards -->
+				<div class="space-y-6">
+					<h3 class="text-lg font-semibold text-gray-800">Stat Cards (BaseStatCard Component)</h3>
+					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+						<div class="space-y-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+								Primary Variant
+							</p>
+							<BaseStatCard variant="primary">
+								<template #icon>
+									<ChartBarIcon />
+								</template>
+								<template #subheading>Total Items</template>
+								<template #number>1,234</template>
+							</BaseStatCard>
+						</div>
+
+						<div class="space-y-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+								Secondary Variant
+							</p>
+							<BaseStatCard variant="secondary">
+								<template #icon>
+									<UsersIcon />
+								</template>
+								<template #subheading>Active Users</template>
+								<template #number>567</template>
+							</BaseStatCard>
+						</div>
+
+						<div class="space-y-3">
+							<p
+								class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+								Tertiary Variant
+							</p>
+							<BaseStatCard variant="tertiary">
+								<template #icon>
+									<CurrencyDollarIcon />
+								</template>
+								<template #subheading>Revenue</template>
+								<template #number>$25,000</template>
+							</BaseStatCard>
 						</div>
 					</div>
 				</div>
