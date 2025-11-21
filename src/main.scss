@@ -13,6 +13,16 @@
 			@apply btn-secondary bg-white text-gray-700 border-gray-300 hover:bg-gray-50;
 		}
 	}
+
+	.radio-input {
+		@apply w-5 h-5;
+		accent-color: theme('colors.gray-asparagus');
+	}
+
+	.checkbox-input {
+		@apply w-4 h-4 rounded;
+		accent-color: theme('colors.gray-asparagus');
+	}
 }
 
 body {

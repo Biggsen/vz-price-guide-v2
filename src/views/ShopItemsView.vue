@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
 import { useRouter, useRoute } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
@@ -18,8 +18,8 @@ import InlinePriceInput from '../components/InlinePriceInput.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
-import { ArrowLeftIcon, PlusIcon } from '@heroicons/vue/20/solid'
-import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { ArrowLeftIcon, PlusIcon, ArrowPathIcon } from '@heroicons/vue/20/solid'
+import { PencilIcon, TrashIcon, ArchiveBoxXMarkIcon } from '@heroicons/vue/24/outline'
 import { getImageUrl } from '../utils/image.js'
 
 const user = useCurrentUser()
@@ -44,6 +44,9 @@ const editingPriceId = ref(null)
 const editingPriceType = ref(null) // 'buy' or 'sell'
 const savingPriceId = ref(null)
 const savingPriceType = ref(null) // 'buy' or 'sell'
+const savingItemId = ref(null) // Track which item is being saved during quick edit
+const showItemSavingSpinner = ref(null) // Show spinner after delay
+let itemSavingTimeout = null
 
 // Edit shop modal state
 const showEditShopModal = ref(false)
@@ -52,14 +55,29 @@ const shopFormLoading = ref(false)
 const shopFormError = ref(null)
 const shopNameValidationError = ref(null)
 const shopServerValidationError = ref(null)
+const useShopNameAsPlayer = ref(false)
 const shopForm = ref({
 	name: '',
+	player: '',
 	server_id: '',
 	location: '',
 	description: '',
 	is_own_shop: false,
 	owner_funds: null
 })
+
+function resetShopForm() {
+	shopForm.value = {
+		name: '',
+		player: '',
+		server_id: '',
+		location: '',
+		description: '',
+		is_own_shop: false,
+		owner_funds: null
+	}
+	useShopNameAsPlayer.value = false
+}
 
 // Get user's shops and servers
 const { shops } = useShops(computed(() => user.value?.uid))
@@ -98,7 +116,23 @@ const selectedServer = computed(() =>
 		? servers.value.find((s) => s.id === selectedShop.value.server_id)
 		: null
 )
-const isShopFormValid = computed(() => shopForm.value.name.trim() && shopForm.value.server_id)
+const isShopFormValid = computed(() => shopForm.value.name.trim())
+
+// Watch shop name to auto-fill player when checkbox is checked
+watch(() => shopForm.value.name, (newName) => {
+	if (useShopNameAsPlayer.value && newName) {
+		shopForm.value.player = newName
+	}
+})
+
+// Watch checkbox to sync player field
+watch(useShopNameAsPlayer, (checked) => {
+	if (checked && shopForm.value.name) {
+		shopForm.value.player = shopForm.value.name
+	} else if (!checked) {
+		shopForm.value.player = ''
+	}
+})
 
 // Get all items from the main collection for the item selector
 const allItemsQuery = computed(() => {
@@ -380,6 +414,36 @@ watch(
 	{ deep: true }
 )
 
+// Watch savingItemId to show spinner after delay
+watch(savingItemId, (newVal) => {
+	// Clear any existing timeout
+	if (itemSavingTimeout) {
+		clearTimeout(itemSavingTimeout)
+		itemSavingTimeout = null
+	}
+
+	if (newVal) {
+		// Wait 500ms before showing spinner
+		itemSavingTimeout = setTimeout(() => {
+			// Only show if still saving after delay
+			if (savingItemId.value === newVal) {
+				showItemSavingSpinner.value = newVal
+			}
+		}, 500)
+	} else {
+		// Immediately hide spinner when not saving
+		showItemSavingSpinner.value = null
+	}
+})
+
+// Clean up timeout on unmount
+onUnmounted(() => {
+	if (itemSavingTimeout) {
+		clearTimeout(itemSavingTimeout)
+		itemSavingTimeout = null
+	}
+})
+
 // Form handlers
 function showAddItemForm() {
 	if (!selectedShop.value || !selectedShopId.value || !selectedServer.value) {
@@ -428,6 +492,15 @@ async function handleItemSubmit(itemData) {
 	loading.value = true
 	error.value = null
 
+	// Capture item ID before closing modal (editingItem gets cleared in cancelForm)
+	const itemIdBeingEdited = editingItem.value?.id
+
+	// Set saving state if editing an existing item
+	if (itemIdBeingEdited) {
+		savingItemId.value = itemIdBeingEdited
+		console.log('ShopItemsView: Setting savingItemId to', itemIdBeingEdited, 'for modal edit')
+	}
+
 	try {
 		if (editingItem.value) {
 			// Update existing shop item
@@ -450,8 +523,16 @@ async function handleItemSubmit(itemData) {
 	} catch (err) {
 		console.error('Error saving shop item:', err)
 		error.value = err.message || 'Failed to save shop item. Please try again.'
+		// Clear saving state on error
+		if (itemIdBeingEdited) {
+			savingItemId.value = null
+		}
 	} finally {
 		loading.value = false
+		// Clear saving state
+		if (itemIdBeingEdited) {
+			savingItemId.value = null
+		}
 	}
 }
 
@@ -511,10 +592,11 @@ async function handleQuickEdit(updatedItem) {
 
 	if (!user.value?.uid || !selectedShopId.value) return
 
-	// Only set global loading if not a price update (price updates use per-item loading)
+	// Set saving state for this item
 	const isPriceUpdate = savingPriceId.value !== null
 	if (!isPriceUpdate) {
-		loading.value = true
+		savingItemId.value = updatedItem.id
+		console.log('ShopItemsView: Setting savingItemId to', updatedItem.id)
 	}
 	error.value = null
 
@@ -547,11 +629,16 @@ async function handleQuickEdit(updatedItem) {
 	} catch (err) {
 		console.error('Error updating shop item:', err)
 		error.value = err.message || 'Failed to update shop item. Please try again.'
-	} finally {
-		// Only clear global loading if not a price update
+		// Clear saving state immediately on error
 		const isPriceUpdate = savingPriceId.value !== null
 		if (!isPriceUpdate) {
-			loading.value = false
+			savingItemId.value = null
+		}
+	} finally {
+		// Clear saving state if not a price update
+		const isPriceUpdate = savingPriceId.value !== null
+		if (!isPriceUpdate) {
+			savingItemId.value = null
 		}
 	}
 }
@@ -604,16 +691,6 @@ function cancelEditPrice() {
 	editingPriceType.value = null
 }
 
-function resetShopForm() {
-	shopForm.value = {
-		name: '',
-		server_id: '',
-		location: '',
-		description: '',
-		is_own_shop: false,
-		owner_funds: null
-	}
-}
 
 function openEditShopModal() {
 	if (!selectedShop.value) return
@@ -626,6 +703,7 @@ function openEditShopModal() {
 	shopFormLoading.value = false
 	shopForm.value = {
 		name: selectedShop.value.name,
+		player: selectedShop.value.player || '',
 		server_id: selectedShop.value.server_id,
 		location: selectedShop.value.location || '',
 		description: selectedShop.value.description || '',
@@ -636,6 +714,7 @@ function openEditShopModal() {
 				? null
 				: selectedShop.value.owner_funds
 	}
+	useShopNameAsPlayer.value = (selectedShop.value.player || '') === selectedShop.value.name
 }
 
 function closeEditShopModal() {
@@ -645,6 +724,7 @@ function closeEditShopModal() {
 	shopNameValidationError.value = null
 	shopServerValidationError.value = null
 	shopFormLoading.value = false
+	useShopNameAsPlayer.value = false
 	resetShopForm()
 }
 
@@ -670,25 +750,23 @@ async function submitEditShop() {
 		return
 	}
 
-	if (!shopForm.value.server_id) {
-		shopServerValidationError.value = 'Server is required'
-		return
-	}
-
 	shopFormLoading.value = true
 
 	try {
-		await updateShop(editingShop.value.id, {
+		const shopData = {
 			name: shopForm.value.name.trim(),
-			server_id: shopForm.value.server_id,
+			server_id: editingShop.value.server_id,
 			location: shopForm.value.location?.trim() || '',
 			description: shopForm.value.description?.trim() || '',
-			is_own_shop: Boolean(shopForm.value.is_own_shop),
-			owner_funds:
-				shopForm.value.owner_funds === null
-					? null
-					: Number(parseFloat(shopForm.value.owner_funds.toString()).toFixed(2))
-		})
+			is_own_shop: editingShop.value.is_own_shop,
+			owner_funds: editingShop.value.owner_funds
+		}
+		
+		if (!shopForm.value.is_own_shop) {
+			shopData.player = shopForm.value.player?.trim() || ''
+		}
+		
+		await updateShop(editingShop.value.id, shopData)
 		closeEditShopModal()
 	} catch (err) {
 		console.error('Error updating shop:', err)
@@ -779,13 +857,6 @@ function getServerName(serverId) {
 			v-if="error"
 			class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
 			{{ error }}
-		</div>
-
-		<!-- Loading state -->
-		<div
-			v-if="loading"
-			class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-blue-700">
-			Processing...
 		</div>
 
 		<!-- No servers warning -->
@@ -925,18 +996,35 @@ function getServerName(serverId) {
 													class="w-full h-full object-contain"
 													loading="lazy" />
 											</div>
-											<div class="font-medium text-gray-900">{{ row.item }}</div>
+											<div class="font-medium text-gray-900 flex items-center justify-between w-full">
+												<span>{{ row.item }}</span>
+												<ArrowPathIcon
+													v-if="showItemSavingSpinner === row.id"
+													class="w-4 h-4 text-gray-500 animate-spin" />
+											</div>
 										</div>
 									</template>
 									<template #cell-buyPrice="{ row, layout }">
-										<InlinePriceInput
-											:value="row._originalItem?.buy_price"
-											:layout="layout"
-											:is-editing="editingPriceId === row.id && editingPriceType === 'buy'"
-											:is-saving="savingPriceId === row.id && savingPriceType === 'buy'"
-											@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'buy'); else cancelEditPrice() }"
-											@save="(newPrice) => savePrice(row, 'buy', newPrice)"
-											@cancel="cancelEditPrice" />
+										<div class="flex items-center justify-end gap-2">
+											<div
+												v-if="row._originalItem?.stock_quantity === 0"
+												class="flex-shrink-0 mr-auto"
+												title="Out of stock">
+												<ArchiveBoxXMarkIcon
+													class="w-5 h-5 text-current"
+													aria-label="Out of stock" />
+												<span class="sr-only">Out of stock</span>
+											</div>
+											<InlinePriceInput
+												:value="row._originalItem?.buy_price"
+												:layout="layout"
+												:is-editing="editingPriceId === row.id && editingPriceType === 'buy'"
+												:is-saving="savingPriceId === row.id && savingPriceType === 'buy'"
+												:strikethrough="row._originalItem?.stock_quantity === 0"
+												@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'buy'); else cancelEditPrice() }"
+												@save="(newPrice) => savePrice(row, 'buy', newPrice)"
+												@cancel="cancelEditPrice" />
+										</div>
 									</template>
 									<template #cell-sellPrice="{ row, layout }">
 										<InlinePriceInput
@@ -984,18 +1072,35 @@ function getServerName(serverId) {
 												class="w-full h-full object-contain"
 												loading="lazy" />
 										</div>
-										<div class="font-medium text-gray-900">{{ row.item }}</div>
+										<div class="font-medium text-gray-900 flex items-center justify-between w-full">
+											<span>{{ row.item }}</span>
+											<ArrowPathIcon
+												v-if="showItemSavingSpinner === row.id"
+												class="w-4 h-4 text-gray-500 animate-spin" />
+										</div>
 									</div>
 								</template>
 								<template #cell-buyPrice="{ row, layout }">
-									<InlinePriceInput
-										:value="row._originalItem?.buy_price"
-										:layout="layout"
-										:is-editing="editingPriceId === row.id && editingPriceType === 'buy'"
-										:is-saving="savingPriceId === row.id && savingPriceType === 'buy'"
-										@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'buy'); else cancelEditPrice() }"
-										@save="(newPrice) => savePrice(row, 'buy', newPrice)"
-										@cancel="cancelEditPrice" />
+									<div class="flex items-center justify-end gap-2">
+										<div
+											v-if="row._originalItem?.stock_quantity === 0"
+											class="flex-shrink-0 mr-auto"
+											title="Out of stock">
+											<ArchiveBoxXMarkIcon
+												class="w-5 h-5 text-current"
+												aria-label="Out of stock" />
+											<span class="sr-only">Out of stock</span>
+										</div>
+										<InlinePriceInput
+											:value="row._originalItem?.buy_price"
+											:layout="layout"
+											:is-editing="editingPriceId === row.id && editingPriceType === 'buy'"
+											:is-saving="savingPriceId === row.id && savingPriceType === 'buy'"
+											:strikethrough="row._originalItem?.stock_quantity === 0"
+											@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'buy'); else cancelEditPrice() }"
+											@save="(newPrice) => savePrice(row, 'buy', newPrice)"
+											@cancel="cancelEditPrice" />
+									</div>
 								</template>
 								<template #cell-sellPrice="{ row, layout }">
 									<InlinePriceInput
@@ -1077,25 +1182,25 @@ function getServerName(serverId) {
 				</div>
 			</div>
 
-			<div>
-				<label for="edit-shop-server" class="block text-sm font-medium text-gray-700 mb-1">
-					Server *
+			<div v-if="!shopForm.is_own_shop">
+				<label for="edit-shop-player" class="block text-sm font-medium text-gray-700 mb-1">
+					Player (Minecraft Username)
 				</label>
-				<select
-					id="edit-shop-server"
-					v-model="shopForm.server_id"
-					required
-					@change="shopServerValidationError = null; shopFormError = null"
-					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus">
-					<option value="">Select a server</option>
-					<option v-for="server in servers" :key="server.id" :value="server.id">
-						{{ server.name }}
-					</option>
-				</select>
-				<div
-					v-if="shopServerValidationError"
-					class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-					<span>{{ shopServerValidationError }}</span>
+				<div class="mt-2">
+					<label class="flex items-center mb-2 cursor-pointer">
+						<input
+							v-model="useShopNameAsPlayer"
+							type="checkbox"
+							class="mr-2 checkbox-input" />
+						<span class="text-sm text-gray-700">Use Shop Name as Player</span>
+					</label>
+					<input
+						id="edit-shop-player"
+						v-model="shopForm.player"
+						type="text"
+						:disabled="useShopNameAsPlayer"
+						placeholder="Enter Minecraft username"
+						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus disabled:bg-gray-100 disabled:cursor-not-allowed" />
 				</div>
 			</div>
 
@@ -1121,48 +1226,6 @@ function getServerName(serverId) {
 					rows="3"
 					placeholder="Optional description for this shop..."
 					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus"></textarea>
-			</div>
-
-			<div>
-				<label for="edit-owner-funds" class="block text-sm font-medium text-gray-700 mb-1">
-					Owner Funds
-				</label>
-				<input
-					id="edit-owner-funds"
-					:value="shopForm.owner_funds ?? ''"
-					@input="handleShopFundsInput"
-					type="number"
-					step="0.01"
-					min="0"
-					placeholder="0.00"
-					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
-				<p class="text-xs text-gray-500 mt-1">
-					Available funds for buying items from players.
-				</p>
-			</div>
-
-			<div>
-				<span class="block text-sm font-medium text-gray-700">Shop Type</span>
-				<div class="mt-3 flex flex-wrap gap-6">
-					<label class="flex items-center gap-2 text-sm text-gray-700">
-						<input
-							id="edit-shop-type-competitor"
-							v-model="shopForm.is_own_shop"
-							type="radio"
-							:value="false"
-							class="radio-input" />
-						<span>Competitor</span>
-					</label>
-					<label class="flex items-center gap-2 text-sm text-gray-700">
-						<input
-							id="edit-shop-type-own"
-							v-model="shopForm.is_own_shop"
-							type="radio"
-							:value="true"
-							class="radio-input" />
-						<span>My Shop</span>
-					</label>
-				</div>
 			</div>
 
 			<div

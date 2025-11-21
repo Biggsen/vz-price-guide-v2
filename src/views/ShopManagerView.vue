@@ -81,7 +81,7 @@ const shopForm = ref({
 })
 
 const isShopFormValid = computed(() => {
-	return shopForm.value.name.trim() && shopForm.value.server_id
+	return shopForm.value.name.trim() && (editingShop.value || shopForm.value.server_id)
 })
 
 // Watch shop name to auto-fill player when checkbox is checked
@@ -256,7 +256,7 @@ function showEditShopForm(shop) {
 		owner_funds:
 			shop.owner_funds === null || shop.owner_funds === undefined ? null : shop.owner_funds
 	}
-	useShopNameAsPlayer.value = false
+	useShopNameAsPlayer.value = (shop.player || '') === shop.name
 	shopCreateError.value = null
 	shopEditError.value = null
 	shopNameValidationError.value = null
@@ -288,7 +288,7 @@ async function handleShopSubmit() {
 		return
 	}
 
-	if (!shopForm.value.server_id) {
+	if (!editingShop.value && !shopForm.value.server_id) {
 		shopServerValidationError.value = 'Server selection is required'
 		return
 	}
@@ -580,12 +580,12 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 						Player (Minecraft Username)
 					</label>
 					<div class="mt-2">
-						<label class="flex items-center mb-2">
+						<label class="flex items-center mb-2 cursor-pointer">
 							<input
 								v-model="useShopNameAsPlayer"
 								type="checkbox"
-								class="checkbox-input" />
-							<span class="ml-2 text-sm text-gray-700">Use Shop Name as Player</span>
+								class="mr-2 checkbox-input" />
+							<span class="text-sm text-gray-700">Use Shop Name as Player</span>
 						</label>
 						<input
 							id="shop-player"
@@ -597,7 +597,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 					</div>
 				</div>
 
-				<div v-if="!presetServerId">
+				<div v-if="!presetServerId && !editingShop">
 					<label for="shop-server" class="block text-sm font-medium text-gray-700 mb-1">
 						Server *
 					</label>
@@ -644,47 +644,6 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 						class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus"></textarea>
 				</div>
 
-				<div>
-					<label for="owner-funds" class="block text-sm font-medium text-gray-700 mb-1">
-						Owner Funds
-					</label>
-					<input
-						id="owner-funds"
-						:value="shopForm.owner_funds"
-						@input="handleShopFundsInput"
-						type="number"
-						step="0.01"
-						min="0"
-						placeholder="0.00"
-						class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
-					<p class="text-xs text-gray-500 mt-1">
-						Available money for buying items from players (affects sell prices)
-					</p>
-				</div>
-
-				<div v-if="presetShopType === null && !editingShop">
-					<label class="block text-sm font-medium text-gray-700">Shop Type</label>
-					<div class="mt-3 flex flex-wrap gap-6">
-						<label class="flex items-center gap-2 text-sm text-gray-700">
-							<input
-								id="shop-type-competitor"
-								v-model="shopForm.is_own_shop"
-								:value="false"
-								type="radio"
-								class="radio-input" />
-							<span>Player Shop</span>
-						</label>
-						<label class="flex items-center gap-2 text-sm text-gray-700">
-							<input
-								id="shop-type-own"
-								v-model="shopForm.is_own_shop"
-								:value="true"
-								type="radio"
-								class="radio-input" />
-							<span>My Shop</span>
-						</label>
-					</div>
-				</div>
 
 				<div
 					v-if="shopCreateError && !editingShop"

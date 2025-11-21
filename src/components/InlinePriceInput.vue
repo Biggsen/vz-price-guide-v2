@@ -19,6 +19,10 @@ const props = defineProps({
 		type: String,
 		default: 'comfortable',
 		validator: (value) => ['comfortable', 'condensed'].includes(value)
+	},
+	strikethrough: {
+		type: Boolean,
+		default: false
 	}
 })
 
@@ -112,7 +116,7 @@ const displayValue = computed(() => {
 			showSavingSpinner && 'opacity-60'
 		]">
 		<ArrowPathIcon v-if="showSavingSpinner" class="w-4 h-4 text-gray-500 animate-spin" />
-		<span>{{ displayValue }}</span>
+		<span :class="{ 'line-through': strikethrough }">{{ displayValue }}</span>
 	</div>
 	<input
 		v-else

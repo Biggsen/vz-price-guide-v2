@@ -11,6 +11,7 @@ import BaseTable from '../components/BaseTable.vue'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import {
+	ArchiveBoxXMarkIcon,
 	BuildingStorefrontIcon,
 	CheckCircleIcon,
 	FolderIcon,
@@ -748,25 +749,37 @@ const priceAnalysis = computed(() => {
 									</div>
 								</template>
 								<template #cell-shop="{ row }">
-									<div>
-										<div
-											@click="navigateToShopItems(row.shopId)"
-											class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
-											<img
-												v-if="row.shopPlayer || row.shop"
-												:src="generateMinecraftAvatar(row.shopPlayer || row.shop)"
-												:alt="row.shop"
-												class="w-5 h-5 rounded mr-2 flex-shrink-0"
-												@error="$event.target.style.display = 'none'" />
-											<span>{{ row.shop }}</span>
-										</div>
-										<div v-if="row.shopLocation" class="text-xs text-gray-500">
-											📍 {{ row.shopLocation }}
-										</div>
+									<div
+										@click="navigateToShopItems(row.shopId)"
+										class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
+										<img
+											v-if="row.shopPlayer || row.shop"
+											:src="generateMinecraftAvatar(row.shopPlayer || row.shop)"
+											:alt="row.shop"
+											class="w-5 h-5 rounded mr-2 flex-shrink-0"
+											@error="$event.target.style.display = 'none'" />
+										<span>{{ row.shop }}</span>
 									</div>
 								</template>
 								<template #cell-buyPrice="{ row }">
-									<div class="text-right">{{ row.buyPrice }}</div>
+									<div class="flex items-center justify-end gap-2">
+										<div
+											v-if="row._originalItem?.stock_quantity === 0"
+											class="flex-shrink-0 mr-auto"
+											title="Out of stock">
+											<ArchiveBoxXMarkIcon
+												class="w-5 h-5 text-current"
+												aria-label="Out of stock" />
+											<span class="sr-only">Out of stock</span>
+										</div>
+										<div
+											:class="[
+												'text-right',
+												row._originalItem?.stock_quantity === 0 ? 'line-through' : ''
+											]">
+											{{ row.buyPrice }}
+										</div>
+									</div>
 								</template>
 								<template #cell-sellPrice="{ row }">
 									<div class="text-right">{{ row.sellPrice }}</div>
@@ -817,25 +830,37 @@ const priceAnalysis = computed(() => {
 								</div>
 							</template>
 							<template #cell-shop="{ row }">
-								<div>
-									<div
-										@click="navigateToShopItems(row.shopId)"
-										class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
-										<img
-											v-if="row.shopPlayer || row.shop"
-											:src="generateMinecraftAvatar(row.shopPlayer || row.shop)"
-											:alt="row.shop"
-											class="w-5 h-5 rounded mr-2 flex-shrink-0"
-											@error="$event.target.style.display = 'none'" />
-										<span>{{ row.shop }}</span>
-									</div>
-									<div v-if="row.shopLocation" class="text-xs text-gray-500">
-										📍 {{ row.shopLocation }}
-									</div>
+								<div
+									@click="navigateToShopItems(row.shopId)"
+									class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
+									<img
+										v-if="row.shopPlayer || row.shop"
+										:src="generateMinecraftAvatar(row.shopPlayer || row.shop)"
+										:alt="row.shop"
+										class="w-5 h-5 rounded mr-2 flex-shrink-0"
+										@error="$event.target.style.display = 'none'" />
+									<span>{{ row.shop }}</span>
 								</div>
 							</template>
 							<template #cell-buyPrice="{ row }">
-								<div class="text-right">{{ row.buyPrice }}</div>
+								<div class="flex items-center justify-end gap-2">
+									<div
+										v-if="row._originalItem?.stock_quantity === 0"
+										class="flex-shrink-0 mr-auto"
+										title="Out of stock">
+										<ArchiveBoxXMarkIcon
+											class="w-5 h-5 text-current"
+											aria-label="Out of stock" />
+										<span class="sr-only">Out of stock</span>
+									</div>
+									<div
+										:class="[
+											'text-right',
+											row._originalItem?.stock_quantity === 0 ? 'line-through' : ''
+										]">
+										{{ row.buyPrice }}
+									</div>
+								</div>
 							</template>
 							<template #cell-sellPrice="{ row }">
 								<div class="text-right">{{ row.sellPrice }}</div>

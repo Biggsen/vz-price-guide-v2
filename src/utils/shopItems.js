@@ -58,12 +58,12 @@ export async function addShopItem(shopId, itemId, itemData) {
 		const shopItem = {
 			shop_id: shopId,
 			item_id: itemId,
-			buy_price: itemData.buy_price || null,
-			sell_price: itemData.sell_price || null,
+			buy_price: itemData.buy_price ?? null,
+			sell_price: itemData.sell_price ?? null,
 			previous_buy_price: null,
 			previous_sell_price: null,
 			previous_price_date: null,
-			stock_quantity: itemData.stock_quantity || null,
+			stock_quantity: itemData.stock_quantity ?? null,
 			stock_full: itemData.stock_full || false,
 			notes: itemData.notes?.trim() || '',
 			last_updated: new Date().toISOString()
@@ -296,12 +296,12 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 				const shopItem = {
 					shop_id: shopId,
 					item_id: itemData.item_id,
-					buy_price: itemData.buy_price || null,
-					sell_price: itemData.sell_price || null,
+					buy_price: itemData.buy_price ?? null,
+					sell_price: itemData.sell_price ?? null,
 					previous_buy_price: null,
 					previous_sell_price: null,
 					previous_price_date: null,
-					stock_quantity: itemData.stock_quantity || null,
+					stock_quantity: itemData.stock_quantity ?? null,
 					stock_full: itemData.stock_full || false,
 					notes: itemData.notes?.trim() || '',
 					last_updated: new Date().toISOString()

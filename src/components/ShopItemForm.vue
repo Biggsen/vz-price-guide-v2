@@ -277,9 +277,9 @@ function handleSubmit() {
 	// Clean up form data before submitting
 	const submitData = {
 		...formData.value,
-		buy_price: formData.value.buy_price || null,
-		sell_price: formData.value.sell_price || null,
-		stock_quantity: formData.value.stock_quantity || null,
+		buy_price: formData.value.buy_price ?? null,
+		sell_price: formData.value.sell_price ?? null,
+		stock_quantity: formData.value.stock_quantity ?? null,
 		notes: formData.value.notes?.trim() || ''
 	}
 
@@ -442,6 +442,14 @@ function handleQuantityInput(event) {
 	}
 }
 
+function handleOutOfStockChange(checked) {
+	if (checked) {
+		formData.value.stock_quantity = 0
+	} else {
+		formData.value.stock_quantity = null
+	}
+}
+
 // Expose focus function, submit method, and form validity for parent component
 defineExpose({
 	focusSearchInput,
@@ -593,6 +601,17 @@ defineExpose({
 						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
 						<XCircleIcon class="w-4 h-4" />
 						Buy price must be a valid number greater than or equal to 0
+					</div>
+					<!-- Out of stock checkbox (only for player shops, not own) -->
+					<div v-if="shop && !shop.is_own_shop" class="mt-2">
+						<label class="flex items-center">
+							<input
+								:checked="formData.stock_quantity === 0"
+								@change="handleOutOfStockChange($event.target.checked)"
+								type="checkbox"
+								class="checkbox-input" />
+							<span class="ml-2 text-sm text-gray-700">Out of stock</span>
+						</label>
 					</div>
 				</div>
 

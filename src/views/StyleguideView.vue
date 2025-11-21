@@ -1180,7 +1180,9 @@ const baseTableRows = [
 
 				<!-- Stat Cards -->
 				<div class="space-y-6">
-					<h3 class="text-lg font-semibold text-gray-800">Stat Cards (BaseStatCard Component)</h3>
+					<h3 class="text-lg font-semibold text-gray-800">
+						Stat Cards (BaseStatCard Component)
+					</h3>
 					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 						<div class="space-y-3">
 							<p
@@ -1566,15 +1568,5 @@ pre {
 
 code {
 	font-family: 'Courier New', Courier, monospace;
-}
-
-.radio-input {
-	@apply w-5 h-5;
-	accent-color: theme('colors.gray-asparagus');
-}
-
-.checkbox-input {
-	@apply w-4 h-4 rounded;
-	accent-color: theme('colors.gray-asparagus');
 }
 </style>
