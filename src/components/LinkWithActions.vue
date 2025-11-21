@@ -1,6 +1,8 @@
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { BuildingStorefrontIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { generateMinecraftAvatar } from '../utils/userProfile.js'
 
 defineOptions({
 	name: 'LinkWithActions'
@@ -18,10 +20,28 @@ const props = defineProps({
 	loading: {
 		type: Boolean,
 		default: false
+	},
+	shopName: {
+		type: String,
+		default: null
+	},
+	avatarUrl: {
+		type: String,
+		default: null
 	}
 })
 
 defineEmits(['edit', 'delete'])
+
+const computedAvatarUrl = computed(() => {
+	if (props.avatarUrl) {
+		return props.avatarUrl
+	}
+	if (props.shopName) {
+		return generateMinecraftAvatar(props.shopName)
+	}
+	return null
+})
 </script>
 
 <template>
@@ -29,7 +49,13 @@ defineEmits(['edit', 'delete'])
 		<RouterLink
 			:to="props.to"
 			class="inline-flex items-center gap-2 text-base font-semibold text-gray-600 hover:text-heavy-metal transition">
-			<BuildingStorefrontIcon class="w-4 h-4 text-gray-500" />
+			<img
+				v-if="computedAvatarUrl"
+				:src="computedAvatarUrl"
+				:alt="props.shopName || props.label"
+				class="w-5 h-5 rounded"
+				@error="$event.target.style.display = 'none'" />
+			<BuildingStorefrontIcon v-else class="w-4 h-4 text-gray-500" />
 			{{ props.label }}
 		</RouterLink>
 		<div class="flex items-center gap-1">

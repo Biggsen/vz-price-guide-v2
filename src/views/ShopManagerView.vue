@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, TransitionGroup } from 'vue'
+import { computed, ref, watch, TransitionGroup } from 'vue'
 import { RouterLink } from 'vue-router'
 import BaseButton from '../components/BaseButton.vue'
 import BaseCard from '../components/BaseCard.vue'
@@ -23,12 +23,14 @@ import {
 	deleteServer,
 	getMinecraftVersions
 } from '../utils/serverProfile.js'
+import { useUserProfile } from '../utils/userProfile.js'
 
 const { user, userProfile } = useAdmin()
 
 // Get user's shops and servers
 const { shops } = useShops(computed(() => user.value?.uid))
 const { servers } = useServers(computed(() => user.value?.uid))
+
 
 const hasServers = computed(() => servers.value && servers.value.length > 0)
 
@@ -66,9 +68,11 @@ const shopServerValidationError = ref(null)
 
 const presetServerId = ref(null)
 const presetShopType = ref(null)
+const useShopNameAsPlayer = ref(false)
 
 const shopForm = ref({
 	name: '',
+	player: '',
 	server_id: '',
 	location: '',
 	description: '',
@@ -78,6 +82,22 @@ const shopForm = ref({
 
 const isShopFormValid = computed(() => {
 	return shopForm.value.name.trim() && shopForm.value.server_id
+})
+
+// Watch shop name to auto-fill player when checkbox is checked
+watch(() => shopForm.value.name, (newName) => {
+	if (useShopNameAsPlayer.value && newName) {
+		shopForm.value.player = newName
+	}
+})
+
+// Watch checkbox to sync player field
+watch(useShopNameAsPlayer, (checked) => {
+	if (checked && shopForm.value.name) {
+		shopForm.value.player = shopForm.value.name
+	} else if (!checked) {
+		shopForm.value.player = ''
+	}
 })
 
 // Find all shops owned by the user (marked with is_own_shop flag)
@@ -196,12 +216,14 @@ async function executeDeleteServer() {
 function resetShopForm() {
 	shopForm.value = {
 		name: '',
+		player: '',
 		server_id: '',
 		location: '',
 		description: '',
 		is_own_shop: false,
 		owner_funds: null
 	}
+	useShopNameAsPlayer.value = false
 }
 
 function showCreateShopForm(serverId = '', isOwnShop = null) {
@@ -226,6 +248,7 @@ function showEditShopForm(shop) {
 	presetShopType.value = null
 	shopForm.value = {
 		name: shop.name,
+		player: shop.player || '',
 		server_id: shop.server_id,
 		location: shop.location || '',
 		description: shop.description || '',
@@ -233,6 +256,7 @@ function showEditShopForm(shop) {
 		owner_funds:
 			shop.owner_funds === null || shop.owner_funds === undefined ? null : shop.owner_funds
 	}
+	useShopNameAsPlayer.value = false
 	shopCreateError.value = null
 	shopEditError.value = null
 	shopNameValidationError.value = null
@@ -447,6 +471,8 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 											:to="{ name: 'shop', params: { shopId: shop.id } }"
 											:label="shop.name"
 											:loading="shopLoading"
+											:avatar-url="userProfile?.minecraft_avatar_url || null"
+											:shop-name="userProfile?.minecraft_username || userProfile?.display_name || null"
 											@edit="showEditShopForm(shop)"
 											@delete="requestDeleteShop(shop)" />
 										<li
@@ -479,6 +505,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 											:to="{ name: 'shop', params: { shopId: shop.id } }"
 											:label="shop.name"
 											:loading="shopLoading"
+											:shop-name="shop.player || shop.name"
 											@edit="showEditShopForm(shop)"
 											@delete="requestDeleteShop(shop)" />
 										<li
@@ -535,6 +562,28 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
 						<XCircleIcon class="w-4 h-4" />
 						{{ shopNameValidationError }}
+					</div>
+				</div>
+
+				<div>
+					<label for="shop-player" class="block text-sm font-medium text-gray-700 mb-1">
+						Player (Minecraft Username)
+					</label>
+					<div class="mt-2">
+						<label class="flex items-center mb-2">
+							<input
+								v-model="useShopNameAsPlayer"
+								type="checkbox"
+								class="checkbox-input" />
+							<span class="ml-2 text-sm text-gray-700">Use Shop Name as Player</span>
+						</label>
+						<input
+							id="shop-player"
+							v-model="shopForm.player"
+							type="text"
+							:disabled="useShopNameAsPlayer"
+							placeholder="Enter Minecraft username"
+							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus disabled:bg-gray-100 disabled:cursor-not-allowed" />
 					</div>
 				</div>
 

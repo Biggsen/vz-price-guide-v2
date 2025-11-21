@@ -50,6 +50,7 @@ export async function createShop(userId, shopData) {
 		const db = getFirestore()
 		const shop = {
 			name: shopData.name.trim(),
+			player: shopData.player?.trim() || '',
 			server_id: shopData.server_id,
 			owner_id: userId,
 			is_own_shop: shopData.is_own_shop,
