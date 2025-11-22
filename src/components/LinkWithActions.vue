@@ -42,6 +42,10 @@ const computedAvatarUrl = computed(() => {
 	}
 	return null
 })
+
+const showShopName = computed(() => {
+	return props.shopName && props.label !== props.shopName
+})
 </script>
 
 <template>
@@ -49,14 +53,26 @@ const computedAvatarUrl = computed(() => {
 		<RouterLink
 			:to="props.to"
 			class="inline-flex items-center gap-2 text-base font-semibold text-gray-600 hover:text-heavy-metal transition">
-			<img
-				v-if="computedAvatarUrl"
-				:src="computedAvatarUrl"
-				:alt="props.shopName || props.label"
-				class="w-5 h-5 rounded"
-				@error="$event.target.style.display = 'none'" />
-			<BuildingStorefrontIcon v-else class="w-4 h-4 text-gray-500" />
-			{{ props.label }}
+			<template v-if="props.shopName">
+				<img
+					v-if="computedAvatarUrl"
+					:src="computedAvatarUrl"
+					:alt="props.shopName"
+					class="w-5 h-5 rounded"
+					@error="$event.target.style.display = 'none'" />
+				<span>{{ props.shopName }}</span>
+				<span v-if="showShopName"> - {{ props.label }}</span>
+			</template>
+			<template v-else>
+				<img
+					v-if="computedAvatarUrl"
+					:src="computedAvatarUrl"
+					:alt="props.label"
+					class="w-5 h-5 rounded"
+					@error="$event.target.style.display = 'none'" />
+				<BuildingStorefrontIcon v-else class="w-4 h-4 text-gray-500" />
+				{{ props.label }}
+			</template>
 		</RouterLink>
 		<div class="flex items-center gap-1">
 			<button

@@ -18,7 +18,8 @@ import {
 	FolderIcon,
 	TagIcon,
 	UserIcon,
-	UsersIcon
+	UsersIcon,
+	WalletIcon
 } from '@heroicons/vue/24/outline'
 
 const user = useCurrentUser()
@@ -557,21 +558,8 @@ const priceAnalysis = computed(() => {
 			Loading market data...
 		</div>
 
-		<!-- No servers warning -->
-		<div
-			v-if="!hasServers && !loading"
-			class="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-			<p class="font-medium">No servers found</p>
-			<p class="text-sm mt-1">
-				You need to create a server first to view market data.
-				<router-link to="/shop-manager" class="text-blue-600 hover:text-blue-800 underline">
-					Go to Shop Manager
-				</router-link>
-			</p>
-		</div>
-
 		<!-- Main content -->
-		<div v-else-if="hasServers">
+		<div v-if="hasServers">
 			<!-- Search input -->
 			<div v-if="selectedServerId" class="mb-6">
 				<label for="item-search" class="block text-sm font-medium text-gray-700 mb-2">
@@ -699,31 +687,13 @@ const priceAnalysis = computed(() => {
 
 			<!-- Market items display -->
 			<div v-if="selectedServerId && shopItems">
-				<div v-if="shopItems.length === 0" class="text-center py-12 bg-gray-50 rounded-lg">
-					<div class="text-gray-500 text-lg mb-2">
-						No items found in any shops on this server
-					</div>
-					<div class="text-sm text-gray-400 mb-4">
-						Shops on this server haven't added any items yet
-					</div>
-					<router-link
-						:to="{ name: 'shop' }"
-						class="bg-semantic-info text-white px-6 py-3 rounded hover:bg-opacity-80 transition-colors font-medium inline-block">
-						Manage Your Shop Items
-					</router-link>
-				</div>
-
 				<!-- Categories View -->
-				<template v-else-if="viewMode === 'categories'">
+				<template v-if="viewMode === 'categories'">
 					<div
 						v-if="searchQuery && Object.keys(filteredShopItemsByCategory).length === 0"
-						class="text-center py-12 bg-gray-50 rounded-lg">
-						<div class="text-gray-500 text-lg mb-2">
-							No items found matching "{{ searchQuery }}"
-						</div>
-						<div class="text-sm text-gray-400">
-							Try searching for a different item name
-						</div>
+						class="text-gray-600">
+						<p class="text-lg font-medium mb-2">No items found matching "{{ searchQuery }}"</p>
+						<p class="text-sm">Try searching for a different item name</p>
 					</div>
 					<div v-else class="space-y-6">
 						<div
@@ -753,13 +723,23 @@ const priceAnalysis = computed(() => {
 									<div
 										@click="navigateToShopItems(row.shopId)"
 										class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
-										<img
-											v-if="row.shopPlayer || row.shop"
-											:src="generateMinecraftAvatar(row.shopPlayer || row.shop)"
-											:alt="row.shop"
-											class="w-5 h-5 rounded mr-2 flex-shrink-0"
-											@error="$event.target.style.display = 'none'" />
-										<span>{{ row.shop }}</span>
+										<template v-if="row.shopPlayer">
+											<img
+												:src="generateMinecraftAvatar(row.shopPlayer)"
+												:alt="row.shopPlayer"
+												class="w-5 h-5 rounded mr-2 flex-shrink-0"
+												@error="$event.target.style.display = 'none'" />
+											<span>{{ row.shopPlayer }}<span v-if="row.shopPlayer !== row.shop"> - {{ row.shop }}</span></span>
+										</template>
+										<template v-else>
+											<img
+												v-if="row.shop"
+												:src="generateMinecraftAvatar(row.shop)"
+												:alt="row.shop"
+												class="w-5 h-5 rounded mr-2 flex-shrink-0"
+												@error="$event.target.style.display = 'none'" />
+											<span>{{ row.shop }}</span>
+										</template>
 									</div>
 								</template>
 								<template #cell-buyPrice="{ row }">
@@ -785,18 +765,23 @@ const priceAnalysis = computed(() => {
 								<template #cell-sellPrice="{ row }">
 									<div class="flex items-center justify-end gap-2">
 										<div
-											v-if="row._originalItem?.stock_full"
+											v-if="row._originalItem?.stock_full || (row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0)"
 											class="flex-shrink-0 mr-auto"
-											title="Stock full">
+											:title="row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full'">
+											<WalletIcon
+												v-if="row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0"
+												class="w-5 h-5 text-current"
+												aria-label="Shop owner has run out of money" />
 											<ArchiveBoxXMarkIcon
+												v-else-if="row._originalItem?.stock_full"
 												class="w-5 h-5 text-current"
 												aria-label="Stock full" />
-											<span class="sr-only">Stock full</span>
+											<span class="sr-only">{{ row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full' }}</span>
 										</div>
 										<div
 											:class="[
 												'text-right',
-												row._originalItem?.stock_full ? 'line-through' : ''
+												row._originalItem?.stock_full || (row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0) ? 'line-through' : ''
 											]">
 											{{ row.sellPrice }}
 										</div>
@@ -817,15 +802,15 @@ const priceAnalysis = computed(() => {
 				<template v-else-if="viewMode === 'list'">
 					<div
 						v-if="allVisibleItems.length === 0"
-						class="text-center py-12 bg-gray-50 rounded-lg">
-						<div class="text-gray-500 text-lg mb-2">No items found</div>
-						<div class="text-sm text-gray-400">
+						class="text-gray-600">
+						<p class="text-lg font-medium mb-2">No items found</p>
+						<p class="text-sm">
 							{{
 								searchQuery
 									? 'Try searching for a different item name'
 									: 'No items available in shops on this server'
 							}}
-						</div>
+						</p>
 					</div>
 					<div v-else>
 						<BaseTable
@@ -851,13 +836,23 @@ const priceAnalysis = computed(() => {
 								<div
 									@click="navigateToShopItems(row.shopId)"
 									class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
-									<img
-										v-if="row.shopPlayer || row.shop"
-										:src="generateMinecraftAvatar(row.shopPlayer || row.shop)"
-										:alt="row.shop"
-										class="w-5 h-5 rounded mr-2 flex-shrink-0"
-										@error="$event.target.style.display = 'none'" />
-									<span>{{ row.shop }}</span>
+									<template v-if="row.shopPlayer">
+										<img
+											:src="generateMinecraftAvatar(row.shopPlayer)"
+											:alt="row.shopPlayer"
+											class="w-5 h-5 rounded mr-2 flex-shrink-0"
+											@error="$event.target.style.display = 'none'" />
+										<span>{{ row.shopPlayer }}<span v-if="row.shopPlayer !== row.shop"> - {{ row.shop }}</span></span>
+									</template>
+									<template v-else>
+										<img
+											v-if="row.shop"
+											:src="generateMinecraftAvatar(row.shop)"
+											:alt="row.shop"
+											class="w-5 h-5 rounded mr-2 flex-shrink-0"
+											@error="$event.target.style.display = 'none'" />
+										<span>{{ row.shop }}</span>
+									</template>
 								</div>
 							</template>
 							<template #cell-buyPrice="{ row }">
@@ -883,18 +878,23 @@ const priceAnalysis = computed(() => {
 							<template #cell-sellPrice="{ row }">
 								<div class="flex items-center justify-end gap-2">
 									<div
-										v-if="row._originalItem?.stock_full"
+										v-if="row._originalItem?.stock_full || (row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0)"
 										class="flex-shrink-0 mr-auto"
-										title="Stock full">
+										:title="row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full'">
+										<WalletIcon
+											v-if="row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0"
+											class="w-5 h-5 text-current"
+											aria-label="Shop owner has run out of money" />
 										<ArchiveBoxIcon
+											v-else-if="row._originalItem?.stock_full"
 											class="w-5 h-5 text-current"
 											aria-label="Stock full" />
-										<span class="sr-only">Stock full</span>
+										<span class="sr-only">{{ row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full' }}</span>
 									</div>
 									<div
 										:class="[
 											'text-right',
-											row._originalItem?.stock_full ? 'line-through' : ''
+											row._originalItem?.stock_full || (row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0) ? 'line-through' : ''
 										]">
 										{{ row.sellPrice }}
 									</div>

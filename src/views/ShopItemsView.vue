@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
 import { useShops, updateShop } from '../utils/shopProfile.js'
 import { useServers } from '../utils/serverProfile.js'
@@ -19,8 +19,10 @@ import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
 import { ArrowLeftIcon, PlusIcon, ArrowPathIcon } from '@heroicons/vue/20/solid'
-import { PencilIcon, TrashIcon, ArchiveBoxIcon, ArchiveBoxXMarkIcon } from '@heroicons/vue/24/outline'
+import { CurrencyDollarIcon } from '@heroicons/vue/24/outline'
+import { PencilIcon, TrashIcon, ArchiveBoxIcon, ArchiveBoxXMarkIcon, WalletIcon } from '@heroicons/vue/24/outline'
 import { getImageUrl } from '../utils/image.js'
+import { generateMinecraftAvatar } from '../utils/userProfile.js'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -55,7 +57,7 @@ const shopFormLoading = ref(false)
 const shopFormError = ref(null)
 const shopNameValidationError = ref(null)
 const shopServerValidationError = ref(null)
-const useShopNameAsPlayer = ref(false)
+const usePlayerAsShopName = ref(false)
 const shopForm = ref({
 	name: '',
 	player: '',
@@ -76,7 +78,7 @@ function resetShopForm() {
 		is_own_shop: false,
 		owner_funds: null
 	}
-	useShopNameAsPlayer.value = false
+	usePlayerAsShopName.value = false
 }
 
 // Get user's shops and servers
@@ -111,6 +113,23 @@ const hasServers = computed(() => servers.value && servers.value.length > 0)
 const selectedShop = computed(
 	() => shops.value?.find((shop) => shop.id === selectedShopId.value) || null
 )
+
+const isShopOutOfMoney = computed(() => {
+	return selectedShop.value?.owner_funds === 0
+})
+
+async function handleOutOfMoneyChange(checked) {
+	if (!selectedShop.value || !selectedShopId.value) return
+
+	try {
+		await updateShop(selectedShopId.value, {
+			owner_funds: checked ? 0 : null
+		})
+	} catch (err) {
+		console.error('Error updating shop funds:', err)
+		error.value = err.message || 'Failed to update shop funds. Please try again.'
+	}
+}
 const selectedServer = computed(() =>
 	selectedShop.value && servers.value
 		? servers.value.find((s) => s.id === selectedShop.value.server_id)
@@ -118,19 +137,19 @@ const selectedServer = computed(() =>
 )
 const isShopFormValid = computed(() => shopForm.value.name.trim())
 
-// Watch shop name to auto-fill player when checkbox is checked
-watch(() => shopForm.value.name, (newName) => {
-	if (useShopNameAsPlayer.value && newName) {
-		shopForm.value.player = newName
+// Watch player name to auto-fill shop name when checkbox is checked
+watch(() => shopForm.value.player, (newPlayer) => {
+	if (usePlayerAsShopName.value && newPlayer) {
+		shopForm.value.name = newPlayer
 	}
 })
 
-// Watch checkbox to sync player field
-watch(useShopNameAsPlayer, (checked) => {
-	if (checked && shopForm.value.name) {
-		shopForm.value.player = shopForm.value.name
+// Watch checkbox to sync shop name field
+watch(usePlayerAsShopName, (checked) => {
+	if (checked && shopForm.value.player) {
+		shopForm.value.name = shopForm.value.player
 	} else if (!checked) {
-		shopForm.value.player = ''
+		shopForm.value.name = ''
 	}
 })
 
@@ -714,7 +733,7 @@ function openEditShopModal() {
 				? null
 				: selectedShop.value.owner_funds
 	}
-	useShopNameAsPlayer.value = (selectedShop.value.player || '') === selectedShop.value.name
+	usePlayerAsShopName.value = (selectedShop.value.player || '') === selectedShop.value.name
 }
 
 function closeEditShopModal() {
@@ -724,7 +743,7 @@ function closeEditShopModal() {
 	shopNameValidationError.value = null
 	shopServerValidationError.value = null
 	shopFormLoading.value = false
-	useShopNameAsPlayer.value = false
+	usePlayerAsShopName.value = false
 	resetShopForm()
 }
 
@@ -812,6 +831,14 @@ function getServerName(serverId) {
 						<PencilIcon class="w-5 h-5" />
 					</button>
 				</div>
+				<div v-if="selectedShop.player" class="flex items-center gap-2 mt-2">
+					<img
+						:src="generateMinecraftAvatar(selectedShop.player)"
+						:alt="selectedShop.player"
+						class="w-6 h-6 rounded"
+						@error="$event.target.style.display = 'none'" />
+					<span class="text-lg font-semibold text-gray-600">{{ selectedShop.player }}</span>
+				</div>
 				<p
 					v-if="selectedShop.description"
 					class="text-gray-600 mt-1 max-w-2xl">
@@ -829,14 +856,6 @@ function getServerName(serverId) {
 					<span v-if="selectedShop.location">
 						<span class="font-medium">Location:</span>
 						{{ selectedShop.location }}
-					</span>
-					<span>
-						<span class="font-medium">Funds:</span>
-						{{
-							selectedShop.owner_funds !== null && selectedShop.owner_funds !== undefined
-								? selectedShop.owner_funds.toFixed(2)
-								: 'Auto'
-						}}
 					</span>
 					<span v-if="selectedShop.created_at">
 						<span class="font-medium">Created:</span>
@@ -900,18 +919,40 @@ function getServerName(serverId) {
 
 		<!-- Main content -->
 		<div v-else-if="hasShops && hasServers && selectedShop" class="space-y-8">
-			<!-- Add Item Button (Top) -->
-			<div v-if="shopItems && shopItems.length > 0" class="mt-4 flex justify-start">
-				<BaseButton
-					type="button"
-					variant="primary"
-					@click="showAddItemForm"
-					:disabled="!selectedShop">
-					<template #left-icon>
-						<PlusIcon />
-					</template>
-					Add Item
-				</BaseButton>
+			<!-- Out of Money Checkbox and Add Item Button (Top) -->
+			<div class="mt-4 space-y-3">
+				<label class="flex items-center cursor-pointer">
+					<input
+						:checked="isShopOutOfMoney"
+						@change="handleOutOfMoneyChange($event.target.checked)"
+						type="checkbox"
+						class="checkbox-input" />
+					<span class="ml-2 text-sm text-gray-700">Shop owner has run out of money</span>
+				</label>
+				<div v-if="shopItems && shopItems.length > 0" class="flex justify-start gap-3">
+					<BaseButton
+						type="button"
+						variant="primary"
+						@click="showAddItemForm"
+						:disabled="!selectedShop">
+						<template #left-icon>
+							<PlusIcon />
+						</template>
+						Add Item
+					</BaseButton>
+					<RouterLink
+						v-if="selectedShop?.server_id"
+						:to="`/market-overview?serverId=${selectedShop.server_id}`">
+						<BaseButton
+							type="button"
+							variant="tertiary">
+							<template #left-icon>
+								<CurrencyDollarIcon class="w-4 h-4" />
+							</template>
+							Market Overview
+						</BaseButton>
+					</RouterLink>
+				</div>
 			</div>
 
 			<!-- Inventory -->
@@ -1029,20 +1070,25 @@ function getServerName(serverId) {
 									<template #cell-sellPrice="{ row, layout }">
 										<div class="flex items-center justify-end gap-2">
 											<div
-												v-if="row._originalItem?.stock_full"
+												v-if="row._originalItem?.stock_full || (isShopOutOfMoney && row._originalItem?.sell_price > 0)"
 												class="flex-shrink-0 mr-auto"
-												title="Stock full">
+												:title="isShopOutOfMoney && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full'">
+												<WalletIcon
+													v-if="isShopOutOfMoney && row._originalItem?.sell_price > 0"
+													class="w-5 h-5 text-current"
+													aria-label="Shop owner has run out of money" />
 												<ArchiveBoxIcon
+													v-else-if="row._originalItem?.stock_full"
 													class="w-5 h-5 text-current"
 													aria-label="Stock full" />
-												<span class="sr-only">Stock full</span>
+												<span class="sr-only">{{ isShopOutOfMoney && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full' }}</span>
 											</div>
 											<InlinePriceInput
 												:value="row._originalItem?.sell_price"
 												:layout="layout"
 												:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
 												:is-saving="savingPriceId === row.id && savingPriceType === 'sell'"
-												:strikethrough="row._originalItem?.stock_full"
+												:strikethrough="row._originalItem?.stock_full || (isShopOutOfMoney && row._originalItem?.sell_price > 0)"
 												@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"
 												@save="(newPrice) => savePrice(row, 'sell', newPrice)"
 												@cancel="cancelEditPrice" />
@@ -1117,20 +1163,25 @@ function getServerName(serverId) {
 								<template #cell-sellPrice="{ row, layout }">
 									<div class="flex items-center justify-end gap-2">
 										<div
-											v-if="row._originalItem?.stock_full"
+											v-if="row._originalItem?.stock_full || (isShopOutOfMoney && row._originalItem?.sell_price > 0)"
 											class="flex-shrink-0 mr-auto"
-											title="Stock full">
+											:title="isShopOutOfMoney && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full'">
+											<WalletIcon
+												v-if="isShopOutOfMoney && row._originalItem?.sell_price > 0"
+												class="w-5 h-5 text-current"
+												aria-label="Shop owner has run out of money" />
 											<ArchiveBoxXMarkIcon
+												v-else-if="row._originalItem?.stock_full"
 												class="w-5 h-5 text-current"
 												aria-label="Stock full" />
-											<span class="sr-only">Stock full</span>
+											<span class="sr-only">{{ isShopOutOfMoney && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full' }}</span>
 										</div>
 										<InlinePriceInput
 											:value="row._originalItem?.sell_price"
 											:layout="layout"
 											:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
 											:is-saving="savingPriceId === row.id && savingPriceType === 'sell'"
-											:strikethrough="row._originalItem?.stock_full"
+											:strikethrough="row._originalItem?.stock_full || (isShopOutOfMoney && row._originalItem?.sell_price > 0)"
 											@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"
 											@save="(newPrice) => savePrice(row, 'sell', newPrice)"
 											@cancel="cancelEditPrice" />
@@ -1187,44 +1238,44 @@ function getServerName(serverId) {
 		maxWidth="max-w-2xl"
 		@close="closeEditShopModal">
 		<form @submit.prevent="submitEditShop" class="space-y-4">
-			<div>
-				<label for="edit-shop-name" class="block text-sm font-medium text-gray-700 mb-1">
-					Shop Name *
-				</label>
-				<input
-					id="edit-shop-name"
-					v-model="shopForm.name"
-					type="text"
-					required
-					placeholder="e.g., vz market"
-					@input="shopNameValidationError = null; shopFormError = null"
-					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
-				<div
-					v-if="shopNameValidationError"
-					class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-					<span>{{ shopNameValidationError }}</span>
-				</div>
-			</div>
-
 			<div v-if="!shopForm.is_own_shop">
 				<label for="edit-shop-player" class="block text-sm font-medium text-gray-700 mb-1">
 					Player (Minecraft Username)
 				</label>
+				<input
+					id="edit-shop-player"
+					v-model="shopForm.player"
+					type="text"
+					placeholder="Enter Minecraft username"
+					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
+			</div>
+
+			<div>
+				<label for="edit-shop-name" class="block text-sm font-medium text-gray-700 mb-1">
+					Shop Name *
+				</label>
 				<div class="mt-2">
-					<label class="flex items-center mb-2 cursor-pointer">
+					<label v-if="!shopForm.is_own_shop" class="flex items-center mb-2 cursor-pointer">
 						<input
-							v-model="useShopNameAsPlayer"
+							v-model="usePlayerAsShopName"
 							type="checkbox"
 							class="mr-2 checkbox-input" />
-						<span class="text-sm text-gray-700">Use Shop Name as Player</span>
+						<span class="text-sm text-gray-700">Use Player as Shop Name</span>
 					</label>
 					<input
-						id="edit-shop-player"
-						v-model="shopForm.player"
+						id="edit-shop-name"
+						v-model="shopForm.name"
 						type="text"
-						:disabled="useShopNameAsPlayer"
-						placeholder="Enter Minecraft username"
+						required
+						:disabled="usePlayerAsShopName && !shopForm.is_own_shop"
+						placeholder="e.g., vz market"
+						@input="shopNameValidationError = null; shopFormError = null"
 						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus disabled:bg-gray-100 disabled:cursor-not-allowed" />
+				</div>
+				<div
+					v-if="shopNameValidationError"
+					class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+					<span>{{ shopNameValidationError }}</span>
 				</div>
 			</div>
 
