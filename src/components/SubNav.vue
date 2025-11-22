@@ -214,28 +214,6 @@ function toggleSection(section) {
 				</RouterLink>
 			</div>
 
-			<!-- Shop Manager Section -->
-			<button
-				@click="toggleSection('shop-manager')"
-				class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-600 transition-colors">
-				<span class="font-medium">Shop Manager</span>
-				<span
-					class="text-sm transition-transform"
-					:class="{ 'rotate-180': isShopManagerExpanded }">
-					▼
-				</span>
-			</button>
-
-			<!-- Shop Manager Content -->
-			<div v-show="isShopManagerExpanded" class="border-t border-gray-600">
-				<RouterLink
-					class="block hover:bg-gray-600 px-6 py-2 transition-colors"
-					active-class="bg-blue-600 text-white"
-					to="/shop-manager">
-					Dashboard
-				</RouterLink>
-			</div>
-
 			<!-- Design Section -->
 			<button
 				@click="toggleSection('design')"
@@ -304,12 +282,6 @@ function toggleSection(section) {
 				:class="{ 'underline font-semibold': isCommunityActive }"
 				to="/admin/community">
 				Community
-			</RouterLink>
-			<RouterLink
-				class="hover:underline"
-				:class="{ 'underline font-semibold': isShopManagerActive }"
-				to="/shop-manager">
-				Shop Manager
 			</RouterLink>
 			<RouterLink
 				class="hover:underline"
