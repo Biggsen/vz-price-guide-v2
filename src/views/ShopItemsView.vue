@@ -19,7 +19,7 @@ import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
 import { ArrowLeftIcon, PlusIcon, ArrowPathIcon } from '@heroicons/vue/20/solid'
-import { PencilIcon, TrashIcon, ArchiveBoxXMarkIcon } from '@heroicons/vue/24/outline'
+import { PencilIcon, TrashIcon, ArchiveBoxIcon, ArchiveBoxXMarkIcon } from '@heroicons/vue/24/outline'
 import { getImageUrl } from '../utils/image.js'
 
 const user = useCurrentUser()
@@ -1027,14 +1027,26 @@ function getServerName(serverId) {
 										</div>
 									</template>
 									<template #cell-sellPrice="{ row, layout }">
-										<InlinePriceInput
-											:value="row._originalItem?.sell_price"
-											:layout="layout"
-											:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
-											:is-saving="savingPriceId === row.id && savingPriceType === 'sell'"
-											@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"
-											@save="(newPrice) => savePrice(row, 'sell', newPrice)"
-											@cancel="cancelEditPrice" />
+										<div class="flex items-center justify-end gap-2">
+											<div
+												v-if="row._originalItem?.stock_full"
+												class="flex-shrink-0 mr-auto"
+												title="Stock full">
+												<ArchiveBoxIcon
+													class="w-5 h-5 text-current"
+													aria-label="Stock full" />
+												<span class="sr-only">Stock full</span>
+											</div>
+											<InlinePriceInput
+												:value="row._originalItem?.sell_price"
+												:layout="layout"
+												:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
+												:is-saving="savingPriceId === row.id && savingPriceType === 'sell'"
+												:strikethrough="row._originalItem?.stock_full"
+												@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"
+												@save="(newPrice) => savePrice(row, 'sell', newPrice)"
+												@cancel="cancelEditPrice" />
+										</div>
 									</template>
 									<template #cell-actions="{ row }">
 										<div class="flex items-center justify-end gap-2">
@@ -1103,14 +1115,26 @@ function getServerName(serverId) {
 									</div>
 								</template>
 								<template #cell-sellPrice="{ row, layout }">
-									<InlinePriceInput
-										:value="row._originalItem?.sell_price"
-										:layout="layout"
-										:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
-										:is-saving="savingPriceId === row.id && savingPriceType === 'sell'"
-										@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"
-										@save="(newPrice) => savePrice(row, 'sell', newPrice)"
-										@cancel="cancelEditPrice" />
+									<div class="flex items-center justify-end gap-2">
+										<div
+											v-if="row._originalItem?.stock_full"
+											class="flex-shrink-0 mr-auto"
+											title="Stock full">
+											<ArchiveBoxXMarkIcon
+												class="w-5 h-5 text-current"
+												aria-label="Stock full" />
+											<span class="sr-only">Stock full</span>
+										</div>
+										<InlinePriceInput
+											:value="row._originalItem?.sell_price"
+											:layout="layout"
+											:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
+											:is-saving="savingPriceId === row.id && savingPriceType === 'sell'"
+											:strikethrough="row._originalItem?.stock_full"
+											@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"
+											@save="(newPrice) => savePrice(row, 'sell', newPrice)"
+											@cancel="cancelEditPrice" />
+									</div>
 								</template>
 								<template #cell-actions="{ row }">
 									<div class="flex items-center justify-end gap-2">

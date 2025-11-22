@@ -11,6 +11,7 @@ import BaseTable from '../components/BaseTable.vue'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import {
+	ArchiveBoxIcon,
 	ArchiveBoxXMarkIcon,
 	BuildingStorefrontIcon,
 	CheckCircleIcon,
@@ -782,7 +783,24 @@ const priceAnalysis = computed(() => {
 									</div>
 								</template>
 								<template #cell-sellPrice="{ row }">
-									<div class="text-right">{{ row.sellPrice }}</div>
+									<div class="flex items-center justify-end gap-2">
+										<div
+											v-if="row._originalItem?.stock_full"
+											class="flex-shrink-0 mr-auto"
+											title="Stock full">
+											<ArchiveBoxXMarkIcon
+												class="w-5 h-5 text-current"
+												aria-label="Stock full" />
+											<span class="sr-only">Stock full</span>
+										</div>
+										<div
+											:class="[
+												'text-right',
+												row._originalItem?.stock_full ? 'line-through' : ''
+											]">
+											{{ row.sellPrice }}
+										</div>
+									</div>
 								</template>
 								<template #cell-profitMargin="{ row }">
 									<div class="text-center">{{ row.profitMargin }}</div>
@@ -863,7 +881,24 @@ const priceAnalysis = computed(() => {
 								</div>
 							</template>
 							<template #cell-sellPrice="{ row }">
-								<div class="text-right">{{ row.sellPrice }}</div>
+								<div class="flex items-center justify-end gap-2">
+									<div
+										v-if="row._originalItem?.stock_full"
+										class="flex-shrink-0 mr-auto"
+										title="Stock full">
+										<ArchiveBoxIcon
+											class="w-5 h-5 text-current"
+											aria-label="Stock full" />
+										<span class="sr-only">Stock full</span>
+									</div>
+									<div
+										:class="[
+											'text-right',
+											row._originalItem?.stock_full ? 'line-through' : ''
+										]">
+										{{ row.sellPrice }}
+									</div>
+								</div>
 							</template>
 							<template #cell-profitMargin="{ row }">
 								<div class="text-center">{{ row.profitMargin }}</div>

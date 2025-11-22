@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
+import { ArchiveBoxIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
 	items: {
@@ -623,7 +623,16 @@ function navigateToShopItems(shopId) {
 								</div>
 							</div>
 							<div v-else>
-								<div class="flex items-center justify-end gap-1 text-md">
+								<div class="flex items-center justify-end gap-2 text-md">
+									<div
+										v-if="item.stock_full"
+										class="flex-shrink-0 mr-auto"
+										title="Stock full">
+										<ArchiveBoxIcon
+											class="w-5 h-5 text-current"
+											aria-label="Stock full" />
+										<span class="sr-only">Stock full</span>
+									</div>
 									<span
 										class=""
 										:class="
@@ -637,11 +646,6 @@ function navigateToShopItems(shopId) {
 										v-if="hasInsufficientFunds(item)"
 										class="text-xs text-red-500">
 										broke
-									</span>
-									<span
-										v-else-if="item.stock_full"
-										class="text-xs text-orange-500">
-										full
 									</span>
 								</div>
 
