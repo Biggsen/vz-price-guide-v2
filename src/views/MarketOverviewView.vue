@@ -8,6 +8,7 @@ import { useServers } from '../utils/serverProfile.js'
 import { useServerShopItems } from '../utils/shopItems.js'
 import BaseStatCard from '../components/BaseStatCard.vue'
 import BaseTable from '../components/BaseTable.vue'
+import BaseCard from '../components/BaseCard.vue'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import {
@@ -15,6 +16,8 @@ import {
 	ArchiveBoxXMarkIcon,
 	BuildingStorefrontIcon,
 	CheckCircleIcon,
+	ChevronRightIcon,
+	CurrencyDollarIcon,
 	FolderIcon,
 	TagIcon,
 	UserIcon,
@@ -459,6 +462,9 @@ const priceAnalysis = computed(() => {
 				const buyShop = data.buyPrices.find((p) => p.price === lowestBuy)
 				const sellShop = affordableSellPrices.find((p) => p.price === highestSell)
 
+				const buyShopData = serverShops.value?.find((s) => s.id === buyShop?.shopId)
+				const sellShopData = serverShops.value?.find((s) => s.id === sellShop?.shopId)
+
 				opportunities.push({
 					itemId,
 					itemName: itemData?.name || 'Unknown Item',
@@ -468,7 +474,11 @@ const priceAnalysis = computed(() => {
 					buyPrice: lowestBuy,
 					sellPrice: highestSell,
 					buyShop: buyShop?.shopName,
-					sellShop: sellShop?.shopName
+					buyShopId: buyShop?.shopId,
+					buyShopPlayer: buyShopData?.player || null,
+					sellShop: sellShop?.shopName,
+					sellShopId: sellShop?.shopId,
+					sellShopPlayer: sellShopData?.player || null
 				})
 			}
 		}
@@ -560,6 +570,69 @@ const priceAnalysis = computed(() => {
 
 		<!-- Main content -->
 		<div v-if="hasServers">
+			<!-- Trading opportunities -->
+			<div
+				v-if="selectedServer && priceAnalysis && priceAnalysis.opportunities.length > 0"
+				class="mb-6">
+				<details class="group">
+					<summary class="text-lg font-semibold text-gray-900 mb-3 cursor-pointer list-none flex items-center gap-2">
+						<span>Opportunities</span>
+						<ChevronRightIcon class="w-5 h-5 transition-transform duration-200 group-open:rotate-90" />
+					</summary>
+					<div class="space-y-4 mt-3">
+					<div
+						v-for="opportunity in priceAnalysis.opportunities"
+						:key="opportunity.itemId"
+						class="flex items-start">
+					<div class="flex items-start">
+						<div
+							v-if="opportunity.itemImage"
+							class="w-10 h-10 mr-3 flex-shrink-0">
+							<img
+								:src="opportunity.itemImage"
+								:alt="opportunity.itemName"
+								class="w-full h-full object-contain" />
+						</div>
+						<div>
+							<div class="font-medium text-gray-900">
+								{{ opportunity.itemName }}
+							</div>
+							<div class="text-sm text-gray-600 space-y-1">
+								<div class="flex items-center gap-2">
+									<span class="font-semibold w-20">Buy from:</span>
+									<img
+										v-if="opportunity.buyShopPlayer"
+										:src="generateMinecraftAvatar(opportunity.buyShopPlayer)"
+										:alt="opportunity.buyShopPlayer"
+										class="w-4 h-4 rounded"
+										@error="$event.target.style.display = 'none'" />
+									<span>{{ opportunity.buyShopPlayer || opportunity.buyShop }}<span v-if="opportunity.buyShopPlayer && opportunity.buyShopPlayer !== opportunity.buyShop"> - {{ opportunity.buyShop }}</span> at {{ opportunity.buyPrice }}</span>
+								</div>
+								<div class="flex items-center gap-2">
+									<span class="font-semibold w-20">Sell to:</span>
+									<img
+										v-if="opportunity.sellShopPlayer"
+										:src="generateMinecraftAvatar(opportunity.sellShopPlayer)"
+										:alt="opportunity.sellShopPlayer"
+										class="w-4 h-4 rounded"
+										@error="$event.target.style.display = 'none'" />
+									<span>{{ opportunity.sellShopPlayer || opportunity.sellShop }}<span v-if="opportunity.sellShopPlayer && opportunity.sellShopPlayer !== opportunity.sellShop"> - {{ opportunity.sellShop }}</span> at {{ opportunity.sellPrice }}</span>
+								</div>
+								<div class="flex items-center gap-2">
+									<span class="font-semibold w-20">Profit:</span>
+									<div class="font-bold text-semantic-success">
+										+{{ opportunity.profit.toFixed(2) }}
+									</div>
+									<span class="text-sm text-gray-500">per item</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+					</div>
+				</details>
+			</div>
+
 			<!-- Search input -->
 			<div v-if="selectedServerId" class="mb-6">
 				<label for="item-search" class="block text-sm font-medium text-gray-700 mb-2">
@@ -634,52 +707,6 @@ const priceAnalysis = computed(() => {
 								]">
 								Condensed
 							</button>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Trading opportunities -->
-			<div
-				v-if="selectedServer && priceAnalysis && priceAnalysis.opportunities.length > 0"
-				class="mb-6">
-				<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-					<h3 class="text-lg font-semibold text-gray-900 mb-4">
-						🚀 Trading Opportunities
-					</h3>
-					<div class="space-y-3">
-						<div
-							v-for="opportunity in priceAnalysis.opportunities"
-							:key="opportunity.itemId"
-							class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-							<div class="flex items-center">
-								<div
-									v-if="opportunity.itemImage"
-									class="w-10 h-10 mr-3 flex-shrink-0">
-									<img
-										:src="opportunity.itemImage"
-										:alt="opportunity.itemName"
-										class="w-full h-full object-contain" />
-								</div>
-								<div>
-									<div class="font-medium text-gray-900">
-										{{ opportunity.itemName }}
-									</div>
-									<div class="text-sm text-gray-600">
-										Buy from {{ opportunity.buyShop }} at
-										{{ opportunity.buyPrice }} → Sell to
-										{{ opportunity.sellShop }} at {{ opportunity.sellPrice }}
-									</div>
-								</div>
-							</div>
-							<div class="text-right">
-								<div class="font-bold text-green-600">
-									+{{ opportunity.profit.toFixed(2) }}
-								</div>
-								<div class="text-sm text-gray-500">
-									{{ opportunity.profitMargin.toFixed(1) }}% profit
-								</div>
-							</div>
 						</div>
 					</div>
 				</div>
