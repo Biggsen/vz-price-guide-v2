@@ -11,9 +11,9 @@ import {
 	CurrencyDollarIcon,
 	PencilIcon,
 	TrashIcon,
-	XCircleIcon,
 	PlusIcon
 } from '@heroicons/vue/24/outline'
+import { XCircleIcon } from '@heroicons/vue/24/solid'
 import { useAdmin } from '../utils/admin.js'
 import { useShops, createShop, updateShop, deleteShop } from '../utils/shopProfile.js'
 import {
@@ -65,6 +65,7 @@ const shopCreateError = ref(null)
 const shopEditError = ref(null)
 const shopNameValidationError = ref(null)
 const shopServerValidationError = ref(null)
+const shopPlayerValidationError = ref(null)
 
 const presetServerId = ref(null)
 const presetShopType = ref(null)
@@ -78,10 +79,6 @@ const shopForm = ref({
 	description: '',
 	is_own_shop: false,
 	owner_funds: null
-})
-
-const isShopFormValid = computed(() => {
-	return shopForm.value.name.trim() && (editingShop.value || shopForm.value.server_id)
 })
 
 // Watch player name to auto-fill shop name when checkbox is checked
@@ -238,6 +235,7 @@ function showCreateShopForm(serverId = '', isOwnShop = null) {
 	shopEditError.value = null
 	shopNameValidationError.value = null
 	shopServerValidationError.value = null
+	shopPlayerValidationError.value = null
 	shopError.value = null
 }
 
@@ -261,6 +259,7 @@ function showEditShopForm(shop) {
 	shopEditError.value = null
 	shopNameValidationError.value = null
 	shopServerValidationError.value = null
+	shopPlayerValidationError.value = null
 	shopError.value = null
 }
 
@@ -276,6 +275,7 @@ function closeShopModals() {
 	shopEditError.value = null
 	shopNameValidationError.value = null
 	shopServerValidationError.value = null
+	shopPlayerValidationError.value = null
 	shopError.value = null
 	resetShopForm()
 }
@@ -285,6 +285,11 @@ async function handleShopSubmit() {
 
 	if (!shopForm.value.name.trim()) {
 		shopNameValidationError.value = 'Shop name is required'
+		return
+	}
+
+	if (!shopForm.value.is_own_shop && !shopForm.value.player.trim()) {
+		shopPlayerValidationError.value = 'Player name is required'
 		return
 	}
 
@@ -298,6 +303,7 @@ async function handleShopSubmit() {
 	shopEditError.value = null
 	shopNameValidationError.value = null
 	shopServerValidationError.value = null
+	shopPlayerValidationError.value = null
 
 	try {
 		// For own shops, use the user's Minecraft username from their profile
@@ -557,14 +563,26 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 			<form @submit.prevent="handleShopSubmit" class="space-y-4">
 				<div v-if="!shopForm.is_own_shop">
 					<label for="shop-player" class="block text-sm font-medium text-gray-700 mb-1">
-						Player (Minecraft Username)
+						Player (Minecraft Username) *
 					</label>
 					<input
 						id="shop-player"
 						v-model="shopForm.player"
 						type="text"
 						placeholder="Enter Minecraft username"
-						class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
+						@input="shopPlayerValidationError = null; shopCreateError = null; shopEditError = null"
+						:class="[
+							'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
+							shopPlayerValidationError
+								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+						]" />
+					<div
+						v-if="shopPlayerValidationError"
+						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+						<XCircleIcon class="w-4 h-4" />
+						{{ shopPlayerValidationError }}
+					</div>
 				</div>
 
 				<div>
@@ -587,7 +605,12 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 							:disabled="usePlayerAsShopName && !shopForm.is_own_shop"
 							placeholder="e.g., verzion's shop"
 							@input="shopNameValidationError = null; shopCreateError = null; shopEditError = null"
-							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus disabled:bg-gray-100 disabled:cursor-not-allowed" />
+							:class="[
+								'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans disabled:bg-gray-100 disabled:cursor-not-allowed',
+								shopNameValidationError
+									? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+									: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+							]" />
 					</div>
 					<div
 						v-if="shopNameValidationError"
@@ -606,7 +629,12 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 						v-model="shopForm.server_id"
 						required
 						@change="shopServerValidationError = null; shopCreateError = null; shopEditError = null"
-						class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus">
+						:class="[
+							'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 focus:ring-2 font-sans',
+							shopServerValidationError
+								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+						]">
 						<option value="">Select a server</option>
 						<option v-for="server in servers" :key="server.id" :value="server.id">
 							{{ server.name }}
@@ -670,7 +698,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 						</button>
 						<BaseButton
 							@click="handleShopSubmit"
-							:disabled="shopLoading || !isShopFormValid"
+							:disabled="shopLoading"
 							variant="primary">
 							{{ shopLoading ? (editingShop ? 'Updating...' : 'Creating...') : editingShop ? 'Update Shop' : 'Create Shop' }}
 						</BaseButton>

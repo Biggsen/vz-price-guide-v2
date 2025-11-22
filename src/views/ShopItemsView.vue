@@ -21,6 +21,7 @@ import BaseIconButton from '../components/BaseIconButton.vue'
 import { ArrowLeftIcon, PlusIcon, ArrowPathIcon } from '@heroicons/vue/20/solid'
 import { CurrencyDollarIcon } from '@heroicons/vue/24/outline'
 import { PencilIcon, TrashIcon, ArchiveBoxIcon, ArchiveBoxXMarkIcon, WalletIcon } from '@heroicons/vue/24/outline'
+import { XCircleIcon } from '@heroicons/vue/24/solid'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 
@@ -57,6 +58,7 @@ const shopFormLoading = ref(false)
 const shopFormError = ref(null)
 const shopNameValidationError = ref(null)
 const shopServerValidationError = ref(null)
+const shopPlayerValidationError = ref(null)
 const usePlayerAsShopName = ref(false)
 const shopForm = ref({
 	name: '',
@@ -135,7 +137,6 @@ const selectedServer = computed(() =>
 		? servers.value.find((s) => s.id === selectedShop.value.server_id)
 		: null
 )
-const isShopFormValid = computed(() => shopForm.value.name.trim())
 
 // Watch player name to auto-fill shop name when checkbox is checked
 watch(() => shopForm.value.player, (newPlayer) => {
@@ -719,6 +720,7 @@ function openEditShopModal() {
 	shopFormError.value = null
 	shopNameValidationError.value = null
 	shopServerValidationError.value = null
+	shopPlayerValidationError.value = null
 	shopFormLoading.value = false
 	shopForm.value = {
 		name: selectedShop.value.name,
@@ -742,6 +744,7 @@ function closeEditShopModal() {
 	shopFormError.value = null
 	shopNameValidationError.value = null
 	shopServerValidationError.value = null
+	shopPlayerValidationError.value = null
 	shopFormLoading.value = false
 	usePlayerAsShopName.value = false
 	resetShopForm()
@@ -762,10 +765,16 @@ async function submitEditShop() {
 
 	shopNameValidationError.value = null
 	shopServerValidationError.value = null
+	shopPlayerValidationError.value = null
 	shopFormError.value = null
 
 	if (!shopForm.value.name.trim()) {
 		shopNameValidationError.value = 'Shop name is required'
+		return
+	}
+
+	if (!shopForm.value.is_own_shop && !shopForm.value.player.trim()) {
+		shopPlayerValidationError.value = 'Player name is required'
 		return
 	}
 
@@ -844,7 +853,7 @@ function getServerName(serverId) {
 					class="text-gray-600 mt-1 max-w-2xl">
 					{{ selectedShop.description }}
 				</p>
-				<div class="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500">
+				<div class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 sm:gap-4 mt-2 text-sm text-gray-500">
 					<span>
 						<span class="font-medium">Server:</span>
 						{{ getServerName(selectedShop.server_id) }}
@@ -878,30 +887,15 @@ function getServerName(serverId) {
 			{{ error }}
 		</div>
 
-		<!-- No servers warning -->
+		<!-- Loading state -->
 		<div
-			v-if="!hasServers && !loading"
-			class="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-4 text-yellow-800">
-			<p class="font-semibold">No servers found</p>
-			<p class="text-sm mt-1">
-				Create a server before managing shop items.
-				<router-link to="/shop-manager" class="text-yellow-900 underline">
-					Go to Shop Manager
-				</router-link>
-			</p>
-		</div>
-
-		<!-- No shops warning -->
-		<div
-			v-else-if="!hasShops && !loading"
-			class="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-4 text-yellow-800">
-			<p class="font-semibold">No shops found</p>
-			<p class="text-sm mt-1">
-				Create a shop before managing items.
-				<router-link to="/shop-manager" class="text-yellow-900 underline">
-					Go to Shop Manager
-				</router-link>
-			</p>
+			v-else-if="shops === null || servers === null"
+			class="flex items-center justify-center py-12">
+			<div class="flex flex-col items-center">
+				<div
+					class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-asparagus mb-4"></div>
+				<p class="text-gray-600">Loading shops...</p>
+			</div>
 		</div>
 
 		<div
@@ -929,12 +923,13 @@ function getServerName(serverId) {
 						class="checkbox-input" />
 					<span class="ml-2 text-sm text-gray-700">Shop owner has run out of money</span>
 				</label>
-				<div v-if="shopItems && shopItems.length > 0" class="flex justify-start gap-3">
+				<div v-if="shopItems && shopItems.length > 0" class="flex flex-col sm:flex-row justify-start gap-3">
 					<BaseButton
 						type="button"
 						variant="primary"
 						@click="showAddItemForm"
-						:disabled="!selectedShop">
+						:disabled="!selectedShop"
+						class="w-full sm:w-auto justify-center sm:justify-start">
 						<template #left-icon>
 							<PlusIcon />
 						</template>
@@ -942,10 +937,12 @@ function getServerName(serverId) {
 					</BaseButton>
 					<RouterLink
 						v-if="selectedShop?.server_id"
-						:to="`/market-overview?serverId=${selectedShop.server_id}`">
+						:to="`/market-overview?serverId=${selectedShop.server_id}`"
+						class="w-full sm:w-auto">
 						<BaseButton
 							type="button"
-							variant="tertiary">
+							variant="tertiary"
+							class="w-full justify-center sm:justify-start">
 							<template #left-icon>
 								<CurrencyDollarIcon class="w-4 h-4" />
 							</template>
@@ -959,56 +956,60 @@ function getServerName(serverId) {
 			<div class="mt-8 space-y-6">
 				<div
 					v-if="shopItems.length > 0"
-					class="flex flex-wrap items-center gap-6">
-					<div>
-						<span class="text-sm font-medium text-gray-700 block">View as:</span>
-						<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
-							<button
-								@click="viewMode = 'categories'"
-								:class="[
-									viewMode === 'categories'
-										? 'bg-gray-asparagus text-white'
-										: 'bg-norway text-heavy-metal hover:bg-sea-mist',
-									'px-3 py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
-								]">
-								Categories
-							</button>
-							<button
-								@click="viewMode = 'list'"
-								:class="[
-									viewMode === 'list'
-										? 'bg-gray-asparagus text-white'
-										: 'bg-norway text-heavy-metal hover:bg-sea-mist',
-									'px-3 py-1 text-sm font-medium transition'
-								]">
-								List
-							</button>
+					class="mb-4">
+					<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-8">
+						<!-- View Mode -->
+						<div class="flex items-center gap-2">
+							<span class="text-sm font-medium text-heavy-metal">View as:</span>
+							<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+								<button
+									@click="viewMode = 'categories'"
+									:class="[
+										viewMode === 'categories'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-gray-100',
+										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+									]">
+									Categories
+								</button>
+								<button
+									@click="viewMode = 'list'"
+									:class="[
+										viewMode === 'list'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-gray-100',
+										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
+									]">
+									List
+								</button>
+							</div>
 						</div>
-					</div>
 
-					<div>
-						<span class="text-sm font-medium text-gray-700 block">Layout:</span>
-						<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
-							<button
-								@click="layout = 'comfortable'"
-								:class="[
-									layout === 'comfortable'
-										? 'bg-gray-asparagus text-white'
-										: 'bg-norway text-heavy-metal hover:bg-sea-mist',
-									'px-3 py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
-								]">
-								Comfortable
-							</button>
-							<button
-								@click="layout = 'condensed'"
-								:class="[
-									layout === 'condensed'
-										? 'bg-gray-asparagus text-white'
-										: 'bg-norway text-heavy-metal hover:bg-sea-mist',
-									'px-3 py-1 text-sm font-medium transition'
-								]">
-								Condensed
-							</button>
+						<!-- Layout -->
+						<div class="flex items-center gap-2">
+							<span class="text-sm font-medium text-heavy-metal">Layout:</span>
+							<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+								<button
+									@click="layout = 'comfortable'"
+									:class="[
+										layout === 'comfortable'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-gray-100',
+										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+									]">
+									Comfortable
+								</button>
+								<button
+									@click="layout = 'condensed'"
+									:class="[
+										layout === 'condensed'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-gray-100',
+										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
+									]">
+									Compact
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -1240,14 +1241,26 @@ function getServerName(serverId) {
 		<form @submit.prevent="submitEditShop" class="space-y-4">
 			<div v-if="!shopForm.is_own_shop">
 				<label for="edit-shop-player" class="block text-sm font-medium text-gray-700 mb-1">
-					Player (Minecraft Username)
+					Player (Minecraft Username) *
 				</label>
 				<input
 					id="edit-shop-player"
 					v-model="shopForm.player"
 					type="text"
 					placeholder="Enter Minecraft username"
-					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
+					@input="shopPlayerValidationError = null; shopFormError = null"
+					:class="[
+						'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
+						shopPlayerValidationError
+							? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+							: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+					]" />
+				<div
+					v-if="shopPlayerValidationError"
+					class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
+					<XCircleIcon class="w-4 h-4" />
+					{{ shopPlayerValidationError }}
+				</div>
 			</div>
 
 			<div>
@@ -1270,12 +1283,18 @@ function getServerName(serverId) {
 						:disabled="usePlayerAsShopName && !shopForm.is_own_shop"
 						placeholder="e.g., vz market"
 						@input="shopNameValidationError = null; shopFormError = null"
-						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus disabled:bg-gray-100 disabled:cursor-not-allowed" />
+						:class="[
+							'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans disabled:bg-gray-100 disabled:cursor-not-allowed',
+							shopNameValidationError
+								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+						]" />
 				</div>
 				<div
 					v-if="shopNameValidationError"
 					class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-					<span>{{ shopNameValidationError }}</span>
+					<XCircleIcon class="w-4 h-4" />
+					{{ shopNameValidationError }}
 				</div>
 			</div>
 
@@ -1305,7 +1324,8 @@ function getServerName(serverId) {
 
 			<div
 				v-if="shopFormError"
-				class="text-sm text-red-600 font-semibold bg-red-100 border border-red-300 px-3 py-2 rounded">
+				class="text-sm text-red-600 font-semibold flex items-center gap-1 bg-red-100 border border-red-300 px-3 py-2 rounded">
+				<XCircleIcon class="w-4 h-4" />
 				{{ shopFormError }}
 			</div>
 		</form>
@@ -1322,7 +1342,7 @@ function getServerName(serverId) {
 					<BaseButton
 						type="button"
 						@click="submitEditShop"
-						:disabled="shopFormLoading || !isShopFormValid"
+						:disabled="shopFormLoading"
 						variant="primary">
 						{{ shopFormLoading ? 'Updating...' : 'Update Shop' }}
 					</BaseButton>

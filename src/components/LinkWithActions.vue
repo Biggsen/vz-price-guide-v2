@@ -49,29 +49,36 @@ const showShopName = computed(() => {
 </script>
 
 <template>
-	<li class="flex items-center gap-3 justify-between text-heavy-metal">
+	<li class="flex items-start sm:items-center gap-3 justify-between text-heavy-metal">
 		<RouterLink
 			:to="props.to"
-			class="inline-flex items-center gap-2 text-base font-semibold text-gray-600 hover:text-heavy-metal transition">
+			class="flex items-start sm:items-center gap-2 text-base font-semibold text-gray-600 hover:text-heavy-metal transition min-w-0 flex-1 sm:flex-initial">
 			<template v-if="props.shopName">
 				<img
 					v-if="computedAvatarUrl"
 					:src="computedAvatarUrl"
 					:alt="props.shopName"
-					class="w-5 h-5 rounded"
+					class="w-5 h-5 rounded flex-shrink-0 mt-0.5 sm:mt-0"
 					@error="$event.target.style.display = 'none'" />
-				<span>{{ props.shopName }}</span>
-				<span v-if="showShopName"> - {{ props.label }}</span>
+				<div class="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-1 min-w-0">
+					<span class="break-words min-w-0">{{ props.shopName }}</span>
+					<span v-if="showShopName" class="break-words min-w-0 sm:inline">
+						<span class="hidden sm:inline"> - </span>
+						<span class="block sm:inline">
+							<span class="sm:hidden">- </span>{{ props.label }}
+						</span>
+					</span>
+				</div>
 			</template>
 			<template v-else>
 				<img
 					v-if="computedAvatarUrl"
 					:src="computedAvatarUrl"
 					:alt="props.label"
-					class="w-5 h-5 rounded"
+					class="w-5 h-5 rounded flex-shrink-0"
 					@error="$event.target.style.display = 'none'" />
-				<BuildingStorefrontIcon v-else class="w-4 h-4 text-gray-500" />
-				{{ props.label }}
+				<BuildingStorefrontIcon v-else class="w-4 h-4 text-gray-500 flex-shrink-0" />
+				<span class="break-words min-w-0">{{ props.label }}</span>
 			</template>
 		</RouterLink>
 		<div class="flex items-center gap-1">

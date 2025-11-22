@@ -44,7 +44,6 @@ const formData = ref({
 // Form state
 const formError = ref(null)
 const searchQuery = ref('')
-const showMoreFields = ref(false)
 const highlightedIndex = ref(-1)
 const searchInput = ref(null)
 const dropdownContainer = ref(null)
@@ -494,8 +493,8 @@ defineExpose({
 					<!-- Error message for item selection -->
 					<div
 						v-if="formError === 'item_id'"
-						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-						<XCircleIcon class="w-4 h-4" />
+						class="mt-1 text-sm text-red-600 font-semibold flex items-start gap-1">
+						<XCircleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
 						Please select an item
 					</div>
 
@@ -598,8 +597,8 @@ defineExpose({
 						]" />
 					<div
 						v-if="formError === 'buy_price'"
-						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-						<XCircleIcon class="w-4 h-4" />
+						class="mt-1 text-sm text-red-600 font-semibold flex items-start gap-1">
+						<XCircleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
 						Buy price must be a valid number greater than or equal to 0
 					</div>
 					<!-- Out of stock checkbox (only for player shops, not own) -->
@@ -640,26 +639,25 @@ defineExpose({
 					</div>
 					<div
 						v-if="formError === 'sell_price'"
-						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-						<XCircleIcon class="w-4 h-4" />
+						class="mt-1 text-sm text-red-600 font-semibold flex items-start gap-1">
+						<XCircleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
 						Sell price must be a valid number greater than or equal to 0
 					</div>
 					<div
 						v-if="formError === 'prices'"
-						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-						<XCircleIcon class="w-4 h-4" />
+						class="mt-1 text-sm text-red-600 font-semibold flex items-start gap-1">
+						<XCircleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
 						At least one price (buy or sell) is required
 					</div>
+					<!-- Stock Full checkbox (only for competitor shops) -->
+					<div v-if="shop && !shop.is_own_shop" class="mt-2">
+						<label class="flex items-center">
+							<input v-model="formData.stock_full" type="checkbox" class="checkbox-input" />
+							<span class="ml-2 text-sm text-gray-700">Stock full</span>
+						</label>
+						<p class="text-xs text-gray-500 mt-1">Mark when you can't sell any more</p>
+					</div>
 				</div>
-			</div>
-
-			<!-- Stock Full checkbox (only for competitor shops) -->
-			<div v-if="shop && !shop.is_own_shop">
-				<label class="flex items-center">
-					<input v-model="formData.stock_full" type="checkbox" class="checkbox-input" />
-					<span class="ml-2 text-sm text-gray-700">Stock full</span>
-				</label>
-				<p class="text-xs text-gray-500 mt-1">Mark when you can't sell any more</p>
 			</div>
 
 			<!-- Notes -->
@@ -675,36 +673,6 @@ defineExpose({
 					class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>
 			</div>
 
-			<!-- Show more link -->
-			<div>
-				<button
-					type="button"
-					@click="showMoreFields = !showMoreFields"
-					class="text-sm text-gray-900 hover:text-gray-700 underline">
-					{{ showMoreFields ? 'Show less' : 'Show more' }}
-				</button>
-			</div>
-
-			<!-- Optional fields (hidden by default) -->
-			<div v-if="showMoreFields" class="space-y-4">
-				<!-- Stock quantity -->
-				<div>
-					<label
-						for="stock-quantity"
-						class="block text-sm font-medium text-gray-700 mb-1">
-						Stock Quantity (Optional)
-					</label>
-					<input
-						id="stock-quantity"
-						:value="formData.stock_quantity"
-						@input="handleQuantityInput"
-						type="number"
-						min="0"
-						placeholder="64"
-						class="mt-2 block w-[150px] rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans" />
-					<p class="text-xs text-gray-500 mt-1">Current stock amount</p>
-				</div>
-			</div>
 
 			<!-- Form actions (only show when not in modal mode) -->
 			<div
