@@ -389,7 +389,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 			<div>
 				<h1 class="text-3xl font-bold text-gray-900 mb-2">Player Shop Manager</h1>
 				<p class="text-gray-600">
-					Manage your player shops and track pricing data.
+					Manage your shops and other player shops across all your servers.
 				</p>
 			</div>
 			<div class="mt-4">
@@ -548,10 +548,9 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 				</BaseCard>
 			</TransitionGroup>
 
-			<div
-				v-else
-				class="rounded-xl border border-dashed border-gray-asparagus/50 bg-saltpan px-6 py-10 text-center text-sm text-gray-600">
-				<p>No servers yet. Use the Add Server button above to add your first server.</p>
+			<div v-else>
+				<p class="text-lg font-medium mb-2">No servers yet.</p>
+				<p class="text-sm text-gray-600">Click "Add Server" to get started with your servers.</p>
 			</div>
 		</div>
 

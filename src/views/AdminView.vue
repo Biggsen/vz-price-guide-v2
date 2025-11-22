@@ -5,7 +5,8 @@ import {
 	ExclamationTriangleIcon,
 	PlusIcon,
 	ArrowPathIcon,
-	ChartBarIcon
+	ChartBarIcon,
+	UserIcon
 } from '@heroicons/vue/24/outline'
 
 const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAdmin()
@@ -136,6 +137,28 @@ const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAd
 				</div>
 				<p class="text-gray-600 text-sm">
 					Recalculate item prices based on recipe costs and market data.
+				</p>
+			</RouterLink>
+		</div>
+
+		<!-- Access Management -->
+		<div class="mb-8">
+			<h2 class="text-2xl font-bold text-gray-900 mb-6">Access Management</h2>
+		</div>
+
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+			<!-- Access Management -->
+			<RouterLink
+				to="/admin/access"
+				class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-blue-300">
+				<div class="flex items-center mb-4">
+					<div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+						<UserIcon class="w-6 h-6 text-blue-600" />
+					</div>
+					<h3 class="text-lg font-semibold text-gray-900 ml-3">Access Management</h3>
+				</div>
+				<p class="text-gray-600 text-sm">
+					Manage shop manager access for users.
 				</p>
 			</RouterLink>
 		</div>

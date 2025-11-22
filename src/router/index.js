@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import { getCurrentUser } from 'vuefire'
-import { isAdmin } from '../constants'
+import { isAdmin, canAccessShopManager } from '../constants'
 
 const siteName = "verzion's economy price guide for Minecraft"
 
@@ -178,7 +178,7 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				requiresVerification: true,
-				requiresAdmin: true,
+				requiresShopManager: true,
 				title: `Player Shop Manager - ${siteName}`
 			}
 		},
@@ -426,6 +426,17 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/admin/access',
+			name: 'admin-access',
+			component: () => import('../views/AccessManagementView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: `Access Management - ${siteName}`
+			}
+		},
+		{
 			path: '/crate-rewards',
 			name: 'crate-rewards',
 			component: () => import('../views/CrateRewardManagerView.vue'),
@@ -507,6 +518,14 @@ router.beforeEach(async (to, from, next) => {
 		if (to.meta.requiresAdmin) {
 			const admin = await isAdmin(user)
 			if (!admin) {
+				return next({ path: '/restricted' })
+			}
+		}
+
+		// Shop manager route protection
+		if (to.meta.requiresShopManager) {
+			const canAccess = await canAccessShopManager(user)
+			if (!canAccess) {
 				return next({ path: '/restricted' })
 			}
 		}

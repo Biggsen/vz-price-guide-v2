@@ -37,7 +37,7 @@ const emit = defineEmits(['setActiveMainNav'])
 const user = useCurrentUser()
 const route = useRoute()
 const router = useRouter()
-const { isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAdmin()
+const { isAdmin, canAccessShopManager, canViewMissingItems, canAddItems, canBulkUpdate } = useAdmin()
 
 // Get the latest update ID
 const latestUpdateId = updatesData[0]?.id || null
@@ -276,7 +276,7 @@ onUnmounted(() => {
 			</RouterLink>
 
 			<RouterLink
-				v-if="isAdmin"
+				v-if="canAccessShopManager"
 				to="/shop-manager"
 				@click="
 					() => {
@@ -496,7 +496,7 @@ onUnmounted(() => {
 			</div>
 		</RouterLink>
 		<RouterLink
-			v-if="isAdmin"
+			v-if="canAccessShopManager"
 			to="/shop-manager"
 			@click="
 				() => {

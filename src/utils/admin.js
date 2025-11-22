@@ -7,6 +7,8 @@ export function useAdmin() {
 	const user = useCurrentUser()
 	const adminStatus = ref(false)
 	const adminStatusLoaded = ref(false)
+	const shopManagerStatus = ref(false)
+	const shopManagerStatusLoaded = ref(false)
 
 	// Get user profile data
 	const { userProfile } = useUserProfile(user.value?.uid)
@@ -19,15 +21,24 @@ export function useAdmin() {
 				try {
 					const idTokenResult = await newUser.getIdTokenResult()
 					adminStatus.value = idTokenResult.claims.admin === true
+					// Shop manager access: admin OR shopManager claim
+					shopManagerStatus.value =
+						idTokenResult.claims.admin === true ||
+						idTokenResult.claims.shopManager === true
 					adminStatusLoaded.value = true
+					shopManagerStatusLoaded.value = true
 				} catch (error) {
 					console.error('Error checking admin status:', error)
 					adminStatus.value = false
+					shopManagerStatus.value = false
 					adminStatusLoaded.value = true
+					shopManagerStatusLoaded.value = true
 				}
 			} else {
 				adminStatus.value = false
+				shopManagerStatus.value = false
 				adminStatusLoaded.value = true
+				shopManagerStatusLoaded.value = true
 			}
 		},
 		{ immediate: true }
@@ -55,6 +66,10 @@ export function useAdmin() {
 
 	const canAccessAdmin = computed(() => {
 		return isAdmin.value
+	})
+
+	const canAccessShopManager = computed(() => {
+		return shopManagerStatus.value
 	})
 
 	// Combined user data
@@ -91,6 +106,8 @@ export function useAdmin() {
 		canAddItems,
 		canBulkUpdate,
 		canViewMissingItems,
-		canAccessAdmin
+		canAccessAdmin,
+		canAccessShopManager,
+		shopManagerStatusLoaded
 	}
 }
