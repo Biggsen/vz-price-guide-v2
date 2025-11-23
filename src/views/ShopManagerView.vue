@@ -1,10 +1,11 @@
 <script setup>
-import { computed, ref, watch, TransitionGroup } from 'vue'
+import { computed, ref, watch, TransitionGroup, nextTick } from 'vue'
 import { RouterLink } from 'vue-router'
 import BaseButton from '../components/BaseButton.vue'
 import BaseCard from '../components/BaseCard.vue'
 import BaseModal from '../components/BaseModal.vue'
 import LinkWithActions from '../components/LinkWithActions.vue'
+import PlayerShopsGroup from '../components/PlayerShopsGroup.vue'
 import ServerFormModal from '../components/ServerFormModal.vue'
 import {
 	GlobeAltIcon,
@@ -70,6 +71,10 @@ const presetServerId = ref(null)
 const presetShopType = ref(null)
 const usePlayerAsShopName = ref(false)
 
+// Refs for form inputs to enable auto-focus
+const shopPlayerInput = ref(null)
+const shopNameInput = ref(null)
+
 const shopForm = ref({
 	name: '',
 	player: '',
@@ -121,6 +126,37 @@ const shopsByServer = computed(() => {
 				grouped[shop.server_id].player.push(shop)
 			}
 		}
+	})
+	
+	return grouped
+})
+
+// Group shops by player name for each server
+const shopsByPlayer = computed(() => {
+	if (!shops.value || !servers.value) return {}
+	
+	const grouped = {}
+	
+	servers.value.forEach((server) => {
+		grouped[server.id] = {
+			own: {},
+			player: {}
+		}
+	})
+	
+	shops.value.forEach((shop) => {
+		if (!shop.server_id || !grouped[shop.server_id]) return
+		
+		const playerName = shop.is_own_shop
+			? shop.player || userProfile.value?.minecraft_username || userProfile.value?.display_name || user.value?.email?.split('@')[0] || 'Unknown'
+			: shop.player || shop.name || 'Unknown'
+		
+		const targetGroup = shop.is_own_shop ? grouped[shop.server_id].own : grouped[shop.server_id].player
+		
+		if (!targetGroup[playerName]) {
+			targetGroup[playerName] = []
+		}
+		targetGroup[playerName].push(shop)
 	})
 	
 	return grouped
@@ -265,6 +301,15 @@ function showCreateShopForm(serverId = '', isOwnShop = null) {
 	shopServerValidationError.value = null
 	shopPlayerValidationError.value = null
 	shopError.value = null
+	
+	// Focus the first input after modal opens
+	nextTick(() => {
+		if (!shopForm.value.is_own_shop && shopPlayerInput.value) {
+			shopPlayerInput.value.focus()
+		} else if (shopForm.value.is_own_shop && shopNameInput.value) {
+			shopNameInput.value.focus()
+		}
+	})
 }
 
 function showEditShopForm(shop) {
@@ -502,70 +547,66 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 								</RouterLink>
 							</div>
 							<div class="space-y-4">
+								<div class="flex gap-2">
+									<BaseButton
+										variant="secondary"
+										:disabled="shopLoading"
+										@click="showCreateShopForm(server.id, true)">
+										<template #left-icon>
+											<PlusIcon class="w-4 h-4" />
+										</template>
+										Add My Shop
+									</BaseButton>
+									<BaseButton
+										variant="secondary"
+										:disabled="shopLoading"
+										@click="showCreateShopForm(server.id, false)">
+										<template #left-icon>
+											<PlusIcon class="w-4 h-4" />
+										</template>
+										Add Player Shop
+									</BaseButton>
+								</div>
 								<div>
 									<h4 class="text-sm font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-asparagus/40 pb-1 w-full">
 										My Shops
 									</h4>
 									<ul class="mt-1 space-y-1 text-sm text-gray-600">
-										<LinkWithActions
-											v-for="shop in shopsByServer[server.id]?.own || []"
-											:key="shop.id"
-											:to="{ name: 'shop', params: { shopId: shop.id } }"
-											:label="shop.name"
-											:loading="shopLoading"
+										<PlayerShopsGroup
+											v-for="(playerShops, playerName) in shopsByPlayer[server.id]?.own || {}"
+											:key="playerName"
+											:player-name="playerName"
+											:shops="playerShops"
 											:avatar-url="userProfile?.minecraft_avatar_url || null"
-											:shop-name="shop.player || userProfile?.minecraft_username || userProfile?.display_name || user?.email?.split('@')[0] || null"
-											@edit="showEditShopForm(shop)"
-											@delete="requestDeleteShop(shop)" />
+											:loading="shopLoading"
+											@edit="showEditShopForm"
+											@delete="requestDeleteShop" />
 										<li
 											v-if="!shopsByServer[server.id]?.own.length"
 											class="text-sm italic text-gray-500">
 											No personal shops yet.
 										</li>
 									</ul>
-									<div class="mt-3 flex">
-										<BaseButton
-											variant="secondary"
-											:disabled="shopLoading"
-											@click="showCreateShopForm(server.id, true)">
-											<template #left-icon>
-												<PlusIcon class="w-4 h-4" />
-											</template>
-											Add Shop
-										</BaseButton>
-									</div>
 								</div>
 								<div>
 									<h4 class="text-sm font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-asparagus/40 pb-1 w-full">
 										Player Shops
 									</h4>
 									<ul class="mt-1 space-y-1 text-sm text-gray-600">
-										<LinkWithActions
-											v-for="shop in shopsByServer[server.id]?.player || []"
-											:key="shop.id"
-											:to="{ name: 'shop', params: { shopId: shop.id } }"
-											:label="shop.name"
+										<PlayerShopsGroup
+											v-for="(playerShops, playerName) in shopsByPlayer[server.id]?.player || {}"
+											:key="playerName"
+											:player-name="playerName"
+											:shops="playerShops"
 											:loading="shopLoading"
-											:shop-name="shop.player || shop.name"
-											@edit="showEditShopForm(shop)"
-											@delete="requestDeleteShop(shop)" />
+											@edit="showEditShopForm"
+											@delete="requestDeleteShop" />
 										<li
 											v-if="!shopsByServer[server.id]?.player.length"
 											class="text-sm italic text-gray-500">
 											No player shops tracked.
 										</li>
 									</ul>
-									<div class="mt-3 flex">
-										<BaseButton
-											variant="secondary"
-											:disabled="shopLoading"
-											@click="showCreateShopForm(server.id, false)">
-											<template #left-icon>
-												<PlusIcon class="w-4 h-4" />
-											</template>
-											Add Player Shop
-										</BaseButton>
-									</div>
 								</div>
 							</div>
 						</div>
@@ -591,6 +632,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 					</label>
 					<input
 						id="shop-player"
+						ref="shopPlayerInput"
 						v-model="shopForm.player"
 						type="text"
 						placeholder="Enter Minecraft username"
@@ -623,6 +665,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 						</label>
 						<input
 							id="shop-name"
+							ref="shopNameInput"
 							v-model="shopForm.name"
 							type="text"
 							required
