@@ -132,8 +132,10 @@ export async function updateShopItem(itemId, updates) {
 			}
 		}
 
-		// Clean up string fields
-		if (updatedData.notes) updatedData.notes = updatedData.notes.trim()
+		// Clean up string fields - always include notes field, even if empty
+		if (updatedData.notes !== undefined) {
+			updatedData.notes = String(updatedData.notes || '').trim()
+		}
 
 		// Always update the last_updated timestamp
 		updatedData.last_updated = new Date().toISOString()

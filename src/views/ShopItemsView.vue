@@ -15,6 +15,7 @@ import {
 import ShopItemForm from '../components/ShopItemForm.vue'
 import BaseTable from '../components/BaseTable.vue'
 import InlinePriceInput from '../components/InlinePriceInput.vue'
+import InlineNotesInput from '../components/InlineNotesInput.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
@@ -46,7 +47,9 @@ const layout = ref('comfortable') // 'comfortable' or 'condensed'
 const editingPriceId = ref(null)
 const editingPriceType = ref(null) // 'buy' or 'sell'
 const savingPriceId = ref(null)
-const savingPriceType = ref(null) // 'buy' or 'sell'
+const savingPriceType = ref(null)
+const editingNotesId = ref(null)
+const savingNotesId = ref(null)
 const savingItemId = ref(null) // Track which item is being saved during quick edit
 const showItemSavingSpinner = ref(null) // Show spinner after delay
 let itemSavingTimeout = null
@@ -627,7 +630,7 @@ async function handleQuickEdit(updatedItem) {
 			sell_price: updatedItem.sell_price,
 			stock_quantity: updatedItem.stock_quantity,
 			stock_full: updatedItem.stock_full,
-			notes: updatedItem.notes
+			notes: updatedItem.notes !== undefined ? updatedItem.notes : ''
 		}
 
 		console.log('ShopItemsView: Updating item ID:', updatedItem.id, 'with data:', updateData)
@@ -711,6 +714,50 @@ function cancelEditPrice() {
 	editingPriceType.value = null
 }
 
+// Inline notes editing functions
+function startEditNotes(itemId) {
+	editingNotesId.value = itemId
+}
+
+async function saveNotes(row, newNotes) {
+	const originalItem = row._originalItem
+	if (!originalItem || !originalItem.id) {
+		cancelEditNotes()
+		return
+	}
+
+	// Ensure newNotes is a string and trim it
+	const newNotesTrimmed = String(newNotes || '').trim()
+	
+	// Normalize current value for comparison (handle null/undefined as empty string)
+	const currentNotes = String(originalItem.notes || '').trim()
+
+	// Only update if value changed
+	if (newNotesTrimmed !== currentNotes) {
+		// Set saving state for this specific notes
+		savingNotesId.value = originalItem.id
+		
+		// Create updated item object
+		const updatedItem = {
+			...originalItem,
+			notes: newNotesTrimmed
+		}
+		
+		try {
+			await handleQuickEdit(updatedItem)
+		} finally {
+			// Clear saving state
+			savingNotesId.value = null
+		}
+	}
+
+	// Always cancel edit mode after save completes (or if no change)
+	cancelEditNotes()
+}
+
+function cancelEditNotes() {
+	editingNotesId.value = null
+}
 
 function openEditShopModal() {
 	if (!selectedShop.value) return
@@ -915,7 +962,7 @@ function getServerName(serverId) {
 		<div v-else-if="hasShops && hasServers && selectedShop" class="space-y-8">
 			<!-- Out of Money Checkbox and Add Item Button (Top) -->
 			<div class="mt-4 space-y-3">
-				<label class="flex items-center cursor-pointer">
+				<label v-if="!selectedShop.is_own_shop" class="flex items-center cursor-pointer">
 					<input
 						:checked="isShopOutOfMoney"
 						@change="handleOutOfMoneyChange($event.target.checked)"
@@ -1095,6 +1142,16 @@ function getServerName(serverId) {
 												@cancel="cancelEditPrice" />
 										</div>
 									</template>
+									<template #cell-notes="{ row, layout }">
+										<InlineNotesInput
+											:value="row._originalItem?.notes || ''"
+											:layout="layout"
+											:is-editing="editingNotesId === row.id"
+											:is-saving="savingNotesId === row.id"
+											@update:is-editing="(val) => { if (val) startEditNotes(row.id); else if (savingNotesId !== row.id) cancelEditNotes() }"
+											@save="(newNotes) => saveNotes(row, newNotes)"
+											@cancel="cancelEditNotes" />
+									</template>
 									<template #cell-actions="{ row }">
 										<div class="flex items-center justify-end gap-2">
 											<BaseIconButton
@@ -1187,6 +1244,16 @@ function getServerName(serverId) {
 											@save="(newPrice) => savePrice(row, 'sell', newPrice)"
 											@cancel="cancelEditPrice" />
 									</div>
+									</template>
+								<template #cell-notes="{ row, layout }">
+									<InlineNotesInput
+										:value="row._originalItem?.notes || ''"
+										:layout="layout"
+										:is-editing="editingNotesId === row.id"
+										:is-saving="savingNotesId === row.id"
+										@update:is-editing="(val) => { if (val) startEditNotes(row.id); else if (savingNotesId !== row.id) cancelEditNotes() }"
+										@save="(newNotes) => saveNotes(row, newNotes)"
+										@cancel="cancelEditNotes" />
 								</template>
 								<template #cell-actions="{ row }">
 									<div class="flex items-center justify-end gap-2">
