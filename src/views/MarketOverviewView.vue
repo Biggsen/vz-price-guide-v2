@@ -12,6 +12,7 @@ import BaseTable from '../components/BaseTable.vue'
 import BaseCard from '../components/BaseCard.vue'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
+import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
 import {
 	ArchiveBoxIcon,
 	ArchiveBoxXMarkIcon,
@@ -272,60 +273,10 @@ const baseTableColumns = computed(() => {
 	return columns
 })
 
-// Format date helper
-function formatDate(dateString) {
-	if (!dateString) return '—'
-
-	const date = new Date(dateString)
-	const now = new Date()
-	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-	const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-
-	const diffTime = today.getTime() - itemDate.getTime()
-	const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
-	if (diffDays === 0) {
-		return 'Today'
-	} else if (diffDays === 1) {
-		return 'Yesterday'
-	} else {
-		return `${diffDays} days ago`
-	}
-}
-
-// Calculate profit margin helper
-function calculateProfitMargin(buyPrice, sellPrice) {
-	if (!buyPrice || !sellPrice || buyPrice === 0) return null
-	const profit = buyPrice - sellPrice
-	const margin = (profit / buyPrice) * 100
-	return margin
-}
-
-// Transform shop items for BaseTable
-function transformShopItemForTable(shopItem) {
-	const profitMargin = calculateProfitMargin(shopItem.buy_price, shopItem.sell_price)
-	const lastUpdatedTimestamp = shopItem.last_updated ? new Date(shopItem.last_updated).getTime() : 0
-	return {
-		id: shopItem.id,
-		item: shopItem.itemData?.name || 'Unknown Item',
-		image: shopItem.itemData?.image || null,
-		shop: shopItem.shopData?.name || 'Unknown Shop',
-		shopPlayer: shopItem.shopData?.player || null,
-		shopLocation: shopItem.shopData?.location || null,
-		shopId: shopItem.shopData?.id || null,
-		buyPrice: shopItem.buy_price !== null && shopItem.buy_price !== undefined && shopItem.buy_price !== 0 ? shopItem.buy_price.toFixed(2) : '—',
-		sellPrice: shopItem.sell_price !== null && shopItem.sell_price !== undefined && shopItem.sell_price !== 0 ? shopItem.sell_price.toFixed(2) : '—',
-		profitMargin: profitMargin !== null ? `${profitMargin.toFixed(1)}%` : '—',
-		lastUpdated: formatDate(shopItem.last_updated),
-		_lastUpdatedTimestamp: lastUpdatedTimestamp,
-		_originalItem: shopItem // Keep reference to original item
-	}
-}
-
 // BaseTable rows for list view
 const baseTableRows = computed(() => {
 	if (!allVisibleItems.value) return []
-	return allVisibleItems.value.map(transformShopItemForTable)
+	return allVisibleItems.value.map((item) => transformShopItem(item, { includeShop: true }))
 })
 
 // BaseTable rows grouped by category
@@ -333,7 +284,7 @@ const baseTableRowsByCategory = computed(() => {
 	if (!filteredShopItemsByCategory.value) return {}
 	const grouped = {}
 	Object.entries(filteredShopItemsByCategory.value).forEach(([category, categoryItems]) => {
-		grouped[category] = categoryItems.map(transformShopItemForTable)
+		grouped[category] = categoryItems.map((item) => transformShopItem(item, { includeShop: true }))
 	})
 	return grouped
 })

@@ -26,6 +26,7 @@ import { PencilIcon, TrashIcon, ArchiveBoxIcon, ArchiveBoxXMarkIcon, WalletIcon 
 import { XCircleIcon } from '@heroicons/vue/24/solid'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
+import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -276,54 +277,9 @@ const baseTableColumns = computed(() => [
 	{ key: 'actions', label: '', align: 'center', headerAlign: 'center', width: 'w-24' }
 ])
 
-// Calculate profit margin helper
-function calculateProfitMargin(buyPrice, sellPrice) {
-	if (!buyPrice || !sellPrice || buyPrice === 0) {
-		return null
-	}
-	const profit = buyPrice - sellPrice
-	const margin = (profit / buyPrice) * 100
-	return margin
-}
-
-// Format date helper (same as ShopItemTable)
-function formatDate(dateString) {
-	if (!dateString) return '—'
-
-	const date = new Date(dateString)
-	const now = new Date()
-	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-	const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-
-	const diffTime = today.getTime() - itemDate.getTime()
-	const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
-	if (diffDays === 0) {
-		return 'Today'
-	} else if (diffDays === 1) {
-		return 'Yesterday'
-	} else {
-		return `${diffDays} days ago`
-	}
-}
-
-// Transform shop items for BaseTable
+// Transform shop items for BaseTable (using shared utility)
 function transformShopItemForTable(shopItem) {
-	const profitMargin = calculateProfitMargin(shopItem.buy_price, shopItem.sell_price)
-	const lastUpdatedTimestamp = shopItem.last_updated ? new Date(shopItem.last_updated).getTime() : 0
-	return {
-		id: shopItem.id,
-		item: shopItem.itemData?.name || 'Unknown Item',
-		image: shopItem.itemData?.image || null,
-		buyPrice: shopItem.buy_price !== null && shopItem.buy_price !== undefined && shopItem.buy_price !== 0 ? shopItem.buy_price.toFixed(2) : '—',
-		sellPrice: shopItem.sell_price !== null && shopItem.sell_price !== undefined && shopItem.sell_price !== 0 ? shopItem.sell_price.toFixed(2) : '—',
-		profitMargin: profitMargin !== null ? `${profitMargin.toFixed(1)}%` : '—',
-		notes: shopItem.notes || '',
-		lastUpdated: formatDate(shopItem.last_updated),
-		_lastUpdatedTimestamp: lastUpdatedTimestamp,
-		actions: '',
-		_originalItem: shopItem // Keep reference to original item for actions
-	}
+	return transformShopItem(shopItem, { includeNotes: true, includeActions: true })
 }
 
 // BaseTable rows for list view

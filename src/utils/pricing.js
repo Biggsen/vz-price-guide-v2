@@ -356,6 +356,40 @@ export function customRoundPrice(price) {
 	}
 }
 
+/**
+ * Calculate profit margin percentage
+ * @param {number} buyPrice - Buy price
+ * @param {number} sellPrice - Sell price
+ * @returns {number|null} Profit margin percentage or null if invalid
+ */
+export function calculateProfitMargin(buyPrice, sellPrice) {
+	if (!buyPrice || !sellPrice || buyPrice === 0) return null
+	const profit = buyPrice - sellPrice
+	const margin = (profit / buyPrice) * 100
+	return margin
+}
+
+/**
+ * Format price for display
+ * @param {number|null|undefined} price - Price to format
+ * @returns {string} Formatted price or '—' if invalid
+ */
+export function formatPrice(price) {
+	if (price !== null && price !== undefined && price !== 0) {
+		return price.toFixed(2)
+	}
+	return '—'
+}
+
+/**
+ * Format profit margin for display
+ * @param {number|null} margin - Profit margin percentage
+ * @returns {string} Formatted margin or '—' if invalid
+ */
+export function formatProfitMargin(margin) {
+	return margin !== null ? `${margin.toFixed(1)}%` : '—'
+}
+
 // Price memoization cache
 const priceCache = new Map()
 const cacheStats = {
