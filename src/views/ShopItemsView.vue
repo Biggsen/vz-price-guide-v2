@@ -13,8 +13,10 @@ import {
 	bulkUpdateShopItems
 } from '../utils/shopItems.js'
 import ShopItemForm from '../components/ShopItemForm.vue'
+import ShopFormModal from '../components/ShopFormModal.vue'
 import BaseTable from '../components/BaseTable.vue'
 import InlinePriceInput from '../components/InlinePriceInput.vue'
+import InlineNotesInput from '../components/InlineNotesInput.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
@@ -24,6 +26,7 @@ import { PencilIcon, TrashIcon, ArchiveBoxIcon, ArchiveBoxXMarkIcon, WalletIcon 
 import { XCircleIcon } from '@heroicons/vue/24/solid'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
+import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -46,7 +49,9 @@ const layout = ref('comfortable') // 'comfortable' or 'condensed'
 const editingPriceId = ref(null)
 const editingPriceType = ref(null) // 'buy' or 'sell'
 const savingPriceId = ref(null)
-const savingPriceType = ref(null) // 'buy' or 'sell'
+const savingPriceType = ref(null)
+const editingNotesId = ref(null)
+const savingNotesId = ref(null)
 const savingItemId = ref(null) // Track which item is being saved during quick edit
 const showItemSavingSpinner = ref(null) // Show spinner after delay
 let itemSavingTimeout = null
@@ -152,6 +157,16 @@ watch(usePlayerAsShopName, (checked) => {
 	} else if (!checked) {
 		shopForm.value.name = ''
 	}
+})
+
+// Clear validation errors when form fields change
+watch(() => shopForm.value.name, () => {
+	shopNameValidationError.value = null
+	shopFormError.value = null
+})
+watch(() => shopForm.value.player, () => {
+	shopPlayerValidationError.value = null
+	shopFormError.value = null
 })
 
 // Get all items from the main collection for the item selector
@@ -262,54 +277,9 @@ const baseTableColumns = computed(() => [
 	{ key: 'actions', label: '', align: 'center', headerAlign: 'center', width: 'w-24' }
 ])
 
-// Calculate profit margin helper
-function calculateProfitMargin(buyPrice, sellPrice) {
-	if (!buyPrice || !sellPrice || buyPrice === 0) {
-		return null
-	}
-	const profit = buyPrice - sellPrice
-	const margin = (profit / buyPrice) * 100
-	return margin
-}
-
-// Format date helper (same as ShopItemTable)
-function formatDate(dateString) {
-	if (!dateString) return '—'
-
-	const date = new Date(dateString)
-	const now = new Date()
-	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-	const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-
-	const diffTime = today.getTime() - itemDate.getTime()
-	const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
-	if (diffDays === 0) {
-		return 'Today'
-	} else if (diffDays === 1) {
-		return 'Yesterday'
-	} else {
-		return `${diffDays} days ago`
-	}
-}
-
-// Transform shop items for BaseTable
+// Transform shop items for BaseTable (using shared utility)
 function transformShopItemForTable(shopItem) {
-	const profitMargin = calculateProfitMargin(shopItem.buy_price, shopItem.sell_price)
-	const lastUpdatedTimestamp = shopItem.last_updated ? new Date(shopItem.last_updated).getTime() : 0
-	return {
-		id: shopItem.id,
-		item: shopItem.itemData?.name || 'Unknown Item',
-		image: shopItem.itemData?.image || null,
-		buyPrice: shopItem.buy_price?.toFixed(2) || '0.00',
-		sellPrice: shopItem.sell_price?.toFixed(2) || '0.00',
-		profitMargin: profitMargin !== null ? `${profitMargin.toFixed(1)}%` : '—',
-		notes: shopItem.notes || '',
-		lastUpdated: formatDate(shopItem.last_updated),
-		_lastUpdatedTimestamp: lastUpdatedTimestamp,
-		actions: '',
-		_originalItem: shopItem // Keep reference to original item for actions
-	}
+	return transformShopItem(shopItem, { includeNotes: true, includeActions: true })
 }
 
 // BaseTable rows for list view
@@ -627,7 +597,7 @@ async function handleQuickEdit(updatedItem) {
 			sell_price: updatedItem.sell_price,
 			stock_quantity: updatedItem.stock_quantity,
 			stock_full: updatedItem.stock_full,
-			notes: updatedItem.notes
+			notes: updatedItem.notes !== undefined ? updatedItem.notes : ''
 		}
 
 		console.log('ShopItemsView: Updating item ID:', updatedItem.id, 'with data:', updateData)
@@ -711,6 +681,50 @@ function cancelEditPrice() {
 	editingPriceType.value = null
 }
 
+// Inline notes editing functions
+function startEditNotes(itemId) {
+	editingNotesId.value = itemId
+}
+
+async function saveNotes(row, newNotes) {
+	const originalItem = row._originalItem
+	if (!originalItem || !originalItem.id) {
+		cancelEditNotes()
+		return
+	}
+
+	// Ensure newNotes is a string and trim it
+	const newNotesTrimmed = String(newNotes || '').trim()
+	
+	// Normalize current value for comparison (handle null/undefined as empty string)
+	const currentNotes = String(originalItem.notes || '').trim()
+
+	// Only update if value changed
+	if (newNotesTrimmed !== currentNotes) {
+		// Set saving state for this specific notes
+		savingNotesId.value = originalItem.id
+		
+		// Create updated item object
+		const updatedItem = {
+			...originalItem,
+			notes: newNotesTrimmed
+		}
+		
+		try {
+			await handleQuickEdit(updatedItem)
+		} finally {
+			// Clear saving state
+			savingNotesId.value = null
+		}
+	}
+
+	// Always cancel edit mode after save completes (or if no change)
+	cancelEditNotes()
+}
+
+function cancelEditNotes() {
+	editingNotesId.value = null
+}
 
 function openEditShopModal() {
 	if (!selectedShop.value) return
@@ -915,7 +929,7 @@ function getServerName(serverId) {
 		<div v-else-if="hasShops && hasServers && selectedShop" class="space-y-8">
 			<!-- Out of Money Checkbox and Add Item Button (Top) -->
 			<div class="mt-4 space-y-3">
-				<label class="flex items-center cursor-pointer">
+				<label v-if="!selectedShop.is_own_shop" class="flex items-center cursor-pointer">
 					<input
 						:checked="isShopOutOfMoney"
 						@change="handleOutOfMoneyChange($event.target.checked)"
@@ -1095,6 +1109,16 @@ function getServerName(serverId) {
 												@cancel="cancelEditPrice" />
 										</div>
 									</template>
+									<template #cell-notes="{ row, layout }">
+										<InlineNotesInput
+											:value="row._originalItem?.notes || ''"
+											:layout="layout"
+											:is-editing="editingNotesId === row.id"
+											:is-saving="savingNotesId === row.id"
+											@update:is-editing="(val) => { if (val) startEditNotes(row.id); else if (savingNotesId !== row.id) cancelEditNotes() }"
+											@save="(newNotes) => saveNotes(row, newNotes)"
+											@cancel="cancelEditNotes" />
+									</template>
 									<template #cell-actions="{ row }">
 										<div class="flex items-center justify-end gap-2">
 											<BaseIconButton
@@ -1187,6 +1211,16 @@ function getServerName(serverId) {
 											@save="(newPrice) => savePrice(row, 'sell', newPrice)"
 											@cancel="cancelEditPrice" />
 									</div>
+									</template>
+								<template #cell-notes="{ row, layout }">
+									<InlineNotesInput
+										:value="row._originalItem?.notes || ''"
+										:layout="layout"
+										:is-editing="editingNotesId === row.id"
+										:is-saving="savingNotesId === row.id"
+										@update:is-editing="(val) => { if (val) startEditNotes(row.id); else if (savingNotesId !== row.id) cancelEditNotes() }"
+										@save="(newNotes) => saveNotes(row, newNotes)"
+										@cancel="cancelEditNotes" />
 								</template>
 								<template #cell-actions="{ row }">
 									<div class="flex items-center justify-end gap-2">
@@ -1233,123 +1267,22 @@ function getServerName(serverId) {
 		</div>
 	</div>
 
-	<BaseModal
+	<ShopFormModal
 		:isOpen="showEditShopModal"
-		title="Edit Shop"
-		maxWidth="max-w-2xl"
-		@close="closeEditShopModal">
-		<form @submit.prevent="submitEditShop" class="space-y-4">
-			<div v-if="!shopForm.is_own_shop">
-				<label for="edit-shop-player" class="block text-sm font-medium text-gray-700 mb-1">
-					Player (Minecraft Username) *
-				</label>
-				<input
-					id="edit-shop-player"
-					v-model="shopForm.player"
-					type="text"
-					placeholder="Enter Minecraft username"
-					@input="shopPlayerValidationError = null; shopFormError = null"
-					:class="[
-						'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
-						shopPlayerValidationError
-							? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-							: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
-					]" />
-				<div
-					v-if="shopPlayerValidationError"
-					class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-					<XCircleIcon class="w-4 h-4" />
-					{{ shopPlayerValidationError }}
-				</div>
-			</div>
-
-			<div>
-				<label for="edit-shop-name" class="block text-sm font-medium text-gray-700 mb-1">
-					Shop Name *
-				</label>
-				<div class="mt-2">
-					<label v-if="!shopForm.is_own_shop" class="flex items-center mb-2 cursor-pointer">
-						<input
-							v-model="usePlayerAsShopName"
-							type="checkbox"
-							class="mr-2 checkbox-input" />
-						<span class="text-sm text-gray-700">Use Player as Shop Name</span>
-					</label>
-					<input
-						id="edit-shop-name"
-						v-model="shopForm.name"
-						type="text"
-						required
-						:disabled="usePlayerAsShopName && !shopForm.is_own_shop"
-						placeholder="e.g., vz market"
-						@input="shopNameValidationError = null; shopFormError = null"
-						:class="[
-							'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans disabled:bg-gray-100 disabled:cursor-not-allowed',
-							shopNameValidationError
-								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
-						]" />
-				</div>
-				<div
-					v-if="shopNameValidationError"
-					class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-					<XCircleIcon class="w-4 h-4" />
-					{{ shopNameValidationError }}
-				</div>
-			</div>
-
-			<div>
-				<label for="edit-shop-location" class="block text-sm font-medium text-gray-700 mb-1">
-					Location
-				</label>
-				<input
-					id="edit-shop-location"
-					v-model="shopForm.location"
-					type="text"
-					placeholder="e.g., /warp shops"
-					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
-			</div>
-
-			<div>
-				<label for="edit-shop-description" class="block text-sm font-medium text-gray-700 mb-1">
-					Description
-				</label>
-				<textarea
-					id="edit-shop-description"
-					v-model="shopForm.description"
-					rows="3"
-					placeholder="Optional description for this shop..."
-					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus"></textarea>
-			</div>
-
-			<div
-				v-if="shopFormError"
-				class="text-sm text-red-600 font-semibold flex items-center gap-1 bg-red-100 border border-red-300 px-3 py-2 rounded">
-				<XCircleIcon class="w-4 h-4" />
-				{{ shopFormError }}
-			</div>
-		</form>
-
-		<template #footer>
-			<div class="flex items-center justify-end">
-				<div class="flex space-x-3">
-					<button
-						type="button"
-						class="btn-secondary--outline"
-						@click="closeEditShopModal">
-						Cancel
-					</button>
-					<BaseButton
-						type="button"
-						@click="submitEditShop"
-						:disabled="shopFormLoading"
-						variant="primary">
-						{{ shopFormLoading ? 'Updating...' : 'Update Shop' }}
-					</BaseButton>
-				</div>
-			</div>
-		</template>
-	</BaseModal>
+		:editingShop="editingShop"
+		v-model:shopForm="shopForm"
+		v-model:usePlayerAsShopName="usePlayerAsShopName"
+		:loading="shopFormLoading"
+		:errors="{
+			name: shopNameValidationError,
+			player: shopPlayerValidationError,
+			server: shopServerValidationError,
+			create: null,
+			edit: shopFormError
+		}"
+		:servers="servers"
+		@submit="submitEditShop"
+		@close="closeEditShopModal" />
 
 	<BaseModal
 		:isOpen="showAddForm"

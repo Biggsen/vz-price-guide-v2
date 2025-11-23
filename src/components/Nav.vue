@@ -14,7 +14,8 @@ import {
 	LightBulbIcon,
 	WrenchScrewdriverIcon,
 	RocketLaunchIcon,
-	Cog6ToothIcon
+	Cog6ToothIcon,
+	BuildingStorefrontIcon
 } from '@heroicons/vue/24/solid'
 
 import { useAdmin } from '../utils/admin.js'
@@ -36,7 +37,7 @@ const emit = defineEmits(['setActiveMainNav'])
 const user = useCurrentUser()
 const route = useRoute()
 const router = useRouter()
-const { isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAdmin()
+const { isAdmin, canAccessShopManager, canViewMissingItems, canAddItems, canBulkUpdate } = useAdmin()
 
 // Get the latest update ID
 const latestUpdateId = updatesData[0]?.id || null
@@ -275,6 +276,29 @@ onUnmounted(() => {
 			</RouterLink>
 
 			<RouterLink
+				v-if="canAccessShopManager"
+				to="/shop-manager"
+				@click="
+					() => {
+						handleNavigationClick('Shop Manager')
+						setActiveMainNav(null)
+					}
+				"
+				:class="[
+					'block px-3 py-2 transition-colors',
+					route.path === '/shop-manager' ||
+					route.path === '/market-overview' ||
+					route.path.startsWith('/shop')
+						? 'bg-gray-700 text-white'
+						: 'hover:bg-gray-700 hover:text-white'
+				]">
+				<div class="flex items-center gap-2">
+					<BuildingStorefrontIcon class="w-4 h-4" />
+					<span>Shop Manager</span>
+				</div>
+			</RouterLink>
+
+			<RouterLink
 				to="/tools"
 				@click="
 					() => {
@@ -366,40 +390,19 @@ onUnmounted(() => {
 						to="/admin"
 						@click="closeMenu"
 						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
-						Dashboard
-					</RouterLink>
-					<RouterLink
-						v-if="canViewMissingItems"
-						to="/missing-items"
-						@click="closeMenu"
-						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
-						Missing Items
-					</RouterLink>
-					<RouterLink
-						v-if="canAddItems"
-						to="/add"
-						@click="closeMenu"
-						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
-						Add Item
-					</RouterLink>
-					<RouterLink
-						v-if="canBulkUpdate"
-						to="/bulk-update"
-						@click="closeMenu"
-						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
-						Bulk Update
-					</RouterLink>
-					<RouterLink
-						to="/styleguide"
-						@click="closeMenu"
-						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
-						Styleguide
+						Price Guide
 					</RouterLink>
 					<RouterLink
 						to="/admin/community"
 						@click="closeMenu"
 						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
 						Community
+					</RouterLink>
+					<RouterLink
+						to="/design"
+						@click="closeMenu"
+						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
+						Design
 					</RouterLink>
 				</div>
 			</div>
@@ -490,6 +493,28 @@ onUnmounted(() => {
 			<div class="flex items-center gap-2">
 				<CurrencyDollarIcon class="w-4 h-4" />
 				<span>Price Guide</span>
+			</div>
+		</RouterLink>
+		<RouterLink
+			v-if="canAccessShopManager"
+			to="/shop-manager"
+			@click="
+				() => {
+					handleNavigationClick('Shop Manager')
+					setActiveMainNav(null)
+				}
+			"
+			:class="[
+				'px-3 py-2 rounded transition-colors whitespace-nowrap',
+				route.path === '/shop-manager' ||
+				route.path === '/market-overview' ||
+				route.path.startsWith('/shop')
+					? 'bg-gray-700 text-white'
+					: 'hover:bg-gray-700 hover:text-white'
+			]">
+			<div class="flex items-center gap-2">
+				<BuildingStorefrontIcon class="w-4 h-4" />
+				<span>Shop Manager</span>
 			</div>
 		</RouterLink>
 		<RouterLink

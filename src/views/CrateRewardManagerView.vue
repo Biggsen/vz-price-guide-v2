@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
 import { useRouter, useRoute } from 'vue-router'
-import { query, collection, orderBy, where } from 'firebase/firestore'
+import { query, collection, orderBy, where, getDocs } from 'firebase/firestore'
 import {
 	useCrateRewards,
 	createCrateReward,
@@ -103,15 +103,78 @@ const {
 // Computed properties
 const hasCrateRewards = computed(() => crateRewards.value && crateRewards.value.length > 0)
 
+// Helper function to chunk array into groups of maxSize
+const chunkArray = (array, maxSize) => {
+	const chunks = []
+	for (let i = 0; i < array.length; i += maxSize) {
+		chunks.push(array.slice(i, i + maxSize))
+	}
+	return chunks
+}
+
 // Get all crate reward items to calculate counts
-const allCrateRewardItemsQuery = computed(() => {
-	if (!crateRewards.value || crateRewards.value.length === 0) return null
+// Handle the 30-item limit for IN queries by chunking when necessary
+const allCrateRewardItems = ref([])
+const allCrateRewardItemsLoading = ref(false)
+
+const fetchCrateRewardItems = async () => {
+	if (!crateRewards.value || crateRewards.value.length === 0) {
+		allCrateRewardItems.value = []
+		return
+	}
 
 	const crateIds = crateRewards.value.map((crate) => crate.id)
-	return query(collection(db, 'crate_reward_items'), where('crate_reward_id', 'in', crateIds))
-})
 
-const { data: allCrateRewardItems } = useCollection(allCrateRewardItemsQuery)
+	allCrateRewardItemsLoading.value = true
+
+	try {
+		if (crateIds.length <= 30) {
+			// Use single query for 30 or fewer crates
+			const q = query(
+				collection(db, 'crate_reward_items'),
+				where('crate_reward_id', 'in', crateIds)
+			)
+			const snapshot = await getDocs(q)
+			allCrateRewardItems.value = snapshot.docs.map((doc) => ({
+				id: doc.id,
+				...doc.data()
+			}))
+		} else {
+			// Split into chunks of 30 and combine results
+			const chunks = chunkArray(crateIds, 30)
+			const allItems = []
+			const seenIds = new Set()
+
+			// Fetch each chunk
+			for (const chunk of chunks) {
+				const q = query(
+					collection(db, 'crate_reward_items'),
+					where('crate_reward_id', 'in', chunk)
+				)
+				const snapshot = await getDocs(q)
+				snapshot.docs.forEach((doc) => {
+					if (!seenIds.has(doc.id)) {
+						seenIds.add(doc.id)
+						allItems.push({
+							id: doc.id,
+							...doc.data()
+						})
+					}
+				})
+			}
+
+			allCrateRewardItems.value = allItems
+		}
+	} catch (err) {
+		console.error('Error fetching crate reward items:', err)
+		allCrateRewardItems.value = []
+	} finally {
+		allCrateRewardItemsLoading.value = false
+	}
+}
+
+// Watch for changes to crateRewards and refetch
+watch(crateRewards, fetchCrateRewardItems, { immediate: true })
 
 // Get item counts for all crates (NEW: counts items within embedded arrays)
 const crateItemCounts = computed(() => {

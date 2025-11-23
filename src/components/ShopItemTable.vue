@@ -289,8 +289,10 @@ watch(
 
 // Utility methods
 function formatPrice(price) {
-	if (price === null || price === undefined) return '-'
-	return parseFloat(price).toFixed(2)
+	if (price === null || price === undefined) return '—'
+	const numValue = parseFloat(price)
+	if (isNaN(numValue) || numValue === 0) return '—'
+	return numValue.toFixed(2)
 }
 
 function formatDate(dateString) {

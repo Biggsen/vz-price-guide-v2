@@ -25,9 +25,6 @@ function updateActiveMainNav() {
 		'/design',
 		'/styleguide',
 		'/visual-gallery',
-		'/shop-manager',
-		'/shop',
-		'/market-overview',
 		'/recipes',
 		'/recipes/import',
 		'/recipes/manage',
@@ -40,8 +37,7 @@ function updateActiveMainNav() {
 	if (
 		adminRoutes.includes(route.path) ||
 		route.path.startsWith('/edit-recipe/') ||
-		route.path.startsWith('/admin/') ||
-		route.path.startsWith('/shop/')
+		route.path.startsWith('/admin/')
 	) {
 		activeMainNav.value = 'admin'
 	} else if (toolsRoutes.includes(route.path) || route.path.startsWith('/crate-rewards/')) {

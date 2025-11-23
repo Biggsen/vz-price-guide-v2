@@ -15,6 +15,7 @@ import {
 	getDocs,
 	writeBatch
 } from 'firebase/firestore'
+import { getAuth } from 'firebase/auth'
 import { ref, computed, unref } from 'vue'
 
 // Check if server exists
@@ -84,9 +85,16 @@ export async function deleteServer(serverId) {
 
 	try {
 		const db = getFirestore()
+		const auth = getAuth()
+		const userId = auth.currentUser?.uid
+
+		if (!userId) throw new Error('User must be authenticated')
+
+		// Only query shops owned by the current user on this server
 		const shopsQuery = query(
 			collection(db, 'shops'),
 			where('server_id', '==', serverId),
+			where('owner_id', '==', userId),
 			limit(50)
 		)
 

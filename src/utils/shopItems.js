@@ -13,9 +13,10 @@ import {
 	orderBy,
 	writeBatch,
 	arrayUnion,
-	arrayRemove
+	arrayRemove,
+	getDocs
 } from 'firebase/firestore'
-import { ref, computed, unref } from 'vue'
+import { ref, computed, unref, watch } from 'vue'
 
 // Check if shop item exists
 export async function shopItemExists(itemId) {
@@ -132,8 +133,10 @@ export async function updateShopItem(itemId, updates) {
 			}
 		}
 
-		// Clean up string fields
-		if (updatedData.notes) updatedData.notes = updatedData.notes.trim()
+		// Clean up string fields - always include notes field, even if empty
+		if (updatedData.notes !== undefined) {
+			updatedData.notes = String(updatedData.notes || '').trim()
+		}
 
 		// Always update the last_updated timestamp
 		updatedData.last_updated = new Date().toISOString()
@@ -449,12 +452,21 @@ export function useShopItem(itemId) {
 export function useServerShopItems(serverId, shopIds) {
 	const db = useFirestore()
 
-	// Create a computed query that updates when serverId or shopIds changes
-	const itemsQuery = computed(() => {
-		const sid = unref(serverId) // Unwrap the ref/computed to get the actual value
-		const sids = unref(shopIds) // Unwrap the ref/computed to get the actual value
+	// Helper function to chunk array into groups of maxSize
+	const chunkArray = (array, maxSize) => {
+		const chunks = []
+		for (let i = 0; i < array.length; i += maxSize) {
+			chunks.push(array.slice(i, i + maxSize))
+		}
+		return chunks
+	}
 
-		if (!sid || !sids || sids.length === 0) {
+	// Create computed query for small arrays (30 or fewer) - use reactive useCollection
+	const smallArrayQuery = computed(() => {
+		const sid = unref(serverId)
+		const sids = unref(shopIds)
+
+		if (!sid || !sids || sids.length === 0 || sids.length > 30) {
 			return null
 		}
 
@@ -465,21 +477,105 @@ export function useServerShopItems(serverId, shopIds) {
 		)
 	})
 
-	// Use the computed query with useCollection
-	const items = useCollection(itemsQuery)
+	// Use reactive collection for small arrays
+	const smallArrayItems = useCollection(smallArrayQuery)
 
-	return { items }
+	// For large arrays (>30), use manual fetching with chunks
+	const largeArrayItems = ref([])
+	const loading = ref(false)
+	const error = ref(null)
+
+	// Fetch shop items for large arrays, handling the 30-item limit for IN queries
+	const fetchLargeArrayItems = async () => {
+		const sid = unref(serverId)
+		const sids = unref(shopIds)
+
+		if (!sid || !sids || sids.length === 0 || sids.length <= 30) {
+			largeArrayItems.value = []
+			return
+		}
+
+		loading.value = true
+		error.value = null
+
+		try {
+			// Split into chunks of 30 and combine results
+			const chunks = chunkArray(sids, 30)
+			const allItems = []
+			const seenIds = new Set()
+
+			// Fetch each chunk
+			for (const chunk of chunks) {
+				const q = query(
+					collection(db, 'shop_items'),
+					where('shop_id', 'in', chunk),
+					orderBy('last_updated', 'desc')
+				)
+				const snapshot = await getDocs(q)
+				snapshot.docs.forEach((doc) => {
+					if (!seenIds.has(doc.id)) {
+						seenIds.add(doc.id)
+						allItems.push({
+							id: doc.id,
+							...doc.data()
+						})
+					}
+				})
+			}
+
+			// Sort by last_updated descending
+			largeArrayItems.value = allItems.sort((a, b) => {
+				const dateA = a.last_updated || ''
+				const dateB = b.last_updated || ''
+				return dateB.localeCompare(dateA)
+			})
+		} catch (err) {
+			console.error('Error fetching shop items:', err)
+			error.value = err
+			largeArrayItems.value = []
+		} finally {
+			loading.value = false
+		}
+	}
+
+	// Watch for changes to serverId or shopIds and refetch large arrays
+	watch([serverId, shopIds], fetchLargeArrayItems, { immediate: true })
+
+	// Combine results - use reactive collection for small arrays, manual for large
+	const items = computed(() => {
+		const sids = unref(shopIds)
+		if (!sids || sids.length === 0) {
+			return []
+		}
+
+		if (sids.length <= 30) {
+			return smallArrayItems.value || []
+		} else {
+			return largeArrayItems.value || []
+		}
+	})
+
+	return { items, loading, error }
 }
 
 // Composable for price comparison across multiple items
 export function usePriceComparison(itemIds) {
 	const db = useFirestore()
 
-	// Create a computed query that updates when itemIds changes
-	const itemsQuery = computed(() => {
-		const ids = unref(itemIds) // Unwrap the ref/computed to get the actual value
+	// Helper function to chunk array into groups of maxSize
+	const chunkArray = (array, maxSize) => {
+		const chunks = []
+		for (let i = 0; i < array.length; i += maxSize) {
+			chunks.push(array.slice(i, i + maxSize))
+		}
+		return chunks
+	}
 
-		if (!ids || !Array.isArray(ids) || ids.length === 0) {
+	// Create computed query for small arrays (30 or fewer) - use reactive useCollection
+	const smallArrayQuery = computed(() => {
+		const ids = unref(itemIds)
+
+		if (!ids || !Array.isArray(ids) || ids.length === 0 || ids.length > 30) {
 			return null
 		}
 
@@ -490,8 +586,82 @@ export function usePriceComparison(itemIds) {
 		)
 	})
 
-	// Use the computed query with useCollection
-	const items = useCollection(itemsQuery)
+	// Use reactive collection for small arrays
+	const smallArrayItems = useCollection(smallArrayQuery)
+
+	// For large arrays (>30), use manual fetching with chunks
+	const largeArrayItems = ref([])
+	const loading = ref(false)
+	const error = ref(null)
+
+	// Fetch items for large arrays
+	const fetchLargeArrayItems = async () => {
+		const ids = unref(itemIds)
+
+		if (!ids || !Array.isArray(ids) || ids.length === 0 || ids.length <= 30) {
+			largeArrayItems.value = []
+			return
+		}
+
+		loading.value = true
+		error.value = null
+
+		try {
+			// Split into chunks of 30 and combine results
+			const chunks = chunkArray(ids, 30)
+			const allItems = []
+			const seenIds = new Set()
+
+			// Fetch each chunk
+			for (const chunk of chunks) {
+				const q = query(
+					collection(db, 'shop_items'),
+					where('item_id', 'in', chunk),
+					orderBy('last_updated', 'desc')
+				)
+				const snapshot = await getDocs(q)
+				snapshot.docs.forEach((doc) => {
+					if (!seenIds.has(doc.id)) {
+						seenIds.add(doc.id)
+						allItems.push({
+							id: doc.id,
+							...doc.data()
+						})
+					}
+				})
+			}
+
+			// Sort by last_updated descending
+			largeArrayItems.value = allItems.sort((a, b) => {
+				const dateA = a.last_updated || ''
+				const dateB = b.last_updated || ''
+				return dateB.localeCompare(dateA)
+			})
+		} catch (err) {
+			console.error('Error fetching price comparison items:', err)
+			error.value = err
+			largeArrayItems.value = []
+		} finally {
+			loading.value = false
+		}
+	}
+
+	// Watch for changes to itemIds and refetch large arrays
+	watch(itemIds, fetchLargeArrayItems, { immediate: true })
+
+	// Combine results - use reactive collection for small arrays, manual for large
+	const items = computed(() => {
+		const ids = unref(itemIds)
+		if (!ids || !Array.isArray(ids) || ids.length === 0) {
+			return []
+		}
+
+		if (ids.length <= 30) {
+			return smallArrayItems.value || []
+		} else {
+			return largeArrayItems.value || []
+		}
+	})
 
 	// Computed to organize items by item_id
 	const itemsByType = computed(() => {
@@ -508,7 +678,7 @@ export function usePriceComparison(itemIds) {
 		return organized
 	})
 
-	return { items, itemsByType }
+	return { items, itemsByType, loading, error }
 }
 
 // Get shop item by ID (for non-reactive use)

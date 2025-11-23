@@ -6,11 +6,13 @@ import { query, collection, orderBy, where } from 'firebase/firestore'
 import { useShops, useServerShops } from '../utils/shopProfile.js'
 import { useServers } from '../utils/serverProfile.js'
 import { useServerShopItems } from '../utils/shopItems.js'
+import { isAdmin, enabledCategories } from '../constants'
 import BaseStatCard from '../components/BaseStatCard.vue'
 import BaseTable from '../components/BaseTable.vue'
 import BaseCard from '../components/BaseCard.vue'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
+import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
 import {
 	ArchiveBoxIcon,
 	ArchiveBoxXMarkIcon,
@@ -40,12 +42,56 @@ const searchQuery = ref('')
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
 
+// Sorting state - initialize from localStorage if available
+function loadSortSettings() {
+	try {
+		const savedSortField = localStorage.getItem('marketOverviewSortField')
+		const savedSortDirection = localStorage.getItem('marketOverviewSortDirection')
+		return {
+			field: savedSortField || '',
+			direction: (savedSortDirection && ['asc', 'desc'].includes(savedSortDirection)) ? savedSortDirection : 'asc'
+		}
+	} catch (error) {
+		console.warn('Error loading sort settings:', error)
+		return { field: '', direction: 'asc' }
+	}
+}
+
+const initialSortSettings = loadSortSettings()
+const sortField = ref(initialSortSettings.field)
+const sortDirection = ref(initialSortSettings.direction)
+
+// Check if user is admin
+const userIsAdmin = ref(false)
+watch(user, async (newUser) => {
+	if (newUser) {
+		userIsAdmin.value = await isAdmin(newUser)
+	} else {
+		userIsAdmin.value = false
+	}
+}, { immediate: true })
+
 // Get user's shops and servers
 const { shops } = useShops(computed(() => user.value?.uid))
 const { servers } = useServers(computed(() => user.value?.uid))
 
-// Get all shops on the selected server
-const { shops: serverShops } = useServerShops(selectedServerId)
+// Only query all server shops if user is admin (to avoid permission errors for non-admins)
+const serverIdForQuery = computed(() => {
+	return userIsAdmin.value ? selectedServerId.value : null
+})
+const { shops: allServerShops } = useServerShops(serverIdForQuery)
+
+// Filter shops based on admin status
+const serverShops = computed(() => {
+	if (userIsAdmin.value) {
+		// Admins can see all shops on the server
+		return allServerShops.value || []
+	} else {
+		// Non-admins (including shopManager) can only see their own shops on the server
+		if (!shops.value || !selectedServerId.value) return []
+		return shops.value.filter((shop) => shop.server_id === selectedServerId.value)
+	}
+})
 
 // Get shop IDs for all shops on server
 const serverShopIds = computed(() => {
@@ -227,60 +273,10 @@ const baseTableColumns = computed(() => {
 	return columns
 })
 
-// Format date helper
-function formatDate(dateString) {
-	if (!dateString) return '—'
-
-	const date = new Date(dateString)
-	const now = new Date()
-	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-	const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-
-	const diffTime = today.getTime() - itemDate.getTime()
-	const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
-	if (diffDays === 0) {
-		return 'Today'
-	} else if (diffDays === 1) {
-		return 'Yesterday'
-	} else {
-		return `${diffDays} days ago`
-	}
-}
-
-// Calculate profit margin helper
-function calculateProfitMargin(buyPrice, sellPrice) {
-	if (!buyPrice || !sellPrice || buyPrice === 0) return null
-	const profit = buyPrice - sellPrice
-	const margin = (profit / buyPrice) * 100
-	return margin
-}
-
-// Transform shop items for BaseTable
-function transformShopItemForTable(shopItem) {
-	const profitMargin = calculateProfitMargin(shopItem.buy_price, shopItem.sell_price)
-	const lastUpdatedTimestamp = shopItem.last_updated ? new Date(shopItem.last_updated).getTime() : 0
-	return {
-		id: shopItem.id,
-		item: shopItem.itemData?.name || 'Unknown Item',
-		image: shopItem.itemData?.image || null,
-		shop: shopItem.shopData?.name || 'Unknown Shop',
-		shopPlayer: shopItem.shopData?.player || null,
-		shopLocation: shopItem.shopData?.location || null,
-		shopId: shopItem.shopData?.id || null,
-		buyPrice: shopItem.buy_price !== null && shopItem.buy_price !== undefined ? shopItem.buy_price.toFixed(2) : '—',
-		sellPrice: shopItem.sell_price !== null && shopItem.sell_price !== undefined ? shopItem.sell_price.toFixed(2) : '—',
-		profitMargin: profitMargin !== null ? `${profitMargin.toFixed(1)}%` : '—',
-		lastUpdated: formatDate(shopItem.last_updated),
-		_lastUpdatedTimestamp: lastUpdatedTimestamp,
-		_originalItem: shopItem // Keep reference to original item
-	}
-}
-
 // BaseTable rows for list view
 const baseTableRows = computed(() => {
 	if (!allVisibleItems.value) return []
-	return allVisibleItems.value.map(transformShopItemForTable)
+	return allVisibleItems.value.map((item) => transformShopItem(item, { includeShop: true }))
 })
 
 // BaseTable rows grouped by category
@@ -288,9 +284,33 @@ const baseTableRowsByCategory = computed(() => {
 	if (!filteredShopItemsByCategory.value) return {}
 	const grouped = {}
 	Object.entries(filteredShopItemsByCategory.value).forEach(([category, categoryItems]) => {
-		grouped[category] = categoryItems.map(transformShopItemForTable)
+		grouped[category] = categoryItems.map((item) => transformShopItem(item, { includeShop: true }))
 	})
 	return grouped
+})
+
+// Sorted categories to match price guide order
+const sortedCategories = computed(() => {
+	if (!baseTableRowsByCategory.value) return []
+	
+	const categoryKeys = Object.keys(baseTableRowsByCategory.value)
+	const orderedCategories = []
+	
+	// First, add categories in the order they appear in enabledCategories
+	enabledCategories.forEach((category) => {
+		if (categoryKeys.includes(category)) {
+			orderedCategories.push(category)
+		}
+	})
+	
+	// Then, add any categories that aren't in enabledCategories (like 'Uncategorized')
+	categoryKeys.forEach((category) => {
+		if (!enabledCategories.includes(category)) {
+			orderedCategories.push(category)
+		}
+	})
+	
+	return orderedCategories
 })
 
 // Navigate to shop items
@@ -338,6 +358,20 @@ watch(
 	{ deep: true }
 )
 
+// Save sorting state when it changes
+watch(
+	[sortField, sortDirection],
+	() => {
+		saveSortSettings()
+	}
+)
+
+// Handle sort event from BaseTable
+function handleSort(event) {
+	sortField.value = event.field
+	sortDirection.value = event.direction
+}
+
 // Load and save view settings from localStorage
 function loadViewSettings() {
 	try {
@@ -362,6 +396,20 @@ function saveViewSettings() {
 		localStorage.setItem('marketOverviewLayout', layout.value)
 	} catch (error) {
 		console.warn('Error saving view settings:', error)
+	}
+}
+
+function saveSortSettings() {
+	try {
+		if (sortField.value) {
+			localStorage.setItem('marketOverviewSortField', sortField.value)
+			localStorage.setItem('marketOverviewSortDirection', sortDirection.value)
+		} else {
+			localStorage.removeItem('marketOverviewSortField')
+			localStorage.removeItem('marketOverviewSortDirection')
+		}
+	} catch (error) {
+		console.warn('Error saving sort settings:', error)
 	}
 }
 
@@ -724,15 +772,18 @@ const priceAnalysis = computed(() => {
 					</div>
 					<div v-else class="space-y-6">
 						<div
-							v-for="(categoryRows, category) in baseTableRowsByCategory"
+							v-for="category in sortedCategories"
 							:key="category"
 							class="mb-6">
 							<BaseTable
 								:columns="baseTableColumns"
-								:rows="categoryRows"
+								:rows="baseTableRowsByCategory[category]"
 								row-key="id"
 								:layout="layout"
 								:hoverable="true"
+								:initial-sort-field="sortField"
+								:initial-sort-direction="sortDirection"
+								@sort="handleSort"
 								:caption="category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()">
 								<template #cell-item="{ row, layout }">
 									<div class="flex items-center">
@@ -846,6 +897,9 @@ const priceAnalysis = computed(() => {
 							row-key="id"
 							:layout="layout"
 							:hoverable="true"
+							:initial-sort-field="sortField"
+							:initial-sort-direction="sortDirection"
+							@sort="handleSort"
 							caption="All Items">
 							<template #cell-item="{ row, layout }">
 								<div class="flex items-center">

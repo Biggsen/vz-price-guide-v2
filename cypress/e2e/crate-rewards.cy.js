@@ -66,8 +66,8 @@ describe('Crate Rewards', () => {
 			cy.waitForAuth()
 			cy.visit('/crate-rewards')
 			cy.location('pathname').should('eq', '/crate-rewards')
-			// Wait for crate rewards page to load by checking for the "Your Crates" heading
-			cy.contains('Your Crates').should('be.visible')
+		// Wait for crate rewards page to load by checking for the "My Crates" heading
+		cy.contains('My Crates').should('be.visible')
 		})
 
 		it('navigates to crate rewards from tools page', () => {
@@ -325,7 +325,7 @@ describe('Crate Rewards', () => {
 
 		it('adds an item to the crate', () => {
 			// Click add item button
-			cy.get('[data-cy="add-item-button"]').should('be.visible').click()
+			cy.get('[data-cy="add-item-button"]').first().should('be.visible').click()
 
 			// Fill out item form
 			cy.get('[data-cy="item-search-input"]').type('diamond')
@@ -348,7 +348,7 @@ describe('Crate Rewards', () => {
 
 		it('validates item quantity is required', () => {
 			// Click add item button
-			cy.get('[data-cy="add-item-button"]').should('be.visible').click()
+			cy.get('[data-cy="add-item-button"]').first().should('be.visible').click()
 
 			// Select an item
 			cy.get('[data-cy="item-search-input"]').type('diamond')
@@ -368,7 +368,7 @@ describe('Crate Rewards', () => {
 
 		it('validates item weight is required', () => {
 			// Click add item button
-			cy.get('[data-cy="add-item-button"]').should('be.visible').click()
+			cy.get('[data-cy="add-item-button"]').first().should('be.visible').click()
 
 			// Select an item and set quantity
 			cy.get('[data-cy="item-search-input"]').type('diamond')
@@ -389,7 +389,7 @@ describe('Crate Rewards', () => {
 
 		it('edits an existing item', () => {
 			// Add an item first
-			cy.get('[data-cy="add-item-button"]').should('be.visible').click()
+			cy.get('[data-cy="add-item-button"]').first().should('be.visible').click()
 			cy.get('[data-cy="item-search-input"]').type('diamond')
 			cy.get('[data-cy="item-search-results"]').should('be.visible')
 			cy.get('[data-cy="item-search-results"]').contains('diamond').click()
