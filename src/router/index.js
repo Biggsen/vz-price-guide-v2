@@ -233,7 +233,7 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				requiresVerification: true,
-				requiresAdmin: true,
+				requiresShopManager: true,
 				title: `Shop Items - ${siteName}`
 			}
 		},
@@ -244,7 +244,7 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				requiresVerification: true,
-				requiresAdmin: true,
+				requiresShopManager: true,
 				title: `Market Overview - ${siteName}`
 			}
 		},
