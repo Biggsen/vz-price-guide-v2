@@ -6,6 +6,7 @@ import { query, collection, orderBy, where } from 'firebase/firestore'
 import { useShops, useServerShops } from '../utils/shopProfile.js'
 import { useServers } from '../utils/serverProfile.js'
 import { useServerShopItems } from '../utils/shopItems.js'
+import { isAdmin, enabledCategories } from '../constants'
 import BaseStatCard from '../components/BaseStatCard.vue'
 import BaseTable from '../components/BaseTable.vue'
 import BaseCard from '../components/BaseCard.vue'
@@ -40,12 +41,37 @@ const searchQuery = ref('')
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
 
+// Check if user is admin
+const userIsAdmin = ref(false)
+watch(user, async (newUser) => {
+	if (newUser) {
+		userIsAdmin.value = await isAdmin(newUser)
+	} else {
+		userIsAdmin.value = false
+	}
+}, { immediate: true })
+
 // Get user's shops and servers
 const { shops } = useShops(computed(() => user.value?.uid))
 const { servers } = useServers(computed(() => user.value?.uid))
 
-// Get all shops on the selected server
-const { shops: serverShops } = useServerShops(selectedServerId)
+// Only query all server shops if user is admin (to avoid permission errors for non-admins)
+const serverIdForQuery = computed(() => {
+	return userIsAdmin.value ? selectedServerId.value : null
+})
+const { shops: allServerShops } = useServerShops(serverIdForQuery)
+
+// Filter shops based on admin status
+const serverShops = computed(() => {
+	if (userIsAdmin.value) {
+		// Admins can see all shops on the server
+		return allServerShops.value || []
+	} else {
+		// Non-admins (including shopManager) can only see their own shops on the server
+		if (!shops.value || !selectedServerId.value) return []
+		return shops.value.filter((shop) => shop.server_id === selectedServerId.value)
+	}
+})
 
 // Get shop IDs for all shops on server
 const serverShopIds = computed(() => {
@@ -291,6 +317,30 @@ const baseTableRowsByCategory = computed(() => {
 		grouped[category] = categoryItems.map(transformShopItemForTable)
 	})
 	return grouped
+})
+
+// Sorted categories to match price guide order
+const sortedCategories = computed(() => {
+	if (!baseTableRowsByCategory.value) return []
+	
+	const categoryKeys = Object.keys(baseTableRowsByCategory.value)
+	const orderedCategories = []
+	
+	// First, add categories in the order they appear in enabledCategories
+	enabledCategories.forEach((category) => {
+		if (categoryKeys.includes(category)) {
+			orderedCategories.push(category)
+		}
+	})
+	
+	// Then, add any categories that aren't in enabledCategories (like 'Uncategorized')
+	categoryKeys.forEach((category) => {
+		if (!enabledCategories.includes(category)) {
+			orderedCategories.push(category)
+		}
+	})
+	
+	return orderedCategories
 })
 
 // Navigate to shop items
@@ -724,12 +774,12 @@ const priceAnalysis = computed(() => {
 					</div>
 					<div v-else class="space-y-6">
 						<div
-							v-for="(categoryRows, category) in baseTableRowsByCategory"
+							v-for="category in sortedCategories"
 							:key="category"
 							class="mb-6">
 							<BaseTable
 								:columns="baseTableColumns"
-								:rows="categoryRows"
+								:rows="baseTableRowsByCategory[category]"
 								row-key="id"
 								:layout="layout"
 								:hoverable="true"
