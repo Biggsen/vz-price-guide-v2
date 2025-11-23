@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useCollection } from 'vuefire'
 import { collection, query, orderBy, getFirestore, doc, getDoc } from 'firebase/firestore'
 import { useAdmin } from '../utils/admin.js'
@@ -90,29 +90,47 @@ function getUserDisplayName(user) {
 }
 
 // Load shop manager status from Firestore
-async function loadUserAccess() {
+function loadUserAccess() {
 	if (!users.value) return
 
 	for (const user of users.value) {
-		// Check if user has shopManager field in Firestore
-		const userRef = doc(db, 'users', user.id || user.__id__)
-		try {
-			const userDoc = await getDoc(userRef)
-			if (userDoc.exists()) {
-				const data = userDoc.data()
-				userAccessMap.value[user.id || user.__id__] = {
-					shopManager: data.shopManager === true,
-					admin: data.admin === true // If we store it
-				}
+		const userId = user.id || user.__id__
+		if (!userId) continue
+
+		// Check the user object directly first (from the collection)
+		if (user.shopManager !== undefined) {
+			userAccessMap.value[userId] = {
+				...userAccessMap.value[userId],
+				shopManager: user.shopManager === true
 			}
-		} catch (err) {
-			console.error(`Error loading access for user ${user.id}:`, err)
+		} else {
+			// Fallback: check Firestore document
+			const userRef = doc(db, 'users', userId)
+			getDoc(userRef)
+				.then((userDoc) => {
+					if (userDoc.exists()) {
+						const data = userDoc.data()
+						userAccessMap.value[userId] = {
+							...userAccessMap.value[userId],
+							shopManager: data.shopManager === true,
+							admin: data.admin === true
+						}
+					}
+				})
+				.catch((err) => {
+					console.error(`Error loading access for user ${userId}:`, err)
+				})
 		}
 	}
 }
 
-onMounted(async () => {
-	await loadUserAccess()
+// Watch for changes to users collection
+watch(users, () => {
+	loadUserAccess()
+}, { immediate: true })
+
+onMounted(() => {
+	loadUserAccess()
 })
 </script>
 
