@@ -5,6 +5,7 @@ import BaseButton from '../components/BaseButton.vue'
 import BaseCard from '../components/BaseCard.vue'
 import BaseModal from '../components/BaseModal.vue'
 import LinkWithActions from '../components/LinkWithActions.vue'
+import ServerFormModal from '../components/ServerFormModal.vue'
 import {
 	GlobeAltIcon,
 	BuildingStorefrontIcon,
@@ -34,15 +35,13 @@ const { servers } = useServers(computed(() => user.value?.uid))
 
 const hasServers = computed(() => servers.value && servers.value.length > 0)
 
-const showCreateForm = ref(false)
-const showEditForm = ref(false)
+const showServerForm = ref(false)
 const showDeleteModal = ref(false)
 const editingServer = ref(null)
 const serverToDelete = ref(null)
 const loading = ref(false)
 const error = ref(null)
-const createFormError = ref(null)
-const editFormError = ref(null)
+const formError = ref(null)
 const nameValidationError = ref(null)
 const versionValidationError = ref(null)
 
@@ -97,10 +96,34 @@ watch(usePlayerAsShopName, (checked) => {
 	}
 })
 
-// Find all shops owned by the user (marked with is_own_shop flag)
-const ownShops = computed(() => {
-	if (!shops.value) return []
-	return shops.value.filter((shop) => shop.is_own_shop === true)
+// Group shops by server ID for easy access
+const shopsByServer = computed(() => {
+	if (!shops.value || !servers.value) return {}
+	
+	const grouped = {}
+	
+	// Initialize groups for each server
+	servers.value.forEach((server) => {
+		grouped[server.id] = {
+			own: [],
+			player: [],
+			all: []
+		}
+	})
+	
+	// Group shops by server
+	shops.value.forEach((shop) => {
+		if (shop.server_id && grouped[shop.server_id]) {
+			grouped[shop.server_id].all.push(shop)
+			if (shop.is_own_shop) {
+				grouped[shop.server_id].own.push(shop)
+			} else {
+				grouped[shop.server_id].player.push(shop)
+			}
+		}
+	})
+	
+	return grouped
 })
 
 function resetServerForm() {
@@ -112,10 +135,10 @@ function resetServerForm() {
 }
 
 function showCreateServerForm() {
-	showCreateForm.value = true
+	showServerForm.value = true
 	editingServer.value = null
 	resetServerForm()
-	createFormError.value = null
+	formError.value = null
 	nameValidationError.value = null
 	versionValidationError.value = null
 	error.value = null
@@ -123,30 +146,40 @@ function showCreateServerForm() {
 
 function showEditServerForm(server) {
 	editingServer.value = server
-	showEditForm.value = true
+	showServerForm.value = true
 	serverForm.value = {
 		name: server.name,
 		minecraft_version: server.minecraft_version,
 		description: server.description || ''
 	}
-	editFormError.value = null
+	formError.value = null
 	nameValidationError.value = null
 	versionValidationError.value = null
 	error.value = null
 }
 
 function closeServerModals() {
-	showCreateForm.value = false
-	showEditForm.value = false
+	showServerForm.value = false
 	showDeleteModal.value = false
 	editingServer.value = null
 	serverToDelete.value = null
-	createFormError.value = null
-	editFormError.value = null
+	formError.value = null
 	nameValidationError.value = null
 	versionValidationError.value = null
 	error.value = null
 	resetServerForm()
+}
+
+function clearServerErrors(types) {
+	if (types.includes('name')) {
+		nameValidationError.value = null
+	}
+	if (types.includes('version')) {
+		versionValidationError.value = null
+	}
+	if (types.includes('form')) {
+		formError.value = null
+	}
 }
 
 async function handleServerSubmit() {
@@ -163,8 +196,7 @@ async function handleServerSubmit() {
 	}
 
 	loading.value = true
-	createFormError.value = null
-	editFormError.value = null
+	formError.value = null
 	nameValidationError.value = null
 	versionValidationError.value = null
 
@@ -177,11 +209,7 @@ async function handleServerSubmit() {
 		closeServerModals()
 	} catch (err) {
 		console.error('Error saving server:', err)
-		if (editingServer.value) {
-			editFormError.value = err.message || 'Failed to save server. Please try again.'
-		} else {
-			createFormError.value = err.message || 'Failed to save server. Please try again.'
-		}
+		formError.value = err.message || 'Failed to save server. Please try again.'
 	} finally {
 		loading.value = false
 	}
@@ -374,8 +402,7 @@ function getServerForShop(shop) {
 
 const serverDeleteShopCount = computed(() => {
 	if (!serverToDelete.value) return 0
-	return (shops.value || []).filter((shop) => shop.server_id === serverToDelete.value.id)
-		.length
+	return shopsByServer.value[serverToDelete.value.id]?.all.length || 0
 })
 
 const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
@@ -463,7 +490,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 								{{ server.description }}
 							</p>
 							<div
-								v-if="(shops || []).some((s) => s.server_id === server.id)"
+								v-if="shopsByServer[server.id]?.all.length"
 								class="mb-2">
 								<RouterLink :to="`/market-overview?serverId=${server.id}`">
 									<BaseButton variant="secondary">
@@ -481,8 +508,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 									</h4>
 									<ul class="mt-1 space-y-1 text-sm text-gray-600">
 										<LinkWithActions
-											v-for="shop in (shops || [])
-												.filter((s) => s.server_id === server.id && s.is_own_shop)"
+											v-for="shop in shopsByServer[server.id]?.own || []"
 											:key="shop.id"
 											:to="{ name: 'shop', params: { shopId: shop.id } }"
 											:label="shop.name"
@@ -492,7 +518,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 											@edit="showEditShopForm(shop)"
 											@delete="requestDeleteShop(shop)" />
 										<li
-											v-if="!(shops || []).some((s) => s.server_id === server.id && s.is_own_shop)"
+											v-if="!shopsByServer[server.id]?.own.length"
 											class="text-sm italic text-gray-500">
 											No personal shops yet.
 										</li>
@@ -515,8 +541,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 									</h4>
 									<ul class="mt-1 space-y-1 text-sm text-gray-600">
 										<LinkWithActions
-											v-for="shop in (shops || [])
-												.filter((s) => s.server_id === server.id && !s.is_own_shop)"
+											v-for="shop in shopsByServer[server.id]?.player || []"
 											:key="shop.id"
 											:to="{ name: 'shop', params: { shopId: shop.id } }"
 											:label="shop.name"
@@ -525,7 +550,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 											@edit="showEditShopForm(shop)"
 											@delete="requestDeleteShop(shop)" />
 										<li
-											v-if="!(shops || []).some((s) => s.server_id === server.id && !s.is_own_shop)"
+											v-if="!shopsByServer[server.id]?.player.length"
 											class="text-sm italic text-gray-500">
 											No player shops tracked.
 										</li>
@@ -742,207 +767,18 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 			</template>
 		</BaseModal>
 
-		<BaseModal
-			:isOpen="showCreateForm"
-			title="Add New Server"
-			maxWidth="max-w-md"
-			@close="closeServerModals">
-			<form @submit.prevent="handleServerSubmit" class="space-y-4">
-				<div>
-					<label for="create-server-name" class="block text-sm font-medium text-gray-700 mb-1">
-						Server Name *
-					</label>
-					<input
-						id="create-server-name"
-						v-model="serverForm.name"
-						type="text"
-						required
-						placeholder="e.g., Hypixel Skyblock"
-						@input="nameValidationError = null; createFormError = null"
-						:class="[
-							'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
-							nameValidationError
-								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
-						]" />
-					<div
-						v-if="nameValidationError"
-						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-						<XCircleIcon class="w-4 h-4" />
-						{{ nameValidationError }}
-					</div>
-				</div>
-
-				<div>
-					<label for="create-minecraft-version" class="block text-sm font-medium text-gray-700 mb-1">
-						Minecraft Version *
-					</label>
-					<select
-						id="create-minecraft-version"
-						v-model="serverForm.minecraft_version"
-						required
-						@change="versionValidationError = null; createFormError = null"
-						:class="[
-							'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 font-sans',
-							versionValidationError
-								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
-						]">
-						<option
-							v-for="version in minecraftVersions"
-							:key="version.value"
-							:value="version.value">
-							{{ version.label }}
-						</option>
-					</select>
-					<div
-						v-if="versionValidationError"
-						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-						<XCircleIcon class="w-4 h-4" />
-						{{ versionValidationError }}
-					</div>
-				</div>
-
-				<div>
-					<label for="create-description" class="block text-sm font-medium text-gray-700 mb-1">
-						Description
-					</label>
-					<textarea
-						id="create-description"
-						v-model="serverForm.description"
-						rows="3"
-						placeholder="Optional description for this server..."
-						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>
-				</div>
-
-				<div
-					v-if="createFormError"
-					class="text-sm text-red-600 font-semibold flex items-center gap-1 bg-red-100 border border-red-300 px-3 py-2 rounded">
-					<XCircleIcon class="w-4 h-4" />
-					{{ createFormError }}
-				</div>
-			</form>
-
-			<template #footer>
-				<div class="flex items-center justify-end">
-					<div class="flex space-x-3">
-						<button
-							type="button"
-							@click="closeServerModals"
-							class="btn-secondary--outline">
-							Cancel
-						</button>
-						<BaseButton
-							@click="handleServerSubmit"
-							:disabled="loading"
-							variant="primary">
-							{{ loading ? 'Creating...' : 'Create Server' }}
-						</BaseButton>
-					</div>
-				</div>
-			</template>
-		</BaseModal>
-
-		<BaseModal
-			:isOpen="showEditForm"
-			title="Edit Server"
-			maxWidth="max-w-md"
-			@close="closeServerModals">
-			<form @submit.prevent="handleServerSubmit" class="space-y-4">
-				<div>
-					<label for="edit-server-name" class="block text-sm font-medium text-gray-700 mb-1">
-						Server Name *
-					</label>
-					<input
-						id="edit-server-name"
-						v-model="serverForm.name"
-						type="text"
-						required
-						placeholder="e.g., Hypixel Skyblock"
-						@input="nameValidationError = null; editFormError = null"
-						:class="[
-							'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
-							nameValidationError
-								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
-						]" />
-					<div
-						v-if="nameValidationError"
-						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-						<XCircleIcon class="w-4 h-4" />
-						{{ nameValidationError }}
-					</div>
-				</div>
-
-				<div>
-					<label for="edit-minecraft-version" class="block text-sm font-medium text-gray-700 mb-1">
-						Minecraft Version *
-					</label>
-					<select
-						id="edit-minecraft-version"
-						v-model="serverForm.minecraft_version"
-						required
-						@change="versionValidationError = null; editFormError = null"
-						:class="[
-							'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 font-sans',
-							versionValidationError
-								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
-						]">
-						<option
-							v-for="version in minecraftVersions"
-							:key="version.value"
-							:value="version.value">
-							{{ version.label }}
-						</option>
-					</select>
-					<div
-						v-if="versionValidationError"
-						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-						<XCircleIcon class="w-4 h-4" />
-						{{ versionValidationError }}
-					</div>
-				</div>
-
-				<div>
-					<label for="edit-description" class="block text-sm font-medium text-gray-700 mb-1">
-						Description
-					</label>
-					<textarea
-						id="edit-description"
-						v-model="serverForm.description"
-						rows="3"
-						placeholder="Optional description for this server..."
-						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>
-				</div>
-
-				<div
-					v-if="editFormError"
-					class="text-sm text-red-600 font-semibold flex items-center gap-1 bg-red-100 border border-red-300 px-3 py-2 rounded">
-					<XCircleIcon class="w-4 h-4" />
-					{{ editFormError }}
-				</div>
-			</form>
-
-			<template #footer>
-				<div class="flex items-center justify-end">
-					<div class="flex space-x-3">
-						<button
-							type="button"
-							@click="closeServerModals"
-							class="btn-secondary--outline">
-							Cancel
-						</button>
-						<BaseButton
-							@click="handleServerSubmit"
-							:disabled="loading"
-							variant="primary">
-							{{ loading ? 'Updating...' : 'Update Server' }}
-						</BaseButton>
-					</div>
-				</div>
-			</template>
-		</BaseModal>
+		<ServerFormModal
+			:isOpen="showServerForm"
+			:editingServer="editingServer"
+			:formData="serverForm"
+			:loading="loading"
+			:formError="formError"
+			:nameValidationError="nameValidationError"
+			:versionValidationError="versionValidationError"
+			@update:formData="serverForm = $event"
+			@submit="handleServerSubmit"
+			@close="closeServerModals"
+			@clear-errors="clearServerErrors" />
 
 		<BaseModal
 			:isOpen="showDeleteModal"
