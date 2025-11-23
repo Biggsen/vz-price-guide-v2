@@ -616,7 +616,7 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 
 			<div v-else>
 				<p class="text-lg font-medium mb-2">No servers yet.</p>
-				<p class="text-sm text-gray-600">Click "Add Server" to get started with your servers.</p>
+				<p class="text-sm text-gray-600">Click "Add Server" to get started. You can then add shops to the server.</p>
 			</div>
 		</div>
 
