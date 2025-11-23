@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import BaseButton from '../components/BaseButton.vue'
 import BaseCard from '../components/BaseCard.vue'
 import BaseModal from '../components/BaseModal.vue'
+import ShopFormModal from '../components/ShopFormModal.vue'
 import LinkWithActions from '../components/LinkWithActions.vue'
 import PlayerShopsGroup from '../components/PlayerShopsGroup.vue'
 import ServerFormModal from '../components/ServerFormModal.vue'
@@ -71,10 +72,6 @@ const presetServerId = ref(null)
 const presetShopType = ref(null)
 const usePlayerAsShopName = ref(false)
 
-// Refs for form inputs to enable auto-focus
-const shopPlayerInput = ref(null)
-const shopNameInput = ref(null)
-
 const shopForm = ref({
 	name: '',
 	player: '',
@@ -99,6 +96,23 @@ watch(usePlayerAsShopName, (checked) => {
 	} else if (!checked) {
 		shopForm.value.name = ''
 	}
+})
+
+// Clear validation errors when form fields change
+watch(() => shopForm.value.name, () => {
+	shopNameValidationError.value = null
+	shopCreateError.value = null
+	shopEditError.value = null
+})
+watch(() => shopForm.value.player, () => {
+	shopPlayerValidationError.value = null
+	shopCreateError.value = null
+	shopEditError.value = null
+})
+watch(() => shopForm.value.server_id, () => {
+	shopServerValidationError.value = null
+	shopCreateError.value = null
+	shopEditError.value = null
 })
 
 // Group shops by server ID for easy access
@@ -301,15 +315,6 @@ function showCreateShopForm(serverId = '', isOwnShop = null) {
 	shopServerValidationError.value = null
 	shopPlayerValidationError.value = null
 	shopError.value = null
-	
-	// Focus the first input after modal opens
-	nextTick(() => {
-		if (!shopForm.value.is_own_shop && shopPlayerInput.value) {
-			shopPlayerInput.value.focus()
-		} else if (shopForm.value.is_own_shop && shopNameInput.value) {
-			shopNameInput.value.focus()
-		}
-	})
 }
 
 function showEditShopForm(shop) {
@@ -620,159 +625,24 @@ const serverDeleteHasShops = computed(() => serverDeleteShopCount.value > 0)
 			</div>
 		</div>
 
-		<BaseModal
+		<ShopFormModal
 			:isOpen="showShopForm"
-			:title="editingShop ? 'Edit Shop' : 'Add New Shop'"
-			maxWidth="max-w-2xl"
-			@close="closeShopModals">
-			<form @submit.prevent="handleShopSubmit" class="space-y-4">
-				<div v-if="!shopForm.is_own_shop">
-					<label for="shop-player" class="block text-sm font-medium text-gray-700 mb-1">
-						Player (Minecraft Username) *
-					</label>
-					<input
-						id="shop-player"
-						ref="shopPlayerInput"
-						v-model="shopForm.player"
-						type="text"
-						placeholder="Enter Minecraft username"
-						@input="shopPlayerValidationError = null; shopCreateError = null; shopEditError = null"
-						:class="[
-							'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
-							shopPlayerValidationError
-								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
-						]" />
-					<div
-						v-if="shopPlayerValidationError"
-						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-						<XCircleIcon class="w-4 h-4" />
-						{{ shopPlayerValidationError }}
-					</div>
-				</div>
-
-				<div>
-					<label for="shop-name" class="block text-sm font-medium text-gray-700 mb-1">
-						Shop Name *
-					</label>
-					<div class="mt-2">
-						<label v-if="!shopForm.is_own_shop" class="flex items-center mb-2 cursor-pointer">
-							<input
-								v-model="usePlayerAsShopName"
-								type="checkbox"
-								class="mr-2 checkbox-input" />
-							<span class="text-sm text-gray-700">Use Player as Shop Name</span>
-						</label>
-						<input
-							id="shop-name"
-							ref="shopNameInput"
-							v-model="shopForm.name"
-							type="text"
-							required
-							:disabled="usePlayerAsShopName && !shopForm.is_own_shop"
-							placeholder="e.g., verzion's shop"
-							@input="shopNameValidationError = null; shopCreateError = null; shopEditError = null"
-							:class="[
-								'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans disabled:bg-gray-100 disabled:cursor-not-allowed',
-								shopNameValidationError
-									? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-									: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
-							]" />
-					</div>
-					<div
-						v-if="shopNameValidationError"
-						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-						<XCircleIcon class="w-4 h-4" />
-						{{ shopNameValidationError }}
-					</div>
-				</div>
-
-				<div v-if="!presetServerId && !editingShop">
-					<label for="shop-server" class="block text-sm font-medium text-gray-700 mb-1">
-						Server *
-					</label>
-					<select
-						id="shop-server"
-						v-model="shopForm.server_id"
-						required
-						@change="shopServerValidationError = null; shopCreateError = null; shopEditError = null"
-						:class="[
-							'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 focus:ring-2 font-sans',
-							shopServerValidationError
-								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
-						]">
-						<option value="">Select a server</option>
-						<option v-for="server in servers" :key="server.id" :value="server.id">
-							{{ server.name }}
-						</option>
-					</select>
-					<div
-						v-if="shopServerValidationError"
-						class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-						<XCircleIcon class="w-4 h-4" />
-						{{ shopServerValidationError }}
-					</div>
-				</div>
-
-				<div>
-					<label for="shop-location" class="block text-sm font-medium text-gray-700 mb-1">
-						Location
-					</label>
-					<input
-						id="shop-location"
-						v-model="shopForm.location"
-						type="text"
-						placeholder="e.g., /warp shops, coordinates, etc."
-						class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
-				</div>
-
-				<div>
-					<label for="shop-description" class="block text-sm font-medium text-gray-700 mb-1">
-						Description
-					</label>
-					<textarea
-						id="shop-description"
-						v-model="shopForm.description"
-						rows="3"
-						placeholder="Optional description for this shop..."
-						class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus"></textarea>
-				</div>
-
-
-				<div
-					v-if="shopCreateError && !editingShop"
-					class="text-sm text-red-600 font-semibold flex items-center gap-1 bg-red-100 border border-red-300 px-3 py-2 rounded">
-					<XCircleIcon class="w-4 h-4" />
-					{{ shopCreateError }}
-				</div>
-				<div
-					v-if="shopEditError && editingShop"
-					class="text-sm text-red-600 font-semibold flex items-center gap-1 bg-red-100 border border-red-300 px-3 py-2 rounded">
-					<XCircleIcon class="w-4 h-4" />
-					{{ shopEditError }}
-				</div>
-			</form>
-
-			<template #footer>
-				<div class="flex items-center justify-end">
-					<div class="flex space-x-3">
-						<button
-							type="button"
-							@click="closeShopModals"
-							class="btn-secondary--outline">
-							Cancel
-						</button>
-						<BaseButton
-							@click="handleShopSubmit"
-							:disabled="shopLoading"
-							variant="primary">
-							{{ shopLoading ? (editingShop ? 'Updating...' : 'Creating...') : editingShop ? 'Update Shop' : 'Create Shop' }}
-						</BaseButton>
-					</div>
-				</div>
-			</template>
-		</BaseModal>
+			:editingShop="editingShop"
+			v-model:shopForm="shopForm"
+			v-model:usePlayerAsShopName="usePlayerAsShopName"
+			:loading="shopLoading"
+			:errors="{
+				name: shopNameValidationError,
+				player: shopPlayerValidationError,
+				server: shopServerValidationError,
+				create: shopCreateError,
+				edit: shopEditError
+			}"
+			:presetServerId="presetServerId"
+			:servers="servers"
+			:userProfile="userProfile"
+			@submit="handleShopSubmit"
+			@close="closeShopModals" />
 
 		<BaseModal
 			:isOpen="showShopDeleteModal"

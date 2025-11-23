@@ -13,6 +13,7 @@ import {
 	bulkUpdateShopItems
 } from '../utils/shopItems.js'
 import ShopItemForm from '../components/ShopItemForm.vue'
+import ShopFormModal from '../components/ShopFormModal.vue'
 import BaseTable from '../components/BaseTable.vue'
 import InlinePriceInput from '../components/InlinePriceInput.vue'
 import InlineNotesInput from '../components/InlineNotesInput.vue'
@@ -155,6 +156,16 @@ watch(usePlayerAsShopName, (checked) => {
 	} else if (!checked) {
 		shopForm.value.name = ''
 	}
+})
+
+// Clear validation errors when form fields change
+watch(() => shopForm.value.name, () => {
+	shopNameValidationError.value = null
+	shopFormError.value = null
+})
+watch(() => shopForm.value.player, () => {
+	shopPlayerValidationError.value = null
+	shopFormError.value = null
 })
 
 // Get all items from the main collection for the item selector
@@ -1300,123 +1311,22 @@ function getServerName(serverId) {
 		</div>
 	</div>
 
-	<BaseModal
+	<ShopFormModal
 		:isOpen="showEditShopModal"
-		title="Edit Shop"
-		maxWidth="max-w-2xl"
-		@close="closeEditShopModal">
-		<form @submit.prevent="submitEditShop" class="space-y-4">
-			<div v-if="!shopForm.is_own_shop">
-				<label for="edit-shop-player" class="block text-sm font-medium text-gray-700 mb-1">
-					Player (Minecraft Username) *
-				</label>
-				<input
-					id="edit-shop-player"
-					v-model="shopForm.player"
-					type="text"
-					placeholder="Enter Minecraft username"
-					@input="shopPlayerValidationError = null; shopFormError = null"
-					:class="[
-						'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
-						shopPlayerValidationError
-							? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-							: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
-					]" />
-				<div
-					v-if="shopPlayerValidationError"
-					class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-					<XCircleIcon class="w-4 h-4" />
-					{{ shopPlayerValidationError }}
-				</div>
-			</div>
-
-			<div>
-				<label for="edit-shop-name" class="block text-sm font-medium text-gray-700 mb-1">
-					Shop Name *
-				</label>
-				<div class="mt-2">
-					<label v-if="!shopForm.is_own_shop" class="flex items-center mb-2 cursor-pointer">
-						<input
-							v-model="usePlayerAsShopName"
-							type="checkbox"
-							class="mr-2 checkbox-input" />
-						<span class="text-sm text-gray-700">Use Player as Shop Name</span>
-					</label>
-					<input
-						id="edit-shop-name"
-						v-model="shopForm.name"
-						type="text"
-						required
-						:disabled="usePlayerAsShopName && !shopForm.is_own_shop"
-						placeholder="e.g., vz market"
-						@input="shopNameValidationError = null; shopFormError = null"
-						:class="[
-							'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans disabled:bg-gray-100 disabled:cursor-not-allowed',
-							shopNameValidationError
-								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
-						]" />
-				</div>
-				<div
-					v-if="shopNameValidationError"
-					class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">
-					<XCircleIcon class="w-4 h-4" />
-					{{ shopNameValidationError }}
-				</div>
-			</div>
-
-			<div>
-				<label for="edit-shop-location" class="block text-sm font-medium text-gray-700 mb-1">
-					Location
-				</label>
-				<input
-					id="edit-shop-location"
-					v-model="shopForm.location"
-					type="text"
-					placeholder="e.g., /warp shops"
-					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
-			</div>
-
-			<div>
-				<label for="edit-shop-description" class="block text-sm font-medium text-gray-700 mb-1">
-					Description
-				</label>
-				<textarea
-					id="edit-shop-description"
-					v-model="shopForm.description"
-					rows="3"
-					placeholder="Optional description for this shop..."
-					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus"></textarea>
-			</div>
-
-			<div
-				v-if="shopFormError"
-				class="text-sm text-red-600 font-semibold flex items-center gap-1 bg-red-100 border border-red-300 px-3 py-2 rounded">
-				<XCircleIcon class="w-4 h-4" />
-				{{ shopFormError }}
-			</div>
-		</form>
-
-		<template #footer>
-			<div class="flex items-center justify-end">
-				<div class="flex space-x-3">
-					<button
-						type="button"
-						class="btn-secondary--outline"
-						@click="closeEditShopModal">
-						Cancel
-					</button>
-					<BaseButton
-						type="button"
-						@click="submitEditShop"
-						:disabled="shopFormLoading"
-						variant="primary">
-						{{ shopFormLoading ? 'Updating...' : 'Update Shop' }}
-					</BaseButton>
-				</div>
-			</div>
-		</template>
-	</BaseModal>
+		:editingShop="editingShop"
+		v-model:shopForm="shopForm"
+		v-model:usePlayerAsShopName="usePlayerAsShopName"
+		:loading="shopFormLoading"
+		:errors="{
+			name: shopNameValidationError,
+			player: shopPlayerValidationError,
+			server: shopServerValidationError,
+			create: null,
+			edit: shopFormError
+		}"
+		:servers="servers"
+		@submit="submitEditShop"
+		@close="closeEditShopModal" />
 
 	<BaseModal
 		:isOpen="showAddForm"
