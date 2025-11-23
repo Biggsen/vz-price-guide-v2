@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, useSlots } from 'vue'
+import { computed, ref, useSlots, watch } from 'vue'
 import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -27,6 +27,15 @@ const props = defineProps({
 	caption: {
 		type: String,
 		default: null
+	},
+	initialSortField: {
+		type: String,
+		default: ''
+	},
+	initialSortDirection: {
+		type: String,
+		default: 'asc',
+		validator: (value) => ['asc', 'desc'].includes(value)
 	}
 })
 
@@ -40,8 +49,21 @@ const hasFixedWidthColumns = computed(() => {
 })
 
 // Sorting state
-const sortField = ref('')
-const sortDirection = ref('asc') // 'asc' or 'desc'
+const sortField = ref(props.initialSortField || '')
+const sortDirection = ref(props.initialSortDirection || 'asc') // 'asc' or 'desc'
+
+// Watch for prop changes to update internal state
+watch(() => props.initialSortField, (newValue) => {
+	if (newValue !== sortField.value) {
+		sortField.value = newValue || ''
+	}
+})
+
+watch(() => props.initialSortDirection, (newValue) => {
+	if (newValue !== sortDirection.value) {
+		sortDirection.value = newValue || 'asc'
+	}
+})
 
 // Computed sorted rows
 const sortedRows = computed(() => {

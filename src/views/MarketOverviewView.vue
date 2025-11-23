@@ -41,6 +41,25 @@ const searchQuery = ref('')
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
 
+// Sorting state - initialize from localStorage if available
+function loadSortSettings() {
+	try {
+		const savedSortField = localStorage.getItem('marketOverviewSortField')
+		const savedSortDirection = localStorage.getItem('marketOverviewSortDirection')
+		return {
+			field: savedSortField || '',
+			direction: (savedSortDirection && ['asc', 'desc'].includes(savedSortDirection)) ? savedSortDirection : 'asc'
+		}
+	} catch (error) {
+		console.warn('Error loading sort settings:', error)
+		return { field: '', direction: 'asc' }
+	}
+}
+
+const initialSortSettings = loadSortSettings()
+const sortField = ref(initialSortSettings.field)
+const sortDirection = ref(initialSortSettings.direction)
+
 // Check if user is admin
 const userIsAdmin = ref(false)
 watch(user, async (newUser) => {
@@ -388,6 +407,20 @@ watch(
 	{ deep: true }
 )
 
+// Save sorting state when it changes
+watch(
+	[sortField, sortDirection],
+	() => {
+		saveSortSettings()
+	}
+)
+
+// Handle sort event from BaseTable
+function handleSort(event) {
+	sortField.value = event.field
+	sortDirection.value = event.direction
+}
+
 // Load and save view settings from localStorage
 function loadViewSettings() {
 	try {
@@ -412,6 +445,20 @@ function saveViewSettings() {
 		localStorage.setItem('marketOverviewLayout', layout.value)
 	} catch (error) {
 		console.warn('Error saving view settings:', error)
+	}
+}
+
+function saveSortSettings() {
+	try {
+		if (sortField.value) {
+			localStorage.setItem('marketOverviewSortField', sortField.value)
+			localStorage.setItem('marketOverviewSortDirection', sortDirection.value)
+		} else {
+			localStorage.removeItem('marketOverviewSortField')
+			localStorage.removeItem('marketOverviewSortDirection')
+		}
+	} catch (error) {
+		console.warn('Error saving sort settings:', error)
 	}
 }
 
@@ -783,6 +830,9 @@ const priceAnalysis = computed(() => {
 								row-key="id"
 								:layout="layout"
 								:hoverable="true"
+								:initial-sort-field="sortField"
+								:initial-sort-direction="sortDirection"
+								@sort="handleSort"
 								:caption="category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()">
 								<template #cell-item="{ row, layout }">
 									<div class="flex items-center">
@@ -896,6 +946,9 @@ const priceAnalysis = computed(() => {
 							row-key="id"
 							:layout="layout"
 							:hoverable="true"
+							:initial-sort-field="sortField"
+							:initial-sort-direction="sortDirection"
+							@sort="handleSort"
 							caption="All Items">
 							<template #cell-item="{ row, layout }">
 								<div class="flex items-center">
