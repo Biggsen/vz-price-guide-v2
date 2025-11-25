@@ -49,7 +49,13 @@ const props = defineProps({
 	}
 })
 
-const emit = defineEmits(['update:isOpen', 'update:shopForm', 'update:usePlayerAsShopName', 'submit', 'close'])
+const emit = defineEmits([
+	'update:isOpen',
+	'update:shopForm',
+	'update:usePlayerAsShopName',
+	'submit',
+	'close'
+])
 
 // Refs for form inputs to enable auto-focus
 const shopPlayerInput = ref(null)
@@ -121,7 +127,6 @@ function updateFormField(field, value) {
 	})
 }
 
-
 // Handle form submission
 function handleSubmit() {
 	emit('submit')
@@ -138,6 +143,7 @@ function handleClose() {
 		:isOpen="isOpen"
 		:title="modalTitle"
 		maxWidth="max-w-2xl"
+		:closeOnBackdrop="false"
 		@close="handleClose">
 		<form @submit.prevent="handleSubmit" class="space-y-4">
 			<!-- Player Name Input (only for non-own shops) -->
@@ -212,9 +218,7 @@ function handleClose() {
 
 			<!-- Server Selection (only when creating and no preset server) -->
 			<div v-if="showServerDropdown">
-				<label
-					for="shop-server"
-					class="block text-sm font-medium text-gray-700 mb-1">
+				<label for="shop-server" class="block text-sm font-medium text-gray-700 mb-1">
 					Server *
 				</label>
 				<select
@@ -229,10 +233,7 @@ function handleClose() {
 							: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
 					]">
 					<option value="">Select a server</option>
-					<option
-						v-for="server in servers"
-						:key="server.id"
-						:value="server.id">
+					<option v-for="server in servers" :key="server.id" :value="server.id">
 						{{ server.name }}
 					</option>
 				</select>
@@ -256,7 +257,9 @@ function handleClose() {
 					:value="shopForm.location"
 					@input="updateFormField('location', $event.target.value)"
 					type="text"
-					:placeholder="isEditMode ? 'e.g., /warp shops' : 'e.g., /warp shops, coordinates, etc.'"
+					:placeholder="
+						isEditMode ? 'e.g., /warp shops' : 'e.g., /warp shops, coordinates, etc.'
+					"
 					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
 			</div>
 
@@ -294,10 +297,7 @@ function handleClose() {
 		<template #footer>
 			<div class="flex items-center justify-end">
 				<div class="flex space-x-3">
-					<button
-						type="button"
-						class="btn-secondary--outline"
-						@click="handleClose">
+					<button type="button" class="btn-secondary--outline" @click="handleClose">
 						Cancel
 					</button>
 					<BaseButton
@@ -319,4 +319,3 @@ function handleClose() {
 	accent-color: theme('colors.gray-asparagus');
 }
 </style>
-

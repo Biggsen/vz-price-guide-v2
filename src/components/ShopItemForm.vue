@@ -156,7 +156,7 @@ const filteredItems = computed(() => {
 	})
 
 	const query = searchQuery.value.toLowerCase().trim()
-	if (!query) return categorizedItems
+	if (!query || query.length < 2) return []
 
 	return categorizedItems.filter(
 		(item) =>
@@ -581,6 +581,9 @@ defineExpose({
 					<label for="buy-price" class="block text-sm font-medium text-gray-700 mb-1">
 						Buy Price
 					</label>
+					<p class="text-xs text-gray-500 mb-1">
+						This is the amount players need to pay for the item
+					</p>
 					<input
 						id="buy-price"
 						:value="formData.buy_price"
@@ -618,6 +621,9 @@ defineExpose({
 					<label for="sell-price" class="block text-sm font-medium text-gray-700 mb-1">
 						Sell Price
 					</label>
+					<p class="text-xs text-gray-500 mb-1">
+						This is the amount players get when selling the item to a shop
+					</p>
 					<div class="flex items-center gap-2">
 						<input
 							id="sell-price"
@@ -652,7 +658,10 @@ defineExpose({
 					<!-- Stock Full checkbox (only for competitor shops) -->
 					<div v-if="shop && !shop.is_own_shop" class="mt-2">
 						<label class="flex items-center">
-							<input v-model="formData.stock_full" type="checkbox" class="checkbox-input" />
+							<input
+								v-model="formData.stock_full"
+								type="checkbox"
+								class="checkbox-input" />
 							<span class="ml-2 text-sm text-gray-700">Stock full</span>
 						</label>
 						<p class="text-xs text-gray-500 mt-1">Mark when you can't sell any more</p>
@@ -672,7 +681,6 @@ defineExpose({
 					placeholder="Add any notes about this item, pricing, or stock..."
 					class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>
 			</div>
-
 
 			<!-- Form actions (only show when not in modal mode) -->
 			<div

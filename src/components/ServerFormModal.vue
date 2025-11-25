@@ -74,6 +74,7 @@ function handleSubmit() {
 		:isOpen="isOpen"
 		:title="title"
 		maxWidth="max-w-md"
+		:closeOnBackdrop="false"
 		@close="$emit('close')">
 		<form @submit.prevent="handleSubmit" class="space-y-4">
 			<div>
@@ -160,16 +161,10 @@ function handleSubmit() {
 		<template #footer>
 			<div class="flex items-center justify-end">
 				<div class="flex space-x-3">
-					<button
-						type="button"
-						@click="$emit('close')"
-						class="btn-secondary--outline">
+					<button type="button" @click="$emit('close')" class="btn-secondary--outline">
 						Cancel
 					</button>
-					<BaseButton
-						@click="handleSubmit"
-						:disabled="loading"
-						variant="primary">
+					<BaseButton @click="handleSubmit" :disabled="loading" variant="primary">
 						{{ submitButtonText }}
 					</BaseButton>
 				</div>
@@ -177,4 +172,3 @@ function handleSubmit() {
 		</template>
 	</BaseModal>
 </template>
-

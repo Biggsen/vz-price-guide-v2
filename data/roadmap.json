@@ -159,11 +159,7 @@
 				"completed": true
 			},
 			{
-				"name": "🎯 Advanced search and filtering - find exactly what you need",
-				"completed": false
-			},
-			{
-				"name": "📋 Bulk operations - update hundreds of prices at once",
+				"name": "🎯 Bugfixes and UX",
 				"completed": false
 			}
 		]

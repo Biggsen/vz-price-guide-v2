@@ -22,7 +22,13 @@ import BaseModal from '../components/BaseModal.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
 import { ArrowLeftIcon, PlusIcon, ArrowPathIcon } from '@heroicons/vue/20/solid'
 import { CurrencyDollarIcon } from '@heroicons/vue/24/outline'
-import { PencilIcon, TrashIcon, ArchiveBoxIcon, ArchiveBoxXMarkIcon, WalletIcon } from '@heroicons/vue/24/outline'
+import {
+	PencilIcon,
+	TrashIcon,
+	ArchiveBoxIcon,
+	ArchiveBoxXMarkIcon,
+	WalletIcon
+} from '@heroicons/vue/24/outline'
 import { XCircleIcon } from '@heroicons/vue/24/solid'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
@@ -144,11 +150,14 @@ const selectedServer = computed(() =>
 )
 
 // Watch player name to auto-fill shop name when checkbox is checked
-watch(() => shopForm.value.player, (newPlayer) => {
-	if (usePlayerAsShopName.value && newPlayer) {
-		shopForm.value.name = newPlayer
+watch(
+	() => shopForm.value.player,
+	(newPlayer) => {
+		if (usePlayerAsShopName.value && newPlayer) {
+			shopForm.value.name = newPlayer
+		}
 	}
-})
+)
 
 // Watch checkbox to sync shop name field
 watch(usePlayerAsShopName, (checked) => {
@@ -160,14 +169,20 @@ watch(usePlayerAsShopName, (checked) => {
 })
 
 // Clear validation errors when form fields change
-watch(() => shopForm.value.name, () => {
-	shopNameValidationError.value = null
-	shopFormError.value = null
-})
-watch(() => shopForm.value.player, () => {
-	shopPlayerValidationError.value = null
-	shopFormError.value = null
-})
+watch(
+	() => shopForm.value.name,
+	() => {
+		shopNameValidationError.value = null
+		shopFormError.value = null
+	}
+)
+watch(
+	() => shopForm.value.player,
+	() => {
+		shopPlayerValidationError.value = null
+		shopFormError.value = null
+	}
+)
 
 // Get all items from the main collection for the item selector
 const allItemsQuery = computed(() => {
@@ -244,8 +259,22 @@ const allVisibleShopItems = computed(() => {
 // BaseTable column definitions
 const baseTableColumns = computed(() => [
 	{ key: 'item', label: 'Item', sortable: true, headerAlign: 'center' },
-	{ key: 'buyPrice', label: 'Buy Price', align: 'right', headerAlign: 'center', sortable: true, width: 'w-32' },
-	{ key: 'sellPrice', label: 'Sell Price', align: 'right', headerAlign: 'center', sortable: true, width: 'w-32' },
+	{
+		key: 'buyPrice',
+		label: 'Buy Price',
+		align: 'right',
+		headerAlign: 'center',
+		sortable: true,
+		width: 'w-32'
+	},
+	{
+		key: 'sellPrice',
+		label: 'Sell Price',
+		align: 'right',
+		headerAlign: 'center',
+		sortable: true,
+		width: 'w-32'
+	},
 	{
 		key: 'profitMargin',
 		label: 'Profit %',
@@ -285,20 +314,20 @@ function transformShopItemForTable(shopItem) {
 // BaseTable rows for list view
 const baseTableRows = computed(() => {
 	if (!allVisibleShopItems.value) return []
-	
+
 	return allVisibleShopItems.value.map(transformShopItemForTable)
 })
 
 // BaseTable rows grouped by category
 const baseTableRowsByCategory = computed(() => {
 	if (!shopItemsByCategory.value || !availableItems.value) return {}
-	
+
 	const grouped = {}
-	
+
 	Object.entries(shopItemsByCategory.value).forEach(([category, categoryItems]) => {
 		grouped[category] = categoryItems.map(transformShopItemForTable)
 	})
-	
+
 	return grouped
 })
 
@@ -342,7 +371,7 @@ onMounted(() => {
 
 watch(
 	() => route.params.shopId,
-	shopId => {
+	(shopId) => {
 		if (shopId && shopId !== selectedShopId.value) {
 			selectedShopId.value = shopId
 		}
@@ -385,7 +414,7 @@ watch(shops, (newShops) => {
 })
 
 // Update URL when shop selection changes
-watch(selectedShopId, newShopId => {
+watch(selectedShopId, (newShopId) => {
 	if (newShopId && route.params.shopId !== newShopId) {
 		router.replace({
 			name: 'shop',
@@ -663,7 +692,7 @@ async function savePrice(row, priceType, newPrice) {
 		// Set saving state for this specific price
 		savingPriceId.value = originalItem.id
 		savingPriceType.value = priceType
-		
+
 		try {
 			await handleQuickEdit(updatedItem)
 		} finally {
@@ -695,7 +724,7 @@ async function saveNotes(row, newNotes) {
 
 	// Ensure newNotes is a string and trim it
 	const newNotesTrimmed = String(newNotes || '').trim()
-	
+
 	// Normalize current value for comparison (handle null/undefined as empty string)
 	const currentNotes = String(originalItem.notes || '').trim()
 
@@ -703,13 +732,13 @@ async function saveNotes(row, newNotes) {
 	if (newNotesTrimmed !== currentNotes) {
 		// Set saving state for this specific notes
 		savingNotesId.value = originalItem.id
-		
+
 		// Create updated item object
 		const updatedItem = {
 			...originalItem,
 			notes: newNotesTrimmed
 		}
-		
+
 		try {
 			await handleQuickEdit(updatedItem)
 		} finally {
@@ -744,8 +773,7 @@ function openEditShopModal() {
 		description: selectedShop.value.description || '',
 		is_own_shop: Boolean(selectedShop.value.is_own_shop),
 		owner_funds:
-			selectedShop.value.owner_funds === null ||
-			selectedShop.value.owner_funds === undefined
+			selectedShop.value.owner_funds === null || selectedShop.value.owner_funds === undefined
 				? null
 				: selectedShop.value.owner_funds
 	}
@@ -803,11 +831,11 @@ async function submitEditShop() {
 			is_own_shop: editingShop.value.is_own_shop,
 			owner_funds: editingShop.value.owner_funds
 		}
-		
+
 		if (!shopForm.value.is_own_shop) {
 			shopData.player = shopForm.value.player?.trim() || ''
 		}
-		
+
 		await updateShop(editingShop.value.id, shopData)
 		closeEditShopModal()
 	} catch (err) {
@@ -860,14 +888,15 @@ function getServerName(serverId) {
 						:alt="selectedShop.player"
 						class="w-6 h-6 rounded"
 						@error="$event.target.style.display = 'none'" />
-					<span class="text-lg font-semibold text-gray-600">{{ selectedShop.player }}</span>
+					<span class="text-lg font-semibold text-gray-600">
+						{{ selectedShop.player }}
+					</span>
 				</div>
-				<p
-					v-if="selectedShop.description"
-					class="text-gray-600 mt-1 max-w-2xl">
+				<p v-if="selectedShop.description" class="text-gray-600 mt-1 max-w-2xl">
 					{{ selectedShop.description }}
 				</p>
-				<div class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 sm:gap-4 mt-2 text-sm text-gray-500">
+				<div
+					class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 sm:gap-4 mt-2 text-sm text-gray-500">
 					<span>
 						<span class="font-medium">Server:</span>
 						{{ getServerName(selectedShop.server_id) }}
@@ -895,9 +924,7 @@ function getServerName(serverId) {
 		</div>
 
 		<!-- Error message -->
-		<div
-			v-if="error"
-			class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+		<div v-if="error" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
 			{{ error }}
 		</div>
 
@@ -937,7 +964,9 @@ function getServerName(serverId) {
 						class="checkbox-input" />
 					<span class="ml-2 text-sm text-gray-700">Shop owner has run out of money</span>
 				</label>
-				<div v-if="shopItems && shopItems.length > 0" class="flex flex-col sm:flex-row justify-start gap-3">
+				<div
+					v-if="shopItems && shopItems.length > 0"
+					class="flex flex-col sm:flex-row justify-start gap-3">
 					<BaseButton
 						type="button"
 						variant="primary"
@@ -968,14 +997,13 @@ function getServerName(serverId) {
 
 			<!-- Inventory -->
 			<div class="mt-8 space-y-6">
-				<div
-					v-if="shopItems.length > 0"
-					class="mb-4">
+				<div v-if="shopItems.length > 0" class="mb-4">
 					<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-8">
 						<!-- View Mode -->
 						<div class="flex items-center gap-2">
 							<span class="text-sm font-medium text-heavy-metal">View as:</span>
-							<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+							<div
+								class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
 								<button
 									@click="viewMode = 'categories'"
 									:class="[
@@ -1002,7 +1030,8 @@ function getServerName(serverId) {
 						<!-- Layout -->
 						<div class="flex items-center gap-2">
 							<span class="text-sm font-medium text-heavy-metal">Layout:</span>
-							<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+							<div
+								class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
 								<button
 									@click="layout = 'comfortable'"
 									:class="[
@@ -1042,17 +1071,26 @@ function getServerName(serverId) {
 									row-key="id"
 									:layout="layout"
 									:hoverable="true"
-									:caption="category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()">
+									:caption="
+										category.charAt(0).toUpperCase() +
+										category.slice(1).toLowerCase()
+									">
 									<template #cell-item="{ row, layout }">
 										<div class="flex items-center">
-											<div v-if="row.image" :class="[layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8', 'mr-3 flex-shrink-0']">
+											<div
+												v-if="row.image"
+												:class="[
+													layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8',
+													'mr-3 flex-shrink-0'
+												]">
 												<img
 													:src="getImageUrl(row.image)"
 													:alt="row.item"
 													class="w-full h-full object-contain"
 													loading="lazy" />
 											</div>
-											<div class="font-medium text-gray-900 flex items-center justify-between w-full">
+											<div
+												class="font-medium text-gray-900 flex items-center justify-between w-full">
 												<span>{{ row.item }}</span>
 												<ArrowPathIcon
 													v-if="showItemSavingSpinner === row.id"
@@ -1074,38 +1112,89 @@ function getServerName(serverId) {
 											<InlinePriceInput
 												:value="row._originalItem?.buy_price"
 												:layout="layout"
-												:is-editing="editingPriceId === row.id && editingPriceType === 'buy'"
-												:is-saving="savingPriceId === row.id && savingPriceType === 'buy'"
-												:strikethrough="row._originalItem?.stock_quantity === 0"
-												@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'buy'); else cancelEditPrice() }"
-												@save="(newPrice) => savePrice(row, 'buy', newPrice)"
+												:is-editing="
+													editingPriceId === row.id &&
+													editingPriceType === 'buy'
+												"
+												:is-saving="
+													savingPriceId === row.id &&
+													savingPriceType === 'buy'
+												"
+												:strikethrough="
+													row._originalItem?.stock_quantity === 0
+												"
+												@update:is-editing="
+													(val) => {
+														if (val) startEditPrice(row.id, 'buy')
+														else cancelEditPrice()
+													}
+												"
+												@save="
+													(newPrice) => savePrice(row, 'buy', newPrice)
+												"
 												@cancel="cancelEditPrice" />
 										</div>
 									</template>
 									<template #cell-sellPrice="{ row, layout }">
 										<div class="flex items-center justify-end gap-2">
 											<div
-												v-if="row._originalItem?.stock_full || (isShopOutOfMoney && row._originalItem?.sell_price > 0)"
+												v-if="
+													row._originalItem?.stock_full ||
+													(isShopOutOfMoney &&
+														row._originalItem?.sell_price > 0)
+												"
 												class="flex-shrink-0 mr-auto"
-												:title="isShopOutOfMoney && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full'">
+												:title="
+													isShopOutOfMoney &&
+													row._originalItem?.sell_price > 0
+														? 'Shop owner has run out of money'
+														: 'Stock full'
+												">
 												<WalletIcon
-													v-if="isShopOutOfMoney && row._originalItem?.sell_price > 0"
+													v-if="
+														isShopOutOfMoney &&
+														row._originalItem?.sell_price > 0
+													"
 													class="w-5 h-5 text-current"
 													aria-label="Shop owner has run out of money" />
 												<ArchiveBoxIcon
 													v-else-if="row._originalItem?.stock_full"
 													class="w-5 h-5 text-current"
 													aria-label="Stock full" />
-												<span class="sr-only">{{ isShopOutOfMoney && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full' }}</span>
+												<span class="sr-only">
+													{{
+														isShopOutOfMoney &&
+														row._originalItem?.sell_price > 0
+															? 'Shop owner has run out of money'
+															: 'Stock full'
+													}}
+												</span>
 											</div>
 											<InlinePriceInput
 												:value="row._originalItem?.sell_price"
 												:layout="layout"
-												:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
-												:is-saving="savingPriceId === row.id && savingPriceType === 'sell'"
-												:strikethrough="row._originalItem?.stock_full || (isShopOutOfMoney && row._originalItem?.sell_price > 0)"
-												@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"
-												@save="(newPrice) => savePrice(row, 'sell', newPrice)"
+												:is-editing="
+													editingPriceId === row.id &&
+													editingPriceType === 'sell'
+												"
+												:is-saving="
+													savingPriceId === row.id &&
+													savingPriceType === 'sell'
+												"
+												:strikethrough="
+													row._originalItem?.stock_full ||
+													(isShopOutOfMoney &&
+														row._originalItem?.sell_price > 0)
+												"
+												@update:is-editing="
+													(val) => {
+														if (val) startEditPrice(row.id, 'sell')
+														else cancelEditPrice()
+													}
+												"
+												@save="
+													(newPrice) => savePrice(row, 'sell', newPrice)
+												"
 												@cancel="cancelEditPrice" />
 										</div>
 									</template>
@@ -1115,7 +1204,13 @@ function getServerName(serverId) {
 											:layout="layout"
 											:is-editing="editingNotesId === row.id"
 											:is-saving="savingNotesId === row.id"
-											@update:is-editing="(val) => { if (val) startEditNotes(row.id); else if (savingNotesId !== row.id) cancelEditNotes() }"
+											@update:is-editing="
+												(val) => {
+													if (val) startEditNotes(row.id)
+													else if (savingNotesId !== row.id)
+														cancelEditNotes()
+												}
+											"
 											@save="(newNotes) => saveNotes(row, newNotes)"
 											@cancel="cancelEditNotes" />
 									</template>
@@ -1148,14 +1243,20 @@ function getServerName(serverId) {
 								:hoverable="true">
 								<template #cell-item="{ row, layout }">
 									<div class="flex items-center">
-										<div v-if="row.image" :class="[layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8', 'mr-3 flex-shrink-0']">
+										<div
+											v-if="row.image"
+											:class="[
+												layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8',
+												'mr-3 flex-shrink-0'
+											]">
 											<img
 												:src="getImageUrl(row.image)"
 												:alt="row.item"
 												class="w-full h-full object-contain"
 												loading="lazy" />
 										</div>
-										<div class="font-medium text-gray-900 flex items-center justify-between w-full">
+										<div
+											class="font-medium text-gray-900 flex items-center justify-between w-full">
 											<span>{{ row.item }}</span>
 											<ArrowPathIcon
 												v-if="showItemSavingSpinner === row.id"
@@ -1177,10 +1278,21 @@ function getServerName(serverId) {
 										<InlinePriceInput
 											:value="row._originalItem?.buy_price"
 											:layout="layout"
-											:is-editing="editingPriceId === row.id && editingPriceType === 'buy'"
-											:is-saving="savingPriceId === row.id && savingPriceType === 'buy'"
+											:is-editing="
+												editingPriceId === row.id &&
+												editingPriceType === 'buy'
+											"
+											:is-saving="
+												savingPriceId === row.id &&
+												savingPriceType === 'buy'
+											"
 											:strikethrough="row._originalItem?.stock_quantity === 0"
-											@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'buy'); else cancelEditPrice() }"
+											@update:is-editing="
+												(val) => {
+													if (val) startEditPrice(row.id, 'buy')
+													else cancelEditPrice()
+												}
+											"
 											@save="(newPrice) => savePrice(row, 'buy', newPrice)"
 											@cancel="cancelEditPrice" />
 									</div>
@@ -1188,37 +1300,76 @@ function getServerName(serverId) {
 								<template #cell-sellPrice="{ row, layout }">
 									<div class="flex items-center justify-end gap-2">
 										<div
-											v-if="row._originalItem?.stock_full || (isShopOutOfMoney && row._originalItem?.sell_price > 0)"
+											v-if="
+												row._originalItem?.stock_full ||
+												(isShopOutOfMoney &&
+													row._originalItem?.sell_price > 0)
+											"
 											class="flex-shrink-0 mr-auto"
-											:title="isShopOutOfMoney && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full'">
+											:title="
+												isShopOutOfMoney &&
+												row._originalItem?.sell_price > 0
+													? 'Shop owner has run out of money'
+													: 'Stock full'
+											">
 											<WalletIcon
-												v-if="isShopOutOfMoney && row._originalItem?.sell_price > 0"
+												v-if="
+													isShopOutOfMoney &&
+													row._originalItem?.sell_price > 0
+												"
 												class="w-5 h-5 text-current"
 												aria-label="Shop owner has run out of money" />
 											<ArchiveBoxXMarkIcon
 												v-else-if="row._originalItem?.stock_full"
 												class="w-5 h-5 text-current"
 												aria-label="Stock full" />
-											<span class="sr-only">{{ isShopOutOfMoney && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full' }}</span>
+											<span class="sr-only">
+												{{
+													isShopOutOfMoney &&
+													row._originalItem?.sell_price > 0
+														? 'Shop owner has run out of money'
+														: 'Stock full'
+												}}
+											</span>
 										</div>
 										<InlinePriceInput
 											:value="row._originalItem?.sell_price"
 											:layout="layout"
-											:is-editing="editingPriceId === row.id && editingPriceType === 'sell'"
-											:is-saving="savingPriceId === row.id && savingPriceType === 'sell'"
-											:strikethrough="row._originalItem?.stock_full || (isShopOutOfMoney && row._originalItem?.sell_price > 0)"
-											@update:is-editing="(val) => { if (val) startEditPrice(row.id, 'sell'); else cancelEditPrice() }"
+											:is-editing="
+												editingPriceId === row.id &&
+												editingPriceType === 'sell'
+											"
+											:is-saving="
+												savingPriceId === row.id &&
+												savingPriceType === 'sell'
+											"
+											:strikethrough="
+												row._originalItem?.stock_full ||
+												(isShopOutOfMoney &&
+													row._originalItem?.sell_price > 0)
+											"
+											@update:is-editing="
+												(val) => {
+													if (val) startEditPrice(row.id, 'sell')
+													else cancelEditPrice()
+												}
+											"
 											@save="(newPrice) => savePrice(row, 'sell', newPrice)"
 											@cancel="cancelEditPrice" />
 									</div>
-									</template>
+								</template>
 								<template #cell-notes="{ row, layout }">
 									<InlineNotesInput
 										:value="row._originalItem?.notes || ''"
 										:layout="layout"
 										:is-editing="editingNotesId === row.id"
 										:is-saving="savingNotesId === row.id"
-										@update:is-editing="(val) => { if (val) startEditNotes(row.id); else if (savingNotesId !== row.id) cancelEditNotes() }"
+										@update:is-editing="
+											(val) => {
+												if (val) startEditNotes(row.id)
+												else if (savingNotesId !== row.id) cancelEditNotes()
+											}
+										"
 										@save="(newNotes) => saveNotes(row, newNotes)"
 										@cancel="cancelEditNotes" />
 								</template>
@@ -1288,6 +1439,7 @@ function getServerName(serverId) {
 		:isOpen="showAddForm"
 		:title="editingItem ? 'Edit Shop Item' : 'Add Shop Item'"
 		maxWidth="max-w-2xl"
+		:closeOnBackdrop="false"
 		@close="cancelForm">
 		<ShopItemForm
 			ref="shopItemForm"
@@ -1316,6 +1468,7 @@ function getServerName(serverId) {
 		</template>
 	</BaseModal>
 
+	<!-- prettier-ignore -->
 	<BaseModal
 		:isOpen="showDeleteItemModal"
 		title="Delete Item"
@@ -1337,6 +1490,7 @@ function getServerName(serverId) {
 		<template #footer>
 			<div class="flex items-center justify-end p-4">
 				<div class="flex space-x-3">
+					<!-- prettier-ignore -->
 					<button
 						type="button"
 						class="btn-secondary--outline"
