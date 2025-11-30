@@ -1,13 +1,13 @@
 <script setup>
 import { computed } from 'vue'
 
-const props = defineProps({
-	variant: {
-		type: String,
-		default: 'primary',
-		validator: (value) =>
-			['primary', 'secondary', 'ghost'].includes(value)
-	},
+	const props = defineProps({
+		variant: {
+			type: String,
+			default: 'primary',
+			validator: (value) =>
+				['primary', 'secondary', 'ghost', 'ghost-in-table'].includes(value)
+		},
 	disabled: {
 		type: Boolean,
 		default: false
@@ -23,6 +23,10 @@ const props = defineProps({
 	ariaLabel: {
 		type: String,
 		required: true
+	},
+	title: {
+		type: String,
+		default: ''
 	}
 })
 
@@ -38,7 +42,9 @@ const buttonClasses = computed(() => {
 		secondary:
 			'bg-norway text-heavy-metal hover:bg-sea-mist focus-visible:outline-gray-asparagus',
 		ghost:
-			'text-gray-400 hover:text-gray-700 hover:bg-gray-100 focus-visible:outline-gray-300'
+			'text-gray-400 hover:text-gray-700 hover:bg-gray-100 focus-visible:outline-gray-300',
+		'ghost-in-table':
+			'text-amulet hover:bg-norway hover:text-gray-asparagus focus-visible:outline-amulet'
 	}
 
 	return `${baseClasses} ${variantClasses[props.variant]}`
@@ -59,6 +65,7 @@ function handleClick(event) {
 		:class="buttonClasses"
 		:disabled="isDisabled"
 		:aria-label="ariaLabel"
+		:title="title"
 		@click="handleClick">
 		<!-- Loading Spinner -->
 		<svg

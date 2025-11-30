@@ -10,7 +10,8 @@ import {
 	addShopItem,
 	updateShopItem,
 	deleteShopItem,
-	bulkUpdateShopItems
+	bulkUpdateShopItems,
+	markShopItemsAsChecked
 } from '../utils/shopItems.js'
 import ShopItemForm from '../components/ShopItemForm.vue'
 import ShopFormModal from '../components/ShopFormModal.vue'
@@ -61,6 +62,8 @@ const savingNotesId = ref(null)
 const savingItemId = ref(null) // Track which item is being saved during quick edit
 const showItemSavingSpinner = ref(null) // Show spinner after delay
 let itemSavingTimeout = null
+const markingAsChecked = ref(false) // Track if marking items as checked
+const markingItemId = ref(null) // Track which item is being marked as checked
 
 // Edit shop modal state
 const showEditShopModal = ref(false)
@@ -367,6 +370,9 @@ onMounted(() => {
 
 	// Load view settings
 	loadViewSettings()
+
+	// Add keyboard shortcut listener
+	document.addEventListener('keydown', handleKeyDown)
 })
 
 watch(
@@ -461,6 +467,9 @@ onUnmounted(() => {
 		clearTimeout(itemSavingTimeout)
 		itemSavingTimeout = null
 	}
+
+	// Remove keyboard shortcut listener
+	document.removeEventListener('keydown', handleKeyDown)
 })
 
 // Form handlers
@@ -478,6 +487,26 @@ function showAddItemForm() {
 			shopItemForm.value.focusSearchInput()
 		}
 	}, 100)
+}
+
+// Keyboard shortcut handler
+function handleKeyDown(event) {
+	// Don't trigger if user is typing in an input, textarea, or contenteditable
+	const target = event.target
+	const isInputFocused =
+		target.tagName === 'INPUT' ||
+		target.tagName === 'TEXTAREA' ||
+		target.isContentEditable ||
+		target.closest('input, textarea, [contenteditable]')
+
+	// Only trigger if not typing and 'n' key is pressed
+	if (!isInputFocused && event.key === 'n' && !event.ctrlKey && !event.metaKey) {
+		// Prevent default only if we're going to trigger the action
+		if (selectedShop.value && !showAddForm.value) {
+			event.preventDefault()
+			showAddItemForm()
+		}
+	}
 }
 
 function showEditItemForm(shopItem) {
@@ -594,6 +623,40 @@ async function handleBulkUpdate(itemsArray) {
 		error.value = err.message || 'Failed to bulk update shop items. Please try again.'
 	} finally {
 		loading.value = false
+	}
+}
+
+// Mark all items in shop as checked (updates last_updated)
+async function handleMarkAllAsChecked() {
+	if (!selectedShopId.value || !shopItems.value || shopItems.value.length === 0) return
+
+	markingAsChecked.value = true
+	error.value = null
+
+	try {
+		await markShopItemsAsChecked(selectedShopId.value)
+	} catch (err) {
+		console.error('Error marking items as checked:', err)
+		error.value = err.message || 'Failed to mark items as checked. Please try again.'
+	} finally {
+		markingAsChecked.value = false
+	}
+}
+
+// Mark a single item as checked (updates last_updated)
+async function handleMarkItemAsChecked(itemId) {
+	if (!selectedShopId.value || !itemId) return
+
+	markingItemId.value = itemId
+	error.value = null
+
+	try {
+		await markShopItemsAsChecked(selectedShopId.value, [itemId])
+	} catch (err) {
+		console.error('Error marking item as checked:', err)
+		error.value = err.message || 'Failed to mark item as checked. Please try again.'
+	} finally {
+		markingItemId.value = null
 	}
 }
 
@@ -1054,6 +1117,25 @@ function getServerName(serverId) {
 								</button>
 							</div>
 						</div>
+
+						<!-- Mark All as Checked -->
+						<div class="flex items-center gap-2">
+							<BaseButton
+								type="button"
+								variant="secondary"
+								@click="handleMarkAllAsChecked"
+								:disabled="markingAsChecked || !shopItems || shopItems.length === 0"
+								class="px-3 py-1.5 text-xs sm:text-sm">
+								<template #left-icon>
+									<ArrowPathIcon
+										:class="[
+											'w-4 h-4',
+											markingAsChecked ? 'animate-spin' : ''
+										]" />
+								</template>
+								{{ markingAsChecked ? 'Marking...' : 'Mark All as Price Checked Today' }}
+							</BaseButton>
+						</div>
 					</div>
 				</div>
 
@@ -1214,6 +1296,20 @@ function getServerName(serverId) {
 											@save="(newNotes) => saveNotes(row, newNotes)"
 											@cancel="cancelEditNotes" />
 									</template>
+									<template #cell-lastUpdated="{ row }">
+										<div class="flex items-center justify-end gap-2">
+											<span>{{ row.lastUpdated }}</span>
+											<BaseIconButton
+												variant="ghost-in-table"
+												:ariaLabel="'Mark as price checked today'"
+												title="Mark as price checked today"
+												:loading="markingItemId === row._originalItem?.id"
+												@click="handleMarkItemAsChecked(row._originalItem?.id)"
+												:disabled="markingItemId === row._originalItem?.id">
+												<ArrowPathIcon />
+											</BaseIconButton>
+										</div>
+									</template>
 									<template #cell-actions="{ row }">
 										<div class="flex items-center justify-end gap-2">
 											<BaseIconButton
@@ -1372,6 +1468,20 @@ function getServerName(serverId) {
 										"
 										@save="(newNotes) => saveNotes(row, newNotes)"
 										@cancel="cancelEditNotes" />
+								</template>
+								<template #cell-lastUpdated="{ row }">
+									<div class="flex items-center justify-end gap-2">
+										<span>{{ row.lastUpdated }}</span>
+										<BaseIconButton
+											variant="ghost-in-table"
+											:ariaLabel="'Mark as price checked today'"
+											title="Mark as price checked today"
+											:loading="markingItemId === row._originalItem?.id"
+											@click="handleMarkItemAsChecked(row._originalItem?.id)"
+											:disabled="markingItemId === row._originalItem?.id">
+											<ArrowPathIcon />
+										</BaseIconButton>
+									</div>
 								</template>
 								<template #cell-actions="{ row }">
 									<div class="flex items-center justify-end gap-2">

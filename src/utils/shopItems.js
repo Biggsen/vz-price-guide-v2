@@ -748,3 +748,47 @@ export function findBestPrices(shopItems) {
 		shopsWithSellPrices: sellPrices.length
 	}
 }
+
+// Mark shop items as checked (updates last_updated without changing prices)
+export async function markShopItemsAsChecked(shopId, itemIds = null) {
+	if (!shopId) throw new Error('Shop ID is required')
+
+	try {
+		const db = getFirestore()
+		const batch = writeBatch(db)
+		const now = new Date().toISOString()
+
+		if (itemIds && Array.isArray(itemIds) && itemIds.length > 0) {
+			// Mark specific items as checked
+			for (const itemId of itemIds) {
+				const docRef = doc(db, 'shop_items', itemId)
+				const docSnap = await getDoc(docRef)
+
+				if (docSnap.exists()) {
+					const data = docSnap.data()
+					// Only update if this item belongs to the shop
+					if (data.shop_id === shopId) {
+						batch.update(docRef, { last_updated: now })
+					}
+				}
+			}
+		} else {
+			// Mark all items in the shop as checked
+			const q = query(
+				collection(db, 'shop_items'),
+				where('shop_id', '==', shopId)
+			)
+			const snapshot = await getDocs(q)
+
+			snapshot.docs.forEach((docSnap) => {
+				batch.update(docSnap.ref, { last_updated: now })
+			})
+		}
+
+		await batch.commit()
+		return true
+	} catch (error) {
+		console.error('Error marking shop items as checked:', error)
+		throw error
+	}
+}
