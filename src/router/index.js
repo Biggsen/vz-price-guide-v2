@@ -309,7 +309,7 @@ const router = createRouter({
 			meta: {
 				title: "Tools - verzion's economy price guide for Minecraft",
 				description:
-					'A growing list of tools verzion has built to set up and run his own Minecraft servers.'
+					'A growing list of tools and utilities verzion has built to set up and run his own Minecraft servers.'
 			}
 		},
 		{
