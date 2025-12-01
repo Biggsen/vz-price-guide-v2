@@ -5,19 +5,17 @@ import { useRouter, useRoute } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
 import { useShops, useServerShops } from '../utils/shopProfile.js'
 import { useServers } from '../utils/serverProfile.js'
-import { useServerShopItems, markShopItemsAsChecked } from '../utils/shopItems.js'
+import { useServerShopItems } from '../utils/shopItems.js'
 import { isAdmin, enabledCategories } from '../constants'
 import BaseStatCard from '../components/BaseStatCard.vue'
 import BaseTable from '../components/BaseTable.vue'
 import BaseCard from '../components/BaseCard.vue'
-import BaseIconButton from '../components/BaseIconButton.vue'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
 import {
 	ArchiveBoxIcon,
 	ArchiveBoxXMarkIcon,
-	ArrowPathIcon,
 	BuildingStorefrontIcon,
 	CheckCircleIcon,
 	ChevronRightIcon,
@@ -39,7 +37,6 @@ const selectedServerId = ref(route.query.serverId || '')
 const loading = ref(false)
 const error = ref(null)
 const searchQuery = ref('')
-const markingItemId = ref(null) // Track which item is being marked as checked
 
 // View mode state
 const viewMode = ref('categories') // 'categories' or 'list'
@@ -323,22 +320,6 @@ function navigateToShopItems(shopId) {
 	}
 }
 
-// Mark a single item as checked (updates last_updated)
-async function handleMarkItemAsChecked(itemId, shopId) {
-	if (!shopId || !itemId) return
-
-	markingItemId.value = itemId
-	error.value = null
-
-	try {
-		await markShopItemsAsChecked(shopId, [itemId])
-	} catch (err) {
-		console.error('Error marking item as checked:', err)
-		error.value = err.message || 'Failed to mark item as checked. Please try again.'
-	} finally {
-		markingItemId.value = null
-	}
-}
 
 // Watch for user changes - redirect if not logged in
 watch(
@@ -889,17 +870,8 @@ const priceAnalysis = computed(() => {
 									<div class="text-center">{{ row.profitMargin }}</div>
 								</template>
 								<template #cell-lastUpdated="{ row }">
-									<div class="flex items-center justify-end gap-2">
+									<div class="text-center">
 										<span>{{ row.lastUpdated }}</span>
-										<BaseIconButton
-											variant="ghost-in-table"
-											:ariaLabel="'Mark as price checked today'"
-											title="Mark as price checked today"
-											:loading="markingItemId === row._originalItem?.id"
-											@click="handleMarkItemAsChecked(row._originalItem?.id, row.shopId)"
-											:disabled="markingItemId === row._originalItem?.id">
-											<ArrowPathIcon />
-										</BaseIconButton>
 									</div>
 								</template>
 							</BaseTable>
@@ -1016,17 +988,8 @@ const priceAnalysis = computed(() => {
 								<div class="text-center">{{ row.profitMargin }}</div>
 							</template>
 							<template #cell-lastUpdated="{ row }">
-								<div class="flex items-center justify-end gap-2">
+								<div class="text-center">
 									<span>{{ row.lastUpdated }}</span>
-									<BaseIconButton
-										variant="ghost-in-table"
-										:ariaLabel="'Mark as price checked today'"
-										title="Mark as price checked today"
-										:loading="markingItemId === row._originalItem?.id"
-										@click="handleMarkItemAsChecked(row._originalItem?.id, row.shopId)"
-										:disabled="markingItemId === row._originalItem?.id">
-										<ArrowPathIcon />
-									</BaseIconButton>
 								</div>
 							</template>
 						</BaseTable>
