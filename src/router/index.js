@@ -73,7 +73,8 @@ const router = createRouter({
 			component: () => import('../views/SignInView.vue'),
 			meta: {
 				title: `Sign In - ${siteName}`,
-				description: `Access your ${siteName} account.`
+				description: `Access your ${siteName} account.`,
+				noindex: true
 			}
 		},
 		{
@@ -82,7 +83,8 @@ const router = createRouter({
 			component: () => import('../views/SignUpView.vue'),
 			meta: {
 				title: `Create Account - ${siteName}`,
-				description: `Create an account on ${siteName} to export the price guide or make suggestions.`
+				description: `Create an account on ${siteName} to export the price guide or make suggestions.`,
+				noindex: true
 			}
 		},
 		{
@@ -93,7 +95,8 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: false,
 				title: `Verify Email - ${siteName}`,
-				description: `Confirm your email so you can keep on using ${siteName}.`
+				description: `Confirm your email so you can keep on using ${siteName}.`,
+				noindex: true
 			}
 		},
 		{
@@ -110,7 +113,8 @@ const router = createRouter({
 				}
 			},
 			meta: {
-				title: `Account Action - ${siteName}`
+				title: `Account Action - ${siteName}`,
+				noindex: true
 			}
 		},
 		{
@@ -119,7 +123,8 @@ const router = createRouter({
 			component: () => import('../views/VerifyEmailSuccessView.vue'),
 			meta: {
 				title: `Email Verified - ${siteName}`,
-				description: `Your email is verified. You can now enjoy full access to ${siteName}.`
+				description: `Your email is verified. You can now enjoy full access to ${siteName}.`,
+				noindex: true
 			}
 		},
 		{
@@ -128,7 +133,8 @@ const router = createRouter({
 			component: () => import('../views/ResetPasswordView.vue'),
 			meta: {
 				title: `Reset Password - ${siteName}`,
-				description: `Start a secure password reset to regain access to your ${siteName} account.`
+				description: `Start a secure password reset to regain access to your ${siteName} account.`,
+				noindex: true
 			}
 		},
 		{
@@ -137,7 +143,8 @@ const router = createRouter({
 			component: () => import('../views/ResetPasswordConfirmView.vue'),
 			meta: {
 				title: `Reset Password - ${siteName}`,
-				description: `Choose a new password and restore access to your ${siteName} account.`
+				description: `Choose a new password and restore access to your ${siteName} account.`,
+				noindex: true
 			}
 		},
 		{
@@ -147,7 +154,8 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				requiresVerification: false,
-				title: `Account - ${siteName}`
+				title: `Account - ${siteName}`,
+				noindex: true
 			}
 		},
 		{
@@ -157,7 +165,8 @@ const router = createRouter({
 			meta: {
 				requiresAuth: true,
 				requiresVerification: false,
-				title: `Change Password - ${siteName}`
+				title: `Change Password - ${siteName}`,
+				noindex: true
 			}
 		},
 		{
@@ -489,6 +498,16 @@ router.beforeEach(async (to, from, next) => {
 
 	setMetaTag('description', seo.description)
 	setMetaTag('keywords', seo.keywords)
+
+	if (seo.noindex) {
+		setMetaTag('robots', 'noindex')
+	} else {
+		// Remove noindex if it was previously set
+		const robotsTag = document.head.querySelector('meta[name="robots"]')
+		if (robotsTag && robotsTag.getAttribute('content') === 'noindex') {
+			robotsTag.remove()
+		}
+	}
 
 	setPropertyMeta('og:title', seo.ogTitle || seo.title)
 	setPropertyMeta('og:description', seo.ogDescription || seo.description)
