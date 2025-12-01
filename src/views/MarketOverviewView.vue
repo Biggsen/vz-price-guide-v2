@@ -10,12 +10,14 @@ import { isAdmin, enabledCategories } from '../constants'
 import BaseStatCard from '../components/BaseStatCard.vue'
 import BaseTable from '../components/BaseTable.vue'
 import BaseCard from '../components/BaseCard.vue'
+import BaseButton from '../components/BaseButton.vue'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
 import {
 	ArchiveBoxIcon,
 	ArchiveBoxXMarkIcon,
+	ArrowPathIcon,
 	BuildingStorefrontIcon,
 	CheckCircleIcon,
 	ChevronRightIcon,
@@ -42,11 +44,11 @@ const searchQuery = ref('')
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
 
-// Sorting state - initialize from localStorage if available
+// Sorting state - initialize from sessionStorage if available
 function loadSortSettings() {
 	try {
-		const savedSortField = localStorage.getItem('marketOverviewSortField')
-		const savedSortDirection = localStorage.getItem('marketOverviewSortDirection')
+		const savedSortField = sessionStorage.getItem('marketOverviewSortField')
+		const savedSortDirection = sessionStorage.getItem('marketOverviewSortDirection')
 		return {
 			field: savedSortField || '',
 			direction: (savedSortDirection && ['asc', 'desc'].includes(savedSortDirection)) ? savedSortDirection : 'asc'
@@ -320,6 +322,11 @@ function navigateToShopItems(shopId) {
 	}
 }
 
+// Reset search
+function resetSearch() {
+	searchQuery.value = ''
+}
+
 
 // Watch for user changes - redirect if not logged in
 watch(
@@ -403,11 +410,11 @@ function saveViewSettings() {
 function saveSortSettings() {
 	try {
 		if (sortField.value) {
-			localStorage.setItem('marketOverviewSortField', sortField.value)
-			localStorage.setItem('marketOverviewSortDirection', sortDirection.value)
+			sessionStorage.setItem('marketOverviewSortField', sortField.value)
+			sessionStorage.setItem('marketOverviewSortDirection', sortDirection.value)
 		} else {
-			localStorage.removeItem('marketOverviewSortField')
-			localStorage.removeItem('marketOverviewSortDirection')
+			sessionStorage.removeItem('marketOverviewSortField')
+			sessionStorage.removeItem('marketOverviewSortDirection')
 		}
 	} catch (error) {
 		console.warn('Error saving sort settings:', error)
@@ -687,13 +694,29 @@ const priceAnalysis = computed(() => {
 				<label for="item-search" class="block text-sm font-medium text-gray-700 mb-2">
 					Search Items
 				</label>
-				<input
-					id="item-search"
-					type="text"
-					v-model="searchQuery"
-					placeholder="Search for items..."
-					class="w-full md:w-1/2 border-2 border-gray-asparagus rounded px-3 py-2 mb-1 h-10" />
-				<p class="text-xs text-gray-500 mt-1">Tip: Use commas to search multiple terms</p>
+				<div class="flex flex-row gap-2">
+					<div class="flex-1 sm:max-w-md">
+						<input
+							id="item-search"
+							type="text"
+							v-model="searchQuery"
+							placeholder="Search for items..."
+							class="border-2 border-gray-asparagus rounded px-3 py-2 w-full mb-1 h-10" />
+						<p class="text-xs text-gray-500 mb-2 sm:mb-0 hidden sm:block">
+							Tip: Use commas to search multiple terms
+						</p>
+					</div>
+					<div class="flex gap-2 sm:gap-0 sm:ml-2">
+						<BaseButton
+							@click="resetSearch"
+							variant="tertiary"
+							class="flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2 h-10">
+							<ArrowPathIcon class="w-4 h-4 sm:mr-1.5" />
+							<span class="hidden sm:inline">Reset</span>
+						</BaseButton>
+					</div>
+				</div>
+				<p class="text-xs text-gray-500 mt-1 sm:hidden">Tip: Use commas to search multiple terms</p>
 				<div v-if="searchQuery" class="mt-2 text-sm text-gray-600">
 					Showing {{ marketStats?.totalItems || 0 }} item{{
 						marketStats?.totalItems === 1 ? '' : 's'
