@@ -6,78 +6,6 @@ This document tracks bugs, regressions, and issues discovered during development
 
 ## Active Issues
 
-### Crate Rewards Mobile Display Issues
-
-**Status**: 🔴 Active  
-**Priority**: High  
-**Type**: UX Issue  
-**Discovered**: 2025-01-27
-
-**Description**:
-Crate rewards display is broken or poorly formatted on mobile devices, creating a poor user experience when viewing crate information on smaller screens.
-
-**Expected Behavior**:
-Crate rewards should display properly on mobile devices with appropriate layout, spacing, and readability.
-
-**Current Behavior**:
-Crate rewards interface is a mess on mobile devices with layout, formatting, or usability issues.
-
-**Impact**:
-
--   Poor mobile user experience when viewing crate rewards
--   Potential usability issues on mobile devices
--   Inconsistent experience across device types
-
-**Notes**:
-
--   Needs investigation to identify specific mobile display issues
--   Should be tested across different mobile screen sizes
-
-### Admin Subnav Inconsistency Between Mobile and Desktop
-
-**Status**: 🔴 Active  
-**Priority**: Medium  
-**Type**: UX Issue  
-**Discovered**: 2025-01-27
-
-**Description**:
-The admin subnav for mobile and desktop displays different links and should be identical. Currently, the mobile and desktop admin navigation show different sets of links, creating an inconsistent user experience.
-
-**Expected Behavior**:
-Both mobile and desktop admin subnav should show the same navigation options:
-
--   Price Guide
--   Shop Manager
--   Design
--   Community
-
-**Current Behavior**:
-
--   Mobile subnav: Shows collapsible sections with different link structures
--   Desktop subnav: Shows horizontal navigation with different link sets
-
-**Impact**:
-
--   Inconsistent navigation experience across devices
--   Users may not find expected admin features on different screen sizes
--   Confusing UX for admins switching between mobile and desktop
-
-**Files Involved**:
-
--   `src/components/SubNav.vue` - Contains both mobile and desktop admin navigation logic
-
-**Reproduction Steps**:
-
-1. Log in as an admin user
-2. Navigate to any admin page to trigger the admin subnav
-3. Compare the mobile view (narrow screen) with desktop view (wide screen)
-4. Observe the different navigation options available
-
-**Notes**:
-
--   This affects the admin navigation consistency
--   Should be fixed to ensure uniform admin experience across all devices
-
 ### Settings Price Modifiers Not Persisting in UI
 
 **Status**: ✅ Resolved  
@@ -114,6 +42,110 @@ Added a watcher in `SettingsModal.vue` that monitors the `isOpen` prop and calls
 
 
 ## Resolved Issues
+
+### Admin Subnav Inconsistency Between Mobile and Desktop
+
+**Status**: ✅ Resolved  
+**Priority**: Medium  
+**Type**: UX Issue  
+**Discovered**: 2025-01-27  
+**Resolved**: 2025-01-27
+
+**Description**:
+The admin subnav for mobile and desktop displayed different links and should be identical. The mobile and desktop admin navigation showed different sets of links, creating an inconsistent user experience.
+
+**Root Cause**:
+The `SubNav.vue` component contained dead code - a mobile collapsible layout section that was never rendered because the parent nav element had `hidden sm:block` classes, making it desktop-only. The actual mobile admin navigation is handled in `Nav.vue` (hamburger menu), which already had the correct order matching desktop.
+
+**Solution Implemented**:
+Removed all dead code from `SubNav.vue`:
+- Removed unused mobile collapsible layout sections (admin and tools)
+- Removed unused expansion state refs and computed properties
+- Removed unused `toggleSection` function and watch handlers
+- Cleaned up unused imports (`ref`, `watch`)
+
+**Files Modified**:
+
+-   `src/components/SubNav.vue` - Removed 256 lines of dead code, now contains only desktop navigation
+
+**User Experience**:
+
+-   Mobile and desktop admin navigation now consistent
+-   Both show: Price Guide, Community, Design, Access (in that order)
+-   Cleaner codebase with no unused mobile navigation code
+-   File reduced from 364 lines to 108 lines
+
+**Notes**:
+
+-   The mobile admin navigation in `Nav.vue` was already correct
+-   The issue was caused by dead code in `SubNav.vue` that appeared to be a mobile implementation but was never rendered
+-   Navigation consistency verified across all devices
+
+### Crate Rewards Mobile Display Issues
+
+**Status**: ✅ Resolved  
+**Priority**: High  
+**Type**: UX Issue  
+**Discovered**: 2025-01-27  
+**Resolved**: 2025-01-27
+
+**Description**:
+Crate rewards display was broken or poorly formatted on mobile devices, creating a poor user experience when viewing crate information on smaller screens.
+
+**Root Cause**:
+The crate rewards interface lacked proper responsive design considerations for mobile devices, including:
+- Icons and buttons not adapting to smaller screens
+- Layout elements not stacking properly on mobile
+- Text sizes too large for mobile viewports
+- Padding and spacing issues causing cramped layouts
+- Navigation elements not optimized for mobile interaction
+
+**Solution Implemented**:
+Comprehensive mobile responsive improvements to the crate rewards interface:
+
+1. **Navigation Icons**: Removed icons from nav items below 900px, made admin nav icon-only
+2. **Header Layout**: Removed bottom padding, moved YAML debug button to top row
+3. **Reward Items List**: 
+   - Moved list outside padding container for full-width on mobile
+   - Added 2px white borders on mobile
+   - Reduced font sizes (header and items) to match price guide homepage
+   - Reduced padding and spacing on mobile
+   - Reduced image sizes on mobile
+4. **Sort Controls**: 
+   - Reduced font sizes on mobile
+   - Made buttons wrap and stack label above buttons below 450px
+   - Added icon space reservation to prevent button resizing
+5. **Item Rows**: 
+   - Reduced padding on mobile
+   - Moved weight/percentage controls below item content below 450px
+   - Adjusted spacing between elements
+   - Top-aligned action buttons on mobile
+6. **Information Display**: 
+   - Made "Rewards" and "Created" wrap to new line on mobile
+   - Reduced spacing between information rows
+7. **CTA Buttons**: 
+   - Allowed buttons to wrap on mobile
+   - Hidden "Copy List" button on mobile
+   - Hidden "Show YAML Debug" button on mobile
+
+**Files Modified**:
+
+-   `src/components/Nav.vue` - Mobile navigation improvements
+-   `src/views/CrateSingleView.vue` - Comprehensive mobile layout fixes
+
+**User Experience**:
+
+-   Crate rewards now display properly on mobile devices
+-   Improved readability with appropriate font sizes and spacing
+-   Better use of screen space on small devices
+-   Consistent mobile experience matching price guide homepage patterns
+-   All interactive elements accessible and properly sized for mobile
+
+**Notes**:
+
+-   All mobile improvements tested and verified across different screen sizes
+-   Layout now responsive from 450px and below
+-   Maintains full functionality while improving mobile UX
 
 ### Crate Total Value Incorrect - Not Considering Enchantments
 

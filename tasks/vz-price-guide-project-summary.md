@@ -48,26 +48,9 @@
 
 ## Outstanding Issues
 
-### Active Bugs (3)
+### Active Bugs (0)
 
-#### 1. Crate Rewards Mobile Display Issues
-- **Status**: 🔴 Active
-- **Priority**: High
-- **Description**: Crate rewards display is broken or poorly formatted on mobile devices
-- **Impact**: Poor mobile user experience when viewing crate information
-
-#### 2. Admin Subnav Inconsistency Between Mobile and Desktop
-- **Status**: 🔴 Active
-- **Priority**: Medium
-- **Description**: Mobile and desktop admin navigation show different sets of links
-- **Expected**: Both should show: Price Guide, Shop Manager, Design, Community
-- **Files**: `src/components/SubNav.vue`
-
-#### 3. Price Guide vs Export Item Count Discrepancy
-- **Status**: 🔴 Active
-- **Priority**: High
-- **Description**: Price guide reports 1,473 items, but export only includes 1,471 items
-- **Impact**: Incomplete export files, possible loss of pricing data
+_No active bugs at this time._
 
 ### Shop Manager Bugs (from shop-manager-notes.md)
 
@@ -189,7 +172,7 @@ Testing infrastructure:
 - Cypress Testing - Comprehensive auth testing with Firebase emulators
 
 ### Root Level
-- **Buglist** - 3 active issues, 3 resolved bugs documented
+- **Buglist** - 0 active issues, 5 resolved bugs documented
 - **Shop Manager Notes** - Scratchpad for observations and bugs
 
 ---
@@ -238,9 +221,7 @@ Testing infrastructure:
    - Add unit tests
 
 3. **Fix Active Bugs**
-   - Resolve crate rewards mobile display issues
-   - Fix admin subnav consistency between mobile/desktop
-   - Investigate and fix export item count discrepancy
+   - No active bugs at this time
 
 ### Short-term (Next 1-3 months)
 
