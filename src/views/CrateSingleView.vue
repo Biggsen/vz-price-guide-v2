@@ -1589,27 +1589,33 @@ watch(selectedCrate, (crate) => {
 </script>
 
 <template>
-	<div class="p-4 pt-8">
+	<div class="px-4 pt-8">
 		<!-- Header -->
 		<div class="mb-8">
+			<!-- Back Button -->
+			<div v-if="selectedCrate" class="mb-4 flex items-center justify-between w-full">
+				<BaseButton
+					variant="tertiary"
+					@click="router.push('/crate-rewards')"
+					class="text-sm"
+					data-cy="back-button">
+					<template #left-icon>
+						<ArrowLeftIcon class="w-4 h-4" />
+					</template>
+					Back to Crates
+				</BaseButton>
+				<BaseButton
+					v-if="canEditItems"
+					@click="showYamlPreview = !showYamlPreview"
+					:variant="showYamlPreview ? 'primary' : 'secondary'"
+					class="hidden sm:inline-flex">
+					{{ showYamlPreview ? 'Hide' : 'Show' }} YAML Debug
+				</BaseButton>
+			</div>
 			<div class="flex items-center justify-between mb-4">
 				<div>
 					<!-- Crate Header -->
 					<div v-if="selectedCrate">
-						<!-- Back Button -->
-						<div class="mb-4">
-							<BaseButton
-								variant="tertiary"
-								@click="router.push('/crate-rewards')"
-								class="text-sm"
-								data-cy="back-button">
-								<template #left-icon>
-									<ArrowLeftIcon class="w-4 h-4" />
-								</template>
-								Back to Crates
-							</BaseButton>
-						</div>
-
 						<div class="flex items-center gap-3">
 							<h1 class="text-3xl font-bold text-gray-900">
 								{{ selectedCrate.name }}
@@ -1625,7 +1631,8 @@ watch(selectedCrate, (crate) => {
 						<p v-if="selectedCrate.description" class="text-gray-600 mt-1 max-w-2xl">
 							{{ selectedCrate.description }}
 						</p>
-						<div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
+						<div
+							class="flex items-center gap-4 max-[640px]:gap-2 max-[640px]:gap-y-1 mt-2 text-sm text-gray-500 flex-wrap">
 							<span>
 								<span class="font-medium">Version:</span>
 								{{ selectedCrate.minecraft_version }}
@@ -1634,14 +1641,17 @@ watch(selectedCrate, (crate) => {
 								<span class="font-medium">Total Value:</span>
 								{{ Math.ceil(totalValue) }}
 							</span>
-							<span>
-								<span class="font-medium">Rewards:</span>
-								{{ rewardDocuments?.length || 0 }}
-							</span>
-							<span>
-								<span class="font-medium">Created:</span>
-								{{ formatDate(selectedCrate.created_at) }}
-							</span>
+							<div
+								class="max-[640px]:basis-full max-[640px]:flex max-[640px]:items-center max-[640px]:gap-4">
+								<span>
+									<span class="font-medium">Rewards:</span>
+									{{ rewardDocuments?.length || 0 }}
+								</span>
+								<span>
+									<span class="font-medium">Created:</span>
+									{{ formatDate(selectedCrate.created_at) }}
+								</span>
+							</div>
 						</div>
 						<div class="mt-2 text-sm text-gray-900">
 							<span class="font-medium">Total Weight:</span>
@@ -1653,7 +1663,7 @@ watch(selectedCrate, (crate) => {
 		</div>
 
 		<!-- CTA Buttons for Single Crate View -->
-		<div v-if="selectedCrate" class="mb-8 flex gap-2">
+		<div v-if="selectedCrate" class="mb-8 flex gap-2 flex-wrap">
 			<BaseButton @click="showImportModal = true" variant="secondary">
 				<template #left-icon>
 					<ArrowUpTrayIcon class="w-4 h-4" />
@@ -1672,7 +1682,8 @@ watch(selectedCrate, (crate) => {
 			<BaseButton
 				@click="copyRewardList"
 				variant="secondary"
-				:disabled="!rewardDocuments?.length">
+				:disabled="!rewardDocuments?.length"
+				class="hidden sm:inline-flex">
 				<template #left-icon>
 					<ClipboardIcon class="w-4 h-4" />
 				</template>
@@ -1687,13 +1698,6 @@ watch(selectedCrate, (crate) => {
 				</template>
 				Test Rewards
 			</BaseButton>
-			<BaseButton
-				v-if="canEditItems"
-				@click="showYamlPreview = !showYamlPreview"
-				:variant="showYamlPreview ? 'primary' : 'secondary'"
-				class="ml-auto">
-				{{ showYamlPreview ? 'Hide' : 'Show' }} YAML Debug
-			</BaseButton>
 		</div>
 
 		<!-- Error Display -->
@@ -1707,14 +1711,15 @@ watch(selectedCrate, (crate) => {
 		<!-- Sorting Controls -->
 		<div
 			v-if="selectedCrate && rewardDocuments && rewardDocuments.length > 0"
-			class="flex items-center justify-between gap-4 mb-4">
+			class="flex items-center justify-between gap-4 mb-4 flex-wrap max-[450px]:flex-col max-[450px]:items-start">
 			<BaseButton @click="startAddItem" variant="primary" data-cy="add-item-button">
 				<template #left-icon>
 					<PlusIcon class="w-4 h-4" />
 				</template>
 				Add Item
 			</BaseButton>
-			<div class="flex items-center gap-4">
+			<div
+				class="flex items-center gap-4 max-[450px]:w-full max-[450px]:flex-col max-[450px]:items-start max-[450px]:gap-2">
 				<span class="text-sm font-medium text-heavy-metal">Sort by:</span>
 				<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
 					<button
@@ -1722,50 +1727,59 @@ watch(selectedCrate, (crate) => {
 						data-cy="sort-by-value"
 						:class="[
 							sortBy === 'value'
-								? 'bg-gray-asparagus text-white pl-3 pr-2 hover:bg-highland'
-								: 'bg-norway text-heavy-metal hover:bg-gray-100 px-4',
-							'py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
+								? 'bg-gray-asparagus text-white pl-2 pr-2 sm:pl-3 hover:bg-highland'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100 px-2 sm:px-4',
+							'py-1 text-xs sm:text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0 whitespace-nowrap flex-shrink-0'
 						]">
 						Value
 						<ArrowUpIcon
 							v-if="sortBy === 'value' && sortDirection === 'asc'"
-							class="w-3 h-3 inline align-middle -mt-0.5" />
+							class="w-3 h-3 inline align-middle -mt-0.5 max-[640px]:inline-block max-[640px]:w-3 max-[640px]:h-3" />
 						<ArrowDownIcon
-							v-if="sortBy === 'value' && sortDirection === 'desc'"
-							class="w-3 h-3 inline align-middle -mt-0.5" />
+							v-else-if="sortBy === 'value' && sortDirection === 'desc'"
+							class="w-3 h-3 inline align-middle -mt-0.5 max-[640px]:inline-block max-[640px]:w-3 max-[640px]:h-3" />
+						<span
+							v-else
+							class="hidden max-[640px]:inline-block max-[640px]:w-3 max-[640px]:h-3"></span>
 					</button>
 					<button
 						@click="setSortBy('weight')"
 						data-cy="sort-by-weight"
 						:class="[
 							sortBy === 'weight'
-								? 'bg-gray-asparagus text-white pl-3 pr-2 hover:bg-highland'
-								: 'bg-norway text-heavy-metal hover:bg-gray-100 px-4',
-							'py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
+								? 'bg-gray-asparagus text-white pl-2 pr-2 sm:pl-3 hover:bg-highland'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100 px-2 sm:px-4',
+							'py-1 text-xs sm:text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0 whitespace-nowrap flex-shrink-0'
 						]">
 						Weight
 						<ArrowUpIcon
 							v-if="sortBy === 'weight' && sortDirection === 'asc'"
-							class="w-3 h-3 inline align-middle -mt-0.5" />
+							class="w-3 h-3 inline align-middle -mt-0.5 max-[640px]:inline-block max-[640px]:w-3 max-[640px]:h-3" />
 						<ArrowDownIcon
-							v-if="sortBy === 'weight' && sortDirection === 'desc'"
-							class="w-3 h-3 inline align-middle -mt-0.5" />
+							v-else-if="sortBy === 'weight' && sortDirection === 'desc'"
+							class="w-3 h-3 inline align-middle -mt-0.5 max-[640px]:inline-block max-[640px]:w-3 max-[640px]:h-3" />
+						<span
+							v-else
+							class="hidden max-[640px]:inline-block max-[640px]:w-3 max-[640px]:h-3"></span>
 					</button>
 					<button
 						@click="setSortBy('chance')"
 						:class="[
 							sortBy === 'chance'
-								? 'bg-gray-asparagus text-white pl-3 pr-2 hover:bg-highland'
-								: 'bg-norway text-heavy-metal hover:bg-gray-100 px-4',
-							'py-1 text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0'
+								? 'bg-gray-asparagus text-white pl-2 pr-2 sm:pl-3 hover:bg-highland'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100 px-2 sm:px-4',
+							'py-1 text-xs sm:text-sm font-medium transition border-r-2 border-gray-asparagus last:border-r-0 whitespace-nowrap flex-shrink-0'
 						]">
 						Chance
 						<ArrowUpIcon
 							v-if="sortBy === 'chance' && sortDirection === 'asc'"
-							class="w-3 h-3 inline align-middle -mt-0.5" />
+							class="w-3 h-3 inline align-middle -mt-0.5 max-[640px]:inline-block max-[640px]:w-3 max-[640px]:h-3" />
 						<ArrowDownIcon
-							v-if="sortBy === 'chance' && sortDirection === 'desc'"
-							class="w-3 h-3 inline align-middle -mt-0.5" />
+							v-else-if="sortBy === 'chance' && sortDirection === 'desc'"
+							class="w-3 h-3 inline align-middle -mt-0.5 max-[640px]:inline-block max-[640px]:w-3 max-[640px]:h-3" />
+						<span
+							v-else
+							class="hidden max-[640px]:inline-block max-[640px]:w-3 max-[640px]:h-3"></span>
 					</button>
 					<button
 						@click="setSortBy('none')"
@@ -1773,304 +1787,299 @@ watch(selectedCrate, (crate) => {
 							sortBy === 'none'
 								? 'bg-gray-asparagus text-white'
 								: 'bg-norway text-heavy-metal hover:bg-gray-100',
-							'px-3 py-1 text-sm font-medium transition'
+							'px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium transition whitespace-nowrap flex-shrink-0'
 						]">
 						None
 					</button>
 				</div>
 			</div>
 		</div>
+	</div>
 
-		<!-- Selected Crate Reward -->
-		<div v-if="selectedCrate" class="space-y-6">
-			<!-- Reward Items -->
-			<div v-if="rewardDocuments?.length" class="bg-white rounded-lg" data-cy="item-list">
-				<div class="px-6 py-4 bg-gray-asparagus border-b-2 border-white">
-					<h3 class="text-xl font-semibold text-white">Reward Items</h3>
-				</div>
+	<!-- Selected Crate Reward -->
+	<div v-if="selectedCrate" class="space-y-6">
+		<!-- Reward Items -->
+		<div
+			v-if="rewardDocuments?.length"
+			class="bg-white rounded-lg max-[640px]:border-x-2 max-[640px]:border-white sm:px-4 sm:pb-4"
+			data-cy="item-list">
+			<div
+				class="px-6 max-[640px]:px-4 py-4 max-[640px]:py-2 bg-gray-asparagus border-b-2 border-white">
+				<h3 class="text-base sm:text-xl font-semibold text-white">Reward Items</h3>
+			</div>
 
-				<div v-if="rewardItemsPending" class="p-6 text-gray-600">
-					Loading reward items...
-				</div>
-				<div v-else>
-					<div class="divide-y-2 divide-white">
+			<div v-if="rewardItemsPending" class="p-6 text-gray-600">Loading reward items...</div>
+			<div v-else>
+				<div class="divide-y-2 divide-white">
+					<div
+						v-for="rewardDoc in sortedRewardDocuments"
+						:key="rewardDoc.id"
+						class="pr-6 max-[640px]:pr-3 bg-norway"
+						data-cy="item-row">
+						<!-- Multi-item indicator badge -->
 						<div
-							v-for="rewardDoc in sortedRewardDocuments"
-							:key="rewardDoc.id"
-							class="pr-6 bg-norway"
-							data-cy="item-row">
-							<!-- Multi-item indicator badge -->
-							<div
-								v-if="isMultiItemReward(rewardDoc)"
-								class="px-4 py-1 bg-blue-100 border-b border-white">
-								<span class="text-xs font-medium text-blue-800">
-									⚠️ Multi-item reward (imported from YAML, read-only)
-								</span>
-							</div>
-							<div class="flex items-stretch justify-between">
-								<div class="flex-1">
-									<div class="flex items-stretch gap-4">
+							v-if="isMultiItemReward(rewardDoc)"
+							class="px-4 py-1 bg-blue-100 border-b border-white">
+							<span class="text-xs font-medium text-blue-800">
+								⚠️ Multi-item reward (imported from YAML, read-only)
+							</span>
+						</div>
+						<div class="flex items-stretch justify-between">
+							<div class="flex-1">
+								<div class="flex items-stretch gap-4 max-[640px]:gap-2">
+									<div
+										class="w-16 max-[640px]:w-12 bg-highland border-r-2 border-white flex items-center justify-center">
+										<img
+											v-if="getDisplayItemImageFromDoc(rewardDoc)"
+											:src="
+												getImageUrl(getDisplayItemImageFromDoc(rewardDoc))
+											"
+											:alt="rewardDoc.display_name"
+											loading="lazy"
+											decoding="async"
+											fetchpriority="low"
+											class="max-w-10 max-h-10 max-[640px]:max-w-8 max-[640px]:max-h-8" />
+										<QuestionMarkCircleIcon
+											v-else
+											class="w-8 h-8 max-[640px]:w-6 max-[640px]:h-6 text-white" />
+									</div>
+									<div
+										class="flex-1 flex items-center justify-between max-[640px]:gap-4 max-[450px]:gap-0 max-[450px]:flex-col max-[450px]:items-start">
 										<div
-											class="w-16 bg-highland border-r-2 border-white flex items-center justify-center">
-											<img
-												v-if="getDisplayItemImageFromDoc(rewardDoc)"
-												:src="
-													getImageUrl(
-														getDisplayItemImageFromDoc(rewardDoc)
+											class="pt-2 pb-3 max-[640px]:pt-1 max-[640px]:pb-2 max-[450px]:pb-1 max-[450px]:w-full">
+											<h4
+												class="text-sm sm:text-base font-semibold text-gray-900">
+												{{
+													stripColorCodes(
+														rewardDoc.display_name || 'Unknown Reward'
 													)
+												}}
+											</h4>
+											<div class="text-sm text-heavy-metal">
+												<span class="font-medium">Value:</span>
+												{{ getValueDisplay(rewardDoc) }}
+											</div>
+											<!-- Items list (only for multi-item rewards) -->
+											<div
+												v-if="
+													isMultiItemReward(rewardDoc) &&
+													rewardDoc.items &&
+													rewardDoc.items.length > 0
 												"
-												:alt="rewardDoc.display_name"
-												loading="lazy"
-												decoding="async"
-												fetchpriority="low"
-												class="max-w-10 max-h-10" />
-											<QuestionMarkCircleIcon
-												v-else
-												class="w-8 h-8 text-white" />
-										</div>
-										<div class="flex-1 flex items-center justify-between">
-											<div class="pt-2 pb-3">
-												<h4 class="text-base font-semibold text-gray-900">
-													{{
-														stripColorCodes(
-															rewardDoc.display_name ||
-																'Unknown Reward'
-														)
-													}}
-												</h4>
-												<div class="text-sm text-heavy-metal">
-													<span class="font-medium">Value:</span>
-													{{ getValueDisplay(rewardDoc) }}
-												</div>
-												<!-- Items list (only for multi-item rewards) -->
+												class="mt-2">
 												<div
-													v-if="
-														isMultiItemReward(rewardDoc) &&
-														rewardDoc.items &&
-														rewardDoc.items.length > 0
-													"
-													class="mt-2">
+													class="text-sm text-heavy-metal font-medium mb-1">
+													Contains {{ rewardDoc.items.length }} items:
+												</div>
+												<div class="space-y-1">
 													<div
-														class="text-sm text-heavy-metal font-medium mb-1">
-														Contains {{ rewardDoc.items.length }} items:
-													</div>
-													<div class="space-y-1">
-														<div
-															v-for="(item, idx) in rewardDoc.items"
-															:key="idx"
-															class="text-sm text-heavy-metal flex items-center gap-2">
-															<span>
-																• {{ item.quantity }}x
-																{{
-																	getItemById(item.item_id)
-																		?.name || 'Unknown'
-																}}
-															</span>
-														</div>
-													</div>
-												</div>
-
-												<!-- Commands Display -->
-												<div
-													v-if="
-														rewardDoc.commands &&
-														rewardDoc.commands.length > 0
-													"
-													class="text-sm text-heavy-metal">
-													<span class="font-medium">Commands:</span>
-													<div class="mt-1 space-y-1">
-														<div
-															v-for="(
-																command, index
-															) in rewardDoc.commands"
-															:key="index"
-															class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-															{{ command }}
-														</div>
-													</div>
-												</div>
-												<!-- Enchantments Display -->
-												<div
-													v-if="
-														rewardDoc.display_enchantments &&
-														getEnchantmentIds(
-															rewardDoc.display_enchantments
-														).length > 0
-													"
-													class="mt-1">
-													<div class="flex flex-wrap gap-1">
-														<span
-															v-for="enchantmentId in getEnchantmentIds(
-																rewardDoc.display_enchantments
-															)"
-															:key="enchantmentId"
-															class="px-2 py-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase">
+														v-for="(item, idx) in rewardDoc.items"
+														:key="idx"
+														class="text-sm text-heavy-metal flex items-center gap-2">
+														<span>
+															• {{ item.quantity }}x
 															{{
-																formatEnchantmentName(enchantmentId)
+																getItemById(item.item_id)?.name ||
+																'Unknown'
 															}}
 														</span>
 													</div>
 												</div>
+											</div>
 
-												<!-- YAML Preview (Debug) -->
-												<div v-if="showYamlPreview" class="mt-2">
-													<button
-														@click="toggleReviewPanel(rewardDoc.id)"
-														class="flex items-center gap-2 text-sm text-heavy-metal hover:text-gray-800 transition-colors">
-														<svg
-															:class="[
-																'w-4 h-4 transition-transform',
-																isReviewPanelExpanded(rewardDoc.id)
-																	? 'rotate-90'
-																	: ''
-															]"
-															fill="none"
-															stroke="currentColor"
-															viewBox="0 0 24 24">
-															<path
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M9 5l7 7-7 7" />
-														</svg>
-														{{
-															isReviewPanelExpanded(rewardDoc.id)
-																? 'Hide'
-																: 'Show'
-														}}
-														YAML Preview
-													</button>
-
-													<pre
-														v-if="isReviewPanelExpanded(rewardDoc.id)"
-														class="mt-3 text-xs bg-white p-3 rounded border overflow-x-auto"><code>{{ getYamlPreview(rewardDoc) }}</code></pre>
+											<!-- Commands Display -->
+											<div
+												v-if="
+													rewardDoc.commands &&
+													rewardDoc.commands.length > 0
+												"
+												class="text-sm text-heavy-metal">
+												<span class="font-medium">Commands:</span>
+												<div class="mt-1 space-y-1">
+													<div
+														v-for="(
+															command, index
+														) in rewardDoc.commands"
+														:key="index"
+														class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+														{{ command }}
+													</div>
 												</div>
 											</div>
-											<!-- Weight and Chance Boxes -->
-											<div class="flex gap-2">
-												<div
-													class="bg-blue-50 border-2 border-gray-asparagus rounded flex items-stretch">
-													<button
-														@click="decreaseRewardWeight(rewardDoc)"
-														class="flex items-center justify-center px-1 py-1 bg-sea-mist hover:bg-saltpan transition-colors rounded-l border-r-2 border-gray-asparagus min-w-[2rem]"
-														title="Decrease weight by 10">
-														<MinusIcon
-															class="w-4 h-4 text-heavy-metal" />
-													</button>
-													<div
-														v-if="editingWeightId !== rewardDoc.id"
-														@click="startEditWeight(rewardDoc)"
-														class="flex items-center justify-center px-1 py-1 text-center cursor-pointer bg-norway hover:bg-saltpan transition-colors min-w-[2.5rem] border-r-2 border-gray-asparagus">
-														<span
-															class="text-base font-bold text-heavy-metal"
-															data-cy="item-weight-display">
-															{{ rewardDoc.weight }}
-														</span>
-													</div>
-													<input
-														v-else
-														:ref="
-															(el) =>
-																(weightInputRefs[rewardDoc.id] = el)
-														"
-														v-model="editingWeightValue"
-														type="number"
-														min="1"
-														@blur="saveWeight(rewardDoc)"
-														@keyup.enter="saveWeight(rewardDoc)"
-														@keydown.escape="cancelEditWeight"
-														class="px-1 py-1 text-center text-base font-semibold text-heavy-metal focus:outline-none focus:ring-2 focus:ring-blue-500 w-10 border-r-2 border-gray-asparagus bg-norway [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-														autofocus />
-													<button
-														@click="increaseRewardWeight(rewardDoc)"
-														class="flex items-center justify-center px-1 py-1 bg-sea-mist hover:bg-saltpan transition-colors rounded-r min-w-[2rem]"
-														title="Increase weight by 10">
-														<PlusIcon
-															class="w-4 h-4 text-heavy-metal" />
-													</button>
-												</div>
-												<div
-													class="bg-transparent px-2 py-1 inline-block min-w-[60px] text-center">
+											<!-- Enchantments Display -->
+											<div
+												v-if="
+													rewardDoc.display_enchantments &&
+													getEnchantmentIds(
+														rewardDoc.display_enchantments
+													).length > 0
+												"
+												class="mt-1">
+												<div class="flex flex-wrap gap-1">
 													<span
-														class="text-base font-semibold text-heavy-metal">
-														{{
-															getRewardDocChance(rewardDoc).toFixed(
-																1
-															)
-														}}%
+														v-for="enchantmentId in getEnchantmentIds(
+															rewardDoc.display_enchantments
+														)"
+														:key="enchantmentId"
+														class="px-2 py-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase">
+														{{ formatEnchantmentName(enchantmentId) }}
 													</span>
 												</div>
+											</div>
+
+											<!-- YAML Preview (Debug) -->
+											<div v-if="showYamlPreview" class="mt-2">
+												<button
+													@click="toggleReviewPanel(rewardDoc.id)"
+													class="flex items-center gap-2 text-sm text-heavy-metal hover:text-gray-800 transition-colors">
+													<svg
+														:class="[
+															'w-4 h-4 transition-transform',
+															isReviewPanelExpanded(rewardDoc.id)
+																? 'rotate-90'
+																: ''
+														]"
+														fill="none"
+														stroke="currentColor"
+														viewBox="0 0 24 24">
+														<path
+															stroke-linecap="round"
+															stroke-linejoin="round"
+															stroke-width="2"
+															d="M9 5l7 7-7 7" />
+													</svg>
+													{{
+														isReviewPanelExpanded(rewardDoc.id)
+															? 'Hide'
+															: 'Show'
+													}}
+													YAML Preview
+												</button>
+
+												<pre
+													v-if="isReviewPanelExpanded(rewardDoc.id)"
+													class="mt-3 text-xs bg-white p-3 rounded border overflow-x-auto"><code>{{ getYamlPreview(rewardDoc) }}</code></pre>
+											</div>
+										</div>
+										<!-- Weight and Chance Boxes -->
+										<div class="flex gap-2 max-[450px]:mt-2 max-[450px]:mb-2">
+											<div
+												class="bg-blue-50 border-2 border-gray-asparagus rounded flex items-stretch">
+												<button
+													@click="decreaseRewardWeight(rewardDoc)"
+													class="flex items-center justify-center px-1 py-1 bg-sea-mist hover:bg-saltpan transition-colors rounded-l border-r-2 border-gray-asparagus min-w-[2rem]"
+													title="Decrease weight by 10">
+													<MinusIcon class="w-4 h-4 text-heavy-metal" />
+												</button>
+												<div
+													v-if="editingWeightId !== rewardDoc.id"
+													@click="startEditWeight(rewardDoc)"
+													class="flex items-center justify-center px-1 py-1 text-center cursor-pointer bg-norway hover:bg-saltpan transition-colors min-w-[2.5rem] border-r-2 border-gray-asparagus">
+													<span
+														class="text-sm sm:text-base font-bold text-heavy-metal"
+														data-cy="item-weight-display">
+														{{ rewardDoc.weight }}
+													</span>
+												</div>
+												<input
+													v-else
+													:ref="
+														(el) => (weightInputRefs[rewardDoc.id] = el)
+													"
+													v-model="editingWeightValue"
+													type="number"
+													min="1"
+													@blur="saveWeight(rewardDoc)"
+													@keyup.enter="saveWeight(rewardDoc)"
+													@keydown.escape="cancelEditWeight"
+													class="px-1 py-1 text-center text-sm sm:text-base font-semibold text-heavy-metal focus:outline-none focus:ring-2 focus:ring-blue-500 w-10 border-r-2 border-gray-asparagus bg-norway [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+													autofocus />
+												<button
+													@click="increaseRewardWeight(rewardDoc)"
+													class="flex items-center justify-center px-1 py-1 bg-sea-mist hover:bg-saltpan transition-colors rounded-r min-w-[2rem]"
+													title="Increase weight by 10">
+													<PlusIcon class="w-4 h-4 text-heavy-metal" />
+												</button>
+											</div>
+											<div
+												class="bg-transparent px-2 py-1 inline-block min-w-[60px] text-center">
+												<span
+													class="text-sm sm:text-base font-semibold text-heavy-metal">
+													{{ getRewardDocChance(rewardDoc).toFixed(1) }}%
+												</span>
 											</div>
 										</div>
 									</div>
 								</div>
-								<div class="flex items-center gap-2 ml-8">
-									<button
-										v-if="canEditReward(rewardDoc)"
-										@click="startEditReward(rewardDoc)"
-										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-										title="Edit reward"
-										data-cy="edit-item-button">
-										<PencilIcon class="w-4 h-4" />
-									</button>
-									<button
-										v-else
-										disabled
-										class="p-1 bg-gray-300 text-gray-500 cursor-not-allowed rounded"
-										title="Cannot edit multi-item rewards (imported from YAML)">
-										<PencilIcon class="w-4 h-4" />
-									</button>
-									<button
-										@click="confirmRemoveReward(rewardDoc)"
-										class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-										title="Delete reward"
-										data-cy="delete-item-button">
-										<TrashIcon class="w-4 h-4" />
-									</button>
-								</div>
+							</div>
+							<div
+								class="flex items-center max-[450px]:items-start max-[450px]:pt-2 gap-2 ml-8 max-[640px]:ml-2">
+								<button
+									v-if="canEditReward(rewardDoc)"
+									@click="startEditReward(rewardDoc)"
+									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
+									title="Edit reward"
+									data-cy="edit-item-button">
+									<PencilIcon class="w-4 h-4" />
+								</button>
+								<button
+									v-else
+									disabled
+									class="p-1 bg-gray-300 text-gray-500 cursor-not-allowed rounded"
+									title="Cannot edit multi-item rewards (imported from YAML)">
+									<PencilIcon class="w-4 h-4" />
+								</button>
+								<button
+									@click="confirmRemoveReward(rewardDoc)"
+									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
+									title="Delete reward"
+									data-cy="delete-item-button">
+									<TrashIcon class="w-4 h-4" />
+								</button>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 		</div>
+	</div>
 
-		<!-- Empty State Message -->
-		<div
-			v-if="selectedCrate && !rewardItemsPending && !rewardDocuments?.length"
-			class="bg-white rounded-lg pt-6 pr-6 pb-6"
-			data-cy="empty-items-message">
-			<div class="text-gray-600">
-				<p class="text-lg font-medium mb-2">No items added yet</p>
-				<p class="text-sm">Click "Add Item" to get started with your crate rewards.</p>
-			</div>
+	<!-- Empty State Message -->
+	<div
+		v-if="selectedCrate && !rewardItemsPending && !rewardDocuments?.length"
+		class="bg-white rounded-lg pt-6 pb-6 px-4"
+		data-cy="empty-items-message">
+		<div class="text-gray-600">
+			<p class="text-lg font-medium mb-2">No items added yet</p>
+			<p class="text-sm">Click "Add Item" to get started with your crate rewards.</p>
 		</div>
+	</div>
 
-		<!-- Add Item Button -->
-		<div v-if="selectedCrate" class="mt-4 flex justify-start">
-			<BaseButton @click="startAddItem" variant="primary" data-cy="add-item-button">
-				<template #left-icon>
-					<PlusIcon class="w-5 h-5" />
-				</template>
-				Add Item
-			</BaseButton>
-		</div>
+	<!-- Add Item Button -->
+	<div v-if="selectedCrate" class="mt-4 flex justify-start px-4">
+		<BaseButton @click="startAddItem" variant="primary" data-cy="add-item-button">
+			<template #left-icon>
+				<PlusIcon class="w-5 h-5" />
+			</template>
+			Add Item
+		</BaseButton>
+	</div>
 
-		<!-- Clear All Rewards Link -->
-		<div v-if="selectedCrate && rewardDocuments?.length" class="mt-4 flex justify-start">
-			<button
-				@click="showClearAllConfirmation"
-				:disabled="loading"
-				class="inline-flex items-center text-sm text-gray-600 hover:text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-				data-cy="clear-all-items-button">
-				<TrashIcon class="w-4 h-4 mr-1" />
-				Clear all items
-			</button>
-		</div>
+	<!-- Clear All Rewards Link -->
+	<div v-if="selectedCrate && rewardDocuments?.length" class="mt-4 flex justify-start px-4">
+		<button
+			@click="showClearAllConfirmation"
+			:disabled="loading"
+			class="inline-flex items-center text-sm text-gray-600 hover:text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+			data-cy="clear-all-items-button">
+			<TrashIcon class="w-4 h-4 mr-1" />
+			Clear all items
+		</button>
+	</div>
 
-		<!-- Edit Crate Reward Modal -->
-		<!-- prettier-ignore -->
-		<BaseModal
+	<!-- Edit Crate Reward Modal -->
+	<!-- prettier-ignore -->
+	<BaseModal
 			:isOpen="showEditForm"
 			title="Edit Crate"
 			maxWidth="max-w-md"
@@ -2166,9 +2175,9 @@ watch(selectedCrate, (crate) => {
 			</template>
 		</BaseModal>
 
-		<!-- Add/Edit Item Modal -->
-		<!-- prettier-ignore -->
-		<BaseModal
+	<!-- Add/Edit Item Modal -->
+	<!-- prettier-ignore -->
+	<BaseModal
 			:isOpen="showAddItemForm"
 			:title="editingRewardDoc ? 'Edit Reward' : 'Add Item to Crate Reward'"
 			maxWidth="max-w-2xl"
@@ -2475,161 +2484,154 @@ watch(selectedCrate, (crate) => {
 			</template>
 		</BaseModal>
 
-		<!-- Enchantment Selection Modal -->
-		<BaseModal
-			:isOpen="showEnchantmentModal"
-			title="Add Enchantment"
-			maxWidth="max-w-md"
-			@close="cancelEnchantment">
-			<form @submit.prevent="saveEnchantment" class="space-y-4">
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">Enchantment</label>
-					<select
-						v-model="enchantmentForm.enchantment"
-						@change="onEnchantmentSelected"
-						class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
-						<option value="">Select an enchantment...</option>
-						<option
-							v-for="enchantment in enchantmentItems"
-							:key="enchantment.id"
-							:value="enchantment.id">
-							{{ formatEnchantmentName(enchantment.id) }}
-						</option>
-					</select>
-				</div>
-			</form>
-		</BaseModal>
+	<!-- Enchantment Selection Modal -->
+	<BaseModal
+		:isOpen="showEnchantmentModal"
+		title="Add Enchantment"
+		maxWidth="max-w-md"
+		@close="cancelEnchantment">
+		<form @submit.prevent="saveEnchantment" class="space-y-4">
+			<div>
+				<label class="block text-sm font-medium text-gray-700 mb-1">Enchantment</label>
+				<select
+					v-model="enchantmentForm.enchantment"
+					@change="onEnchantmentSelected"
+					class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
+					<option value="">Select an enchantment...</option>
+					<option
+						v-for="enchantment in enchantmentItems"
+						:key="enchantment.id"
+						:value="enchantment.id">
+						{{ formatEnchantmentName(enchantment.id) }}
+					</option>
+				</select>
+			</div>
+		</form>
+	</BaseModal>
 
-		<!-- Import YAML Modal -->
-		<BaseModal
-			:isOpen="showImportModal"
-			title="Import Crate"
-			maxWidth="max-w-md"
-			@close="closeImportModal">
-			<div class="space-y-4">
-				<div>
-					<label
-						for="yaml-file-input"
-						class="block text-sm font-medium text-gray-700 mb-1">
-						Select YAML File
-					</label>
-					<input
-						id="yaml-file-input"
-						type="file"
-						accept=".yml,.yaml"
-						@change="handleFileSelect"
-						class="block w-full pr-3 py-1 mt-2 mb-2 text-gray-900 font-sans" />
-					<p class="text-xs text-gray-500 mt-1">
-						Upload a complete CrazyCrates YAML file with
-						<code>Crate: { Prizes: {} }</code>
-						format.
-					</p>
-				</div>
+	<!-- Import YAML Modal -->
+	<BaseModal
+		:isOpen="showImportModal"
+		title="Import Crate"
+		maxWidth="max-w-md"
+		@close="closeImportModal">
+		<div class="space-y-4">
+			<div>
+				<label for="yaml-file-input" class="block text-sm font-medium text-gray-700 mb-1">
+					Select YAML File
+				</label>
+				<input
+					id="yaml-file-input"
+					type="file"
+					accept=".yml,.yaml"
+					@change="handleFileSelect"
+					class="block w-full pr-3 py-1 mt-2 mb-2 text-gray-900 font-sans" />
+				<p class="text-xs text-gray-500 mt-1">
+					Upload a complete CrazyCrates YAML file with
+					<code>Crate: { Prizes: {} }</code>
+					format.
+				</p>
+			</div>
 
-				<!-- Error Display -->
-				<div v-if="importModalError" class="p-3 bg-red-50 border-l-4 border-l-red-500">
+			<!-- Error Display -->
+			<div v-if="importModalError" class="p-3 bg-red-50 border-l-4 border-l-red-500">
+				<div class="flex items-start">
+					<ExclamationTriangleIcon class="w-6 h-6 text-red-600 mr-2 flex-shrink-0" />
+					<div>
+						<div class="text-heavy-metal font-medium">Import failed</div>
+						<div class="text-heavy-metal text-sm mt-1">
+							{{ importModalError.replace('Import failed: ', '') }}
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Import Results -->
+			<div v-if="importResult" class="space-y-3">
+				<!-- Success Message -->
+				<div
+					v-if="importResult.success"
+					class="p-3 bg-semantic-success-light border-l-4 border-l-semantic-success">
 					<div class="flex items-start">
-						<ExclamationTriangleIcon class="w-6 h-6 text-red-600 mr-2 flex-shrink-0" />
+						<CheckCircleIcon class="w-6 h-6 text-heavy-metal mr-2 flex-shrink-0" />
 						<div>
-							<div class="text-heavy-metal font-medium">Import failed</div>
+							<div class="text-heavy-metal font-medium">
+								Import completed successfully!
+							</div>
 							<div class="text-heavy-metal text-sm mt-1">
-								{{ importModalError.replace('Import failed: ', '') }}
+								{{ importResult.importedCount }} of
+								{{ importResult.totalPrizes }} prizes imported
+								<span v-if="importResult.errorCount > 0">
+									({{ importResult.errorCount }} failed)
+								</span>
 							</div>
 						</div>
 					</div>
 				</div>
 
-				<!-- Import Results -->
-				<div v-if="importResult" class="space-y-3">
-					<!-- Success Message -->
-					<div
-						v-if="importResult.success"
-						class="p-3 bg-semantic-success-light border-l-4 border-l-semantic-success">
-						<div class="flex items-start">
-							<CheckCircleIcon class="w-6 h-6 text-heavy-metal mr-2 flex-shrink-0" />
-							<div>
-								<div class="text-heavy-metal font-medium">
-									Import completed successfully!
-								</div>
-								<div class="text-heavy-metal text-sm mt-1">
-									{{ importResult.importedCount }} of
-									{{ importResult.totalPrizes }} prizes imported
-									<span v-if="importResult.errorCount > 0">
-										({{ importResult.errorCount }} failed)
-									</span>
+				<!-- Warnings -->
+				<div
+					v-if="importResult.warnings && importResult.warnings.length > 0"
+					class="p-3 bg-yellow-50 border-l-4 border-l-yellow-400 rounded">
+					<div class="flex items-start">
+						<ExclamationTriangleIcon
+							class="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" />
+						<div class="flex-1">
+							<div class="text-yellow-800 font-medium mb-2">
+								Warnings ({{ importResult.warningCount }}):
+							</div>
+							<div class="text-yellow-700 text-sm space-y-1 max-h-32 overflow-y-auto">
+								<div v-for="warning in importResult.warnings" :key="warning">
+									• {{ warning }}
 								</div>
 							</div>
 						</div>
 					</div>
+				</div>
 
-					<!-- Warnings -->
-					<div
-						v-if="importResult.warnings && importResult.warnings.length > 0"
-						class="p-3 bg-yellow-50 border-l-4 border-l-yellow-400 rounded">
-						<div class="flex items-start">
-							<ExclamationTriangleIcon
-								class="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" />
-							<div class="flex-1">
-								<div class="text-yellow-800 font-medium mb-2">
-									Warnings ({{ importResult.warningCount }}):
-								</div>
-								<div
-									class="text-yellow-700 text-sm space-y-1 max-h-32 overflow-y-auto">
-									<div v-for="warning in importResult.warnings" :key="warning">
-										• {{ warning }}
-									</div>
-								</div>
+				<!-- Errors -->
+				<div
+					v-if="importResult.errors && importResult.errors.length > 0"
+					class="p-3 bg-red-50 border-l-4 border-l-red-400 rounded">
+					<div class="flex items-start">
+						<ExclamationTriangleIcon
+							class="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+						<div class="flex-1">
+							<div class="text-red-800 font-medium mb-2">
+								Errors ({{ importResult.errorCount }}):
 							</div>
-						</div>
-					</div>
-
-					<!-- Errors -->
-					<div
-						v-if="importResult.errors && importResult.errors.length > 0"
-						class="p-3 bg-red-50 border-l-4 border-l-red-400 rounded">
-						<div class="flex items-start">
-							<ExclamationTriangleIcon
-								class="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
-							<div class="flex-1">
-								<div class="text-red-800 font-medium mb-2">
-									Errors ({{ importResult.errorCount }}):
-								</div>
-								<div
-									class="text-red-700 text-sm space-y-1 max-h-32 overflow-y-auto">
-									<div v-for="error in importResult.errors" :key="error">
-										• {{ error }}
-									</div>
+							<div class="text-red-700 text-sm space-y-1 max-h-32 overflow-y-auto">
+								<div v-for="error in importResult.errors" :key="error">
+									• {{ error }}
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
+		</div>
 
-			<template #footer>
-				<div class="flex items-center justify-end">
-					<div class="flex space-x-3">
-						<button
-							type="button"
-							@click="closeImportModal"
-							class="btn-secondary--outline">
-							{{ importResult ? 'Close' : 'Cancel' }}
-						</button>
-						<BaseButton
-							v-if="!importResult"
-							@click="importYamlFile"
-							:disabled="!importFile || isImporting"
-							variant="primary">
-							{{ isImporting ? 'Importing...' : 'Import' }}
-						</BaseButton>
-					</div>
+		<template #footer>
+			<div class="flex items-center justify-end">
+				<div class="flex space-x-3">
+					<button type="button" @click="closeImportModal" class="btn-secondary--outline">
+						{{ importResult ? 'Close' : 'Cancel' }}
+					</button>
+					<BaseButton
+						v-if="!importResult"
+						@click="importYamlFile"
+						:disabled="!importFile || isImporting"
+						variant="primary">
+						{{ isImporting ? 'Importing...' : 'Import' }}
+					</BaseButton>
 				</div>
-			</template>
-		</BaseModal>
+			</div>
+		</template>
+	</BaseModal>
 
-		<!-- Delete Confirmation Modal -->
-		<!-- prettier-ignore -->
-		<BaseModal
+	<!-- Delete Confirmation Modal -->
+	<!-- prettier-ignore -->
+	<BaseModal
 			:isOpen="showDeleteModal"
 			:title="`Delete ${itemToDelete?.type === 'crate' ? 'Crate Reward' : 'Item'}`"
 			size="small"
@@ -2666,163 +2668,162 @@ watch(selectedCrate, (crate) => {
 			</template>
 		</BaseModal>
 
-		<!-- Clear All Confirmation Modal -->
-		<BaseModal
-			:isOpen="showClearAllModal"
-			title="Clear All Items"
-			size="small"
-			@close="showClearAllModal = false">
-			<div class="space-y-4">
-				<div>
-					<h3 class="font-normal text-gray-900">
-						Are you sure you want to clear
-						<span class="font-semibold">ALL</span>
-						items from this crate?
-					</h3>
-					<p class="text-sm text-gray-600 mt-2">
-						This action cannot be undone and will permanently delete all
-						{{ rewardDocuments?.length || 0 }} rewards.
-					</p>
+	<!-- Clear All Confirmation Modal -->
+	<BaseModal
+		:isOpen="showClearAllModal"
+		title="Clear All Items"
+		size="small"
+		@close="showClearAllModal = false">
+		<div class="space-y-4">
+			<div>
+				<h3 class="font-normal text-gray-900">
+					Are you sure you want to clear
+					<span class="font-semibold">ALL</span>
+					items from this crate?
+				</h3>
+				<p class="text-sm text-gray-600 mt-2">
+					This action cannot be undone and will permanently delete all
+					{{ rewardDocuments?.length || 0 }} rewards.
+				</p>
+			</div>
+		</div>
+
+		<template #footer>
+			<div class="flex items-center justify-end p-4">
+				<div class="flex space-x-3">
+					<button
+						type="button"
+						@click="showClearAllModal = false"
+						class="btn-secondary--outline"
+						data-cy="cancel-clear-all-button">
+						Cancel
+					</button>
+					<BaseButton
+						@click="clearAllRewards"
+						:disabled="loading"
+						variant="primary"
+						class="bg-semantic-danger hover:bg-opacity-90"
+						data-cy="confirm-clear-all-button">
+						{{ loading ? 'Clearing...' : 'Clear All' }}
+					</BaseButton>
+				</div>
+			</div>
+		</template>
+	</BaseModal>
+
+	<!-- Copy Success Toast -->
+	<div
+		v-if="showCopyToast"
+		class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 z-50 transition-all duration-300">
+		<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M5 13l4 4L19 7" />
+		</svg>
+		<span>Reward list copied to clipboard!</span>
+	</div>
+
+	<!-- Test Rewards Modal -->
+	<BaseModal
+		:isOpen="showTestRewardsModal"
+		title="Test Crate Rewards"
+		maxWidth="max-w-4xl"
+		@close="showTestRewardsModal = false">
+		<div class="space-y-6">
+			<!-- Simulation Controls -->
+			<div class="flex items-center gap-4 flex-wrap">
+				<div class="flex gap-2">
+					<BaseButton
+						@click="simulateCrateOpen"
+						:disabled="!rewardDocuments?.length || isSimulating"
+						variant="primary">
+						Open 1 Crate
+					</BaseButton>
+					<BaseButton
+						@click="simulateMultipleOpens(10)"
+						:disabled="!rewardDocuments?.length || isSimulating"
+						variant="primary">
+						Open 10 Crates
+					</BaseButton>
+					<BaseButton
+						@click="simulateMultipleOpens(50)"
+						:disabled="!rewardDocuments?.length || isSimulating"
+						variant="primary">
+						Open 50 Crates
+					</BaseButton>
+				</div>
+				<BaseButton
+					@click="clearSimulationResults"
+					:disabled="!simulationResults.length"
+					variant="tertiary"
+					class="ml-auto">
+					Clear Results
+				</BaseButton>
+				<div v-if="isSimulating" class="text-sm text-gray-700 font-medium">
+					Simulating...
 				</div>
 			</div>
 
-			<template #footer>
-				<div class="flex items-center justify-end p-4">
-					<div class="flex space-x-3">
-						<button
-							type="button"
-							@click="showClearAllModal = false"
-							class="btn-secondary--outline"
-							data-cy="cancel-clear-all-button">
-							Cancel
-						</button>
-						<BaseButton
-							@click="clearAllRewards"
-							:disabled="loading"
-							variant="primary"
-							class="bg-semantic-danger hover:bg-opacity-90"
-							data-cy="confirm-clear-all-button">
-							{{ loading ? 'Clearing...' : 'Clear All' }}
-						</BaseButton>
-					</div>
-				</div>
-			</template>
-		</BaseModal>
-
-		<!-- Copy Success Toast -->
-		<div
-			v-if="showCopyToast"
-			class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 z-50 transition-all duration-300">
-			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M5 13l4 4L19 7" />
-			</svg>
-			<span>Reward list copied to clipboard!</span>
-		</div>
-
-		<!-- Test Rewards Modal -->
-		<BaseModal
-			:isOpen="showTestRewardsModal"
-			title="Test Crate Rewards"
-			maxWidth="max-w-4xl"
-			@close="showTestRewardsModal = false">
-			<div class="space-y-6">
-				<!-- Simulation Controls -->
-				<div class="flex items-center gap-4">
-					<div class="flex gap-2">
-						<BaseButton
-							@click="simulateCrateOpen"
-							:disabled="!rewardDocuments?.length || isSimulating"
-							variant="primary">
-							Open 1 Crate
-						</BaseButton>
-						<BaseButton
-							@click="simulateMultipleOpens(10)"
-							:disabled="!rewardDocuments?.length || isSimulating"
-							variant="primary">
-							Open 10 Crates
-						</BaseButton>
-						<BaseButton
-							@click="simulateMultipleOpens(50)"
-							:disabled="!rewardDocuments?.length || isSimulating"
-							variant="primary">
-							Open 50 Crates
-						</BaseButton>
-					</div>
-					<BaseButton
-						@click="clearSimulationResults"
-						:disabled="!simulationResults.length"
-						variant="tertiary"
-						class="ml-auto">
-						Clear Results
-					</BaseButton>
-					<div v-if="isSimulating" class="text-sm text-gray-700 font-medium">
-						Simulating...
-					</div>
-				</div>
-
-				<!-- Simulation Results -->
-				<div
-					v-if="simulationResults.length > 0"
-					class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-					<h4 class="text-sm font-medium text-gray-700 mb-3">
-						Recent Simulation Results ({{ simulationResults.length }}):
-					</h4>
-					<div class="max-h-[60vh] overflow-y-auto">
+			<!-- Simulation Results -->
+			<div
+				v-if="simulationResults.length > 0"
+				class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+				<h4 class="text-sm font-medium text-gray-700 mb-3">
+					Recent Simulation Results ({{ simulationResults.length }}):
+				</h4>
+				<div class="max-h-[60vh] overflow-y-auto">
+					<div
+						class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
 						<div
-							class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-							<div
-								v-for="result in simulationResults"
-								:key="result.id"
-								class="p-2 bg-white rounded border">
-								<div class="flex items-start gap-2 mb-1">
-									<img
-										v-if="getDisplayItemImageFromDoc(result.item)"
-										:src="getImageUrl(getDisplayItemImageFromDoc(result.item))"
-										:alt="result.item.display_name"
-										loading="lazy"
-										decoding="async"
-										fetchpriority="low"
-										class="max-w-6 max-h-6 object-contain" />
-									<QuestionMarkCircleIcon v-else class="w-6 h-6 text-gray-400" />
-									<div class="flex-1 min-w-0">
-										<div class="text-xs font-medium text-gray-900 truncate">
-											{{
-												stripColorCodes(result.item.display_name) ||
-												stripColorCodes(result.itemData?.name) ||
-												'Unknown'
-											}}
-										</div>
-										<div class="text-xs text-gray-500">
-											{{ getRewardDocChance(result.item).toFixed(1) }}% chance
-										</div>
-										<!-- Multi-item indicator -->
-										<div
-											v-if="isMultiItemReward(result.item)"
-											class="text-xs text-blue-600 font-medium">
-											{{ result.item.items.length }} items
-										</div>
-										<!-- Enchantments Display -->
-										<div
-											v-if="
-												result.item.display_enchantments &&
-												getEnchantmentIds(result.item.display_enchantments)
-													.length > 0
-											"
-											class="mt-1">
-											<div class="flex flex-wrap gap-x-2 gap-y-1">
-												<span
-													v-for="enchantmentId in getEnchantmentIds(
-														result.item.display_enchantments
-													)"
-													:key="enchantmentId"
-													class="text-heavy-metal text-[10px] font-medium capitalize leading-none">
-													{{ formatEnchantmentName(enchantmentId) }}
-												</span>
-											</div>
+							v-for="result in simulationResults"
+							:key="result.id"
+							class="p-2 bg-white rounded border">
+							<div class="flex items-start gap-2 mb-1">
+								<img
+									v-if="getDisplayItemImageFromDoc(result.item)"
+									:src="getImageUrl(getDisplayItemImageFromDoc(result.item))"
+									:alt="result.item.display_name"
+									loading="lazy"
+									decoding="async"
+									fetchpriority="low"
+									class="max-w-6 max-h-6 object-contain" />
+								<QuestionMarkCircleIcon v-else class="w-6 h-6 text-gray-400" />
+								<div class="flex-1 min-w-0">
+									<div class="text-xs font-medium text-gray-900 truncate">
+										{{
+											stripColorCodes(result.item.display_name) ||
+											stripColorCodes(result.itemData?.name) ||
+											'Unknown'
+										}}
+									</div>
+									<div class="text-xs text-gray-500">
+										{{ getRewardDocChance(result.item).toFixed(1) }}% chance
+									</div>
+									<!-- Multi-item indicator -->
+									<div
+										v-if="isMultiItemReward(result.item)"
+										class="text-xs text-blue-600 font-medium">
+										{{ result.item.items.length }} items
+									</div>
+									<!-- Enchantments Display -->
+									<div
+										v-if="
+											result.item.display_enchantments &&
+											getEnchantmentIds(result.item.display_enchantments)
+												.length > 0
+										"
+										class="mt-1">
+										<div class="flex flex-wrap gap-x-2 gap-y-1">
+											<span
+												v-for="enchantmentId in getEnchantmentIds(
+													result.item.display_enchantments
+												)"
+												:key="enchantmentId"
+												class="text-heavy-metal text-[10px] font-medium capitalize leading-none">
+												{{ formatEnchantmentName(enchantmentId) }}
+											</span>
 										</div>
 									</div>
 								</div>
@@ -2830,17 +2831,17 @@ watch(selectedCrate, (crate) => {
 						</div>
 					</div>
 				</div>
-
-				<!-- Empty State -->
-				<div v-else class="text-center py-8 text-gray-500">
-					<p>
-						No simulation results yet. Click a button above to start testing your crate
-						rewards!
-					</p>
-				</div>
 			</div>
-		</BaseModal>
-	</div>
+
+			<!-- Empty State -->
+			<div v-else class="text-center py-8 text-gray-500">
+				<p>
+					No simulation results yet. Click a button above to start testing your crate
+					rewards!
+				</p>
+			</div>
+		</div>
+	</BaseModal>
 </template>
 
 <style scoped>
