@@ -491,13 +491,13 @@ onUnmounted(() => {
 				}
 			"
 			:class="[
-				'px-3 py-2 rounded transition-colors whitespace-nowrap',
+				'px-3 max-[800px]:px-2 py-2 rounded transition-colors whitespace-nowrap',
 				route.path === '/' || route.path.startsWith('/edit/')
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
 			<div class="flex items-center gap-2">
-				<CurrencyDollarIcon class="w-4 h-4" />
+				<CurrencyDollarIcon class="w-4 h-4 max-[900px]:hidden" />
 				<span>Price Guide</span>
 			</div>
 		</RouterLink>
@@ -511,7 +511,7 @@ onUnmounted(() => {
 				}
 			"
 			:class="[
-				'px-3 py-2 rounded transition-colors whitespace-nowrap',
+				'px-3 max-[800px]:px-2 py-2 rounded transition-colors whitespace-nowrap',
 				route.path === '/shop-manager' ||
 				route.path === '/market-overview' ||
 				route.path.startsWith('/shop')
@@ -519,7 +519,7 @@ onUnmounted(() => {
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
 			<div class="flex items-center gap-2">
-				<BuildingStorefrontIcon class="w-4 h-4" />
+				<BuildingStorefrontIcon class="w-4 h-4 max-[900px]:hidden" />
 				<span>Shop Manager</span>
 			</div>
 		</RouterLink>
@@ -532,7 +532,7 @@ onUnmounted(() => {
 				}
 			"
 			:class="[
-				'px-3 py-2 rounded transition-colors whitespace-nowrap',
+				'px-3 max-[800px]:px-2 py-2 rounded transition-colors whitespace-nowrap',
 				route.path === '/tools' ||
 				route.path === '/crate-rewards' ||
 				route.path.startsWith('/crate-rewards/')
@@ -540,7 +540,7 @@ onUnmounted(() => {
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
 			<div class="flex items-center gap-2">
-				<WrenchScrewdriverIcon class="w-4 h-4" />
+				<WrenchScrewdriverIcon class="w-4 h-4 max-[900px]:hidden" />
 				<span>Tools</span>
 			</div>
 		</RouterLink>
@@ -553,14 +553,14 @@ onUnmounted(() => {
 				}
 			"
 			:class="[
-				'px-3 py-2 rounded transition-colors whitespace-nowrap relative',
+				'px-3 max-[800px]:px-2 py-2 rounded transition-colors whitespace-nowrap relative',
 				route.path === '/suggestions'
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
 			]"
 			v-if="user?.email">
 			<div class="flex items-center gap-2">
-				<LightBulbIcon class="w-4 h-4" />
+				<LightBulbIcon class="w-4 h-4 max-[900px]:hidden" />
 				<span class="relative">
 					Suggestions
 					<!-- Notification dot -->
@@ -579,13 +579,13 @@ onUnmounted(() => {
 				}
 			"
 			:class="[
-				'px-3 py-2 rounded transition-colors whitespace-nowrap relative',
+				'px-3 max-[800px]:px-2 py-2 rounded transition-colors whitespace-nowrap relative',
 				route.path === '/updates'
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
 			<div class="flex items-center gap-2">
-				<RocketLaunchIcon class="w-4 h-4" />
+				<RocketLaunchIcon class="w-4 h-4 max-[900px]:hidden" />
 				<span class="relative">
 					Updates
 					<!-- Notification dot -->
@@ -601,15 +601,12 @@ onUnmounted(() => {
 			v-if="isAdmin"
 			to="/admin"
 			:class="[
-				'px-3 py-2 rounded transition-colors whitespace-nowrap',
+				'px-3 max-[800px]:px-2 py-2 rounded transition-colors whitespace-nowrap',
 				activeMainNav === 'admin'
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
-			<div class="flex items-center gap-2">
-				<Cog6ToothIcon class="w-4 h-4" />
-				<span>Admin</span>
-			</div>
+			<Cog6ToothIcon class="w-4 h-4" />
 		</RouterLink>
 
 		<!-- Sign In/Sign Up buttons (when not logged in) -->
@@ -618,13 +615,13 @@ onUnmounted(() => {
 				to="/signin"
 				@click="handleSignInClickDesktop"
 				:class="[
-					'px-3 py-2 rounded transition-colors whitespace-nowrap',
+					'px-3 max-[800px]:px-2 py-2 rounded transition-colors whitespace-nowrap',
 					route.path === '/signin'
 						? 'bg-gray-700 text-white'
 						: 'hover:bg-gray-700 hover:text-white'
 				]">
 				<div class="flex items-center gap-2">
-					<ArrowRightEndOnRectangleIcon class="w-4 h-4" />
+					<ArrowRightEndOnRectangleIcon class="w-4 h-4 max-[900px]:hidden" />
 					<span>Sign In</span>
 				</div>
 			</RouterLink>
@@ -632,13 +629,13 @@ onUnmounted(() => {
 				to="/signup"
 				@click="handleSignUpClickDesktop"
 				:class="[
-					'px-3 py-2 rounded transition-colors whitespace-nowrap',
+					'px-3 max-[800px]:px-2 py-2 rounded transition-colors whitespace-nowrap',
 					route.path === '/signup'
 						? 'bg-gray-700 text-white'
 						: 'hover:bg-gray-700 hover:text-white'
 				]">
 				<div class="flex items-center gap-2">
-					<UserIcon class="w-4 h-4" />
+					<UserIcon class="w-4 h-4 max-[900px]:hidden" />
 					<span>Sign Up</span>
 				</div>
 			</RouterLink>
@@ -647,7 +644,7 @@ onUnmounted(() => {
 		<!-- User profile display (when logged in, regardless of verification) -->
 		<RouterLink
 			v-if="user?.email"
-			class="flex items-center gap-2 hover:bg-gray-700 px-2 py-1 rounded transition-colors ml-auto"
+			class="flex items-center gap-2 hover:bg-gray-700 px-2 max-[800px]:px-1 py-1 rounded transition-colors ml-auto"
 			to="/account"
 			@click="setActiveMainNav(null)">
 			<!-- Display Name or Email -->
