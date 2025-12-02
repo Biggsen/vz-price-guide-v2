@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, addDoc, getDocs, query } from 'firebase/firestore'
@@ -45,6 +45,39 @@ const recalculationStatus = ref({})
 const pendingPricingTypeChange = ref(null)
 const originalPricingType = ref('static')
 const successMessage = ref('')
+
+// Check for copied item data on mount
+onMounted(() => {
+	const copiedItemData = sessionStorage.getItem('copiedItem')
+	if (copiedItemData) {
+		try {
+			const copiedItem = JSON.parse(copiedItemData)
+			// Prefill form with copied item data
+			newItem.value = {
+				name: copiedItem.name || '',
+				material_id: copiedItem.material_id || '',
+				image: copiedItem.image || '',
+				url: copiedItem.url || '',
+				price: copiedItem.price || 1,
+				stack: copiedItem.stack || 64,
+				category: copiedItem.category || '',
+				subcategory: copiedItem.subcategory || '',
+				version: copiedItem.version || '',
+				version_removed: copiedItem.version_removed || '',
+				pricing_type: copiedItem.pricing_type || 'static',
+				prices_by_version: copiedItem.prices_by_version ? { ...copiedItem.prices_by_version } : {},
+				recipes_by_version: copiedItem.recipes_by_version ? { ...copiedItem.recipes_by_version } : {}
+			}
+			// Set original pricing type
+			originalPricingType.value = newItem.value.pricing_type
+			// Clear the copied item data from sessionStorage
+			sessionStorage.removeItem('copiedItem')
+		} catch (error) {
+			console.error('Error parsing copied item data:', error)
+			sessionStorage.removeItem('copiedItem')
+		}
+	}
+})
 
 // Fetch all items for recipe calculations
 const allItemsQuery = query(
@@ -203,7 +236,26 @@ async function addItem() {
 	})
 	if (newDoc.id) {
 		successMessage.value = `Item "${newItem.value.name}" has been successfully added to the price guide.`
-		newItem.value = { ...newItemInitial.value }
+		// Reset all form fields including nested objects
+		newItem.value = {
+			name: '',
+			material_id: '',
+			image: '',
+			url: '',
+			price: 1,
+			stack: 64,
+			category: '',
+			subcategory: '',
+			version: '',
+			version_removed: '',
+			pricing_type: 'static',
+			prices_by_version: {},
+			recipes_by_version: {}
+		}
+		// Reset other form state
+		recalculationStatus.value = {}
+		pendingPricingTypeChange.value = null
+		originalPricingType.value = 'static'
 		// Auto-hide notification after 5 seconds
 		setTimeout(() => {
 			successMessage.value = ''

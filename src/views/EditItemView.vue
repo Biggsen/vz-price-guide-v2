@@ -366,6 +366,14 @@ async function updateItem() {
 function isBaseVersion(versionKey) {
 	return versionKey === editItem.value.version.replace('.', '_')
 }
+
+function copyItem() {
+	// Store the item data in sessionStorage to pass to AddItemView
+	// Use JSON parse/stringify for deep copy of nested objects
+	const itemDataToCopy = JSON.parse(JSON.stringify(editItem.value))
+	sessionStorage.setItem('copiedItem', JSON.stringify(itemDataToCopy))
+	router.push('/add')
+}
 </script>
 
 <template>
@@ -634,6 +642,12 @@ function isBaseVersion(versionKey) {
 					type="submit"
 					class="rounded-md bg-semantic-success px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 					Update item
+				</button>
+				<button
+					type="button"
+					@click="copyItem"
+					class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+					Copy item
 				</button>
 				<button
 					type="button"
