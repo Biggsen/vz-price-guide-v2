@@ -288,8 +288,23 @@ const totalCategoryCounts = computed(() => {
 				return false
 			}
 			// Apply same filtering as groupedItems but without search
-			if (user.value?.email) return item.category === cat
-			return item.category === cat && item.image && item.image.trim() !== ''
+			if (user.value?.email) {
+				// Admin users: filter by category and exclude 0-priced items
+				if (item.category !== cat) return false
+				const effectivePrice = getEffectivePriceMemoized(
+					item,
+					selectedVersion.value.replace('.', '_')
+				)
+				return effectivePrice && effectivePrice !== 0
+			}
+			// Non-admin users: filter by category, require image, and exclude 0-priced items
+			if (item.category !== cat) return false
+			if (!item.image || item.image.trim() === '') return false
+			const effectivePrice = getEffectivePriceMemoized(
+				item,
+				selectedVersion.value.replace('.', '_')
+			)
+			return effectivePrice && effectivePrice !== 0
 		})
 		acc[cat] = categoryItems.length
 		return acc
@@ -610,7 +625,14 @@ function getTotalItemCount() {
 			return false
 		}
 		// Apply price/image filtering (mirroring itemsWithValidPrices logic)
-		if (user.value?.email) return true // Admin users see all items
+		if (user.value?.email) {
+			// Admin users: exclude 0-priced items but don't require images
+			const effectivePrice = getEffectivePriceMemoized(
+				item,
+				selectedVersion.value.replace('.', '_')
+			)
+			return effectivePrice && effectivePrice !== 0
+		}
 		if (!item.image || item.image.trim() === '') return false // Non-admin users need images
 		// Always filter out zero-priced items
 		const effectivePrice = getEffectivePriceMemoized(

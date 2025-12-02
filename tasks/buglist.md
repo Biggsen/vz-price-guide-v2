@@ -112,38 +112,6 @@ Added a watcher in `SettingsModal.vue` that monitors the `isOpen` prop and calls
 -   Settings are now properly loaded from localStorage when modal opens
 -   No changes needed to the save functionality as it was already working
 
-### Price Guide vs Export Item Count Discrepancy
-
-**Status**: 🔴 Active  
-**Priority**: High  
-**Type**: Data Integrity  
-**Discovered**: 2025-11-10
-
-**Description**:
-The admin price guide reports `1,473` items, while the export summary indicates only `1,471` items will be exported. Two items are missing from the export output, revealing a mismatch between the inventory view and export pipeline.
-
-**Expected Behavior**:
-The export pipeline should include every item displayed in the price guide. Total item counts must stay in sync across views.
-
-**Current Behavior**:
-The price guide displays `1,473` items, but the export flow only includes `1,471` items.
-
-**Impact**:
-
--   Incomplete export files for admins and downstream tooling
--   Possible loss of pricing data for the missing items
--   Reduces confidence in export accuracy
-
-**Reproduction Steps**:
-
-1. Open the admin price guide and note the total item count.
-2. Initiate the export flow and view the export summary count.
-3. Observe the mismatch between the price guide (`1,473`) and export (`1,471`) totals.
-
-**Notes**:
-
--   Determine which items are excluded during export and why
--   Confirm whether other metadata differs between the two items and the export schema
 
 ## Resolved Issues
 
@@ -179,6 +147,48 @@ Verified that the total value calculation correctly includes:
 -   Issue was resolved through testing and verification
 -   Total value calculations are working as expected
 -   Enchantment values are properly included in crate totals
+
+### Price Guide vs Export Item Count Discrepancy
+
+**Status**: ✅ Resolved  
+**Priority**: High  
+**Type**: Data Integrity  
+**Discovered**: 2025-11-10  
+**Resolved**: 2025-01-27
+
+**Description**:
+The admin price guide reported `1,473` items, while the export summary indicated only `1,471` items would be exported. Additionally, category counts in the price guide (e.g., "Enchantments (122)") didn't match the actual items displayed in the table (121 items). The export was correctly excluding 0-priced items, which revealed the discrepancy.
+
+**Root Cause**:
+The price guide's count functions (`getTotalItemCount()` and `totalCategoryCounts`) were including items with 0 prices in their counts, while the table display (`itemsWithValidPrices`) and export pipeline correctly excluded 0-priced items. This created a mismatch where:
+
+-   Category buttons showed counts including 0-priced items
+-   The "All categories" count included 0-priced items
+-   The table and export correctly excluded 0-priced items
+-   Admin users had an additional issue where `getTotalItemCount()` bypassed price filtering entirely
+
+**Solution Implemented**:
+Updated both `getTotalItemCount()` and `totalCategoryCounts` computed properties to exclude 0-priced items for all users (admin and non-admin), matching the filtering logic used by `itemsWithValidPrices` and the export pipeline:
+
+1.   **Fixed `totalCategoryCounts`**: Added price filtering to exclude 0-priced items for both admin and non-admin users
+2.   **Fixed `getTotalItemCount()`**: Removed the early return for admin users that bypassed price filtering, ensuring 0-priced items are excluded for all users
+
+**Files Modified**:
+
+-   `src/views/HomeView.vue` - Updated `totalCategoryCounts` and `getTotalItemCount()` to exclude 0-priced items
+
+**User Experience**:
+
+-   Category button counts now match the actual items displayed in the table
+-   "All categories" count now matches the sum of individual category counts
+-   Price guide counts are now consistent with export counts
+-   All views (table, category buttons, export) use the same filtering logic
+
+**Notes**:
+
+-   The export pipeline was working correctly - it was the price guide counts that were wrong
+-   This fix ensures consistency across all views and eliminates confusion about item counts
+-   Zero-priced items are now consistently excluded from counts and displays across the application
 
 ### Duplicate Crate Names When Importing Same File
 
