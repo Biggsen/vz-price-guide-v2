@@ -404,6 +404,12 @@ onUnmounted(() => {
 						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
 						Design
 					</RouterLink>
+					<RouterLink
+						to="/admin/access"
+						@click="closeMenu"
+						class="block px-3 py-1.5 transition-colors hover:bg-gray-700 hover:text-white text-sm">
+						Access
+					</RouterLink>
 				</div>
 			</div>
 
