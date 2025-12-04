@@ -22,8 +22,8 @@ created_at: 2025-11-11
 -   Being able to add multiple items at once would be great. It could be a checkbox in the item selector and you can check many items. They'd all share the same other values (buy, sell, notes).
 -   Add a reset button for the search on market overview.
 -   Would be good to be able to mark or star or favorite items. When you found the cheapest option, marking it would be good.
--   Need a way to mark when a player shop is fully added so all of its items are accounted for.
+-   ~~Need a way to mark when a player shop is fully added so all of its items are accounted for.~~ ✅ Implemented: "Shop is fully cataloged" checkbox in ShopItemsView (simplified to boolean in 2025-12-04)
 
 ## Notes
 
--
+- **2025-12-04**: Simplified `fully_cataloged` field from a complex map structure (with `at`, `by`, `by_label`, `notes`) to a simple boolean. The catalog checkbox in ShopItemsView now sets `fully_cataloged: true/false` directly. Removed all catalog metadata helpers and UI elements that displayed catalog dates/notes.
