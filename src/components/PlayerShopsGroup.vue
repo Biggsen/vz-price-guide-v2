@@ -69,7 +69,7 @@ const computedAvatarUrl = computed(() => {
 										<span class="break-words min-w-0">{{ shop.name }}</span>
 									</RouterLink>
 									<ClipboardDocumentCheckIcon
-										v-if="shop.fully_cataloged?.at"
+										v-if="shop.fully_cataloged"
 										class="w-4 h-4 text-green-600"
 										:title="'Fully cataloged'" />
 								</div>
@@ -77,12 +77,6 @@ const computedAvatarUrl = computed(() => {
 									<MapPinIcon class="w-4 h-4 flex-shrink-0" />
 									<span class="break-words min-w-0">{{ shop.location }}</span>
 								</div>
-								<p
-									v-if="shop.fully_cataloged?.notes"
-									class="ml-5 mt-1 text-xs text-gray-500">
-									<span class="font-semibold text-gray-600">Catalog notes:</span>
-									{{ shop.fully_cataloged.notes }}
-								</p>
 							</div>
 							<div class="flex items-center gap-1">
 								<button

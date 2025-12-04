@@ -33,6 +33,8 @@ service cloud.firestore {
       allow update: if request.auth != null &&
         request.auth.uid == resource.data.owner_id &&
         request.resource.data.owner_id == resource.data.owner_id &&
+        (request.resource.data.fully_cataloged == null ||
+         request.resource.data.fully_cataloged is bool) &&
         (request.resource.data.owner_funds == null || 
          (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0));
       allow delete: if request.auth != null && request.auth.uid == resource.data.owner_id;
@@ -42,6 +44,8 @@ service cloud.firestore {
         request.resource.data.server_id is string &&
         request.resource.data.owner_id is string &&
         request.resource.data.is_own_shop is bool &&
+        (request.resource.data.fully_cataloged == null ||
+         request.resource.data.fully_cataloged is bool) &&
         (request.resource.data.owner_funds == null || 
          (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0));
     }

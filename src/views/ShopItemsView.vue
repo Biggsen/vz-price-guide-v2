@@ -137,20 +137,7 @@ const isShopOutOfMoney = computed(() => {
 })
 
 const isShopFullyCataloged = computed(() => {
-	return Boolean(selectedShop.value?.fully_cataloged?.at)
-})
-
-const catalogStatusDetails = computed(() => {
-	const status = selectedShop.value?.fully_cataloged
-
-	if (!status?.at) return null
-
-	return {
-		date: formatCatalogDate(status.at),
-		rawDate: status.at,
-		by: status.by_label || status.by || 'Unknown user',
-		notes: status.notes
-	}
+	return Boolean(selectedShop.value?.fully_cataloged)
 })
 
 async function handleOutOfMoneyChange(checked) {
@@ -174,14 +161,7 @@ async function handleCatalogStatusChange(checked) {
 
 	try {
 		await updateShop(selectedShopId.value, {
-			fully_cataloged: checked
-				? {
-						at: new Date().toISOString(),
-						by: user.value?.uid || null,
-						by_label: getCurrentUserCatalogLabel(),
-						notes: ''
-				  }
-				: null
+			fully_cataloged: Boolean(checked)
 		})
 	} catch (err) {
 		console.error('Error updating catalog status:', err)
@@ -961,24 +941,6 @@ function getShopName(shopId) {
 
 function getServerName(serverId) {
 	return servers.value?.find((server) => server.id === serverId)?.name || 'Unknown Server'
-}
-
-function formatCatalogDate(dateString) {
-	if (!dateString) return null
-
-	const parsed = new Date(dateString)
-	return Number.isNaN(parsed.getTime()) ? null : parsed.toLocaleDateString()
-}
-
-function getCurrentUserCatalogLabel() {
-	if (!user.value) return 'Unknown user'
-
-	return (
-		user.value.displayName ||
-		user.value.email?.split('@')[0] ||
-		user.value.email ||
-		'Unknown user'
-	)
 }
 </script>
 
