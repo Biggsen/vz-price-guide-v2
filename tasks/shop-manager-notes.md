@@ -22,6 +22,7 @@ created_at: 2025-11-11
 -   Being able to add multiple items at once would be great. It could be a checkbox in the item selector and you can check many items. They'd all share the same other values (buy, sell, notes).
 -   Add a reset button for the search on market overview.
 -   Would be good to be able to mark or star or favorite items. When you found the cheapest option, marking it would be good.
+-   Need a way to mark when a player shop is fully added so all of its items are accounted for.
 
 ## Notes
 
