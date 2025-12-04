@@ -22,7 +22,7 @@ import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
 import { ArrowLeftIcon, PlusIcon, ArrowPathIcon } from '@heroicons/vue/20/solid'
-import { CurrencyDollarIcon } from '@heroicons/vue/24/outline'
+import { CurrencyDollarIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import {
 	PencilIcon,
 	TrashIcon,
@@ -64,6 +64,8 @@ const showItemSavingSpinner = ref(null) // Show spinner after delay
 let itemSavingTimeout = null
 const markingAsChecked = ref(false) // Track if marking items as checked
 const markingItemId = ref(null) // Track which item is being marked as checked
+const catalogStatusLoading = ref(false)
+const catalogStatusError = ref(null)
 
 // Edit shop modal state
 const showEditShopModal = ref(false)
@@ -134,6 +136,23 @@ const isShopOutOfMoney = computed(() => {
 	return selectedShop.value?.owner_funds === 0
 })
 
+const isShopFullyCataloged = computed(() => {
+	return Boolean(selectedShop.value?.fully_cataloged?.at)
+})
+
+const catalogStatusDetails = computed(() => {
+	const status = selectedShop.value?.fully_cataloged
+
+	if (!status?.at) return null
+
+	return {
+		date: formatCatalogDate(status.at),
+		rawDate: status.at,
+		by: status.by_label || status.by || 'Unknown user',
+		notes: status.notes
+	}
+})
+
 async function handleOutOfMoneyChange(checked) {
 	if (!selectedShop.value || !selectedShopId.value) return
 
@@ -144,6 +163,32 @@ async function handleOutOfMoneyChange(checked) {
 	} catch (err) {
 		console.error('Error updating shop funds:', err)
 		error.value = err.message || 'Failed to update shop funds. Please try again.'
+	}
+}
+
+async function handleCatalogStatusChange(checked) {
+	if (!selectedShopId.value) return
+
+	catalogStatusLoading.value = true
+	catalogStatusError.value = null
+
+	try {
+		await updateShop(selectedShopId.value, {
+			fully_cataloged: checked
+				? {
+						at: new Date().toISOString(),
+						by: user.value?.uid || null,
+						by_label: getCurrentUserCatalogLabel(),
+						notes: ''
+				  }
+				: null
+		})
+	} catch (err) {
+		console.error('Error updating catalog status:', err)
+		catalogStatusError.value =
+			err.message || 'Failed to update catalog status. Please try again.'
+	} finally {
+		catalogStatusLoading.value = false
 	}
 }
 const selectedServer = computed(() =>
@@ -917,6 +962,24 @@ function getShopName(shopId) {
 function getServerName(serverId) {
 	return servers.value?.find((server) => server.id === serverId)?.name || 'Unknown Server'
 }
+
+function formatCatalogDate(dateString) {
+	if (!dateString) return null
+
+	const parsed = new Date(dateString)
+	return Number.isNaN(parsed.getTime()) ? null : parsed.toLocaleDateString()
+}
+
+function getCurrentUserCatalogLabel() {
+	if (!user.value) return 'Unknown user'
+
+	return (
+		user.value.displayName ||
+		user.value.email?.split('@')[0] ||
+		user.value.email ||
+		'Unknown user'
+	)
+}
 </script>
 
 <template>
@@ -1018,15 +1081,37 @@ function getServerName(serverId) {
 		<!-- Main content -->
 		<div v-else-if="hasShops && hasServers && selectedShop" class="space-y-8">
 			<!-- Out of Money Checkbox and Add Item Button (Top) -->
-			<div class="mt-4 space-y-3">
-				<label v-if="!selectedShop.is_own_shop" class="flex items-center cursor-pointer">
-					<input
-						:checked="isShopOutOfMoney"
-						@change="handleOutOfMoneyChange($event.target.checked)"
-						type="checkbox"
-						class="checkbox-input" />
-					<span class="ml-2 text-sm text-gray-700">Shop owner has run out of money</span>
-				</label>
+			<div class="mt-4">
+				<div class="space-y-1 mb-1">
+					<label class="flex items-center gap-2 text-sm font-semibold text-gray-800">
+						<input
+							type="checkbox"
+							class="checkbox-input"
+							:checked="isShopFullyCataloged"
+							:disabled="catalogStatusLoading"
+							@change="handleCatalogStatusChange($event.target.checked)" />
+						<span class="flex items-center gap-1">
+							Shop is fully cataloged
+							<ClipboardDocumentCheckIcon class="w-4 h-4 text-gray-700" />
+						</span>
+					</label>
+					<p v-if="catalogStatusError" class="text-sm text-red-700">
+						{{ catalogStatusError }}
+					</p>
+				</div>
+				<div v-if="!selectedShop.is_own_shop" class="mt-1 mb-5">
+					<label class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+						<input
+							:checked="isShopOutOfMoney"
+							@change="handleOutOfMoneyChange($event.target.checked)"
+							type="checkbox"
+							class="checkbox-input" />
+						<span class="flex items-center gap-1">
+							Shop owner has run out of money
+							<WalletIcon class="w-4 h-4 text-gray-700" />
+						</span>
+					</label>
+				</div>
 				<div
 					v-if="shopItems && shopItems.length > 0"
 					class="flex flex-col sm:flex-row justify-start gap-3">

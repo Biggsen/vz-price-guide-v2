@@ -1,6 +1,18 @@
 rules_version = '2';
 
 service cloud.firestore {
+  function validCatalogStatus(catalog) {
+    return catalog == null ||
+      (
+        catalog is map &&
+        catalog.keys().hasOnly(['at', 'by', 'by_label', 'notes']) &&
+        (catalog.at == null || catalog.at is string) &&
+        (catalog.by == null || catalog.by is string) &&
+        (catalog.by_label == null || catalog.by_label is string) &&
+        (catalog.notes == null || catalog.notes is string)
+      );
+  }
+
   match /databases/{database}/documents {
     // Users: Allow user to read/write their own profile, allow admins to read all
     match /users/{userId} {
@@ -33,6 +45,7 @@ service cloud.firestore {
       allow update: if request.auth != null &&
         request.auth.uid == resource.data.owner_id &&
         request.resource.data.owner_id == resource.data.owner_id &&
+        validCatalogStatus(request.resource.data.fully_cataloged) &&
         (request.resource.data.owner_funds == null || 
          (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0));
       allow delete: if request.auth != null && request.auth.uid == resource.data.owner_id;
@@ -42,6 +55,7 @@ service cloud.firestore {
         request.resource.data.server_id is string &&
         request.resource.data.owner_id is string &&
         request.resource.data.is_own_shop is bool &&
+        validCatalogStatus(request.resource.data.fully_cataloged) &&
         (request.resource.data.owner_funds == null || 
          (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0));
     }

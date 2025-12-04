@@ -1,7 +1,12 @@
 <script setup>
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { BuildingStorefrontIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import {
+	BuildingStorefrontIcon,
+	PencilIcon,
+	TrashIcon,
+	ClipboardDocumentCheckIcon
+} from '@heroicons/vue/24/outline'
 import { MapPinIcon } from '@heroicons/vue/24/solid'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 
@@ -56,16 +61,28 @@ const computedAvatarUrl = computed(() => {
 							:key="shop.id"
 							class="flex items-start justify-between gap-2">
 							<div class="flex-1 min-w-0">
-								<RouterLink
-									:to="{ name: 'shop', params: { shopId: shop.id } }"
-									class="flex items-center gap-1 text-sm font-normal text-gray-500 hover:text-heavy-metal transition">
-									<BuildingStorefrontIcon class="w-4 h-4 flex-shrink-0" />
-									<span class="break-words min-w-0">{{ shop.name }}</span>
-								</RouterLink>
+								<div class="flex items-center gap-2">
+									<RouterLink
+										:to="{ name: 'shop', params: { shopId: shop.id } }"
+										class="flex items-center gap-1 text-sm font-normal text-gray-500 hover:text-heavy-metal transition">
+										<BuildingStorefrontIcon class="w-4 h-4 flex-shrink-0" />
+										<span class="break-words min-w-0">{{ shop.name }}</span>
+									</RouterLink>
+									<ClipboardDocumentCheckIcon
+										v-if="shop.fully_cataloged?.at"
+										class="w-4 h-4 text-green-600"
+										:title="'Fully cataloged'" />
+								</div>
 								<div v-if="shop.location" class="flex items-center gap-1 mt-0.5 ml-5 text-sm text-gray-500">
 									<MapPinIcon class="w-4 h-4 flex-shrink-0" />
 									<span class="break-words min-w-0">{{ shop.location }}</span>
 								</div>
+								<p
+									v-if="shop.fully_cataloged?.notes"
+									class="ml-5 mt-1 text-xs text-gray-500">
+									<span class="font-semibold text-gray-600">Catalog notes:</span>
+									{{ shop.fully_cataloged.notes }}
+								</p>
 							</div>
 							<div class="flex items-center gap-1">
 								<button
@@ -92,4 +109,5 @@ const computedAvatarUrl = computed(() => {
 		</div>
 	</li>
 </template>
+
 

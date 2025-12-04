@@ -14,6 +14,28 @@ import {
 } from 'firebase/firestore'
 import { ref, computed, unref } from 'vue'
 
+function sanitizeFullyCatalogedStatus(status) {
+	if (status === null) {
+		return null
+	}
+
+	if (!status || typeof status !== 'object') {
+		return null
+	}
+
+	const sanitized = {
+		at: typeof status.at === 'string' && status.at.trim() ? status.at.trim() : null,
+		by: typeof status.by === 'string' && status.by.trim() ? status.by.trim() : null,
+		by_label:
+			typeof status.by_label === 'string' && status.by_label.trim()
+				? status.by_label.trim()
+				: null,
+		notes: typeof status.notes === 'string' ? status.notes.trim() : ''
+	}
+
+	return sanitized.at ? sanitized : null
+}
+
 // Check if shop exists
 export async function shopExists(shopId) {
 	if (!shopId) return false
@@ -57,6 +79,7 @@ export async function createShop(userId, shopData) {
 			location: shopData.location?.trim() || '',
 			description: shopData.description?.trim() || '',
 			owner_funds: shopData.owner_funds || null,
+		fully_cataloged: sanitizeFullyCatalogedStatus(shopData.fully_cataloged),
 			created_at: new Date().toISOString(),
 			updated_at: new Date().toISOString()
 		}
@@ -90,6 +113,10 @@ export async function updateShop(shopId, updates) {
 			...updates,
 			updated_at: new Date().toISOString()
 		}
+
+	if (Object.prototype.hasOwnProperty.call(updates, 'fully_cataloged')) {
+		updatedData.fully_cataloged = sanitizeFullyCatalogedStatus(updates.fully_cataloged)
+	}
 
 		// Clean up string fields
 		if (updatedData.name) updatedData.name = updatedData.name.trim()
