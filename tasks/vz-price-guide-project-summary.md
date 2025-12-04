@@ -10,7 +10,7 @@
 	"status": "active",
 	"domain": "minecraft",
 	"type": "webapp",
-	"lastUpdated": "2025-12-03",
+	"lastUpdated": "2025-12-04",
 	"links": {
 		"prod": "https://minecraft-economy-price-guide.net/",
 		"staging": null
@@ -105,7 +105,7 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 -   [x] Recipes & Dynamic Pricing - 2,000+ recipes with automatic price calculations
 -   [x] Suggestions System - User feedback and feature requests with admin management
 -   [x] Crate Rewards Management - YAML import, custom pricing, value calculations
--   [x] Shop Manager - Multi-server shop tracking with price history (75% complete)
+-   [x] Shop Manager - Multi-server shop tracking with price history and catalog status (75% complete)
 -   [x] Price Export - JSON/YAML export with filtering and version selection
 -   [x] Bulk Item Management - Admin tools for managing the item catalog
 -   [x] Visual Testing - Comprehensive screenshot-based testing system
@@ -419,6 +419,10 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
   Can include architecture decisions, lessons learned, or future considerations.
 -->
 
+### Recent Changes
+
+-   **2025-12-04**: Simplified shop `fully_cataloged` field from complex map structure (with `at`, `by`, `by_label`, `notes`) to a simple boolean. Updated Firestore rules to validate boolean type, removed catalog metadata helpers from codebase, and simplified UI to show catalog status as a checkbox.
+
 ### Development Workflow
 
 -   Uses Firebase emulators by default for local development
@@ -447,6 +451,7 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 -   Live data (items, prices) must come from Firestore collections, not resource files
 -   When a Minecraft version doesn't have a recipe, the system falls back to using the previous version's recipe instead of duplicating recipes
 -   Use underscores (e.g., `1_16`) for version keys and filenames, not dots (e.g., `1.16`)
+-   Shop `fully_cataloged` field is a simple boolean (simplified from complex map structure in 2025-12-04)
 
 ### Strategic Focus Areas
 
