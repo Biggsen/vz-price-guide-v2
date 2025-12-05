@@ -1044,7 +1044,7 @@ function getServerName(serverId) {
 		<div v-else-if="hasShops && hasServers && selectedShop" class="space-y-8">
 			<!-- Out of Money Checkbox and Add Item Button (Top) -->
 			<div class="mt-4">
-				<div class="space-y-1 mb-1">
+				<div v-if="!selectedShop.is_own_shop" class="space-y-1 mb-1">
 					<label class="flex items-center gap-2 text-sm font-semibold text-gray-800">
 						<input
 							type="checkbox"
@@ -1165,24 +1165,24 @@ function getServerName(serverId) {
 							</div>
 						</div>
 
-						<!-- Mark All as Checked -->
-						<div class="flex items-center gap-2">
-							<BaseButton
-								type="button"
-								variant="secondary"
-								@click="handleMarkAllAsChecked"
-								:disabled="markingAsChecked || !shopItems || shopItems.length === 0"
-								class="px-3 py-1.5 text-xs sm:text-sm">
-								<template #left-icon>
-									<ArrowPathIcon
-										:class="[
-											'w-4 h-4',
-											markingAsChecked ? 'animate-spin' : ''
-										]" />
-								</template>
-								{{ markingAsChecked ? 'Marking...' : 'Mark All as Price Checked Today' }}
-							</BaseButton>
-						</div>
+					<!-- Mark All as Checked -->
+					<div v-if="!selectedShop.is_own_shop" class="flex items-center gap-2">
+						<BaseButton
+							type="button"
+							variant="secondary"
+							@click="handleMarkAllAsChecked"
+							:disabled="markingAsChecked || !shopItems || shopItems.length === 0"
+							class="px-3 py-1.5 text-xs sm:text-sm">
+							<template #left-icon>
+								<ArrowPathIcon
+									:class="[
+										'w-4 h-4',
+										markingAsChecked ? 'animate-spin' : ''
+									]" />
+							</template>
+							{{ markingAsChecked ? 'Marking...' : 'Mark All as Price Checked Today' }}
+						</BaseButton>
+					</div>
 					</div>
 				</div>
 
@@ -1347,6 +1347,7 @@ function getServerName(serverId) {
 										<div class="flex items-center justify-end gap-2">
 											<span>{{ row.lastUpdated }}</span>
 											<BaseIconButton
+												v-if="!selectedShop.is_own_shop"
 												variant="ghost-in-table"
 												:ariaLabel="'Mark as price checked today'"
 												title="Mark as price checked today"
@@ -1520,6 +1521,7 @@ function getServerName(serverId) {
 									<div class="flex items-center justify-end gap-2">
 										<span>{{ row.lastUpdated }}</span>
 										<BaseIconButton
+											v-if="!selectedShop.is_own_shop"
 											variant="ghost-in-table"
 											:ariaLabel="'Mark as price checked today'"
 											title="Mark as price checked today"
