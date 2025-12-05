@@ -370,23 +370,9 @@ export function useShopItems(shopId) {
 	const items = computed(() => {
 		if (!rawItems.value) return []
 
-		console.log('useShopItems: Raw items from VueFire:', rawItems.value)
-		console.log(
-			'useShopItems: First item keys:',
-			rawItems.value[0] ? Object.keys(rawItems.value[0]) : 'No items'
-		)
-
 		// Transform items to ensure they have proper document IDs
 		const itemsWithIds = rawItems.value.map((item, index) => {
 			let docId = item.id
-
-			// Log the item structure for debugging
-			console.log(`useShopItems: Item ${index}:`, {
-				hasId: !!item.id,
-				itemId: item.id,
-				keys: Object.keys(item),
-				item: item
-			})
 
 			// If no ID, this is a problem with VueFire setup
 			if (!docId) {
@@ -400,7 +386,6 @@ export function useShopItems(shopId) {
 			}
 		})
 
-		console.log('useShopItems: Final processed items:', itemsWithIds)
 		return itemsWithIds
 	})
 

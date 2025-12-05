@@ -47,6 +47,8 @@ const searchQuery = ref('')
 const highlightedIndex = ref(-1)
 const searchInput = ref(null)
 const dropdownContainer = ref(null)
+const enableMultipleSelection = ref(false) // Toggle for multiple selection mode
+const selectedItemIds = ref([]) // Track multiple selected items
 
 // Auto-focus search input when form is shown for adding new items
 function focusSearchInput() {
@@ -68,6 +70,8 @@ function resetForm() {
 	searchQuery.value = ''
 	formError.value = null
 	highlightedIndex.value = -1
+	enableMultipleSelection.value = false
+	selectedItemIds.value = []
 }
 
 // Initialize form when editing
@@ -94,7 +98,6 @@ onMounted(() => {
 watch(
 	() => props.editingItem,
 	(newEditingItem) => {
-		console.log('ShopItemForm: editingItem changed, isEditing:', !!newEditingItem)
 		if (newEditingItem) {
 			formData.value = {
 				item_id: newEditingItem.item_id,
@@ -118,6 +121,10 @@ watch(
 const selectedItem = computed(
 	() => props.availableItems.find((item) => item.id === formData.value.item_id) || null
 )
+
+const selectedItems = computed(() => {
+	return props.availableItems.filter((item) => selectedItemIds.value.includes(item.id))
+})
 
 const isModalVariant = computed(() => props.displayVariant === 'modal')
 
@@ -198,7 +205,42 @@ const flattenedItems = computed(() => {
 
 // Form validation
 const isFormValid = computed(() => {
-	const hasItemId = !!formData.value.item_id
+	// For editing, use single item validation
+	if (props.editingItem) {
+		const hasItemId = !!formData.value.item_id
+		const hasBuyPrice =
+			formData.value.buy_price !== null &&
+			formData.value.buy_price !== undefined &&
+			formData.value.buy_price !== ''
+		const hasSellPrice =
+			formData.value.sell_price !== null &&
+			formData.value.sell_price !== undefined &&
+			formData.value.sell_price !== ''
+		const hasAtLeastOnePrice = hasBuyPrice || hasSellPrice
+
+		if (!hasItemId) {
+			return false
+		}
+
+		if (!hasAtLeastOnePrice) {
+			return false
+		}
+
+		if (hasBuyPrice && (isNaN(formData.value.buy_price) || formData.value.buy_price < 0)) {
+			return false
+		}
+
+		if (hasSellPrice && (isNaN(formData.value.sell_price) || formData.value.sell_price < 0)) {
+			return false
+		}
+
+		return true
+	}
+
+	// For adding new items, check based on selection mode
+	const hasItem = enableMultipleSelection.value
+		? selectedItemIds.value.length > 0
+		: !!formData.value.item_id
 	const hasBuyPrice =
 		formData.value.buy_price !== null &&
 		formData.value.buy_price !== undefined &&
@@ -209,24 +251,19 @@ const isFormValid = computed(() => {
 		formData.value.sell_price !== ''
 	const hasAtLeastOnePrice = hasBuyPrice || hasSellPrice
 
-	if (!hasItemId) {
-		console.log('ShopItemForm: Validation failed - missing item_id')
+	if (!hasItem) {
 		return false
 	}
 
 	if (!hasAtLeastOnePrice) {
-		console.log('ShopItemForm: Validation failed - no prices set')
 		return false
 	}
 
-	// Validate price values if they exist
 	if (hasBuyPrice && (isNaN(formData.value.buy_price) || formData.value.buy_price < 0)) {
-		console.log('ShopItemForm: Validation failed - invalid buy_price')
 		return false
 	}
 
 	if (hasSellPrice && (isNaN(formData.value.sell_price) || formData.value.sell_price < 0)) {
-		console.log('ShopItemForm: Validation failed - invalid sell_price')
 		return false
 	}
 
@@ -237,53 +274,160 @@ const isFormValid = computed(() => {
 function handleSubmit() {
 	formError.value = null
 
-	// Validate item selection
-	if (!formData.value.item_id) {
-		formError.value = 'item_id'
+	// Handle editing mode (single item)
+	if (props.editingItem) {
+		// Validate item selection
+		if (!formData.value.item_id) {
+			formError.value = 'item_id'
+			return
+		}
+
+		// Validate at least one price
+		if (!formData.value.buy_price && !formData.value.sell_price) {
+			formError.value = 'prices'
+			return
+		}
+
+		// Validate buy price if provided
+		if (
+			formData.value.buy_price !== null &&
+			formData.value.buy_price !== undefined &&
+			formData.value.buy_price !== ''
+		) {
+			if (isNaN(formData.value.buy_price) || formData.value.buy_price < 0) {
+				formError.value = 'buy_price'
+				return
+			}
+		}
+
+		// Validate sell price if provided
+		if (
+			formData.value.sell_price !== null &&
+			formData.value.sell_price !== undefined &&
+			formData.value.sell_price !== ''
+		) {
+			if (isNaN(formData.value.sell_price) || formData.value.sell_price < 0) {
+				formError.value = 'sell_price'
+				return
+			}
+		}
+
+		// Clean up form data before submitting
+		const submitData = {
+			...formData.value,
+			buy_price: formData.value.buy_price ?? null,
+			sell_price: formData.value.sell_price ?? null,
+			stock_quantity: formData.value.stock_quantity ?? null,
+			notes: formData.value.notes?.trim() || ''
+		}
+
+		emit('submit', submitData)
 		return
 	}
 
-	// Validate at least one price
-	if (!formData.value.buy_price && !formData.value.sell_price) {
-		formError.value = 'prices'
-		return
-	}
-
-	// Validate buy price if provided
-	if (
-		formData.value.buy_price !== null &&
-		formData.value.buy_price !== undefined &&
-		formData.value.buy_price !== ''
-	) {
-		if (isNaN(formData.value.buy_price) || formData.value.buy_price < 0) {
-			formError.value = 'buy_price'
+	// Handle adding mode - check if multiple selection is enabled
+	if (enableMultipleSelection.value) {
+		// Multiple selection mode
+		// Validate item selection
+		if (selectedItemIds.value.length === 0) {
+			formError.value = 'item_id'
 			return
 		}
-	}
 
-	// Validate sell price if provided
-	if (
-		formData.value.sell_price !== null &&
-		formData.value.sell_price !== undefined &&
-		formData.value.sell_price !== ''
-	) {
-		if (isNaN(formData.value.sell_price) || formData.value.sell_price < 0) {
-			formError.value = 'sell_price'
+		// Validate at least one price
+		if (!formData.value.buy_price && !formData.value.sell_price) {
+			formError.value = 'prices'
 			return
 		}
-	}
 
-	// Clean up form data before submitting
-	const submitData = {
-		...formData.value,
-		buy_price: formData.value.buy_price ?? null,
-		sell_price: formData.value.sell_price ?? null,
-		stock_quantity: formData.value.stock_quantity ?? null,
-		notes: formData.value.notes?.trim() || ''
-	}
+		// Validate buy price if provided
+		if (
+			formData.value.buy_price !== null &&
+			formData.value.buy_price !== undefined &&
+			formData.value.buy_price !== ''
+		) {
+			if (isNaN(formData.value.buy_price) || formData.value.buy_price < 0) {
+				formError.value = 'buy_price'
+				return
+			}
+		}
 
-	console.log('Submitting cleaned data:', submitData)
-	emit('submit', submitData)
+		// Validate sell price if provided
+		if (
+			formData.value.sell_price !== null &&
+			formData.value.sell_price !== undefined &&
+			formData.value.sell_price !== ''
+		) {
+			if (isNaN(formData.value.sell_price) || formData.value.sell_price < 0) {
+				formError.value = 'sell_price'
+				return
+			}
+		}
+
+		// Create array of items with shared form data
+		const baseData = {
+			buy_price: formData.value.buy_price ?? null,
+			sell_price: formData.value.sell_price ?? null,
+			stock_quantity: formData.value.stock_quantity ?? null,
+			stock_full: formData.value.stock_full || false,
+			notes: formData.value.notes?.trim() || ''
+		}
+
+		const itemsToSubmit = selectedItemIds.value.map((itemId) => ({
+			...baseData,
+			item_id: itemId
+		}))
+
+		emit('submit', itemsToSubmit)
+	} else {
+		// Single selection mode (original behavior)
+		// Validate item selection
+		if (!formData.value.item_id) {
+			formError.value = 'item_id'
+			return
+		}
+
+		// Validate at least one price
+		if (!formData.value.buy_price && !formData.value.sell_price) {
+			formError.value = 'prices'
+			return
+		}
+
+		// Validate buy price if provided
+		if (
+			formData.value.buy_price !== null &&
+			formData.value.buy_price !== undefined &&
+			formData.value.buy_price !== ''
+		) {
+			if (isNaN(formData.value.buy_price) || formData.value.buy_price < 0) {
+				formError.value = 'buy_price'
+				return
+			}
+		}
+
+		// Validate sell price if provided
+		if (
+			formData.value.sell_price !== null &&
+			formData.value.sell_price !== undefined &&
+			formData.value.sell_price !== ''
+		) {
+			if (isNaN(formData.value.sell_price) || formData.value.sell_price < 0) {
+				formError.value = 'sell_price'
+				return
+			}
+		}
+
+		// Clean up form data before submitting
+		const submitData = {
+			...formData.value,
+			buy_price: formData.value.buy_price ?? null,
+			sell_price: formData.value.sell_price ?? null,
+			stock_quantity: formData.value.stock_quantity ?? null,
+			notes: formData.value.notes?.trim() || ''
+		}
+
+		emit('submit', submitData)
+	}
 }
 
 function handleCancel() {
@@ -323,7 +467,12 @@ function handleKeyDown(event) {
 				highlightedIndex.value >= 0 &&
 				highlightedIndex.value < flattenedItems.value.length
 			) {
-				selectItem(flattenedItems.value[highlightedIndex.value])
+				const item = flattenedItems.value[highlightedIndex.value]
+				if (enableMultipleSelection.value) {
+					toggleItemSelection(item)
+				} else {
+					selectItem(item)
+				}
 			}
 			break
 		case 'Escape':
@@ -360,6 +509,51 @@ function handleSearchInput() {
 	}
 }
 
+// Toggle item selection (for multiple selection)
+function toggleItemSelection(item) {
+	const index = selectedItemIds.value.indexOf(item.id)
+	if (index > -1) {
+		selectedItemIds.value.splice(index, 1)
+	} else {
+		selectedItemIds.value.push(item.id)
+	}
+	if (formError.value === 'item_id') {
+		formError.value = null
+	}
+}
+
+// Handle multiple selection toggle
+function handleMultipleSelectionToggle(checked) {
+	enableMultipleSelection.value = checked
+	if (!checked) {
+		// Clear multiple selections when disabling
+		selectedItemIds.value = []
+		// If we had a single item selected, keep it
+		if (formData.value.item_id) {
+			// Keep the single selection
+		}
+	} else {
+		// When enabling, move single selection to multiple if exists
+		if (formData.value.item_id && !selectedItemIds.value.includes(formData.value.item_id)) {
+			selectedItemIds.value = [formData.value.item_id]
+			formData.value.item_id = '' // Clear single selection
+		}
+	}
+}
+
+// Check if item is selected
+function isItemSelected(itemId) {
+	return selectedItemIds.value.includes(itemId)
+}
+
+// Remove selected item
+function removeSelectedItem(itemId) {
+	const index = selectedItemIds.value.indexOf(itemId)
+	if (index > -1) {
+		selectedItemIds.value.splice(index, 1)
+	}
+}
+
 // Form submission on Enter key
 function handleFormKeyDown(event) {
 	if (event.key === 'Enter' && !event.shiftKey) {
@@ -384,7 +578,7 @@ function handleFormKeyDown(event) {
 	}
 }
 
-// Select item handler
+// Select item handler (kept for backward compatibility, but not used in new multi-select mode)
 function selectItem(item) {
 	formData.value.item_id = item.id
 	searchQuery.value = '' // Clear search query when item is selected
@@ -394,11 +588,24 @@ function selectItem(item) {
 	}
 }
 
-// Clear selected item
+// Clear all selected items
+function clearSelectedItems() {
+	selectedItemIds.value = []
+	searchQuery.value = ''
+	highlightedIndex.value = -1
+	if (formError.value === 'item_id') {
+		formError.value = null
+	}
+}
+
+// Clear selected item (single mode)
 function clearSelectedItem() {
 	formData.value.item_id = ''
 	searchQuery.value = ''
 	highlightedIndex.value = -1
+	if (formError.value === 'item_id') {
+		formError.value = null
+	}
 }
 
 // Get visual index of an item in the dropdown (accounting for category grouping)
@@ -449,11 +656,12 @@ function handleOutOfStockChange(checked) {
 	}
 }
 
-// Expose focus function, submit method, and form validity for parent component
+// Expose focus function, submit method, form validity, and selected items count for parent component
 defineExpose({
 	focusSearchInput,
 	submit: handleSubmit,
-	isFormValid
+	isFormValid,
+	selectedItemsCount: computed(() => selectedItemIds.value.length)
 })
 </script>
 
@@ -469,11 +677,29 @@ defineExpose({
 		<form @submit.prevent="handleSubmit" @keydown="handleFormKeyDown" class="space-y-4">
 			<!-- Item selection -->
 			<div v-if="!editingItem">
-				<!-- Show search input when no item is selected -->
-				<div v-if="!selectedItem">
+				<!-- Show search input when no item is selected (single mode) or in multiple mode -->
+				<div v-if="!selectedItem || enableMultipleSelection">
 					<label for="item-search" class="block text-sm font-medium text-gray-700 mb-1">
-						Search and Select Item *
+						Search and Select {{ enableMultipleSelection ? 'Items' : 'Item' }} *
+						<span
+							v-if="enableMultipleSelection && selectedItemIds.length > 0"
+							class="text-gray-500 font-normal">
+							({{ selectedItemIds.length }} selected)
+						</span>
 					</label>
+
+					<!-- Enable multiple selection checkbox -->
+					<div class="mb-2">
+						<label class="flex items-center">
+							<input
+								v-model="enableMultipleSelection"
+								@change="handleMultipleSelectionToggle($event.target.checked)"
+								type="checkbox"
+								class="checkbox-input" />
+							<span class="ml-2 text-sm text-gray-700">Enable multiple selection</span>
+						</label>
+					</div>
+
 					<input
 						id="item-search"
 						ref="searchInput"
@@ -495,7 +721,31 @@ defineExpose({
 						v-if="formError === 'item_id'"
 						class="mt-1 text-sm text-red-600 font-semibold flex items-start gap-1">
 						<XCircleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
-						Please select an item
+						{{ enableMultipleSelection ? 'Please select at least one item' : 'Please select an item' }}
+					</div>
+
+					<!-- Selected items display (multiple mode only) -->
+					<div v-if="enableMultipleSelection && selectedItems.length > 0" class="mt-2 mb-2">
+						<div class="flex flex-wrap gap-2">
+							<div
+								v-for="item in selectedItems"
+								:key="item.id"
+								class="px-2 py-1 bg-sea-mist border border-highland rounded flex items-center gap-2">
+								<span class="text-sm font-medium text-heavy-metal">{{ item.name }}</span>
+								<button
+									type="button"
+									@click="removeSelectedItem(item.id)"
+									class="text-gray-600 hover:text-gray-900">
+									<XCircleIcon class="w-4 h-4" />
+								</button>
+							</div>
+						</div>
+						<button
+							type="button"
+							@click="clearSelectedItems"
+							class="mt-2 text-sm text-gray-900 hover:text-gray-700 underline">
+							Clear all selections
+						</button>
 					</div>
 
 					<!-- Item selection dropdown -->
@@ -513,17 +763,24 @@ defineExpose({
 							<div
 								v-for="(item, categoryIndex) in categoryItems"
 								:key="item.id"
-								@click="selectItem(item)"
+								@click="enableMultipleSelection ? toggleItemSelection(item) : selectItem(item)"
 								:class="[
-									'px-3 py-2 cursor-pointer border-b border-gray-100 flex items-center justify-between',
+									'px-3 py-2 cursor-pointer border-b border-gray-100 flex items-center gap-3',
 									getItemVisualIndex(category, categoryIndex) === highlightedIndex
 										? 'bg-norway text-heavy-metal'
 										: 'hover:bg-sea-mist'
 								]">
-								<div>
+								<input
+									v-if="enableMultipleSelection"
+									type="checkbox"
+									:checked="isItemSelected(item.id)"
+									@click.stop
+									@change.stop="toggleItemSelection(item)"
+									class="checkbox-input flex-shrink-0" />
+								<div class="flex-1">
 									<div class="font-medium">{{ item.name }}</div>
 								</div>
-								<div v-if="item.image" class="w-8 h-8">
+								<div v-if="item.image" class="w-8 h-8 flex-shrink-0">
 									<img
 										:src="item.image"
 										:alt="item.name"
@@ -534,9 +791,22 @@ defineExpose({
 					</div>
 				</div>
 
-				<!-- Show selected item when item is selected -->
+				<!-- Show selected item when item is selected (single mode only) -->
 				<div v-else>
 					<label class="block text-sm font-medium text-gray-700 mb-1">Item *</label>
+
+					<!-- Enable multiple selection checkbox -->
+					<div class="mb-2">
+						<label class="flex items-center">
+							<input
+								v-model="enableMultipleSelection"
+								@change="handleMultipleSelectionToggle($event.target.checked)"
+								type="checkbox"
+								class="checkbox-input" />
+							<span class="ml-2 text-sm text-gray-700">Enable multiple selection</span>
+						</label>
+					</div>
+
 					<div
 						class="px-3 py-2 bg-sea-mist border-2 border-highland rounded flex items-center justify-between">
 						<div>

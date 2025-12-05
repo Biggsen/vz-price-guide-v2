@@ -202,9 +202,6 @@ function startEdit(item) {
 	// Cancel any existing edit first
 	cancelEdit()
 
-	// Debug logging
-	console.log('ShopItemTable: Starting edit for item ID:', item.id)
-
 	// Set the new editing item
 	editingItemId.value = item.id
 	editingValues.value = {
@@ -217,13 +214,11 @@ function startEdit(item) {
 }
 
 function cancelEdit() {
-	console.log('ShopItemTable: Canceling edit')
 	editingItemId.value = null
 	editingValues.value = {}
 }
 
 function saveEdit() {
-	console.log('ShopItemTable: Saving edit for item ID:', editingItemId.value)
 	if (editingItemId.value) {
 		const item = props.items.find((i) => i.id === editingItemId.value)
 		if (item) {
@@ -274,13 +269,10 @@ watch(
 	() => props.items,
 	(newItems) => {
 		if (newItems && newItems.length > 0) {
-			console.log('ShopItemTable: Items loaded, count:', newItems.length)
-
 			// Check for missing IDs
 			const missingIds = newItems.filter((item) => !item.id)
 			if (missingIds.length > 0) {
 				console.warn('ShopItemTable: Items missing IDs:', missingIds.length)
-				console.log('First missing ID item:', missingIds[0])
 			}
 		}
 	},

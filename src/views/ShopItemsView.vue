@@ -117,7 +117,6 @@ const shopItems = computed(() => {
 	// Return empty array if there's an error or no data
 	try {
 		const items = shopItemsResult.items.value || []
-		console.log('Final shop items in view:', items)
 		return items
 	} catch (error) {
 		console.warn('Error loading shop items:', error)
@@ -535,8 +534,6 @@ function handleKeyDown(event) {
 }
 
 function showEditItemForm(shopItem) {
-	console.log('ShopItemsView: Opening edit form for item:', shopItem.id)
-	console.log('ShopItemsView: Full item data:', shopItem)
 
 	// Ensure the item has a proper document ID
 	if (!shopItem.id) {
@@ -557,9 +554,6 @@ function cancelForm() {
 
 // CRUD operations
 async function handleItemSubmit(itemData) {
-	console.log('ShopItemsView: handleItemSubmit called')
-	console.log('Is editing:', !!editingItem.value)
-
 	if (!user.value?.uid || !selectedShopId.value) return
 
 	loading.value = true
@@ -571,14 +565,11 @@ async function handleItemSubmit(itemData) {
 	// Set saving state if editing an existing item
 	if (itemIdBeingEdited) {
 		savingItemId.value = itemIdBeingEdited
-		console.log('ShopItemsView: Setting savingItemId to', itemIdBeingEdited, 'for modal edit')
 	}
 
 	try {
 		if (editingItem.value) {
-			// Update existing shop item
-			console.log('ShopItemsView: Updating existing item with ID:', editingItem.value.id)
-
+			// Update existing shop item (single item only)
 			// Validate that we have a document ID
 			if (!editingItem.value.id) {
 				throw new Error('Cannot update item: missing document ID')
@@ -586,9 +577,16 @@ async function handleItemSubmit(itemData) {
 
 			await updateShopItem(editingItem.value.id, itemData)
 		} else {
-			// Add new shop item
-			console.log('ShopItemsView: Adding new item')
-			await addShopItem(selectedShopId.value, itemData.item_id, itemData)
+			// Add new shop item(s) - handle both single item and array
+			if (Array.isArray(itemData)) {
+				// Multiple items - add each one
+				for (const item of itemData) {
+					await addShopItem(selectedShopId.value, item.item_id, item)
+				}
+			} else {
+				// Single item (backward compatibility)
+				await addShopItem(selectedShopId.value, itemData.item_id, itemData)
+			}
 		}
 
 		// Close form
@@ -687,8 +685,6 @@ async function handleMarkItemAsChecked(itemId) {
 
 // Handle quick edit from table
 async function handleQuickEdit(updatedItem) {
-	console.log('ShopItemsView: handleQuickEdit called for item:', updatedItem.id)
-	console.log('ShopItemsView: Full updated item data:', updatedItem)
 
 	// Validate that we have a document ID
 	if (!updatedItem.id) {
@@ -703,7 +699,6 @@ async function handleQuickEdit(updatedItem) {
 	const isPriceUpdate = savingPriceId.value !== null
 	if (!isPriceUpdate) {
 		savingItemId.value = updatedItem.id
-		console.log('ShopItemsView: Setting savingItemId to', updatedItem.id)
 	}
 	error.value = null
 
@@ -717,18 +712,10 @@ async function handleQuickEdit(updatedItem) {
 			notes: updatedItem.notes !== undefined ? updatedItem.notes : ''
 		}
 
-		console.log('ShopItemsView: Updating item ID:', updatedItem.id, 'with data:', updateData)
 		await updateShopItem(updatedItem.id, updateData)
 
 		// Handle shop owner_funds update if needed
 		if (updatedItem._setOwnerFunds !== undefined && updatedItem._shopId) {
-			console.log(
-				'ShopItemsView: Setting owner_funds to',
-				updatedItem._setOwnerFunds,
-				'for shop:',
-				updatedItem._shopId
-			)
-
 			// Import shop utilities if needed
 			const { updateShop } = await import('../utils/shopProfile.js')
 			await updateShop(updatedItem._shopId, { owner_funds: updatedItem._setOwnerFunds })
@@ -1618,9 +1605,17 @@ function getServerName(serverId) {
 					<BaseButton
 						type="button"
 						variant="primary"
-						:disabled="loading"
+						:disabled="loading || !shopItemForm?.isFormValid"
 						@click="shopItemForm?.submit()">
-						{{ loading ? 'Saving...' : editingItem ? 'Update Item' : 'Add Item' }}
+						{{
+							loading
+								? 'Saving...'
+								: editingItem
+									? 'Update Item'
+									: shopItemForm?.selectedItemsCount > 1
+										? `Add ${shopItemForm.selectedItemsCount} Items`
+										: 'Add Item'
+						}}
 					</BaseButton>
 				</div>
 			</div>
