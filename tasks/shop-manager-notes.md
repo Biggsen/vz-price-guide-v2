@@ -19,11 +19,12 @@ created_at: 2025-11-11
 -   Require server version selector to support minor versions (e.g., 1.21.4 instead of only 1.21).
 -   The server cards aren't working so well for managing a lot of shops. It gets very long and there's little space to have sorting and such. Considering that a table might be better.
 -   Inline price editing on the market overview would be great.
--   Being able to add multiple items at once would be great. It could be a checkbox in the item selector and you can check many items. They'd all share the same other values (buy, sell, notes).
+-   ~~Being able to add multiple items at once would be great. It could be a checkbox in the item selector and you can check many items. They'd all share the same other values (buy, sell, notes).~~ ✅ Implemented: Added "Enable multiple selection" checkbox below the search label. When enabled, checkboxes appear in the dropdown and users can select multiple items that share the same buy/sell prices and notes.
 -   Add a reset button for the search on market overview.
 -   Would be good to be able to mark or star or favorite items. When you found the cheapest option, marking it would be good.
 -   ~~Need a way to mark when a player shop is fully added so all of its items are accounted for.~~ ✅ Implemented: "Shop is fully cataloged" checkbox in ShopItemsView (simplified to boolean in 2025-12-04)
 
 ## Notes
 
-- **2025-12-04**: Simplified `fully_cataloged` field from a complex map structure (with `at`, `by`, `by_label`, `notes`) to a simple boolean. The catalog checkbox in ShopItemsView now sets `fully_cataloged: true/false` directly. Removed all catalog metadata helpers and UI elements that displayed catalog dates/notes.
+-   **2025-12-04**: Simplified `fully_cataloged` field from a complex map structure (with `at`, `by`, `by_label`, `notes`) to a simple boolean. The catalog checkbox in ShopItemsView now sets `fully_cataloged: true/false` directly. Removed all catalog metadata helpers and UI elements that displayed catalog dates/notes.
+-   **2025-12-05**: Implemented multiple item selection feature. Added "Enable multiple selection" checkbox that appears below the "Search and Select Item(s)" label. When enabled, checkboxes appear next to each item in the dropdown, and users can select multiple items that will all share the same buy price, sell price, and notes when submitted. Removed all console.log statements from shop manager, shop components, and useShopItems utility.

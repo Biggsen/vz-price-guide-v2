@@ -10,7 +10,7 @@
 	"status": "active",
 	"domain": "minecraft",
 	"type": "webapp",
-	"lastUpdated": "2025-12-04",
+	"lastUpdated": "2025-12-05",
 	"links": {
 		"prod": "https://minecraft-economy-price-guide.net/",
 		"staging": null
@@ -55,7 +55,7 @@
 
 -   **User Accounts System** - Registration, authentication, email verification, password reset
 -   **Recipes & Dynamic Pricing** - 2,000+ recipes with automatic price calculations
--   **Shop Manager** - Multi-server shop tracking with price history
+-   **Shop Manager** - Multi-server shop tracking
 -   **Crate Rewards Management** - YAML import, custom pricing, value calculations
 -   **Suggestions System** - User feedback and feature requests with admin management
 -   **Price Export** - JSON/YAML export with filtering and version selection
@@ -105,7 +105,7 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 -   [x] Recipes & Dynamic Pricing - 2,000+ recipes with automatic price calculations
 -   [x] Suggestions System - User feedback and feature requests with admin management
 -   [x] Crate Rewards Management - YAML import, custom pricing, value calculations
--   [x] Shop Manager - Multi-server shop tracking with price history and catalog status (75% complete)
+-   [x] Shop Manager - Multi-server shop tracking (80% complete)
 -   [x] Price Export - JSON/YAML export with filtering and version selection
 -   [x] Bulk Item Management - Admin tools for managing the item catalog
 -   [x] Visual Testing - Comprehensive screenshot-based testing system
@@ -134,6 +134,14 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 -   1,400+ items across 6 Minecraft versions (1.16-1.21)
 -   Comprehensive item data with images and metadata
 -   Status: Production ready
+
+#### Shop Manager
+
+-   Multi-server shop tracking with price history
+-   Catalog status tracking (fully_cataloged boolean field)
+-   Multiple item selection - users can select multiple items at once when adding to shops
+-   Selected items share the same buy price, sell price, and notes
+-   Status: 80% complete (Phase 7 in progress)
 
 ---
 
@@ -345,6 +353,7 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 -   **Core Features**: 85% complete
 -   **User Management**: 90% complete
 -   **Data Management**: 95% complete
+-   **Shop Manager**: 80% complete
 -   **Testing Coverage**: 80% complete
 
 ### Technical Debt
@@ -421,6 +430,7 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 
 ### Recent Changes
 
+-   **2025-12-05**: Implemented multiple item selection feature in Shop Manager. Added "Enable multiple selection" checkbox that allows users to select multiple items at once when adding to shops. Selected items share the same buy price, sell price, and notes. Removed all console.log debug statements from shop manager components (ShopItemsView, ShopItemForm, ShopItemTable) and useShopItems utility for cleaner production code.
 -   **2025-12-04**: Simplified shop `fully_cataloged` field from complex map structure (with `at`, `by`, `by_label`, `notes`) to a simple boolean. Updated Firestore rules to validate boolean type, removed catalog metadata helpers from codebase, and simplified UI to show catalog status as a checkbox.
 
 ### Development Workflow
