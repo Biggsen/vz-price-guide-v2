@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { disabledCategories, enabledCategories } from '../constants.js'
 import { getMajorMinorVersion } from '../utils/serverProfile.js'
@@ -48,6 +48,7 @@ const searchQuery = ref('')
 const highlightedIndex = ref(-1)
 const searchInput = ref(null)
 const dropdownContainer = ref(null)
+const buyPriceInput = ref(null)
 const enableMultipleSelection = ref(false) // Toggle for multiple selection mode
 const selectedItemIds = ref([]) // Track multiple selected items
 
@@ -531,7 +532,7 @@ function scrollToHighlightedItem() {
 	if (!dropdownContainer.value || highlightedIndex.value < 0) return
 
 	setTimeout(() => {
-		const highlightedElement = dropdownContainer.value.querySelector('.bg-blue-100')
+		const highlightedElement = dropdownContainer.value.querySelector('.bg-norway')
 		if (highlightedElement) {
 			highlightedElement.scrollIntoView({
 				behavior: 'smooth',
@@ -625,6 +626,15 @@ function selectItem(item) {
 	highlightedIndex.value = -1 // Reset highlight
 	if (formError.value === 'item_id') {
 		formError.value = null
+	}
+
+	// Auto-focus buy price field in single-select mode
+	if (!enableMultipleSelection.value) {
+		nextTick(() => {
+			if (buyPriceInput.value) {
+				buyPriceInput.value.focus()
+			}
+		})
 	}
 }
 
@@ -912,6 +922,7 @@ defineExpose({
 					</p>
 					<input
 						id="buy-price"
+						ref="buyPriceInput"
 						:value="formData.buy_price"
 						@input="handlePriceInput('buy_price', $event)"
 						type="number"
