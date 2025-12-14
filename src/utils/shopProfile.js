@@ -91,13 +91,31 @@ export async function updateShop(shopId, updates) {
 
 	try {
 		const db = getFirestore()
-		const updatedData = {
-			...updates,
-			updated_at: new Date().toISOString()
+		const docRef = doc(db, 'shops', shopId)
+
+		// Always include fully_cataloged in updates to ensure it exists
+		// If not provided, preserve existing value or default to false
+		let fullyCatalogedValue
+		if (Object.prototype.hasOwnProperty.call(updates, 'fully_cataloged')) {
+			fullyCatalogedValue = normalizeFullyCataloged(updates.fully_cataloged)
+		} else {
+			// Get existing value to preserve it
+			const docSnap = await getDoc(docRef)
+			if (docSnap.exists()) {
+				const existingData = docSnap.data()
+				fullyCatalogedValue =
+					existingData.fully_cataloged !== undefined
+						? normalizeFullyCataloged(existingData.fully_cataloged)
+						: false
+			} else {
+				fullyCatalogedValue = false
+			}
 		}
 
-		if (Object.prototype.hasOwnProperty.call(updates, 'fully_cataloged')) {
-			updatedData.fully_cataloged = normalizeFullyCataloged(updates.fully_cataloged)
+		const updatedData = {
+			...updates,
+			fully_cataloged: fullyCatalogedValue,
+			updated_at: new Date().toISOString()
 		}
 
 		// Clean up string fields
@@ -105,7 +123,6 @@ export async function updateShop(shopId, updates) {
 		if (updatedData.location) updatedData.location = updatedData.location.trim()
 		if (updatedData.description) updatedData.description = updatedData.description.trim()
 
-		const docRef = doc(db, 'shops', shopId)
 		await updateDoc(docRef, updatedData)
 		return updatedData
 	} catch (error) {
