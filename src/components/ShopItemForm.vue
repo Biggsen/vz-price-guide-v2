@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { getEffectivePrice } from '../utils/pricing.js'
-import { disabledCategories } from '../constants.js'
+import { disabledCategories, enabledCategories } from '../constants.js'
 import BaseButton from './BaseButton.vue'
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 
@@ -185,17 +185,55 @@ const itemsByCategory = computed(() => {
 		grouped[category].push(item)
 	})
 
+	// Sort items within each category by subcategory and name (matching HomeView ordering)
+	Object.keys(grouped).forEach((category) => {
+		grouped[category].sort((a, b) => {
+			// First sort by subcategory
+			const subcatA = a.subcategory || ''
+			const subcatB = b.subcategory || ''
+			if (subcatA !== subcatB) {
+				return subcatA.localeCompare(subcatB)
+			}
+			// Then sort by name
+			const nameA = a.name || ''
+			const nameB = b.name || ''
+			return nameA.localeCompare(nameB)
+		})
+	})
+
 	return grouped
+})
+
+// Order categories according to enabledCategories array (matching main price guide)
+const orderedItemsByCategory = computed(() => {
+	const grouped = itemsByCategory.value
+	const ordered = {}
+
+	// Iterate through enabledCategories in order
+	enabledCategories.forEach((category) => {
+		if (grouped[category]) {
+			ordered[category] = grouped[category]
+		}
+	})
+
+	// Add any remaining categories that aren't in enabledCategories (shouldn't happen, but just in case)
+	Object.keys(grouped).forEach((category) => {
+		if (!ordered[category]) {
+			ordered[category] = grouped[category]
+		}
+	})
+
+	return ordered
 })
 
 // Flattened items list for keyboard navigation - matches visual order
 const flattenedItems = computed(() => {
 	const flattened = []
-	const grouped = itemsByCategory.value
+	const ordered = orderedItemsByCategory.value
 
-	// Flatten items in the same order they appear visually (by category)
-	Object.keys(grouped).forEach((category) => {
-		grouped[category].forEach((item) => {
+	// Flatten items in the same order they appear visually (by category, ordered)
+	Object.keys(ordered).forEach((category) => {
+		ordered[category].forEach((item) => {
 			flattened.push(item)
 		})
 	})
@@ -611,9 +649,9 @@ function clearSelectedItem() {
 // Get visual index of an item in the dropdown (accounting for category grouping)
 function getItemVisualIndex(targetCategory, targetCategoryIndex) {
 	let visualIndex = 0
-	const grouped = itemsByCategory.value
+	const ordered = orderedItemsByCategory.value
 
-	for (const [category, categoryItems] of Object.entries(grouped)) {
+	for (const [category, categoryItems] of Object.entries(ordered)) {
 		if (category === targetCategory) {
 			return visualIndex + targetCategoryIndex
 		}
@@ -696,7 +734,9 @@ defineExpose({
 								@change="handleMultipleSelectionToggle($event.target.checked)"
 								type="checkbox"
 								class="checkbox-input" />
-							<span class="ml-2 text-sm text-gray-700">Enable multiple selection</span>
+							<span class="ml-2 text-sm text-gray-700">
+								Enable multiple selection
+							</span>
 						</label>
 					</div>
 
@@ -721,17 +761,25 @@ defineExpose({
 						v-if="formError === 'item_id'"
 						class="mt-1 text-sm text-red-600 font-semibold flex items-start gap-1">
 						<XCircleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
-						{{ enableMultipleSelection ? 'Please select at least one item' : 'Please select an item' }}
+						{{
+							enableMultipleSelection
+								? 'Please select at least one item'
+								: 'Please select an item'
+						}}
 					</div>
 
 					<!-- Selected items display (multiple mode only) -->
-					<div v-if="enableMultipleSelection && selectedItems.length > 0" class="mt-2 mb-2">
+					<div
+						v-if="enableMultipleSelection && selectedItems.length > 0"
+						class="mt-2 mb-2">
 						<div class="flex flex-wrap gap-2">
 							<div
 								v-for="item in selectedItems"
 								:key="item.id"
 								class="px-2 py-1 bg-sea-mist border border-highland rounded flex items-center gap-2">
-								<span class="text-sm font-medium text-heavy-metal">{{ item.name }}</span>
+								<span class="text-sm font-medium text-heavy-metal">
+									{{ item.name }}
+								</span>
 								<button
 									type="button"
 									@click="removeSelectedItem(item.id)"
@@ -754,7 +802,7 @@ defineExpose({
 						ref="dropdownContainer"
 						class="max-h-64 overflow-y-auto border-2 border-gray-asparagus rounded-md bg-white">
 						<template
-							v-for="(categoryItems, category) in itemsByCategory"
+							v-for="(categoryItems, category) in orderedItemsByCategory"
 							:key="category">
 							<div
 								class="px-3 py-2 bg-gray-100 text-sm font-medium text-gray-700 border-b">
@@ -763,7 +811,11 @@ defineExpose({
 							<div
 								v-for="(item, categoryIndex) in categoryItems"
 								:key="item.id"
-								@click="enableMultipleSelection ? toggleItemSelection(item) : selectItem(item)"
+								@click="
+									enableMultipleSelection
+										? toggleItemSelection(item)
+										: selectItem(item)
+								"
 								:class="[
 									'px-3 py-2 cursor-pointer border-b border-gray-100 flex items-center gap-3',
 									getItemVisualIndex(category, categoryIndex) === highlightedIndex
@@ -803,7 +855,9 @@ defineExpose({
 								@change="handleMultipleSelectionToggle($event.target.checked)"
 								type="checkbox"
 								class="checkbox-input" />
-							<span class="ml-2 text-sm text-gray-700">Enable multiple selection</span>
+							<span class="ml-2 text-sm text-gray-700">
+								Enable multiple selection
+							</span>
 						</label>
 					</div>
 
