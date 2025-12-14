@@ -51,7 +51,10 @@ function loadSortSettings() {
 		const savedSortDirection = sessionStorage.getItem('marketOverviewSortDirection')
 		return {
 			field: savedSortField || '',
-			direction: (savedSortDirection && ['asc', 'desc'].includes(savedSortDirection)) ? savedSortDirection : 'asc'
+			direction:
+				savedSortDirection && ['asc', 'desc'].includes(savedSortDirection)
+					? savedSortDirection
+					: 'asc'
 		}
 	} catch (error) {
 		console.warn('Error loading sort settings:', error)
@@ -65,13 +68,17 @@ const sortDirection = ref(initialSortSettings.direction)
 
 // Check if user is admin
 const userIsAdmin = ref(false)
-watch(user, async (newUser) => {
-	if (newUser) {
-		userIsAdmin.value = await isAdmin(newUser)
-	} else {
-		userIsAdmin.value = false
-	}
-}, { immediate: true })
+watch(
+	user,
+	async (newUser) => {
+		if (newUser) {
+			userIsAdmin.value = await isAdmin(newUser)
+		} else {
+			userIsAdmin.value = false
+		}
+	},
+	{ immediate: true }
+)
 
 // Get user's shops and servers
 const { shops } = useShops(computed(() => user.value?.uid))
@@ -185,6 +192,14 @@ const shopItemsByCategory = computed(() => {
 	return grouped
 })
 
+// Count filtered items for search results
+const filteredItemCount = computed(() => {
+	return Object.values(filteredShopItemsByCategory.value).reduce(
+		(total, items) => total + items.length,
+		0
+	)
+})
+
 // Filtered version for search
 const filteredShopItemsByCategory = computed(() => {
 	if (!shopItemsByCategory.value) return {}
@@ -242,8 +257,22 @@ const baseTableColumns = computed(() => {
 	const columns = [
 		{ key: 'item', label: 'Item', sortable: true, headerAlign: 'center' },
 		{ key: 'shop', label: 'Shop', sortable: true, headerAlign: 'center' },
-		{ key: 'buyPrice', label: 'Buy Price', align: 'right', headerAlign: 'center', sortable: true, width: 'w-32' },
-		{ key: 'sellPrice', label: 'Sell Price', align: 'right', headerAlign: 'center', sortable: true, width: 'w-32' },
+		{
+			key: 'buyPrice',
+			label: 'Buy Price',
+			align: 'right',
+			headerAlign: 'center',
+			sortable: true,
+			width: 'w-32'
+		},
+		{
+			key: 'sellPrice',
+			label: 'Sell Price',
+			align: 'right',
+			headerAlign: 'center',
+			sortable: true,
+			width: 'w-32'
+		},
 		{
 			key: 'profitMargin',
 			label: 'Profit %',
@@ -286,7 +315,9 @@ const baseTableRowsByCategory = computed(() => {
 	if (!filteredShopItemsByCategory.value) return {}
 	const grouped = {}
 	Object.entries(filteredShopItemsByCategory.value).forEach(([category, categoryItems]) => {
-		grouped[category] = categoryItems.map((item) => transformShopItem(item, { includeShop: true }))
+		grouped[category] = categoryItems.map((item) =>
+			transformShopItem(item, { includeShop: true })
+		)
 	})
 	return grouped
 })
@@ -294,24 +325,24 @@ const baseTableRowsByCategory = computed(() => {
 // Sorted categories to match price guide order
 const sortedCategories = computed(() => {
 	if (!baseTableRowsByCategory.value) return []
-	
+
 	const categoryKeys = Object.keys(baseTableRowsByCategory.value)
 	const orderedCategories = []
-	
+
 	// First, add categories in the order they appear in enabledCategories
 	enabledCategories.forEach((category) => {
 		if (categoryKeys.includes(category)) {
 			orderedCategories.push(category)
 		}
 	})
-	
+
 	// Then, add any categories that aren't in enabledCategories (like 'Uncategorized')
 	categoryKeys.forEach((category) => {
 		if (!enabledCategories.includes(category)) {
 			orderedCategories.push(category)
 		}
 	})
-	
+
 	return orderedCategories
 })
 
@@ -326,7 +357,6 @@ function navigateToShopItems(shopId) {
 function resetSearch() {
 	searchQuery.value = ''
 }
-
 
 // Watch for user changes - redirect if not logged in
 watch(
@@ -343,7 +373,7 @@ watch(
 watch(servers, (newServers) => {
 	if (newServers && newServers.length > 0) {
 		// If serverId from query param exists and is valid, use it
-		if (route.query.serverId && newServers.some(s => s.id === route.query.serverId)) {
+		if (route.query.serverId && newServers.some((s) => s.id === route.query.serverId)) {
 			selectedServerId.value = route.query.serverId
 		} else if (!selectedServerId.value) {
 			// Auto-select first server if none selected
@@ -359,7 +389,7 @@ onMounted(() => {
 
 // Save view settings when they change
 watch(
-	[viewMode, layout],
+	[viewMode, layout, searchQuery],
 	() => {
 		saveViewSettings()
 	},
@@ -367,12 +397,9 @@ watch(
 )
 
 // Save sorting state when it changes
-watch(
-	[sortField, sortDirection],
-	() => {
-		saveSortSettings()
-	}
-)
+watch([sortField, sortDirection], () => {
+	saveSortSettings()
+})
 
 // Handle sort event from BaseTable
 function handleSort(event) {
@@ -385,6 +412,7 @@ function loadViewSettings() {
 	try {
 		const savedViewMode = localStorage.getItem('marketOverviewViewMode')
 		const savedLayout = localStorage.getItem('marketOverviewLayout')
+		const savedSearchQuery = localStorage.getItem('marketOverviewSearchQuery')
 
 		if (savedViewMode && ['categories', 'list'].includes(savedViewMode)) {
 			viewMode.value = savedViewMode
@@ -392,6 +420,10 @@ function loadViewSettings() {
 
 		if (savedLayout && ['comfortable', 'condensed'].includes(savedLayout)) {
 			layout.value = savedLayout
+		}
+
+		if (savedSearchQuery !== null) {
+			searchQuery.value = savedSearchQuery
 		}
 	} catch (error) {
 		console.warn('Error loading view settings:', error)
@@ -402,6 +434,7 @@ function saveViewSettings() {
 	try {
 		localStorage.setItem('marketOverviewViewMode', viewMode.value)
 		localStorage.setItem('marketOverviewLayout', layout.value)
+		localStorage.setItem('marketOverviewSearchQuery', searchQuery.value)
 	} catch (error) {
 		console.warn('Error saving view settings:', error)
 	}
@@ -430,18 +463,18 @@ function getServerName(serverId) {
 const marketStats = computed(() => {
 	if (!shopItems.value || !serverShops.value) return null
 
-	// Count filtered items for display
-	const filteredItemCount = Object.values(filteredShopItemsByCategory.value).reduce(
+	// Count total items (unfiltered)
+	const totalItemCount = Object.values(shopItemsByCategory.value).reduce(
 		(total, items) => total + items.length,
 		0
 	)
 
 	const stats = {
-		totalItems: filteredItemCount,
+		totalItems: totalItemCount,
 		totalShops: serverShops.value.length,
 		userShops: serverShops.value.filter((shop) => shop.is_own_shop === true).length,
 		competitorShops: serverShops.value.filter((shop) => shop.is_own_shop !== true).length,
-		categoriesCount: Object.keys(filteredShopItemsByCategory.value).length
+		categoriesCount: Object.keys(shopItemsByCategory.value).length
 	}
 
 	return stats
@@ -631,60 +664,97 @@ const priceAnalysis = computed(() => {
 				v-if="selectedServer && priceAnalysis && priceAnalysis.opportunities.length > 0"
 				class="mb-6">
 				<details class="group">
-					<summary class="text-lg font-semibold text-gray-900 mb-3 cursor-pointer list-none flex items-center gap-2">
+					<summary
+						class="text-lg font-semibold text-gray-900 mb-3 cursor-pointer list-none flex items-center gap-2">
 						<span>Opportunities</span>
-						<ChevronRightIcon class="w-5 h-5 transition-transform duration-200 group-open:rotate-90" />
+						<ChevronRightIcon
+							class="w-5 h-5 transition-transform duration-200 group-open:rotate-90" />
 					</summary>
 					<div class="space-y-4 mt-3">
-					<div
-						v-for="opportunity in priceAnalysis.opportunities"
-						:key="opportunity.itemId"
-						class="flex items-start">
-					<div class="flex items-start">
 						<div
-							v-if="opportunity.itemImage"
-							class="w-10 h-10 mr-3 flex-shrink-0">
-							<img
-								:src="opportunity.itemImage"
-								:alt="opportunity.itemName"
-								class="w-full h-full object-contain" />
-						</div>
-						<div>
-							<div class="font-medium text-gray-900">
-								{{ opportunity.itemName }}
-							</div>
-							<div class="text-sm text-gray-600 space-y-1">
-								<div class="flex items-center gap-2">
-									<span class="font-semibold w-20">Buy from:</span>
+							v-for="opportunity in priceAnalysis.opportunities"
+							:key="opportunity.itemId"
+							class="flex items-start">
+							<div class="flex items-start">
+								<div
+									v-if="opportunity.itemImage"
+									class="w-10 h-10 mr-3 flex-shrink-0">
 									<img
-										v-if="opportunity.buyShopPlayer"
-										:src="generateMinecraftAvatar(opportunity.buyShopPlayer)"
-										:alt="opportunity.buyShopPlayer"
-										class="w-4 h-4 rounded"
-										@error="$event.target.style.display = 'none'" />
-									<span>{{ opportunity.buyShopPlayer || opportunity.buyShop }}<span v-if="opportunity.buyShopPlayer && opportunity.buyShopPlayer !== opportunity.buyShop"> - {{ opportunity.buyShop }}</span> at {{ opportunity.buyPrice }}</span>
+										:src="opportunity.itemImage"
+										:alt="opportunity.itemName"
+										class="w-full h-full object-contain" />
 								</div>
-								<div class="flex items-center gap-2">
-									<span class="font-semibold w-20">Sell to:</span>
-									<img
-										v-if="opportunity.sellShopPlayer"
-										:src="generateMinecraftAvatar(opportunity.sellShopPlayer)"
-										:alt="opportunity.sellShopPlayer"
-										class="w-4 h-4 rounded"
-										@error="$event.target.style.display = 'none'" />
-									<span>{{ opportunity.sellShopPlayer || opportunity.sellShop }}<span v-if="opportunity.sellShopPlayer && opportunity.sellShopPlayer !== opportunity.sellShop"> - {{ opportunity.sellShop }}</span> at {{ opportunity.sellPrice }}</span>
-								</div>
-								<div class="flex items-center gap-2">
-									<span class="font-semibold w-20">Profit:</span>
-									<div class="font-bold text-semantic-success">
-										+{{ opportunity.profit.toFixed(2) }}
+								<div>
+									<div class="font-medium text-gray-900">
+										{{ opportunity.itemName }}
 									</div>
-									<span class="text-sm text-gray-500">per item</span>
+									<div class="text-sm text-gray-600 space-y-1">
+										<div class="flex items-center gap-2">
+											<span class="font-semibold w-20">Buy from:</span>
+											<img
+												v-if="opportunity.buyShopPlayer"
+												:src="
+													generateMinecraftAvatar(
+														opportunity.buyShopPlayer
+													)
+												"
+												:alt="opportunity.buyShopPlayer"
+												class="w-4 h-4 rounded"
+												@error="$event.target.style.display = 'none'" />
+											<span>
+												{{
+													opportunity.buyShopPlayer || opportunity.buyShop
+												}}
+												<span
+													v-if="
+														opportunity.buyShopPlayer &&
+														opportunity.buyShopPlayer !==
+															opportunity.buyShop
+													">
+													- {{ opportunity.buyShop }}
+												</span>
+												at {{ opportunity.buyPrice }}
+											</span>
+										</div>
+										<div class="flex items-center gap-2">
+											<span class="font-semibold w-20">Sell to:</span>
+											<img
+												v-if="opportunity.sellShopPlayer"
+												:src="
+													generateMinecraftAvatar(
+														opportunity.sellShopPlayer
+													)
+												"
+												:alt="opportunity.sellShopPlayer"
+												class="w-4 h-4 rounded"
+												@error="$event.target.style.display = 'none'" />
+											<span>
+												{{
+													opportunity.sellShopPlayer ||
+													opportunity.sellShop
+												}}
+												<span
+													v-if="
+														opportunity.sellShopPlayer &&
+														opportunity.sellShopPlayer !==
+															opportunity.sellShop
+													">
+													- {{ opportunity.sellShop }}
+												</span>
+												at {{ opportunity.sellPrice }}
+											</span>
+										</div>
+										<div class="flex items-center gap-2">
+											<span class="font-semibold w-20">Profit:</span>
+											<div class="font-bold text-semantic-success">
+												+{{ opportunity.profit.toFixed(2) }}
+											</div>
+											<span class="text-sm text-gray-500">per item</span>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
-					</div>
-				</div>
 					</div>
 				</details>
 			</div>
@@ -716,10 +786,12 @@ const priceAnalysis = computed(() => {
 						</BaseButton>
 					</div>
 				</div>
-				<p class="text-xs text-gray-500 mt-1 sm:hidden">Tip: Use commas to search multiple terms</p>
+				<p class="text-xs text-gray-500 mt-1 sm:hidden">
+					Tip: Use commas to search multiple terms
+				</p>
 				<div v-if="searchQuery" class="mt-2 text-sm text-gray-600">
-					Showing {{ marketStats?.totalItems || 0 }} item{{
-						marketStats?.totalItems === 1 ? '' : 's'
+					Showing {{ filteredItemCount }} item{{
+						filteredItemCount === 1 ? '' : 's'
 					}}
 					matching "{{ searchQuery }}"
 				</div>
@@ -731,7 +803,8 @@ const priceAnalysis = computed(() => {
 					<!-- View Mode -->
 					<div>
 						<span class="text-sm font-medium text-gray-700 block">View as:</span>
-						<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
+						<div
+							class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
 							<button
 								@click="viewMode = 'categories'"
 								:class="[
@@ -758,7 +831,8 @@ const priceAnalysis = computed(() => {
 					<!-- Layout -->
 					<div>
 						<span class="text-sm font-medium text-gray-700 block">Layout:</span>
-						<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
+						<div
+							class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
 							<button
 								@click="layout = 'comfortable'"
 								:class="[
@@ -791,14 +865,13 @@ const priceAnalysis = computed(() => {
 					<div
 						v-if="searchQuery && Object.keys(filteredShopItemsByCategory).length === 0"
 						class="text-gray-600">
-						<p class="text-lg font-medium mb-2">No items found matching "{{ searchQuery }}"</p>
+						<p class="text-lg font-medium mb-2">
+							No items found matching "{{ searchQuery }}"
+						</p>
 						<p class="text-sm">Try searching for a different item name</p>
 					</div>
 					<div v-else class="space-y-6">
-						<div
-							v-for="category in sortedCategories"
-							:key="category"
-							class="mb-6">
+						<div v-for="category in sortedCategories" :key="category" class="mb-6">
 							<BaseTable
 								:columns="baseTableColumns"
 								:rows="baseTableRowsByCategory[category]"
@@ -808,10 +881,18 @@ const priceAnalysis = computed(() => {
 								:initial-sort-field="sortField"
 								:initial-sort-direction="sortDirection"
 								@sort="handleSort"
-								:caption="category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()">
+								:caption="
+									category.charAt(0).toUpperCase() +
+									category.slice(1).toLowerCase()
+								">
 								<template #cell-item="{ row, layout }">
 									<div class="flex items-center">
-										<div v-if="row.image" :class="[layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8', 'mr-3 flex-shrink-0']">
+										<div
+											v-if="row.image"
+											:class="[
+												layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8',
+												'mr-3 flex-shrink-0'
+											]">
 											<img
 												:src="getImageUrl(row.image)"
 												:alt="row.item"
@@ -831,7 +912,12 @@ const priceAnalysis = computed(() => {
 												:alt="row.shopPlayer"
 												class="w-5 h-5 rounded mr-2 flex-shrink-0"
 												@error="$event.target.style.display = 'none'" />
-											<span>{{ row.shopPlayer }}<span v-if="row.shopPlayer !== row.shop"> - {{ row.shop }}</span></span>
+											<span>
+												{{ row.shopPlayer }}
+												<span v-if="row.shopPlayer !== row.shop">
+													- {{ row.shop }}
+												</span>
+											</span>
 										</template>
 										<template v-else>
 											<img
@@ -858,7 +944,9 @@ const priceAnalysis = computed(() => {
 										<div
 											:class="[
 												'text-right',
-												row._originalItem?.stock_quantity === 0 ? 'line-through' : ''
+												row._originalItem?.stock_quantity === 0
+													? 'line-through'
+													: ''
 											]">
 											{{ row.buyPrice }}
 										</div>
@@ -867,23 +955,46 @@ const priceAnalysis = computed(() => {
 								<template #cell-sellPrice="{ row }">
 									<div class="flex items-center justify-end gap-2">
 										<div
-											v-if="row._originalItem?.stock_full || (row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0)"
+											v-if="
+												row._originalItem?.stock_full ||
+												(row._originalItem?.shopData?.owner_funds === 0 &&
+													row._originalItem?.sell_price > 0)
+											"
 											class="flex-shrink-0 mr-auto"
-											:title="row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full'">
+											:title="
+												row._originalItem?.shopData?.owner_funds === 0 &&
+												row._originalItem?.sell_price > 0
+													? 'Shop owner has run out of money'
+													: 'Stock full'
+											">
 											<WalletIcon
-												v-if="row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0"
+												v-if="
+													row._originalItem?.shopData?.owner_funds ===
+														0 && row._originalItem?.sell_price > 0
+												"
 												class="w-5 h-5 text-current"
 												aria-label="Shop owner has run out of money" />
 											<ArchiveBoxXMarkIcon
 												v-else-if="row._originalItem?.stock_full"
 												class="w-5 h-5 text-current"
 												aria-label="Stock full" />
-											<span class="sr-only">{{ row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full' }}</span>
+											<span class="sr-only">
+												{{
+													row._originalItem?.shopData?.owner_funds ===
+														0 && row._originalItem?.sell_price > 0
+														? 'Shop owner has run out of money'
+														: 'Stock full'
+												}}
+											</span>
 										</div>
 										<div
 											:class="[
 												'text-right',
-												row._originalItem?.stock_full || (row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0) ? 'line-through' : ''
+												row._originalItem?.stock_full ||
+												(row._originalItem?.shopData?.owner_funds === 0 &&
+													row._originalItem?.sell_price > 0)
+													? 'line-through'
+													: ''
 											]">
 											{{ row.sellPrice }}
 										</div>
@@ -904,9 +1015,7 @@ const priceAnalysis = computed(() => {
 
 				<!-- List View -->
 				<template v-else-if="viewMode === 'list'">
-					<div
-						v-if="allVisibleItems.length === 0"
-						class="text-gray-600">
+					<div v-if="allVisibleItems.length === 0" class="text-gray-600">
 						<p class="text-lg font-medium mb-2">No items found</p>
 						<p class="text-sm">
 							{{
@@ -929,7 +1038,12 @@ const priceAnalysis = computed(() => {
 							caption="All Items">
 							<template #cell-item="{ row, layout }">
 								<div class="flex items-center">
-									<div v-if="row.image" :class="[layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8', 'mr-3 flex-shrink-0']">
+									<div
+										v-if="row.image"
+										:class="[
+											layout === 'condensed' ? 'w-6 h-6' : 'w-8 h-8',
+											'mr-3 flex-shrink-0'
+										]">
 										<img
 											:src="getImageUrl(row.image)"
 											:alt="row.item"
@@ -949,7 +1063,12 @@ const priceAnalysis = computed(() => {
 											:alt="row.shopPlayer"
 											class="w-5 h-5 rounded mr-2 flex-shrink-0"
 											@error="$event.target.style.display = 'none'" />
-										<span>{{ row.shopPlayer }}<span v-if="row.shopPlayer !== row.shop"> - {{ row.shop }}</span></span>
+										<span>
+											{{ row.shopPlayer }}
+											<span v-if="row.shopPlayer !== row.shop">
+												- {{ row.shop }}
+											</span>
+										</span>
 									</template>
 									<template v-else>
 										<img
@@ -976,7 +1095,9 @@ const priceAnalysis = computed(() => {
 									<div
 										:class="[
 											'text-right',
-											row._originalItem?.stock_quantity === 0 ? 'line-through' : ''
+											row._originalItem?.stock_quantity === 0
+												? 'line-through'
+												: ''
 										]">
 										{{ row.buyPrice }}
 									</div>
@@ -985,23 +1106,46 @@ const priceAnalysis = computed(() => {
 							<template #cell-sellPrice="{ row }">
 								<div class="flex items-center justify-end gap-2">
 									<div
-										v-if="row._originalItem?.stock_full || (row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0)"
+										v-if="
+											row._originalItem?.stock_full ||
+											(row._originalItem?.shopData?.owner_funds === 0 &&
+												row._originalItem?.sell_price > 0)
+										"
 										class="flex-shrink-0 mr-auto"
-										:title="row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full'">
+										:title="
+											row._originalItem?.shopData?.owner_funds === 0 &&
+											row._originalItem?.sell_price > 0
+												? 'Shop owner has run out of money'
+												: 'Stock full'
+										">
 										<WalletIcon
-											v-if="row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0"
+											v-if="
+												row._originalItem?.shopData?.owner_funds === 0 &&
+												row._originalItem?.sell_price > 0
+											"
 											class="w-5 h-5 text-current"
 											aria-label="Shop owner has run out of money" />
 										<ArchiveBoxIcon
 											v-else-if="row._originalItem?.stock_full"
 											class="w-5 h-5 text-current"
 											aria-label="Stock full" />
-										<span class="sr-only">{{ row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0 ? 'Shop owner has run out of money' : 'Stock full' }}</span>
+										<span class="sr-only">
+											{{
+												row._originalItem?.shopData?.owner_funds === 0 &&
+												row._originalItem?.sell_price > 0
+													? 'Shop owner has run out of money'
+													: 'Stock full'
+											}}
+										</span>
 									</div>
 									<div
 										:class="[
 											'text-right',
-											row._originalItem?.stock_full || (row._originalItem?.shopData?.owner_funds === 0 && row._originalItem?.sell_price > 0) ? 'line-through' : ''
+											row._originalItem?.stock_full ||
+											(row._originalItem?.shopData?.owner_funds === 0 &&
+												row._originalItem?.sell_price > 0)
+												? 'line-through'
+												: ''
 										]">
 										{{ row.sellPrice }}
 									</div>
