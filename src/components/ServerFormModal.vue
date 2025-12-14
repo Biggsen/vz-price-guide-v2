@@ -1,9 +1,13 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
 import { XCircleIcon } from '@heroicons/vue/24/solid'
-import { getMinecraftVersions } from '../utils/serverProfile.js'
+import {
+	getMinecraftVersions,
+	getMinecraftPatches,
+	getMajorMinorVersion
+} from '../utils/serverProfile.js'
 
 const props = defineProps({
 	isOpen: {
@@ -39,6 +43,82 @@ const props = defineProps({
 const emit = defineEmits(['update:formData', 'submit', 'close', 'clear-errors'])
 
 const minecraftVersions = getMinecraftVersions()
+
+// Local state for version selection
+const selectedMajorMinor = ref('')
+const selectedPatch = ref('')
+
+// Initialize version state from formData when modal opens or editingServer changes
+watch(
+	[() => props.isOpen, () => props.editingServer],
+	() => {
+		if (props.isOpen) {
+			const fullVersion = props.formData.minecraft_version || ''
+			if (fullVersion) {
+				// Extract major.minor and patch from full version
+				const majorMinor = getMajorMinorVersion(fullVersion)
+				selectedMajorMinor.value = majorMinor || ''
+
+				// Extract patch number if present, otherwise default to 0
+				const parts = fullVersion.split('.')
+				if (parts.length >= 3) {
+					selectedPatch.value = parts[2]
+				} else {
+					// Default to patch 0 if no patch specified
+					selectedPatch.value = '0'
+				}
+			} else {
+				selectedMajorMinor.value = ''
+				selectedPatch.value = ''
+			}
+		}
+	},
+	{ immediate: true }
+)
+
+// Watch for major.minor changes and set default patch to 0
+watch(selectedMajorMinor, () => {
+	if (selectedMajorMinor.value) {
+		// Auto-select patch 0 as default
+		selectedPatch.value = '0'
+	} else {
+		selectedPatch.value = ''
+	}
+	updateFormDataVersion()
+})
+
+// Watch for patch changes and update form data
+watch(selectedPatch, () => {
+	updateFormDataVersion()
+})
+
+// Update formData.minecraft_version when version selection changes
+function updateFormDataVersion() {
+	if (!selectedMajorMinor.value) {
+		emit('update:formData', { ...props.formData, minecraft_version: '' })
+		return
+	}
+
+	// Always include patch (defaults to 0)
+	if (selectedPatch.value) {
+		emit('update:formData', {
+			...props.formData,
+			minecraft_version: `${selectedMajorMinor.value}.${selectedPatch.value}`
+		})
+	} else {
+		// Fallback to just major.minor if no patch selected (shouldn't happen with default 0)
+		emit('update:formData', {
+			...props.formData,
+			minecraft_version: selectedMajorMinor.value
+		})
+	}
+}
+
+// Available patches for selected major.minor version
+const availablePatches = computed(() => {
+	if (!selectedMajorMinor.value) return []
+	return getMinecraftPatches(selectedMajorMinor.value)
+})
 
 const isEditing = computed(() => !!props.editingServer)
 const title = computed(() => (isEditing.value ? 'Edit Server' : 'Add New Server'))
@@ -105,29 +185,53 @@ function handleSubmit() {
 			</div>
 
 			<div>
-				<label
-					:for="`${inputPrefix}-minecraft-version`"
-					class="block text-sm font-medium text-gray-700 mb-1">
-					Minecraft Version *
-				</label>
-				<select
-					:id="`${inputPrefix}-minecraft-version`"
-					v-model="localFormData.minecraft_version"
-					required
-					@change="handleInput('version')"
-					:class="[
-						'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 font-sans',
-						versionValidationError
-							? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-							: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
-					]">
-					<option
-						v-for="version in minecraftVersions"
-						:key="version.value"
-						:value="version.value">
-						{{ version.label }}
-					</option>
-				</select>
+				<div class="flex gap-2">
+					<div class="w-1/2">
+						<label
+							:for="`${inputPrefix}-minecraft-version`"
+							class="block text-sm font-medium text-gray-700 mb-1">
+							Minecraft Version *
+						</label>
+						<select
+							:id="`${inputPrefix}-minecraft-version`"
+							v-model="selectedMajorMinor"
+							required
+							@change="handleInput('version')"
+							:class="[
+								'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 font-sans',
+								versionValidationError
+									? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+									: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+							]">
+							<option value="">Select version...</option>
+							<option
+								v-for="version in minecraftVersions"
+								:key="version.value"
+								:value="version.value">
+								{{ version.label }}
+							</option>
+						</select>
+					</div>
+					<div v-if="selectedMajorMinor && availablePatches.length > 0" class="w-1/2">
+						<label
+							:for="`${inputPrefix}-minecraft-patch`"
+							class="block text-sm font-medium text-gray-700 mb-1">
+							Patch version
+						</label>
+						<select
+							:id="`${inputPrefix}-minecraft-patch`"
+							v-model="selectedPatch"
+							@change="handleInput('version')"
+							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
+							<option
+								v-for="patch in availablePatches"
+								:key="patch.value"
+								:value="patch.value">
+								{{ patch.label }}
+							</option>
+						</select>
+					</div>
+				</div>
 				<div
 					v-if="versionValidationError"
 					class="mt-1 text-sm text-red-600 font-semibold flex items-center gap-1">

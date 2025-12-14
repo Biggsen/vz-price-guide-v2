@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { disabledCategories, enabledCategories } from '../constants.js'
+import { getMajorMinorVersion } from '../utils/serverProfile.js'
 import BaseButton from './BaseButton.vue'
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 
@@ -147,8 +148,9 @@ const filteredItems = computed(() => {
 	if (!props.availableItems) return []
 
 	// First filter out items with zero prices using effective pricing
-	// Use the server's Minecraft version for price checking
-	const serverVersion = props.server?.minecraft_version?.replace('.', '_') || '1_16'
+	// Use the server's Minecraft version for price checking (extract major.minor if needed)
+	const majorMinorVersion = getMajorMinorVersion(props.server?.minecraft_version) || '1.16'
+	const serverVersion = majorMinorVersion.replace('.', '_')
 	const nonZeroItems = props.availableItems.filter((item) => {
 		const effectivePrice = getEffectivePrice(item, serverVersion)
 		return effectivePrice > 0

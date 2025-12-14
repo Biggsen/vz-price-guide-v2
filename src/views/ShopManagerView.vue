@@ -705,6 +705,7 @@ function toggleShopsVisibility(serverId) {
 								</BaseButton>
 							</div>
 							<button
+								v-if="shopsByServer[server.id]?.all.length"
 								type="button"
 								@click="toggleShopsVisibility(server.id)"
 								class="mt-2 text-sm text-gray-asparagus hover:text-highland underline text-left">

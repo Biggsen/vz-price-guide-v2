@@ -201,7 +201,17 @@ export async function getServerById(serverId) {
 	}
 }
 
-// Get available Minecraft versions
+// Minecraft version configuration with all available patches
+const MINECRAFT_VERSIONS = {
+	1.21: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+	'1.20': [0, 1, 2, 3, 4, 5, 6],
+	1.19: [0, 1, 2, 3, 4],
+	1.18: [0, 2],
+	1.17: [0, 1],
+	1.16: [0, 4, 5]
+}
+
+// Get available major.minor Minecraft versions
 export function getMinecraftVersions() {
 	return [
 		{ value: '1.16', label: 'Minecraft 1.16' },
@@ -211,4 +221,26 @@ export function getMinecraftVersions() {
 		{ value: '1.20', label: 'Minecraft 1.20' },
 		{ value: '1.21', label: 'Minecraft 1.21' }
 	]
+}
+
+// Get available patch versions for a given major.minor version
+export function getMinecraftPatches(majorMinorVersion) {
+	if (!majorMinorVersion) return []
+	const patches = MINECRAFT_VERSIONS[majorMinorVersion] || []
+	return patches.map((patch) => ({
+		value: patch,
+		label: `${majorMinorVersion}.${patch}`
+	}))
+}
+
+// Extract major.minor version from full version string
+// Handles both "1.18" and "1.18.2" formats
+export function getMajorMinorVersion(fullVersion) {
+	if (!fullVersion) return null
+	// Split by '.' and take first two parts
+	const parts = fullVersion.split('.')
+	if (parts.length >= 2) {
+		return `${parts[0]}.${parts[1]}`
+	}
+	return fullVersion
 }

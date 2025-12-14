@@ -4,7 +4,7 @@ import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
 import { useRouter, useRoute } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
 import { useShops, useServerShops } from '../utils/shopProfile.js'
-import { useServers } from '../utils/serverProfile.js'
+import { useServers, getMajorMinorVersion } from '../utils/serverProfile.js'
 import { useServerShopItems } from '../utils/shopItems.js'
 import { isAdmin, enabledCategories } from '../constants'
 import BaseStatCard from '../components/BaseStatCard.vue'
@@ -132,9 +132,12 @@ const selectedServer = computed(
 const allItemsQuery = computed(() => {
 	if (!selectedServer.value) return null
 
+	// Use major.minor version for filtering (extract from full version if needed)
+	const majorMinorVersion = getMajorMinorVersion(selectedServer.value.minecraft_version)
+
 	return query(
 		collection(db, 'items'),
-		where('version', '<=', selectedServer.value.minecraft_version),
+		where('version', '<=', majorMinorVersion),
 		orderBy('version', 'asc'),
 		orderBy('category', 'asc'),
 		orderBy('name', 'asc')

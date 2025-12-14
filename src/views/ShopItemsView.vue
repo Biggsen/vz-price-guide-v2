@@ -4,7 +4,7 @@ import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
 import { useShops, updateShop } from '../utils/shopProfile.js'
-import { useServers } from '../utils/serverProfile.js'
+import { useServers, getMajorMinorVersion } from '../utils/serverProfile.js'
 import {
 	useShopItems,
 	addShopItem,
@@ -219,9 +219,12 @@ const allItemsQuery = computed(() => {
 	const server = servers.value?.find((s) => s.id === selectedShop.value.server_id)
 	if (!server) return null
 
+	// Use major.minor version for filtering (extract from full version if needed)
+	const majorMinorVersion = getMajorMinorVersion(server.minecraft_version)
+
 	return query(
 		collection(db, 'items'),
-		where('version', '<=', server.minecraft_version),
+		where('version', '<=', majorMinorVersion),
 		orderBy('version', 'asc'),
 		orderBy('category', 'asc'),
 		orderBy('name', 'asc')
@@ -534,7 +537,6 @@ function handleKeyDown(event) {
 }
 
 function showEditItemForm(shopItem) {
-
 	// Ensure the item has a proper document ID
 	if (!shopItem.id) {
 		console.error('ShopItemsView: Cannot edit item without document ID')
@@ -685,7 +687,6 @@ async function handleMarkItemAsChecked(itemId) {
 
 // Handle quick edit from table
 async function handleQuickEdit(updatedItem) {
-
 	// Validate that we have a document ID
 	if (!updatedItem.id) {
 		console.error('ShopItemsView: Cannot quick edit item without document ID')
@@ -1049,7 +1050,8 @@ function getServerName(serverId) {
 					</p>
 				</div>
 				<div v-if="!selectedShop.is_own_shop" class="mt-1 mb-5">
-					<label class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+					<label
+						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
 						<input
 							:checked="isShopOutOfMoney"
 							@change="handleOutOfMoneyChange($event.target.checked)"
@@ -1152,24 +1154,28 @@ function getServerName(serverId) {
 							</div>
 						</div>
 
-					<!-- Mark All as Checked -->
-					<div v-if="!selectedShop.is_own_shop" class="flex items-center gap-2">
-						<BaseButton
-							type="button"
-							variant="secondary"
-							@click="handleMarkAllAsChecked"
-							:disabled="markingAsChecked || !shopItems || shopItems.length === 0"
-							class="px-3 py-1.5 text-xs sm:text-sm">
-							<template #left-icon>
-								<ArrowPathIcon
-									:class="[
-										'w-4 h-4',
-										markingAsChecked ? 'animate-spin' : ''
-									]" />
-							</template>
-							{{ markingAsChecked ? 'Marking...' : 'Mark All as Price Checked Today' }}
-						</BaseButton>
-					</div>
+						<!-- Mark All as Checked -->
+						<div v-if="!selectedShop.is_own_shop" class="flex items-center gap-2">
+							<BaseButton
+								type="button"
+								variant="secondary"
+								@click="handleMarkAllAsChecked"
+								:disabled="markingAsChecked || !shopItems || shopItems.length === 0"
+								class="px-3 py-1.5 text-xs sm:text-sm">
+								<template #left-icon>
+									<ArrowPathIcon
+										:class="[
+											'w-4 h-4',
+											markingAsChecked ? 'animate-spin' : ''
+										]" />
+								</template>
+								{{
+									markingAsChecked
+										? 'Marking...'
+										: 'Mark All as Price Checked Today'
+								}}
+							</BaseButton>
+						</div>
 					</div>
 				</div>
 
@@ -1339,7 +1345,9 @@ function getServerName(serverId) {
 												:ariaLabel="'Mark as price checked today'"
 												title="Mark as price checked today"
 												:loading="markingItemId === row._originalItem?.id"
-												@click="handleMarkItemAsChecked(row._originalItem?.id)"
+												@click="
+													handleMarkItemAsChecked(row._originalItem?.id)
+												"
 												:disabled="markingItemId === row._originalItem?.id">
 												<ArrowPathIcon />
 											</BaseIconButton>
@@ -1611,10 +1619,10 @@ function getServerName(serverId) {
 							loading
 								? 'Saving...'
 								: editingItem
-									? 'Update Item'
-									: shopItemForm?.selectedItemsCount > 1
-										? `Add ${shopItemForm.selectedItemsCount} Items`
-										: 'Add Item'
+								? 'Update Item'
+								: shopItemForm?.selectedItemsCount > 1
+								? `Add ${shopItemForm.selectedItemsCount} Items`
+								: 'Add Item'
 						}}
 					</BaseButton>
 				</div>
