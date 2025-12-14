@@ -16,7 +16,8 @@ import {
 	PencilIcon,
 	TrashIcon,
 	PlusIcon,
-	ClipboardDocumentCheckIcon
+	ClipboardDocumentCheckIcon,
+	WalletIcon
 } from '@heroicons/vue/24/outline'
 import { XCircleIcon, MapPinIcon } from '@heroicons/vue/24/solid'
 import { useAdmin } from '../utils/admin.js'
@@ -767,9 +768,7 @@ function toggleShopsVisibility(serverId) {
 													class="w-4 h-4 flex-shrink-0 text-gray-900" />
 												<span>{{ row.location }}</span>
 											</div>
-											<span v-else class="text-gray-900 italic">
-												No location set
-											</span>
+											<span v-else class="text-gray-900 italic">—</span>
 										</template>
 										<template #cell-actions="{ row }">
 											<div class="flex items-center justify-end gap-2">
@@ -842,6 +841,10 @@ function toggleShopsVisibility(serverId) {
 													v-if="row.shop.fully_cataloged"
 													class="w-4 h-4 text-gray-900 flex-shrink-0"
 													title="Fully cataloged" />
+												<WalletIcon
+													v-if="row.shop.owner_funds === 0"
+													class="w-4 h-4 text-gray-900 flex-shrink-0"
+													title="Shop owner has run out of money" />
 											</div>
 										</template>
 										<template #cell-location="{ row }">
@@ -852,9 +855,7 @@ function toggleShopsVisibility(serverId) {
 													class="w-4 h-4 flex-shrink-0 text-gray-900" />
 												<span>{{ row.location }}</span>
 											</div>
-											<span v-else class="text-gray-900 italic">
-												No location set
-											</span>
+											<span v-else class="text-gray-900 italic">—</span>
 										</template>
 										<template #cell-actions="{ row }">
 											<div class="flex items-center justify-end gap-2">
