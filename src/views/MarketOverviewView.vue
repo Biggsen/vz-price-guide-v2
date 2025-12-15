@@ -15,7 +15,6 @@ import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
 import {
-	ArchiveBoxIcon,
 	ArchiveBoxXMarkIcon,
 	ArrowPathIcon,
 	BuildingStorefrontIcon,
@@ -217,16 +216,18 @@ const filteredShopItemsByCategory = computed(() => {
 			if (!item.itemData?.name) return false
 			const itemName = item.itemData.name.toLowerCase()
 
-			// Split search query by commas and/or spaces, then trim and filter out empty strings
+			// Split search query by commas only, then trim and filter out empty strings
+			// Spaces within terms are preserved (e.g., "iron ingot" stays as one term)
+			// Comma-separated terms use OR logic (e.g., "iron,ingot" matches items with "iron" OR "ingot")
 			const searchTerms = query
-				.split(/[,\s]+/)
+				.split(',')
 				.map((term) => term.trim())
 				.filter((term) => term.length > 0)
 
 			// If no valid search terms, return all items
 			if (searchTerms.length === 0) return true
 
-			// Check if item name contains any of the search terms (OR logic)
+			// Check if item name contains any of the search terms (OR logic for comma-separated terms)
 			return searchTerms.some((term) => itemName.includes(term))
 		})
 
@@ -1128,7 +1129,7 @@ const priceAnalysis = computed(() => {
 											"
 											class="w-5 h-5 text-current"
 											aria-label="Shop owner has run out of money" />
-										<ArchiveBoxIcon
+										<ArchiveBoxXMarkIcon
 											v-else-if="row._originalItem?.stock_full"
 											class="w-5 h-5 text-current"
 											aria-label="Stock full" />
