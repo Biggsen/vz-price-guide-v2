@@ -1,5 +1,25 @@
 [
 	{
+		"id": 35,
+		"title": "Shop Manager is now available",
+		"date": "2025-12-15",
+		"types": ["Feature"],
+		"hidden": false,
+		"description": "Shop Manager is now open to everyone. It's a simple way to track what you're buying and selling across one or more Minecraft servers, without needing to keep everything in spreadsheets. It also includes a Market Overview, letting you browse and compare items across all shops on a server in one place.",
+		"changes": [
+			"Multiple servers: keep separate setups for different servers and SMPs",
+			"Version tracking (1.16–1.21): tag a server with its Minecraft version so the item list stays relevant",
+			"Multiple shops per server: add shops with names, locations, and optional descriptions",
+			"Buy / sell pricing: set and edit prices directly in the item table",
+			"Last-checked tracking: see when shop prices were last reviewed and reset the date after rechecking",
+			"Shop state tracking: mark items as out of stock and shops as having run out of money",
+			"Market Overview: browse and search all items across all shops on a server to compare prices at a glance",
+			"Notes: add your own metadata per item or shop for reminders and context",
+			"Private by default: your shop data is only visible to you",
+			"Note: The mobile version is still quite wonky, and I'm working on it"
+		]
+	},
+	{
 		"id": 34,
 		"title": "Early Access: Shop Manager",
 		"date": "2025-11-20",

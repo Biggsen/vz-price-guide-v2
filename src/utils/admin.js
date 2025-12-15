@@ -21,10 +21,8 @@ export function useAdmin() {
 				try {
 					const idTokenResult = await newUser.getIdTokenResult()
 					adminStatus.value = idTokenResult.claims.admin === true
-					// Shop manager access: admin OR shopManager claim
-					shopManagerStatus.value =
-						idTokenResult.claims.admin === true ||
-						idTokenResult.claims.shopManager === true
+					// Shop manager access: public access for any verified user
+					shopManagerStatus.value = newUser.emailVerified === true
 					adminStatusLoaded.value = true
 					shopManagerStatusLoaded.value = true
 				} catch (error) {

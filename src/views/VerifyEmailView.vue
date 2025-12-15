@@ -4,8 +4,8 @@ import { useFirebaseAuth, useCurrentUser } from 'vuefire'
 import { useRouter, useRoute } from 'vue-router'
 import { sendEmailVerification } from '@firebase/auth'
 import { EnvelopeIcon } from '@heroicons/vue/24/outline'
-import { CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid'
 import BaseButton from '@/components/BaseButton.vue'
+import NotificationBanner from '@/components/NotificationBanner.vue'
 
 const auth = useFirebaseAuth()
 const currentUser = useCurrentUser()
@@ -91,32 +91,20 @@ function goToSignIn() {
 		</p>
 
 		<!-- Success Message -->
-		<div v-if="resendSuccess" class="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
-			<div class="flex">
-				<div class="flex-shrink-0">
-					<!-- Use Heroicon for check -->
-					<CheckCircleIcon class="h-5 w-5 text-green-400" />
-				</div>
-				<div class="ml-3">
-					<p class="text-sm font-medium text-green-800">
-						Verification email sent successfully!
-					</p>
-				</div>
-			</div>
-		</div>
+		<NotificationBanner
+			v-if="resendSuccess"
+			type="success"
+			title="Success"
+			message="Verification email sent successfully!"
+			class="mb-4" />
 
 		<!-- Error Message -->
-		<div v-if="resendError" class="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
-			<div class="flex">
-				<div class="flex-shrink-0">
-					<!-- Use Heroicon for error -->
-					<XCircleIcon class="h-5 w-5 text-red-400" />
-				</div>
-				<div class="ml-3">
-					<p class="text-sm font-medium text-red-800">{{ resendError }}</p>
-				</div>
-			</div>
-		</div>
+		<NotificationBanner
+			v-if="resendError"
+			type="error"
+			title="Error"
+			:message="resendError"
+			class="mb-4" />
 
 		<!-- Resend Button -->
 		<BaseButton

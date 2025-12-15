@@ -2,8 +2,8 @@
 import { ref, computed } from 'vue'
 import { useFirebaseAuth } from 'vuefire'
 import { sendPasswordResetEmail } from '@firebase/auth'
-import { CheckCircleIcon, XCircleIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 import BaseButton from '@/components/BaseButton.vue'
+import NotificationBanner from '@/components/NotificationBanner.vue'
 
 const userInput = ref({
 	email: ''
@@ -82,38 +82,20 @@ function clearSuccess() {
 		</div>
 
 		<!-- Success Message -->
-		<div v-if="successMessage" class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-			<div class="flex">
-				<div class="flex-shrink-0">
-					<CheckCircleIcon class="h-5 w-5 text-green-400" />
-				</div>
-				<div class="ml-3">
-					<p class="text-sm font-medium text-green-800">{{ successMessage }}</p>
-				</div>
-				<div class="ml-auto pl-3">
-					<button @click="clearSuccess" class="text-green-400 hover:text-green-600">
-						<XMarkIcon class="h-4 w-4" />
-					</button>
-				</div>
-			</div>
-		</div>
+		<NotificationBanner
+			v-if="successMessage"
+			type="success"
+			title="Success"
+			:message="successMessage"
+			class="mb-6" />
 
 		<!-- Error Message -->
-		<div v-if="errorMessage" class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-			<div class="flex">
-				<div class="flex-shrink-0">
-					<XCircleIcon class="h-5 w-5 text-red-400" />
-				</div>
-				<div class="ml-3">
-					<p class="text-sm font-medium text-red-800">{{ errorMessage }}</p>
-				</div>
-				<div class="ml-auto pl-3">
-					<button @click="clearError" class="text-red-400 hover:text-red-600">
-						<XMarkIcon class="h-4 w-4" />
-					</button>
-				</div>
-			</div>
-		</div>
+		<NotificationBanner
+			v-if="errorMessage"
+			type="error"
+			title="Error"
+			:message="errorMessage"
+			class="mb-6" />
 
 		<!-- Form Section -->
 		<div class="mb-8">

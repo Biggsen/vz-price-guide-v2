@@ -81,11 +81,6 @@ export async function requiresAdmin(user) {
 export async function canAccessShopManager(user) {
 	if (!user) return false
 
-	try {
-		const idTokenResult = await user.getIdTokenResult()
-		return idTokenResult.claims.admin === true || idTokenResult.claims.shopManager === true
-	} catch (error) {
-		console.error('Error checking shop manager access:', error)
-		return false
-	}
+	// Public access: any verified user can access shop manager
+	return user.emailVerified === true
 }

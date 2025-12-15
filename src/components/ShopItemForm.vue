@@ -5,6 +5,7 @@ import { disabledCategories, enabledCategories } from '../constants.js'
 import { getMajorMinorVersion } from '../utils/serverProfile.js'
 import BaseButton from './BaseButton.vue'
 import { XCircleIcon } from '@heroicons/vue/20/solid'
+import { ArchiveBoxIcon, ArchiveBoxXMarkIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
 	availableItems: {
@@ -949,7 +950,10 @@ defineExpose({
 								@change="handleOutOfStockChange($event.target.checked)"
 								type="checkbox"
 								class="checkbox-input" />
-							<span class="ml-2 text-sm text-gray-700">Out of stock</span>
+							<span class="ml-2 text-sm text-gray-700 flex items-center gap-1">
+								Out of stock
+								<ArchiveBoxXMarkIcon class="w-4 h-4" />
+							</span>
 						</label>
 					</div>
 				</div>
@@ -999,7 +1003,10 @@ defineExpose({
 								v-model="formData.stock_full"
 								type="checkbox"
 								class="checkbox-input" />
-							<span class="ml-2 text-sm text-gray-700">Stock full</span>
+							<span class="ml-2 text-sm text-gray-700 flex items-center gap-1">
+								Stock full
+								<ArchiveBoxIcon class="w-4 h-4" />
+							</span>
 						</label>
 						<p class="text-xs text-gray-500 mt-1">Mark when you can't sell any more</p>
 					</div>
