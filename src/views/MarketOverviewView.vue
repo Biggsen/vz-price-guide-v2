@@ -15,7 +15,6 @@ import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
 import {
-	ArchiveBoxIcon,
 	ArchiveBoxXMarkIcon,
 	ArrowPathIcon,
 	BuildingStorefrontIcon,
@@ -1130,7 +1129,7 @@ const priceAnalysis = computed(() => {
 											"
 											class="w-5 h-5 text-current"
 											aria-label="Shop owner has run out of money" />
-										<ArchiveBoxIcon
+										<ArchiveBoxXMarkIcon
 											v-else-if="row._originalItem?.stock_full"
 											class="w-5 h-5 text-current"
 											aria-label="Stock full" />
