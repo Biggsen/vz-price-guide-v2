@@ -430,19 +430,18 @@ watch(shops, (newShops) => {
 			// Validate that the selected shop exists and user owns it
 			const userShop = newShops.find((shop) => shop.id === selectedShopId.value)
 			if (!userShop) {
-				// If selected shop doesn't exist or user doesn't own it, clear selection and show error
+				// If selected shop doesn't exist or user doesn't own it, redirect to shop manager
 				console.warn('Shop not found or access denied:', selectedShopId.value)
-				error.value = 'You do not have access to this shop or it does not exist.'
-				selectedShopId.value = newShops[0].id
+				router.replace('/shop-manager')
+				return
 			}
 		} else {
 			// If no shop selected, select the first one
 			selectedShopId.value = newShops[0].id
 		}
 	} else if (selectedShopId.value) {
-		// User has no shops but trying to access one
-		error.value = 'No shops found. Please create a shop first.'
-		selectedShopId.value = ''
+		// User has no shops but trying to access one - redirect to shop manager
+		router.replace('/shop-manager')
 	}
 })
 

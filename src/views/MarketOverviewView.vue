@@ -377,15 +377,42 @@ watch(
 // Watch for servers loading - handle server selection
 watch(servers, (newServers) => {
 	if (newServers && newServers.length > 0) {
-		// If serverId from query param exists and is valid, use it
-		if (route.query.serverId && newServers.some((s) => s.id === route.query.serverId)) {
+		// If serverId from query param exists, validate it
+		if (route.query.serverId) {
+			const userServer = newServers.find((s) => s.id === route.query.serverId)
+			if (!userServer) {
+				// If server doesn't exist or user doesn't own it, redirect to shop manager
+				console.warn('Server not found or access denied:', route.query.serverId)
+				router.replace('/shop-manager')
+				return
+			}
 			selectedServerId.value = route.query.serverId
 		} else if (!selectedServerId.value) {
 			// Auto-select first server if none selected
 			selectedServerId.value = newServers[0].id
 		}
+	} else if (route.query.serverId) {
+		// User has no servers but trying to access one - redirect to shop manager
+		router.replace('/shop-manager')
 	}
 })
+
+// Watch for route query changes - handle direct URL navigation
+watch(
+	() => route.query.serverId,
+	(newServerId) => {
+		if (newServerId && servers.value) {
+			const userServer = servers.value.find((s) => s.id === newServerId)
+			if (!userServer) {
+				// If server doesn't exist or user doesn't own it, redirect to shop manager
+				console.warn('Server not found or access denied:', newServerId)
+				router.replace('/shop-manager')
+				return
+			}
+			selectedServerId.value = newServerId
+		}
+	}
+)
 
 // Load view settings on mount
 onMounted(() => {
