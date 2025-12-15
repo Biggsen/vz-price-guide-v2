@@ -217,16 +217,18 @@ const filteredShopItemsByCategory = computed(() => {
 			if (!item.itemData?.name) return false
 			const itemName = item.itemData.name.toLowerCase()
 
-			// Split search query by commas and/or spaces, then trim and filter out empty strings
+			// Split search query by commas only, then trim and filter out empty strings
+			// Spaces within terms are preserved (e.g., "iron ingot" stays as one term)
+			// Comma-separated terms use OR logic (e.g., "iron,ingot" matches items with "iron" OR "ingot")
 			const searchTerms = query
-				.split(/[,\s]+/)
+				.split(',')
 				.map((term) => term.trim())
 				.filter((term) => term.length > 0)
 
 			// If no valid search terms, return all items
 			if (searchTerms.length === 0) return true
 
-			// Check if item name contains any of the search terms (OR logic)
+			// Check if item name contains any of the search terms (OR logic for comma-separated terms)
 			return searchTerms.some((term) => itemName.includes(term))
 		})
 
