@@ -214,8 +214,11 @@ const TEST_DATA = {
 			server_id: 'test-server-1',
 			owner_id: 'test-admin-1',
 			is_own_shop: true,
+			player: '',
 			location: 'Spawn',
 			description: 'Test shop for E2E testing',
+			owner_funds: null,
+			fully_cataloged: false,
 			created_at: nowIso(),
 			updated_at: nowIso()
 		},
@@ -225,8 +228,11 @@ const TEST_DATA = {
 			server_id: 'test-server-1',
 			owner_id: 'test-admin-1',
 			is_own_shop: false,
+			player: 'CompetitorPlayer',
 			location: 'Market District',
 			description: 'Competitor shop for price comparison',
+			owner_funds: null,
+			fully_cataloged: false,
 			created_at: nowIso(),
 			updated_at: nowIso()
 		}
