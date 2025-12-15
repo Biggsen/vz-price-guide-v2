@@ -276,7 +276,6 @@ onUnmounted(() => {
 			</RouterLink>
 
 			<RouterLink
-				v-if="canAccessShopManager"
 				to="/shop-manager"
 				@click="
 					() => {
@@ -502,7 +501,6 @@ onUnmounted(() => {
 			</div>
 		</RouterLink>
 		<RouterLink
-			v-if="canAccessShopManager"
 			to="/shop-manager"
 			@click="
 				() => {

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch, TransitionGroup, nextTick, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import BaseButton from '../components/BaseButton.vue'
 import BaseCard from '../components/BaseCard.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
@@ -17,9 +17,12 @@ import {
 	TrashIcon,
 	PlusIcon,
 	ClipboardDocumentCheckIcon,
-	WalletIcon
+	WalletIcon,
+	ChartBarIcon,
+	MagnifyingGlassIcon,
+	CheckCircleIcon
 } from '@heroicons/vue/24/outline'
-import { XCircleIcon, MapPinIcon } from '@heroicons/vue/24/solid'
+import { XCircleIcon, MapPinIcon, UserIcon } from '@heroicons/vue/24/solid'
 import { useAdmin } from '../utils/admin.js'
 import { useShops, createShop, updateShop, deleteShop } from '../utils/shopProfile.js'
 import {
@@ -31,11 +34,37 @@ import {
 } from '../utils/serverProfile.js'
 import { useUserProfile, generateMinecraftAvatar } from '../utils/userProfile.js'
 
-const { user, userProfile } = useAdmin()
+const router = useRouter()
+const { user, userProfile, canAccessShopManager } = useAdmin()
 
-// Get user's shops and servers
-const { shops } = useShops(computed(() => user.value?.uid))
-const { servers } = useServers(computed(() => user.value?.uid))
+// Check if user has access to shop manager
+const hasAccess = computed(() => canAccessShopManager.value)
+
+// Computed properties for authentication states
+const isAuthenticated = computed(() => {
+	return user.value?.email && user.value?.emailVerified
+})
+
+const isSignedInButNotVerified = computed(() => {
+	return user.value?.email && !user.value?.emailVerified
+})
+
+// Navigation functions
+function goToSignUp() {
+	router.push('/signup')
+}
+
+function goToSignIn() {
+	router.push('/signin')
+}
+
+function goToVerifyEmail() {
+	router.push('/verify-email')
+}
+
+// Get user's shops and servers (only if user has access)
+const { shops } = useShops(computed(() => (hasAccess.value ? user.value?.uid : null)))
+const { servers } = useServers(computed(() => (hasAccess.value ? user.value?.uid : null)))
 
 const hasServers = computed(() => servers.value && servers.value.length > 0)
 
@@ -599,7 +628,232 @@ function toggleShopsVisibility(serverId) {
 </script>
 
 <template>
-	<div class="p-4 pt-8">
+	<!-- Feature Page (shown when user doesn't have access) -->
+	<div v-if="!hasAccess" class="p-4 py-8">
+		<!-- Main Feature Section -->
+		<div class="mb-16">
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+				<!-- Left Column: Text and CTA -->
+				<div>
+					<h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+						Player Shop Manager is here
+					</h1>
+					<p class="text-lg text-gray-600 mb-8 leading-relaxed">
+						Keep track of your own shops and other player shops across one or more Minecraft
+						servers. The Player Shop Manager helps you record prices, check competitors,
+						and spot outdated listings without relying on spreadsheets or memory.
+					</p>
+					<p class="text-lg text-gray-600 mb-8 leading-relaxed">
+						Set up servers by Minecraft version, add shops, track buy and sell prices, and
+						use the Market Overview to compare items across all shops in one place.
+					</p>
+					<div class="flex flex-col sm:flex-row gap-4">
+						<BaseButton
+							v-if="!user?.email"
+							@click="goToSignUp"
+							variant="primary"
+							class="text-base px-6 py-3">
+							<template #left-icon>
+								<UserIcon />
+							</template>
+							Get Started
+						</BaseButton>
+						<BaseButton
+							v-else-if="!user?.emailVerified"
+							@click="goToVerifyEmail"
+							variant="primary"
+							class="text-base px-6 py-3">
+							<template #left-icon>
+								<CheckCircleIcon />
+							</template>
+							Verify Email
+						</BaseButton>
+						<BaseButton
+							v-else
+							@click="goToSignIn"
+							variant="primary"
+							class="text-base px-6 py-3">
+							Request Access
+						</BaseButton>
+						<BaseButton
+							v-if="!user?.email"
+							@click="goToSignIn"
+							variant="secondary"
+							class="text-base px-6 py-3">
+							Sign In
+						</BaseButton>
+					</div>
+				</div>
+
+				<!-- Right Column: Feature Images Grid -->
+				<div class="grid grid-cols-2 gap-4">
+					<div class="space-y-4">
+						<div class="bg-gray-100 rounded-lg aspect-[3/4] flex items-center justify-center overflow-hidden">
+							<BuildingStorefrontIcon class="w-16 h-16 text-gray-400" />
+						</div>
+						<div class="bg-gray-100 rounded-lg aspect-[3/4] flex items-center justify-center overflow-hidden">
+							<ChartBarIcon class="w-16 h-16 text-gray-400" />
+						</div>
+					</div>
+					<div class="space-y-4 pt-8">
+						<div class="bg-gray-100 rounded-lg aspect-[3/4] flex items-center justify-center overflow-hidden">
+							<MagnifyingGlassIcon class="w-16 h-16 text-gray-400" />
+						</div>
+						<div class="bg-gray-100 rounded-lg aspect-[3/4] flex items-center justify-center overflow-hidden">
+							<GlobeAltIcon class="w-16 h-16 text-gray-400" />
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Features Grid -->
+		<div class="mb-16">
+			<h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">
+				Everything you need to manage your shops
+			</h2>
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				<BaseCard variant="tertiary">
+					<template #header>
+						<div class="flex items-center gap-3">
+							<BuildingStorefrontIcon class="w-6 h-6 text-gray-asparagus" />
+							<span class="font-semibold">Multi-Server Management</span>
+						</div>
+					</template>
+					<template #body>
+						<p class="text-gray-600">
+							Manage multiple shops across different Minecraft servers from one central
+							location. No more switching between spreadsheets or losing track of your
+							inventory.
+						</p>
+					</template>
+				</BaseCard>
+
+				<BaseCard variant="tertiary">
+					<template #header>
+						<div class="flex items-center gap-3">
+							<ChartBarIcon class="w-6 h-6 text-gray-asparagus" />
+							<span class="font-semibold">Price Comparison</span>
+						</div>
+					</template>
+					<template #body>
+						<p class="text-gray-600">
+							Compare prices instantly across all shops on a server. See who's offering
+							the best deals and spot profitable trading opportunities at a glance.
+						</p>
+					</template>
+				</BaseCard>
+
+				<BaseCard variant="tertiary">
+					<template #header>
+						<div class="flex items-center gap-3">
+							<MagnifyingGlassIcon class="w-6 h-6 text-gray-asparagus" />
+							<span class="font-semibold">Market Overview</span>
+						</div>
+					</template>
+					<template #body>
+						<p class="text-gray-600">
+							Browse and compare items across all shops on a server in one place. Find
+							the best deals and spot profitable trading opportunities instantly.
+						</p>
+					</template>
+				</BaseCard>
+
+				<BaseCard variant="tertiary">
+					<template #header>
+						<div class="flex items-center gap-3">
+							<ClipboardDocumentCheckIcon class="w-6 h-6 text-gray-asparagus" />
+							<span class="font-semibold">Stock Tracking</span>
+						</div>
+					</template>
+					<template #body>
+						<p class="text-gray-600">
+							Track stock status for each item in your shops. Mark when chests are full
+							or empty, and keep your inventory organized without spreadsheets.
+						</p>
+					</template>
+				</BaseCard>
+
+				<BaseCard variant="tertiary">
+					<template #header>
+						<div class="flex items-center gap-3">
+							<CurrencyDollarIcon class="w-6 h-6 text-gray-asparagus" />
+							<span class="font-semibold">Quick Price Updates</span>
+						</div>
+					</template>
+					<template #body>
+						<p class="text-gray-600">
+							Update buy and sell prices with inline editing. Keep your shop competitive
+							in seconds without leaving the page.
+						</p>
+					</template>
+				</BaseCard>
+
+				<BaseCard variant="tertiary">
+					<template #header>
+						<div class="flex items-center gap-3">
+							<GlobeAltIcon class="w-6 h-6 text-gray-asparagus" />
+							<span class="font-semibold">Version Filtering</span>
+						</div>
+					</template>
+					<template #body>
+						<p class="text-gray-600">
+							Smart filtering by Minecraft version ensures you only see relevant items
+							for your server version. No more confusion about what's available.
+						</p>
+					</template>
+				</BaseCard>
+			</div>
+		</div>
+
+		<!-- Call to Action Section -->
+		<div class="bg-gray-50 rounded-lg p-8 text-center">
+			<h2 class="text-2xl font-bold text-gray-900 mb-4">Ready to get started?</h2>
+			<p class="text-gray-600 mb-6 max-w-2xl mx-auto">
+				Join other players who are already using Shop Manager to streamline their trading
+				operations and maximize their profits.
+			</p>
+			<div class="flex flex-col sm:flex-row gap-4 justify-center">
+				<BaseButton
+					v-if="!user?.email"
+					@click="goToSignUp"
+					variant="primary"
+					class="text-base px-6 py-3">
+					<template #left-icon>
+						<UserIcon />
+					</template>
+					Create Account
+				</BaseButton>
+				<BaseButton
+					v-else-if="!user?.emailVerified"
+					@click="goToVerifyEmail"
+					variant="primary"
+					class="text-base px-6 py-3">
+					<template #left-icon>
+						<CheckCircleIcon />
+					</template>
+					Verify Email
+				</BaseButton>
+				<BaseButton
+					v-else
+					@click="goToSignIn"
+					variant="primary"
+					class="text-base px-6 py-3">
+					Request Access
+				</BaseButton>
+				<BaseButton
+					v-if="!user?.email"
+					@click="goToSignIn"
+					variant="secondary"
+					class="text-base px-6 py-3">
+					Sign In
+				</BaseButton>
+			</div>
+		</div>
+	</div>
+
+	<!-- Actual Shop Manager (shown when user has access) -->
+	<div v-else class="p-4 pt-8">
 		<!-- Header -->
 		<div class="mb-8">
 			<div>

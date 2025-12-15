@@ -185,10 +185,7 @@ const router = createRouter({
 			name: 'shop-manager',
 			component: () => import('../views/ShopManagerView.vue'),
 			meta: {
-				requiresAuth: true,
-				requiresVerification: true,
-				requiresShopManager: true,
-				title: `Player Shop Manager - ${siteName}`,
+				title: `Shop Manager - ${siteName}`,
 				description:
 					'Manage your Minecraft shops across multiple servers. Track buy and sell prices, stock status, and shop inventory without spreadsheets.'
 			}
