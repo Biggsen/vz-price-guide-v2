@@ -26,7 +26,7 @@ describe('Homepage Functionality', () => {
 			cy.visit('/')
 
 			// Wait for items to load
-			cy.contains('Showing').should('be.visible')
+			cy.contains('oak planks', { matchCase: false }).should('be.visible')
 
 			// Check for specific seeded items
 			cy.contains('a', /^oak planks$/i)
@@ -51,35 +51,41 @@ describe('Homepage Functionality', () => {
 			cy.clearLocalStorage()
 		})
 
-		it('displays the crate rewards alert banner by default', () => {
+		it('displays the alert banner by default with correct structure', () => {
 			cy.visit('/')
 
-			// Check if alert banner is visible
-			cy.get('body').then(($body) => {
-				if ($body.find('[data-cy="dismiss-alert"]').length > 0) {
-					// Alert banner is present
-					cy.contains('New Crate Rewards Tool!').should('be.visible')
-					cy.contains('Build, manage and balance CrazyCrates prizes').should('be.visible')
-					cy.contains('Try it out').should('be.visible')
-					cy.contains('Updates').should('be.visible')
-				} else {
-					// Alert banner is not present (might be dismissed or disabled)
-					cy.log('Alert banner not found - might be dismissed or disabled')
-				}
-			})
+			// Check if alert banner is visible using dismiss button selector
+			cy.get('[data-cy="dismiss-alert"]').should('be.visible')
+
+			// Check banner has correct styling classes
+			cy.get('[data-cy="dismiss-alert"]')
+				.parents()
+				.should('have.class', 'bg-semantic-info-light')
+				.and('have.class', 'border-l-4')
+				.and('have.class', 'border-l-semantic-info')
+
+			// Check banner has a title (strong tag)
+			cy.get('[data-cy="dismiss-alert"]')
+				.parents()
+				.find('strong')
+				.should('be.visible')
+				.and('not.be.empty')
+
+			// Check banner has content text
+			cy.get('[data-cy="dismiss-alert"]').parents().should('contain.text', '!')
 		})
 
 		it('can dismiss the alert banner', () => {
 			cy.visit('/')
 
 			// Verify banner is visible
-			cy.contains('New Crate Rewards Tool!').should('be.visible')
+			cy.get('[data-cy="dismiss-alert"]').should('be.visible')
 
 			// Click dismiss button
 			cy.get('[data-cy="dismiss-alert"]').click()
 
 			// Verify banner is dismissed
-			cy.contains('New Crate Rewards Tool!').should('not.exist')
+			cy.get('[data-cy="dismiss-alert"]').should('not.exist')
 		})
 
 		it('remembers dismissed alert state on page reload', () => {
@@ -87,13 +93,13 @@ describe('Homepage Functionality', () => {
 
 			// Dismiss the alert
 			cy.get('[data-cy="dismiss-alert"]').click()
-			cy.contains('New Crate Rewards Tool!').should('not.exist')
+			cy.get('[data-cy="dismiss-alert"]').should('not.exist')
 
 			// Reload page
 			cy.reload()
 
 			// Verify alert stays dismissed
-			cy.contains('New Crate Rewards Tool!').should('not.exist')
+			cy.get('[data-cy="dismiss-alert"]').should('not.exist')
 		})
 
 		it('has working links in the alert banner', () => {
@@ -102,13 +108,21 @@ describe('Homepage Functionality', () => {
 			// Check if alert banner is present first
 			cy.get('body').then(($body) => {
 				if ($body.find('[data-cy="dismiss-alert"]').length > 0) {
-					// Test "Try it out" link - use router-link
-					cy.get('a[href="/tools"]').contains('Try it out').click()
-					cy.location('pathname').should('eq', '/tools')
+					// Test shop-manager link
+					cy.get('[data-cy="dismiss-alert"]')
+						.parents()
+						.find('a[href="/shop-manager"]')
+						.should('be.visible')
+						.click()
+					cy.location('pathname').should('eq', '/shop-manager')
 
-					// Go back and test "Updates" link
+					// Go back and test updates link
 					cy.go('back')
-					cy.get('a[href="/updates"]').contains('Updates').click()
+					cy.get('[data-cy="dismiss-alert"]')
+						.parents()
+						.find('a[href="/updates"]')
+						.should('be.visible')
+						.click()
 					cy.location('pathname').should('eq', '/updates')
 				} else {
 					cy.log('Alert banner not found - skipping link tests')
@@ -157,20 +171,25 @@ describe('Homepage Functionality', () => {
 			cy.contains('Try adjusting your search terms or category filters').should('be.visible')
 		})
 
-		it('updates item counts when searching', () => {
+		it('filters items when searching', () => {
 			cy.visit('/')
 
-			// Get initial count
-			cy.contains('Showing').then(($el) => {
-				const initialText = $el.text()
+			// Wait for initial items to load
+			cy.contains('oak planks', { matchCase: false }).should('be.visible')
+			cy.contains('oak log', { matchCase: false }).should('be.visible')
 
-				// Search for something
-				cy.get('input[placeholder*="Search for items"]').type('oak')
+			// Search for something
+			cy.get('input[placeholder*="Search for items"]').type('oak')
 
-				// Count should change
-				cy.contains('Showing').should(($newEl) => {
-					expect($newEl.text()).to.not.equal(initialText)
-				})
+			// Should still show oak items
+			cy.contains('oak planks', { matchCase: false }).should('be.visible')
+			cy.contains('oak log', { matchCase: false }).should('be.visible')
+
+			// But other items should be filtered out (if any exist)
+			cy.get('body').then(($body) => {
+				if ($body.text().includes('diamond')) {
+					cy.contains('diamond').should('not.be.visible')
+				}
 			})
 		})
 
@@ -199,42 +218,75 @@ describe('Homepage Functionality', () => {
 		it('can toggle category filters', () => {
 			cy.visit('/')
 
-			// Get initial state - all categories should be selected by default
-			cy.contains('button', 'Wood', { matchCase: false }).should(
+			// Initial state: All categories button is selected, individual buttons are unselected
+			cy.contains('button', 'All categories', { matchCase: false }).should(
 				'have.class',
 				'bg-gray-asparagus'
 			)
-
-			// Click to deselect wood category
-			cy.contains('button', 'Wood', { matchCase: false }).click()
-
-			// Should be deselected
 			cy.contains('button', 'Wood', { matchCase: false }).should('have.class', 'bg-norway')
 
-			// Click again to reselect
+			// Click to select wood category (adds it to visibleCategories)
 			cy.contains('button', 'Wood', { matchCase: false }).click()
+
+			// Wood button should now be selected
 			cy.contains('button', 'Wood', { matchCase: false }).should(
 				'have.class',
 				'bg-gray-asparagus'
 			)
+
+			// All categories button should now be unselected
+			cy.contains('button', 'All categories', { matchCase: false }).should(
+				'have.class',
+				'bg-norway'
+			)
+
+			// Click again to deselect wood (removes from visibleCategories)
+			cy.contains('button', 'Wood', { matchCase: false }).click()
+
+			// If visibleCategories becomes empty, All categories button is selected again
+			cy.contains('button', 'All categories', { matchCase: false }).should(
+				'have.class',
+				'bg-gray-asparagus'
+			)
+
+			// Wood button should be unselected again
+			cy.contains('button', 'Wood', { matchCase: false }).should('have.class', 'bg-norway')
 		})
 
-		it('can toggle all categories with the toggle button', () => {
+		it('can toggle all categories with the All categories button', () => {
 			cy.visit('/')
 
-			// Initially should show "Unselect all categories"
-			cy.contains('Unselect all categories').should('be.visible')
+			// Initially all categories should be selected (All categories button is active)
+			cy.contains('button', 'All categories', { matchCase: false })
+				.should('be.visible')
+				.should('have.class', 'bg-gray-asparagus')
 
-			// Click to unselect all
-			cy.contains('Unselect all categories').click()
+			// Click Wood to select it (adds it to visibleCategories)
+			cy.contains('button', 'Wood', { matchCase: false }).click()
 
-			// Should now show "Select all categories"
-			cy.contains('Select all categories').should('be.visible')
+			// All categories button should now be inactive
+			cy.contains('button', 'All categories', { matchCase: false }).should(
+				'have.class',
+				'bg-norway'
+			)
 
-			// All category buttons should be deselected
-			cy.get('button')
-				.contains('Wood', { matchCase: false })
-				.should('have.class', 'bg-norway')
+			// Wood category should be selected (it's now in visibleCategories)
+			cy.contains('button', 'Wood', { matchCase: false }).should(
+				'have.class',
+				'bg-gray-asparagus'
+			)
+
+			// Click "All categories" to clear filters and show all categories again
+			cy.contains('button', 'All categories', { matchCase: false }).click()
+
+			// All categories button should be active again
+			cy.contains('button', 'All categories', { matchCase: false }).should(
+				'have.class',
+				'bg-gray-asparagus'
+			)
+
+			// Wood category should be unselected again (visibleCategories is now empty)
+			cy.contains('button', 'Wood', { matchCase: false }).should('have.class', 'bg-norway')
 		})
 
 		it('can hide/show category filters on mobile', () => {
@@ -259,25 +311,25 @@ describe('Homepage Functionality', () => {
 			cy.visit('/')
 
 			// Wait for items to load
-			cy.contains('Showing').should('be.visible')
+			cy.contains('oak planks', { matchCase: false }).should('be.visible')
 
-			// Deselect wood category
-			cy.contains('button', 'Wood', { matchCase: false }).click()
+			// Select Sand category (this filters to only show Sand items)
+			cy.contains('button', 'Sand', { matchCase: false }).click()
 
 			// Wait for filtering to take effect
 			cy.wait(500)
 
-			// Wood items should not be visible in the main content area
+			// Wood items should not be visible in the main content area (only Sand items shown)
 			cy.get('table').should('not.contain', 'oak planks')
 			cy.get('table').should('not.contain', 'oak log')
 
-			// Reselect wood category
-			cy.contains('button', 'Wood', { matchCase: false }).click()
+			// Click Sand again to deselect it (clears visibleCategories, shows all categories)
+			cy.contains('button', 'Sand', { matchCase: false }).click()
 
 			// Wait for filtering to take effect
 			cy.wait(500)
 
-			// Wood items should be visible again
+			// Wood items should be visible again (all categories are now shown)
 			cy.contains('oak planks', { matchCase: false }).should('be.visible')
 		})
 	})
@@ -396,7 +448,7 @@ describe('Homepage Functionality', () => {
 			cy.visit('/?version=1.20')
 
 			// Should show version in the display
-			cy.contains('Showing').should('contain', '1.20')
+			cy.contains('MC 1.20').should('be.visible')
 		})
 
 		it('updates URL when changing filters', () => {
@@ -435,9 +487,8 @@ describe('Homepage Functionality', () => {
 		it('displays item counts correctly', () => {
 			cy.visit('/')
 
-			// Should show item count in the summary
-			cy.contains('Showing').should('be.visible')
-			cy.contains('items').should('be.visible')
+			// Should show total item count in the "All categories" button
+			cy.contains('button', 'All categories', { matchCase: false }).should('contain', '(')
 
 			// Category buttons should show counts
 			cy.contains('button', 'Wood', { matchCase: false }).should('contain', '(')
@@ -446,8 +497,8 @@ describe('Homepage Functionality', () => {
 		it('handles empty states gracefully', () => {
 			cy.visit('/')
 
-			// Deselect all categories
-			cy.contains('Unselect all categories').click()
+			// Use a search query that returns no results to trigger empty state
+			cy.get('input[placeholder*="Search for items"]').type('nonexistentitemxyz123')
 
 			// Should show empty state
 			cy.contains('No items found').should('be.visible')
@@ -488,7 +539,7 @@ describe('Homepage Functionality', () => {
 			const startTime = Date.now()
 
 			cy.visit('/')
-			cy.contains('Showing').should('be.visible')
+			cy.contains('oak planks', { matchCase: false }).should('be.visible')
 
 			const endTime = Date.now()
 			const loadTime = endTime - startTime
