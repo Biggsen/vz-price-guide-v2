@@ -661,13 +661,14 @@ function toggleShopsVisibility(serverId) {
 						Player Shop Manager is here
 					</h1>
 					<p class="text-lg text-gray-600 mb-8 leading-relaxed">
-						Keep track of your own shops and other player shops across one or more Minecraft
-						servers. The Player Shop Manager helps you record prices, check competitors,
-						and spot outdated listings without relying on spreadsheets or memory.
+						Keep track of your own shops and other player shops across one or more
+						Minecraft servers. The Player Shop Manager helps you record prices, check
+						competitors, and spot outdated listings without relying on spreadsheets or
+						memory.
 					</p>
 					<p class="text-lg text-gray-600 mb-8 leading-relaxed">
-						Set up servers by Minecraft version, add shops, track buy and sell prices, and
-						use the Market Overview to compare items across all shops in one place.
+						Set up servers by Minecraft version, add shops, track buy and sell prices,
+						and use the Market Overview to compare items across all shops in one place.
 					</p>
 					<div class="flex flex-col sm:flex-row gap-4">
 						<BaseButton
@@ -685,7 +686,7 @@ function toggleShopsVisibility(serverId) {
 							variant="primary"
 							class="text-base px-6 py-3">
 							<template #left-icon>
-								<CheckCircleIcon />
+								<BuildingStorefrontIcon />
 							</template>
 							Try the Shop Manager
 						</BaseButton>
@@ -702,13 +703,15 @@ function toggleShopsVisibility(serverId) {
 				<!-- Right Column: Feature Images Grid -->
 				<div class="grid grid-cols-2 gap-3 max-w-md">
 					<div class="space-y-3">
-						<div class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+						<div
+							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
 							<img
 								src="/images/promo/shop-manager-1.png"
 								alt="Shop Manager feature"
 								class="w-full h-full object-cover" />
 						</div>
-						<div class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+						<div
+							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
 							<img
 								src="/images/promo/shop-manager-4.png"
 								alt="Shop Manager feature"
@@ -716,13 +719,15 @@ function toggleShopsVisibility(serverId) {
 						</div>
 					</div>
 					<div class="space-y-3 pt-6">
-						<div class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+						<div
+							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
 							<img
 								src="/images/promo/shop-manager-2.png"
 								alt="Shop Manager feature"
 								class="w-full h-full object-cover" />
 						</div>
-						<div class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+						<div
+							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
 							<img
 								src="/images/promo/shop-manager-3.png"
 								alt="Shop Manager feature"
@@ -749,8 +754,8 @@ function toggleShopsVisibility(serverId) {
 					<template #body>
 						<p class="text-gray-600">
 							Keep separate shop setups for different Minecraft servers in one place.
-							Track your own shops and other player shops without relying on spreadsheets
-							or scattered notes.
+							Track your own shops and other player shops without relying on
+							spreadsheets or scattered notes.
 						</p>
 					</template>
 				</BaseCard>
@@ -795,8 +800,9 @@ function toggleShopsVisibility(serverId) {
 					</template>
 					<template #body>
 						<p class="text-gray-600">
-							Mark items as out of stock and keep track of shop availability while price
-							checking. Useful for noting when listings are temporarily unavailable.
+							Mark items as out of stock and keep track of shop availability while
+							price checking. Useful for noting when listings are temporarily
+							unavailable.
 						</p>
 					</template>
 				</BaseCard>
@@ -810,8 +816,8 @@ function toggleShopsVisibility(serverId) {
 					</template>
 					<template #body>
 						<p class="text-gray-600">
-							Update buy and sell prices directly in the item table using inline editing,
-							making quick price checks and adjustments easier.
+							Update buy and sell prices directly in the item table using inline
+							editing, making quick price checks and adjustments easier.
 						</p>
 					</template>
 				</BaseCard>
@@ -825,8 +831,8 @@ function toggleShopsVisibility(serverId) {
 					</template>
 					<template #body>
 						<p class="text-gray-600">
-							Servers are tagged with a Minecraft version so item lists only show items
-							that exist in that version when adding new shop entries.
+							Servers are tagged with a Minecraft version so item lists only show
+							items that exist in that version when adding new shop entries.
 						</p>
 					</template>
 				</BaseCard>
@@ -1271,7 +1277,7 @@ function toggleShopsVisibility(serverId) {
 		<div v-if="!user?.email" class="text-left pt-2 pb-4 sm:py-4">
 			<div class="mb-8">
 				<h1 class="text-3xl font-bold text-gray-900 mb-2">Almost there!</h1>
-				<p class="mb-6">You'll need an account to use the Shop Manager tool.</p>
+				<p class="mb-6">You'll need an account to use the Shop Manager.</p>
 				<p class="text-sm text-gray-900 mb-2">With an account, you can:</p>
 				<ul class="text-sm text-gray-900 space-y-1 list-disc list-inside">
 					<li>track your own shops and other player shops across multiple servers</li>
@@ -1305,7 +1311,7 @@ function toggleShopsVisibility(serverId) {
 		<div v-else-if="isSignedInButNotVerified" class="text-left pt-2 pb-4 sm:py-4">
 			<div class="mb-8">
 				<h1 class="text-3xl font-bold text-gray-900 mb-2">So close!</h1>
-				<p class="mb-6">Please verify your email address to use the Shop Manager tool.</p>
+				<p class="mb-6">Please verify your email address to use the Shop Manager.</p>
 				<p class="text-sm text-gray-900 mb-2">Once verified, you can:</p>
 				<ul class="text-sm text-gray-900 space-y-1 list-disc list-inside">
 					<li>track your own shops and other player shops across multiple servers</li>
