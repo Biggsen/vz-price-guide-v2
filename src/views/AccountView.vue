@@ -11,8 +11,8 @@ import {
 	updateUserProfile,
 	isMinecraftUsernameTaken
 } from '../utils/userProfile.js'
-import { CheckCircleIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 import BaseButton from '@/components/BaseButton.vue'
+import NotificationBanner from '@/components/NotificationBanner.vue'
 
 const { user, isAdmin } = useAdmin()
 const auth = useFirebaseAuth()
@@ -201,25 +201,12 @@ function signOutOfFirebase() {
 			<h1 class="text-3xl font-bold mb-6">Account</h1>
 
 			<!-- Success Message (verified only) -->
-			<div
+			<NotificationBanner
 				v-if="isVerified && successMessage"
-				class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-				<div class="flex">
-					<div class="flex-shrink-0">
-						<CheckCircleIcon class="h-5 w-5 text-green-400" />
-					</div>
-					<div class="ml-3">
-						<p class="text-sm font-medium text-green-800">{{ successMessage }}</p>
-					</div>
-					<div class="ml-auto pl-3">
-						<button
-							@click="successMessage = ''"
-							class="text-green-400 hover:text-green-600">
-							<XMarkIcon class="h-4 w-4" />
-						</button>
-					</div>
-				</div>
-			</div>
+				type="success"
+				title="Success"
+				:message="successMessage"
+				class="mb-6" />
 
 			<!-- Account Information (single source with conditional bits) -->
 			<div class="mb-8">
