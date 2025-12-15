@@ -1458,7 +1458,7 @@ function getServerName(serverId) {
 												"
 												class="w-5 h-5 text-current"
 												aria-label="Shop owner has run out of money" />
-											<ArchiveBoxXMarkIcon
+											<ArchiveBoxIcon
 												v-else-if="row._originalItem?.stock_full"
 												class="w-5 h-5 text-current"
 												aria-label="Stock full" />

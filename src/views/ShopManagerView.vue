@@ -9,9 +9,9 @@ import BaseTable from '../components/BaseTable.vue'
 import ShopFormModal from '../components/ShopFormModal.vue'
 import LinkWithActions from '../components/LinkWithActions.vue'
 import ServerFormModal from '../components/ServerFormModal.vue'
+import NotificationBanner from '../components/NotificationBanner.vue'
 import {
 	GlobeAltIcon,
-	BuildingStorefrontIcon,
 	CurrencyDollarIcon,
 	PencilIcon,
 	TrashIcon,
@@ -20,9 +20,10 @@ import {
 	WalletIcon,
 	ChartBarIcon,
 	MagnifyingGlassIcon,
-	CheckCircleIcon
+	CheckCircleIcon,
+	CubeIcon
 } from '@heroicons/vue/24/outline'
-import { XCircleIcon, MapPinIcon, UserIcon } from '@heroicons/vue/24/solid'
+import { XCircleIcon, MapPinIcon, UserIcon, BuildingStorefrontIcon } from '@heroicons/vue/24/solid'
 import { useAdmin } from '../utils/admin.js'
 import { useShops, createShop, updateShop, deleteShop } from '../utils/shopProfile.js'
 import {
@@ -631,11 +632,11 @@ function toggleShopsVisibility(serverId) {
 	<!-- Feature Page (shown when user doesn't have access) -->
 	<div v-if="!hasAccess" class="p-4 py-8">
 		<!-- Main Feature Section -->
-		<div class="mb-16">
-			<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+		<div class="mb-16 lg:ml-[70px]">
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-center">
 				<!-- Left Column: Text and CTA -->
 				<div>
-					<h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+					<h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-6 leading-tight">
 						Player Shop Manager is here
 					</h1>
 					<p class="text-lg text-gray-600 mb-8 leading-relaxed">
@@ -651,12 +652,11 @@ function toggleShopsVisibility(serverId) {
 						<BaseButton
 							v-if="!user?.email"
 							@click="goToSignUp"
-							variant="primary"
-							class="text-base px-6 py-3">
+							variant="primary">
 							<template #left-icon>
-								<UserIcon />
+								<BuildingStorefrontIcon />
 							</template>
-							Get Started
+							Try the Shop Manager
 						</BaseButton>
 						<BaseButton
 							v-else-if="!user?.emailVerified"
@@ -675,32 +675,37 @@ function toggleShopsVisibility(serverId) {
 							class="text-base px-6 py-3">
 							Request Access
 						</BaseButton>
-						<BaseButton
-							v-if="!user?.email"
-							@click="goToSignIn"
-							variant="secondary"
-							class="text-base px-6 py-3">
-							Sign In
-						</BaseButton>
 					</div>
 				</div>
 
 				<!-- Right Column: Feature Images Grid -->
-				<div class="grid grid-cols-2 gap-4">
-					<div class="space-y-4">
-						<div class="bg-gray-100 rounded-lg aspect-[3/4] flex items-center justify-center overflow-hidden">
-							<BuildingStorefrontIcon class="w-16 h-16 text-gray-400" />
+				<div class="grid grid-cols-2 gap-3 max-w-md">
+					<div class="space-y-3">
+						<div class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+							<img
+								src="/images/promo/shop-manager-1.png"
+								alt="Shop Manager feature"
+								class="w-full h-full object-cover" />
 						</div>
-						<div class="bg-gray-100 rounded-lg aspect-[3/4] flex items-center justify-center overflow-hidden">
-							<ChartBarIcon class="w-16 h-16 text-gray-400" />
+						<div class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+							<img
+								src="/images/promo/shop-manager-4.png"
+								alt="Shop Manager feature"
+								class="w-full h-full object-cover" />
 						</div>
 					</div>
-					<div class="space-y-4 pt-8">
-						<div class="bg-gray-100 rounded-lg aspect-[3/4] flex items-center justify-center overflow-hidden">
-							<MagnifyingGlassIcon class="w-16 h-16 text-gray-400" />
+					<div class="space-y-3 pt-6">
+						<div class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+							<img
+								src="/images/promo/shop-manager-2.png"
+								alt="Shop Manager feature"
+								class="w-full h-full object-cover" />
 						</div>
-						<div class="bg-gray-100 rounded-lg aspect-[3/4] flex items-center justify-center overflow-hidden">
-							<GlobeAltIcon class="w-16 h-16 text-gray-400" />
+						<div class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+							<img
+								src="/images/promo/shop-manager-3.png"
+								alt="Shop Manager feature"
+								class="w-full h-full object-cover" />
 						</div>
 					</div>
 				</div>
@@ -710,21 +715,21 @@ function toggleShopsVisibility(serverId) {
 		<!-- Features Grid -->
 		<div class="mb-16">
 			<h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">
-				Everything you need to manage your shops
+				Tools to help you manage and compare shops
 			</h2>
 			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				<BaseCard variant="tertiary">
 					<template #header>
 						<div class="flex items-center gap-3">
-							<BuildingStorefrontIcon class="w-6 h-6 text-gray-asparagus" />
-							<span class="font-semibold">Multi-Server Management</span>
+							<GlobeAltIcon class="w-6 h-6 text-gray-asparagus" />
+							<span class="font-semibold">Servers & Shops</span>
 						</div>
 					</template>
 					<template #body>
 						<p class="text-gray-600">
-							Manage multiple shops across different Minecraft servers from one central
-							location. No more switching between spreadsheets or losing track of your
-							inventory.
+							Keep separate shop setups for different Minecraft servers in one place.
+							Track your own shops and other player shops without relying on spreadsheets
+							or scattered notes.
 						</p>
 					</template>
 				</BaseCard>
@@ -733,13 +738,13 @@ function toggleShopsVisibility(serverId) {
 					<template #header>
 						<div class="flex items-center gap-3">
 							<ChartBarIcon class="w-6 h-6 text-gray-asparagus" />
-							<span class="font-semibold">Price Comparison</span>
+							<span class="font-semibold">Price Checking</span>
 						</div>
 					</template>
 					<template #body>
 						<p class="text-gray-600">
-							Compare prices instantly across all shops on a server. See who's offering
-							the best deals and spot profitable trading opportunities at a glance.
+							Compare item prices across all shops on a server. Quickly see how prices
+							differ between shops while checking or updating listings.
 						</p>
 					</template>
 				</BaseCard>
@@ -748,13 +753,14 @@ function toggleShopsVisibility(serverId) {
 					<template #header>
 						<div class="flex items-center gap-3">
 							<MagnifyingGlassIcon class="w-6 h-6 text-gray-asparagus" />
-							<span class="font-semibold">Market Overview</span>
+							<span class="font-semibold">Server Market Overview</span>
 						</div>
 					</template>
 					<template #body>
 						<p class="text-gray-600">
-							Browse and compare items across all shops on a server in one place. Find
-							the best deals and spot profitable trading opportunities instantly.
+							Browse all items across all shops on a server in one combined view. Use
+							search and categories to compare prices without opening each shop
+							individually.
 						</p>
 					</template>
 				</BaseCard>
@@ -763,13 +769,13 @@ function toggleShopsVisibility(serverId) {
 					<template #header>
 						<div class="flex items-center gap-3">
 							<ClipboardDocumentCheckIcon class="w-6 h-6 text-gray-asparagus" />
-							<span class="font-semibold">Stock Tracking</span>
+							<span class="font-semibold">Availability Tracking</span>
 						</div>
 					</template>
 					<template #body>
 						<p class="text-gray-600">
-							Track stock status for each item in your shops. Mark when chests are full
-							or empty, and keep your inventory organized without spreadsheets.
+							Mark items as out of stock and keep track of shop availability while price
+							checking. Useful for noting when listings are temporarily unavailable.
 						</p>
 					</template>
 				</BaseCard>
@@ -778,13 +784,13 @@ function toggleShopsVisibility(serverId) {
 					<template #header>
 						<div class="flex items-center gap-3">
 							<CurrencyDollarIcon class="w-6 h-6 text-gray-asparagus" />
-							<span class="font-semibold">Quick Price Updates</span>
+							<span class="font-semibold">Inline Price Editing</span>
 						</div>
 					</template>
 					<template #body>
 						<p class="text-gray-600">
-							Update buy and sell prices with inline editing. Keep your shop competitive
-							in seconds without leaving the page.
+							Update buy and sell prices directly in the item table using inline editing,
+							making quick price checks and adjustments easier.
 						</p>
 					</template>
 				</BaseCard>
@@ -792,63 +798,26 @@ function toggleShopsVisibility(serverId) {
 				<BaseCard variant="tertiary">
 					<template #header>
 						<div class="flex items-center gap-3">
-							<GlobeAltIcon class="w-6 h-6 text-gray-asparagus" />
-							<span class="font-semibold">Version Filtering</span>
+							<CubeIcon class="w-6 h-6 text-gray-asparagus" />
+							<span class="font-semibold">Minecraft Version Support</span>
 						</div>
 					</template>
 					<template #body>
 						<p class="text-gray-600">
-							Smart filtering by Minecraft version ensures you only see relevant items
-							for your server version. No more confusion about what's available.
+							Servers are tagged with a Minecraft version so item lists only show items
+							that exist in that version when adding new shop entries.
 						</p>
 					</template>
 				</BaseCard>
 			</div>
 		</div>
 
-		<!-- Call to Action Section -->
-		<div class="bg-gray-50 rounded-lg p-8 text-center">
-			<h2 class="text-2xl font-bold text-gray-900 mb-4">Ready to get started?</h2>
-			<p class="text-gray-600 mb-6 max-w-2xl mx-auto">
-				Join other players who are already using Shop Manager to streamline their trading
-				operations and maximize their profits.
-			</p>
-			<div class="flex flex-col sm:flex-row gap-4 justify-center">
-				<BaseButton
-					v-if="!user?.email"
-					@click="goToSignUp"
-					variant="primary"
-					class="text-base px-6 py-3">
-					<template #left-icon>
-						<UserIcon />
-					</template>
-					Create Account
-				</BaseButton>
-				<BaseButton
-					v-else-if="!user?.emailVerified"
-					@click="goToVerifyEmail"
-					variant="primary"
-					class="text-base px-6 py-3">
-					<template #left-icon>
-						<CheckCircleIcon />
-					</template>
-					Verify Email
-				</BaseButton>
-				<BaseButton
-					v-else
-					@click="goToSignIn"
-					variant="primary"
-					class="text-base px-6 py-3">
-					Request Access
-				</BaseButton>
-				<BaseButton
-					v-if="!user?.email"
-					@click="goToSignIn"
-					variant="secondary"
-					class="text-base px-6 py-3">
-					Sign In
-				</BaseButton>
-			</div>
+		<!-- Info Alert -->
+		<div class="mb-16">
+			<NotificationBanner
+				type="info"
+				title="Designed for manual price tracking and regular shop upkeep."
+				message="The Shop Manager does not connect to your Minecraft server or modify in-game shops." />
 		</div>
 	</div>
 
