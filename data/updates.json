@@ -15,7 +15,8 @@
 			"Shop state tracking: mark items as out of stock and shops as having run out of money",
 			"Market Overview: browse and search all items across all shops on a server to compare prices at a glance",
 			"Notes: add your own metadata per item or shop for reminders and context",
-			"Private by default: your shop data is only visible to you"
+			"Private by default: your shop data is only visible to you",
+			"Note: The mobile version is still quite wonky, and I'm working on it"
 		]
 	},
 	{

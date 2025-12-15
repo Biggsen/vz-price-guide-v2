@@ -50,16 +50,37 @@ const isSignedInButNotVerified = computed(() => {
 	return user.value?.email && !user.value?.emailVerified
 })
 
+// Modal state
+const showShopManagerModal = ref(false)
+
+function closeShopManagerModal() {
+	showShopManagerModal.value = false
+}
+
+function handleShopManagerClick() {
+	if (isAuthenticated.value && hasAccess.value) {
+		// User is authenticated, verified, and has access - shouldn't reach here
+		// as they would see the actual shop manager, not the CTA
+		return
+	} else {
+		// User is not authenticated or not verified, show modal
+		showShopManagerModal.value = true
+	}
+}
+
 // Navigation functions
 function goToSignUp() {
+	closeShopManagerModal()
 	router.push('/signup')
 }
 
 function goToSignIn() {
+	closeShopManagerModal()
 	router.push('/signin')
 }
 
 function goToVerifyEmail() {
+	closeShopManagerModal()
 	router.push('/verify-email')
 }
 
@@ -651,7 +672,7 @@ function toggleShopsVisibility(serverId) {
 					<div class="flex flex-col sm:flex-row gap-4">
 						<BaseButton
 							v-if="!user?.email"
-							@click="goToSignUp"
+							@click="handleShopManagerClick"
 							variant="primary">
 							<template #left-icon>
 								<BuildingStorefrontIcon />
@@ -660,13 +681,13 @@ function toggleShopsVisibility(serverId) {
 						</BaseButton>
 						<BaseButton
 							v-else-if="!user?.emailVerified"
-							@click="goToVerifyEmail"
+							@click="handleShopManagerClick"
 							variant="primary"
 							class="text-base px-6 py-3">
 							<template #left-icon>
 								<CheckCircleIcon />
 							</template>
-							Verify Email
+							Try the Shop Manager
 						</BaseButton>
 						<BaseButton
 							v-else
@@ -1230,6 +1251,80 @@ function toggleShopsVisibility(serverId) {
 			</template>
 		</BaseModal>
 	</div>
+
+	<!-- Shop Manager Modal -->
+	<BaseModal
+		:isOpen="showShopManagerModal"
+		title="Try the Shop Manager"
+		@close="closeShopManagerModal">
+		<!-- Sign-up content for unauthenticated users -->
+		<div v-if="!user?.email" class="text-left pt-2 pb-4 sm:py-4">
+			<div class="mb-8">
+				<h1 class="text-3xl font-bold text-gray-900 mb-2">Almost there!</h1>
+				<p class="mb-6">You'll need an account to use the Shop Manager tool.</p>
+				<p class="text-sm text-gray-900 mb-2">With an account, you can:</p>
+				<ul class="text-sm text-gray-900 space-y-1 list-disc list-inside">
+					<li>track your own shops and other player shops across multiple servers</li>
+					<li>set up servers by Minecraft version and organize shops by server</li>
+					<li>record buy and sell prices for items in each shop</li>
+					<li>use the Market Overview to compare prices across all shops</li>
+					<li>mark items as out of stock and track shop availability</li>
+				</ul>
+			</div>
+
+			<!-- Action buttons -->
+			<div>
+				<BaseButton @click="goToSignUp" variant="primary">
+					<template #left-icon>
+						<UserIcon />
+					</template>
+					Create Account
+				</BaseButton>
+				<div class="text-left pt-4">
+					<p class="text-sm text-gray-500">
+						Already have an account?
+						<button @click="goToSignIn" class="text-gray-700 hover:text-opacity-80">
+							<span class="underline">Sign in</span>
+						</button>
+					</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Email verification content for signed-in but unverified users -->
+		<div v-else-if="isSignedInButNotVerified" class="text-left pt-2 pb-4 sm:py-4">
+			<div class="mb-8">
+				<h1 class="text-3xl font-bold text-gray-900 mb-2">So close!</h1>
+				<p class="mb-6">Please verify your email address to use the Shop Manager tool.</p>
+				<p class="text-sm text-gray-900 mb-2">Once verified, you can:</p>
+				<ul class="text-sm text-gray-900 space-y-1 list-disc list-inside">
+					<li>track your own shops and other player shops across multiple servers</li>
+					<li>set up servers by Minecraft version and organize shops by server</li>
+					<li>record buy and sell prices for items in each shop</li>
+					<li>use the Market Overview to compare prices across all shops</li>
+					<li>mark items as out of stock and track shop availability</li>
+				</ul>
+			</div>
+
+			<!-- Action buttons -->
+			<div>
+				<BaseButton @click="goToVerifyEmail" variant="primary">
+					<template #left-icon>
+						<CheckCircleIcon />
+					</template>
+					Resend verification email
+				</BaseButton>
+				<div class="text-left pt-4">
+					<p class="text-sm text-gray-500">
+						Need to sign in with a different account?
+						<button @click="goToSignIn" class="text-gray-700 hover:text-opacity-80">
+							<span class="underline">Sign in</span>
+						</button>
+					</p>
+				</div>
+			</div>
+		</div>
+	</BaseModal>
 </template>
 
 <style scoped>
