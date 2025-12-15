@@ -982,9 +982,14 @@ function toggleShopsVisibility(serverId) {
 													:alt="row.owner"
 													class="w-5 h-5 rounded flex-shrink-0"
 													@error="$event.target.style.display = 'none'" />
-												<span class="font-medium text-gray-900">
+												<RouterLink
+													:to="{
+														name: 'shop',
+														params: { shopId: row.shop.id }
+													}"
+													class="font-medium text-gray-900 hover:text-heavy-metal transition">
 													{{ row.owner }}
-												</span>
+												</RouterLink>
 											</div>
 										</template>
 										<template #cell-shopName="{ row }">
@@ -1065,9 +1070,14 @@ function toggleShopsVisibility(serverId) {
 													:alt="row.owner"
 													class="w-5 h-5 rounded flex-shrink-0"
 													@error="$event.target.style.display = 'none'" />
-												<span class="font-medium text-gray-900">
+												<RouterLink
+													:to="{
+														name: 'shop',
+														params: { shopId: row.shop.id }
+													}"
+													class="font-medium text-gray-900 hover:text-heavy-metal transition">
 													{{ row.owner }}
-												</span>
+												</RouterLink>
 											</div>
 										</template>
 										<template #cell-shopName="{ row }">
