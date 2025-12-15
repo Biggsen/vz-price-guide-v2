@@ -11,7 +11,7 @@ import { enabledCategories, versions, baseEnabledVersions } from '../constants.j
 import { useAdmin } from '../utils/admin.js'
 import { getEffectivePriceMemoized, clearPriceCache, getCacheStats } from '../utils/pricing.js'
 import {
-	BeakerIcon
+	BuildingStorefrontIcon
 } from '@heroicons/vue/24/solid'
 import {
 	EyeIcon,
@@ -160,7 +160,7 @@ const showExportFeature = ref(true) // Set to true to enable export functionalit
 const disableAlert = ref(false) // Set to true to disable all alerts regardless of showAlert state
 
 // Info alert state
-const alertStorageKey = 'brewingCategoryUpdateAlertDismissed'
+const alertStorageKey = 'shopManagerAlertDismissed'
 const showAlert = ref(true)
 
 function dismissAlert() {
@@ -706,13 +706,17 @@ watch(
 		class="bg-semantic-info-light border-l-4 border-l-semantic-info text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
-				<BeakerIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
+				<BuildingStorefrontIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					<strong>New Brewing category is live!</strong>
-					Added 173 brewing items including base potions, effect potions, splash potions, lingering potions, and tipped arrows - all with accurate pricing.
+					<strong>Shop Manager is now available!</strong>
+					Track what you're buying and selling across one or more Minecraft servers, without needing to keep everything in spreadsheets. Includes Market Overview to browse and compare items across all shops.
 					<span> </span>
+					<router-link to="/shop-manager" class="underline hover:text-gray-asparagus">
+						<span>Try Shop Manager</span>
+					</router-link>
+					<span> or </span>
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
-						<span>Read the release notes</span>
+						<span>read the release notes</span>
 					</router-link>
 				</span>
 			</div>
