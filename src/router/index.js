@@ -188,7 +188,9 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresShopManager: true,
-				title: `Player Shop Manager - ${siteName}`
+				title: `Player Shop Manager - ${siteName}`,
+				description:
+					'Manage your Minecraft shops across multiple servers. Track buy and sell prices, stock status, and shop inventory without spreadsheets.'
 			}
 		},
 		{
@@ -243,7 +245,9 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresShopManager: true,
-				title: `Shop Items - ${siteName}`
+				title: `Shop Items - ${siteName}`,
+				description:
+					'View and manage items for your shop. Set buy and sell prices, track stock, and update inventory with inline editing.'
 			}
 		},
 		{
@@ -254,7 +258,9 @@ const router = createRouter({
 				requiresAuth: true,
 				requiresVerification: true,
 				requiresShopManager: true,
-				title: `Market Overview - ${siteName}`
+				title: `Market Overview - ${siteName}`,
+				description:
+					'Browse and compare prices across all shops on a server. Find the best deals and spot profitable trading opportunities at a glance.'
 			}
 		},
 		{
