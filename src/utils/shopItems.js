@@ -528,6 +528,23 @@ export function useServerShopItems(serverId, shopIds) {
 	// Watch for changes to serverId or shopIds and refetch large arrays
 	watch([serverId, shopIds], fetchLargeArrayItems, { immediate: true })
 
+	// Function to update an item in place (for large arrays without real-time listeners)
+	const updateItemInPlace = (itemId, updates) => {
+		const sids = unref(shopIds)
+		if (sids.length > 30) {
+			// For large arrays, manually update the ref
+			const itemIndex = largeArrayItems.value.findIndex((item) => item.id === itemId)
+			if (itemIndex !== -1) {
+				largeArrayItems.value[itemIndex] = {
+					...largeArrayItems.value[itemIndex],
+					...updates
+				}
+			}
+		}
+		// For small arrays (≤30), VueFire handles reactivity automatically via useCollection
+		// So we don't need to do anything here
+	}
+
 	// Combine results - use reactive collection for small arrays, manual for large
 	const items = computed(() => {
 		const sids = unref(shopIds)
@@ -557,7 +574,7 @@ export function useServerShopItems(serverId, shopIds) {
 		})
 	})
 
-	return { items, loading, error }
+	return { items, loading, error, updateItem: updateItemInPlace }
 }
 
 // Composable for price comparison across multiple items

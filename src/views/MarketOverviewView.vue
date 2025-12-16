@@ -372,6 +372,12 @@ async function toggleStar(itemId, currentlyStarred, originalItem) {
 	
 	try {
 		await updateShopItem(shopItemId, { starred: !currentlyStarred })
+		
+		// Optimistically update local state for large arrays (>30 shops)
+		// For small arrays, VueFire handles reactivity automatically
+		if (serverShopItemsResult.updateItem) {
+			serverShopItemsResult.updateItem(shopItemId, { starred: !currentlyStarred })
+		}
 	} catch (err) {
 		console.error('Error toggling star:', err)
 		error.value = err.message || 'Failed to update starred status. Please try again.'
@@ -1150,7 +1156,7 @@ const priceAnalysis = computed(() => {
 										<span class="truncate">{{ row.item }}</span>
 										<div class="flex items-center gap-2 ml-2 flex-shrink-0">
 											<button
-												@click.stop="toggleStar(row.id, row._originalItem?.starred || false)"
+												@click.stop="toggleStar(row.id, row._originalItem?.starred || false, row._originalItem)"
 												class="flex-shrink-0 transition-opacity"
 												:class="{
 													'opacity-0 group-hover:opacity-100': !(row._originalItem?.starred || false),
