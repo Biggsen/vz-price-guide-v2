@@ -86,7 +86,7 @@
 
 Currently focused on **Homepage Refactoring** - breaking down the 928-line HomeView.vue component into manageable pieces. This involves extracting composables (useEconomyConfig, useFilters, useItems), creating utility functions and constants, and improving testability and maintainability. Estimated effort: 30-42 hours.
 
-Also working on **Shop Manager Phase 7** - price comparison and market analysis features, and **Comment to SuggestionMessages Refactor** - refactoring the comment system to use `suggestionMessages` terminology for better semantic accuracy and future-proofing.
+Also working on **Shop Manager Phase 7** - price comparison and market analysis features.
 
 ---
 
@@ -118,6 +118,7 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 -   [x] Shop Manager Refactoring - ShopFormModal component extracted, ~423 lines of code eliminated
 -   [x] Crate Rewards Mobile Display - Comprehensive mobile responsive improvements
 -   [x] Duplicate Crate Name Detection - Auto-append number suffixes when importing duplicate crates
+-   [x] Comment to SuggestionMessages Refactor - Refactored comment system to use suggestionMessages terminology, renamed all files and components, updated Firestore collection path
 
 ### Detailed Completed Features
 
@@ -147,6 +148,15 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 -   Selected items share the same buy price, sell price, and notes
 -   Status: 80% complete (Phase 7 in progress)
 
+#### Comment to SuggestionMessages Refactor
+
+-   Refactored comment system to use suggestionMessages terminology for better semantic accuracy
+-   Renamed utility file: `comments.js` → `suggestionMessages.js`
+-   Renamed components: `CommentForm` → `SuggestionMessageForm`, `AdminCommentForm` → `AdminSuggestionMessageForm`, `CommentList` → `SuggestionMessageList`
+-   Updated Firestore collection path: `comments` → `suggestionMessages`
+-   Updated all function names, variable names, and UI terminology
+-   Status: Production ready
+
 ---
 
 ## Features (In Progress)
@@ -161,7 +171,6 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 
 -   [ ] Homepage Refactoring - Breaking down 928-line component into manageable pieces (30-42 hours estimated)
 -   [ ] Shop Manager Phase 7 - Price comparison and market analysis features (75% complete)
--   [ ] Comment to SuggestionMessages Refactor - Refactoring comment system to use suggestionMessages terminology
 
 ### Detailed In-Progress Features
 
@@ -323,7 +332,6 @@ _No active bugs currently - all recent issues have been resolved._
 
 -   [ ] Complete Homepage Refactoring - Extract composables (useEconomyConfig, useFilters, useItems), create utilities, reduce component size to <400 lines
 -   [ ] Finish Shop Manager Phase 7 - Search & filtering improvements (owner scope), price comparison features, performance optimizations
--   [ ] Comment to SuggestionMessages Refactor - Rename files, update terminology, migrate collection path
 
 ### Medium Priority
 
@@ -361,8 +369,8 @@ _No active bugs currently - all recent issues have been resolved._
 
 -   **Code Coverage**: 80% (Cypress E2E testing)
 -   **Open Issues**: 0 active bugs (6 recently resolved)
--   **Active Features**: 3 (Homepage Refactoring, Shop Manager Phase 7, Comment Refactor)
--   **Completed Features**: 16
+-   **Active Features**: 2 (Homepage Refactoring, Shop Manager Phase 7)
+-   **Completed Features**: 17
 -   **Frontend Components**: 38 Vue components and views
 -   **Backend Utilities**: 12 utility modules
 -   **Testing Suites**: 7 Cypress test suites
@@ -408,13 +416,7 @@ _No active bugs currently - all recent issues have been resolved._
     - Refactor main component to <400 lines
     - Add unit tests
 
-2. Comment to SuggestionMessages Refactor
-    - Rename utility files and components
-    - Update Firestore collection path
-    - Update all references and terminology
-    - Test migration flow
-
-3. Finish Shop Manager Phase 7
+2. Finish Shop Manager Phase 7
     - Complete search & filtering improvements (owner scope)
     - Add price comparison features
     - Performance optimizations (pagination/virtual scrolling)
@@ -461,7 +463,7 @@ _No active bugs currently - all recent issues have been resolved._
 
 ### Recent Changes
 
--   **2025-12-16**: Updated project summary with comprehensive review of all tasks and current project status.
+-   **2025-12-16**: Updated project summary with comprehensive review of all tasks and current project status. Moved Comment to SuggestionMessages Refactor from in-progress to completed (refactor already implemented).
 -   **2025-01-27**: Resolved multiple bugs including settings price modifiers persistence, admin subnav consistency, crate rewards mobile display, price guide count discrepancies, duplicate crate names, and enchantment book separation. All issues fixed and tested.
 -   **2025-01-27**: Completed Market Overview refactoring - extracted shared utility functions (date.js, pricing.js, tableTransform.js), eliminated ~100 lines of duplicated code from MarketOverviewView and ShopItemsView.
 -   **2025-01-27**: Completed Shop Manager refactoring - extracted ShopFormModal component, eliminated ~423 lines of duplicated code from ShopItemsView and ShopManagerView.
