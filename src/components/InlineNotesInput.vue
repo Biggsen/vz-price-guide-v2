@@ -78,6 +78,11 @@ function handleClick() {
 }
 
 function handleBlur() {
+	// Don't save on blur if we're not in edit mode anymore (edit was cancelled)
+	if (!props.isEditing) {
+		return
+	}
+	
 	// Don't save on blur if we just handled Enter (to avoid double-saving)
 	if (isHandlingEnter.value) {
 		return

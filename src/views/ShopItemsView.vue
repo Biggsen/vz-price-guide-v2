@@ -124,6 +124,7 @@ const shopItems = computed(() => {
 	}
 })
 
+
 // Computed properties - Define these FIRST before using them in other computeds
 const hasShops = computed(() => shops.value && shops.value.length > 0)
 const hasServers = computed(() => servers.value && servers.value.length > 0)
@@ -816,6 +817,8 @@ async function saveNotes(row, newNotes) {
 
 		try {
 			await handleQuickEdit(updatedItem)
+		} catch (err) {
+			throw err
 		} finally {
 			// Clear saving state
 			savingNotesId.value = null
