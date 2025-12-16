@@ -65,7 +65,8 @@ service cloud.firestore {
         (request.resource.data.sell_price == null || 
          (request.resource.data.sell_price is number && request.resource.data.sell_price >= 0)) &&
         (request.resource.data.buy_price != null || request.resource.data.sell_price != null) &&
-        request.resource.data.stock_full is bool;
+        request.resource.data.stock_full is bool &&
+        (request.resource.data.starred == null || request.resource.data.starred is bool);
     }
     // Suggestions: Users can read/write their own, admins can read/update/delete all
     match /suggestions/{suggestionId} {

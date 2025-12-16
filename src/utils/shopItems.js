@@ -66,6 +66,7 @@ export async function addShopItem(shopId, itemId, itemData) {
 			previous_price_date: null,
 			stock_quantity: itemData.stock_quantity ?? null,
 			stock_full: itemData.stock_full || false,
+			starred: false,
 			notes: itemData.notes?.trim() || '',
 			last_updated: new Date().toISOString()
 		}
@@ -138,8 +139,11 @@ export async function updateShopItem(itemId, updates) {
 			updatedData.notes = String(updatedData.notes || '').trim()
 		}
 
-		// Always update the last_updated timestamp
-		updatedData.last_updated = new Date().toISOString()
+		// Update the last_updated timestamp, but not for starring/unstarring
+		const isOnlyStarredUpdate = Object.keys(updates).length === 1 && 'starred' in updates
+		if (!isOnlyStarredUpdate) {
+			updatedData.last_updated = new Date().toISOString()
+		}
 
 		await updateDoc(docRef, updatedData)
 		return updatedData
@@ -172,8 +176,7 @@ export async function getShopItems(shopId) {
 		const db = getFirestore()
 		const q = query(
 			collection(db, 'shop_items'),
-			where('shop_id', '==', shopId),
-			orderBy('last_updated', 'desc')
+			where('shop_id', '==', shopId)
 		)
 
 		// Note: This returns a query object, not the actual data
@@ -359,8 +362,7 @@ export function useShopItems(shopId) {
 
 		return query(
 			collection(db, 'shop_items'),
-			where('shop_id', '==', sid),
-			orderBy('last_updated', 'desc')
+			where('shop_id', '==', sid)
 		)
 	})
 
@@ -533,11 +535,26 @@ export function useServerShopItems(serverId, shopIds) {
 			return []
 		}
 
-		if (sids.length <= 30) {
-			return smallArrayItems.value || []
-		} else {
-			return largeArrayItems.value || []
-		}
+		const rawItems = sids.length <= 30 
+			? (smallArrayItems.value || [])
+			: (largeArrayItems.value || [])
+
+		// Ensure all items have proper document IDs
+		return rawItems.map((item, index) => {
+			// For large arrays, IDs are already set manually
+			// For small arrays (useCollection), VueFire should add id, but ensure it exists
+			let docId = item.id
+
+			if (!docId) {
+				console.error('useServerShopItems: Item missing ID:', item)
+				docId = `missing-${index}-${Date.now()}`
+			}
+
+			return {
+				...item,
+				id: docId
+			}
+		})
 	})
 
 	return { items, loading, error }

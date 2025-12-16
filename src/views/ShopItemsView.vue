@@ -28,9 +28,10 @@ import {
 	TrashIcon,
 	ArchiveBoxIcon,
 	ArchiveBoxXMarkIcon,
-	WalletIcon
+	WalletIcon,
+	StarIcon as StarIconOutline
 } from '@heroicons/vue/24/outline'
-import { XCircleIcon } from '@heroicons/vue/24/solid'
+import { XCircleIcon, StarIcon } from '@heroicons/vue/24/solid'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
@@ -270,21 +271,14 @@ const shopItemsByCategory = computed(() => {
 const allVisibleShopItems = computed(() => {
 	if (!shopItems.value || !availableItems.value) return []
 
-	return shopItems.value
-		.map((shopItem) => {
-			// Find the corresponding item data from the main items collection
-			const itemData = availableItems.value.find((item) => item.id === shopItem.item_id)
-			return {
-				...shopItem,
-				itemData
-			}
-		})
-		.sort((a, b) => {
-			// Sort alphabetically by name
-			const nameA = a.itemData?.name?.toLowerCase() || ''
-			const nameB = b.itemData?.name?.toLowerCase() || ''
-			return nameA.localeCompare(nameB)
-		})
+	return shopItems.value.map((shopItem) => {
+		// Find the corresponding item data from the main items collection
+		const itemData = availableItems.value.find((item) => item.id === shopItem.item_id)
+		return {
+			...shopItem,
+			itemData
+		}
+	})
 })
 
 // BaseTable column definitions
@@ -833,6 +827,16 @@ function cancelEditNotes() {
 	editingNotesId.value = null
 }
 
+// Toggle starred status
+async function toggleStar(itemId, currentlyStarred) {
+	try {
+		await updateShopItem(itemId, { starred: !currentlyStarred })
+	} catch (error) {
+		console.error('Error toggling star:', error)
+		error.value = error.message || 'Failed to update starred status. Please try again.'
+	}
+}
+
 function openEditShopModal() {
 	if (!selectedShop.value) return
 
@@ -1200,7 +1204,11 @@ function getServerName(serverId) {
 										category.slice(1).toLowerCase()
 									">
 									<template #cell-item="{ row, layout }">
-										<div class="flex items-center">
+										<div 
+											class="flex items-center group"
+											:class="[
+												layout === 'condensed' ? '-mx-2 -my-1 px-2 py-1' : '-mx-4 -my-3 px-4 py-3'
+											]">
 											<div
 												v-if="row.image"
 												:class="[
@@ -1214,11 +1222,28 @@ function getServerName(serverId) {
 													loading="lazy" />
 											</div>
 											<div
-												class="font-medium text-gray-900 flex items-center justify-between w-full">
-												<span>{{ row.item }}</span>
-												<ArrowPathIcon
-													v-if="showItemSavingSpinner === row.id"
-													class="w-4 h-4 text-gray-500 animate-spin" />
+												class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
+												<span class="truncate">{{ row.item }}</span>
+												<div class="flex items-center gap-2 ml-2 flex-shrink-0">
+													<ArrowPathIcon
+														v-if="showItemSavingSpinner === row.id"
+														class="w-4 h-4 text-gray-500 animate-spin" />
+													<button
+														@click.stop="toggleStar(row.id, row._originalItem?.starred || false)"
+														class="flex-shrink-0 transition-opacity"
+														:class="{
+															'opacity-0 group-hover:opacity-100': !(row._originalItem?.starred || false),
+															'opacity-100': row._originalItem?.starred || false
+														}"
+														:title="row._originalItem?.starred ? 'Unstar item' : 'Star item'">
+														<StarIcon
+															v-if="row._originalItem?.starred"
+															class="w-5 h-5 text-gray-asparagus" />
+														<StarIconOutline
+															v-else
+															class="w-5 h-5 text-gray-asparagus" />
+													</button>
+												</div>
 											</div>
 										</div>
 									</template>
@@ -1383,7 +1408,11 @@ function getServerName(serverId) {
 								:layout="layout"
 								:hoverable="true">
 								<template #cell-item="{ row, layout }">
-									<div class="flex items-center">
+									<div 
+										class="flex items-center group"
+										:class="[
+											layout === 'condensed' ? '-mx-2 -my-1 px-2 py-1' : '-mx-4 -my-3 px-4 py-3'
+										]">
 										<div
 											v-if="row.image"
 											:class="[
@@ -1397,11 +1426,28 @@ function getServerName(serverId) {
 												loading="lazy" />
 										</div>
 										<div
-											class="font-medium text-gray-900 flex items-center justify-between w-full">
-											<span>{{ row.item }}</span>
-											<ArrowPathIcon
-												v-if="showItemSavingSpinner === row.id"
-												class="w-4 h-4 text-gray-500 animate-spin" />
+											class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
+											<span class="truncate">{{ row.item }}</span>
+											<div class="flex items-center gap-2 ml-2 flex-shrink-0">
+												<ArrowPathIcon
+													v-if="showItemSavingSpinner === row.id"
+													class="w-4 h-4 text-gray-500 animate-spin" />
+												<button
+													@click.stop="toggleStar(row.id, row._originalItem?.starred || false)"
+													class="flex-shrink-0 transition-opacity"
+													:class="{
+														'opacity-0 group-hover:opacity-100': !(row._originalItem?.starred || false),
+														'opacity-100': row._originalItem?.starred || false
+													}"
+													:title="row._originalItem?.starred ? 'Unstar item' : 'Star item'">
+													<StarIcon
+														v-if="row._originalItem?.starred"
+														class="w-5 h-5 text-gray-asparagus" />
+													<StarIconOutline
+														v-else
+														class="w-5 h-5 text-gray-asparagus" />
+												</button>
+											</div>
 										</div>
 									</div>
 								</template>

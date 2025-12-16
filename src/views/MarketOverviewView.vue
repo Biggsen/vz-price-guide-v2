@@ -5,7 +5,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
 import { useShops, useServerShops } from '../utils/shopProfile.js'
 import { useServers, getMajorMinorVersion } from '../utils/serverProfile.js'
-import { useServerShopItems } from '../utils/shopItems.js'
+import { useServerShopItems, updateShopItem } from '../utils/shopItems.js'
 import { isAdmin, enabledCategories } from '../constants'
 import BaseStatCard from '../components/BaseStatCard.vue'
 import BaseTable from '../components/BaseTable.vue'
@@ -26,8 +26,10 @@ import {
 	TagIcon,
 	UserIcon,
 	UsersIcon,
-	WalletIcon
+	WalletIcon,
+	StarIcon as StarIconOutline
 } from '@heroicons/vue/24/outline'
+import { StarIcon } from '@heroicons/vue/24/solid'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -355,6 +357,24 @@ const sortedCategories = computed(() => {
 function navigateToShopItems(shopId) {
 	if (shopId) {
 		router.push({ name: 'shop', params: { shopId } })
+	}
+}
+
+// Toggle starred status
+async function toggleStar(itemId, currentlyStarred, originalItem) {
+	// Try multiple ways to get the shop_item document ID
+	const shopItemId = itemId || originalItem?.id || originalItem?._originalItem?.id
+	
+	if (!shopItemId) {
+		console.error('Cannot star item: missing item ID', { itemId, originalItem })
+		return
+	}
+	
+	try {
+		await updateShopItem(shopItemId, { starred: !currentlyStarred })
+	} catch (err) {
+		console.error('Error toggling star:', err)
+		error.value = err.message || 'Failed to update starred status. Please try again.'
 	}
 }
 
@@ -918,7 +938,11 @@ const priceAnalysis = computed(() => {
 									category.slice(1).toLowerCase()
 								">
 								<template #cell-item="{ row, layout }">
-									<div class="flex items-center">
+									<div 
+										class="flex items-center group"
+										:class="[
+											layout === 'condensed' ? '-mx-2 -my-1 px-2 py-1' : '-mx-4 -my-3 px-4 py-3'
+										]">
 										<div
 											v-if="row.image"
 											:class="[
@@ -931,7 +955,33 @@ const priceAnalysis = computed(() => {
 												class="w-full h-full object-contain"
 												loading="lazy" />
 										</div>
-										<div class="font-medium text-gray-900">{{ row.item }}</div>
+										<div
+											class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
+											<span class="truncate">{{ row.item }}</span>
+											<div class="flex items-center gap-2 ml-2 flex-shrink-0">
+												<button
+													@click.stop="toggleStar(row.id, row._originalItem?.starred || false, row._originalItem)"
+													class="flex-shrink-0 transition-opacity"
+													:class="{
+														'opacity-0 group-hover:opacity-100': !(row._originalItem?.starred || false),
+														'opacity-100': row._originalItem?.starred || false
+													}"
+													:title="row._originalItem?.starred ? 'Unstar item' : 'Star item'">
+													<StarIcon
+														v-if="row._originalItem?.starred"
+														:class="[
+															layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
+															'text-gray-asparagus'
+														]" />
+													<StarIconOutline
+														v-else
+														:class="[
+															layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
+															'text-gray-asparagus'
+														]" />
+												</button>
+											</div>
+										</div>
 									</div>
 								</template>
 								<template #cell-shop="{ row }">
@@ -962,14 +1012,17 @@ const priceAnalysis = computed(() => {
 										</template>
 									</div>
 								</template>
-								<template #cell-buyPrice="{ row }">
+								<template #cell-buyPrice="{ row, layout }">
 									<div class="flex items-center justify-end gap-2">
 										<div
 											v-if="row._originalItem?.stock_quantity === 0"
 											class="flex-shrink-0 mr-auto"
 											title="Out of stock">
 											<ArchiveBoxXMarkIcon
-												class="w-5 h-5 text-current"
+												:class="[
+													layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
+													'text-current'
+												]"
 												aria-label="Out of stock" />
 											<span class="sr-only">Out of stock</span>
 										</div>
@@ -984,7 +1037,7 @@ const priceAnalysis = computed(() => {
 										</div>
 									</div>
 								</template>
-								<template #cell-sellPrice="{ row }">
+								<template #cell-sellPrice="{ row, layout }">
 									<div class="flex items-center justify-end gap-2">
 										<div
 											v-if="
@@ -1004,11 +1057,17 @@ const priceAnalysis = computed(() => {
 													row._originalItem?.shopData?.owner_funds ===
 														0 && row._originalItem?.sell_price > 0
 												"
-												class="w-5 h-5 text-current"
+												:class="[
+													layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
+													'text-current'
+												]"
 												aria-label="Shop owner has run out of money" />
 											<ArchiveBoxIcon
 												v-else-if="row._originalItem?.stock_full"
-												class="w-5 h-5 text-current"
+												:class="[
+													layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
+													'text-current'
+												]"
 												aria-label="Stock full" />
 											<span class="sr-only">
 												{{
@@ -1069,7 +1128,11 @@ const priceAnalysis = computed(() => {
 							@sort="handleSort"
 							caption="All Items">
 							<template #cell-item="{ row, layout }">
-								<div class="flex items-center">
+								<div 
+									class="flex items-center group"
+									:class="[
+										layout === 'condensed' ? '-mx-2 -my-1 px-2 py-1' : '-mx-4 -my-3 px-4 py-3'
+									]">
 									<div
 										v-if="row.image"
 										:class="[
@@ -1082,7 +1145,33 @@ const priceAnalysis = computed(() => {
 											class="w-full h-full object-contain"
 											loading="lazy" />
 									</div>
-									<div class="font-medium text-gray-900">{{ row.item }}</div>
+									<div
+										class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
+										<span class="truncate">{{ row.item }}</span>
+										<div class="flex items-center gap-2 ml-2 flex-shrink-0">
+											<button
+												@click.stop="toggleStar(row.id, row._originalItem?.starred || false)"
+												class="flex-shrink-0 transition-opacity"
+												:class="{
+													'opacity-0 group-hover:opacity-100': !(row._originalItem?.starred || false),
+													'opacity-100': row._originalItem?.starred || false
+												}"
+												:title="row._originalItem?.starred ? 'Unstar item' : 'Star item'">
+												<StarIcon
+													v-if="row._originalItem?.starred"
+													:class="[
+														layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
+														'text-gray-asparagus'
+													]" />
+												<StarIconOutline
+													v-else
+													:class="[
+														layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
+														'text-gray-asparagus'
+													]" />
+											</button>
+										</div>
+									</div>
 								</div>
 							</template>
 							<template #cell-shop="{ row }">
@@ -1113,14 +1202,17 @@ const priceAnalysis = computed(() => {
 									</template>
 								</div>
 							</template>
-							<template #cell-buyPrice="{ row }">
+							<template #cell-buyPrice="{ row, layout }">
 								<div class="flex items-center justify-end gap-2">
 									<div
 										v-if="row._originalItem?.stock_quantity === 0"
 										class="flex-shrink-0 mr-auto"
 										title="Out of stock">
 										<ArchiveBoxXMarkIcon
-											class="w-5 h-5 text-current"
+											:class="[
+												layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
+												'text-current'
+											]"
 											aria-label="Out of stock" />
 										<span class="sr-only">Out of stock</span>
 									</div>
@@ -1135,7 +1227,7 @@ const priceAnalysis = computed(() => {
 									</div>
 								</div>
 							</template>
-							<template #cell-sellPrice="{ row }">
+							<template #cell-sellPrice="{ row, layout }">
 								<div class="flex items-center justify-end gap-2">
 									<div
 										v-if="
@@ -1155,11 +1247,17 @@ const priceAnalysis = computed(() => {
 												row._originalItem?.shopData?.owner_funds === 0 &&
 												row._originalItem?.sell_price > 0
 											"
-											class="w-5 h-5 text-current"
+											:class="[
+												layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
+												'text-current'
+											]"
 											aria-label="Shop owner has run out of money" />
 										<ArchiveBoxIcon
 											v-else-if="row._originalItem?.stock_full"
-											class="w-5 h-5 text-current"
+											:class="[
+												layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
+												'text-current'
+											]"
 											aria-label="Stock full" />
 										<span class="sr-only">
 											{{
