@@ -10,7 +10,7 @@
 	"status": "active",
 	"domain": "minecraft",
 	"type": "webapp",
-	"lastUpdated": "2025-12-05",
+	"lastUpdated": "2025-12-16",
 	"links": {
 		"prod": "https://minecraft-economy-price-guide.net/",
 		"staging": null
@@ -86,7 +86,7 @@
 
 Currently focused on **Homepage Refactoring** - breaking down the 928-line HomeView.vue component into manageable pieces. This involves extracting composables (useEconomyConfig, useFilters, useItems), creating utility functions and constants, and improving testability and maintainability. Estimated effort: 30-42 hours.
 
-Also working on **Shop Manager Phase 7** - price comparison and market analysis features.
+Also working on **Shop Manager Phase 7** - price comparison and market analysis features, and **Comment to SuggestionMessages Refactor** - refactoring the comment system to use `suggestionMessages` terminology for better semantic accuracy and future-proofing.
 
 ---
 
@@ -114,6 +114,10 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 -   [x] Homepage Cleanup - Initial improvements and organization
 -   [x] Custom Pricing for Crates - Enhanced crate pricing capabilities
 -   [x] Brewing Category - Complete potion catalog with brewing recipes
+-   [x] Market Overview Refactoring - Shared utility functions extracted (date, pricing, tableTransform)
+-   [x] Shop Manager Refactoring - ShopFormModal component extracted, ~423 lines of code eliminated
+-   [x] Crate Rewards Mobile Display - Comprehensive mobile responsive improvements
+-   [x] Duplicate Crate Name Detection - Auto-append number suffixes when importing duplicate crates
 
 ### Detailed Completed Features
 
@@ -156,7 +160,8 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 -->
 
 -   [ ] Homepage Refactoring - Breaking down 928-line component into manageable pieces (30-42 hours estimated)
--   [ ] Shop Manager Phase 7 - Price comparison and market analysis features
+-   [ ] Shop Manager Phase 7 - Price comparison and market analysis features (75% complete)
+-   [ ] Comment to SuggestionMessages Refactor - Refactoring comment system to use suggestionMessages terminology
 
 ### Detailed In-Progress Features
 
@@ -183,16 +188,18 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
   Items in this section will be tagged as "Enhancements" by the parser.
 -->
 
--   [ ] Price Export Enhancements - CSV/XLSX support, proper YAML library, dedicated route
--   [ ] Suggestions Enhancements - Comments/threads, detail views, advanced filtering
--   [ ] User Accounts Enhancements - Account settings, data export, account deletion
+-   [ ] Price Export Enhancements - CSV/XLSX support, proper YAML library (js-yaml), dedicated route, stack size override, currency format toggle
+-   [ ] Suggestions Enhancements - Detail views, advanced filtering/search, status badges, improved admin workflows (note: messaging already implemented via suggestionMessages)
+-   [ ] User Accounts Enhancements - Account settings page, data export, account deletion (GDPR-style cleanup), email preferences, security settings
 -   [ ] Category Filter Sorting - Improve category ordering in filters
 -   [ ] Base Input Component Refactor - Standardize input components
--   [ ] Email Notifications - Notification system for suggestions and updates
+-   [ ] Email Notifications - Notification system for suggestions and updates, welcome emails, deliverability monitoring
 -   [ ] Hard 404 Spec - Implement proper 404 handling
 -   [ ] Netlify Blobs Media Spec - Media storage improvements
 -   [ ] Recipe Version Copy Spec - Recipe versioning improvements
--   [ ] Shop Manager Enhanced - Additional shop manager improvements
+-   [ ] Shop Manager Enhanced - Public visibility, competitive price comparison, market analysis dashboard, advanced filtering/import/export
+-   [ ] Market Overview Refactoring - ViewModeLayoutToggle component, MarketItemsTable component, useViewSettings composable enhancement, useItemGrouping composable
+-   [ ] Shop Refactoring - useShopForm composable, ShopItemsTable component, useInlineEditing composable, component breakdown
 
 ### High Priority Enhancements
 
@@ -258,35 +265,45 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 
 ### Active Bugs
 
--   [ ] Inline Notes Editing Bug - Notes don't save consistently, shows long dash instead (Shop Manager)
--   [ ] Item Search Keyboard Navigation - When using keyboard in item search results, doesn't scroll with up/down keys (Shop Manager)
--   [ ] Item Search Category Ordering - Categories in item search results should match main price guide order (Shop Manager)
+_No active bugs currently - all recent issues have been resolved._
 
-### Bug Details
+### Recently Resolved Bugs
 
-#### Inline Notes Editing Bug
+#### Settings Price Modifiers Not Persisting in UI
 
--   **Description**: Notes don't save consistently, shows long dash instead
--   **Severity**: Medium
--   **Affected Areas**: Shop page inline editing functionality
--   **Steps to Reproduce**: Edit notes inline on shop page, save, observe inconsistent behavior
--   **Workaround**: None
+-   **Status**: ✅ Resolved (2025-01-27)
+-   **Description**: Price modifiers (Buy X and Sell %) were refreshing back to default values in settings modal
+-   **Solution**: Added watcher in SettingsModal.vue to load settings when modal opens
 
-#### Item Search Keyboard Navigation
+#### Admin Subnav Inconsistency Between Mobile and Desktop
 
--   **Description**: When using keyboard in item search results, doesn't scroll with up/down keys
--   **Severity**: Medium
--   **Affected Areas**: Item search in Shop Manager
--   **Steps to Reproduce**: Use keyboard navigation in item search, selected item goes below viewport
--   **Workaround**: Use mouse to scroll
+-   **Status**: ✅ Resolved (2025-01-27)
+-   **Description**: Mobile and desktop admin navigation showed different links
+-   **Solution**: Removed dead code from SubNav.vue (256 lines), now consistent across devices
 
-#### Item Search Category Ordering
+#### Crate Rewards Mobile Display Issues
 
--   **Description**: Categories in item search results should match main price guide order
--   **Severity**: Low
--   **Affected Areas**: Item search in Shop Manager
--   **Steps to Reproduce**: Open item search, observe category ordering
--   **Workaround**: None
+-   **Status**: ✅ Resolved (2025-01-27)
+-   **Description**: Crate rewards display was broken or poorly formatted on mobile devices
+-   **Solution**: Comprehensive mobile responsive improvements to CrateSingleView.vue
+
+#### Price Guide vs Export Item Count Discrepancy
+
+-   **Status**: ✅ Resolved (2025-01-27)
+-   **Description**: Price guide count included 0-priced items while export correctly excluded them
+-   **Solution**: Updated count functions to exclude 0-priced items for consistency
+
+#### Duplicate Crate Names When Importing Same File
+
+-   **Status**: ✅ Resolved (2025-01-27)
+-   **Description**: Multiple imports of same crate YAML created identical names
+-   **Solution**: Added duplicate checking with auto-append number suffixes and warning dialog
+
+#### Enchantment Books Not Separated When Adding Crate Items
+
+-   **Status**: ✅ Resolved (2025-01-27)
+-   **Description**: Enchanted books not being added as separate book and enchantment entities
+-   **Solution**: Added fallback logic to extract display enchantments from Items array when DisplayEnchantments is missing
 
 ---
 
@@ -304,15 +321,18 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 
 ### High Priority
 
--   [ ] Fix Shop Manager Bugs - Inline notes editing, keyboard navigation scrolling, category ordering
--   [ ] Complete Homepage Refactoring - Extract composables, create utilities, reduce component size
--   [ ] Finish Shop Manager Phase 7 - Search & filtering improvements, price comparison features
+-   [ ] Complete Homepage Refactoring - Extract composables (useEconomyConfig, useFilters, useItems), create utilities, reduce component size to <400 lines
+-   [ ] Finish Shop Manager Phase 7 - Search & filtering improvements (owner scope), price comparison features, performance optimizations
+-   [ ] Comment to SuggestionMessages Refactor - Rename files, update terminology, migrate collection path
 
 ### Medium Priority
 
--   [ ] Price Export Enhancements - CSV/XLSX support, improved YAML implementation, dedicated route
--   [ ] User Accounts Enhancements - Account settings page, data export, account deletion
--   [ ] Suggestions Enhancements - Comments/threads, detail views, advanced filtering
+-   [ ] Price Export Enhancements - CSV/XLSX support (SheetJS), proper YAML library (js-yaml), dedicated route, stack size override, currency format toggle
+-   [ ] User Accounts Enhancements - Account settings page, data export, account deletion (GDPR-style cleanup), email preferences, security settings
+-   [ ] Suggestions Enhancements - Detail views, advanced filtering/search, status badges (note: messaging already implemented)
+-   [ ] Market Overview Refactoring - ViewModeLayoutToggle component, MarketItemsTable component, composables (useViewSettings, useItemGrouping)
+-   [ ] Shop Refactoring - useShopForm composable, ShopItemsTable component, useInlineEditing composable, component breakdown
+-   [ ] Unit Testing Implementation - Vitest setup, utility function tests, component tests, coverage reporting
 
 ### Low Priority / Future
 
@@ -340,9 +360,9 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 ### Metrics
 
 -   **Code Coverage**: 80% (Cypress E2E testing)
--   **Open Issues**: 3 active bugs
--   **Active Features**: 2 (Homepage Refactoring, Shop Manager Phase 7)
--   **Completed Features**: 13
+-   **Open Issues**: 0 active bugs (6 recently resolved)
+-   **Active Features**: 3 (Homepage Refactoring, Shop Manager Phase 7, Comment Refactor)
+-   **Completed Features**: 16
 -   **Frontend Components**: 38 Vue components and views
 -   **Backend Utilities**: 12 utility modules
 -   **Testing Suites**: 7 Cypress test suites
@@ -358,10 +378,11 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 
 ### Technical Debt
 
--   **Large Components**: 1 major refactoring needed (HomeView - 928 lines)
--   **Code Duplication**: Minimal, well-organized
--   **Performance**: Good, room for optimization
--   **Maintainability**: High, following Vue 3 best practices
+-   **Large Components**: 1 major refactoring needed (HomeView - 928 lines, target <400 lines)
+-   **Code Duplication**: Reduced significantly through recent refactoring (Market Overview, Shop Manager)
+-   **Performance**: Good, room for optimization (pagination/virtual scrolling for large datasets)
+-   **Maintainability**: High, following Vue 3 best practices, composables pattern established
+-   **Testing**: E2E coverage good, unit testing infrastructure needed (Vitest)
 
 ### Data Management
 
@@ -381,36 +402,46 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 
 ### Immediate (Next 1-2 weeks)
 
-1. Fix Shop Manager Bugs
-
-    - Fix inline notes editing (save functionality)
-    - Implement keyboard navigation scrolling in item search
-    - Align category ordering in item search with main price guide
-
-2. Complete Homepage Refactoring
-    - Extract constants and utilities
+1. Complete Homepage Refactoring
+    - Extract constants and utilities (homepage.js, constants)
     - Create composables (useEconomyConfig, useFilters, useItems)
     - Refactor main component to <400 lines
     - Add unit tests
 
+2. Comment to SuggestionMessages Refactor
+    - Rename utility files and components
+    - Update Firestore collection path
+    - Update all references and terminology
+    - Test migration flow
+
+3. Finish Shop Manager Phase 7
+    - Complete search & filtering improvements (owner scope)
+    - Add price comparison features
+    - Performance optimizations (pagination/virtual scrolling)
+
 ### Short-term (Next 1-3 months)
 
-1. Finish Shop Manager Phase 7
-
-    - Complete search & filtering improvements
-    - Add price comparison features
-    - Performance optimizations
-
-2. Price Export Enhancements
-
-    - Add CSV/XLSX support
-    - Improve YAML implementation
+1. Price Export Enhancements
+    - Add CSV/XLSX support (SheetJS library)
+    - Improve YAML implementation (js-yaml library)
     - Create dedicated export route
+    - Add stack size override and currency format toggle
 
-3. User Accounts Enhancements
-    - Account settings page
-    - Data export functionality
-    - Account deletion
+2. User Accounts Enhancements
+    - Account settings page (email preferences, security settings)
+    - Data export functionality (JSON download)
+    - Account deletion with GDPR-style cleanup
+
+3. Market Overview & Shop Refactoring
+    - Extract ViewModeLayoutToggle and MarketItemsTable components
+    - Create useViewSettings and useItemGrouping composables
+    - Complete shop refactoring (useShopForm, ShopItemsTable, useInlineEditing)
+
+4. Unit Testing Implementation
+    - Set up Vitest testing framework
+    - Test utility functions (pricing, image, admin)
+    - Test components (ExportModal, ItemTable, base components)
+    - Add coverage reporting
 
 ### Long-term (3+ months)
 
@@ -430,8 +461,12 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 
 ### Recent Changes
 
--   **2025-12-05**: Implemented multiple item selection feature in Shop Manager. Added "Enable multiple selection" checkbox that allows users to select multiple items at once when adding to shops. Selected items share the same buy price, sell price, and notes. Removed all console.log debug statements from shop manager components (ShopItemsView, ShopItemForm, ShopItemTable) and useShopItems utility for cleaner production code.
--   **2025-12-04**: Simplified shop `fully_cataloged` field from complex map structure (with `at`, `by`, `by_label`, `notes`) to a simple boolean. Updated Firestore rules to validate boolean type, removed catalog metadata helpers from codebase, and simplified UI to show catalog status as a checkbox.
+-   **2025-12-16**: Updated project summary with comprehensive review of all tasks and current project status.
+-   **2025-01-27**: Resolved multiple bugs including settings price modifiers persistence, admin subnav consistency, crate rewards mobile display, price guide count discrepancies, duplicate crate names, and enchantment book separation. All issues fixed and tested.
+-   **2025-01-27**: Completed Market Overview refactoring - extracted shared utility functions (date.js, pricing.js, tableTransform.js), eliminated ~100 lines of duplicated code from MarketOverviewView and ShopItemsView.
+-   **2025-01-27**: Completed Shop Manager refactoring - extracted ShopFormModal component, eliminated ~423 lines of duplicated code from ShopItemsView and ShopManagerView.
+-   **2025-12-05**: Implemented multiple item selection feature in Shop Manager. Added "Enable multiple selection" checkbox that allows users to select multiple items at once when adding to shops. Selected items share the same buy price, sell price, and notes. Removed all console.log debug statements from shop manager components for cleaner production code.
+-   **2025-12-04**: Simplified shop `fully_cataloged` field from complex map structure to a simple boolean. Updated Firestore rules and simplified UI.
 
 ### Development Workflow
 
@@ -465,10 +500,11 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 
 ### Strategic Focus Areas
 
-1. **Technical Debt Reduction** - Homepage Refactoring, code organization, performance optimization
-2. **User Experience Enhancement** - Price Export improvements, Shop Manager completion, enhanced suggestions
-3. **Platform Evolution** - Community features, advanced collaboration, market intelligence
-4. **Innovation & Growth** - Diamond currency, linked shops, expert network
+1. **Technical Debt Reduction** - Homepage Refactoring (30-42 hours), code organization, performance optimization, unit testing infrastructure
+2. **User Experience Enhancement** - Price Export improvements (CSV/XLSX), Shop Manager completion, enhanced suggestions, user account settings
+3. **Code Quality & Maintainability** - Component extraction, composable patterns, shared utilities, testing coverage
+4. **Platform Evolution** - Community features, advanced collaboration, market intelligence, Shop Manager Enhanced features
+5. **Innovation & Growth** - Diamond currency, linked shops, expert network, multi-user crate management
 
 ---
 
