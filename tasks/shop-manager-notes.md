@@ -10,7 +10,7 @@ created_at: 2025-11-11
 
 ## Bugs / Issues
 
--   In the shop page, adding notes using the inline editing is buggy. Doesn't save always and just results in a long dash.
+-   ~~In the shop page, adding notes using the inline editing is buggy. Doesn't save always and just results in a long dash.~~ ✅ Fixed: Added check in `handleBlur()` to skip saving if edit mode was cancelled, preventing blur handler from overwriting saved notes with empty string.
 -   ~~When using keyboard in the item search results (when adding items to the shop), it needs to scroll with the up and down keyboard. Now, when you key down, you go below and can't see what you're selecting.~~ ✅ Fixed: Keyboard navigation now properly scrolls highlighted items into view using the correct CSS selector.
 -   ~~For the item search result, the categories should be in the same order as on the main price guide.~~ ✅ Fixed: Categories in shop item form dropdown now match main price guide order. Items within each category are sorted by subcategory and name.
 
@@ -30,3 +30,4 @@ created_at: 2025-11-11
 -   **2025-12-05**: Implemented multiple item selection feature. Added "Enable multiple selection" checkbox that appears below the "Search and Select Item(s)" label. When enabled, checkboxes appear next to each item in the dropdown, and users can select multiple items that will all share the same buy price, sell price, and notes when submitted. Removed all console.log statements from shop manager, shop components, and useShopItems utility.
 -   **2025-12-14**: Fixed category ordering in shop item form dropdown. Categories now appear in the same order as the main price guide (using `enabledCategories` array), and items within each category are sorted by subcategory and name to match HomeView ordering.
 -   **2025-12-14**: Implemented optional patch version support for server Minecraft versions. Added two-dropdown UI (major.minor required, patch optional with default 0). Full versions stored in metadata, major.minor extracted for filtering. Fixed keyboard navigation scrolling in item search dropdown by using correct CSS selector (`.bg-norway`).
+-   **2025-01-16**: Fixed inline notes editing bug where notes would show "—" after saving. The issue was caused by the blur handler overwriting saved notes with an empty string after edit mode was cancelled. Added check in `handleBlur()` to skip saving if edit mode is no longer active.
