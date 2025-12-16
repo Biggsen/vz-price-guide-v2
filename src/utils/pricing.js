@@ -376,7 +376,8 @@ export function calculateProfitMargin(buyPrice, sellPrice) {
  */
 export function formatPrice(price) {
 	if (price !== null && price !== undefined && price !== 0) {
-		return price.toFixed(2)
+		const formatted = price.toFixed(2)
+		return parseFloat(formatted).toString()
 	}
 	return '—'
 }

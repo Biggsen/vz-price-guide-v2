@@ -62,7 +62,13 @@ onUnmounted(() => {
 
 watch(() => props.isEditing, (newVal) => {
 	if (newVal) {
-		editingValue.value = props.value !== null && props.value !== undefined ? parseFloat(props.value).toFixed(2) : '0.00'
+		if (props.value !== null && props.value !== undefined) {
+			const numValue = parseFloat(props.value)
+			const formatted = numValue.toFixed(2)
+			editingValue.value = parseFloat(formatted).toString()
+		} else {
+			editingValue.value = '0'
+		}
 		nextTick(() => {
 			if (inputRef.value) {
 				inputRef.value.focus()
@@ -103,7 +109,8 @@ const displayValue = computed(() => {
 	if (props.value === null || props.value === undefined || props.value === '') return '—'
 	const numValue = parseFloat(props.value)
 	if (isNaN(numValue) || numValue === 0) return '—'
-	return numValue.toFixed(2)
+	const formatted = numValue.toFixed(2)
+	return parseFloat(formatted).toString()
 })
 </script>
 

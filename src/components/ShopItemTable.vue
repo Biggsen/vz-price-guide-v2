@@ -284,7 +284,8 @@ function formatPrice(price) {
 	if (price === null || price === undefined) return '—'
 	const numValue = parseFloat(price)
 	if (isNaN(numValue) || numValue === 0) return '—'
-	return numValue.toFixed(2)
+	const formatted = numValue.toFixed(2)
+	return parseFloat(formatted).toString()
 }
 
 function formatDate(dateString) {
