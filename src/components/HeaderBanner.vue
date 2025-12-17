@@ -1,9 +1,10 @@
 <script setup>
 import { CubeIcon } from '@heroicons/vue/24/solid'
 import { useRoute } from 'vue-router'
+import { computed } from 'vue'
 
 const route = useRoute()
-const isHomepage = route.path === '/'
+const isHomepage = computed(() => route.path === '/')
 </script>
 
 <template>
