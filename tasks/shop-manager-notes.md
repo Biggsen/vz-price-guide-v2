@@ -25,8 +25,6 @@ _(None currently)_
 ### Open
 
 -   Inline price editing on the market overview would be great.
--   Opportunities need to take into account out of stock.
--   Would be good to archive shops when they disappear from the pshops. They might return so I'd rather not delete them fully.
 -   Would be good to see starred items only.
 
 ### Completed
@@ -38,6 +36,8 @@ _(None currently)_
 -   ~~Would be good to be able to mark or star or favorite items. When you found the cheapest option, marking it would be good.~~ ✅ Implemented: Starring functionality added to both ShopItemsView and MarketOverviewView. Items can be starred/unstarred with outline/solid star icons. Starred status persists and doesn't update last_updated timestamp. Works with both small (≤30) and large (>30) shop arrays.
 -   ~~Need a way to mark when a player shop is fully added so all of its items are accounted for.~~ ✅ Implemented: "Shop is fully cataloged" checkbox in ShopItemsView (simplified to boolean in 2025-12-04)
 -   ~~In shop, the categories view needs to be ordered as on the price guide.~~ ✅ Fixed: Category ordering in shop manager category view now matches price guide order (using `enabledCategories` from constants).
+-   ~~Would be good to archive shops when they disappear from the pshops. They might return so I'd rather not delete them fully.~~ ✅ Implemented: Shop archiving feature added. Users can archive shops via checkbox in ShopItemsView. Archived shops are filtered out from Market Overview but visible in Shop Manager with "(Archived)" label. Archive status persists and shops can be unarchived.
+-   ~~Opportunities need to take into account out of stock.~~ ✅ Implemented: Opportunities feature now filters out items that are out of stock. Buy prices are only included if `stock_quantity !== 0`, and sell prices are only included if `!stock_full`. Additional filtering ensures out-of-stock shops don't appear in opportunities.
 
 ## Notes
 
@@ -48,3 +48,4 @@ _(None currently)_
 -   **2025-12-14**: Implemented optional patch version support for server Minecraft versions. Added two-dropdown UI (major.minor required, patch optional with default 0). Full versions stored in metadata, major.minor extracted for filtering. Fixed keyboard navigation scrolling in item search dropdown by using correct CSS selector (`.bg-norway`).
 -   **2025-12-16**: Fixed inline notes editing bug where notes would show "—" after saving. The issue was caused by the blur handler overwriting saved notes with an empty string after edit mode was cancelled. Added check in `handleBlur()` to skip saving if edit mode is no longer active.
 -   **2025-12-16**: Implemented starring functionality for shop items. Added star icons (outline when unstarred, solid when starred) to item columns in both ShopItemsView and MarketOverviewView. Starring doesn't update last_updated timestamp. Added updateItem method to useServerShopItems composable to handle optimistic updates for large shop arrays (>30 shops) that don't have real-time listeners.
+-   **2025-12-17**: Implemented shop archiving feature. Added archive checkbox in ShopItemsView to mark shops as archived. Archived shops are filtered out from Market Overview opportunities but remain visible in Shop Manager with "(Archived)" label. Archive status stored in shop document and can be toggled on/off.
