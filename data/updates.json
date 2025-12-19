@@ -1,5 +1,21 @@
 [
 	{
+		"id": 36,
+		"title": "Shop Manager Improvements & Bug Fixes",
+		"date": "2025-12-19",
+		"types": ["Enhancement"],
+		"hidden": false,
+		"description": "Made some improvements to Shop Manager based on early feedback. Added a few handy features and fixed some bugs that were getting in the way.",
+		"changes": [
+			"Starring: mark your favorite items or best deals with a star icon for quick reference",
+			"Shop archiving: archive shops that are no longer active instead of deleting them",
+			"Opportunities improvements: better filtering and a bell icon to highlight the best deals",
+			"Price display: cleaner price formatting - removed unnecessary .00 from whole number prices",
+			"Notes editing: fixed a bug where notes would disappear when editing",
+			"Category ordering: categories now match the same order as the main price guide for consistency"
+		]
+	},
+	{
 		"id": 35,
 		"title": "Shop Manager is now available",
 		"date": "2025-12-15",
