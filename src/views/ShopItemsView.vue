@@ -35,6 +35,7 @@ import { XCircleIcon, StarIcon } from '@heroicons/vue/24/solid'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
+import { enabledCategories } from '../constants.js'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -354,6 +355,30 @@ const baseTableRowsByCategory = computed(() => {
 	})
 
 	return grouped
+})
+
+// Sorted categories to match price guide order
+const sortedCategories = computed(() => {
+	if (!baseTableRowsByCategory.value) return []
+
+	const categoryKeys = Object.keys(baseTableRowsByCategory.value)
+	const orderedCategories = []
+
+	// First, add categories in the order they appear in enabledCategories
+	enabledCategories.forEach((category) => {
+		if (categoryKeys.includes(category)) {
+			orderedCategories.push(category)
+		}
+	})
+
+	// Then, add any categories that aren't in enabledCategories (like 'Uncategorized')
+	categoryKeys.forEach((category) => {
+		if (!enabledCategories.includes(category)) {
+			orderedCategories.push(category)
+		}
+	})
+
+	return orderedCategories
 })
 
 // Load and save view settings from localStorage
@@ -1190,12 +1215,12 @@ function getServerName(serverId) {
 					<div class="mb-8">
 						<template v-if="viewMode === 'categories'">
 							<div
-								v-for="(categoryRows, category) in baseTableRowsByCategory"
+								v-for="category in sortedCategories"
 								:key="category"
 								class="mb-6">
 								<BaseTable
 									:columns="baseTableColumns"
-									:rows="categoryRows"
+									:rows="baseTableRowsByCategory[category]"
 									row-key="id"
 									:layout="layout"
 									:hoverable="true"
