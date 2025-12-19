@@ -19,9 +19,13 @@ created_at: 2025-11-11
 -   ~~Require server version selector to support minor versions (e.g., 1.21.4 instead of only 1.21).~~ ✅ Implemented: Two-dropdown version selector with major.minor (required) and patch (optional, defaults to 0). Full version stored in metadata, major.minor extracted for filtering.
 -   ~~The server cards aren't working so well for managing a lot of shops. It gets very long and there's little space to have sorting and such. Considering that a table might be better.~~ ✅ Implemented: Table view for multiple shops now available.
 -   Inline price editing on the market overview would be great.
+-   In shop, the categories view needs to be ordered as on the price guide.
+-   Opportunities need to take into account out of stock.
+-   Would be good to archive shops when they disappear from the pshops. They might return so I'd rather not delete them fully.
 -   ~~Being able to add multiple items at once would be great. It could be a checkbox in the item selector and you can check many items. They'd all share the same other values (buy, sell, notes).~~ ✅ Implemented: Added "Enable multiple selection" checkbox below the search label. When enabled, checkboxes appear in the dropdown and users can select multiple items that share the same buy/sell prices and notes.
 -   ~~Add a reset button for the search on market overview.~~ ✅ Implemented: Reset button for search on market overview now available.
 -   ~~Would be good to be able to mark or star or favorite items. When you found the cheapest option, marking it would be good.~~ ✅ Implemented: Starring functionality added to both ShopItemsView and MarketOverviewView. Items can be starred/unstarred with outline/solid star icons. Starred status persists and doesn't update last_updated timestamp. Works with both small (≤30) and large (>30) shop arrays.
+-   Would be good to see starred items only.
 -   ~~Need a way to mark when a player shop is fully added so all of its items are accounted for.~~ ✅ Implemented: "Shop is fully cataloged" checkbox in ShopItemsView (simplified to boolean in 2025-12-04)
 
 ## Notes
