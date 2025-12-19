@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
-import { useShops, updateShop } from '../utils/shopProfile.js'
+import { useAllShops, updateShop } from '../utils/shopProfile.js'
 import { useServers, getMajorMinorVersion } from '../utils/serverProfile.js'
 import {
 	useShopItems,
@@ -102,7 +102,7 @@ function resetShopForm() {
 }
 
 // Get user's shops and servers
-const { shops } = useShops(computed(() => user.value?.uid))
+const { shops } = useAllShops(computed(() => user.value?.uid))
 const { servers } = useServers(computed(() => user.value?.uid))
 
 // Get shop items for selected shop (with error handling)
@@ -126,7 +126,6 @@ const shopItems = computed(() => {
 	}
 })
 
-
 // Computed properties - Define these FIRST before using them in other computeds
 const hasShops = computed(() => shops.value && shops.value.length > 0)
 const hasServers = computed(() => servers.value && servers.value.length > 0)
@@ -142,6 +141,10 @@ const isShopFullyCataloged = computed(() => {
 	return Boolean(selectedShop.value?.fully_cataloged)
 })
 
+const isShopArchived = computed(() => {
+	return Boolean(selectedShop.value?.archived)
+})
+
 async function handleOutOfMoneyChange(checked) {
 	if (!selectedShop.value || !selectedShopId.value) return
 
@@ -152,6 +155,19 @@ async function handleOutOfMoneyChange(checked) {
 	} catch (err) {
 		console.error('Error updating shop funds:', err)
 		error.value = err.message || 'Failed to update shop funds. Please try again.'
+	}
+}
+
+async function handleArchiveChange(checked) {
+	if (!selectedShop.value || !selectedShopId.value) return
+
+	try {
+		await updateShop(selectedShopId.value, {
+			archived: checked
+		})
+	} catch (err) {
+		console.error('Error archiving shop:', err)
+		error.value = err.message || 'Failed to update shop archive status. Please try again.'
 	}
 }
 
@@ -1062,8 +1078,8 @@ function getServerName(serverId) {
 		<!-- Main content -->
 		<div v-else-if="hasShops && hasServers && selectedShop" class="space-y-8">
 			<!-- Out of Money Checkbox and Add Item Button (Top) -->
-			<div class="mt-4">
-				<div v-if="!selectedShop.is_own_shop" class="space-y-1 mb-1">
+			<div class="mt-4 space-y-2 mb-5">
+				<div v-if="!selectedShop.is_own_shop" class="space-y-1">
 					<label class="flex items-center gap-2 text-sm font-semibold text-gray-800">
 						<input
 							type="checkbox"
@@ -1080,7 +1096,7 @@ function getServerName(serverId) {
 						{{ catalogStatusError }}
 					</p>
 				</div>
-				<div v-if="!selectedShop.is_own_shop" class="mt-1 mb-5">
+				<div v-if="!selectedShop.is_own_shop">
 					<label
 						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
 						<input
@@ -1094,6 +1110,21 @@ function getServerName(serverId) {
 						</span>
 					</label>
 				</div>
+				<div>
+					<label
+						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+						<input
+							:checked="isShopArchived"
+							@change="handleArchiveChange($event.target.checked)"
+							type="checkbox"
+							class="checkbox-input" />
+						<span>Archive this shop</span>
+					</label>
+				</div>
+			</div>
+
+			<!-- Add items and Market overview Buttons -->
+			<div>
 				<div
 					v-if="shopItems && shopItems.length > 0"
 					class="flex flex-col sm:flex-row justify-start gap-3">
@@ -1214,10 +1245,7 @@ function getServerName(serverId) {
 					<!-- BaseTable Implementation (New) -->
 					<div class="mb-8">
 						<template v-if="viewMode === 'categories'">
-							<div
-								v-for="category in sortedCategories"
-								:key="category"
-								class="mb-6">
+							<div v-for="category in sortedCategories" :key="category" class="mb-6">
 								<BaseTable
 									:columns="baseTableColumns"
 									:rows="baseTableRowsByCategory[category]"
@@ -1229,10 +1257,12 @@ function getServerName(serverId) {
 										category.slice(1).toLowerCase()
 									">
 									<template #cell-item="{ row, layout }">
-										<div 
+										<div
 											class="flex items-center group"
 											:class="[
-												layout === 'condensed' ? '-mx-2 -my-1 px-2 py-1' : '-mx-4 -my-3 px-4 py-3'
+												layout === 'condensed'
+													? '-mx-2 -my-1 px-2 py-1'
+													: '-mx-4 -my-3 px-4 py-3'
 											]">
 											<div
 												v-if="row.image"
@@ -1249,18 +1279,31 @@ function getServerName(serverId) {
 											<div
 												class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
 												<span class="truncate">{{ row.item }}</span>
-												<div class="flex items-center gap-2 ml-2 flex-shrink-0">
+												<div
+													class="flex items-center gap-2 ml-2 flex-shrink-0">
 													<ArrowPathIcon
 														v-if="showItemSavingSpinner === row.id"
 														class="w-4 h-4 text-gray-500 animate-spin" />
 													<button
-														@click.stop="toggleStar(row.id, row._originalItem?.starred || false)"
+														@click.stop="
+															toggleStar(
+																row.id,
+																row._originalItem?.starred || false
+															)
+														"
 														class="flex-shrink-0 transition-opacity"
 														:class="{
-															'opacity-0 group-hover:opacity-100': !(row._originalItem?.starred || false),
-															'opacity-100': row._originalItem?.starred || false
+															'opacity-0 group-hover:opacity-100': !(
+																row._originalItem?.starred || false
+															),
+															'opacity-100':
+																row._originalItem?.starred || false
 														}"
-														:title="row._originalItem?.starred ? 'Unstar item' : 'Star item'">
+														:title="
+															row._originalItem?.starred
+																? 'Unstar item'
+																: 'Star item'
+														">
 														<StarIcon
 															v-if="row._originalItem?.starred"
 															class="w-5 h-5 text-gray-asparagus" />
@@ -1433,10 +1476,12 @@ function getServerName(serverId) {
 								:layout="layout"
 								:hoverable="true">
 								<template #cell-item="{ row, layout }">
-									<div 
+									<div
 										class="flex items-center group"
 										:class="[
-											layout === 'condensed' ? '-mx-2 -my-1 px-2 py-1' : '-mx-4 -my-3 px-4 py-3'
+											layout === 'condensed'
+												? '-mx-2 -my-1 px-2 py-1'
+												: '-mx-4 -my-3 px-4 py-3'
 										]">
 										<div
 											v-if="row.image"
@@ -1458,13 +1503,25 @@ function getServerName(serverId) {
 													v-if="showItemSavingSpinner === row.id"
 													class="w-4 h-4 text-gray-500 animate-spin" />
 												<button
-													@click.stop="toggleStar(row.id, row._originalItem?.starred || false)"
+													@click.stop="
+														toggleStar(
+															row.id,
+															row._originalItem?.starred || false
+														)
+													"
 													class="flex-shrink-0 transition-opacity"
 													:class="{
-														'opacity-0 group-hover:opacity-100': !(row._originalItem?.starred || false),
-														'opacity-100': row._originalItem?.starred || false
+														'opacity-0 group-hover:opacity-100': !(
+															row._originalItem?.starred || false
+														),
+														'opacity-100':
+															row._originalItem?.starred || false
 													}"
-													:title="row._originalItem?.starred ? 'Unstar item' : 'Star item'">
+													:title="
+														row._originalItem?.starred
+															? 'Unstar item'
+															: 'Star item'
+													">
 													<StarIcon
 														v-if="row._originalItem?.starred"
 														class="w-5 h-5 text-gray-asparagus" />

@@ -62,6 +62,7 @@ export async function createShop(userId, shopData) {
 			description: shopData.description?.trim() || '',
 			owner_funds: shopData.owner_funds || null,
 			fully_cataloged: normalizeFullyCataloged(shopData.fully_cataloged),
+			archived: shopData.archived || false,
 			created_at: new Date().toISOString(),
 			updated_at: new Date().toISOString()
 		}
@@ -210,7 +211,13 @@ export function useShops(userId) {
 	// Use the computed query with useCollection
 	const shops = useCollection(shopsQuery)
 
-	return { shops }
+	// Filter out archived shops client-side (treat undefined/null/false as not archived)
+	const filteredShops = computed(() => {
+		if (!shops.value) return shops.value
+		return shops.value.filter((shop) => shop.archived !== true)
+	})
+
+	return { shops: filteredShops }
 }
 
 // Composable to use server's shops
@@ -228,6 +235,38 @@ export function useServerShops(serverId) {
 		return query(
 			collection(db, 'shops'),
 			where('server_id', '==', sid),
+			orderBy('created_at', 'desc')
+		)
+	})
+
+	// Use the computed query with useCollection
+	const shops = useCollection(shopsQuery)
+
+	// Filter out archived shops client-side (treat undefined/null/false as not archived)
+	const filteredShops = computed(() => {
+		if (!shops.value) return shops.value
+		return shops.value.filter((shop) => shop.archived !== true)
+	})
+
+	return { shops: filteredShops }
+}
+
+// Composable to use all user's shops (including archived) - for ShopManagerView
+export function useAllShops(userId) {
+	const db = useFirestore()
+
+	// Create a computed query that updates when userId changes
+	const shopsQuery = computed(() => {
+		const uid = unref(userId) // Unwrap the ref/computed to get the actual value
+
+		if (!uid) {
+			return null
+		}
+
+		// Don't filter by archived - include all shops
+		return query(
+			collection(db, 'shops'),
+			where('owner_id', '==', uid),
 			orderBy('created_at', 'desc')
 		)
 	})

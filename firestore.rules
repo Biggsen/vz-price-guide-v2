@@ -36,7 +36,9 @@ service cloud.firestore {
         (request.resource.data.fully_cataloged == null ||
          request.resource.data.fully_cataloged is bool) &&
         (request.resource.data.owner_funds == null || 
-         (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0));
+         (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0)) &&
+        (request.resource.data.archived == null ||
+         request.resource.data.archived is bool);
       allow delete: if request.auth != null && request.auth.uid == resource.data.owner_id;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.owner_id &&
         request.resource.data.keys().hasAll(['name', 'server_id', 'owner_id', 'is_own_shop']) &&
@@ -47,7 +49,9 @@ service cloud.firestore {
         (request.resource.data.fully_cataloged == null ||
          request.resource.data.fully_cataloged is bool) &&
         (request.resource.data.owner_funds == null || 
-         (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0));
+         (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0)) &&
+        (request.resource.data.archived == null ||
+         request.resource.data.archived is bool);
     }
     // Shop Items: Allow authenticated users to read, only shop owner can write
     match /shop_items/{itemId} {

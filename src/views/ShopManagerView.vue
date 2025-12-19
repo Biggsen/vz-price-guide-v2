@@ -25,7 +25,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import { XCircleIcon, MapPinIcon, UserIcon, BuildingStorefrontIcon } from '@heroicons/vue/24/solid'
 import { useAdmin } from '../utils/admin.js'
-import { useShops, createShop, updateShop, deleteShop } from '../utils/shopProfile.js'
+import { useAllShops, createShop, updateShop, deleteShop } from '../utils/shopProfile.js'
 import {
 	useServers,
 	createServer,
@@ -85,7 +85,8 @@ function goToVerifyEmail() {
 }
 
 // Get user's shops and servers (only if user has access)
-const { shops } = useShops(computed(() => (hasAccess.value ? user.value?.uid : null)))
+// Use useAllShops to include archived shops in server cards
+const { shops } = useAllShops(computed(() => (hasAccess.value ? user.value?.uid : null)))
 const { servers } = useServers(computed(() => (hasAccess.value ? user.value?.uid : null)))
 
 const hasServers = computed(() => servers.value && servers.value.length > 0)
@@ -1007,13 +1008,21 @@ function toggleShopsVisibility(serverId) {
 														name: 'shop',
 														params: { shopId: row.shop.id }
 													}"
-													class="text-gray-900 hover:text-heavy-metal transition">
+													:class="[
+														'text-gray-900 hover:text-heavy-metal transition',
+														row.shop.archived ? 'opacity-60 italic' : ''
+													]">
 													{{ row.shopName }}
 												</RouterLink>
 												<ClipboardDocumentCheckIcon
 													v-if="row.shop.fully_cataloged"
 													class="w-4 h-4 text-gray-900 flex-shrink-0"
 													title="Fully cataloged" />
+												<span
+													v-if="row.shop.archived"
+													class="text-xs text-gray-500 italic">
+													(Archived)
+												</span>
 											</div>
 										</template>
 										<template #cell-location="{ row }">
@@ -1095,7 +1104,10 @@ function toggleShopsVisibility(serverId) {
 														name: 'shop',
 														params: { shopId: row.shop.id }
 													}"
-													class="text-gray-900 hover:text-heavy-metal transition">
+													:class="[
+														'text-gray-900 hover:text-heavy-metal transition',
+														row.shop.archived ? 'opacity-60 italic' : ''
+													]">
 													{{ row.shopName }}
 												</RouterLink>
 												<ClipboardDocumentCheckIcon
@@ -1106,6 +1118,11 @@ function toggleShopsVisibility(serverId) {
 													v-if="row.shop.owner_funds === 0"
 													class="w-4 h-4 text-gray-900 flex-shrink-0"
 													title="Shop owner has run out of money" />
+												<span
+													v-if="row.shop.archived"
+													class="text-xs text-gray-500 italic">
+													(Archived)
+												</span>
 											</div>
 										</template>
 										<template #cell-location="{ row }">

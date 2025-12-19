@@ -93,12 +93,13 @@ const serverIdForQuery = computed(() => {
 const { shops: allServerShops } = useServerShops(serverIdForQuery)
 
 // Filter shops based on admin status
+// Note: useServerShops and useShops already filter out archived shops client-side
 const serverShops = computed(() => {
 	if (userIsAdmin.value) {
-		// Admins can see all shops on the server
+		// Admins can see all shops on the server (already filtered by useServerShops)
 		return allServerShops.value || []
 	} else {
-		// Non-admins (including shopManager) can only see their own shops on the server
+		// Non-admins (including shopManager) can only see their own shops on the server (already filtered by useShops)
 		if (!shops.value || !selectedServerId.value) return []
 		return shops.value.filter((shop) => shop.server_id === selectedServerId.value)
 	}
@@ -158,13 +159,18 @@ const shopItemsByCategory = computed(() => {
 		// Find the corresponding item data from the main items collection
 		const itemData = availableItems.value.find((item) => item.id === shopItem.item_id)
 		if (itemData) {
+			// Add shop data for market overview
+			const shopData = serverShops.value?.find((shop) => shop.id === shopItem.shop_id)
+			
+			// Skip items from archived shops (treat undefined as not archived)
+			if (!shopData || (shopData.archived === true)) {
+				return
+			}
+			
 			const category = itemData.category || 'Uncategorized'
 			if (!grouped[category]) {
 				grouped[category] = []
 			}
-
-			// Add shop data for market overview
-			const shopData = serverShops.value?.find((shop) => shop.id === shopItem.shop_id)
 
 			grouped[category].push({
 				...shopItem,
@@ -544,13 +550,18 @@ const priceAnalysis = computed(() => {
 
 	const itemPrices = {}
 
-	// Group items by item_id to analyze prices (excluding own shops)
+	// Group items by item_id to analyze prices (excluding own shops and archived shops)
 	shopItems.value.forEach((shopItem) => {
 		const itemId = shopItem.item_id
 		const shop = serverShops.value?.find((s) => s.id === shopItem.shop_id)
 
 		// Skip own shops for trading opportunities
 		if (shop?.is_own_shop) {
+			return
+		}
+		
+		// Skip archived shops (treat undefined as not archived)
+		if (shop?.archived === true) {
 			return
 		}
 
