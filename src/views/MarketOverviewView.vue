@@ -18,6 +18,7 @@ import {
 	ArchiveBoxIcon,
 	ArchiveBoxXMarkIcon,
 	ArrowPathIcon,
+	BellIcon,
 	BuildingStorefrontIcon,
 	CheckCircleIcon,
 	ChevronRightIcon,
@@ -573,19 +574,31 @@ const priceAnalysis = computed(() => {
 			}
 		}
 
-		if (shopItem.buy_price !== null && shopItem.buy_price !== undefined) {
+		// Only include buy prices if item is not out of stock
+		if (
+			shopItem.buy_price !== null &&
+			shopItem.buy_price !== undefined &&
+			shopItem.stock_quantity !== 0
+		) {
 			itemPrices[itemId].buyPrices.push({
 				price: shopItem.buy_price,
 				shopId: shopItem.shop_id,
-				shopName: shop?.name || 'Unknown'
+				shopName: shop?.name || 'Unknown',
+				shopItem: shopItem
 			})
 		}
 
-		if (shopItem.sell_price !== null && shopItem.sell_price !== undefined) {
+		// Only include sell prices if item is not stock full
+		if (
+			shopItem.sell_price !== null &&
+			shopItem.sell_price !== undefined &&
+			!shopItem.stock_full
+		) {
 			itemPrices[itemId].sellPrices.push({
 				price: shopItem.sell_price,
 				shopId: shopItem.shop_id,
-				shopName: shop?.name || 'Unknown'
+				shopName: shop?.name || 'Unknown',
+				shopItem: shopItem
 			})
 		}
 	})
@@ -594,8 +607,13 @@ const priceAnalysis = computed(() => {
 	const opportunities = []
 
 	Object.entries(itemPrices).forEach(([itemId, data]) => {
-		if (data.buyPrices.length > 0 && data.sellPrices.length > 0) {
-			const lowestBuy = Math.min(...data.buyPrices.map((p) => p.price))
+		// Filter out buy prices from shops that are out of stock
+		const availableBuyPrices = data.buyPrices.filter((buyPrice) => {
+			return buyPrice.shopItem?.stock_quantity !== 0
+		})
+
+		if (availableBuyPrices.length > 0 && data.sellPrices.length > 0) {
+			const lowestBuy = Math.min(...availableBuyPrices.map((p) => p.price))
 
 			// Filter out sell prices from shops that don't have enough funds
 			const affordableSellPrices = data.sellPrices.filter((sellPrice) => {
@@ -617,7 +635,7 @@ const priceAnalysis = computed(() => {
 				const profitMargin = (profit / lowestBuy) * 100
 
 				const itemData = availableItems.value?.find((item) => item.id === itemId)
-				const buyShop = data.buyPrices.find((p) => p.price === lowestBuy)
+				const buyShop = availableBuyPrices.find((p) => p.price === lowestBuy)
 				const sellShop = affordableSellPrices.find((p) => p.price === highestSell)
 
 				const buyShopData = serverShops.value?.find((s) => s.id === buyShop?.shopId)
@@ -735,6 +753,7 @@ const priceAnalysis = computed(() => {
 				<details class="group">
 					<summary
 						class="text-lg font-semibold text-gray-900 mb-3 cursor-pointer list-none flex items-center gap-2">
+						<BellIcon class="w-5 h-5" />
 						<span>Opportunities</span>
 						<ChevronRightIcon
 							class="w-5 h-5 transition-transform duration-200 group-open:rotate-90" />
