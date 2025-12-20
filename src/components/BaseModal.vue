@@ -122,6 +122,7 @@ function handleBackdropClick() {
 				'bg-white rounded-lg shadow-xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden',
 				sizeClasses.maxWidth
 			]"
+			v-bind="$attrs"
 			@click.stop>
 			<!-- Header -->
 			<div

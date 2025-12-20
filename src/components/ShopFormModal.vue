@@ -144,6 +144,7 @@ function handleClose() {
 		:title="modalTitle"
 		maxWidth="max-w-2xl"
 		:closeOnBackdrop="false"
+		data-cy="shop-form-modal"
 		@close="handleClose">
 		<form @submit.prevent="handleSubmit" class="space-y-4">
 			<!-- Player Name Input (only for non-own shops) -->
@@ -160,6 +161,7 @@ function handleClose() {
 					@input="updateFormField('player', $event.target.value)"
 					type="text"
 					placeholder="Enter Minecraft username"
+					:data-cy="isEditMode ? 'edit-shop-player-input' : 'shop-player-input'"
 					:class="[
 						'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
 						errors.player
@@ -201,6 +203,7 @@ function handleClose() {
 						required
 						:disabled="usePlayerAsShopName && !shopForm.is_own_shop"
 						:placeholder="isEditMode ? 'e.g., vz market' : 'e.g., verzion\'s shop'"
+						:data-cy="isEditMode ? 'edit-shop-name-input' : 'shop-name-input'"
 						:class="[
 							'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans disabled:bg-gray-100 disabled:cursor-not-allowed',
 							errors.name
@@ -226,6 +229,7 @@ function handleClose() {
 					:value="shopForm.server_id"
 					@change="updateFormField('server_id', $event.target.value)"
 					required
+					data-cy="shop-server-select"
 					:class="[
 						'block w-full rounded border-2 px-3 py-1.5 mt-2 mb-2 text-gray-900 focus:ring-2 font-sans',
 						errors.server
@@ -260,6 +264,7 @@ function handleClose() {
 					:placeholder="
 						isEditMode ? 'e.g., /warp shops' : 'e.g., /warp shops, coordinates, etc.'
 					"
+					:data-cy="isEditMode ? 'edit-shop-location-input' : 'shop-location-input'"
 					class="mt-2 mb-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 placeholder:text-gray-400 focus:border-gray-asparagus focus:outline-none focus:ring-2 focus:ring-gray-asparagus" />
 			</div>
 
@@ -297,14 +302,19 @@ function handleClose() {
 		<template #footer>
 			<div class="flex items-center justify-end">
 				<div class="flex space-x-3">
-					<button type="button" class="btn-secondary--outline" @click="handleClose">
+					<button
+						type="button"
+						class="btn-secondary--outline"
+						@click="handleClose"
+						data-cy="shop-form-modal-close">
 						Cancel
 					</button>
 					<BaseButton
 						type="button"
 						@click="handleSubmit"
 						:disabled="loading"
-						variant="primary">
+						variant="primary"
+						:data-cy="isEditMode ? 'edit-shop-submit-button' : 'create-shop-submit-button'">
 						{{ buttonText }}
 					</BaseButton>
 				</div>

@@ -155,6 +155,7 @@ function handleSubmit() {
 		:title="title"
 		maxWidth="max-w-md"
 		:closeOnBackdrop="false"
+		data-cy="server-form-modal"
 		@close="$emit('close')">
 		<form @submit.prevent="handleSubmit" class="space-y-4">
 			<div>
@@ -169,6 +170,7 @@ function handleSubmit() {
 					type="text"
 					required
 					placeholder="e.g., Hypixel Skyblock"
+					:data-cy="`${inputPrefix}-server-name-input`"
 					@input="handleInput('name')"
 					:class="[
 						'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
@@ -196,6 +198,7 @@ function handleSubmit() {
 							:id="`${inputPrefix}-minecraft-version`"
 							v-model="selectedMajorMinor"
 							required
+							:data-cy="`${inputPrefix}-minecraft-version-select`"
 							@change="handleInput('version')"
 							:class="[
 								'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 font-sans',
@@ -265,10 +268,18 @@ function handleSubmit() {
 		<template #footer>
 			<div class="flex items-center justify-end">
 				<div class="flex space-x-3">
-					<button type="button" @click="$emit('close')" class="btn-secondary--outline">
+					<button
+						type="button"
+						@click="$emit('close')"
+						class="btn-secondary--outline"
+						data-cy="server-form-modal-close">
 						Cancel
 					</button>
-					<BaseButton @click="handleSubmit" :disabled="loading" variant="primary">
+					<BaseButton
+						@click="handleSubmit"
+						:disabled="loading"
+						variant="primary"
+						:data-cy="`${inputPrefix}-server-submit-button`">
 						{{ submitButtonText }}
 					</BaseButton>
 				</div>

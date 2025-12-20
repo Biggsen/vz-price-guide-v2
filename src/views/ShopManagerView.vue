@@ -675,7 +675,8 @@ function toggleShopsVisibility(serverId) {
 						<BaseButton
 							v-if="!user?.email"
 							@click="handleShopManagerClick"
-							variant="primary">
+							variant="primary"
+							data-cy="shop-manager-cta-button">
 							<template #left-icon>
 								<BuildingStorefrontIcon />
 							</template>
@@ -685,7 +686,8 @@ function toggleShopsVisibility(serverId) {
 							v-else-if="!user?.emailVerified"
 							@click="handleShopManagerClick"
 							variant="primary"
-							class="text-base px-6 py-3">
+							class="text-base px-6 py-3"
+							data-cy="shop-manager-cta-button">
 							<template #left-icon>
 								<BuildingStorefrontIcon />
 							</template>
@@ -860,7 +862,10 @@ function toggleShopsVisibility(serverId) {
 				</p>
 			</div>
 			<div class="mt-4">
-				<BaseButton @click="showCreateServerForm" variant="primary">
+				<BaseButton
+					@click="showCreateServerForm"
+					variant="primary"
+					data-cy="shop-manager-add-server-button">
 					<template #left-icon>
 						<PlusIcon />
 					</template>
@@ -892,7 +897,8 @@ function toggleShopsVisibility(serverId) {
 					v-for="server in servers"
 					:key="server.id"
 					variant="tertiary"
-					class="h-full md:col-span-3 lg:col-span-2">
+					class="h-full md:col-span-3 lg:col-span-2"
+					data-cy="server-card">
 					<template #header>
 						<h3 class="text-lg font-semibold text-heavy-metal flex items-center gap-2">
 							<GlobeAltIcon class="w-5 h-5" />
@@ -905,6 +911,7 @@ function toggleShopsVisibility(serverId) {
 								type="button"
 								@click="showEditServerForm(server)"
 								:disabled="loading"
+								data-cy="server-edit-button"
 								class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded disabled:opacity-60 disabled:cursor-not-allowed">
 								<PencilIcon class="w-4 h-4" />
 							</button>
@@ -912,6 +919,7 @@ function toggleShopsVisibility(serverId) {
 								type="button"
 								@click="confirmDeleteServer(server)"
 								:disabled="loading"
+								data-cy="server-delete-button"
 								class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded disabled:opacity-60 disabled:cursor-not-allowed">
 								<TrashIcon class="w-4 h-4" />
 							</button>
@@ -939,7 +947,8 @@ function toggleShopsVisibility(serverId) {
 								<BaseButton
 									variant="secondary"
 									:disabled="shopLoading"
-									@click="showCreateShopForm(server.id, true)">
+									@click="showCreateShopForm(server.id, true)"
+									data-cy="shop-manager-add-shop-button">
 									<template #left-icon>
 										<PlusIcon class="w-4 h-4" />
 									</template>
@@ -948,7 +957,8 @@ function toggleShopsVisibility(serverId) {
 								<BaseButton
 									variant="secondary"
 									:disabled="shopLoading"
-									@click="showCreateShopForm(server.id, false)">
+									@click="showCreateShopForm(server.id, false)"
+									data-cy="shop-manager-add-shop-button">
 									<template #left-icon>
 										<PlusIcon class="w-4 h-4" />
 									</template>
@@ -959,7 +969,8 @@ function toggleShopsVisibility(serverId) {
 								v-if="shopsByServer[server.id]?.all.length"
 								type="button"
 								@click="toggleShopsVisibility(server.id)"
-								class="mt-2 text-sm text-gray-asparagus hover:text-highland underline text-left">
+								class="mt-2 text-sm text-gray-asparagus hover:text-highland underline text-left"
+								data-cy="shop-visibility-toggle">
 								{{ shopsHidden[server.id] ? 'Show all shops' : 'Hide all shops' }}
 							</button>
 							<div v-if="!shopsHidden[server.id]" class="space-y-4">
@@ -1041,6 +1052,7 @@ function toggleShopsVisibility(serverId) {
 													variant="primary"
 													:disabled="shopLoading"
 													aria-label="Edit shop"
+													data-cy="shop-edit-button"
 													@click="showEditShopForm(row.shop)">
 													<PencilIcon />
 												</BaseIconButton>
@@ -1048,6 +1060,7 @@ function toggleShopsVisibility(serverId) {
 													variant="primary"
 													:disabled="shopLoading"
 													aria-label="Delete shop"
+													data-cy="shop-delete-button"
 													@click="requestDeleteShop(row.shop)">
 													<TrashIcon />
 												</BaseIconButton>
@@ -1141,6 +1154,7 @@ function toggleShopsVisibility(serverId) {
 													variant="primary"
 													:disabled="shopLoading"
 													aria-label="Edit shop"
+													data-cy="shop-edit-button"
 													@click="showEditShopForm(row.shop)">
 													<PencilIcon />
 												</BaseIconButton>
@@ -1148,6 +1162,7 @@ function toggleShopsVisibility(serverId) {
 													variant="primary"
 													:disabled="shopLoading"
 													aria-label="Delete shop"
+													data-cy="shop-delete-button"
 													@click="requestDeleteShop(row.shop)">
 													<TrashIcon />
 												</BaseIconButton>
@@ -1165,7 +1180,7 @@ function toggleShopsVisibility(serverId) {
 				</BaseCard>
 			</TransitionGroup>
 
-			<div v-else>
+			<div v-else data-cy="shop-manager-empty-servers">
 				<p class="text-lg font-medium mb-2">No servers yet.</p>
 				<p class="text-sm text-gray-600">
 					Click "Add Server" to get started. You can then add shops to the server.
@@ -1289,6 +1304,7 @@ function toggleShopsVisibility(serverId) {
 	<BaseModal
 		:isOpen="showShopManagerModal"
 		title="Try the Shop Manager"
+		data-cy="shop-manager-modal"
 		@close="closeShopManagerModal">
 		<!-- Sign-up content for unauthenticated users -->
 		<div v-if="!user?.email" class="text-left pt-2 pb-4 sm:py-4">
@@ -1307,7 +1323,7 @@ function toggleShopsVisibility(serverId) {
 
 			<!-- Action buttons -->
 			<div>
-				<BaseButton @click="goToSignUp" variant="primary">
+				<BaseButton @click="goToSignUp" variant="primary" data-cy="shop-manager-modal-signup">
 					<template #left-icon>
 						<UserIcon />
 					</template>
@@ -1316,7 +1332,10 @@ function toggleShopsVisibility(serverId) {
 				<div class="text-left pt-4">
 					<p class="text-sm text-gray-500">
 						Already have an account?
-						<button @click="goToSignIn" class="text-gray-700 hover:text-opacity-80">
+						<button
+							@click="goToSignIn"
+							class="text-gray-700 hover:text-opacity-80"
+							data-cy="shop-manager-modal-signin-link">
 							<span class="underline">Sign in</span>
 						</button>
 					</p>
@@ -1341,7 +1360,10 @@ function toggleShopsVisibility(serverId) {
 
 			<!-- Action buttons -->
 			<div>
-				<BaseButton @click="goToVerifyEmail" variant="primary">
+				<BaseButton
+					@click="goToVerifyEmail"
+					variant="primary"
+					data-cy="shop-manager-modal-verify-email">
 					<template #left-icon>
 						<CheckCircleIcon />
 					</template>
