@@ -983,7 +983,10 @@ function getServerName(serverId) {
 	<div class="p-4 pt-8">
 		<!-- Back Button -->
 		<div class="mb-4">
-			<BaseButton variant="tertiary" @click="router.push('/shop-manager')">
+			<BaseButton
+				variant="tertiary"
+				data-cy="shop-items-back-button"
+				@click="router.push('/shop-manager')">
 				<template #left-icon>
 					<ArrowLeftIcon />
 				</template>
@@ -999,6 +1002,7 @@ function getServerName(serverId) {
 					</h1>
 					<button
 						type="button"
+						data-cy="shop-items-edit-shop-button"
 						@click="openEditShopModal"
 						class="text-gray-700 hover:text-gray-900 transition-colors"
 						aria-label="Edit shop">
@@ -1083,6 +1087,7 @@ function getServerName(serverId) {
 					<label class="flex items-center gap-2 text-sm font-semibold text-gray-800">
 						<input
 							type="checkbox"
+							data-cy="shop-items-fully-cataloged-checkbox"
 							class="checkbox-input"
 							:checked="isShopFullyCataloged"
 							:disabled="catalogStatusLoading"
@@ -1100,6 +1105,7 @@ function getServerName(serverId) {
 					<label
 						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
 						<input
+							data-cy="shop-items-out-of-money-checkbox"
 							:checked="isShopOutOfMoney"
 							@change="handleOutOfMoneyChange($event.target.checked)"
 							type="checkbox"
@@ -1114,6 +1120,7 @@ function getServerName(serverId) {
 					<label
 						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
 						<input
+							data-cy="shop-items-archive-checkbox"
 							:checked="isShopArchived"
 							@change="handleArchiveChange($event.target.checked)"
 							type="checkbox"
@@ -1131,6 +1138,7 @@ function getServerName(serverId) {
 					<BaseButton
 						type="button"
 						variant="primary"
+						data-cy="shop-items-add-item-button"
 						@click="showAddItemForm"
 						:disabled="!selectedShop"
 						class="w-full sm:w-auto justify-center sm:justify-start">
@@ -1146,6 +1154,7 @@ function getServerName(serverId) {
 						<BaseButton
 							type="button"
 							variant="tertiary"
+							data-cy="shop-items-market-overview-button"
 							class="w-full justify-center sm:justify-start">
 							<template #left-icon>
 								<CurrencyDollarIcon class="w-4 h-4" />
@@ -1165,26 +1174,28 @@ function getServerName(serverId) {
 							<span class="text-sm font-medium text-heavy-metal">View as:</span>
 							<div
 								class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-								<button
-									@click="viewMode = 'categories'"
-									:class="[
-										viewMode === 'categories'
-											? 'bg-gray-asparagus text-white'
-											: 'bg-norway text-heavy-metal hover:bg-gray-100',
-										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
-									]">
-									Categories
-								</button>
-								<button
-									@click="viewMode = 'list'"
-									:class="[
-										viewMode === 'list'
-											? 'bg-gray-asparagus text-white'
-											: 'bg-norway text-heavy-metal hover:bg-gray-100',
-										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
-									]">
-									List
-								</button>
+							<button
+								data-cy="shop-items-view-mode-categories"
+								@click="viewMode = 'categories'"
+								:class="[
+									viewMode === 'categories'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-gray-100',
+									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+								]">
+								Categories
+							</button>
+							<button
+								data-cy="shop-items-view-mode-list"
+								@click="viewMode = 'list'"
+								:class="[
+									viewMode === 'list'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-gray-100',
+									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
+								]">
+								List
+							</button>
 							</div>
 						</div>
 
@@ -1193,26 +1204,28 @@ function getServerName(serverId) {
 							<span class="text-sm font-medium text-heavy-metal">Layout:</span>
 							<div
 								class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-								<button
-									@click="layout = 'comfortable'"
-									:class="[
-										layout === 'comfortable'
-											? 'bg-gray-asparagus text-white'
-											: 'bg-norway text-heavy-metal hover:bg-gray-100',
-										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
-									]">
-									Comfortable
-								</button>
-								<button
-									@click="layout = 'condensed'"
-									:class="[
-										layout === 'condensed'
-											? 'bg-gray-asparagus text-white'
-											: 'bg-norway text-heavy-metal hover:bg-gray-100',
-										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
-									]">
-									Compact
-								</button>
+							<button
+								data-cy="shop-items-layout-comfortable"
+								@click="layout = 'comfortable'"
+								:class="[
+									layout === 'comfortable'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-gray-100',
+									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+								]">
+								Comfortable
+							</button>
+							<button
+								data-cy="shop-items-layout-compact"
+								@click="layout = 'condensed'"
+								:class="[
+									layout === 'condensed'
+										? 'bg-gray-asparagus text-white'
+										: 'bg-norway text-heavy-metal hover:bg-gray-100',
+									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
+								]">
+								Compact
+							</button>
 							</div>
 						</div>
 
@@ -1221,6 +1234,7 @@ function getServerName(serverId) {
 							<BaseButton
 								type="button"
 								variant="secondary"
+								data-cy="shop-items-mark-all-checked-button"
 								@click="handleMarkAllAsChecked"
 								:disabled="markingAsChecked || !shopItems || shopItems.length === 0"
 								class="px-3 py-1.5 text-xs sm:text-sm">
@@ -1434,30 +1448,33 @@ function getServerName(serverId) {
 									<template #cell-lastUpdated="{ row }">
 										<div class="flex items-center justify-end gap-2">
 											<span>{{ row.lastUpdated }}</span>
-											<BaseIconButton
-												v-if="!selectedShop.is_own_shop"
-												variant="ghost-in-table"
-												:ariaLabel="'Mark as price checked today'"
-												title="Mark as price checked today"
-												:loading="markingItemId === row._originalItem?.id"
-												@click="
-													handleMarkItemAsChecked(row._originalItem?.id)
-												"
-												:disabled="markingItemId === row._originalItem?.id">
-												<ArrowPathIcon />
-											</BaseIconButton>
+										<BaseIconButton
+											v-if="!selectedShop.is_own_shop"
+											variant="ghost-in-table"
+											data-cy="shop-item-mark-checked-button"
+											:ariaLabel="'Mark as price checked today'"
+											title="Mark as price checked today"
+											:loading="markingItemId === row._originalItem?.id"
+											@click="
+												handleMarkItemAsChecked(row._originalItem?.id)
+											"
+											:disabled="markingItemId === row._originalItem?.id">
+											<ArrowPathIcon />
+										</BaseIconButton>
 										</div>
 									</template>
 									<template #cell-actions="{ row }">
 										<div class="flex items-center justify-end gap-2">
 											<BaseIconButton
 												variant="primary"
+												data-cy="shop-item-edit-button"
 												aria-label="Edit item"
 												@click="showEditItemForm(row._originalItem)">
 												<PencilIcon />
 											</BaseIconButton>
 											<BaseIconButton
 												variant="primary"
+												data-cy="shop-item-delete-button"
 												aria-label="Delete item"
 												@click="handleItemDelete(row._originalItem)">
 												<TrashIcon />
@@ -1678,7 +1695,7 @@ function getServerName(serverId) {
 					</div>
 				</div>
 
-				<div v-else class="bg-white rounded-lg pt-6 pr-6 pb-6">
+				<div v-else class="bg-white rounded-lg pt-6 pr-6 pb-6" data-cy="shop-items-empty-state">
 					<div class="text-gray-600">
 						<p class="text-lg font-medium mb-2">No items in this shop yet</p>
 						<p class="text-sm">Click "Add Item" to get started with your shop items.</p>
@@ -1690,6 +1707,7 @@ function getServerName(serverId) {
 					<BaseButton
 						type="button"
 						variant="primary"
+						data-cy="shop-items-add-item-button-bottom"
 						@click="showAddItemForm"
 						:disabled="!selectedShop">
 						<template #left-icon>
@@ -1724,6 +1742,7 @@ function getServerName(serverId) {
 		:title="editingItem ? 'Edit Shop Item' : 'Add Shop Item'"
 		maxWidth="max-w-2xl"
 		:closeOnBackdrop="false"
+		data-cy="shop-item-form-modal"
 		@close="cancelForm">
 		<ShopItemForm
 			ref="shopItemForm"
@@ -1737,12 +1756,17 @@ function getServerName(serverId) {
 		<template #footer>
 			<div class="flex items-center justify-end">
 				<div class="flex space-x-3">
-					<BaseButton type="button" variant="tertiary" @click="cancelForm">
+					<BaseButton
+						type="button"
+						variant="tertiary"
+						data-cy="shop-item-form-cancel-button"
+						@click="cancelForm">
 						Cancel
 					</BaseButton>
 					<BaseButton
 						type="button"
 						variant="primary"
+						data-cy="shop-item-form-submit-button"
 						:disabled="loading || !shopItemForm?.isFormValid"
 						@click="shopItemForm?.submit()">
 						{{
@@ -1765,6 +1789,7 @@ function getServerName(serverId) {
 		:isOpen="showDeleteItemModal"
 		title="Delete Item"
 		size="small"
+		data-cy="shop-item-delete-modal"
 		@close="showDeleteItemModal = false; itemPendingDelete = null">
 		<div class="space-y-4">
 			<div>
@@ -1786,12 +1811,14 @@ function getServerName(serverId) {
 					<button
 						type="button"
 						class="btn-secondary--outline"
+						data-cy="shop-item-delete-cancel-button"
 						@click="showDeleteItemModal = false; itemPendingDelete = null">
 						Cancel
 					</button>
 					<BaseButton
 						type="button"
 						variant="primary"
+						data-cy="shop-item-delete-confirm-button"
 						class="bg-semantic-danger hover:bg-opacity-90"
 						:disabled="loading"
 						@click="confirmDeleteItem">

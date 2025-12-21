@@ -744,6 +744,7 @@ defineExpose({
 						<label class="flex items-center">
 							<input
 								v-model="enableMultipleSelection"
+								data-cy="shop-item-multiple-selection-checkbox"
 								@change="handleMultipleSelectionToggle($event.target.checked)"
 								type="checkbox"
 								class="checkbox-input" />
@@ -757,6 +758,7 @@ defineExpose({
 						id="item-search"
 						ref="searchInput"
 						v-model="searchQuery"
+						data-cy="shop-item-search-input"
 						@input="handleSearchInput"
 						@keydown="handleKeyDown"
 						type="text"
@@ -824,6 +826,7 @@ defineExpose({
 							<div
 								v-for="(item, categoryIndex) in categoryItems"
 								:key="item.id"
+								data-cy="shop-item-dropdown-item"
 								@click="
 									enableMultipleSelection
 										? toggleItemSelection(item)
@@ -865,6 +868,7 @@ defineExpose({
 						<label class="flex items-center">
 							<input
 								v-model="enableMultipleSelection"
+								data-cy="shop-item-multiple-selection-checkbox"
 								@change="handleMultipleSelectionToggle($event.target.checked)"
 								type="checkbox"
 								class="checkbox-input" />
@@ -924,6 +928,7 @@ defineExpose({
 					<input
 						id="buy-price"
 						ref="buyPriceInput"
+						data-cy="shop-item-buy-price-input"
 						:value="formData.buy_price"
 						@input="handlePriceInput('buy_price', $event)"
 						type="number"
@@ -968,6 +973,7 @@ defineExpose({
 					<div class="flex items-center gap-2">
 						<input
 							id="sell-price"
+							data-cy="shop-item-sell-price-input"
 							:value="formData.sell_price"
 							@input="handlePriceInput('sell_price', $event)"
 							type="number"
@@ -1021,6 +1027,7 @@ defineExpose({
 				<textarea
 					id="notes"
 					v-model="formData.notes"
+					data-cy="shop-item-notes-input"
 					rows="3"
 					placeholder="Add any notes about this item, pricing, or stock..."
 					class="mt-2 block w-full rounded border-2 border-gray-asparagus px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans"></textarea>

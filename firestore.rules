@@ -33,11 +33,14 @@ service cloud.firestore {
       allow update: if request.auth != null &&
         request.auth.uid == resource.data.owner_id &&
         request.resource.data.owner_id == resource.data.owner_id &&
-        (request.resource.data.fully_cataloged == null ||
+        (!('fully_cataloged' in request.resource.data) ||
+         request.resource.data.fully_cataloged == null ||
          request.resource.data.fully_cataloged is bool) &&
-        (request.resource.data.owner_funds == null || 
+        (!('owner_funds' in request.resource.data) ||
+         request.resource.data.owner_funds == null || 
          (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0)) &&
-        (request.resource.data.archived == null ||
+        (!('archived' in request.resource.data) ||
+         request.resource.data.archived == null ||
          request.resource.data.archived is bool);
       allow delete: if request.auth != null && request.auth.uid == resource.data.owner_id;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.owner_id &&
