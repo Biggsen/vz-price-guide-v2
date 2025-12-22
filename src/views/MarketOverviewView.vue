@@ -672,6 +672,7 @@ const priceAnalysis = computed(() => {
 		<div class="mb-4">
 			<RouterLink
 				to="/shop-manager"
+				data-cy="market-overview-back-button"
 				class="inline-flex items-center rounded-md bg-white text-gray-700 border-2 border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 transition">
 				<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path
@@ -749,9 +750,11 @@ const priceAnalysis = computed(() => {
 			<!-- Trading opportunities -->
 			<div
 				v-if="selectedServer && priceAnalysis && priceAnalysis.opportunities.length > 0"
-				class="mb-6">
+				class="mb-6"
+				data-cy="market-overview-opportunities-section">
 				<details class="group">
 					<summary
+						data-cy="market-overview-opportunities-toggle"
 						class="text-lg font-semibold text-gray-900 mb-3 cursor-pointer list-none flex items-center gap-2">
 						<BellIcon class="w-5 h-5" />
 						<span>Opportunities</span>
@@ -858,6 +861,7 @@ const priceAnalysis = computed(() => {
 							id="item-search"
 							type="text"
 							v-model="searchQuery"
+							data-cy="market-overview-search-input"
 							placeholder="Search for items..."
 							class="border-2 border-gray-asparagus rounded px-3 py-2 w-full mb-1 h-10" />
 						<p class="text-xs text-gray-500 mb-2 sm:mb-0 hidden sm:block">
@@ -868,6 +872,7 @@ const priceAnalysis = computed(() => {
 						<BaseButton
 							@click="resetSearch"
 							variant="tertiary"
+							data-cy="market-overview-reset-search-button"
 							class="flex-1 sm:flex-none sm:whitespace-nowrap sm:mr-2 h-10">
 							<ArrowPathIcon class="w-4 h-4 sm:mr-1.5" />
 							<span class="hidden sm:inline">Reset</span>
@@ -894,6 +899,7 @@ const priceAnalysis = computed(() => {
 						<div
 							class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
 							<button
+								data-cy="market-overview-view-mode-categories"
 								@click="viewMode = 'categories'"
 								:class="[
 									viewMode === 'categories'
@@ -904,6 +910,7 @@ const priceAnalysis = computed(() => {
 								Categories
 							</button>
 							<button
+								data-cy="market-overview-view-mode-list"
 								@click="viewMode = 'list'"
 								:class="[
 									viewMode === 'list'
@@ -922,6 +929,7 @@ const priceAnalysis = computed(() => {
 						<div
 							class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
 							<button
+								data-cy="market-overview-layout-comfortable"
 								@click="layout = 'comfortable'"
 								:class="[
 									layout === 'comfortable'
@@ -932,6 +940,7 @@ const priceAnalysis = computed(() => {
 								Comfortable
 							</button>
 							<button
+								data-cy="market-overview-layout-condensed"
 								@click="layout = 'condensed'"
 								:class="[
 									layout === 'condensed'
@@ -952,6 +961,7 @@ const priceAnalysis = computed(() => {
 				<template v-if="viewMode === 'categories'">
 					<div
 						v-if="searchQuery && Object.keys(filteredShopItemsByCategory).length === 0"
+						data-cy="market-overview-empty-search-state"
 						class="text-gray-600">
 						<p class="text-lg font-medium mb-2">
 							No items found matching "{{ searchQuery }}"
@@ -1023,6 +1033,7 @@ const priceAnalysis = computed(() => {
 								<template #cell-shop="{ row }">
 									<div
 										@click="navigateToShopItems(row.shopId)"
+										data-cy="market-overview-shop-link"
 										class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
 										<template v-if="row.shopPlayer">
 											<img
@@ -1213,6 +1224,7 @@ const priceAnalysis = computed(() => {
 							<template #cell-shop="{ row }">
 								<div
 									@click="navigateToShopItems(row.shopId)"
+									data-cy="market-overview-shop-link"
 									class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
 									<template v-if="row.shopPlayer">
 										<img
