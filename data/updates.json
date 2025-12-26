@@ -7,8 +7,8 @@
 		"hidden": false,
 		"description": "Added all Minecraft 1.21.11 (Mounts of Mayhem) items to the catalog including spears, nautilus armor variants, and netherite horse armor - all with accurate pricing.",
 		"changes": [
-			"Spears: new weapon type added to the catalog",
-			"Nautilus armor: available in copper, iron, gold, diamond, and netherite variants",
+			"Spears: new weapon type available in wooden, stone, copper, iron, golden, diamond, and netherite variants",
+			"Nautilus armor: available in copper, iron, golden, diamond, and netherite variants",
 			"Netherite horse armor: the ultimate horse armor variant"
 		]
 	},
