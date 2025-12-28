@@ -59,7 +59,7 @@
 -   **Crate Rewards Management** - YAML import, custom pricing, value calculations
 -   **Suggestions System** - User feedback and feature requests with admin management
 -   **Price Export** - JSON/YAML export with filtering and version selection
--   **Item Catalog** - 1,600+ items across 6 Minecraft versions (1.16-1.21, including Mounts of Mayhem 1.21.11)
+-   **Item Catalog** - 1,600+ items across 6 Minecraft versions (1.16-1.21, including 1.21.11)
 
 ---
 
@@ -111,11 +111,11 @@ Upcoming focus areas:
 -   [x] Recipes & Dynamic Pricing - 2,000+ recipes with automatic price calculations
 -   [x] Suggestions System - User feedback and feature requests with admin management
 -   [x] Crate Rewards Management - YAML import, custom pricing, value calculations
--   [x] Shop Manager - Multi-server shop tracking with price history, starring, archiving, and market overview
+-   [x] Shop Manager - Multi-server shop tracking with starring, archiving, and market overview
 -   [x] Price Export - JSON/YAML export with filtering and version selection
 -   [x] Bulk Item Management - Admin tools for managing the item catalog
 -   [x] Visual Testing - Comprehensive screenshot-based testing system
--   [x] Item Catalog - 1,600+ items across 6 Minecraft versions (1.16-1.21) including Mounts of Mayhem 1.21.11
+-   [x] Item Catalog - 1,600+ items across 6 Minecraft versions (1.16-1.21) including 1.21.11
 -   [x] Price Field Migration - Version-aware pricing with inheritance and fallback logic
 -   [x] Homepage Refactoring - Reduced HomeView.vue from 988 lines to 309 lines (69% reduction), extracted composables and utilities
 -   [x] Custom Pricing for Crates - Enhanced crate pricing capabilities
@@ -148,7 +148,7 @@ Upcoming focus areas:
 
 #### Shop Manager
 
--   Multi-server shop tracking with price history
+-   Multi-server shop tracking
 -   Catalog status tracking (fully_cataloged boolean field)
 -   Multiple item selection - users can select multiple items at once when adding to shops
 -   Selected items share the same buy price, sell price, and notes
@@ -400,7 +400,7 @@ _No active bugs currently - all recent issues have been resolved._
 -   **2,000+ recipes** with automatic price calculations
 -   **Version-aware pricing** with inheritance and fallback logic
 -   **Dynamic pricing system** with circular dependency detection
--   **Comprehensive item catalog** with 1,600+ items across 6 Minecraft versions (1.16-1.21, including Mounts of Mayhem 1.21.11)
+-   **Comprehensive item catalog** with 1,600+ items across 6 Minecraft versions (1.16-1.21, including 1.21.11)
 
 ---
 
@@ -462,9 +462,9 @@ _No active bugs currently - all recent issues have been resolved._
 ### Recent Changes
 
 -   **2025-12-28**: Completed Homepage Refactoring (Phases 1-3) - Reduced HomeView.vue from 988 lines to 309 lines (69% reduction). Extracted composables (useEconomyConfig, useFilters, useItems), created utility functions and constants. Improved code organization, maintainability, and testability. Phase 4 (unit testing) pending.
--   **2025-12-26**: Added Mounts of Mayhem 1.21.11 items to catalog including spears, nautilus armor variants, and netherite horse armor - all with accurate pricing.
+-   **2025-12-26**: Added Minecraft 1.21.11 items to catalog including spears, nautilus armor variants, and netherite horse armor - all with accurate pricing.
 -   **2025-12-19**: Shop Manager improvements - Added starring functionality, shop archiving, opportunities improvements with better filtering, cleaner price formatting, fixed notes editing bug, and category ordering consistency.
--   **2025-12-15**: Shop Manager is now available to everyone - Multi-server shop tracking with price history, market overview, and comprehensive shop management features.
+-   **2025-12-15**: Shop Manager is now available to everyone - Multi-server shop tracking, market overview, and comprehensive shop management features.
 -   **2025-12-16**: Updated project summary with comprehensive review of all tasks and current project status. Moved Comment to SuggestionMessages Refactor from in-progress to completed (refactor already implemented).
 -   **2025-01-27**: Resolved multiple bugs including settings price modifiers persistence, admin subnav consistency, crate rewards mobile display, price guide count discrepancies, duplicate crate names, and enchantment book separation. All issues fixed and tested.
 -   **2025-01-27**: Completed Market Overview refactoring - extracted shared utility functions (date.js, pricing.js, tableTransform.js), eliminated ~100 lines of duplicated code from MarketOverviewView and ShopItemsView.
