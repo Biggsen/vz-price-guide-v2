@@ -1,5 +1,18 @@
 [
 	{
+		"id": 37,
+		"title": "Mounts of Mayhem 1.21.11 Items Added",
+		"date": "2025-12-26",
+		"types": ["Content"],
+		"hidden": false,
+		"description": "Added all Minecraft 1.21.11 (Mounts of Mayhem) items to the catalog including spears, nautilus armor variants, and netherite horse armor - all with accurate pricing.",
+		"changes": [
+			"Spears: new weapon type available in wooden, stone, copper, iron, golden, diamond, and netherite variants",
+			"Nautilus armor: available in copper, iron, golden, diamond, and netherite variants",
+			"Netherite horse armor: the ultimate horse armor variant"
+		]
+	},
+	{
 		"id": 36,
 		"title": "Shop Manager Improvements & Bug Fixes",
 		"date": "2025-12-19",
