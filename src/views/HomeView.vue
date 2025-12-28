@@ -8,8 +8,23 @@ import ExportModal from '../components/ExportModal.vue'
 import SettingsModal from '../components/SettingsModal.vue'
 import BaseButton from '../components/BaseButton.vue'
 import { enabledCategories, versions, baseEnabledVersions } from '../constants.js'
+import {
+	MAX_CATEGORIES_FOR_DB,
+	LOADING_DELAY_FAST,
+	LOADING_DELAY_SLOW,
+	LOADING_THRESHOLD,
+	FALLBACK_VERSIONS,
+	STORAGE_KEYS
+} from '../constants/homepage.js'
 import { useAdmin } from '../utils/admin.js'
 import { getEffectivePriceMemoized, clearPriceCache, getCacheStats } from '../utils/pricing.js'
+import {
+	isVersionLessOrEqual,
+	processSearchTerms,
+	filterItemsBySearch,
+	filterItemsByVersion,
+	filterItemsByPriceAndImage
+} from '../utils/homepage.js'
 import {
 	RocketLaunchIcon
 } from '@heroicons/vue/24/solid'
@@ -27,7 +42,7 @@ const router = useRouter()
 const { user, canEditItems } = useAdmin()
 
 // Ensure versions array is available as fallback
-const fallbackVersions = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
+const fallbackVersions = FALLBACK_VERSIONS
 
 // Computed property for enabled versions based on user type
 const enabledVersions = computed(() => {
@@ -68,8 +83,7 @@ const itemsQuery = computed(() => {
 
 	// Only do category filtering at DB level if we have few enough categories
 	// Firestore limit is around 10-15 categories, so let's be safe with 10
-	const maxCategoriesForDB = 10
-	if (enabledCategories.length <= maxCategoriesForDB) {
+	if (enabledCategories.length <= MAX_CATEGORIES_FOR_DB) {
 		// If visibleCategories is empty, show all categories (no filter)
 		// If visibleCategories has items, only show those specific categories
 		if (visibleCategories.value.length > 0) {
@@ -107,8 +121,7 @@ const allItemsForCountsQuery = computed(() => {
 
 	// Only do category filtering at DB level if we have few enough categories
 	// Use same limit as main query to avoid disjunction limit
-	const maxCategoriesForDB = 10
-	if (enabledCategories.length <= maxCategoriesForDB) {
+	if (enabledCategories.length <= MAX_CATEGORIES_FOR_DB) {
 		filters.push(where('category', 'in', enabledCategories))
 	}
 	// If we have too many categories, we'll filter them client-side to avoid disjunction limit
@@ -134,8 +147,8 @@ watch(
 		// Data is loaded when both collections have been populated (even if empty)
 		if (items !== null && counts !== null && !hasInitiallyLoaded.value) {
 			const loadTime = Date.now() - loadingStartTime.value
-			// If data loads very quickly (< 100ms), add a minimum delay to prevent flash
-			const delay = loadTime < 100 ? 300 : 100
+			// If data loads very quickly (< threshold), add a minimum delay to prevent flash
+			const delay = loadTime < LOADING_THRESHOLD ? LOADING_DELAY_FAST : LOADING_DELAY_SLOW
 
 			setTimeout(() => {
 				isLoading.value = false
@@ -160,7 +173,7 @@ const showExportFeature = ref(true) // Set to true to enable export functionalit
 const disableAlert = ref(false) // Set to true to disable all alerts regardless of showAlert state
 
 // Mounts of Mayhem announcement state
-const mountsAnnouncementStorageKey = 'mountsOfMayhemAnnouncementDismissed'
+const mountsAnnouncementStorageKey = STORAGE_KEYS.MOUNTS_ANNOUNCEMENT_DISMISSED
 const showMountsAnnouncement = ref(true)
 
 function dismissMountsAnnouncement() {
@@ -181,68 +194,28 @@ function closeHoverPanel() {
 	openHoverPanel.value = null
 }
 
-// Helper function to compare version strings (e.g., "1.16" vs "1.17")
-function isVersionLessOrEqual(itemVersion, targetVersion) {
-	if (!itemVersion || !targetVersion) return false
-
-	const [itemMajor, itemMinor] = itemVersion.split('.').map(Number)
-	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
-
-	if (itemMajor < targetMajor) return true
-	if (itemMajor > targetMajor) return false
-	return itemMinor <= targetMinor
-}
 
 // Helper computed for version-filtered items
 // Now we only need to filter version_removed client-side since version is filtered at DB level
 const versionFilteredItems = computed(() => {
-	if (!allItemsCollection.value) return []
-	return allItemsCollection.value.filter((item) => {
-		// Check if item was removed in or before selected version
-		if (
-			item.version_removed &&
-			isVersionLessOrEqual(item.version_removed, selectedVersion.value)
-		) {
-			return false
-		}
-		return true
-	})
+	return filterItemsByVersion(allItemsCollection.value, selectedVersion.value)
 })
 
-// Helper computed for items with valid images
-const itemsWithImages = computed(() => {
-	const items = versionFilteredItems.value
-	if (user.value?.email) return items // Admin users see all items
-
-	return items.filter((item) => item.image && item.image.trim() !== '')
-})
-
-// Helper computed for items with valid prices and categories
+// Helper computed for items with valid images and prices
 const itemsWithValidPrices = computed(() => {
-	const items = itemsWithImages.value
-
-	return items.filter((item) => {
-		// Filter out items with null/empty categories (client-side filtering)
-		if (!item.category || item.category.trim() === '') {
-			return false
-		}
-
-		// Filter out items with 0 prices
-		const effectivePrice = getEffectivePriceMemoized(
-			item,
-			selectedVersion.value.replace('.', '_')
-		)
-		return effectivePrice && effectivePrice !== 0
-	})
+	return filterItemsByPriceAndImage(
+		versionFilteredItems.value,
+		user.value,
+		selectedVersion.value
+	)
 })
 
 const groupedItems = computed(() => {
 	const items = itemsWithValidPrices.value
 
-	// If we have more than 10 categories, filter by enabled categories client-side
+	// If we have more than MAX_CATEGORIES_FOR_DB categories, filter by enabled categories client-side
 	// to avoid Firestore disjunction limit
-	const maxCategoriesForDB = 10
-	const shouldFilterByCategory = enabledCategories.length > maxCategoriesForDB
+	const shouldFilterByCategory = enabledCategories.length > MAX_CATEGORIES_FOR_DB
 
 	let filteredItems = shouldFilterByCategory
 		? items.filter((item) => enabledCategories.includes(item.category))
@@ -269,10 +242,9 @@ const totalCategoryCounts = computed(() => {
 	// Use allItemsForCounts directly, not versionFilteredItems (which is already filtered)
 	let items = allItemsForCounts.value
 
-	// If we have more than 10 categories, filter by enabled categories client-side
+	// If we have more than MAX_CATEGORIES_FOR_DB categories, filter by enabled categories client-side
 	// to avoid Firestore disjunction limit
-	const maxCategoriesForDB = 10
-	const shouldFilterByCategory = enabledCategories.length > maxCategoriesForDB
+	const shouldFilterByCategory = enabledCategories.length > MAX_CATEGORIES_FOR_DB
 
 	if (shouldFilterByCategory) {
 		items = items.filter((item) => enabledCategories.includes(item.category))
@@ -288,23 +260,14 @@ const totalCategoryCounts = computed(() => {
 				return false
 			}
 			// Apply same filtering as groupedItems but without search
-			if (user.value?.email) {
-				// Admin users: filter by category and exclude 0-priced items
-				if (item.category !== cat) return false
-				const effectivePrice = getEffectivePriceMemoized(
-					item,
-					selectedVersion.value.replace('.', '_')
-				)
-				return effectivePrice && effectivePrice !== 0
-			}
-			// Non-admin users: filter by category, require image, and exclude 0-priced items
 			if (item.category !== cat) return false
-			if (!item.image || item.image.trim() === '') return false
-			const effectivePrice = getEffectivePriceMemoized(
-				item,
-				selectedVersion.value.replace('.', '_')
+			// Use the same price/image filtering logic
+			const filtered = filterItemsByPriceAndImage(
+				[item],
+				user.value,
+				selectedVersion.value
 			)
-			return effectivePrice && effectivePrice !== 0
+			return filtered.length > 0
 		})
 		acc[cat] = categoryItems.length
 		return acc
@@ -339,14 +302,14 @@ const economyConfig = computed(() => ({
 
 // Load config from localStorage
 function loadEconomyConfig() {
-	const savedPriceMultiplier = localStorage.getItem('priceMultiplier')
-	const savedSellMargin = localStorage.getItem('sellMargin')
-	const savedRoundToWhole = localStorage.getItem('roundToWhole')
-	const savedViewMode = localStorage.getItem('viewMode')
-	const savedLayout = localStorage.getItem('layout')
-	const savedSelectedVersion = localStorage.getItem('selectedVersion')
-	const savedShowStackSize = localStorage.getItem('showStackSize')
-	const savedShowFullNumbers = localStorage.getItem('showFullNumbers')
+	const savedPriceMultiplier = localStorage.getItem(STORAGE_KEYS.PRICE_MULTIPLIER)
+	const savedSellMargin = localStorage.getItem(STORAGE_KEYS.SELL_MARGIN)
+	const savedRoundToWhole = localStorage.getItem(STORAGE_KEYS.ROUND_TO_WHOLE)
+	const savedViewMode = localStorage.getItem(STORAGE_KEYS.VIEW_MODE)
+	const savedLayout = localStorage.getItem(STORAGE_KEYS.LAYOUT)
+	const savedSelectedVersion = localStorage.getItem(STORAGE_KEYS.SELECTED_VERSION)
+	const savedShowStackSize = localStorage.getItem(STORAGE_KEYS.SHOW_STACK_SIZE)
+	const savedShowFullNumbers = localStorage.getItem(STORAGE_KEYS.SHOW_FULL_NUMBERS)
 
 	if (savedPriceMultiplier !== null) {
 		priceMultiplier.value = parseFloat(savedPriceMultiplier)
@@ -378,14 +341,14 @@ function loadEconomyConfig() {
 
 // Save config to localStorage
 function saveEconomyConfig() {
-	localStorage.setItem('priceMultiplier', priceMultiplier.value.toString())
-	localStorage.setItem('sellMargin', sellMargin.value.toString())
-	localStorage.setItem('roundToWhole', roundToWhole.value.toString())
-	localStorage.setItem('viewMode', viewMode.value)
-	localStorage.setItem('layout', layout.value)
-	localStorage.setItem('selectedVersion', selectedVersion.value)
-	localStorage.setItem('showStackSize', showStackSize.value.toString())
-	localStorage.setItem('showFullNumbers', showFullNumbers.value.toString())
+	localStorage.setItem(STORAGE_KEYS.PRICE_MULTIPLIER, priceMultiplier.value.toString())
+	localStorage.setItem(STORAGE_KEYS.SELL_MARGIN, sellMargin.value.toString())
+	localStorage.setItem(STORAGE_KEYS.ROUND_TO_WHOLE, roundToWhole.value.toString())
+	localStorage.setItem(STORAGE_KEYS.VIEW_MODE, viewMode.value)
+	localStorage.setItem(STORAGE_KEYS.LAYOUT, layout.value)
+	localStorage.setItem(STORAGE_KEYS.SELECTED_VERSION, selectedVersion.value)
+	localStorage.setItem(STORAGE_KEYS.SHOW_STACK_SIZE, showStackSize.value.toString())
+	localStorage.setItem(STORAGE_KEYS.SHOW_FULL_NUMBERS, showFullNumbers.value.toString())
 }
 
 // Watch for changes and save to localStorage
@@ -408,24 +371,6 @@ watch(
 	{ deep: true }
 )
 
-// Helper function for search term processing
-function processSearchTerms(query) {
-	return query
-		.split(',')
-		.map((term) => term.trim())
-		.filter((term) => term.length > 0)
-}
-
-// Helper function for item filtering
-function filterItemsBySearch(items, searchTerms) {
-	if (searchTerms.length === 0) return items
-
-	return items.filter((item) => {
-		if (!item.name) return false
-		const itemName = item.name.toLowerCase()
-		return searchTerms.some((term) => itemName.includes(term))
-	})
-}
 
 const filteredGroupedItems = computed(() => {
 	if (!allItemsCollection.value) return {}
@@ -449,25 +394,12 @@ const allCategoriesWithSearch = computed(() => {
 		// Get all items for this category from the unfiltered-by-category list
 		const items = allItemsForCounts.value.filter((item) => item.category === cat)
 		// Apply client-side version_removed filtering and price/image filtering
-		const versionAndPriceFilteredItems = items.filter((item) => {
-			// Apply version_removed filtering (client-side)
-			if (
-				item.version_removed &&
-				isVersionLessOrEqual(item.version_removed, selectedVersion.value)
-			) {
-				return false
-			}
-			// Apply price/image filtering (mirroring itemsWithValidPrices logic)
-			if (user.value?.email) return true // Admin users see all items
-			if (!item.image || item.image.trim() === '') return false // Non-admin users need images
-			// Always filter out zero-priced items
-			const effectivePrice = getEffectivePriceMemoized(
-				item,
-				selectedVersion.value.replace('.', '_')
-			)
-			if (!effectivePrice || effectivePrice === 0) return false
-			return true
-		})
+		const versionFiltered = filterItemsByVersion(items, selectedVersion.value)
+		const versionAndPriceFilteredItems = filterItemsByPriceAndImage(
+			versionFiltered,
+			user.value,
+			selectedVersion.value
+		)
 		acc[cat] = filterItemsBySearch(versionAndPriceFilteredItems, searchTerms)
 		return acc
 	}, {})
@@ -616,32 +548,12 @@ function getTotalItemCount() {
 	}
 
 	// Apply version and price filtering (mirroring the logic from allCategoriesWithSearch)
-	const filteredItems = items.filter((item) => {
-		// Apply version_removed filtering (client-side)
-		if (
-			item.version_removed &&
-			isVersionLessOrEqual(item.version_removed, selectedVersion.value)
-		) {
-			return false
-		}
-		// Apply price/image filtering (mirroring itemsWithValidPrices logic)
-		if (user.value?.email) {
-			// Admin users: exclude 0-priced items but don't require images
-			const effectivePrice = getEffectivePriceMemoized(
-				item,
-				selectedVersion.value.replace('.', '_')
-			)
-			return effectivePrice && effectivePrice !== 0
-		}
-		if (!item.image || item.image.trim() === '') return false // Non-admin users need images
-		// Always filter out zero-priced items
-		const effectivePrice = getEffectivePriceMemoized(
-			item,
-			selectedVersion.value.replace('.', '_')
-		)
-		if (!effectivePrice || effectivePrice === 0) return false
-		return true
-	})
+	const versionFiltered = filterItemsByVersion(items, selectedVersion.value)
+	const filteredItems = filterItemsByPriceAndImage(
+		versionFiltered,
+		user.value,
+		selectedVersion.value
+	)
 
 	return filteredItems.length
 }
