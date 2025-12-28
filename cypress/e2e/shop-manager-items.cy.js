@@ -6,12 +6,7 @@ describe('Shop Manager - Shop Items Management', () => {
 
 	describe('Navigation to Shop Items View', () => {
 		it('navigates to shop items view from shop manager', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
+			cy.navigateToShopManagerAsAdmin()
 			cy.wait(1000) // Wait for shops to load
 
 			// Click on the shop name link (TestPlayer1's Shop is seeded)
@@ -21,13 +16,7 @@ describe('Shop Manager - Shop Items Management', () => {
 		})
 
 		it('displays back button to return to shop manager', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			cy.get('[data-cy="shop-items-back-button"]').should('be.visible')
 			cy.get('[data-cy="shop-items-back-button"]').click()
@@ -37,13 +26,7 @@ describe('Shop Manager - Shop Items Management', () => {
 
 	describe('Shop Items Display', () => {
 		it('displays existing shop items', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			// Should see items in the table
 			cy.get('table').should('be.visible')
@@ -52,12 +35,7 @@ describe('Shop Manager - Shop Items Management', () => {
 		})
 
 		it('displays empty state when no items exist', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('user@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
+			cy.navigateToShopManagerAsUser()
 			cy.wait(1000)
 
 			// First, create a server (user@example.com has no servers)
@@ -89,13 +67,7 @@ describe('Shop Manager - Shop Items Management', () => {
 
 	describe('Add Item', () => {
 		it('opens add item form modal', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			cy.get('[data-cy="shop-items-add-item-button"]').click()
 			cy.get('[data-cy="shop-item-form-modal"]').should('be.visible')
@@ -103,13 +75,7 @@ describe('Shop Manager - Shop Items Management', () => {
 		})
 
 		it('adds single item with valid data', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			cy.get('[data-cy="shop-items-add-item-button"]').click()
 			cy.get('[data-cy="shop-item-form-modal"]').should('be.visible')
@@ -137,13 +103,7 @@ describe('Shop Manager - Shop Items Management', () => {
 		})
 
 		it('adds multiple items with bulk selection', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			cy.get('[data-cy="shop-items-add-item-button"]').click()
 			cy.get('[data-cy="shop-item-form-modal"]').should('be.visible')
@@ -163,12 +123,8 @@ describe('Shop Manager - Shop Items Management', () => {
 			cy.get('[data-cy="shop-item-buy-price-input"]').type('5')
 			cy.get('[data-cy="shop-item-sell-price-input"]').type('4')
 
-			// Ensure cookie banner is not blocking (accept again if needed)
-			cy.get('body').then(($body) => {
-				if ($body.find('[aria-label*="Cookie"]').length > 0) {
-					cy.acceptCookies()
-				}
-			})
+			// Ensure cookie banner is not blocking
+			cy.ensureCookieBannerDismissed()
 
 			// Submit should show "Add 2 Items"
 			cy.get('[data-cy="shop-item-form-submit-button"]').should('contain', 'Add 2 Items')
@@ -180,13 +136,7 @@ describe('Shop Manager - Shop Items Management', () => {
 		})
 
 		it('shows validation error for missing item selection', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			cy.get('[data-cy="shop-items-add-item-button"]').click()
 			cy.get('[data-cy="shop-item-form-modal"]').should('be.visible')
@@ -197,13 +147,7 @@ describe('Shop Manager - Shop Items Management', () => {
 		})
 
 		it('shows validation error for missing prices', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			cy.get('[data-cy="shop-items-add-item-button"]').click()
 			cy.get('[data-cy="shop-item-form-modal"]').should('be.visible')
@@ -218,23 +162,13 @@ describe('Shop Manager - Shop Items Management', () => {
 		})
 
 		it('cancels add item form', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			cy.get('[data-cy="shop-items-add-item-button"]').click()
 			cy.get('[data-cy="shop-item-form-modal"]').should('be.visible')
 
-			// Ensure cookie banner is not blocking (accept again if needed)
-			cy.get('body').then(($body) => {
-				if ($body.find('[aria-label*="Cookie"]').length > 0) {
-					cy.acceptCookies()
-				}
-			})
+			// Ensure cookie banner is not blocking
+			cy.ensureCookieBannerDismissed()
 
 			// Cancel
 			cy.get('[data-cy="shop-item-form-cancel-button"]').click()
@@ -246,13 +180,7 @@ describe('Shop Manager - Shop Items Management', () => {
 
 	describe('Edit Item', () => {
 		it('opens edit item form', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			// Click edit button on first item
 			cy.get('[data-cy="shop-item-edit-button"]').first().click()
@@ -261,13 +189,7 @@ describe('Shop Manager - Shop Items Management', () => {
 		})
 
 		it('updates item with new prices', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			// Click edit button on first item
 			cy.get('[data-cy="shop-item-edit-button"]').first().click()
@@ -277,12 +199,8 @@ describe('Shop Manager - Shop Items Management', () => {
 			cy.get('[data-cy="shop-item-buy-price-input"]').clear().type('15')
 			cy.get('[data-cy="shop-item-sell-price-input"]').clear().type('12')
 
-			// Ensure cookie banner is not blocking (accept again if needed)
-			cy.get('body').then(($body) => {
-				if ($body.find('[aria-label*="Cookie"]').length > 0) {
-					cy.acceptCookies()
-				}
-			})
+			// Ensure cookie banner is not blocking
+			cy.ensureCookieBannerDismissed()
 
 			// Submit
 			cy.get('[data-cy="shop-item-form-submit-button"]').click()
@@ -295,13 +213,7 @@ describe('Shop Manager - Shop Items Management', () => {
 
 	describe('Delete Item', () => {
 		it('deletes item with confirmation', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			// Get initial item count
 			cy.get('tbody tr').then(($rows) => {
@@ -327,13 +239,7 @@ describe('Shop Manager - Shop Items Management', () => {
 		})
 
 		it('cancels delete operation', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			// Get initial item count
 			cy.get('tbody tr').then(($rows) => {
@@ -359,13 +265,7 @@ describe('Shop Manager - Shop Items Management', () => {
 
 	describe('View Mode Toggle', () => {
 		it('switches between categories and list view', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			// Default should be categories
 			cy.get('[data-cy="shop-items-view-mode-categories"]').should(
@@ -391,13 +291,7 @@ describe('Shop Manager - Shop Items Management', () => {
 
 	describe('Layout Toggle', () => {
 		it('switches between comfortable and compact layout', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			// Default should be comfortable
 			cy.get('[data-cy="shop-items-layout-comfortable"]').should(
@@ -423,13 +317,7 @@ describe('Shop Manager - Shop Items Management', () => {
 
 	describe('Shop Status Checkboxes', () => {
 		it('toggles fully cataloged checkbox', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-2') // Use test-shop-2 which is a player shop (is_own_shop: false)
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-2') // Use test-shop-2 which is a player shop (is_own_shop: false)
 
 			// Checkbox should be visible (for player shops)
 			cy.get('[data-cy="shop-items-fully-cataloged-checkbox"]').should('be.visible')
@@ -439,13 +327,7 @@ describe('Shop Manager - Shop Items Management', () => {
 		})
 
 		it('toggles out of money checkbox', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-2') // Use test-shop-2 which is a player shop (is_own_shop: false)
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-2') // Use test-shop-2 which is a player shop (is_own_shop: false)
 
 			cy.get('[data-cy="shop-items-out-of-money-checkbox"]').should('be.visible')
 			cy.get('[data-cy="shop-items-out-of-money-checkbox"]').check()
@@ -454,13 +336,7 @@ describe('Shop Manager - Shop Items Management', () => {
 		})
 
 		it('toggles archive checkbox', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			cy.get('[data-cy="shop-items-archive-checkbox"]').should('be.visible')
 			cy.get('[data-cy="shop-items-archive-checkbox"]').check()
@@ -471,13 +347,7 @@ describe('Shop Manager - Shop Items Management', () => {
 
 	describe('Navigation', () => {
 		it('navigates to market overview', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			cy.get('[data-cy="shop-items-market-overview-button"]').should('be.visible')
 			cy.get('[data-cy="shop-items-market-overview-button"]').click()

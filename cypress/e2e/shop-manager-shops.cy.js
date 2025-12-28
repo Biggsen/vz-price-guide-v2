@@ -5,13 +5,11 @@ describe('Shop Manager - Shop Management', () => {
 	})
 
 	describe('Create Shop', () => {
+		beforeEach(() => {
+			cy.navigateToShopManagerAsAdmin()
+		})
+
 		it('creates shop with valid data', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			// Click add shop button (assuming a server exists)
 			cy.get('[data-cy="shop-manager-add-shop-button"]').first().click()
 
@@ -32,12 +30,6 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('creates player shop with player name', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			// Click add player shop button
 			cy.get('[data-cy="shop-manager-add-shop-button"]').last().click()
 
@@ -48,12 +40,8 @@ describe('Shop Manager - Shop Management', () => {
 			cy.get('[data-cy="shop-player-input"]').type('TestPlayer')
 			cy.get('[data-cy="shop-name-input"]').type('Test Player Shop')
 
-			// Ensure cookie banner is not blocking (accept again if needed)
-			cy.get('body').then(($body) => {
-				if ($body.find('[aria-label*="Cookie"]').length > 0) {
-					cy.acceptCookies()
-				}
-			})
+			// Ensure cookie banner is not blocking
+			cy.ensureCookieBannerDismissed()
 
 			// Submit
 			cy.get('[data-cy="create-shop-submit-button"]').click()
@@ -66,12 +54,6 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('shows validation error for missing shop name', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			cy.get('[data-cy="shop-manager-add-shop-button"]').first().click()
 			cy.get('[data-cy="shop-form-modal"]').should('be.visible')
 
@@ -83,12 +65,6 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('shows validation error for missing player name on player shop', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			cy.get('[data-cy="shop-manager-add-shop-button"]').last().click()
 			cy.get('[data-cy="shop-form-modal"]').should('be.visible')
 
@@ -103,12 +79,6 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('creates shop with location and description', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			cy.get('[data-cy="shop-manager-add-shop-button"]').first().click()
 			cy.get('[data-cy="shop-form-modal"]').should('be.visible')
 
@@ -128,12 +98,6 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('uses player name as shop name when checkbox is checked', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			cy.get('[data-cy="shop-manager-add-shop-button"]').last().click()
 			cy.get('[data-cy="shop-form-modal"]').should('be.visible')
 
@@ -150,13 +114,11 @@ describe('Shop Manager - Shop Management', () => {
 	})
 
 	describe('Edit Shop', () => {
+		beforeEach(() => {
+			cy.navigateToShopManagerAsAdmin()
+		})
+
 		it('edits existing shop', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			// Find edit button for first shop (assuming shops exist)
 			cy.get('body').then(($body) => {
 				const editButton = $body.find('[data-cy="shop-edit-button"]')
@@ -183,12 +145,6 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('cancels edit operation', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			cy.get('body').then(($body) => {
 				const editButton = $body.find('[data-cy="shop-edit-button"]')
 				if (editButton.length > 0) {
@@ -208,13 +164,11 @@ describe('Shop Manager - Shop Management', () => {
 	})
 
 	describe('Delete Shop', () => {
+		beforeEach(() => {
+			cy.navigateToShopManagerAsAdmin()
+		})
+
 		it('deletes shop with confirmation', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			// Create a test shop first (server is inferred from the button context)
 			cy.get('[data-cy="shop-manager-add-shop-button"]').first().click()
 			cy.get('[data-cy="shop-name-input"]').type('Shop to Delete')
@@ -240,12 +194,6 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('cancels delete operation', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			cy.get('body').then(($body) => {
 				const deleteButton = $body.find('[data-cy="shop-delete-button"]')
 				if (deleteButton.length > 0) {
@@ -265,13 +213,11 @@ describe('Shop Manager - Shop Management', () => {
 	})
 
 	describe('Shop List Display', () => {
+		beforeEach(() => {
+			cy.navigateToShopManagerAsAdmin()
+		})
+
 		it('displays shops grouped by server', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			// Should see shops for the test server
 			cy.contains('Test Server 1').should('be.visible')
 			// Shops should be visible in the server card
@@ -282,12 +228,6 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('displays shop location when provided', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			// Check if any shop has a location displayed
 			cy.get('body').then(($body) => {
 				if ($body.find('[data-cy="shop-location"]').length > 0) {
@@ -298,15 +238,12 @@ describe('Shop Manager - Shop Management', () => {
 	})
 
 	describe('Navigation to Shop Items', () => {
-		it('navigates to shop items view when clicking shop link', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
+		beforeEach(() => {
+			cy.navigateToShopManagerAsAdmin()
 			cy.wait(1000) // Wait for shops to load
+		})
 
+		it('navigates to shop items view when clicking shop link', () => {
 			// Click on the shop name link (TestPlayer1's Shop is seeded)
 			cy.contains('a', "TestPlayer1's Shop").click()
 			cy.location('pathname').should('match', /^\/shop\/.+/)
@@ -314,12 +251,7 @@ describe('Shop Manager - Shop Management', () => {
 	})
 
 	after(() => {
-		cy.ensureSignedOut()
-		cy.visit('/')
-		cy.acceptCookies()
-		cy.signIn('admin@example.com', 'passWORD123')
-		cy.waitForAuth()
-		cy.visit('/shop-manager')
+		cy.navigateToShopManagerAsAdmin()
 		cy.wait(1000) // Wait for shops to load
 
 		const testShopNames = ['Test Shop', 'Test Player Shop', 'Shop with Details']

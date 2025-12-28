@@ -6,12 +6,7 @@ describe('Shop Manager - Market Overview', () => {
 
 	describe('Navigation to Market Overview', () => {
 		it('navigates to market overview from shop manager', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
+			cy.navigateToShopManagerAsAdmin()
 			cy.wait(1000)
 
 			// Click Market Overview button
@@ -21,13 +16,7 @@ describe('Shop Manager - Market Overview', () => {
 		})
 
 		it('navigates to market overview from shop items view', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop/test-shop-1')
-			cy.wait(1000)
+			cy.navigateToShopItems('test-shop-1')
 
 			// Click Market Overview button
 			cy.get('[data-cy="shop-items-market-overview-button"]').click()
@@ -36,13 +25,7 @@ describe('Shop Manager - Market Overview', () => {
 		})
 
 		it('displays back button to return to shop manager', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/market-overview?serverId=test-server-1')
-			cy.wait(1000)
+			cy.navigateToMarketOverview('test-server-1')
 
 			cy.get('[data-cy="market-overview-back-button"]').should('be.visible')
 			cy.get('[data-cy="market-overview-back-button"]').click()
@@ -51,14 +34,11 @@ describe('Shop Manager - Market Overview', () => {
 	})
 
 	describe('Market Overview Display', () => {
+		beforeEach(() => {
+			cy.navigateToMarketOverview('test-server-1')
+		})
+
 		it('loads market overview for selected server', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/market-overview?serverId=test-server-1')
-			cy.wait(1000)
 
 			// Should see server name in title
 			cy.contains('Test Server 1 Market Overview').should('be.visible')
@@ -66,13 +46,6 @@ describe('Shop Manager - Market Overview', () => {
 		})
 
 		it('displays market statistics', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/market-overview?serverId=test-server-1')
-			cy.wait(1000)
 
 			// Should see stat cards
 			cy.contains('Items').should('be.visible')
@@ -82,13 +55,6 @@ describe('Shop Manager - Market Overview', () => {
 		})
 
 		it('displays all shops on server', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/market-overview?serverId=test-server-1')
-			cy.wait(1000)
 
 			// Should see items table with shop information
 			cy.get('table').should('be.visible')
@@ -97,13 +63,6 @@ describe('Shop Manager - Market Overview', () => {
 		})
 
 		it('displays empty state when no items match search', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/market-overview?serverId=test-server-1')
-			cy.wait(1000)
 
 			// Search for something that doesn't exist
 			cy.get('[data-cy="market-overview-search-input"]').type('nonexistentitem12345')
@@ -116,14 +75,11 @@ describe('Shop Manager - Market Overview', () => {
 	})
 
 	describe('Search and Filtering', () => {
+		beforeEach(() => {
+			cy.navigateToMarketOverview('test-server-1')
+		})
+
 		it('searches items by name', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/market-overview?serverId=test-server-1')
-			cy.wait(1000)
 
 			// Search for an item
 			cy.get('[data-cy="market-overview-search-input"]').type('diamond')
@@ -135,13 +91,6 @@ describe('Shop Manager - Market Overview', () => {
 		})
 
 		it('resets search query', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/market-overview?serverId=test-server-1')
-			cy.wait(1000)
 
 			// Enter search query
 			cy.get('[data-cy="market-overview-search-input"]').type('diamond')
@@ -157,14 +106,11 @@ describe('Shop Manager - Market Overview', () => {
 	})
 
 	describe('View Mode Toggle', () => {
+		beforeEach(() => {
+			cy.navigateToMarketOverview('test-server-1')
+		})
+
 		it('switches between categories and list view', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/market-overview?serverId=test-server-1')
-			cy.wait(1000)
 
 			// Default should be categories
 			cy.get('[data-cy="market-overview-view-mode-categories"]').should(
@@ -189,14 +135,11 @@ describe('Shop Manager - Market Overview', () => {
 	})
 
 	describe('Layout Toggle', () => {
+		beforeEach(() => {
+			cy.navigateToMarketOverview('test-server-1')
+		})
+
 		it('switches between comfortable and condensed layout', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/market-overview?serverId=test-server-1')
-			cy.wait(1000)
 
 			// Default should be comfortable
 			cy.get('[data-cy="market-overview-layout-comfortable"]').should(
@@ -221,14 +164,11 @@ describe('Shop Manager - Market Overview', () => {
 	})
 
 	describe('Price Comparison', () => {
+		beforeEach(() => {
+			cy.navigateToMarketOverview('test-server-1')
+		})
+
 		it('displays price comparison table', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/market-overview?serverId=test-server-1')
-			cy.wait(1000)
 
 			// Should see table with price columns
 			cy.get('table').should('be.visible')
@@ -237,13 +177,6 @@ describe('Shop Manager - Market Overview', () => {
 		})
 
 		it('navigates to shop items when clicking shop link', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/market-overview?serverId=test-server-1')
-			cy.wait(1000)
 
 			// Click on a shop link
 			cy.get('[data-cy="market-overview-shop-link"]').first().click()
@@ -252,14 +185,11 @@ describe('Shop Manager - Market Overview', () => {
 	})
 
 	describe('Trading Opportunities', () => {
+		beforeEach(() => {
+			cy.navigateToMarketOverview('test-server-1')
+		})
+
 		it('displays trading opportunities when available', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/market-overview?serverId=test-server-1')
-			cy.wait(1000)
 
 			// Check if opportunities section exists (may or may not have opportunities)
 			cy.get('body').then(($body) => {
@@ -271,13 +201,6 @@ describe('Shop Manager - Market Overview', () => {
 		})
 
 		it('toggles opportunities section', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/market-overview?serverId=test-server-1')
-			cy.wait(1000)
 
 			// Check if opportunities section exists
 			cy.get('body').then(($body) => {
@@ -295,11 +218,7 @@ describe('Shop Manager - Market Overview', () => {
 
 	describe('Error Handling', () => {
 		it('redirects when server does not exist', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
+			cy.navigateToShopManagerAsAdmin()
 			cy.visit('/market-overview?serverId=nonexistent-server')
 			cy.wait(1000)
 
@@ -308,11 +227,7 @@ describe('Shop Manager - Market Overview', () => {
 		})
 
 		it('redirects when user has no servers', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('user@example.com', 'passWORD123')
-			cy.waitForAuth()
+			cy.navigateToShopManagerAsUser()
 			cy.visit('/market-overview?serverId=test-server-1')
 			cy.wait(1000)
 

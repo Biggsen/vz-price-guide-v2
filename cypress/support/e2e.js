@@ -502,3 +502,49 @@ Cypress.Commands.add('waitForAuth', () => {
 	// Simple wait for auth state - reduced from 2000ms to 1000ms
 	cy.wait(1000)
 })
+
+// Shop Manager Navigation Commands
+Cypress.Commands.add('navigateToShopManagerAsAdmin', () => {
+	cy.log('Navigating to shop manager as admin...')
+	cy.ensureSignedOut()
+	cy.visit('/')
+	cy.acceptCookies()
+	cy.signIn('admin@example.com', 'passWORD123')
+	cy.waitForAuth()
+	cy.visit('/shop-manager')
+})
+
+Cypress.Commands.add('navigateToShopManagerAsUser', () => {
+	cy.log('Navigating to shop manager as user...')
+	cy.ensureSignedOut()
+	cy.visit('/')
+	cy.acceptCookies()
+	cy.signIn('user@example.com', 'passWORD123')
+	cy.waitForAuth()
+	cy.visit('/shop-manager')
+})
+
+Cypress.Commands.add('navigateToShopItems', (shopId) => {
+	cy.log(`Navigating to shop items view: ${shopId}`)
+	cy.navigateToShopManagerAsAdmin()
+	cy.wait(1000)
+	cy.visit(`/shop/${shopId}`)
+	cy.wait(1000)
+})
+
+Cypress.Commands.add('navigateToMarketOverview', (serverId) => {
+	cy.log(`Navigating to market overview: ${serverId}`)
+	cy.navigateToShopManagerAsAdmin()
+	cy.wait(1000)
+	cy.visit(`/market-overview?serverId=${serverId}`)
+	cy.wait(1000)
+})
+
+Cypress.Commands.add('ensureCookieBannerDismissed', () => {
+	cy.log('Ensuring cookie banner is dismissed...')
+	cy.get('body').then(($body) => {
+		if ($body.find('[aria-label*="Cookie"]').length > 0) {
+			cy.acceptCookies()
+		}
+	})
+})

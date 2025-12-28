@@ -13,12 +13,7 @@ describe('Shop Manager - Server Management', () => {
 		]
 
 		// Clean up servers for user@example.com
-		cy.ensureSignedOut()
-		cy.visit('/')
-		cy.acceptCookies()
-		cy.signIn('user@example.com', 'passWORD123')
-		cy.waitForAuth()
-		cy.visit('/shop-manager')
+		cy.navigateToShopManagerAsUser()
 		cy.wait(1000) // Wait for servers to load
 
 		testServerNames.forEach((serverName) => {
@@ -43,19 +38,20 @@ describe('Shop Manager - Server Management', () => {
 	})
 
 	describe('Create Server', () => {
+		beforeEach(() => {
+			cy.navigateToShopManagerAsUser()
+		})
+
 		it('creates server with valid data', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('user@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			cy.get('[data-cy="shop-manager-add-server-button"]').click()
 			cy.get('[data-cy="server-form-modal"]').should('be.visible')
 
 			// Fill in form
 			cy.get('[data-cy="create-server-name-input"]').type('Test Server 2')
 			cy.get('[data-cy="create-minecraft-version-select"]').select('1.21')
+
+			// Ensure cookie banner is not blocking
+			cy.ensureCookieBannerDismissed()
 
 			// Submit
 			cy.get('[data-cy="create-server-submit-button"]').click()
@@ -68,12 +64,6 @@ describe('Shop Manager - Server Management', () => {
 		})
 
 		it('shows validation error for missing server name', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('user@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			cy.get('[data-cy="shop-manager-add-server-button"]').click()
 			cy.get('[data-cy="server-form-modal"]').should('be.visible')
 
@@ -85,12 +75,6 @@ describe('Shop Manager - Server Management', () => {
 		})
 
 		it('shows validation error for missing Minecraft version', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('user@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			cy.get('[data-cy="shop-manager-add-server-button"]').click()
 			cy.get('[data-cy="server-form-modal"]').should('be.visible')
 
@@ -108,12 +92,6 @@ describe('Shop Manager - Server Management', () => {
 		})
 
 		it('creates server with description', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('user@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			cy.get('[data-cy="shop-manager-add-server-button"]').click()
 			cy.get('[data-cy="server-form-modal"]').should('be.visible')
 
@@ -121,6 +99,9 @@ describe('Shop Manager - Server Management', () => {
 			cy.get('[data-cy="create-server-name-input"]').type('Test Server with Description')
 			cy.get('[data-cy="create-minecraft-version-select"]').select('1.20')
 			cy.get('textarea').type('This is a test server description')
+
+			// Ensure cookie banner is not blocking
+			cy.ensureCookieBannerDismissed()
 
 			// Submit
 			cy.get('[data-cy="create-server-submit-button"]').click()
@@ -135,13 +116,11 @@ describe('Shop Manager - Server Management', () => {
 	})
 
 	describe('Edit Server', () => {
+		beforeEach(() => {
+			cy.navigateToShopManagerAsAdmin()
+		})
+
 		it('edits existing server', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			// Find edit button for first server
 			cy.get('[data-cy="server-card"]')
 				.first()
@@ -155,6 +134,9 @@ describe('Shop Manager - Server Management', () => {
 
 			// Update name
 			cy.get('[data-cy="edit-server-name-input"]').clear().type('Updated Server Name')
+
+			// Ensure cookie banner is not blocking
+			cy.ensureCookieBannerDismissed()
 
 			// Submit
 			cy.get('[data-cy="edit-server-submit-button"]').click()
@@ -174,17 +156,12 @@ describe('Shop Manager - Server Management', () => {
 
 			cy.get('[data-cy="server-form-modal"]').should('be.visible')
 			cy.get('[data-cy="edit-server-name-input"]').clear().type('Test Server 1')
+			cy.ensureCookieBannerDismissed()
 			cy.get('[data-cy="edit-server-submit-button"]').click()
 			cy.get('[data-cy="server-form-modal"]').should('not.exist')
 		})
 
 		it('cancels edit operation', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			// Find edit button for first server
 			cy.get('[data-cy="server-card"]')
 				.first()
@@ -195,12 +172,8 @@ describe('Shop Manager - Server Management', () => {
 			// Modal should open
 			cy.get('[data-cy="server-form-modal"]').should('be.visible')
 
-			// Ensure cookie banner is not blocking (accept again if needed)
-			cy.get('body').then(($body) => {
-				if ($body.find('[aria-label*="Cookie"]').length > 0) {
-					cy.acceptCookies()
-				}
-			})
+			// Ensure cookie banner is not blocking
+			cy.ensureCookieBannerDismissed()
 
 			// Cancel
 			cy.get('[data-cy="server-form-modal-close"]').click()
@@ -212,16 +185,12 @@ describe('Shop Manager - Server Management', () => {
 
 	describe('Delete Server', () => {
 		it('deletes server with confirmation', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('user@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
+			cy.navigateToShopManagerAsUser()
 			// Create a test server first
 			cy.get('[data-cy="shop-manager-add-server-button"]').click()
 			cy.get('[data-cy="create-server-name-input"]').type('Server to Delete')
 			cy.get('[data-cy="create-minecraft-version-select"]').select('1.19')
+			cy.ensureCookieBannerDismissed()
 			cy.get('[data-cy="create-server-submit-button"]').click()
 			cy.wait(500) // Wait for server to be created
 
@@ -244,12 +213,7 @@ describe('Shop Manager - Server Management', () => {
 		})
 
 		it('cancels delete operation', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
+			cy.navigateToShopManagerAsAdmin()
 			// Find delete button for first server
 			cy.get('[data-cy="server-card"]')
 				.first()
@@ -270,35 +234,21 @@ describe('Shop Manager - Server Management', () => {
 	})
 
 	describe('Server List Display', () => {
+		beforeEach(() => {
+			cy.navigateToShopManagerAsAdmin()
+		})
+
 		it('displays all user servers', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			// Should see at least the seeded server
 			cy.contains('Test Server 1').should('be.visible')
 		})
 
 		it('displays server with correct Minecraft version', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			cy.contains('Test Server 1').should('be.visible')
 			cy.contains('Version 1.20').should('be.visible')
 		})
 
 		it('displays server description', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
 			cy.contains('Test Server 1')
 				.parents('[data-cy="server-card"]')
 				.within(() => {
@@ -308,14 +258,13 @@ describe('Shop Manager - Server Management', () => {
 	})
 
 	describe('Version Selection', () => {
-		it('shows all supported versions in dropdown', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('user@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
+		beforeEach(() => {
+			cy.navigateToShopManagerAsUser()
 			cy.get('[data-cy="shop-manager-add-server-button"]').click()
+			cy.get('[data-cy="server-form-modal"]').should('be.visible')
+		})
+
+		it('shows all supported versions in dropdown', () => {
 			cy.get('[data-cy="server-form-modal"]').should('be.visible')
 
 			// Check for version options by getting all option elements
@@ -333,15 +282,6 @@ describe('Shop Manager - Server Management', () => {
 		})
 
 		it('default version selection works correctly', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('user@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
-			cy.get('[data-cy="shop-manager-add-server-button"]').click()
-			cy.get('[data-cy="server-form-modal"]').should('be.visible')
-
 			// Check that default version is selected (should be 1.16, the first version in the array)
 			cy.get('[data-cy="create-minecraft-version-select"]').should('have.value', '1.16')
 		})

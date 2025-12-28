@@ -6,10 +6,7 @@ describe('Shop Manager Dashboard', () => {
 
 	describe('Dashboard Display', () => {
 		it('loads with correct title and structure', () => {
-			cy.ensureSignedOut()
-			cy.signIn('user@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
+			cy.navigateToShopManagerAsUser()
 			cy.location('pathname').should('eq', '/shop-manager')
 
 			cy.contains('Player Shop Manager').should('be.visible')
@@ -19,10 +16,7 @@ describe('Shop Manager Dashboard', () => {
 		it('shows empty state when no servers exist', () => {
 			// This test assumes a user with no servers
 			// We may need to create a separate test user for this
-			cy.ensureSignedOut()
-			cy.signIn('user@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
+			cy.navigateToShopManagerAsUser()
 			cy.waitForAuth()
 
 			// Check if empty state is shown (if no servers)
@@ -35,10 +29,7 @@ describe('Shop Manager Dashboard', () => {
 		})
 
 		it('displays existing servers', () => {
-			cy.ensureSignedOut()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
+			cy.navigateToShopManagerAsAdmin()
 			cy.waitForAuth()
 
 			// Should see at least one server from seeded data
@@ -46,10 +37,7 @@ describe('Shop Manager Dashboard', () => {
 		})
 
 		it('displays existing shops grouped by server', () => {
-			cy.ensureSignedOut()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
+			cy.navigateToShopManagerAsAdmin()
 			cy.waitForAuth()
 
 			// Should see shops for the test server
@@ -62,10 +50,7 @@ describe('Shop Manager Dashboard', () => {
 		})
 
 		it('server count displays correctly', () => {
-			cy.ensureSignedOut()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
+			cy.navigateToShopManagerAsAdmin()
 			cy.waitForAuth()
 
 			// Count visible servers
@@ -77,15 +62,12 @@ describe('Shop Manager Dashboard', () => {
 	})
 
 	describe('Navigation', () => {
-		it('server form modal opens and closes correctly', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
+		beforeEach(() => {
+			cy.navigateToShopManagerAsAdmin()
 			cy.waitForAuth()
-			cy.visit('/shop-manager')
-			cy.waitForAuth()
+		})
 
+		it('server form modal opens and closes correctly', () => {
 			// Click add server button
 			cy.get('[data-cy="shop-manager-add-server-button"]').click()
 
@@ -99,14 +81,6 @@ describe('Shop Manager Dashboard', () => {
 		})
 
 		it('shop form modal opens and closes correctly', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
-			cy.waitForAuth()
-
 			// Click add shop button (assuming a server exists)
 			cy.get('body').then(($body) => {
 				const addShopButton = $body.find('[data-cy="shop-manager-add-shop-button"]')
@@ -124,14 +98,6 @@ describe('Shop Manager Dashboard', () => {
 		})
 
 		it('navigation to shop items view works', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
-			cy.waitForAuth()
-
 			// Click on a shop link
 			cy.get('body').then(($body) => {
 				const shopLink = $body.find('a[href*="/shop/"]')
@@ -143,14 +109,6 @@ describe('Shop Manager Dashboard', () => {
 		})
 
 		it('navigation to market overview works', () => {
-			cy.ensureSignedOut()
-			cy.visit('/')
-			cy.acceptCookies()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
-			cy.waitForAuth()
-
 			// Click market overview button
 			cy.get('body').then(($body) => {
 				const marketButton = $body.find('a[href*="/market-overview"]')
@@ -164,10 +122,7 @@ describe('Shop Manager Dashboard', () => {
 
 	describe('LocalStorage Persistence', () => {
 		it('persists shop visibility preferences', () => {
-			cy.ensureSignedOut()
-			cy.signIn('admin@example.com', 'passWORD123')
-			cy.waitForAuth()
-			cy.visit('/shop-manager')
+			cy.navigateToShopManagerAsAdmin()
 			cy.waitForAuth()
 
 			// Toggle shop visibility if toggle exists
