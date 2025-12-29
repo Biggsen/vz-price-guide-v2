@@ -68,43 +68,99 @@ Add `enchantments` field to store enchantments on shop items:
 }
 ```
 
-## Migration Scripts
+## Data Migration via Admin UI
 
-### Script 1: Populate enchantCategories on Regular Items
+Migration will be handled through admin UI views rather than scripts, following the patterns established in `MissingItemsView.vue` and `RecipeImportView.vue`.
 
-**Purpose**: Migrate `enchantCategories` from resource files to Firestore
+### View 1: Migrate enchantCategories (Regular Items)
+
+**Route**: `/admin/enchantments/migrate-items`
+
+**Pattern**: Similar to `MissingItemsView.vue`
+
+**Features**:
+- Version selector for versioned resource files
+- Load `resource/items_*.json` files and compare with Firestore items
+- Table view showing:
+  - Item name/material_id
+  - Current `enchantCategories` in DB (if any)
+  - Proposed `enchantCategories` from resource file
+  - Status indicator (needs update / up to date / missing in resource)
+- Selection capabilities:
+  - Individual item checkboxes
+  - "Select All" checkbox
+  - Bulk update button for selected items
+  - Individual "Update" button per item
+- Filtering:
+  - Show only items needing updates
+  - Search by material_id or name
+- Progress tracking:
+  - "Updated X items, Skipped Y items" summary
+  - Visual feedback during updates
 
 **Process**:
-1. Read `resource/items_*.json` files (versioned)
-2. For each item with `enchantCategories` field:
-   - Find matching item in Firestore by `material_id`
-   - Update with `enchantCategories` array
-3. Handle version-specific data appropriately
-4. Support dry-run mode for testing
+1. Load resource file for selected version
+2. Load all items from Firestore
+3. Compare `enchantCategories` from resource vs Firestore
+4. Display items needing updates
+5. Admin reviews and selects items to update
+6. Update Firestore documents with `enchantCategories` array
+7. Refresh and show progress
 
-**Output**: All enchantable items in Firestore now have `enchantCategories` field
+### View 2: Migrate Enchantment Metadata (Enchanted Books)
 
-### Script 2: Populate Enchantment Metadata on Enchanted Books
+**Route**: `/admin/enchantments/migrate-books`
 
-**Purpose**: Add compatibility data to enchanted book items
+**Pattern**: Similar to `RecipeImportView.vue` with list view (see dependencies)
+
+**Features**:
+- Load PrismarineJS `enchantments.json` data (fetch from URL or local file)
+- Query all enchanted book items from Firestore (`category === 'enchantments'`)
+- List view showing:
+  - Enchanted book name/material_id
+  - Current metadata (if any)
+  - Proposed metadata from PrismarineJS (category, exclude, maxLevel)
+  - Match status (found / not found in PrismarineJS data)
+- Individual review or bulk operations:
+  - Individual Import/Skip buttons
+  - Bulk selection checkboxes
+  - Bulk import button
+- Filtering and search:
+  - Filter by enchantment name
+  - Filter by status (needs update / up to date / not found)
+  - Search by material_id
+- Progress tracking:
+  - "Imported X, Skipped Y, Failed Z" summary
+  - Visual progress indicators
 
 **Process**:
-1. Load PrismarineJS `enchantments.json` data
-2. Query all items in Firestore where `category === 'enchantments'`
+1. Fetch/load PrismarineJS `enchantments.json`
+2. Query all enchanted book items from Firestore
 3. For each enchanted book:
    - Extract enchantment name from `material_id` (pattern: `enchanted_book_{name}_{level}`)
    - Match to PrismarineJS data by `name` field
-   - Update Firestore document with:
-     - `enchantment_category`: from PrismarineJS `category`
-     - `enchantment_exclude`: from PrismarineJS `exclude`
-     - `enchantment_max_level`: from PrismarineJS `maxLevel`
-4. Support dry-run mode
+   - Show comparison (current vs proposed)
+4. Admin reviews and selects items to update
+5. Update Firestore documents with:
+   - `enchantment_category`: from PrismarineJS `category`
+   - `enchantment_exclude`: from PrismarineJS `exclude`
+   - `enchantment_max_level`: from PrismarineJS `maxLevel`
+6. Refresh and show progress
 
-**Output**: All enchanted book items have compatibility metadata
+### Admin Dashboard Integration
 
-### Script 3: Backfill Missing Data (if needed)
+Add to `AdminView.vue`:
+- New section "Enchantment Compatibility" with links to both migration views
+- Access controlled via `canBulkUpdate` permission (same as recipe import)
 
-**Purpose**: Handle edge cases or items missed in initial migrations
+### Key Advantages of UI-Based Migration
+
+- **Interactive review**: Admins can review changes before applying
+- **Visual comparison**: See current vs proposed data side-by-side
+- **Selective updates**: Update only selected items, not all-or-nothing
+- **Progress feedback**: Real-time feedback during migration
+- **Error handling**: User-friendly error messages with retry options
+- **Consistent UX**: Follows established admin UI patterns
 
 ## Validation Utilities
 
@@ -325,11 +381,18 @@ Similar implementation to crate rewards:
    - Already filtered out of list (not shown)
    - If somehow selected, validation fails: "Lure can only be applied to fishing rods"
 
+## Dependencies
+
+- **Recipe Import UI Improvements** (`tasks/enhancement/recipe-import-ui-improvements.md`): The list view patterns and bulk import functionality from this enhancement will be used as reference/pattern for the enchanted book metadata migration view. This ensures consistency in admin UI patterns and leverages any improvements made to the recipe import workflow.
+
 ## Implementation Phases
 
-### Phase 1: Data Migration
-- Create migration scripts
-- Run migrations to populate Firestore with compatibility data
+### Phase 1: Data Migration (Admin UI)
+- Create admin views for migrating `enchantCategories` and enchantment metadata
+- Implement comparison logic and update functionality
+- Add routes and admin dashboard integration
+- Test migration workflows
+- Populate Firestore with compatibility data via admin UI
 - Verify data integrity
 
 ### Phase 2: Validation Utilities
@@ -360,7 +423,8 @@ Similar implementation to crate rewards:
 - Non-enchantable items don't show enchantment options
 - All compatibility rules from PrismarineJS data are properly enforced
 - Shop items can store and display enchantments
-- Migration scripts successfully populate all required data
+- Admin UI migration views successfully populate all required data
+- Migration process is user-friendly and allows selective updates
 
 ## Open Questions
 
