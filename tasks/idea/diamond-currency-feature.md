@@ -2,7 +2,7 @@
 
 ## 📌 Overview
 
-Implement a currency toggle system that allows users to switch between traditional money units and diamond-based currency. The diamond currency will use a conversion ratio to transform existing prices, making the price guide relevant for Minecraft servers that use diamond-based economies.
+Implement a currency toggle system that allows users to switch between traditional money units and diamond-based currency. The diamond currency uses ratio-based pricing (e.g., "1 diamond per 32 items") calculated from existing price data, then rounded to common Minecraft quantities. This approach recreates the natural diamond economy format used by servers like TogetherCraft.
 
 **Status**: 🚧 **PLANNING** - Ready for implementation
 
@@ -11,24 +11,39 @@ Implement a currency toggle system that allows users to switch between tradition
 ## 🎯 Goals
 
 1. **Currency Toggle**: Add a simple toggle between "Money" and "Diamond" currency modes
-2. **Automatic Conversion**: Convert existing prices using a configurable ratio (32:1)
-3. **Diamond Formatting**: Display prices in diamond blocks when ≥ 9 diamonds
-4. **Backward Compatibility**: Maintain existing functionality for money-based servers
-5. **Shop Manager Integration**: Support diamond currency in shop management features
+2. **Ratio-Based Conversion**: Convert existing prices to diamond ratios using price relationships
+3. **Quantity Rounding**: Round ratios to common Minecraft quantities (4, 8, 16, 32, 64, 128, 256)
+4. **Hybrid Display**: Show compact ratio format in table cells with full context in tooltips
+5. **Backward Compatibility**: Maintain existing functionality for money-based servers
+6. **Shop Manager Integration**: Support diamond currency in shop management features
 
 ---
 
-## 📊 Conversion Analysis
+## 📊 Conversion Strategy
 
-Based on user examples, the conversion ratio is approximately **32:1**:
+### Price-to-Ratio Conversion
 
-| Item                | Current Price | Diamond Price | Ratio  |
-| ------------------- | ------------- | ------------- | ------ |
-| 64 Cactus (stack)   | 64            | 2 diamonds    | 32:1   |
-| Netherite Ingot     | 840           | 27 diamonds   | 31.1:1 |
-| 64 Coal Ore (stack) | 640           | 18 diamonds   | 35.6:1 |
+Convert existing money prices to diamond ratios using relative pricing:
 
-**Recommended conversion ratio**: **32:1** (current units ÷ 32 = diamonds)
+**Example:**
+- Diamond price: 280
+- Amethyst Shard price: 10
+- Raw ratio: 280 ÷ 10 = 28 shards per diamond
+- Rounded to common quantity: 28 → **32** (nearest standard grouping)
+- Display format: **"1 diamond per 32 amethyst shards"**
+
+### Rounding Targets
+
+Round calculated ratios to nearest standard Minecraft quantities:
+- **Common quantities**: 1, 2, 4, 8, 16, 32, 64, 128, 256
+- **Shulker-aware**: Consider 1728 (shulker size) as a target for bulk pricing
+- **Direction**: Round to nearest (most accurate), with option for round-up (buyer-friendly) or round-down (seller-friendly)
+
+### Ratio Display Logic
+
+- **When ratio < 1**: "1 diamond per X items" (common items)
+- **When ratio ≥ 1**: "X diamonds per 1 item" (rare/expensive items)
+- Always use whole numbers for diamonds
 
 ---
 
@@ -45,7 +60,8 @@ EconomyConfig {
   roundToWhole: boolean;
   version: string;
   currencyType: 'money' | 'diamond';  // NEW
-  diamondConversionRatio: number;     // NEW (default: 32)
+  diamondItemId?: string;              // NEW (reference to diamond item for ratio calculation)
+  diamondRoundingDirection?: 'nearest' | 'up' | 'down';  // NEW (default: 'nearest')
 }
 ```
 
@@ -69,22 +85,35 @@ Shop {
 #### New Functions in `src/utils/pricing.js`
 
 ```ts
-// Convert money price to diamond price
-function convertToDiamondPrice(moneyPrice: number, ratio: number = 32): number
+// Calculate diamond ratio from item prices
+function calculateDiamondRatio(
+	itemPrice: number,
+	diamondPrice: number
+): { diamonds: number, quantity: number }
 
-// Convert diamond price to money price
-function convertToMoneyPrice(diamondPrice: number, ratio: number = 32): number
+// Round ratio to nearest common quantity
+function roundToCommonQuantity(ratio: number): number
 
-// Format diamond price as either diamonds or diamond blocks (e.g., "5 diamonds" or "3 diamond blocks")
-function formatDiamondPrice(diamondPrice: number): string
+// Format diamond ratio for display (compact format)
+function formatDiamondRatio(diamonds: number, quantity: number): string
+// Returns: "1 per 32" or "7 per 1" or "12 per shulker"
 
-// Get effective price in current currency
-function getEffectivePriceInCurrency(
+// Format diamond ratio for tooltip (full format)
+function formatDiamondRatioFull(diamonds: number, quantity: number, itemName: string): string
+// Returns: "1 diamond per 32 amethyst shards" or "7 diamonds per 1 ancient debris"
+
+// Get diamond pricing for item (buy and sell)
+function getDiamondPricing(
 	item: Item,
+	diamondItem: Item,
 	version: string,
-	currencyType: string,
-	config: EconomyConfig
-): number
+	sellMargin: number
+): {
+	buy: { diamonds: number, quantity: number },
+	sell: { diamonds: number, quantity: number },
+	shulkerBuy?: { diamonds: number, quantity: number },
+	shulkerSell?: { diamonds: number, quantity: number }
+}
 ```
 
 ### 3. UI Components
@@ -92,14 +121,37 @@ function getEffectivePriceInCurrency(
 #### Currency Toggle Component
 
 -   Simple toggle switch in economy settings
--   Visual indicator showing current currency mode
+-   Visual indicator showing current currency mode (💰/💎)
 -   Automatic price updates when toggled
+-   Column headers change: "Stack" → "Shulker" in diamond mode
 
-#### Price Display Updates
+#### Price Display Updates - Hybrid Format
 
--   Update `ItemTable.vue` to handle diamond formatting
--   Update `ShopItemTable.vue` for shop management
--   Update all price input forms to support diamond entry
+**Table Column Structure:**
+
+**Money Mode:**
+- Unit Price Buy | Unit Price Sell
+- Stack Price Buy | Stack Price Sell
+- Stack (optional quantity column)
+
+**Diamond Mode:**
+- Unit Price Buy | Unit Price Sell
+  - Display: "1 per 32" (compact ratio)
+  - Tooltip: "1 diamond per 32 amethyst shards" (full context)
+- Shulker Price Buy | Shulker Price Sell
+  - Display: "12 per shulker" (compact ratio)
+  - Tooltip: "12 diamonds per shulker (1728 items)" (full context)
+- Shulker (optional quantity column)
+
+**Display Examples:**
+- Common items: "1 per 32", "1 per 64", "1 per 128"
+- Rare items: "7 per 1", "30 per 1"
+- Shulker pricing: "12 per shulker", "24 per shulker"
+
+**Components to Update:**
+- `ItemTable.vue`: Hybrid ratio display with tooltips
+- `ShopItemTable.vue`: Diamond currency detection and formatting
+- All price input forms: Support ratio-based entry
 
 ---
 
@@ -111,7 +163,8 @@ function getEffectivePriceInCurrency(
 
 -   [ ] **Update `src/views/HomeView.vue`**
     -   Add `currencyType` ref (default: 'money')
-    -   Add `diamondConversionRatio` ref (default: 32)
+    -   Add `diamondItemId` ref (reference to diamond item for ratio calculation)
+    -   Add `diamondRoundingDirection` ref (default: 'nearest')
     -   Update `economyConfig` computed property
     -   Add localStorage persistence for new fields
     -   Update `resetEconomyConfig()` function
@@ -119,45 +172,58 @@ function getEffectivePriceInCurrency(
 #### Task 1.2: Create Diamond Currency Utilities
 
 -   [ ] **Extend `src/utils/pricing.js`**
-    -   Add `convertToDiamondPrice()` function (money → diamonds)
-    -   Add `convertToMoneyPrice()` function (diamonds → money)
-    -   Add `formatDiamondPrice()` function (diamonds → diamonds or diamond blocks based on amount)
-    -   Add `getEffectivePriceInCurrency()` function
-    -   Update existing price functions to handle currency type
+    -   Add `calculateDiamondRatio()` function (item price → diamond ratio)
+    -   Add `roundToCommonQuantity()` function (round to 4, 8, 16, 32, 64, 128, 256)
+    -   Add `formatDiamondRatio()` function (compact: "1 per 32")
+    -   Add `formatDiamondRatioFull()` function (full: "1 diamond per 32 items")
+    -   Add `getDiamondPricing()` function (calculate buy/sell/shulker ratios)
+    -   Update existing price functions to detect currency type and format accordingly
 
 #### Task 1.3: Add Currency Toggle UI
 
 -   [ ] **Update economy settings in `src/views/HomeView.vue`**
     -   Add currency type toggle (Money/Diamond)
-    -   Add diamond conversion ratio input (when in diamond mode)
+    -   Add rounding direction option (nearest/up/down) for diamond mode
     -   Update styling to accommodate new controls
-    -   Add visual indicators for current currency mode
+    -   Add visual indicators for current currency mode (💰/💎)
+    -   Add help text explaining ratio-based pricing
 
 ### Phase 2: Price Display Updates
 
 #### Task 2.1: Update Item Table Display
 
 -   [ ] **Update `src/components/ItemTable.vue`**
-    -   Modify price display logic to use `getEffectivePriceInCurrency()`
-    -   Add diamond formatting for diamond currency mode (diamonds or diamond blocks)
--   Update sorting logic to handle diamond prices
-    -   Ensure all price columns show correct currency
+    -   Detect currency type from economy config
+    -   When in diamond mode:
+        - Calculate diamond ratios for each item (using diamond item price as reference)
+        - Display compact ratio format: "1 per 32" in table cells
+        - Add tooltips with full format: "1 diamond per 32 amethyst shards"
+        - Change "Stack" column header to "Shulker"
+        - Calculate shulker pricing (may differ from unit × stack size)
+    -   Update sorting logic to use per-item equivalent for comparison
+    -   Ensure Buy/Sell columns show correct ratios
 
 #### Task 2.2: Update Shop Management
 
 -   [ ] **Update `src/components/ShopItemTable.vue`**
     -   Add currency type detection from shop/server
-    -   Update price display and formatting (diamonds or diamond blocks)
--   Modify price input handling for diamond entry
-    -   Update price history display
+    -   When in diamond mode:
+        - Display ratios in compact format: "1 per 32"
+        - Show full ratio in tooltips
+        - Update column headers: "Stack" → "Shulker"
+    -   Modify price input handling for diamond entry (ratio format)
+    -   Update price history display to show ratio changes
 
 #### Task 2.3: Update Price Input Forms
 
 -   [ ] **Update `src/components/ShopItemForm.vue`**
     -   Add currency type detection
-    -   Update price input validation for diamonds
--   Add diamond formatting in price previews (diamonds or diamond blocks)
-    -   Handle currency conversion in form submission
+    -   When in diamond mode:
+        - Input format: "1 per 32" or "7 per 1" (ratio entry)
+        - Validate ratio format and quantities
+        - Show preview of calculated per-item equivalent
+    -   Add diamond ratio formatting in price previews
+    -   Handle ratio conversion in form submission (store as ratio structure)
 
 ### Phase 3: Shop Manager Integration
 
@@ -166,7 +232,8 @@ function getEffectivePriceInCurrency(
 -   [ ] **Update server data structure**
 
     -   Add `currency_type` field to servers collection (default: 'money')
-    -   Add `diamond_conversion_ratio` field to servers collection (default: 32)
+    -   Add `diamond_item_id` field to servers collection (reference to diamond item for ratio calculation)
+    -   Add `diamond_rounding_direction` field (default: 'nearest', options: 'nearest'|'up'|'down')
     -   Update Firestore rules to allow currency type fields
     -   Update `src/utils/serverProfile.js` to handle new fields
 
@@ -185,7 +252,9 @@ function getEffectivePriceInCurrency(
 
 -   [ ] **Update `src/views/ServersView.vue`**
     -   Add currency type selection in server creation/editing form
-    -   Add diamond conversion ratio input (when currency type is 'diamond')
+    -   When currency type is 'diamond':
+        - Add diamond item selector (which item represents 1 diamond)
+        - Add rounding direction selector (nearest/up/down)
     -   Display currency type in server list table
     -   Update form validation to handle new fields
     -   Update `serverForm` data structure to include currency fields
@@ -203,23 +272,32 @@ function getEffectivePriceInCurrency(
 
 -   [ ] **Update `src/views/AddItemView.vue`**
 
-    -   Add currency type selection
-    -   Update price input handling
-    -   Add diamond price preview (diamonds or diamond blocks)
+    -   Detect currency type from server/economy config
+    -   When in diamond mode:
+        - Show ratio input format: "1 per 32" or "7 per 1"
+        - Calculate and display per-item equivalent preview
+    -   Update price input handling for ratio format
+    -   Add diamond ratio preview with tooltip
 
 -   [ ] **Update `src/views/EditItemView.vue`**
-    -   Add currency type selection
-    -   Update price input handling
-    -   Add diamond price preview (diamonds or diamond blocks)
+    -   Detect currency type from server/economy config
+    -   When in diamond mode:
+        - Show ratio input format: "1 per 32" or "7 per 1"
+        - Calculate and display per-item equivalent preview
+    -   Update price input handling for ratio format
+    -   Add diamond ratio preview with tooltip
 
 #### Task 4.2: Create Currency Migration Tools
 
 -   [ ] **Create `scripts/migrateToDiamondCurrency.js`**
 
-    -   Bulk convert existing prices to diamond format
-    -   Update server currency types and conversion ratios
+    -   Bulk convert existing prices to diamond ratios:
+        - Calculate ratio: diamond_price / item_price
+        - Round to common quantities (4, 8, 16, 32, 64, 128, 256)
+        - Store ratio structure: { diamonds: X, quantity: Y }
+    -   Update server currency types and diamond item references
     -   Update shop currency types (inherit from servers)
-    -   Provide rollback functionality
+    -   Provide rollback functionality (restore original prices)
 
 -   [ ] **Create `scripts/auditCurrencyTypes.js`**
     -   Audit current currency usage across servers and shops
@@ -233,9 +311,15 @@ function getEffectivePriceInCurrency(
 
 -   [ ] **Test currency conversion accuracy**
 
-    -   Verify 32:1 ratio works correctly
-    -   Test edge cases (zero prices, very large prices)
-    -   Test diamond formatting and unit selection
+    -   Verify ratio calculation from existing prices
+    -   Test rounding to common quantities (4, 8, 16, 32, 64, 128, 256)
+    -   Test edge cases:
+        - Zero prices
+        - Very large prices (ratio ≥ 1: "X per 1")
+        - Very small prices (ratio < 1: "1 per X")
+        - Items more expensive than diamond
+    -   Test ratio formatting (compact vs full format)
+    -   Test shulker pricing calculations
 
 -   [ ] **Test UI interactions**
 
@@ -271,21 +355,23 @@ function getEffectivePriceInCurrency(
 -   **Visual indicators**: Currency icons (💰/💎)
 -   **Contextual labels**: "Money Mode" / "Diamond Mode"
 
-### Diamond Price Formatting
+### Diamond Price Formatting - Hybrid Display
 
--   **Single unit display**: Display as either diamonds OR diamond blocks, not mixed
--   **Diamond blocks**: For larger amounts (e.g., "3 diamond blocks" for 27+ diamonds)
--   **Individual diamonds**: For smaller amounts (e.g., "5 diamonds" for < 9 diamonds)
--   **Threshold-based**: Choose display unit based on price size (e.g., ≥ 9 diamonds = blocks, < 9 = diamonds)
--   **Consistent format**: "3 diamond blocks" or "5 diamonds" (never mixed)
+-   **Compact format in cells**: "1 per 32", "7 per 1", "12 per shulker"
+-   **Full format in tooltips**: "1 diamond per 32 amethyst shards", "7 diamonds per 1 ancient debris"
+-   **Ratio direction**:
+    - When ratio < 1: "1 per X items" (common items)
+    - When ratio ≥ 1: "X per 1 item" (rare/expensive items)
+-   **Always whole numbers**: Diamonds are discrete units, no decimals
+-   **Shulker pricing**: Independent from unit pricing, may not be simple multiple
 
 ### Price Input Handling
 
--   **Diamond input**: Allow whole numbers only (1, 2, 3 diamonds or diamond blocks)
--   **Unit selection**: Choose input unit (diamonds or diamond blocks)
--   **Conversion preview**: Show both currencies when switching
--   **Validation**: Prevent negative or decimal diamond prices
--   **Auto-formatting**: Display in appropriate unit based on amount
+-   **Ratio input format**: "1 per 32" or "7 per 1" (diamonds per quantity)
+-   **Quantity validation**: Must be common Minecraft quantities (4, 8, 16, 32, 64, 128, 256, 1728)
+-   **Diamond validation**: Whole numbers only, no decimals
+-   **Conversion preview**: Show per-item equivalent when entering ratios
+-   **Auto-rounding**: Suggest nearest common quantity when entering custom ratios
 
 ---
 
@@ -293,15 +379,19 @@ function getEffectivePriceInCurrency(
 
 ### Performance
 
--   **Lazy conversion**: Convert prices on-demand, not pre-calculate
--   **Caching**: Cache converted prices during session
--   **Efficient formatting**: Optimize diamond block calculation
+-   **Lazy conversion**: Calculate ratios on-demand from existing prices
+-   **Caching**: Cache calculated ratios during session
+-   **Efficient rounding**: Optimize common quantity rounding algorithm
+-   **Diamond item lookup**: Cache diamond item reference to avoid repeated lookups
 
 ### Data Integrity
 
 -   **Backup strategy**: Create backups before currency migrations
--   **Rollback plan**: Ability to revert currency changes
--   **Validation**: Ensure conversion ratio is positive and reasonable
+-   **Rollback plan**: Ability to revert currency changes (original prices preserved)
+-   **Validation**: 
+    - Ensure diamond item reference is valid
+    - Validate ratio calculations (no division by zero)
+    - Ensure rounded quantities are valid Minecraft stack sizes
 
 ### Compatibility
 
@@ -331,9 +421,10 @@ function getEffectivePriceInCurrency(
 
 ### Enhanced Formatting
 
--   **Compact diamond display**: "3d" or "3db" shorthand
--   **Price ranges**: Show min/max diamond prices
--   **Trend indicators**: Diamond price change arrows
+-   **Alternative ratio formats**: "1:32" or "1/32" shorthand options
+-   **Price ranges**: Show min/max diamond ratios
+-   **Trend indicators**: Ratio change arrows (↑ ↓)
+-   **Bulk quantity presets**: Quick buttons for common quantities (64, 128, shulker)
 
 ### Integration Features
 
