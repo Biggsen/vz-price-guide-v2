@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import ItemTable from '../components/ItemTable.vue'
 import ExportModal from '../components/ExportModal.vue'
@@ -16,10 +16,11 @@ import { useAdmin } from '../utils/admin.js'
 import { useEconomyConfig } from '../composables/useEconomyConfig.js'
 import { useFilters } from '../composables/useFilters.js'
 import { useItems } from '../composables/useItems.js'
+import { getImageUrl } from '../utils/image.js'
 import {
 	RocketLaunchIcon
 } from '@heroicons/vue/24/solid'
-import { Cog6ToothIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
+import { Cog6ToothIcon, ArrowDownTrayIcon, ArrowUpIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const { user, canEditItems } = useAdmin()
@@ -59,13 +60,13 @@ const openHoverPanel = ref(null) // Track which item has hover panel open (item.
 const showExportFeature = ref(true) // Set to true to enable export functionality
 const disableAlert = ref(false) // Set to true to disable all alerts regardless of showAlert state
 
-// Mounts of Mayhem announcement state
-const mountsAnnouncementStorageKey = STORAGE_KEYS.MOUNTS_ANNOUNCEMENT_DISMISSED
-const showMountsAnnouncement = ref(true)
+// Diamond currency announcement state
+const diamondCurrencyAnnouncementStorageKey = STORAGE_KEYS.DIAMOND_CURRENCY_ANNOUNCEMENT_DISMISSED
+const showDiamondCurrencyAnnouncement = ref(true)
 
-function dismissMountsAnnouncement() {
-	showMountsAnnouncement.value = false
-	localStorage.setItem(mountsAnnouncementStorageKey, 'true')
+function dismissDiamondCurrencyAnnouncement() {
+	showDiamondCurrencyAnnouncement.value = false
+	localStorage.setItem(diamondCurrencyAnnouncementStorageKey, 'true')
 }
 
 // Functions to manage shared hover panel state
@@ -118,24 +119,57 @@ const {
 	viewMode,
 	layout,
 	economyConfig,
-	loadConfig
+	loadConfig,
+	currencyType,
+	diamondItemId
 } = economyConfigComposable
+
+// Find diamond item for currency indicator
+const diamondItem = computed(() => {
+	if (!diamondItemId.value || !allItemsForCounts.value || allItemsForCounts.value.length === 0) {
+		// Fallback: try to find by material_id 'diamond'
+		return allItemsForCounts.value?.find((item) => item.material_id === 'diamond') || null
+	}
+	return allItemsForCounts.value?.find((item) => item.id === diamondItemId.value || item.material_id === 'diamond') || null
+})
+
+// Check if we're in diamond currency mode
+const isDiamondCurrency = computed(() => currencyType.value === 'diamond' && diamondItem.value !== null)
 
 const showCategoryFilters = ref(false) // Hidden by default on mobile
 
+// Back to top button state
+const showBackToTop = ref(false)
+
+function scrollToTop() {
+	window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function handleScroll() {
+	showBackToTop.value = window.scrollY > 300
+}
 
 // Initialize from query on mount
 onMounted(() => {
 	filters.initializeFromQuery()
 
-	// Check if Mounts of Mayhem announcement was previously dismissed
-	const mountsDismissed = localStorage.getItem(mountsAnnouncementStorageKey)
-	if (mountsDismissed === 'true') {
-		showMountsAnnouncement.value = false
+	// Check if Diamond Currency announcement was previously dismissed
+	const diamondCurrencyDismissed = localStorage.getItem(diamondCurrencyAnnouncementStorageKey)
+	if (diamondCurrencyDismissed === 'true') {
+		showDiamondCurrencyAnnouncement.value = false
 	}
 
 	// Initialize economy config from localStorage
 	economyConfigComposable.loadConfig()
+
+	// Add scroll listener for back to top button
+	window.addEventListener('scroll', handleScroll)
+	handleScroll() // Check initial scroll position
+})
+
+// Cleanup scroll listener
+onUnmounted(() => {
+	window.removeEventListener('scroll', handleScroll)
 })
 
 function toggleCategoryFilters() {
@@ -170,6 +204,18 @@ function handleSaveSettings(settings) {
 	roundToWhole.value = settings.roundToWhole
 	showStackSize.value = settings.showStackSize
 	showFullNumbers.value = settings.showFullNumbers === true
+	if (settings.hideSellPrices !== undefined) {
+		economyConfigComposable.hideSellPrices.value = settings.hideSellPrices
+	}
+	if (settings.currencyType) {
+		economyConfigComposable.currencyType.value = settings.currencyType
+	}
+	if (settings.diamondItemId !== undefined) {
+		economyConfigComposable.diamondItemId.value = settings.diamondItemId
+	}
+	if (settings.diamondRoundingDirection) {
+		economyConfigComposable.diamondRoundingDirection.value = settings.diamondRoundingDirection
+	}
 
 	// Close the modal
 	showSettingsModal.value = false
@@ -207,16 +253,16 @@ watch(
 </script>
 
 <template>
-	<!-- Mounts of Mayhem Announcement -->
+	<!-- Diamond Currency Announcement -->
 	<div
-		v-if="!disableAlert && showMountsAnnouncement"
+		v-if="!disableAlert && showDiamondCurrencyAnnouncement"
 		class="bg-semantic-info-light border-l-4 border-l-semantic-info text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
 				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					<strong>Mounts of Mayhem 1.21.11 items added!</strong>
-					New items including spears, nautilus armor, and netherite horse armor are now available in the catalog.
+					<strong>Diamond currency is now available!</strong>
+					The price guide now supports diamond-based currency.
 					<span> </span>
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
 						<span>Read more</span>
@@ -224,7 +270,7 @@ watch(
 				</span>
 			</div>
 			<button
-				@click="dismissMountsAnnouncement"
+				@click="dismissDiamondCurrencyAnnouncement"
 				class="text-gray-asparagus hover:text-heavy-metal ml-2 sm:ml-4 p-1"
 				aria-label="Dismiss announcement"
 				data-cy="dismiss-alert">
@@ -274,7 +320,15 @@ watch(
 		<div class="mb-4 text-sm text-gray-asparagus font-medium">
 			<span v-if="isLoading">Loading price guide...</span>
 			<span v-else>
-				<span class="text-xl text-heavy-metal font-bold">MC {{ selectedVersion }}</span>
+				<div class="flex items-center gap-2">
+					<span class="text-xl text-heavy-metal font-bold">MC {{ selectedVersion }}</span>
+					<img
+						v-if="isDiamondCurrency && diamondItem"
+						:src="getImageUrl(`/images/items/${diamondItem.material_id}.png`, { width: 24 })"
+						:alt="diamondItem.name || 'Diamond'"
+						class="w-6 h-6"
+						title="Diamond Currency Mode" />
+				</div>
 				<span v-if="canEditItems" class="ml-4 text-xs text-gray-500">
 					Cache: {{ getCacheStats().hits }}/{{
 						getCacheStats().hits + getCacheStats().misses
@@ -300,6 +354,7 @@ watch(
 				:category="cat"
 				:categories="enabledCategories"
 				:economyConfig="economyConfig"
+				:allItems="allItemsForCounts"
 				:viewMode="viewMode"
 				:layout="layout"
 				:showStackSize="showStackSize"
@@ -319,6 +374,7 @@ watch(
 			category="All Items"
 			:categories="enabledCategories"
 			:economyConfig="economyConfig"
+			:allItems="allItemsForCounts"
 			:viewMode="viewMode"
 			:layout="layout"
 			:showStackSize="showStackSize"
@@ -343,6 +399,16 @@ watch(
 		:selectedVersion="selectedVersion"
 		@close="closeSettingsModal"
 		@save-settings="handleSaveSettings" />
+
+	<!-- Back to Top Button -->
+	<button
+		v-if="showBackToTop"
+		@click="scrollToTop"
+		class="fixed bottom-6 right-6 z-50 bg-amulet text-white p-3 opacity-50 hover:opacity-100 transition-all duration-200 flex items-center justify-center"
+		aria-label="Back to top"
+		data-cy="back-to-top">
+		<ArrowUpIcon class="w-6 h-6" />
+	</button>
 </template>
 
 <style scoped>

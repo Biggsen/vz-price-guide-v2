@@ -6,6 +6,12 @@ This document tracks bugs, regressions, and issues discovered during development
 
 ## Active Issues
 
+_No active bugs currently - all recent issues have been resolved._
+
+---
+
+## Resolved Issues
+
 ### Settings Price Modifiers Not Persisting in UI
 
 **Status**: ✅ Resolved  
@@ -40,9 +46,6 @@ Added a watcher in `SettingsModal.vue` that monitors the `isOpen` prop and calls
 -   Settings are now properly loaded from localStorage when modal opens
 -   No changes needed to the save functionality as it was already working
 
-
-## Resolved Issues
-
 ### Admin Subnav Inconsistency Between Mobile and Desktop
 
 **Status**: ✅ Resolved  
@@ -59,10 +62,11 @@ The `SubNav.vue` component contained dead code - a mobile collapsible layout sec
 
 **Solution Implemented**:
 Removed all dead code from `SubNav.vue`:
-- Removed unused mobile collapsible layout sections (admin and tools)
-- Removed unused expansion state refs and computed properties
-- Removed unused `toggleSection` function and watch handlers
-- Cleaned up unused imports (`ref`, `watch`)
+
+-   Removed unused mobile collapsible layout sections (admin and tools)
+-   Removed unused expansion state refs and computed properties
+-   Removed unused `toggleSection` function and watch handlers
+-   Cleaned up unused imports (`ref`, `watch`)
 
 **Files Modified**:
 
@@ -94,39 +98,40 @@ Crate rewards display was broken or poorly formatted on mobile devices, creating
 
 **Root Cause**:
 The crate rewards interface lacked proper responsive design considerations for mobile devices, including:
-- Icons and buttons not adapting to smaller screens
-- Layout elements not stacking properly on mobile
-- Text sizes too large for mobile viewports
-- Padding and spacing issues causing cramped layouts
-- Navigation elements not optimized for mobile interaction
+
+-   Icons and buttons not adapting to smaller screens
+-   Layout elements not stacking properly on mobile
+-   Text sizes too large for mobile viewports
+-   Padding and spacing issues causing cramped layouts
+-   Navigation elements not optimized for mobile interaction
 
 **Solution Implemented**:
 Comprehensive mobile responsive improvements to the crate rewards interface:
 
 1. **Navigation Icons**: Removed icons from nav items below 900px, made admin nav icon-only
 2. **Header Layout**: Removed bottom padding, moved YAML debug button to top row
-3. **Reward Items List**: 
-   - Moved list outside padding container for full-width on mobile
-   - Added 2px white borders on mobile
-   - Reduced font sizes (header and items) to match price guide homepage
-   - Reduced padding and spacing on mobile
-   - Reduced image sizes on mobile
-4. **Sort Controls**: 
-   - Reduced font sizes on mobile
-   - Made buttons wrap and stack label above buttons below 450px
-   - Added icon space reservation to prevent button resizing
-5. **Item Rows**: 
-   - Reduced padding on mobile
-   - Moved weight/percentage controls below item content below 450px
-   - Adjusted spacing between elements
-   - Top-aligned action buttons on mobile
-6. **Information Display**: 
-   - Made "Rewards" and "Created" wrap to new line on mobile
-   - Reduced spacing between information rows
-7. **CTA Buttons**: 
-   - Allowed buttons to wrap on mobile
-   - Hidden "Copy List" button on mobile
-   - Hidden "Show YAML Debug" button on mobile
+3. **Reward Items List**:
+    - Moved list outside padding container for full-width on mobile
+    - Added 2px white borders on mobile
+    - Reduced font sizes (header and items) to match price guide homepage
+    - Reduced padding and spacing on mobile
+    - Reduced image sizes on mobile
+4. **Sort Controls**:
+    - Reduced font sizes on mobile
+    - Made buttons wrap and stack label above buttons below 450px
+    - Added icon space reservation to prevent button resizing
+5. **Item Rows**:
+    - Reduced padding on mobile
+    - Moved weight/percentage controls below item content below 450px
+    - Adjusted spacing between elements
+    - Top-aligned action buttons on mobile
+6. **Information Display**:
+    - Made "Rewards" and "Created" wrap to new line on mobile
+    - Reduced spacing between information rows
+7. **CTA Buttons**:
+    - Allowed buttons to wrap on mobile
+    - Hidden "Copy List" button on mobile
+    - Hidden "Show YAML Debug" button on mobile
 
 **Files Modified**:
 
@@ -202,8 +207,8 @@ The price guide's count functions (`getTotalItemCount()` and `totalCategoryCount
 **Solution Implemented**:
 Updated both `getTotalItemCount()` and `totalCategoryCounts` computed properties to exclude 0-priced items for all users (admin and non-admin), matching the filtering logic used by `itemsWithValidPrices` and the export pipeline:
 
-1.   **Fixed `totalCategoryCounts`**: Added price filtering to exclude 0-priced items for both admin and non-admin users
-2.   **Fixed `getTotalItemCount()`**: Removed the early return for admin users that bypassed price filtering, ensuring 0-priced items are excluded for all users
+1.  **Fixed `totalCategoryCounts`**: Added price filtering to exclude 0-priced items for both admin and non-admin users
+2.  **Fixed `getTotalItemCount()`**: Removed the early return for admin users that bypassed price filtering, ensuring 0-priced items are excluded for all users
 
 **Files Modified**:
 

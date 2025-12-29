@@ -10,7 +10,7 @@
 	"status": "active",
 	"domain": "minecraft",
 	"type": "webapp",
-	"lastUpdated": "2025-12-16",
+	"lastUpdated": "2025-12-28",
 	"links": {
 		"prod": "https://minecraft-economy-price-guide.net/",
 		"staging": null
@@ -59,7 +59,7 @@
 -   **Crate Rewards Management** - YAML import, custom pricing, value calculations
 -   **Suggestions System** - User feedback and feature requests with admin management
 -   **Price Export** - JSON/YAML export with filtering and version selection
--   **Item Catalog** - 1,400+ items across 6 Minecraft versions (1.16-1.21)
+-   **Item Catalog** - 1,600+ items across 6 Minecraft versions (1.16-1.21, including 1.21.11)
 
 ---
 
@@ -84,9 +84,15 @@
   This helps track immediate priorities and current development state.
 -->
 
-Currently focused on **Homepage Refactoring** - breaking down the 928-line HomeView.vue component into manageable pieces. This involves extracting composables (useEconomyConfig, useFilters, useItems), creating utility functions and constants, and improving testability and maintainability. Estimated effort: 30-42 hours.
+Upcoming focus areas:
 
-Also working on **Shop Manager Phase 7** - price comparison and market analysis features.
+1. **Marketing Email Opt-In** - Implement explicit opt-in system for marketing emails to ensure compliance with GDPR and CAN-SPAM regulations. Add opt-in checkbox during signup and toggle in account settings.
+
+2. **Refactors** - Continue code quality improvements through refactoring:
+   - Base Input Component Refactor - Standardize form inputs across the application
+   - Market Overview Refactoring - Extract ViewModeLayoutToggle, MarketItemsTable components, and composables
+   - Shop Refactoring - Extract useShopForm composable, ShopItemsTable component, and useInlineEditing composable
+   - Crate Single View Refactoring - Break down 2,853-line component into manageable pieces
 
 ---
 
@@ -105,13 +111,13 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 -   [x] Recipes & Dynamic Pricing - 2,000+ recipes with automatic price calculations
 -   [x] Suggestions System - User feedback and feature requests with admin management
 -   [x] Crate Rewards Management - YAML import, custom pricing, value calculations
--   [x] Shop Manager - Multi-server shop tracking (80% complete)
+-   [x] Shop Manager - Multi-server shop tracking with starring, archiving, and market overview
 -   [x] Price Export - JSON/YAML export with filtering and version selection
 -   [x] Bulk Item Management - Admin tools for managing the item catalog
 -   [x] Visual Testing - Comprehensive screenshot-based testing system
--   [x] Item Catalog - 1,400+ items across 6 Minecraft versions (1.16-1.21)
+-   [x] Item Catalog - 1,600+ items across 6 Minecraft versions (1.16-1.21) including 1.21.11
 -   [x] Price Field Migration - Version-aware pricing with inheritance and fallback logic
--   [x] Homepage Cleanup - Initial improvements and organization
+-   [x] Homepage Refactoring - Reduced HomeView.vue from 988 lines to 309 lines (69% reduction), extracted composables and utilities
 -   [x] Custom Pricing for Crates - Enhanced crate pricing capabilities
 -   [x] Brewing Category - Complete potion catalog with brewing recipes
 -   [x] Market Overview Refactoring - Shared utility functions extracted (date, pricing, tableTransform)
@@ -142,11 +148,14 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 
 #### Shop Manager
 
--   Multi-server shop tracking with price history
+-   Multi-server shop tracking
 -   Catalog status tracking (fully_cataloged boolean field)
 -   Multiple item selection - users can select multiple items at once when adding to shops
 -   Selected items share the same buy price, sell price, and notes
--   Status: 80% complete (Phase 7 in progress)
+-   Starring functionality - mark favorite items or best deals
+-   Shop archiving - archive inactive shops instead of deleting them
+-   Market overview with opportunities highlighting
+-   Status: Production ready
 
 #### Comment to SuggestionMessages Refactor
 
@@ -156,6 +165,14 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 -   Updated Firestore collection path: `comments` → `suggestionMessages`
 -   Updated all function names, variable names, and UI terminology
 -   Status: Production ready
+
+#### Homepage Refactoring
+
+-   Reduced HomeView.vue from 988 lines to 309 lines (69% reduction)
+-   Extracted composables: useEconomyConfig, useFilters, useItems
+-   Created utility functions and constants (homepage.js, constants/homepage.js)
+-   Improved code organization, maintainability, and testability
+-   Status: Production ready (Phase 4 unit testing pending)
 
 ---
 
@@ -169,21 +186,7 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
   Items in this section will be tagged as "Features" by the parser.
 -->
 
--   [ ] Homepage Refactoring - Breaking down 928-line component into manageable pieces (30-42 hours estimated)
--   [ ] Shop Manager Phase 7 - Price comparison and market analysis features (75% complete)
-
-### Detailed In-Progress Features
-
-#### Homepage Refactoring
-
--   Current status: Breaking down 928-line HomeView.vue component
--   Remaining work: Extract composables (useEconomyConfig, useFilters, useItems), create utility functions and constants, refactor main component to <400 lines, add unit tests
--   Estimated completion: 30-42 hours
-
-#### Shop Manager Phase 7
-
--   Current status: Price comparison and market analysis features
--   Remaining work: Search & filtering improvements (owner scope), performance optimizations (pagination/virtual scrolling), price comparison features, market analysis tools
+_No features currently in active development._
 
 ---
 
@@ -206,6 +209,7 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 -   [ ] Hard 404 Spec - Implement proper 404 handling
 -   [ ] Netlify Blobs Media Spec - Media storage improvements
 -   [ ] Recipe Version Copy Spec - Recipe versioning improvements
+-   [ ] Shop Manager Phase 7 - Price comparison and market analysis features, search & filtering improvements (owner scope), performance optimizations (pagination/virtual scrolling)
 -   [ ] Shop Manager Enhanced - Public visibility, competitive price comparison, market analysis dashboard, advanced filtering/import/export
 -   [ ] Market Overview Refactoring - ViewModeLayoutToggle component, MarketItemsTable component, useViewSettings composable enhancement, useItemGrouping composable
 -   [ ] Shop Refactoring - useShopForm composable, ShopItemsTable component, useInlineEditing composable, component breakdown
@@ -219,20 +223,20 @@ Also working on **Shop Manager Phase 7** - price comparison and market analysis 
 -   Dedicated export route/page
 -   Enhanced filtering options
 
-#### Shop Manager Phase 7 Completion
+#### Shop Manager Phase 7
 
+-   Price comparison and market analysis features
 -   Search & filtering improvements (owner scope)
 -   Performance optimizations (pagination/virtual scrolling)
--   Price comparison features
 -   Market analysis tools
 
-#### Homepage Refactoring
+#### Homepage Refactoring Phase 4
 
--   Reduce HomeView.vue from 928 lines to <400 lines
--   Extract composables (useEconomyConfig, useFilters, useItems)
--   Create utility functions and constants
--   Improve testability and maintainability
--   **Estimated Effort**: 30-42 hours
+-   Set up Vitest testing framework
+-   Add unit tests for composables (useEconomyConfig, useFilters, useItems)
+-   Add unit tests for utility functions (homepage.js)
+-   Add coverage reporting
+-   **Estimated Effort**: 6-8 hours
 
 ### Medium Priority Enhancements
 
@@ -330,8 +334,7 @@ _No active bugs currently - all recent issues have been resolved._
 
 ### High Priority
 
--   [ ] Complete Homepage Refactoring - Extract composables (useEconomyConfig, useFilters, useItems), create utilities, reduce component size to <400 lines
--   [ ] Finish Shop Manager Phase 7 - Search & filtering improvements (owner scope), price comparison features, performance optimizations
+-   [ ] Homepage Refactoring Phase 4 - Unit testing for composables and utilities (Vitest setup, test coverage)
 
 ### Medium Priority
 
@@ -362,15 +365,15 @@ _No active bugs currently - all recent issues have been resolved._
 -->
 
 **Overall Status**: Active Development  
-**Completion**: ~85%  
+**Completion**: ~87%  
 **Last Major Update**: December 2025
 
 ### Metrics
 
 -   **Code Coverage**: 80% (Cypress E2E testing)
 -   **Open Issues**: 0 active bugs (6 recently resolved)
--   **Active Features**: 2 (Homepage Refactoring, Shop Manager Phase 7)
--   **Completed Features**: 17
+-   **Active Features**: 0
+-   **Completed Features**: 18
 -   **Frontend Components**: 38 Vue components and views
 -   **Backend Utilities**: 12 utility modules
 -   **Testing Suites**: 7 Cypress test suites
@@ -378,26 +381,26 @@ _No active bugs currently - all recent issues have been resolved._
 
 ### Feature Completeness
 
--   **Core Features**: 85% complete
+-   **Core Features**: 90% complete
 -   **User Management**: 90% complete
 -   **Data Management**: 95% complete
--   **Shop Manager**: 80% complete
+-   **Shop Manager**: 85% complete
 -   **Testing Coverage**: 80% complete
 
 ### Technical Debt
 
--   **Large Components**: 1 major refactoring needed (HomeView - 928 lines, target <400 lines)
--   **Code Duplication**: Reduced significantly through recent refactoring (Market Overview, Shop Manager)
+-   **Large Components**: ✅ HomeView refactoring complete (988 → 309 lines, 69% reduction)
+-   **Code Duplication**: Reduced significantly through recent refactoring (Market Overview, Shop Manager, Homepage)
 -   **Performance**: Good, room for optimization (pagination/virtual scrolling for large datasets)
 -   **Maintainability**: High, following Vue 3 best practices, composables pattern established
--   **Testing**: E2E coverage good, unit testing infrastructure needed (Vitest)
+-   **Testing**: E2E coverage good, unit testing infrastructure needed (Vitest) - Phase 4 of homepage refactoring
 
 ### Data Management
 
 -   **2,000+ recipes** with automatic price calculations
 -   **Version-aware pricing** with inheritance and fallback logic
 -   **Dynamic pricing system** with circular dependency detection
--   **Comprehensive item catalog** with 1,400+ items across 6 Minecraft versions
+-   **Comprehensive item catalog** with 1,600+ items across 6 Minecraft versions (1.16-1.21, including 1.21.11)
 
 ---
 
@@ -410,16 +413,11 @@ _No active bugs currently - all recent issues have been resolved._
 
 ### Immediate (Next 1-2 weeks)
 
-1. Complete Homepage Refactoring
-    - Extract constants and utilities (homepage.js, constants)
-    - Create composables (useEconomyConfig, useFilters, useItems)
-    - Refactor main component to <400 lines
-    - Add unit tests
-
-2. Finish Shop Manager Phase 7
-    - Complete search & filtering improvements (owner scope)
-    - Add price comparison features
-    - Performance optimizations (pagination/virtual scrolling)
+1. Homepage Refactoring Phase 4
+    - Set up Vitest testing framework
+    - Add unit tests for composables (useEconomyConfig, useFilters, useItems)
+    - Add unit tests for utility functions
+    - Add coverage reporting
 
 ### Short-term (Next 1-3 months)
 
@@ -463,6 +461,10 @@ _No active bugs currently - all recent issues have been resolved._
 
 ### Recent Changes
 
+-   **2025-12-28**: Completed Homepage Refactoring (Phases 1-3) - Reduced HomeView.vue from 988 lines to 309 lines (69% reduction). Extracted composables (useEconomyConfig, useFilters, useItems), created utility functions and constants. Improved code organization, maintainability, and testability. Phase 4 (unit testing) pending.
+-   **2025-12-26**: Added Minecraft 1.21.11 items to catalog including spears, nautilus armor variants, and netherite horse armor - all with accurate pricing.
+-   **2025-12-19**: Shop Manager improvements - Added starring functionality, shop archiving, opportunities improvements with better filtering, cleaner price formatting, fixed notes editing bug, and category ordering consistency.
+-   **2025-12-15**: Shop Manager is now available to everyone - Multi-server shop tracking, market overview, and comprehensive shop management features.
 -   **2025-12-16**: Updated project summary with comprehensive review of all tasks and current project status. Moved Comment to SuggestionMessages Refactor from in-progress to completed (refactor already implemented).
 -   **2025-01-27**: Resolved multiple bugs including settings price modifiers persistence, admin subnav consistency, crate rewards mobile display, price guide count discrepancies, duplicate crate names, and enchantment book separation. All issues fixed and tested.
 -   **2025-01-27**: Completed Market Overview refactoring - extracted shared utility functions (date.js, pricing.js, tableTransform.js), eliminated ~100 lines of duplicated code from MarketOverviewView and ShopItemsView.
@@ -502,9 +504,9 @@ _No active bugs currently - all recent issues have been resolved._
 
 ### Strategic Focus Areas
 
-1. **Technical Debt Reduction** - Homepage Refactoring (30-42 hours), code organization, performance optimization, unit testing infrastructure
-2. **User Experience Enhancement** - Price Export improvements (CSV/XLSX), Shop Manager completion, enhanced suggestions, user account settings
-3. **Code Quality & Maintainability** - Component extraction, composable patterns, shared utilities, testing coverage
+1. **Technical Debt Reduction** - ✅ Homepage Refactoring complete (Phases 1-3), unit testing infrastructure (Phase 4 pending), performance optimization
+2. **User Experience Enhancement** - Price Export improvements (CSV/XLSX), enhanced suggestions, user account settings
+3. **Code Quality & Maintainability** - ✅ Component extraction complete, composable patterns established, shared utilities, testing coverage improvement
 4. **Platform Evolution** - Community features, advanced collaboration, market intelligence, Shop Manager Enhanced features
 5. **Innovation & Growth** - Diamond currency, linked shops, expert network, multi-user crate management
 

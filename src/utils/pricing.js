@@ -528,3 +528,206 @@ export function recalculateDynamicPrices(allItems, version = '1_16') {
 
 	return results
 }
+
+// ============================================================================
+// Diamond Currency Utility Functions
+// ============================================================================
+
+/**
+ * Common Minecraft quantities for rounding diamond ratios
+ */
+const COMMON_QUANTITIES = [1, 2, 4, 6, 8, 16, 32, 48, 64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 1024, 1152, 1280, 1408, 1536, 1600, 1664, 1728, 1792, 1920, 2048, 2176, 2304, 2432, 2560, 2688, 2816, 2944, 3072, 3200, 3328, 3456] // 1728 = shulker size
+
+/**
+ * Round a number to the nearest common Minecraft quantity
+ * @param {number} value - The value to round
+ * @param {string} direction - 'nearest' | 'up' | 'down'
+ * @returns {number} Rounded value
+ */
+export function roundToCommonQuantity(value, direction = 'nearest') {
+	if (value <= 0) return 1
+
+	let rounded
+
+	if (direction === 'up') {
+		// Round up to next common quantity
+		rounded = COMMON_QUANTITIES.find((qty) => qty >= value) || COMMON_QUANTITIES[COMMON_QUANTITIES.length - 1]
+	} else if (direction === 'down') {
+		// Round down to previous common quantity
+		const reversed = [...COMMON_QUANTITIES].reverse()
+		rounded = reversed.find((qty) => qty <= value) || 1
+	} else {
+		// Round to nearest
+		rounded = COMMON_QUANTITIES.reduce((prev, curr) => {
+			return Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+		})
+	}
+
+	return rounded
+}
+
+/**
+ * Calculate diamond ratio from item prices
+ * @param {number} itemPrice - The item's price
+ * @param {number} diamondPrice - The diamond item's price
+ * @param {string} roundingDirection - 'nearest' | 'up' | 'down'
+ * @returns {{ diamonds: number, quantity: number }} Ratio object
+ */
+export function calculateDiamondRatio(itemPrice, diamondPrice, roundingDirection = 'nearest') {
+	if (!itemPrice || !diamondPrice || itemPrice <= 0 || diamondPrice <= 0) {
+		return { diamonds: 0, quantity: 1 }
+	}
+
+	// Calculate raw ratio: how many items per diamond
+	const rawRatio = diamondPrice / itemPrice
+
+	let diamonds, quantity
+
+	if (rawRatio >= 1) {
+		// Item is cheaper than diamond: calculate items per diamond and round to common quantity
+		// Example: diamond=280, item=10, ratio=28, round to 32 → "1 diamond per 32 items"
+		const itemsPerDiamond = rawRatio
+		quantity = roundToCommonQuantity(itemsPerDiamond, roundingDirection)
+		diamonds = 1
+	} else {
+		// Item is more expensive than diamond: "X diamonds per 1 item"
+		// Round the number of diamonds to whole number
+		const diamondsPerItem = 1 / rawRatio
+		diamonds = Math.round(diamondsPerItem)
+		quantity = 1
+	}
+
+	return { diamonds, quantity }
+}
+
+/**
+ * Format diamond ratio for compact display (e.g., "1 per 32", "7 per 1")
+ * @param {number} diamonds - Number of diamonds
+ * @param {number} quantity - Quantity of items
+ * @returns {string} Compact ratio string
+ */
+export function formatDiamondRatio(diamonds, quantity) {
+	if (diamonds === 0 || quantity === 0) return '—'
+
+	// For shulker boxes, check if quantity is a multiple of 27 (shulker has 27 slots)
+	// This covers both 1728 (27×64) and 27 (27×1) cases
+	if (quantity % 27 === 0 && quantity >= 27) {
+		// Check if it's a standard shulker capacity (27 slots × common stack sizes)
+		const stackSize = quantity / 27
+		const commonStackSizes = [1, 16, 64] // Common Minecraft stack sizes
+		if (commonStackSizes.includes(stackSize)) {
+			return diamonds.toString()
+		}
+	}
+
+	if (quantity === 1) {
+		return `${diamonds} per 1`
+	}
+
+	return `${diamonds} per ${quantity}`
+}
+
+/**
+ * Format diamond ratio for full display in tooltips
+ * @param {number} diamonds - Number of diamonds
+ * @param {number} quantity - Quantity of items
+ * @param {string} itemName - Name of the item
+ * @returns {string} Full ratio string
+ */
+export function formatDiamondRatioFull(diamonds, quantity, itemName) {
+	if (diamonds === 0 || quantity === 0) return '—'
+
+	const itemText = quantity === 1 ? itemName : `${quantity} ${itemName}`
+	const diamondText = diamonds === 1 ? 'diamond' : 'diamonds'
+
+	if (quantity === 1) {
+		return `${diamonds} ${diamondText} per 1 ${itemName}`
+	}
+
+	return `${diamonds} ${diamondText} per ${itemText}`
+}
+
+/**
+ * Get diamond pricing for an item (buy and sell ratios)
+ * @param {Object} item - The item object
+ * @param {Object} diamondItem - The diamond item object
+ * @param {string} version - Version key (e.g., "1_16")
+ * @param {number} sellMargin - Sell margin multiplier
+ * @param {string} roundingDirection - 'nearest' | 'up' | 'down'
+ * @returns {Object} Pricing object with buy/sell ratios
+ */
+export function getDiamondPricing(item, diamondItem, version, sellMargin = 0.3, roundingDirection = 'nearest') {
+	if (!item || !diamondItem) {
+		return {
+			buy: { diamonds: 0, quantity: 1 },
+			sell: { diamonds: 0, quantity: 1 }
+		}
+	}
+
+	const versionKey = version.replace('.', '_')
+	const itemPrice = getEffectivePrice(item, versionKey)
+	const diamondPrice = getEffectivePrice(diamondItem, versionKey)
+
+	// Calculate buy ratio (using item price directly)
+	const buyRatio = calculateDiamondRatio(itemPrice, diamondPrice, roundingDirection)
+
+	// Calculate sell ratio (using item price * sellMargin)
+	const sellItemPrice = itemPrice * sellMargin
+	const sellRatio = calculateDiamondRatio(sellItemPrice, diamondPrice, roundingDirection)
+
+	return {
+		buy: buyRatio,
+		sell: sellRatio
+	}
+}
+
+/**
+ * Calculate shulker pricing based on item stack size
+ * A shulker box has 27 slots, so capacity = 27 × stack size
+ * @param {Object} item - The item object
+ * @param {Object} diamondItem - The diamond item object
+ * @param {string} version - Version key
+ * @param {number} sellMargin - Sell margin multiplier
+ * @param {string} roundingDirection - 'nearest' | 'up' | 'down'
+ * @returns {Object} Shulker pricing object
+ */
+export function getDiamondShulkerPricing(item, diamondItem, version, sellMargin = 0.3, roundingDirection = 'nearest') {
+	if (!item || !diamondItem) {
+		return {
+			buy: { diamonds: 0, quantity: 1728 },
+			sell: { diamonds: 0, quantity: 1728 }
+		}
+	}
+
+	const versionKey = version.replace('.', '_')
+	const itemPrice = getEffectivePrice(item, versionKey)
+	const diamondPrice = getEffectivePrice(diamondItem, versionKey)
+	
+	// Calculate shulker capacity: 27 slots × stack size
+	const stackSize = item.stack || 64
+	const SHULKER_CAPACITY = 27 * stackSize
+
+	// Calculate price for a full shulker
+	const shulkerBuyPrice = itemPrice * SHULKER_CAPACITY
+	const shulkerSellPrice = itemPrice * sellMargin * SHULKER_CAPACITY
+
+	// Calculate how many diamonds for a shulker
+	const buyDiamonds = Math.round(shulkerBuyPrice / diamondPrice)
+	const sellDiamonds = Math.round(shulkerSellPrice / diamondPrice)
+
+	// Round to whole diamonds
+	const buyRatio = {
+		diamonds: buyDiamonds || 1,
+		quantity: SHULKER_CAPACITY
+	}
+
+	const sellRatio = {
+		diamonds: sellDiamonds || 1,
+		quantity: SHULKER_CAPACITY
+	}
+
+	return {
+		buy: buyRatio,
+		sell: sellRatio
+	}
+}

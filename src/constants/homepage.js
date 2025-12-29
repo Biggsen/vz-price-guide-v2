@@ -17,7 +17,10 @@ export const STORAGE_KEYS = {
 	SELECTED_VERSION: 'selectedVersion',
 	SHOW_STACK_SIZE: 'showStackSize',
 	SHOW_FULL_NUMBERS: 'showFullNumbers',
-	ALERT_DISMISSED: 'crateRewardsToolAlertDismissed',
-	MOUNTS_ANNOUNCEMENT_DISMISSED: 'mountsOfMayhemAnnouncementDismissed'
+	HIDE_SELL_PRICES: 'hideSellPrices',
+	CURRENCY_TYPE: 'currencyType',
+	DIAMOND_ITEM_ID: 'diamondItemId',
+	DIAMOND_ROUNDING_DIRECTION: 'diamondRoundingDirection',
+	DIAMOND_CURRENCY_ANNOUNCEMENT_DISMISSED: 'diamondCurrencyAnnouncementDismissed'
 }
 

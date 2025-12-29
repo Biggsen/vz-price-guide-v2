@@ -324,12 +324,13 @@
 	{
 		"id": 14,
 		"title": "Diamond Currency Support",
-		"status": "Pending",
+		"status": "Completed",
+		"completedDate": "2025-12-29",
 		"description": "Support diamond-based economies as an alternative to money. Users can switch between money and diamond currencies, set conversion ratios, and see prices displayed in their preferred currency. This feature will make the price guide more flexible for servers that use diamonds as currency.",
 		"features": [
-			{ "name": "Switch between money and diamond currencies in the UI", "completed": false },
-			{ "name": "Set and adjust diamond-to-money conversion ratios", "completed": false },
-			{ "name": "Display all prices in the selected currency", "completed": false }
+			{ "name": "Switch between money and diamond currencies in the UI", "completed": true },
+			{ "name": "Set and adjust diamond-to-money conversion ratios", "completed": true },
+			{ "name": "Display all prices in the selected currency", "completed": true }
 		]
 	},
 	{

@@ -142,10 +142,10 @@ describe('Homepage Functionality', () => {
 			cy.contains('oak planks', { matchCase: false }).should('be.visible')
 			cy.contains('oak log', { matchCase: false }).should('be.visible')
 
-			// Verify other items are filtered out
-			cy.get('body').then(($body) => {
-				if ($body.text().includes('diamond')) {
-					cy.contains('diamond').should('not.be.visible')
+			// Verify other items are filtered out - check specifically in the table rows
+			cy.get('table tbody').then(($tbody) => {
+				if ($tbody.text().toLowerCase().includes('diamond')) {
+					cy.get('table tbody').contains('diamond', { matchCase: false }).should('not.exist')
 				}
 			})
 		})
@@ -185,10 +185,10 @@ describe('Homepage Functionality', () => {
 			cy.contains('oak planks', { matchCase: false }).should('be.visible')
 			cy.contains('oak log', { matchCase: false }).should('be.visible')
 
-			// But other items should be filtered out (if any exist)
-			cy.get('body').then(($body) => {
-				if ($body.text().includes('diamond')) {
-					cy.contains('diamond').should('not.be.visible')
+			// But other items should be filtered out - check specifically in the table rows
+			cy.get('table tbody').then(($tbody) => {
+				if ($tbody.text().toLowerCase().includes('diamond')) {
+					cy.get('table tbody').contains('diamond', { matchCase: false }).should('not.exist')
 				}
 			})
 		})
