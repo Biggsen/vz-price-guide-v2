@@ -609,9 +609,15 @@ export function calculateDiamondRatio(itemPrice, diamondPrice, roundingDirection
 export function formatDiamondRatio(diamonds, quantity) {
 	if (diamonds === 0 || quantity === 0) return '—'
 
-	// For shulker boxes (1728 items), just show diamond count since column header says "per Shulker"
-	if (quantity === 1728) {
-		return diamonds.toString()
+	// For shulker boxes, check if quantity is a multiple of 27 (shulker has 27 slots)
+	// This covers both 1728 (27×64) and 27 (27×1) cases
+	if (quantity % 27 === 0 && quantity >= 27) {
+		// Check if it's a standard shulker capacity (27 slots × common stack sizes)
+		const stackSize = quantity / 27
+		const commonStackSizes = [1, 16, 64] // Common Minecraft stack sizes
+		if (commonStackSizes.includes(stackSize)) {
+			return diamonds.toString()
+		}
 	}
 
 	if (quantity === 1) {
@@ -676,7 +682,8 @@ export function getDiamondPricing(item, diamondItem, version, sellMargin = 0.3, 
 }
 
 /**
- * Calculate shulker pricing (1728 items per shulker)
+ * Calculate shulker pricing based on item stack size
+ * A shulker box has 27 slots, so capacity = 27 × stack size
  * @param {Object} item - The item object
  * @param {Object} diamondItem - The diamond item object
  * @param {string} version - Version key
@@ -695,11 +702,14 @@ export function getDiamondShulkerPricing(item, diamondItem, version, sellMargin 
 	const versionKey = version.replace('.', '_')
 	const itemPrice = getEffectivePrice(item, versionKey)
 	const diamondPrice = getEffectivePrice(diamondItem, versionKey)
-	const SHULKER_SIZE = 1728
+	
+	// Calculate shulker capacity: 27 slots × stack size
+	const stackSize = item.stack || 64
+	const SHULKER_CAPACITY = 27 * stackSize
 
 	// Calculate price for a full shulker
-	const shulkerBuyPrice = itemPrice * SHULKER_SIZE
-	const shulkerSellPrice = itemPrice * sellMargin * SHULKER_SIZE
+	const shulkerBuyPrice = itemPrice * SHULKER_CAPACITY
+	const shulkerSellPrice = itemPrice * sellMargin * SHULKER_CAPACITY
 
 	// Calculate how many diamonds for a shulker
 	const buyDiamonds = Math.round(shulkerBuyPrice / diamondPrice)
@@ -708,12 +718,12 @@ export function getDiamondShulkerPricing(item, diamondItem, version, sellMargin 
 	// Round to whole diamonds
 	const buyRatio = {
 		diamonds: buyDiamonds || 1,
-		quantity: SHULKER_SIZE
+		quantity: SHULKER_CAPACITY
 	}
 
 	const sellRatio = {
 		diamonds: sellDiamonds || 1,
-		quantity: SHULKER_SIZE
+		quantity: SHULKER_CAPACITY
 	}
 
 	return {
