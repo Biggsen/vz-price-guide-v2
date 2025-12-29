@@ -369,29 +369,5 @@
 				"completed": true
 			}
 		]
-	},
-	{
-		"id": 16,
-		"title": "Enchantment Support for Shop Items",
-		"status": "Idea",
-		"description": "Add enchantment support to shop items so you can properly track and price enchanted items in your shops. The system will intelligently validate which enchantments can be applied to which items (e.g., Lure only works on fishing rods) and prevent conflicting enchantment combinations, making your shop listings more accurate and complete.",
-		"features": [
-			{
-				"name": "✨ Add enchantments to shop items - Track enchanted swords, armor, tools, and more",
-				"completed": false
-			},
-			{
-				"name": "🔍 Smart enchantment validation - Only show compatible enchantments for each item type",
-				"completed": false
-			},
-			{
-				"name": "⚔️ Conflict prevention - Prevents incompatible enchantment combinations (e.g., Sharpness + Smite)",
-				"completed": false
-			},
-			{
-				"name": "📋 Complete shop listings - Display enchantments in your shop item list and detail views",
-				"completed": false
-			}
-		]
 	}
 ]
