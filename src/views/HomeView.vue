@@ -60,13 +60,13 @@ const openHoverPanel = ref(null) // Track which item has hover panel open (item.
 const showExportFeature = ref(true) // Set to true to enable export functionality
 const disableAlert = ref(false) // Set to true to disable all alerts regardless of showAlert state
 
-// Mounts of Mayhem announcement state
-const mountsAnnouncementStorageKey = STORAGE_KEYS.MOUNTS_ANNOUNCEMENT_DISMISSED
-const showMountsAnnouncement = ref(true)
+// Diamond currency announcement state
+const diamondCurrencyAnnouncementStorageKey = STORAGE_KEYS.DIAMOND_CURRENCY_ANNOUNCEMENT_DISMISSED
+const showDiamondCurrencyAnnouncement = ref(true)
 
-function dismissMountsAnnouncement() {
-	showMountsAnnouncement.value = false
-	localStorage.setItem(mountsAnnouncementStorageKey, 'true')
+function dismissDiamondCurrencyAnnouncement() {
+	showDiamondCurrencyAnnouncement.value = false
+	localStorage.setItem(diamondCurrencyAnnouncementStorageKey, 'true')
 }
 
 // Functions to manage shared hover panel state
@@ -153,10 +153,10 @@ function handleScroll() {
 onMounted(() => {
 	filters.initializeFromQuery()
 
-	// Check if Mounts of Mayhem announcement was previously dismissed
-	const mountsDismissed = localStorage.getItem(mountsAnnouncementStorageKey)
-	if (mountsDismissed === 'true') {
-		showMountsAnnouncement.value = false
+	// Check if Diamond Currency announcement was previously dismissed
+	const diamondCurrencyDismissed = localStorage.getItem(diamondCurrencyAnnouncementStorageKey)
+	if (diamondCurrencyDismissed === 'true') {
+		showDiamondCurrencyAnnouncement.value = false
 	}
 
 	// Initialize economy config from localStorage
@@ -253,16 +253,16 @@ watch(
 </script>
 
 <template>
-	<!-- Mounts of Mayhem Announcement -->
+	<!-- Diamond Currency Announcement -->
 	<div
-		v-if="!disableAlert && showMountsAnnouncement"
+		v-if="!disableAlert && showDiamondCurrencyAnnouncement"
 		class="bg-semantic-info-light border-l-4 border-l-semantic-info text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
 				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					<strong>Mounts of Mayhem 1.21.11 items added!</strong>
-					New items including spears, nautilus armor, and netherite horse armor are now available in the catalog.
+					<strong>Diamond currency is now available!</strong>
+					The price guide now supports diamond-based currency.
 					<span> </span>
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
 						<span>Read more</span>
@@ -270,7 +270,7 @@ watch(
 				</span>
 			</div>
 			<button
-				@click="dismissMountsAnnouncement"
+				@click="dismissDiamondCurrencyAnnouncement"
 				class="text-gray-asparagus hover:text-heavy-metal ml-2 sm:ml-4 p-1"
 				aria-label="Dismiss announcement"
 				data-cy="dismiss-alert">

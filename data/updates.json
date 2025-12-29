@@ -5,12 +5,13 @@
 		"date": "2025-12-29",
 		"types": ["Feature"],
 		"hidden": false,
-		"description": "The price guide now supports diamond-based currency. You can switch between Money and Diamond modes in Settings, and all prices will automatically display as diamond ratios (for example, 1 diamond per 32 oak log), matching how most diamond economies operate in-game.",
+		"description": "The price guide now supports diamond-based currency. You can switch between Money and Diamond modes in Settings, and all prices will automatically display as diamond ratios (for example, \"1 per 32\", or \"1 diamond per 32 oak log\" if you hide the sell prices column), matching how most diamond economies operate in-game.",
 		"changes": [
 			"Currency toggle: switch between Money and Diamond modes in the price guide settings",
 			"Shulker pricing: bulk pricing for shulker boxes calculated separately",
 			"Export price list: supports diamond currency with updated data structure for ratios",
 			"Hide sell prices: option to hide sell prices if you only need buy prices",
+			"Little extra: Added back to top button on the price guide for those long lists",
 			"Note: Crate Rewards and Shop Manager don't support diamond currency yet"
 		]
 	},
