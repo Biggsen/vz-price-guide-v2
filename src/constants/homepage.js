@@ -17,6 +17,7 @@ export const STORAGE_KEYS = {
 	SELECTED_VERSION: 'selectedVersion',
 	SHOW_STACK_SIZE: 'showStackSize',
 	SHOW_FULL_NUMBERS: 'showFullNumbers',
+	HIDE_SELL_PRICES: 'hideSellPrices',
 	CURRENCY_TYPE: 'currencyType',
 	DIAMOND_ITEM_ID: 'diamondItemId',
 	DIAMOND_ROUNDING_DIRECTION: 'diamondRoundingDirection',

@@ -48,6 +48,7 @@ const sellMargin = ref(0.3)
 const roundToWhole = ref(false)
 const showStackSize = ref(false)
 const showFullNumbers = ref(false)
+const hideSellPrices = ref(false)
 const currencyType = ref('money')
 const diamondItemId = ref(null)
 const diamondRoundingDirection = ref('nearest')
@@ -76,6 +77,7 @@ function loadSettings() {
 	const savedSelectedVersion = localStorage.getItem('selectedVersion')
 	const savedShowStackSize = localStorage.getItem('showStackSize')
 	const savedShowFullNumbers = localStorage.getItem('showFullNumbers')
+	const savedHideSellPrices = localStorage.getItem('hideSellPrices')
 	const savedCurrencyType = localStorage.getItem('currencyType')
 	const savedDiamondItemId = localStorage.getItem('diamondItemId')
 	const savedDiamondRoundingDirection = localStorage.getItem('diamondRoundingDirection')
@@ -103,6 +105,9 @@ function loadSettings() {
 	if (savedShowFullNumbers !== null) {
 		showFullNumbers.value = savedShowFullNumbers === 'true'
 	}
+	if (savedHideSellPrices !== null) {
+		hideSellPrices.value = savedHideSellPrices === 'true'
+	}
 	if (savedCurrencyType !== null) {
 		currencyType.value = savedCurrencyType
 	}
@@ -122,6 +127,7 @@ function saveSettings() {
 	localStorage.setItem('selectedVersion', selectedVersion.value)
 	localStorage.setItem('showStackSize', showStackSize.value.toString())
 	localStorage.setItem('showFullNumbers', showFullNumbers.value.toString())
+	localStorage.setItem('hideSellPrices', hideSellPrices.value.toString())
 	localStorage.setItem('currencyType', currencyType.value)
 	if (diamondItemId.value) {
 		localStorage.setItem('diamondItemId', diamondItemId.value)
@@ -136,6 +142,7 @@ function saveSettings() {
 		roundToWhole: roundToWhole.value,
 		showStackSize: showStackSize.value,
 		showFullNumbers: showFullNumbers.value,
+		hideSellPrices: hideSellPrices.value,
 		currencyType: currencyType.value,
 		diamondItemId: diamondItemId.value,
 		diamondRoundingDirection: diamondRoundingDirection.value
@@ -331,6 +338,15 @@ defineExpose({
 					type="checkbox"
 					class="checkbox-input" />
 				<label for="showStackSize" class="text-sm text-gray-700">Show stack size</label>
+			</div>
+
+			<div class="flex items-center gap-2 mt-2">
+				<input
+					id="hideSellPrices"
+					v-model="hideSellPrices"
+					type="checkbox"
+					class="checkbox-input" />
+				<label for="hideSellPrices" class="text-sm text-gray-700">Hide sell prices</label>
 			</div>
 		</div>
 

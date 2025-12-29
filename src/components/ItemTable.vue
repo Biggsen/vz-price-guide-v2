@@ -9,10 +9,11 @@ import {
 	getDiamondPricing,
 	getDiamondShulkerPricing,
 	formatDiamondRatio,
-	formatDiamondRatioFull
+	formatDiamondRatioFull,
+	formatNumber
 } from '../utils/pricing.js'
 import { getImageUrl, getWikiUrl } from '../utils/image.js'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { Squares2X2Icon } from '@heroicons/vue/16/solid'
 
 // Sorting state
@@ -22,6 +23,31 @@ const sortDirection = ref('asc') // 'asc' or 'desc'
 // Track if user has clicked on any recipe icon (like a dismissible banner)
 // Check localStorage on component mount
 const hasClickedRecipe = ref(localStorage.getItem('hasClickedRecipe') === 'true')
+
+// Mobile detection (below 640px, Tailwind's sm breakpoint)
+const isMobile = ref(false)
+
+function checkMobile() {
+	isMobile.value = window.innerWidth < 640
+}
+
+onMounted(() => {
+	checkMobile()
+	window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+	window.removeEventListener('resize', checkMobile)
+})
+
+// Format diamond ratio for mobile (uses "/" instead of " per ")
+function formatDiamondRatioMobile(diamonds, quantity) {
+	if (diamonds === 0 || quantity === 0) return '—'
+	if (quantity === 1) {
+		return `${diamonds}/1`
+	}
+	return `${diamonds}/${quantity}`
+}
 
 const props = defineProps({
 	collection: {
@@ -71,6 +97,7 @@ const priceMultiplier = computed(() => props.economyConfig.priceMultiplier)
 const sellMargin = computed(() => props.economyConfig.sellMargin)
 const roundToWhole = computed(() => props.economyConfig.roundToWhole)
 const showFullNumbers = computed(() => props.economyConfig.showFullNumbers === true)
+const hideSellPrices = computed(() => props.economyConfig.hideSellPrices === true)
 const useSmartNumberFormatting = computed(() => !showFullNumbers.value)
 const currentVersion = computed(() => props.economyConfig.version || '1.21')
 const currencyType = computed(() => props.economyConfig.currencyType || 'money')
@@ -284,7 +311,7 @@ function getItemRecipe(item) {
 						<span v-else>Item/Block Name</span>
 					</th>
 					<th rowspan="2"></th>
-					<th colspan="2">
+					<th :colspan="hideSellPrices ? 1 : 2">
 						<span class="hidden min-[330px]:inline">
 							{{ isDiamondCurrency ? 'Diamond Price' : 'Unit Price' }}
 						</span>
@@ -292,7 +319,7 @@ function getItemRecipe(item) {
 							{{ isDiamondCurrency ? 'Diamond' : 'Unit' }}
 						</span>
 					</th>
-					<th colspan="2">
+					<th :colspan="hideSellPrices ? 1 : 2">
 						<span class="hidden min-[330px]:inline">
 							{{ isDiamondCurrency ? 'Diamond Price per Shulker' : 'Stack Price' }}
 						</span>
@@ -323,9 +350,9 @@ function getItemRecipe(item) {
 						</div>
 						<span v-else>Buy</span>
 					</th>
-					<th>Sell</th>
+					<th v-if="!hideSellPrices">Sell</th>
 					<th>Buy</th>
-					<th>Sell</th>
+					<th v-if="!hideSellPrices">Sell</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -423,16 +450,27 @@ function getItemRecipe(item) {
 						<template v-if="isDiamondCurrency">
 							<span
 								v-if="getItemDiamondPricing(item)"
-								:title="formatDiamondRatioFull(
+								:title="hideSellPrices ? undefined : formatDiamondRatioFull(
 									getItemDiamondPricing(item).buy.diamonds,
 									getItemDiamondPricing(item).buy.quantity,
 									item.name
 								)">
 								{{
-									formatDiamondRatio(
-										getItemDiamondPricing(item).buy.diamonds,
-										getItemDiamondPricing(item).buy.quantity
-									)
+									hideSellPrices && !isMobile
+										? formatDiamondRatioFull(
+												getItemDiamondPricing(item).buy.diamonds,
+												getItemDiamondPricing(item).buy.quantity,
+												item.name
+											)
+										: isMobile
+										? formatDiamondRatioMobile(
+												getItemDiamondPricing(item).buy.diamonds,
+												getItemDiamondPricing(item).buy.quantity
+											)
+										: formatDiamondRatio(
+												getItemDiamondPricing(item).buy.diamonds,
+												getItemDiamondPricing(item).buy.quantity
+											)
 								}}
 							</span>
 							<span v-else>—</span>
@@ -450,7 +488,7 @@ function getItemRecipe(item) {
 					</td>
 
 					<!-- Unit Sell Price -->
-					<td class="text-center">
+					<td v-if="!hideSellPrices" class="text-center">
 						<template v-if="isDiamondCurrency">
 							<span
 								v-if="getItemDiamondPricing(item)"
@@ -460,10 +498,15 @@ function getItemRecipe(item) {
 									item.name
 								)">
 								{{
-									formatDiamondRatio(
-										getItemDiamondPricing(item).sell.diamonds,
-										getItemDiamondPricing(item).sell.quantity
-									)
+									isMobile
+										? formatDiamondRatioMobile(
+												getItemDiamondPricing(item).sell.diamonds,
+												getItemDiamondPricing(item).sell.quantity
+											)
+										: formatDiamondRatio(
+												getItemDiamondPricing(item).sell.diamonds,
+												getItemDiamondPricing(item).sell.quantity
+											)
 								}}
 							</span>
 							<span v-else>—</span>
@@ -486,16 +529,18 @@ function getItemRecipe(item) {
 						<template v-if="isDiamondCurrency">
 							<span
 								v-if="getItemDiamondShulkerPricing(item)"
-								:title="formatDiamondRatioFull(
+								:title="hideSellPrices ? undefined : formatDiamondRatioFull(
 									getItemDiamondShulkerPricing(item).buy.diamonds,
 									getItemDiamondShulkerPricing(item).buy.quantity,
 									item.name
 								)">
 								{{
-									formatDiamondRatio(
-										getItemDiamondShulkerPricing(item).buy.diamonds,
-										getItemDiamondShulkerPricing(item).buy.quantity
-									)
+									hideSellPrices
+										? `${useSmartNumberFormatting ? formatNumber(getItemDiamondShulkerPricing(item).buy.diamonds) : getItemDiamondShulkerPricing(item).buy.diamonds} per shulker`
+										: formatDiamondRatio(
+												getItemDiamondShulkerPricing(item).buy.diamonds,
+												getItemDiamondShulkerPricing(item).buy.quantity
+											)
 								}}
 							</span>
 							<span v-else>—</span>
@@ -514,7 +559,7 @@ function getItemRecipe(item) {
 					</td>
 
 					<!-- Stack/Shulker Sell Price -->
-					<td class="text-center">
+					<td v-if="!hideSellPrices" class="text-center">
 						<template v-if="isDiamondCurrency">
 							<span
 								v-if="getItemDiamondShulkerPricing(item)"

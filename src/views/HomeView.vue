@@ -189,6 +189,9 @@ function handleSaveSettings(settings) {
 	roundToWhole.value = settings.roundToWhole
 	showStackSize.value = settings.showStackSize
 	showFullNumbers.value = settings.showFullNumbers === true
+	if (settings.hideSellPrices !== undefined) {
+		economyConfigComposable.hideSellPrices.value = settings.hideSellPrices
+	}
 	if (settings.currencyType) {
 		economyConfigComposable.currencyType.value = settings.currencyType
 	}
