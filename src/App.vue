@@ -28,7 +28,8 @@ function updateActiveMainNav() {
 		'/recipes',
 		'/recipes/import',
 		'/recipes/manage',
-		'/recipes/recalculate'
+		'/recipes/recalculate',
+		'/admin/enchantments'
 	]
 
 	// Tools-related routes (for authenticated users)

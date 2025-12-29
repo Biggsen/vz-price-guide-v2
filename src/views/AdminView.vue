@@ -6,7 +6,8 @@ import {
 	PlusIcon,
 	ArrowPathIcon,
 	ChartBarIcon,
-	UserIcon
+	UserIcon,
+	SparklesIcon
 } from '@heroicons/vue/24/outline'
 
 const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAdmin()
@@ -137,6 +138,64 @@ const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAd
 				</div>
 				<p class="text-gray-600 text-sm">
 					Recalculate item prices based on recipe costs and market data.
+				</p>
+			</RouterLink>
+		</div>
+
+		<!-- Enchantment Compatibility -->
+		<div class="mb-8">
+			<h2 class="text-2xl font-bold text-gray-900 mb-6">Enchantment Compatibility</h2>
+		</div>
+
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+			<!-- Migrate Items -->
+			<RouterLink
+				v-if="canBulkUpdate"
+				to="/admin/enchantments/migrate-items"
+				class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-purple-300">
+				<div class="flex items-center mb-4">
+					<div
+						class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+						<SparklesIcon class="w-6 h-6 text-purple-600" />
+					</div>
+					<h3 class="text-lg font-semibold text-gray-900 ml-3">Migrate Item Categories</h3>
+				</div>
+				<p class="text-gray-600 text-sm">
+					Migrate enchantment categories from resource files to item database.
+				</p>
+			</RouterLink>
+
+			<!-- Migrate Books -->
+			<RouterLink
+				v-if="canBulkUpdate"
+				to="/admin/enchantments/migrate-books"
+				class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-indigo-300">
+				<div class="flex items-center mb-4">
+					<div
+						class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+						<SparklesIcon class="w-6 h-6 text-indigo-600" />
+					</div>
+					<h3 class="text-lg font-semibold text-gray-900 ml-3">Migrate Book Metadata</h3>
+				</div>
+				<p class="text-gray-600 text-sm">
+					Migrate enchantment metadata from PrismarineJS data to enchanted books.
+				</p>
+			</RouterLink>
+
+			<!-- Manage Enchantable Items -->
+			<RouterLink
+				v-if="canBulkUpdate"
+				to="/admin/enchantments/manage"
+				class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-teal-300">
+				<div class="flex items-center mb-4">
+					<div
+						class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+						<SparklesIcon class="w-6 h-6 text-teal-600" />
+					</div>
+					<h3 class="text-lg font-semibold text-gray-900 ml-3">Manage Enchantable Items</h3>
+				</div>
+				<p class="text-gray-600 text-sm">
+					Review and toggle enchantable status for items with enchantment categories.
 				</p>
 			</RouterLink>
 		</div>

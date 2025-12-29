@@ -29,17 +29,21 @@ This leads to invalid crate configurations that won't work in-game.
 
 #### Regular Items Collection
 
-Add `enchantCategories` field to items that can be enchanted:
+Add `enchantCategories` and `enchantable` fields to items:
 
 ```javascript
 {
   // ... existing fields ...
   enchantCategories: string[] | null  // e.g., ["weapon", "fire_aspect", "melee_weapon", "durability"]
+  enchantable: boolean | null  // Explicit flag to mark items as enchantable or not (defaults to true during migration)
 }
 ```
 
-- If `enchantCategories` exists AND has length > 0, item is enchantable
-- If field is missing, `null`, or empty array, item cannot be enchanted
+**Enchantability Logic:**
+- Item is enchantable if: `enchantCategories` exists AND has length > 0 AND `enchantable !== false`
+- During migration, items with `enchantCategories` are automatically set with `enchantable: true`
+- The `enchantable` flag allows manual curation to mark false positives (items with categories that aren't actually enchantable in-game, like `brush`)
+- If `enchantable` field is missing or `null`, it defaults to `true` for items with `enchantCategories`
 
 #### Enchanted Book Items Collection
 
@@ -147,10 +151,35 @@ Migration will be handled through admin UI views rather than scripts, following 
    - `enchantment_max_level`: from PrismarineJS `maxLevel`
 6. Refresh and show progress
 
+### View 3: Manage Enchantable Items
+
+**Route**: `/admin/enchantments/manage`
+
+**Purpose**: Review and manually curate the `enchantable` flag for items with `enchantCategories`. This addresses false positives where items have enchantment categories in the resource files but aren't actually enchantable in-game (e.g., `brush`).
+
+**Features**:
+1. List all items with `enchantCategories` from Firestore
+2. Show current `enchantable` status (defaults to `true`)
+3. Display enchantment categories for context
+4. Filter by status: All / Enchantable / Not Enchantable
+5. Search by name or material_id
+6. Toggle `enchantable` flag for individual items
+7. Bulk update selected items to set `enchantable` to `true` or `false`
+8. Statistics display: Total items, Enchantable count, Not Enchantable count
+
+**Workflow**:
+1. After migration, review items with `enchantCategories` that shouldn't be enchantable
+2. Search/filter to find items like `brush` that have categories but aren't enchantable
+3. Mark them as `enchantable: false`
+4. The validation utilities will respect this flag
+
 ### Admin Dashboard Integration
 
 Add to `AdminView.vue`:
-- New section "Enchantment Compatibility" with links to both migration views
+- New section "Enchantment Compatibility" with links to:
+  - Migrate Item Categories (View 1)
+  - Migrate Book Metadata (View 2)
+  - Manage Enchantable Items (View 3)
 - Access controlled via `canBulkUpdate` permission (same as recipe import)
 
 ### Key Advantages of UI-Based Migration
@@ -172,7 +201,12 @@ Check if an item can accept enchantments.
 
 ```javascript
 function isItemEnchantable(item) {
-  return item.enchantCategories && Array.isArray(item.enchantCategories) && item.enchantCategories.length > 0
+  // Must have enchantCategories
+  if (!item.enchantCategories || !Array.isArray(item.enchantCategories) || item.enchantCategories.length === 0) {
+    return false
+  }
+  // Check explicit enchantable flag (defaults to true if not set)
+  return item.enchantable !== false
 }
 ```
 
