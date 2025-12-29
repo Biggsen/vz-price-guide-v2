@@ -245,7 +245,7 @@ defineExpose({
 
 		<!-- Currency Type -->
 		<div class="mb-6">
-			<label class="block text-sm font-medium text-gray-700 mb-2">Currency Type:</label>
+			<label class="block text-sm font-medium text-gray-700 mb-2">Currency:</label>
 			<div class="space-y-2">
 				<label class="flex items-center cursor-pointer">
 					<input
