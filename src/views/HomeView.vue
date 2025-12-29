@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import ItemTable from '../components/ItemTable.vue'
 import ExportModal from '../components/ExportModal.vue'
@@ -19,7 +19,7 @@ import { useItems } from '../composables/useItems.js'
 import {
 	RocketLaunchIcon
 } from '@heroicons/vue/24/solid'
-import { Cog6ToothIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
+import { Cog6ToothIcon, ArrowDownTrayIcon, ArrowUpIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const { user, canEditItems } = useAdmin()
@@ -123,6 +123,16 @@ const {
 
 const showCategoryFilters = ref(false) // Hidden by default on mobile
 
+// Back to top button state
+const showBackToTop = ref(false)
+
+function scrollToTop() {
+	window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function handleScroll() {
+	showBackToTop.value = window.scrollY > 300
+}
 
 // Initialize from query on mount
 onMounted(() => {
@@ -136,6 +146,15 @@ onMounted(() => {
 
 	// Initialize economy config from localStorage
 	economyConfigComposable.loadConfig()
+
+	// Add scroll listener for back to top button
+	window.addEventListener('scroll', handleScroll)
+	handleScroll() // Check initial scroll position
+})
+
+// Cleanup scroll listener
+onUnmounted(() => {
+	window.removeEventListener('scroll', handleScroll)
 })
 
 function toggleCategoryFilters() {
@@ -170,6 +189,15 @@ function handleSaveSettings(settings) {
 	roundToWhole.value = settings.roundToWhole
 	showStackSize.value = settings.showStackSize
 	showFullNumbers.value = settings.showFullNumbers === true
+	if (settings.currencyType) {
+		economyConfigComposable.currencyType.value = settings.currencyType
+	}
+	if (settings.diamondItemId !== undefined) {
+		economyConfigComposable.diamondItemId.value = settings.diamondItemId
+	}
+	if (settings.diamondRoundingDirection) {
+		economyConfigComposable.diamondRoundingDirection.value = settings.diamondRoundingDirection
+	}
 
 	// Close the modal
 	showSettingsModal.value = false
@@ -300,6 +328,7 @@ watch(
 				:category="cat"
 				:categories="enabledCategories"
 				:economyConfig="economyConfig"
+				:allItems="allItemsForCounts"
 				:viewMode="viewMode"
 				:layout="layout"
 				:showStackSize="showStackSize"
@@ -319,6 +348,7 @@ watch(
 			category="All Items"
 			:categories="enabledCategories"
 			:economyConfig="economyConfig"
+			:allItems="allItemsForCounts"
 			:viewMode="viewMode"
 			:layout="layout"
 			:showStackSize="showStackSize"
@@ -343,6 +373,16 @@ watch(
 		:selectedVersion="selectedVersion"
 		@close="closeSettingsModal"
 		@save-settings="handleSaveSettings" />
+
+	<!-- Back to Top Button -->
+	<button
+		v-if="showBackToTop"
+		@click="scrollToTop"
+		class="fixed bottom-6 right-6 z-50 bg-amulet text-white p-3 opacity-50 hover:opacity-100 transition-all duration-200 flex items-center justify-center"
+		aria-label="Back to top"
+		data-cy="back-to-top">
+		<ArrowUpIcon class="w-6 h-6" />
+	</button>
 </template>
 
 <style scoped>

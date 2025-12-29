@@ -11,6 +11,9 @@ export function useEconomyConfig(selectedVersion) {
 	const showFullNumbers = ref(false)
 	const viewMode = ref('categories') // 'categories' or 'list'
 	const layout = ref('comfortable') // 'comfortable' or 'condensed'
+	const currencyType = ref('money') // 'money' or 'diamond'
+	const diamondItemId = ref(null) // Reference to diamond item for ratio calculation
+	const diamondRoundingDirection = ref('nearest') // 'nearest' | 'up' | 'down'
 
 	// Computed
 	const economyConfig = computed(() => ({
@@ -19,7 +22,10 @@ export function useEconomyConfig(selectedVersion) {
 		roundToWhole: roundToWhole.value,
 		showStackSize: showStackSize.value,
 		showFullNumbers: showFullNumbers.value,
-		version: selectedVersion.value
+		version: selectedVersion.value,
+		currencyType: currencyType.value,
+		diamondItemId: diamondItemId.value,
+		diamondRoundingDirection: diamondRoundingDirection.value
 	}))
 
 	// Methods
@@ -32,6 +38,9 @@ export function useEconomyConfig(selectedVersion) {
 		const savedSelectedVersion = localStorage.getItem(STORAGE_KEYS.SELECTED_VERSION)
 		const savedShowStackSize = localStorage.getItem(STORAGE_KEYS.SHOW_STACK_SIZE)
 		const savedShowFullNumbers = localStorage.getItem(STORAGE_KEYS.SHOW_FULL_NUMBERS)
+		const savedCurrencyType = localStorage.getItem(STORAGE_KEYS.CURRENCY_TYPE)
+		const savedDiamondItemId = localStorage.getItem(STORAGE_KEYS.DIAMOND_ITEM_ID)
+		const savedDiamondRoundingDirection = localStorage.getItem(STORAGE_KEYS.DIAMOND_ROUNDING_DIRECTION)
 
 		if (savedPriceMultiplier !== null) {
 			priceMultiplier.value = parseFloat(savedPriceMultiplier)
@@ -54,6 +63,15 @@ export function useEconomyConfig(selectedVersion) {
 		if (savedShowFullNumbers !== null) {
 			showFullNumbers.value = savedShowFullNumbers === 'true'
 		}
+		if (savedCurrencyType !== null) {
+			currencyType.value = savedCurrencyType
+		}
+		if (savedDiamondItemId !== null) {
+			diamondItemId.value = savedDiamondItemId
+		}
+		if (savedDiamondRoundingDirection !== null) {
+			diamondRoundingDirection.value = savedDiamondRoundingDirection
+		}
 		// Note: selectedVersion is managed by useFilters, not here
 		// We just load it for initial setup, but it should be set by useFilters
 	}
@@ -69,6 +87,11 @@ export function useEconomyConfig(selectedVersion) {
 		}
 		localStorage.setItem(STORAGE_KEYS.SHOW_STACK_SIZE, showStackSize.value.toString())
 		localStorage.setItem(STORAGE_KEYS.SHOW_FULL_NUMBERS, showFullNumbers.value.toString())
+		localStorage.setItem(STORAGE_KEYS.CURRENCY_TYPE, currencyType.value)
+		if (diamondItemId.value) {
+			localStorage.setItem(STORAGE_KEYS.DIAMOND_ITEM_ID, diamondItemId.value)
+		}
+		localStorage.setItem(STORAGE_KEYS.DIAMOND_ROUNDING_DIRECTION, diamondRoundingDirection.value)
 	}
 
 	function resetToDefaults() {
@@ -79,6 +102,9 @@ export function useEconomyConfig(selectedVersion) {
 		showFullNumbers.value = false
 		viewMode.value = 'categories'
 		layout.value = 'comfortable'
+		currencyType.value = 'money'
+		diamondItemId.value = null
+		diamondRoundingDirection.value = 'nearest'
 		// Note: selectedVersion is managed by useFilters
 		saveConfig()
 	}
@@ -93,6 +119,9 @@ export function useEconomyConfig(selectedVersion) {
 			layout,
 			showStackSize,
 			showFullNumbers,
+			currencyType,
+			diamondItemId,
+			diamondRoundingDirection,
 			selectedVersion
 		],
 		() => {
@@ -112,6 +141,9 @@ export function useEconomyConfig(selectedVersion) {
 		showFullNumbers,
 		viewMode,
 		layout,
+		currencyType,
+		diamondItemId,
+		diamondRoundingDirection,
 
 		// Computed
 		economyConfig,

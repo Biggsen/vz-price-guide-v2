@@ -48,6 +48,9 @@ const sellMargin = ref(0.3)
 const roundToWhole = ref(false)
 const showStackSize = ref(false)
 const showFullNumbers = ref(false)
+const currencyType = ref('money')
+const diamondItemId = ref(null)
+const diamondRoundingDirection = ref('nearest')
 
 // Watch for prop changes and update local state
 watch(
@@ -73,6 +76,9 @@ function loadSettings() {
 	const savedSelectedVersion = localStorage.getItem('selectedVersion')
 	const savedShowStackSize = localStorage.getItem('showStackSize')
 	const savedShowFullNumbers = localStorage.getItem('showFullNumbers')
+	const savedCurrencyType = localStorage.getItem('currencyType')
+	const savedDiamondItemId = localStorage.getItem('diamondItemId')
+	const savedDiamondRoundingDirection = localStorage.getItem('diamondRoundingDirection')
 
 	// Check URL query parameters first for version
 	const versionParam = route.query.version
@@ -97,6 +103,15 @@ function loadSettings() {
 	if (savedShowFullNumbers !== null) {
 		showFullNumbers.value = savedShowFullNumbers === 'true'
 	}
+	if (savedCurrencyType !== null) {
+		currencyType.value = savedCurrencyType
+	}
+	if (savedDiamondItemId !== null) {
+		diamondItemId.value = savedDiamondItemId
+	}
+	if (savedDiamondRoundingDirection !== null) {
+		diamondRoundingDirection.value = savedDiamondRoundingDirection
+	}
 }
 
 // Save settings to localStorage and emit to parent
@@ -107,6 +122,11 @@ function saveSettings() {
 	localStorage.setItem('selectedVersion', selectedVersion.value)
 	localStorage.setItem('showStackSize', showStackSize.value.toString())
 	localStorage.setItem('showFullNumbers', showFullNumbers.value.toString())
+	localStorage.setItem('currencyType', currencyType.value)
+	if (diamondItemId.value) {
+		localStorage.setItem('diamondItemId', diamondItemId.value)
+	}
+	localStorage.setItem('diamondRoundingDirection', diamondRoundingDirection.value)
 
 	// Emit settings to parent component
 	emit('save-settings', {
@@ -115,7 +135,10 @@ function saveSettings() {
 		sellMargin: sellMargin.value,
 		roundToWhole: roundToWhole.value,
 		showStackSize: showStackSize.value,
-		showFullNumbers: showFullNumbers.value
+		showFullNumbers: showFullNumbers.value,
+		currencyType: currencyType.value,
+		diamondItemId: diamondItemId.value,
+		diamondRoundingDirection: diamondRoundingDirection.value
 	})
 }
 
@@ -211,6 +234,31 @@ defineExpose({
 					{{ version }}{{ !enabledVersions.includes(version) ? ' (Admin only)' : '' }}
 				</option>
 			</select>
+		</div>
+
+		<!-- Currency Type -->
+		<div class="mb-6">
+			<label class="block text-sm font-medium text-gray-700 mb-2">Currency Type:</label>
+			<div class="space-y-2">
+				<label class="flex items-center cursor-pointer">
+					<input
+						type="radio"
+						v-model="currencyType"
+						value="money"
+						class="mr-2 radio-input"
+						name="currencyType" />
+					<span class="text-sm">Money</span>
+				</label>
+				<label class="flex items-center cursor-pointer">
+					<input
+						type="radio"
+						v-model="currencyType"
+						value="diamond"
+						class="mr-2 radio-input"
+						name="currencyType" />
+					<span class="text-sm">Diamond</span>
+				</label>
+			</div>
 		</div>
 
 		<!-- Price Configuration -->
