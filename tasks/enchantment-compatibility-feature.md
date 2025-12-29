@@ -20,7 +20,7 @@ This leads to invalid crate configurations that won't work in-game.
 ### Data Sources
 
 1. **Resource Files** (`resource/items_*.json`): Contains `enchantCategories` arrays for enchantable items
-2. **PrismarineJS Data** (`enchantments.json`): Contains enchantment metadata including:
+2. **PrismarineJS Data** (`resource/enchantments_*.json`): Contains enchantment metadata including:
    - `category`: Which item category the enchantment applies to (e.g., `"fishing_rod"`, `"foot_armor"`, `"bow"`)
    - `exclude`: Array of enchantment names that cannot be combined with this one
    - `maxLevel`: Maximum enchantment level
@@ -38,8 +38,8 @@ Add `enchantCategories` field to items that can be enchanted:
 }
 ```
 
-- If `enchantCategories` exists (even if empty array), item is enchantable
-- If field is missing or `null`, item cannot be enchanted
+- If `enchantCategories` exists AND has length > 0, item is enchantable
+- If field is missing, `null`, or empty array, item cannot be enchanted
 
 #### Enchanted Book Items Collection
 
@@ -114,7 +114,7 @@ Migration will be handled through admin UI views rather than scripts, following 
 **Pattern**: Similar to `RecipeImportView.vue` with list view (see dependencies)
 
 **Features**:
-- Load PrismarineJS `enchantments.json` data (fetch from URL or local file)
+- Load PrismarineJS `enchantments_*.json` data from local resource files
 - Query all enchanted book items from Firestore (`category === 'enchantments'`)
 - List view showing:
   - Enchanted book name/material_id
@@ -134,7 +134,7 @@ Migration will be handled through admin UI views rather than scripts, following 
   - Visual progress indicators
 
 **Process**:
-1. Fetch/load PrismarineJS `enchantments.json`
+1. Load PrismarineJS `enchantments_*.json` file for selected version
 2. Query all enchanted book items from Firestore
 3. For each enchanted book:
    - Extract enchantment name from `material_id` (pattern: `enchanted_book_{name}_{level}`)
@@ -273,7 +273,8 @@ Enchantment selection in `CrateSingleView.vue` currently shows all enchantments 
 
 2. **Hide Enchantment Section for Non-Enchantable Items**
    - Hide "Enchantments" section when selected item is not enchantable
-   - Use `isItemEnchantable()` utility
+   - Hide "Enchantments" section when selected item is an enchanted book itself (category === 'enchantments')
+   - Use `isItemEnchantable()` utility and check item category
 
 3. **Validation on Add**
    - When adding enchantment, check for conflicts with existing enchantments
@@ -294,11 +295,14 @@ const enchantmentItems = computed(() => {
   if (!allItems.value) return []
   const allEnchItems = allItems.value.filter((item) => item.category === 'enchantments')
   
-  // If no item selected, show all (for enchanted books themselves)
-  if (!itemForm.value.item_id) return allEnchItems
+  // If no item selected, return empty (shouldn't show enchantments)
+  if (!itemForm.value.item_id) return []
   
   const selectedItem = getItemById(itemForm.value.item_id)
-  if (!selectedItem) return allEnchItems
+  if (!selectedItem) return []
+  
+  // Hide enchantments for enchanted books themselves
+  if (selectedItem.category === 'enchantments') return []
   
   // Filter to only compatible enchantments
   return getCompatibleEnchantments(selectedItem, allEnchItems)
@@ -334,7 +338,7 @@ function saveEnchantment() {
 
 1. **Add Enchantment Section**
    - Similar UI to crate rewards enchantment section
-   - Show/hide based on selected item's enchantability
+   - Show/hide based on selected item's enchantability (hide for non-enchantable items and enchanted books)
    - Add/remove enchantments functionality
 
 2. **Reuse Validation Logic**
@@ -381,6 +385,9 @@ Similar implementation to crate rewards:
    - Already filtered out of list (not shown)
    - If somehow selected, validation fails: "Lure can only be applied to fishing rods"
 
+6. User selects an enchanted book as the item
+   - Enchantment section is hidden (enchanted books cannot be enchanted)
+
 ## Dependencies
 
 - **Recipe Import UI Improvements** (`tasks/enhancement/recipe-import-ui-improvements.md`): The list view patterns and bulk import functionality from this enhancement will be used as reference/pattern for the enchanted book metadata migration view. This ensures consistency in admin UI patterns and leverages any improvements made to the recipe import workflow.
@@ -413,7 +420,7 @@ Similar implementation to crate rewards:
 - Test with items that cannot be enchanted (should hide section)
 - Test with items that can be enchanted but have no compatible enchantments (edge case)
 - Test all mutual exclusion rules (Sharpness/Smite, Protection types, Silk Touch/Fortune, etc.)
-- Test with enchanted books themselves (should allow any enchantment)
+- Test with enchanted books themselves (should hide enchantment section - enchanted books cannot be enchanted)
 - Test version-specific edge cases if any
 
 ## Success Criteria
