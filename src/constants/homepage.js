@@ -21,8 +21,6 @@ export const STORAGE_KEYS = {
 	CURRENCY_TYPE: 'currencyType',
 	DIAMOND_ITEM_ID: 'diamondItemId',
 	DIAMOND_ROUNDING_DIRECTION: 'diamondRoundingDirection',
-	ALERT_DISMISSED: 'crateRewardsToolAlertDismissed',
-	MOUNTS_ANNOUNCEMENT_DISMISSED: 'mountsOfMayhemAnnouncementDismissed',
 	DIAMOND_CURRENCY_ANNOUNCEMENT_DISMISSED: 'diamondCurrencyAnnouncementDismissed'
 }
 
