@@ -19,6 +19,7 @@ const selectedVersion = ref('all') // Changed from '1.16' to 'all'
 const existingRecipes = ref([])
 const searchQuery = ref('')
 const showOnlyInvalid = ref(false)
+const showOnlyCircular = ref(false)
 const sortKey = ref('material_id')
 const sortAsc = ref(true)
 
@@ -26,6 +27,101 @@ const sortAsc = ref(true)
 async function loadDbItems() {
 	const snapshot = await getDocs(collection(db, 'items'))
 	dbItems.value = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+}
+
+// Get the version of the recipe that would actually be used for price calculation
+// (considering version inheritance)
+function getActiveRecipeVersion(item, targetVersionKey) {
+	if (!item.recipes_by_version) return null
+
+	// Check if recipe exists for exact version
+	if (item.recipes_by_version[targetVersionKey]) {
+		return targetVersionKey.replace('_', '.')
+	}
+
+	// Find the version that would be used (same logic as calculateRecipePrice)
+	const availableVersions = Object.keys(item.recipes_by_version)
+	const sortedVersions = availableVersions.sort((a, b) => {
+		const aVersion = a.replace('_', '.')
+		const bVersion = b.replace('_', '.')
+		const [aMajor, aMinor] = aVersion.split('.').map(Number)
+		const [bMajor, bMinor] = bVersion.split('.').map(Number)
+		if (aMajor !== bMajor) return bMajor - aMajor
+		return bMinor - aMinor
+	})
+
+	const targetVersion = targetVersionKey.replace('_', '.')
+	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+
+	for (const availableVersion of sortedVersions) {
+		const availableVersionFormatted = availableVersion.replace('_', '.')
+		const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
+		if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
+			return availableVersionFormatted
+		}
+	}
+
+	return null
+}
+
+// Check if a recipe has a circular dependency
+function checkCircularDependency(recipe, item, dbItems, versionKey) {
+	if (!recipe || !recipe.ingredients || recipe.ingredients.length === 0) return false
+
+	const outputMaterialId = item.material_id
+	const outputCount = recipe.output_count || 1
+
+	// Check each ingredient to see if it has a recipe that uses this recipe's output
+	for (const ingredient of recipe.ingredients) {
+		const ingredientItem = dbItems.find((i) => i.material_id === ingredient.material_id)
+		if (!ingredientItem || !ingredientItem.recipes_by_version) continue
+
+		// Get recipe for this ingredient (check target version or earlier)
+		let ingredientRecipe = ingredientItem.recipes_by_version[versionKey]
+		if (!ingredientRecipe && ingredientItem.recipes_by_version) {
+			const availableVersions = Object.keys(ingredientItem.recipes_by_version)
+			const sortedVersions = availableVersions.sort((a, b) => {
+				const aVersion = a.replace('_', '.')
+				const bVersion = b.replace('_', '.')
+				const [aMajor, aMinor] = aVersion.split('.').map(Number)
+				const [bMajor, bMinor] = bVersion.split('.').map(Number)
+				if (aMajor !== bMajor) return bMajor - aMajor
+				return bMinor - aMinor
+			})
+			const targetVersion = versionKey.replace('_', '.')
+			const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+			for (const availableVersion of sortedVersions) {
+				const availableVersionFormatted = availableVersion.replace('_', '.')
+				const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
+				if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
+					ingredientRecipe = ingredientItem.recipes_by_version[availableVersion]
+					break
+				}
+			}
+		}
+
+		if (ingredientRecipe) {
+			// Check if this ingredient's recipe uses the output item as an ingredient
+			const ingredientRecipeIngredients = Array.isArray(ingredientRecipe)
+				? ingredientRecipe
+				: ingredientRecipe.ingredients || []
+
+			const createsCircularDependency = ingredientRecipeIngredients.some(
+				(ing) => ing.material_id === outputMaterialId
+			)
+
+			if (createsCircularDependency) {
+				// Determine if this recipe is decompression (1 → many) or compression (many → 1)
+				const isDecompression = outputCount > 1 && recipe.ingredients.length === 1
+				const isCompression = outputCount === 1 && ingredient.quantity > 1
+
+				// Return true if it's a circular dependency (both types are circular, but we want to show both)
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // Load existing recipes
@@ -47,6 +143,22 @@ async function loadExistingRecipes() {
 						(ingredient) => ingredient.material_id === item.material_id
 					)
 
+					// Check for circular dependencies
+					const recipeObj = Array.isArray(recipe)
+						? { ingredients: recipe, output_count: 1 }
+						: recipe
+					const hasCircularDependency = checkCircularDependency(
+						recipeObj,
+						item,
+						dbItems.value,
+						versionKey
+					)
+
+					// Check if this recipe is active (used for price calculation)
+					const isActive = item.pricing_type === 'dynamic'
+					const activeRecipeVersion = getActiveRecipeVersion(item, versionKey)
+					const isInherited = activeRecipeVersion !== null && activeRecipeVersion !== versionKey.replace('_', '.')
+
 					return {
 						id: item.id, // Include item ID for editing
 						material_id: item.material_id,
@@ -56,6 +168,10 @@ async function loadExistingRecipes() {
 						isValid: !selfReferencing, // Mark as invalid if self-referencing
 						pricing_type: item.pricing_type || 'static',
 						selfReferencing: selfReferencing, // Add flag for UI display
+						hasCircularDependency: hasCircularDependency, // Add flag for circular dependency
+						isActive: isActive, // Recipe is being used for price calculation
+						activeRecipeVersion: activeRecipeVersion, // Version of recipe actually used
+						isInherited: isInherited, // Recipe is inherited from different version
 						version: versionKey.replace('_', '.') // Add version for display
 					}
 				})
@@ -76,6 +192,22 @@ async function loadExistingRecipes() {
 					(ingredient) => ingredient.material_id === item.material_id
 				)
 
+				// Check for circular dependencies
+				const recipeObj = Array.isArray(recipe)
+					? { ingredients: recipe, output_count: 1 }
+					: recipe
+				const hasCircularDependency = checkCircularDependency(
+					recipeObj,
+					item,
+					dbItems.value,
+					versionKey
+				)
+
+				// Check if this recipe is active (used for price calculation)
+				const isActive = item.pricing_type === 'dynamic'
+				const activeRecipeVersion = getActiveRecipeVersion(item, versionKey)
+				const isInherited = activeRecipeVersion !== null && activeRecipeVersion !== selectedVersion.value
+
 				return {
 					id: item.id, // Include item ID for editing
 					material_id: item.material_id,
@@ -85,6 +217,10 @@ async function loadExistingRecipes() {
 					isValid: !selfReferencing, // Mark as invalid if self-referencing
 					pricing_type: item.pricing_type || 'static',
 					selfReferencing: selfReferencing, // Add flag for UI display
+					hasCircularDependency: hasCircularDependency, // Add flag for circular dependency
+					isActive: isActive, // Recipe is being used for price calculation
+					activeRecipeVersion: activeRecipeVersion, // Version of recipe actually used
+					isInherited: isInherited, // Recipe is inherited from different version
 					version: selectedVersion.value // Add version for display
 				}
 			})
@@ -144,6 +280,10 @@ const filteredExistingRecipes = computed(() => {
 		recipes = recipes.filter((recipe) => !recipe.isValid)
 	}
 
+	if (showOnlyCircular.value) {
+		recipes = recipes.filter((recipe) => recipe.hasCircularDependency)
+	}
+
 	// Only sort if a sortKey is selected (not null/empty)
 	if (sortKey.value) {
 		recipes = [...recipes].sort((a, b) => {
@@ -157,6 +297,15 @@ const filteredExistingRecipes = computed(() => {
 					.map((ing) => ing.material_id)
 					.join(',')
 					.toLowerCase()
+			} else if (sortKey.value === 'status') {
+				// Sort by status: Valid > Invalid, and Circular > Non-circular within each group
+				// Format: "valid-circular", "valid-noncircular", "invalid-circular", "invalid-noncircular"
+				const aValid = a.isValid ? 'valid' : 'invalid'
+				const aCircular = a.hasCircularDependency ? 'circular' : 'noncircular'
+				const bValid = b.isValid ? 'valid' : 'invalid'
+				const bCircular = b.hasCircularDependency ? 'circular' : 'noncircular'
+				aVal = `${aValid}-${aCircular}`
+				bVal = `${bValid}-${bCircular}`
 			} else {
 				aVal = a[sortKey.value]?.toString().toLowerCase() || ''
 				bVal = b[sortKey.value]?.toString().toLowerCase() || ''
@@ -241,6 +390,7 @@ function highlightMatch(text) {
 							() => {
 								searchQuery = ''
 								showOnlyInvalid = false
+								showOnlyCircular = false
 							}
 						"
 						class="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 border border-gray-300">
@@ -275,10 +425,28 @@ function highlightMatch(text) {
 						{{ version }}
 					</button>
 				</div>
-				<label class="inline-flex items-center mt-3">
-					<input type="checkbox" v-model="showOnlyInvalid" class="mr-2 checkbox-input" />
-					Show only invalid recipes
-				</label>
+				<div class="flex flex-col gap-2 mt-3">
+					<label class="inline-flex items-center">
+						<input type="checkbox" v-model="showOnlyInvalid" class="mr-2 checkbox-input" />
+						Show only invalid recipes
+					</label>
+					<label class="inline-flex items-center">
+						<input type="checkbox" v-model="showOnlyCircular" class="mr-2 checkbox-input" />
+						Show only circular dependency recipes
+					</label>
+				</div>
+			</div>
+
+			<!-- Recipe count -->
+			<div class="mb-4 text-sm text-gray-600">
+				Showing
+				<span class="font-semibold text-gray-900">{{ filteredExistingRecipes.length }}</span>
+				of
+				<span class="font-semibold text-gray-900">{{ existingRecipes.length }}</span>
+				recipes
+				<span v-if="filteredExistingRecipes.length !== existingRecipes.length">
+					(matching filters)
+				</span>
 			</div>
 
 			<!-- Recipes table -->
@@ -341,8 +509,17 @@ function highlightMatch(text) {
 									</div>
 								</th>
 								<th
-									class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-									Status
+									@click="setSort('status')"
+									class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none border-r border-gray-200">
+									<div class="flex items-center gap-1">
+										Status
+										<ArrowUpIcon
+											v-if="getSortIcon('status') === 'up'"
+											class="w-4 h-4 text-gray-700" />
+										<ArrowDownIcon
+											v-else-if="getSortIcon('status') === 'down'"
+											class="w-4 h-4 text-gray-700" />
+									</div>
 								</th>
 								<th
 									class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -383,11 +560,37 @@ function highlightMatch(text) {
 										v-html="highlightMatch(ing)"></div>
 								</td>
 								<td class="px-4 py-3 border-r border-gray-200">
-									<span
-										:class="recipe.isValid ? 'text-green-600' : 'text-red-600'"
-										:title="recipe.selfReferencing ? 'self-referencing' : ''">
-										{{ recipe.isValid ? 'Valid' : 'Invalid' }}
-									</span>
+									<div class="flex flex-col gap-1">
+										<span
+											:class="recipe.isValid ? 'text-green-600' : 'text-red-600'"
+											:title="recipe.selfReferencing ? 'self-referencing' : ''">
+											{{ recipe.isValid ? 'Valid' : 'Invalid' }}
+										</span>
+										<span
+											v-if="recipe.hasCircularDependency"
+											class="text-xs text-orange-600"
+											title="This recipe has a circular dependency with another recipe">
+											Circular
+										</span>
+										<span
+											v-if="recipe.isActive"
+											class="text-xs font-semibold text-blue-600"
+											title="This recipe is actively being used for price calculation">
+											Active
+										</span>
+										<span
+											v-else-if="recipe.pricing_type === 'static'"
+											class="text-xs text-gray-500"
+											title="Item uses static pricing, recipe not used for calculation">
+											Not used
+										</span>
+										<span
+											v-if="recipe.isInherited"
+											class="text-xs text-purple-600"
+											:title="`Recipe inherited from version ${recipe.activeRecipeVersion}`">
+											From {{ recipe.activeRecipeVersion }}
+										</span>
+									</div>
 								</td>
 								<td class="px-4 py-3">
 									<div class="flex gap-2">
