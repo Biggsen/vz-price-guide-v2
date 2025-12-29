@@ -20,6 +20,22 @@ import { getEffectivePrice } from '../utils/pricing.js'
 import { getImageUrl } from '../utils/image.js'
 import { versions, enabledCategories, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
+import {
+	getRewardDocValue,
+	getRewardDocChance,
+	getValueDisplay
+} from '../utils/crateRewardCalculations.js'
+import {
+	getDisplayItemImageFromDoc,
+	isMultiItemReward,
+	canEditReward,
+	stripColorCodes
+} from '../utils/crateRewardDisplay.js'
+import {
+	formatEnchantmentName,
+	extractEnchantmentsFromMaterialId,
+	getEnchantmentIds
+} from '../utils/enchantments.js'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import {
@@ -194,7 +210,10 @@ const currentVersion = computed(() => {
 // Calculate total value of current crate reward
 const totalValue = computed(() => {
 	if (!rewardDocuments.value || !allItems.value) return 0
-	return rewardDocuments.value.reduce((total, doc) => total + getRewardDocValue(doc), 0)
+	return rewardDocuments.value.reduce(
+		(total, doc) => total + getRewardDocValue(doc, allItems.value, currentVersion.value, getItemById),
+		0
+	)
 })
 
 // Calculate total weight of current crate reward
@@ -212,16 +231,16 @@ const sortedRewardDocuments = computed(() => {
 
 		switch (sortBy.value) {
 			case 'value':
-				aValue = getRewardDocValue(a)
-				bValue = getRewardDocValue(b)
+				aValue = getRewardDocValue(a, allItems.value, currentVersion.value, getItemById)
+				bValue = getRewardDocValue(b, allItems.value, currentVersion.value, getItemById)
 				break
 			case 'weight':
 				aValue = a.weight || 0
 				bValue = b.weight || 0
 				break
 			case 'chance':
-				aValue = getRewardDocChance(a)
-				bValue = getRewardDocChance(b)
+				aValue = getRewardDocChance(a, totalWeight.value)
+				bValue = getRewardDocChance(b, totalWeight.value)
 				break
 			default:
 				return 0
@@ -458,83 +477,6 @@ function getItemById(itemId) {
 	return allItems.value.find((item) => item.id === itemId) || null
 }
 
-function getItemName(itemId, rewardItem = null) {
-	const item = getItemById(itemId)
-	const name = rewardItem?.display_name || item?.name || 'Unknown Item'
-	return stripColorCodes(name)
-}
-
-// ===== DOCUMENT-BASED HELPER FUNCTIONS =====
-
-function getRewardDocValue(rewardDoc) {
-	// Check for custom value first (works for both item-based and itemless rewards)
-	if (rewardDoc.value_source === 'custom' && rewardDoc.custom_value) {
-		return rewardDoc.custom_value
-	}
-
-	// For catalog-based pricing, we need items
-	if (!rewardDoc.items || !rewardDoc.items.length || !allItems.value) return 0
-
-	let totalValue = 0
-	rewardDoc.items.forEach((item) => {
-		const itemData = getItemById(item.item_id)
-		if (itemData) {
-			const unitPrice = getEffectivePrice(itemData, currentVersion.value)
-			const baseValue = unitPrice * (item.quantity || 1)
-
-			// Calculate enchantment values from item's actual enchantments
-			let enchantmentValue = 0
-			if (item.enchantments && Array.isArray(item.enchantments)) {
-				item.enchantments.forEach((enchId) => {
-					const enchItem = getItemById(enchId)
-					if (enchItem) {
-						enchantmentValue += getEffectivePrice(enchItem, currentVersion.value)
-					}
-				})
-			}
-
-			totalValue += baseValue + enchantmentValue
-		}
-	})
-
-	return totalValue
-}
-
-function getRewardDocChance(rewardDoc) {
-	if (!totalWeight.value || totalWeight.value === 0) return 0
-	return ((rewardDoc.weight || 0) / totalWeight.value) * 100
-}
-
-function getValueDisplay(rewardDoc) {
-	const value = getRewardDocValue(rewardDoc)
-
-	// Show "Unknown" if value is 0
-	if (value === 0) {
-		return 'Unknown'
-	}
-
-	return Math.ceil(value)
-}
-
-function getDisplayItemImageFromDoc(rewardDoc) {
-	if (rewardDoc.display_item) {
-		const displayItem = getItemById(rewardDoc.display_item)
-		if (displayItem?.image) {
-			return displayItem.image
-		}
-	}
-	return null
-}
-
-function isMultiItemReward(rewardDoc) {
-	return rewardDoc.items && rewardDoc.items.length > 1
-}
-
-function canEditReward(rewardDoc) {
-	// Can edit if single-item reward
-	return !rewardDoc.items || rewardDoc.items.length <= 1
-}
-
 // ===== DOCUMENT UPDATE FUNCTIONS =====
 
 async function updateRewardDocument(rewardDoc, updates) {
@@ -686,35 +628,6 @@ function generateDisplayName(itemForm) {
 	return `<white>${quantityPrefix}${capitalizedItemName}`
 }
 
-// Helper function to get enchantment IDs from either array or object format
-function getEnchantmentIds(enchantments) {
-	if (!enchantments) return []
-
-	// Handle array format (new structure)
-	if (Array.isArray(enchantments)) {
-		return enchantments
-	}
-
-	// Handle object format (legacy structure)
-	if (typeof enchantments === 'object') {
-		return Object.keys(enchantments)
-	}
-
-	return []
-}
-
-// Helper function to strip color codes from text
-function stripColorCodes(text) {
-	if (!text) return ''
-
-	// Remove <color> format (e.g., <red>, <blue>, <#ff0000>)
-	let cleaned = text.replace(/<[^>]*>/g, '')
-
-	// Remove § format color codes (e.g., §c, §4, §r)
-	cleaned = cleaned.replace(/§[0-9a-fk-or]/gi, '')
-
-	return cleaned.trim()
-}
 
 async function saveItem() {
 	// Save item to crate reward
@@ -915,17 +828,17 @@ function copyRewardList() {
 		.map((rewardDoc) => {
 			if (isMultiItemReward(rewardDoc)) {
 				// For multi-item rewards, show summary
-				const totalValue = getRewardDocValue(rewardDoc)
-				const chance = getRewardDocChance(rewardDoc).toFixed(1)
+				const totalValue = getRewardDocValue(rewardDoc, allItems.value, currentVersion.value, getItemById)
+				const chance = getRewardDocChance(rewardDoc, totalWeight.value).toFixed(1)
 				return `${stripColorCodes(
 					rewardDoc.display_name || 'Multi-item Reward'
-				)} - Value: ${getValueDisplay(rewardDoc)} - Weight: ${
+				)} - Value: ${getValueDisplay(rewardDoc, allItems.value, currentVersion.value, getItemById)} - Weight: ${
 					rewardDoc.weight
 				} - Chance: ${chance}% (${rewardDoc.items.length} items)`
 			} else {
 				// For single-item rewards, show details
 				const singleItem = rewardDoc.items?.[0]
-				const chance = getRewardDocChance(rewardDoc).toFixed(1)
+				const chance = getRewardDocChance(rewardDoc, totalWeight.value).toFixed(1)
 
 				if (!singleItem) {
 					return `${stripColorCodes(
@@ -946,7 +859,7 @@ function copyRewardList() {
 
 				return `${singleItem.quantity || 1}x ${stripColorCodes(
 					itemData.name
-				)} - Value: ${getValueDisplay(rewardDoc)} - Weight: ${
+				)} - Value: ${getValueDisplay(rewardDoc, allItems.value, currentVersion.value, getItemById)} - Weight: ${
 					rewardDoc.weight
 				} - Chance: ${chance}%`
 			}
@@ -987,108 +900,6 @@ function formatDate(dateValue) {
 	return date.toLocaleDateString()
 }
 
-function formatEnchantmentName(enchantmentId) {
-	if (!enchantmentId) return ''
-
-	// Get enchantment item from allItems
-	const enchantmentItem = getItemById(enchantmentId)
-	if (!enchantmentItem) return enchantmentId
-
-	// Try to extract from material_id first (most reliable)
-	const materialId = enchantmentItem.material_id
-	if (materialId && materialId.startsWith('enchanted_book_')) {
-		// Extract enchantment name from material_id like "enchanted_book_aqua_affinity_1"
-		const enchantmentPart = materialId.replace('enchanted_book_', '')
-
-		// Try to extract enchantment with level first (e.g., "unbreaking_3" -> "unbreaking 3")
-		const enchantWithLevelMatch = enchantmentPart.match(/^(.+)_(\d+)$/)
-		if (enchantWithLevelMatch) {
-			const enchantName = enchantWithLevelMatch[1]
-			const level = enchantWithLevelMatch[2]
-
-			// Replace underscores with spaces, then capitalize each word
-			const capitalizedEnchant = enchantName
-				.replace(/_/g, ' ')
-				.replace(/\b\w/g, (l) => l.toUpperCase())
-			return `${capitalizedEnchant} ${level}`
-		}
-
-		// Try enchantment without level (e.g., "silk_touch" -> "silk touch")
-		const enchantWithoutLevelMatch = enchantmentPart.match(/^(.+)$/)
-		if (enchantWithoutLevelMatch) {
-			const enchantName = enchantWithoutLevelMatch[1]
-			// Replace underscores with spaces, then capitalize each word
-			const capitalizedEnchant = enchantName
-				.replace(/_/g, ' ')
-				.replace(/\b\w/g, (l) => l.toUpperCase())
-			return capitalizedEnchant
-		}
-	}
-
-	// Fallback: Try to extract from item name
-	const itemName = enchantmentItem.name || enchantmentId
-
-	// Expected format: "Enchanted Book (Sharpness IV)"
-	const match = itemName.match(/Enchanted Book \((.+?)\s*(I|II|III|IV|V|X)?\)/)
-
-	if (match) {
-		const enchantment = match[1]
-		const level = match[2]
-
-		// Capitalize the first letter of each word in enchantment
-		const capitalizedEnchantment = enchantment.replace(/\b\w/g, (l) => l.toUpperCase())
-
-		if (level) {
-			// Convert Roman numerals to numbers for consistency
-			const levelMap = {
-				I: '1',
-				II: '2',
-				III: '3',
-				IV: '4',
-				V: '5',
-				X: '10'
-			}
-			const displayLevel = levelMap[level] || level
-			return `${capitalizedEnchantment} ${displayLevel}`
-		} else {
-			// No level found, just return the enchantment name
-			return capitalizedEnchantment
-		}
-	}
-
-	// Final fallback - clean up the name
-	return itemName
-		.replace(/^enchanted book /i, '')
-		.replace(/_/g, ' ')
-		.replace(/\b\w/g, (l) => l.toUpperCase())
-}
-
-// Extract enchantments from material_id (e.g., "enchanted_book_mending_1" -> [{id: "mending", level: 1}])
-function extractEnchantmentsFromMaterialId(materialId) {
-	if (!materialId || !materialId.startsWith('enchanted_book_')) {
-		return []
-	}
-
-	// Remove "enchanted_book_" prefix
-	const enchantmentPart = materialId.replace('enchanted_book_', '')
-
-	// Try to extract enchantment with level first (e.g., "mending_1" -> "mending:1")
-	const enchantWithLevelMatch = enchantmentPart.match(/^(.+)_(\d+)$/)
-	if (enchantWithLevelMatch) {
-		const enchantName = enchantWithLevelMatch[1]
-		const enchantLevel = parseInt(enchantWithLevelMatch[2])
-		return [{ id: enchantName, level: enchantLevel }]
-	}
-
-	// Try to extract enchantment without level (e.g., "silk_touch" -> "silk_touch:1")
-	const enchantWithoutLevelMatch = enchantmentPart.match(/^(.+)$/)
-	if (enchantWithoutLevelMatch) {
-		const enchantName = enchantWithoutLevelMatch[1]
-		return [{ id: enchantName, level: 1 }]
-	}
-
-	return []
-}
 
 // Item search functions
 function selectItem(item) {
@@ -1830,9 +1641,9 @@ watch(selectedCrate, (crate) => {
 									<div
 										class="w-16 max-[640px]:w-12 bg-highland border-r-2 border-white flex items-center justify-center">
 										<img
-											v-if="getDisplayItemImageFromDoc(rewardDoc)"
+											v-if="getDisplayItemImageFromDoc(rewardDoc, getItemById)"
 											:src="
-												getImageUrl(getDisplayItemImageFromDoc(rewardDoc))
+												getImageUrl(getDisplayItemImageFromDoc(rewardDoc, getItemById))
 											"
 											:alt="rewardDoc.display_name"
 											loading="lazy"
@@ -1857,7 +1668,7 @@ watch(selectedCrate, (crate) => {
 											</h4>
 											<div class="text-sm text-heavy-metal">
 												<span class="font-medium">Value:</span>
-												{{ getValueDisplay(rewardDoc) }}
+												{{ getValueDisplay(rewardDoc, allItems, currentVersion, getItemById) }}
 											</div>
 											<!-- Items list (only for multi-item rewards) -->
 											<div
@@ -1922,7 +1733,7 @@ watch(selectedCrate, (crate) => {
 														)"
 														:key="enchantmentId"
 														class="px-2 py-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase">
-														{{ formatEnchantmentName(enchantmentId) }}
+														{{ formatEnchantmentName(enchantmentId, getItemById) }}
 													</span>
 												</div>
 											</div>
@@ -2005,7 +1816,7 @@ watch(selectedCrate, (crate) => {
 												class="bg-transparent px-2 py-1 inline-block min-w-[60px] text-center">
 												<span
 													class="text-sm sm:text-base font-semibold text-heavy-metal">
-													{{ getRewardDocChance(rewardDoc).toFixed(1) }}%
+													{{ getRewardDocChance(rewardDoc, totalWeight).toFixed(1) }}%
 												</span>
 											</div>
 										</div>
@@ -2453,7 +2264,7 @@ watch(selectedCrate, (crate) => {
 							v-for="(level, enchantment, index) in itemForm.enchantments"
 							:key="index"
 							class="flex items-center gap-2 pl-3 pr-2 py-1 bg-sea-mist text-heavy-metal rounded-md text-sm font-medium">
-							<span>{{ formatEnchantmentName(enchantment) }}</span>
+							<span>{{ formatEnchantmentName(enchantment, getItemById) }}</span>
 							<button
 								type="button"
 								@click="removeEnchantment(enchantment)"
@@ -2502,7 +2313,7 @@ watch(selectedCrate, (crate) => {
 						v-for="enchantment in enchantmentItems"
 						:key="enchantment.id"
 						:value="enchantment.id">
-						{{ formatEnchantmentName(enchantment.id) }}
+						{{ formatEnchantmentName(enchantment.id, getItemById) }}
 					</option>
 				</select>
 			</div>
@@ -2782,8 +2593,8 @@ watch(selectedCrate, (crate) => {
 							class="p-2 bg-white rounded border">
 							<div class="flex items-start gap-2 mb-1">
 								<img
-									v-if="getDisplayItemImageFromDoc(result.item)"
-									:src="getImageUrl(getDisplayItemImageFromDoc(result.item))"
+									v-if="getDisplayItemImageFromDoc(result.item, getItemById)"
+									:src="getImageUrl(getDisplayItemImageFromDoc(result.item, getItemById))"
 									:alt="result.item.display_name"
 									loading="lazy"
 									decoding="async"
@@ -2799,7 +2610,7 @@ watch(selectedCrate, (crate) => {
 										}}
 									</div>
 									<div class="text-xs text-gray-500">
-										{{ getRewardDocChance(result.item).toFixed(1) }}% chance
+										{{ getRewardDocChance(result.item, totalWeight).toFixed(1) }}% chance
 									</div>
 									<!-- Multi-item indicator -->
 									<div
@@ -2822,7 +2633,7 @@ watch(selectedCrate, (crate) => {
 												)"
 												:key="enchantmentId"
 												class="text-heavy-metal text-[10px] font-medium capitalize leading-none">
-												{{ formatEnchantmentName(enchantmentId) }}
+												{{ formatEnchantmentName(enchantmentId, getItemById) }}
 											</span>
 										</div>
 									</div>
