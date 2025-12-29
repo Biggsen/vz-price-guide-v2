@@ -16,6 +16,7 @@ import { useAdmin } from '../utils/admin.js'
 import { useEconomyConfig } from '../composables/useEconomyConfig.js'
 import { useFilters } from '../composables/useFilters.js'
 import { useItems } from '../composables/useItems.js'
+import { getImageUrl } from '../utils/image.js'
 import {
 	RocketLaunchIcon
 } from '@heroicons/vue/24/solid'
@@ -118,8 +119,22 @@ const {
 	viewMode,
 	layout,
 	economyConfig,
-	loadConfig
+	loadConfig,
+	currencyType,
+	diamondItemId
 } = economyConfigComposable
+
+// Find diamond item for currency indicator
+const diamondItem = computed(() => {
+	if (!diamondItemId.value || !allItemsForCounts.value || allItemsForCounts.value.length === 0) {
+		// Fallback: try to find by material_id 'diamond'
+		return allItemsForCounts.value?.find((item) => item.material_id === 'diamond') || null
+	}
+	return allItemsForCounts.value?.find((item) => item.id === diamondItemId.value || item.material_id === 'diamond') || null
+})
+
+// Check if we're in diamond currency mode
+const isDiamondCurrency = computed(() => currencyType.value === 'diamond' && diamondItem.value !== null)
 
 const showCategoryFilters = ref(false) // Hidden by default on mobile
 
@@ -305,7 +320,15 @@ watch(
 		<div class="mb-4 text-sm text-gray-asparagus font-medium">
 			<span v-if="isLoading">Loading price guide...</span>
 			<span v-else>
-				<span class="text-xl text-heavy-metal font-bold">MC {{ selectedVersion }}</span>
+				<div class="flex items-center gap-2">
+					<span class="text-xl text-heavy-metal font-bold">MC {{ selectedVersion }}</span>
+					<img
+						v-if="isDiamondCurrency && diamondItem"
+						:src="getImageUrl(`/images/items/${diamondItem.material_id}.png`, { width: 24 })"
+						:alt="diamondItem.name || 'Diamond'"
+						class="w-6 h-6"
+						title="Diamond Currency Mode" />
+				</div>
 				<span v-if="canEditItems" class="ml-4 text-xs text-gray-500">
 					Cache: {{ getCacheStats().hits }}/{{
 						getCacheStats().hits + getCacheStats().misses

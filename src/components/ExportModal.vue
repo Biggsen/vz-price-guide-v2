@@ -9,7 +9,9 @@ import {
 	buyUnitPriceRaw,
 	sellUnitPriceRaw,
 	buyStackPriceRaw,
-	sellStackPriceRaw
+	sellStackPriceRaw,
+	getDiamondPricing,
+	getDiamondShulkerPricing
 } from '../utils/pricing.js'
 import { useRouter } from 'vue-router'
 import BaseModal from './BaseModal.vue'
@@ -95,17 +97,42 @@ watch(
 	{ immediate: true }
 )
 
-// Available price fields
-const priceFields = [
-	{ key: 'unit_buy', label: 'Unit Buy' },
-	{ key: 'unit_sell', label: 'Unit Sell' },
-	{ key: 'stack_buy', label: 'Stack Buy' },
-	{ key: 'stack_sell', label: 'Stack Sell' }
-]
-
 // Computed properties
 const priceMultiplier = computed(() => props.economyConfig.priceMultiplier || 1)
 const sellMargin = computed(() => props.economyConfig.sellMargin || 0.3)
+const currencyType = computed(() => props.economyConfig.currencyType || 'money')
+const diamondItemId = computed(() => props.economyConfig.diamondItemId)
+const diamondRoundingDirection = computed(() => props.economyConfig.diamondRoundingDirection || 'nearest')
+
+// Find diamond item from all items
+const diamondItem = computed(() => {
+	if (!diamondItemId.value || !props.items || props.items.length === 0) {
+		// Fallback: try to find by material_id 'diamond'
+		return props.items?.find((item) => item.material_id === 'diamond') || null
+	}
+	return props.items?.find((item) => item.id === diamondItemId.value || item.material_id === 'diamond') || null
+})
+
+// Check if we're in diamond currency mode
+const isDiamondCurrency = computed(() => currencyType.value === 'diamond' && diamondItem.value !== null)
+
+// Available price fields - labels change based on currency type
+const priceFields = computed(() => {
+	if (isDiamondCurrency.value) {
+		return [
+			{ key: 'unit_buy', label: 'Buy' },
+			{ key: 'unit_sell', label: 'Sell' },
+			{ key: 'stack_buy', label: 'Shulker Buy' },
+			{ key: 'stack_sell', label: 'Shulker Sell' }
+		]
+	}
+	return [
+		{ key: 'unit_buy', label: 'Unit Buy' },
+		{ key: 'unit_sell', label: 'Unit Sell' },
+		{ key: 'stack_buy', label: 'Stack Buy' },
+		{ key: 'stack_sell', label: 'Stack Sell' }
+	]
+})
 
 // Helper function to compare version strings (e.g., "1.16" vs "1.17")
 function isVersionLessOrEqual(itemVersion, targetVersion) {
@@ -211,38 +238,70 @@ const exportData = computed(() => {
 			itemData.stack = stackSize
 		}
 
-		// Add selected price fields using same logic as main interface (raw numbers for export)
-		if (selectedPriceFields.value.includes('unit_buy')) {
-			itemData.unit_buy = buyUnitPriceRaw(
-				basePrice,
-				priceMultiplier.value,
-				roundToWhole.value
-			)
-		}
-		if (selectedPriceFields.value.includes('unit_sell')) {
-			itemData.unit_sell = sellUnitPriceRaw(
-				basePrice,
-				priceMultiplier.value,
+		// Handle diamond currency vs money currency differently
+		if (isDiamondCurrency.value && diamondItem.value) {
+			// Diamond currency: export ratio objects with simpler property names
+			const diamondPricing = getDiamondPricing(
+				item,
+				diamondItem.value,
+				versionKey,
 				sellMargin.value,
-				roundToWhole.value
+				diamondRoundingDirection.value
 			)
-		}
-		if (selectedPriceFields.value.includes('stack_buy')) {
-			itemData.stack_buy = buyStackPriceRaw(
-				basePrice,
-				stackSize,
-				priceMultiplier.value,
-				roundToWhole.value
-			)
-		}
-		if (selectedPriceFields.value.includes('stack_sell')) {
-			itemData.stack_sell = sellStackPriceRaw(
-				basePrice,
-				stackSize,
-				priceMultiplier.value,
+			const shulkerPricing = getDiamondShulkerPricing(
+				item,
+				diamondItem.value,
+				versionKey,
 				sellMargin.value,
-				roundToWhole.value
+				diamondRoundingDirection.value
 			)
+
+			if (selectedPriceFields.value.includes('unit_buy')) {
+				itemData.buy = diamondPricing.buy
+			}
+			if (selectedPriceFields.value.includes('unit_sell')) {
+				itemData.sell = diamondPricing.sell
+			}
+			if (selectedPriceFields.value.includes('stack_buy')) {
+				itemData.shulker_buy = shulkerPricing.buy
+			}
+			if (selectedPriceFields.value.includes('stack_sell')) {
+				itemData.shulker_sell = shulkerPricing.sell
+			}
+		} else {
+			// Money currency: export raw numbers with existing property names
+			if (selectedPriceFields.value.includes('unit_buy')) {
+				itemData.unit_buy = buyUnitPriceRaw(
+					basePrice,
+					priceMultiplier.value,
+					roundToWhole.value
+				)
+			}
+			if (selectedPriceFields.value.includes('unit_sell')) {
+				itemData.unit_sell = sellUnitPriceRaw(
+					basePrice,
+					priceMultiplier.value,
+					sellMargin.value,
+					roundToWhole.value
+				)
+			}
+			if (selectedPriceFields.value.includes('stack_buy')) {
+				itemData.stack_buy = buyStackPriceRaw(
+					basePrice,
+					stackSize,
+					priceMultiplier.value,
+					roundToWhole.value
+				)
+			}
+			if (selectedPriceFields.value.includes('stack_sell')) {
+				itemData.stack_sell = sellStackPriceRaw(
+					basePrice,
+					stackSize,
+					priceMultiplier.value,
+					sellMargin.value,
+					roundToWhole.value
+				)
+			}
 		}
 
 		data[item.material_id] = itemData
@@ -255,11 +314,18 @@ const exportData = computed(() => {
 		version: selectedVersion.value,
 		export_date: new Date().toISOString(),
 		item_count: itemsToProcess.length,
+		currency_type: currencyType.value,
 		price_multiplier: priceMultiplier.value,
 		sell_margin: sellMargin.value,
 		round_to_whole: roundToWhole.value,
 		sort_field: sortField.value,
 		sort_direction: sortField.value === 'default' ? 'curated' : sortDirection.value
+	}
+
+	// Add diamond-specific metadata if applicable
+	if (isDiamondCurrency.value && diamondItem.value) {
+		data._export_metadata.diamond_item_id = diamondItem.value.material_id
+		data._export_metadata.diamond_rounding_direction = diamondRoundingDirection.value
 	}
 
 	return data
@@ -287,9 +353,20 @@ function exportYAML() {
 function generateYAML(data) {
 	let yaml = ''
 	for (const [key, value] of Object.entries(data)) {
+		if (key === '_export_metadata') {
+			// Skip metadata in YAML for cleaner output
+			continue
+		}
 		yaml += `${key}:\n`
 		for (const [field, val] of Object.entries(value)) {
-			yaml += `  ${field}: ${val}\n`
+			// Handle ratio objects for diamond currency
+			if (typeof val === 'object' && val !== null && 'diamonds' in val && 'quantity' in val) {
+				yaml += `  ${field}:\n`
+				yaml += `    diamonds: ${val.diamonds}\n`
+				yaml += `    quantity: ${val.quantity}\n`
+			} else {
+				yaml += `  ${field}: ${val}\n`
+			}
 		}
 		yaml += '\n'
 	}
