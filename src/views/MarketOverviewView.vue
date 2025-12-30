@@ -11,6 +11,7 @@ import BaseStatCard from '../components/BaseStatCard.vue'
 import BaseTable from '../components/BaseTable.vue'
 import BaseCard from '../components/BaseCard.vue'
 import BaseButton from '../components/BaseButton.vue'
+import BaseModal from '../components/BaseModal.vue'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
@@ -23,6 +24,7 @@ import {
 	CheckCircleIcon,
 	ChevronRightIcon,
 	CurrencyDollarIcon,
+	Cog6ToothIcon,
 	FolderIcon,
 	TagIcon,
 	UserIcon,
@@ -46,6 +48,12 @@ const searchQuery = ref('')
 // View mode state
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
+const showEnchantments = ref(true) // Show enchantments in item table
+const hideOutOfStock = ref(false) // Hide items that are out of stock
+const hideStockFull = ref(false) // Hide items that have full stock
+
+// Settings modal state
+const showSettingsModal = ref(false)
 
 // Sorting state - initialize from sessionStorage if available
 function loadSortSettings() {
@@ -276,33 +284,48 @@ const filteredItemCount = computed(() => {
 	)
 })
 
-// Filtered version for search
+// Filtered version for search and stock filters
 const filteredShopItemsByCategory = computed(() => {
 	if (!shopItemsByCategory.value) return {}
 
 	const query = searchQuery.value.trim().toLowerCase()
-	if (!query) return shopItemsByCategory.value
-
 	const filtered = {}
 
 	Object.entries(shopItemsByCategory.value).forEach(([category, items]) => {
 		const filteredItems = items.filter((item) => {
 			if (!item.itemData?.name) return false
-			const itemName = item.itemData.name.toLowerCase()
 
-			// Split search query by commas only, then trim and filter out empty strings
-			// Spaces within terms are preserved (e.g., "iron ingot" stays as one term)
-			// Comma-separated terms use OR logic (e.g., "iron,ingot" matches items with "iron" OR "ingot")
-			const searchTerms = query
-				.split(',')
-				.map((term) => term.trim())
-				.filter((term) => term.length > 0)
+			// Filter by stock status
+			if (hideOutOfStock.value && item.stock_quantity === 0) {
+				return false
+			}
 
-			// If no valid search terms, return all items
-			if (searchTerms.length === 0) return true
+			if (hideStockFull.value && item.stock_full === true) {
+				return false
+			}
 
-			// Check if item name contains any of the search terms (OR logic for comma-separated terms)
-			return searchTerms.some((term) => itemName.includes(term))
+			// Filter by search query if provided
+			if (query) {
+				const itemName = item.itemData.name.toLowerCase()
+
+				// Split search query by commas only, then trim and filter out empty strings
+				// Spaces within terms are preserved (e.g., "iron ingot" stays as one term)
+				// Comma-separated terms use OR logic (e.g., "iron,ingot" matches items with "iron" OR "ingot")
+				const searchTerms = query
+					.split(',')
+					.map((term) => term.trim())
+					.filter((term) => term.length > 0)
+
+				// If no valid search terms, return all items
+				if (searchTerms.length === 0) return true
+
+				// Check if item name contains any of the search terms (OR logic for comma-separated terms)
+				if (!searchTerms.some((term) => itemName.includes(term))) {
+					return false
+				}
+			}
+
+			return true
 		})
 
 		if (filteredItems.length > 0) {
@@ -518,7 +541,7 @@ onMounted(() => {
 
 // Save view settings when they change
 watch(
-	[viewMode, layout, searchQuery],
+	[viewMode, layout, searchQuery, showEnchantments, hideOutOfStock, hideStockFull],
 	() => {
 		saveViewSettings()
 	},
@@ -542,6 +565,9 @@ function loadViewSettings() {
 		const savedViewMode = localStorage.getItem('marketOverviewViewMode')
 		const savedLayout = localStorage.getItem('marketOverviewLayout')
 		const savedSearchQuery = localStorage.getItem('marketOverviewSearchQuery')
+		const savedShowEnchantments = localStorage.getItem('marketOverviewShowEnchantments')
+		const savedHideOutOfStock = localStorage.getItem('marketOverviewHideOutOfStock')
+		const savedHideStockFull = localStorage.getItem('marketOverviewHideStockFull')
 
 		if (savedViewMode && ['categories', 'list'].includes(savedViewMode)) {
 			viewMode.value = savedViewMode
@@ -554,6 +580,18 @@ function loadViewSettings() {
 		if (savedSearchQuery !== null) {
 			searchQuery.value = savedSearchQuery
 		}
+
+		if (savedShowEnchantments !== null) {
+			showEnchantments.value = savedShowEnchantments === 'true'
+		}
+
+		if (savedHideOutOfStock !== null) {
+			hideOutOfStock.value = savedHideOutOfStock === 'true'
+		}
+
+		if (savedHideStockFull !== null) {
+			hideStockFull.value = savedHideStockFull === 'true'
+		}
 	} catch (error) {
 		console.warn('Error loading view settings:', error)
 	}
@@ -564,6 +602,9 @@ function saveViewSettings() {
 		localStorage.setItem('marketOverviewViewMode', viewMode.value)
 		localStorage.setItem('marketOverviewLayout', layout.value)
 		localStorage.setItem('marketOverviewSearchQuery', searchQuery.value)
+		localStorage.setItem('marketOverviewShowEnchantments', showEnchantments.value.toString())
+		localStorage.setItem('marketOverviewHideOutOfStock', hideOutOfStock.value.toString())
+		localStorage.setItem('marketOverviewHideStockFull', hideStockFull.value.toString())
 	} catch (error) {
 		console.warn('Error saving view settings:', error)
 	}
@@ -954,6 +995,19 @@ const priceAnalysis = computed(() => {
 				</div>
 			</div>
 
+			<!-- Settings Button -->
+			<div v-if="selectedServerId" class="mb-4">
+				<BaseButton
+					@click="showSettingsModal = true"
+					variant="secondary"
+					data-cy="market-overview-settings-button">
+					<template #left-icon>
+						<Cog6ToothIcon />
+					</template>
+					Settings
+				</BaseButton>
+			</div>
+
 			<!-- View Mode and Layout Toggle -->
 			<div v-if="selectedServerId" class="mb-4">
 				<div class="flex flex-wrap items-center gap-6">
@@ -1098,7 +1152,7 @@ const priceAnalysis = computed(() => {
 										</div>
 										<!-- Enchantments Display -->
 										<div
-											v-if="row.enchantments && row.enchantments.length > 0"
+											v-if="showEnchantments && row.enchantments && row.enchantments.length > 0"
 											class="mt-1 pb-1">
 											<div class="flex flex-wrap gap-1">
 												<span
@@ -1305,19 +1359,19 @@ const priceAnalysis = computed(() => {
 											</button>
 										</div>
 									</div>
-									<!-- Enchantments Display -->
-									<div
-										v-if="row.enchantments && row.enchantments.length > 0"
-										class="mt-1 pb-1">
-										<div class="flex flex-wrap gap-1">
-											<span
-												v-for="enchantmentId in row.enchantments"
-												:key="enchantmentId"
-												class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
-												{{ formatEnchantmentName(enchantmentId) }}
-											</span>
-										</div>
+								<!-- Enchantments Display -->
+								<div
+									v-if="showEnchantments && row.enchantments && row.enchantments.length > 0"
+									class="mt-1 pb-1">
+									<div class="flex flex-wrap gap-1">
+										<span
+											v-for="enchantmentId in row.enchantments"
+											:key="enchantmentId"
+											class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
+											{{ formatEnchantmentName(enchantmentId) }}
+										</span>
 									</div>
+								</div>
 								</div>
 							</div>
 						</template>
@@ -1443,4 +1497,51 @@ const priceAnalysis = computed(() => {
 			</div>
 		</div>
 	</div>
+
+	<!-- Settings Modal -->
+	<BaseModal
+		:isOpen="showSettingsModal"
+		title="Settings"
+		size="normal"
+		maxWidth="max-w-md"
+		data-cy="market-overview-settings-modal"
+		@close="showSettingsModal = false">
+		<div class="space-y-4">
+			<div>
+				<h3 class="text-sm font-semibold text-gray-900 mb-3">Items list</h3>
+				<div class="space-y-3">
+					<label
+						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+						<input
+							data-cy="market-overview-hide-enchantments-checkbox"
+							:checked="!showEnchantments"
+							@change="showEnchantments = !$event.target.checked"
+							type="checkbox"
+							class="checkbox-input" />
+						<span>Hide enchantments</span>
+					</label>
+					<label
+						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+						<input
+							data-cy="market-overview-hide-out-of-stock-checkbox"
+							:checked="hideOutOfStock"
+							@change="hideOutOfStock = $event.target.checked"
+							type="checkbox"
+							class="checkbox-input" />
+						<span>Hide out of stock</span>
+					</label>
+					<label
+						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+						<input
+							data-cy="market-overview-hide-stock-full-checkbox"
+							:checked="hideStockFull"
+							@change="hideStockFull = $event.target.checked"
+							type="checkbox"
+							class="checkbox-input" />
+						<span>Hide stock full</span>
+					</label>
+				</div>
+			</div>
+		</div>
+	</BaseModal>
 </template>

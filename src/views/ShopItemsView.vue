@@ -1268,27 +1268,30 @@ function getServerName(serverId) {
 						</div>
 
 						<!-- Mark All as Checked -->
-						<div v-if="!selectedShop.is_own_shop" class="flex items-center gap-2">
-							<BaseButton
-								type="button"
-								variant="secondary"
-								data-cy="shop-items-mark-all-checked-button"
-								@click="handleMarkAllAsChecked"
-								:disabled="markingAsChecked || !shopItems || shopItems.length === 0"
-								class="px-3 py-1.5 text-xs sm:text-sm">
-								<template #left-icon>
-									<ArrowPathIcon
-										:class="[
-											'w-4 h-4',
-											markingAsChecked ? 'animate-spin' : ''
-										]" />
-								</template>
-								{{
-									markingAsChecked
-										? 'Marking...'
-										: 'Mark All as Price Checked Today'
-								}}
-							</BaseButton>
+						<div v-if="!selectedShop.is_own_shop">
+							<span class="text-sm font-medium text-heavy-metal block opacity-0 pointer-events-none">Actions:</span>
+							<div>
+								<BaseButton
+									type="button"
+									variant="secondary"
+									data-cy="shop-items-mark-all-checked-button"
+									@click="handleMarkAllAsChecked"
+									:disabled="markingAsChecked || !shopItems || shopItems.length === 0"
+									class="px-3 py-1.5 text-xs sm:text-sm">
+									<template #left-icon>
+										<ArrowPathIcon
+											:class="[
+												'w-4 h-4',
+												markingAsChecked ? 'animate-spin' : ''
+											]" />
+									</template>
+									{{
+										markingAsChecked
+											? 'Marking...'
+											: 'Mark All as Price Checked Today'
+									}}
+								</BaseButton>
+							</div>
 						</div>
 					</div>
 				</div>
