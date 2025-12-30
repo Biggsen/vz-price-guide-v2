@@ -26,7 +26,8 @@ export function transformShopItemForTable(shopItem, options = {}) {
 		profitMargin: formatProfitMargin(profitMargin),
 		lastUpdated: formatRelativeDate(shopItem.last_updated),
 		_lastUpdatedTimestamp: lastUpdatedTimestamp,
-		_originalItem: shopItem
+		_originalItem: shopItem,
+		enchantments: Array.isArray(shopItem.enchantments) ? shopItem.enchantments : []
 	}
 	
 	if (includeShop) {

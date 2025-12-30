@@ -68,6 +68,7 @@ export async function addShopItem(shopId, itemId, itemData) {
 			stock_full: itemData.stock_full || false,
 			starred: false,
 			notes: itemData.notes?.trim() || '',
+			enchantments: Array.isArray(itemData.enchantments) ? itemData.enchantments : [],
 			last_updated: new Date().toISOString()
 		}
 
@@ -137,6 +138,11 @@ export async function updateShopItem(itemId, updates) {
 		// Clean up string fields - always include notes field, even if empty
 		if (updatedData.notes !== undefined) {
 			updatedData.notes = String(updatedData.notes || '').trim()
+		}
+
+		// Normalize enchantments array
+		if (updatedData.enchantments !== undefined) {
+			updatedData.enchantments = Array.isArray(updatedData.enchantments) ? updatedData.enchantments : []
 		}
 
 		// Update the last_updated timestamp, but not for starring/unstarring
@@ -288,7 +294,14 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 					}
 
 					// Clean up string fields
-					if (updatedData.notes) updatedData.notes = updatedData.notes.trim()
+					if (updatedData.notes !== undefined) {
+						updatedData.notes = String(updatedData.notes || '').trim()
+					}
+
+					// Normalize enchantments array
+					if (updatedData.enchantments !== undefined) {
+						updatedData.enchantments = Array.isArray(updatedData.enchantments) ? updatedData.enchantments : []
+					}
 
 					// Always update the last_updated timestamp
 					updatedData.last_updated = new Date().toISOString()
@@ -310,6 +323,7 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 					stock_quantity: itemData.stock_quantity ?? null,
 					stock_full: itemData.stock_full || false,
 					notes: itemData.notes?.trim() || '',
+					enchantments: Array.isArray(itemData.enchantments) ? itemData.enchantments : [],
 					last_updated: new Date().toISOString()
 				}
 

@@ -380,7 +380,7 @@ function resetFilters() {
 										class="checkbox-input" />
 								</td>
 								<td class="px-4 py-3">
-									<div class="font-medium text-gray-900">{{ item.displayName }}</div>
+									<div class="font-medium text-gray-900">{{ item.displayName.toLowerCase() }}</div>
 									<div class="text-sm text-gray-500">{{ item.name }}</div>
 								</td>
 								<td class="px-4 py-3">

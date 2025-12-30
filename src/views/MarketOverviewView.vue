@@ -150,6 +150,63 @@ const allItemsQuery = computed(() => {
 
 const availableItems = useCollection(allItemsQuery)
 
+// Get image URL, preferring enchanted version if item has enchantments
+function getItemImageUrl(imagePath, enchantments) {
+	if (!imagePath) return null
+
+	// If item has enchantments, try to use enchanted version (always .gif)
+	if (enchantments && enchantments.length > 0) {
+		// Replace extension with _enchanted.gif
+		const enchantedPath = imagePath.replace(/\.(png|webp|gif)$/i, '_enchanted.gif')
+		return getImageUrl(enchantedPath)
+	}
+
+	return getImageUrl(imagePath)
+}
+
+// Format enchantment name for display
+function formatEnchantmentName(enchantmentId) {
+	if (!enchantmentId || !availableItems.value) return ''
+
+	// Get enchantment item from availableItems
+	const enchantmentItem = availableItems.value.find((item) => item.id === enchantmentId)
+	if (!enchantmentItem) return ''
+
+	// Try to extract from material_id first (most reliable)
+	const materialId = enchantmentItem.material_id
+	if (materialId && materialId.startsWith('enchanted_book_')) {
+		// Extract enchantment name from material_id like "enchanted_book_aqua_affinity_1"
+		const enchantmentPart = materialId.replace('enchanted_book_', '')
+
+		// Try to extract enchantment with level first (e.g., "unbreaking_3" -> "unbreaking 3")
+		const enchantWithLevelMatch = enchantmentPart.match(/^(.+)_(\d+)$/)
+		if (enchantWithLevelMatch) {
+			const enchantName = enchantWithLevelMatch[1]
+			const level = enchantWithLevelMatch[2]
+
+			// Replace underscores with spaces, then capitalize each word
+			const capitalizedEnchant = enchantName
+				.replace(/_/g, ' ')
+				.replace(/\b\w/g, (l) => l.toUpperCase())
+			return `${capitalizedEnchant} ${level}`
+		}
+
+		// Try enchantment without level (e.g., "silk_touch" -> "silk touch")
+		const enchantWithoutLevelMatch = enchantmentPart.match(/^(.+)$/)
+		if (enchantWithoutLevelMatch) {
+			const enchantName = enchantWithoutLevelMatch[1]
+			// Replace underscores with spaces, then capitalize each word
+			const capitalizedEnchant = enchantName
+				.replace(/_/g, ' ')
+				.replace(/\b\w/g, (l) => l.toUpperCase())
+			return capitalizedEnchant
+		}
+	}
+
+	// Fallback: Use item name
+	return enchantmentItem.name || ''
+}
+
 // Group shop items by category for better organization
 const shopItemsByCategory = computed(() => {
 	if (!shopItems.value || !availableItems.value) return {}
@@ -996,14 +1053,18 @@ const priceAnalysis = computed(() => {
 												'mr-3 flex-shrink-0'
 											]">
 											<img
-												:src="getImageUrl(row.image)"
+												:src="getItemImageUrl(row.image, row.enchantments)"
 												:alt="row.item"
+												@error="$event.target.src = getImageUrl(row.image)"
 												class="w-full h-full object-contain"
 												loading="lazy" />
 										</div>
-										<div
-											class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
-											<span class="truncate">{{ row.item }}</span>
+										<div class="flex-1 min-w-0">
+											<div
+												class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
+												<span>
+													{{ row.item }}
+												</span>
 											<div class="flex items-center gap-2 ml-2 flex-shrink-0">
 												<button
 													@click.stop="toggleStar(row.id, row._originalItem?.starred || false, row._originalItem)"
@@ -1028,8 +1089,22 @@ const priceAnalysis = computed(() => {
 												</button>
 											</div>
 										</div>
+										<!-- Enchantments Display -->
+										<div
+											v-if="row.enchantments && row.enchantments.length > 0"
+											class="mt-1 pb-1">
+											<div class="flex flex-wrap gap-1">
+												<span
+													v-for="enchantmentId in row.enchantments"
+													:key="enchantmentId"
+													class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
+													{{ formatEnchantmentName(enchantmentId) }}
+												</span>
+											</div>
+										</div>
 									</div>
-								</template>
+								</div>
+							</template>
 								<template #cell-shop="{ row }">
 									<div
 										@click="navigateToShopItems(row.shopId)"
@@ -1187,14 +1262,18 @@ const priceAnalysis = computed(() => {
 											'mr-3 flex-shrink-0'
 										]">
 										<img
-											:src="getImageUrl(row.image)"
+											:src="getItemImageUrl(row.image, row.enchantments)"
 											:alt="row.item"
+											@error="$event.target.src = getImageUrl(row.image)"
 											class="w-full h-full object-contain"
 											loading="lazy" />
 									</div>
-									<div
-										class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
-										<span class="truncate">{{ row.item }}</span>
+									<div class="flex-1 min-w-0">
+										<div
+											class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
+											<span>
+												{{ row.item }}
+											</span>
 										<div class="flex items-center gap-2 ml-2 flex-shrink-0">
 											<button
 												@click.stop="toggleStar(row.id, row._originalItem?.starred || false, row._originalItem)"
@@ -1219,37 +1298,51 @@ const priceAnalysis = computed(() => {
 											</button>
 										</div>
 									</div>
-								</div>
-							</template>
-							<template #cell-shop="{ row }">
-								<div
-									@click="navigateToShopItems(row.shopId)"
-									data-cy="market-overview-shop-link"
-									class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
-									<template v-if="row.shopPlayer">
-										<img
-											:src="generateMinecraftAvatar(row.shopPlayer)"
-											:alt="row.shopPlayer"
-											class="w-5 h-5 rounded mr-2 flex-shrink-0"
-											@error="$event.target.style.display = 'none'" />
-										<span>
-											{{ row.shopPlayer }}
-											<span v-if="row.shopPlayer !== row.shop">
-												- {{ row.shop }}
+									<!-- Enchantments Display -->
+									<div
+										v-if="row.enchantments && row.enchantments.length > 0"
+										class="mt-1 pb-1">
+										<div class="flex flex-wrap gap-1">
+											<span
+												v-for="enchantmentId in row.enchantments"
+												:key="enchantmentId"
+												class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
+												{{ formatEnchantmentName(enchantmentId) }}
 											</span>
-										</span>
-									</template>
-									<template v-else>
-										<img
-											v-if="row.shop"
-											:src="generateMinecraftAvatar(row.shop)"
-											:alt="row.shop"
-											class="w-5 h-5 rounded mr-2 flex-shrink-0"
-											@error="$event.target.style.display = 'none'" />
-										<span>{{ row.shop }}</span>
-									</template>
+										</div>
+									</div>
 								</div>
-							</template>
+							</div>
+						</template>
+						<template #cell-shop="{ row }">
+							<div
+								@click="navigateToShopItems(row.shopId)"
+								data-cy="market-overview-shop-link"
+								class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
+								<template v-if="row.shopPlayer">
+									<img
+										:src="generateMinecraftAvatar(row.shopPlayer)"
+										:alt="row.shopPlayer"
+										class="w-5 h-5 rounded mr-2 flex-shrink-0"
+										@error="$event.target.style.display = 'none'" />
+									<span>
+										{{ row.shopPlayer }}
+										<span v-if="row.shopPlayer !== row.shop">
+											- {{ row.shop }}
+										</span>
+									</span>
+								</template>
+								<template v-else>
+									<img
+										v-if="row.shop"
+										:src="generateMinecraftAvatar(row.shop)"
+										:alt="row.shop"
+										class="w-5 h-5 rounded mr-2 flex-shrink-0"
+										@error="$event.target.style.display = 'none'" />
+									<span>{{ row.shop }}</span>
+								</template>
+							</div>
+						</template>
 							<template #cell-buyPrice="{ row, layout }">
 								<div class="flex items-center justify-end gap-2">
 									<div
