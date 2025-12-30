@@ -923,6 +923,13 @@ function formatEnchantmentName(enchantmentId) {
 			const capitalizedEnchant = enchantName
 				.replace(/_/g, ' ')
 				.replace(/\b\w/g, (l) => l.toUpperCase())
+			
+			// Don't display level 1 for single-level enchantments (max level 1)
+			const maxLevel = enchantmentItem.enchantment_max_level
+			if (level === '1' && maxLevel === 1) {
+				return capitalizedEnchant
+			}
+			
 			return `${capitalizedEnchant} ${level}`
 		}
 

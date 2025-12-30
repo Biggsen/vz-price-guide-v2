@@ -319,6 +319,10 @@ describe('Shop Manager - Shop Items Management', () => {
 		it('toggles fully cataloged checkbox', () => {
 			cy.navigateToShopItems('test-shop-2') // Use test-shop-2 which is a player shop (is_own_shop: false)
 
+			// Open settings modal
+			cy.get('[data-cy="shop-items-settings-button"]').click()
+			cy.get('[data-cy="shop-items-settings-modal"]').should('be.visible')
+
 			// Checkbox should be visible (for player shops)
 			cy.get('[data-cy="shop-items-fully-cataloged-checkbox"]').should('be.visible')
 			cy.get('[data-cy="shop-items-fully-cataloged-checkbox"]').check()
@@ -329,6 +333,10 @@ describe('Shop Manager - Shop Items Management', () => {
 		it('toggles out of money checkbox', () => {
 			cy.navigateToShopItems('test-shop-2') // Use test-shop-2 which is a player shop (is_own_shop: false)
 
+			// Open settings modal
+			cy.get('[data-cy="shop-items-settings-button"]').click()
+			cy.get('[data-cy="shop-items-settings-modal"]').should('be.visible')
+
 			cy.get('[data-cy="shop-items-out-of-money-checkbox"]').should('be.visible')
 			cy.get('[data-cy="shop-items-out-of-money-checkbox"]').check()
 			cy.wait(500)
@@ -337,6 +345,10 @@ describe('Shop Manager - Shop Items Management', () => {
 
 		it('toggles archive checkbox', () => {
 			cy.navigateToShopItems('test-shop-1')
+
+			// Open settings modal
+			cy.get('[data-cy="shop-items-settings-button"]').click()
+			cy.get('[data-cy="shop-items-settings-modal"]').should('be.visible')
 
 			cy.get('[data-cy="shop-items-archive-checkbox"]').should('be.visible')
 			cy.get('[data-cy="shop-items-archive-checkbox"]').check()
