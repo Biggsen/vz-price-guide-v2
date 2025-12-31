@@ -74,7 +74,7 @@ Add `enchantments` field to store enchantments on shop items:
 
 ## Data Migration via Admin UI
 
-Migration will be handled through admin UI views rather than scripts, following the patterns established in `MissingItemsView.vue` and `RecipeImportView.vue`.
+✅ **Status: IMPLEMENTED** - Migration handled through admin UI views rather than scripts, following the patterns established in `MissingItemsView.vue` and `RecipeImportView.vue`.
 
 ### View 1: Migrate enchantCategories (Regular Items)
 
@@ -193,7 +193,9 @@ Add to `AdminView.vue`:
 
 ## Validation Utilities
 
-Create utility functions in `src/utils/enchantments.js`:
+✅ **Status: IMPLEMENTED** - Utility functions created in `src/utils/enchantments.js` with comprehensive unit tests.
+
+The following utility functions are available:
 
 ### `isItemEnchantable(item)`
 
@@ -294,133 +296,43 @@ function getEnchantmentConflictReason(newEnchantment, existingEnchantments, allE
 
 ## UI Updates - Crate Rewards
 
-### Current State
+**See separate spec**: `tasks/enhancement/crate-rewards-enchantment-validation.md`
 
-Enchantment selection in `CrateSingleView.vue` currently shows all enchantments and allows any selection.
-
-### Changes Required
-
-1. **Filter Enchantment List**
-   - Update `enchantmentItems` computed property to filter based on selected item
-   - Use `getCompatibleEnchantments()` utility
-   - Only show compatible enchantments in the modal dropdown
-
-2. **Hide Enchantment Section for Non-Enchantable Items**
-   - Hide "Enchantments" section when selected item is not enchantable
-   - Hide "Enchantments" section when selected item is an enchanted book itself (category === 'enchantments')
-   - Use `isItemEnchantable()` utility and check item category
-
-3. **Validation on Add**
-   - When adding enchantment, check for conflicts with existing enchantments
-   - Show error message if conflict detected
-   - Use `hasEnchantmentConflict()` and `getEnchantmentConflictReason()` utilities
-
-4. **Visual Feedback**
-   - Show warning/error indicators for incompatible selections
-   - Disable incompatible options (though they should already be filtered out)
-
-### Code Changes
-
-In `CrateSingleView.vue`:
-
-```javascript
-// Update enchantmentItems computed to filter by selected item
-const enchantmentItems = computed(() => {
-  if (!allItems.value) return []
-  const allEnchItems = allItems.value.filter((item) => item.category === 'enchantments')
-  
-  // If no item selected, return empty (shouldn't show enchantments)
-  if (!itemForm.value.item_id) return []
-  
-  const selectedItem = getItemById(itemForm.value.item_id)
-  if (!selectedItem) return []
-  
-  // Hide enchantments for enchanted books themselves
-  if (selectedItem.category === 'enchantments') return []
-  
-  // Filter to only compatible enchantments
-  return getCompatibleEnchantments(selectedItem, allEnchItems)
-})
-
-// Add validation before saving enchantment
-function saveEnchantment() {
-  if (!enchantmentForm.value.enchantment) return
-  
-  const newEnchId = enchantmentForm.value.enchantment
-  const existingEnchIds = Object.keys(itemForm.value.enchantments || {})
-  const allEnchItems = allItems.value.filter(item => item.category === 'enchantments')
-  
-  // Check for conflicts
-  if (hasEnchantmentConflict(newEnchId, existingEnchIds, allEnchItems)) {
-    const reason = getEnchantmentConflictReason(newEnchId, existingEnchIds, allEnchItems)
-    addItemFormError.value = reason
-    return
-  }
-  
-  itemForm.value.enchantments[newEnchId] = 1
-  showEnchantmentModal.value = false
-}
-```
+Phase 3 (Crate Rewards UI integration) has been extracted to a separate specification document for future implementation.
 
 ## UI Updates - Shop Items
 
-### Current State
+### ✅ Implementation Status: COMPLETE
 
-`ShopItemForm.vue` does not currently support enchantments.
+`ShopItemForm.vue` fully supports enchantments with all required features:
 
-### Changes Required
+1. **Enchantment Section**
+   - ✅ Enchantment section shown/hidden based on selected item's enchantability
+   - ✅ Hidden for non-enchantable items and enchanted books themselves
+   - ✅ Add/remove enchantments functionality with search interface
 
-1. **Add Enchantment Section**
-   - Similar UI to crate rewards enchantment section
-   - Show/hide based on selected item's enchantability (hide for non-enchantable items and enchanted books)
-   - Add/remove enchantments functionality
+2. **Validation Logic**
+   - ✅ Uses `isItemEnchantable()`, `getCompatibleEnchantments()`, `hasEnchantmentConflict()`, and `getEnchantmentConflictReason()` utilities
+   - ✅ Filters enchantment list to show only compatible enchantments for selected item
+   - ✅ Validates conflicts before adding enchantments
+   - ✅ Shows user-friendly error messages for conflicts
 
-2. **Reuse Validation Logic**
-   - Import and use same validation utilities
-   - Filter enchantment list based on selected item
-   - Check for conflicts before saving
+3. **Data Storage**
+   - ✅ `enchantments` field stored in shop item documents as array of enchanted book item document IDs
+   - ✅ Enchantments displayed in shop item forms and views
+   - ✅ Supports editing existing shop items with enchantments
 
-3. **Store Enchantments**
-   - Add `enchantments` field to shop item document
-   - Array of enchanted book item document IDs
-   - Display enchantments in shop item list/detail views
+### Implementation Details
 
-### Code Structure
+- Enchantment search with keyboard navigation
+- Real-time filtering of compatible enchantments
+- Conflict detection and prevention
+- Level replacement (higher level replaces lower level of same enchantment type)
+- Visual display of selected enchantments with remove buttons
 
-Similar implementation to crate rewards:
-- Enchantment selection modal
-- Filtered enchantment list
-- Validation on add
-- Display existing enchantments with remove functionality
+## Example Workflow
 
-## Example Workflow: Iron Sword
-
-1. User selects "iron_sword" item
-   - Item has `enchantCategories: ["weapon", "fire_aspect", "melee_weapon", "durability", "sharp_weapon", "sweeping", "vanishing"]`
-   - System recognizes item is enchantable
-
-2. User clicks "Add Enchantment"
-   - Modal opens with filtered list
-   - Shows: Sharpness, Smite, Bane of Arthropods, Fire Aspect, Sweeping Edge, Knockback, Looting, Unbreaking, Mending, etc.
-   - Hides: Lure, Power, Protection, Respiration, Depth Strider, etc.
-
-3. User selects "Sharpness V"
-   - System validates: compatible (category "sharp_weapon" is in sword's categories)
-   - No existing enchantments, so no conflicts
-   - Enchantment added successfully
-
-4. User tries to add "Smite V"
-   - System validates: compatible category
-   - But checks conflicts: Sharpness excludes ["smite", ...]
-   - Shows error: "Cannot combine Sharpness with Smite"
-   - Enchantment not added
-
-5. User tries to add "Lure"
-   - Already filtered out of list (not shown)
-   - If somehow selected, validation fails: "Lure can only be applied to fishing rods"
-
-6. User selects an enchanted book as the item
-   - Enchantment section is hidden (enchanted books cannot be enchanted)
+See `tasks/enhancement/crate-rewards-enchantment-validation.md` for detailed workflow examples.
 
 ## Dependencies
 
@@ -428,26 +340,35 @@ Similar implementation to crate rewards:
 
 ## Implementation Phases
 
-### Phase 1: Data Migration (Admin UI)
-- Create admin views for migrating `enchantCategories` and enchantment metadata
-- Implement comparison logic and update functionality
-- Add routes and admin dashboard integration
-- Test migration workflows
-- Populate Firestore with compatibility data via admin UI
-- Verify data integrity
+### ✅ Phase 1: Data Migration (Admin UI) - COMPLETE
+- ✅ Created admin views for migrating `enchantCategories` and enchantment metadata
+- ✅ Implemented comparison logic and update functionality
+- ✅ Added routes and admin dashboard integration
+- ✅ Tested migration workflows
+- ✅ Populated Firestore with compatibility data via admin UI
+- ✅ Verified data integrity
 
-### Phase 2: Validation Utilities
-- Create `src/utils/enchantments.js` with all utility functions
-- Add unit tests for validation logic
+**Implementation**: All three admin views (`MigrateItemsView.vue`, `MigrateBooksView.vue`, `ManageEnchantableItemsView.vue`) are implemented and accessible via `/admin/enchantments/*` routes.
 
-### Phase 3: Crate Rewards UI
+### ✅ Phase 2: Validation Utilities - COMPLETE
+- ✅ Created `src/utils/enchantments.js` with all utility functions
+- ✅ Added comprehensive unit tests for validation logic
+
+**Implementation**: All utility functions (`isItemEnchantable`, `getCompatibleEnchantments`, `isEnchantmentCompatibleWithItem`, `hasEnchantmentConflict`, `getEnchantmentConflictReason`) are implemented and tested.
+
+### ⏳ Phase 3: Crate Rewards UI - PENDING
+- **See separate spec**: `tasks/enhancement/crate-rewards-enchantment-validation.md`
 - Update `CrateSingleView.vue` with filtering and validation
 - Test with various items and enchantment combinations
 
-### Phase 4: Shop Items UI
-- Add enchantment support to `ShopItemForm.vue`
-- Update shop item display components to show enchantments
-- Test end-to-end workflow
+**Status**: Extracted to separate specification document. Not yet implemented.
+
+### ✅ Phase 4: Shop Items UI - COMPLETE
+- ✅ Added enchantment support to `ShopItemForm.vue`
+- ✅ Updated shop item display components to show enchantments
+- ✅ Tested end-to-end workflow
+
+**Implementation**: `ShopItemForm.vue` fully implements enchantment support with filtering, validation, conflict detection, and proper data storage.
 
 ## Testing Considerations
 
@@ -459,13 +380,17 @@ Similar implementation to crate rewards:
 
 ## Success Criteria
 
-- Users can only see and select compatible enchantments for selected items
-- Conflicting enchantments are prevented with clear error messages
-- Non-enchantable items don't show enchantment options
-- All compatibility rules from PrismarineJS data are properly enforced
-- Shop items can store and display enchantments
-- Admin UI migration views successfully populate all required data
-- Migration process is user-friendly and allows selective updates
+### ✅ Completed
+- ✅ Admin UI migration views successfully populate all required data
+- ✅ Migration process is user-friendly and allows selective updates
+- ✅ Validation utilities are implemented and tested
+- ✅ Shop items can store and display enchantments
+- ✅ Shop item forms filter enchantments by compatibility
+- ✅ Shop item forms prevent conflicting enchantment combinations
+- ✅ Enchantment section hidden for non-enchantable items
+
+### ⏳ Pending
+- ⏳ Crate rewards UI validation (see Phase 3 spec for detailed criteria)
 
 ## Open Questions
 
