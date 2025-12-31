@@ -77,10 +77,3 @@ export async function isAdmin(user) {
 export async function requiresAdmin(user) {
 	return !(await isAdmin(user))
 }
-
-export async function canAccessShopManager(user) {
-	if (!user) return false
-
-	// Public access: any verified user can access shop manager
-	return user.emailVerified === true
-}

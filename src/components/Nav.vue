@@ -37,7 +37,7 @@ const emit = defineEmits(['setActiveMainNav'])
 const user = useCurrentUser()
 const route = useRoute()
 const router = useRouter()
-const { isAdmin, canAccessShopManager, canViewMissingItems, canAddItems, canBulkUpdate } = useAdmin()
+const { isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAdmin()
 
 // Get the latest update ID
 const latestUpdateId = updatesData[0]?.id || null

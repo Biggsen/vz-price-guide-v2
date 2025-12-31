@@ -7,7 +7,6 @@ import { updateShopManagerAccess } from '../utils/accessManagement.js'
 import BaseButton from '../components/BaseButton.vue'
 import BaseCard from '../components/BaseCard.vue'
 import { getAuth } from 'firebase/auth'
-import { canAccessShopManager } from '../constants'
 
 const { isAdmin, user: currentUser } = useAdmin()
 const db = getFirestore()
