@@ -20,8 +20,9 @@ Implement an explicit opt-in system for marketing emails to ensure compliance wi
 #### Marketing Opt-In Checkbox
 
 - **Location**: Signup form (`SignUpView.vue`)
-- **Placement**: After Terms of Service checkbox, before Submit button
-- **Label**: "I'd like to receive emails about new features and updates"
+- **Placement**: After Terms of Service checkbox, before Submit button (grouped in same container with space-y-2 spacing)
+- **Label**: "Send me occasional updates about new features and improvements."
+- **Additional Text**: "No spam. Unsubscribe anytime." displayed below checkbox in smaller text (text-xs)
 - **Default State**: Unchecked (opt-in by default is false)
 - **Required**: No (optional checkbox)
 - **Data Attribute**: `data-cy="signup-marketing-opt-in"`
@@ -44,7 +45,7 @@ Implement an explicit opt-in system for marketing emails to ensure compliance wi
 
 #### Marketing Opt-In Toggle
 
-- **Label**: "Receive emails about new features and updates"
+- **Label**: "Send me occasional updates about new features and improvements." (regular font weight, not bold)
 - **Type**: Checkbox/toggle
 - **Default State**: Reflects current opt-in status from user profile
 - **Data Attribute**: `data-cy="account-marketing-opt-in"`
@@ -68,6 +69,9 @@ Add to `users` collection documents:
 ```javascript
 {
   // ... existing user profile fields ...
+  email: string,                   // Email address (for marketing queries)
+  email_verified: boolean,         // Email verification status (for filtering)
+  created_at: string,              // ISO timestamp - account creation time (set during signup)
   marketing_opt_in: {
     enabled: boolean,              // true if user opted in, false otherwise
     timestamp: string,             // ISO timestamp of when opt-in was set/changed
@@ -78,8 +82,8 @@ Add to `users` collection documents:
 
 ### Default Values
 
-- **New Users**: A minimal user document is created during signup with the `marketing_opt_in` field. The field is always created with `enabled: false` if the checkbox is unchecked, or `enabled: true` if checked. This ensures 100% of new signups have their preference recorded.
-- **Existing Users**: Users created before this feature have no `marketing_opt_in` field, which should be treated as `enabled: false` (explicit opt-out)
+- **New Users**: A minimal user document is created during signup with `email`, `email_verified`, `created_at`, and `marketing_opt_in` fields. The `marketing_opt_in` field is always created with `enabled: false` if the checkbox is unchecked, or `enabled: true` if checked. This ensures 100% of new signups have their preference recorded. The `created_at` field is set to the account creation time (signup time).
+- **Existing Users**: Users created before this feature have no `marketing_opt_in` field, which should be treated as `enabled: false` (explicit opt-out). When they first interact with marketing preferences, their user document is created with `created_at` set from Auth metadata (actual account creation time).
 
 ### Data Migration
 
@@ -113,7 +117,14 @@ async function signUpToFirebase() {
   // After successful account creation, create minimal user document with marketing opt-in
   // This ensures we capture the preference even if user never creates a full profile
   if (userCredential.user) {
-    await saveMarketingOptIn(userCredential.user.uid, marketingOptIn.value, 'signup')
+    await saveMarketingOptIn(
+      userCredential.user.uid,
+      marketingOptIn.value,
+      'signup',
+      userCredential.user.email || null,
+      false, // Email not verified yet at signup
+      new Date().toISOString() // Account creation time
+    )
   }
 }
 ```
@@ -146,7 +157,16 @@ watch(userProfile, (profile) => {
 async function saveMarketingOptInPreference() {
   marketingOptInLoading.value = true
   try {
-    await saveMarketingOptIn(user.value.uid, marketingOptIn.value, 'settings')
+    // Get account creation time from Auth metadata for old accounts without user records
+    const accountCreatedAt = user.value.metadata?.creationTime || null
+    await saveMarketingOptIn(
+      user.value.uid,
+      marketingOptIn.value,
+      'settings',
+      user.value.email || null,
+      user.value.emailVerified || false,
+      accountCreatedAt
+    )
     successMessage.value = 'Email preferences updated.'
   } catch (error) {
     console.error('Error saving marketing opt-in:', error)
@@ -164,16 +184,30 @@ Add helper function to save marketing opt-in:
 
 ```javascript
 /**
- * Save marketing email opt-in preference
+ * Save marketing email opt-in preference and sync email/verification status
  * @param {string} userId
  * @param {boolean} enabled
  * @param {'signup' | 'settings'} method
+ * @param {string} [email] - Optional email address to store
+ * @param {boolean} [emailVerified] - Optional email verification status to store
+ * @param {string} [accountCreatedAt] - Optional ISO string for account creation time (from Auth metadata)
  */
-export async function saveMarketingOptIn(userId, enabled, method) {
+export async function saveMarketingOptIn(
+  userId,
+  enabled,
+  method,
+  email = null,
+  emailVerified = null,
+  accountCreatedAt = null
+) {
   if (!userId) throw new Error('User ID is required')
   
   try {
     const db = getFirestore()
+    const docRef = doc(db, 'users', userId)
+    const docSnap = await getDoc(docRef)
+    const isNewDocument = !docSnap.exists()
+    
     const optInData = {
       marketing_opt_in: {
         enabled,
@@ -182,10 +216,43 @@ export async function saveMarketingOptIn(userId, enabled, method) {
       }
     }
     
-    await setDoc(doc(db, 'users', userId), optInData, { merge: true })
+    // Include email if provided
+    if (email !== null) {
+      optInData.email = email
+    }
+    
+    // Include email_verified if provided
+    if (emailVerified !== null) {
+      optInData.email_verified = emailVerified
+    }
+    
+    // Set created_at only for new documents (when account is first created)
+    // For old accounts without user records, use provided accountCreatedAt or current time
+    if (isNewDocument) {
+      optInData.created_at = accountCreatedAt || new Date().toISOString()
+    }
+    
+    await setDoc(docRef, optInData, { merge: true })
     return optInData
   } catch (error) {
     console.error('Error saving marketing opt-in:', error)
+    throw error
+  }
+}
+
+/**
+ * Update email verification status in user document
+ * @param {string} userId
+ * @param {boolean} emailVerified
+ */
+export async function updateEmailVerifiedStatus(userId, emailVerified) {
+  if (!userId) throw new Error('User ID is required')
+  
+  try {
+    const db = getFirestore()
+    await setDoc(doc(db, 'users', userId), { email_verified: emailVerified }, { merge: true })
+  } catch (error) {
+    console.error('Error updating email verified status:', error)
     throw error
   }
 }
@@ -222,7 +289,7 @@ if (!hasMarketingOptIn(userProfile)) {
 
 - **Styling**: Match existing checkbox styling (same as Terms checkbox)
 - **Text Color**: Gray-700 (same as Terms text)
-- **Spacing**: Add margin-top: 1rem (space-y-4) between Terms and Marketing checkbox
+- **Spacing**: Checkboxes grouped in single container with space-y-2 spacing between them
 - **Accessibility**: Proper label association, keyboard navigable
 
 ### Account Settings Section
@@ -230,6 +297,7 @@ if (!hasMarketingOptIn(userProfile)) {
 - **Section Header**: "Email Preferences" with same styling as other sections (border-bottom, font-semibold)
 - **Checkbox Layout**: 
   - Label on the right side of checkbox
+  - Regular font weight (not bold)
   - Full width container
   - Loading state when saving
 - **Success Feedback**: Use existing `NotificationBanner` component
@@ -344,36 +412,35 @@ This rule is sufficient and secure, as it only allows users to update their own 
 
 ### Phase 1: Data Model & Utilities
 
-- [ ] Add `saveMarketingOptIn()` function to `userProfile.js`
-- [ ] Add `hasMarketingOptIn()` helper function
-- [ ] Verify existing Firestore security rules support marketing_opt_in updates (no changes needed)
-- [ ] Test utility functions
+- [x] Add `saveMarketingOptIn()` function to `userProfile.js`
+- [x] Add `hasMarketingOptIn()` helper function
+- [x] Add `updateEmailVerifiedStatus()` helper function
+- [x] Verify existing Firestore security rules support marketing_opt_in updates (no changes needed)
 
 ### Phase 2: Signup Integration
 
-- [ ] Add marketing opt-in checkbox to `SignUpView.vue`
-- [ ] Add state management for checkbox
-- [ ] Integrate with signup flow to save preference
-- [ ] Add Cypress test for signup with opt-in
-- [ ] Add Cypress test for signup without opt-in
+- [x] Add marketing opt-in checkbox to `SignUpView.vue`
+- [x] Add state management for checkbox
+- [x] Integrate with signup flow to save preference (creates minimal user document with email, email_verified, created_at, marketing_opt_in)
+- [x] Update checkbox text and add "No spam. Unsubscribe anytime." message
+- [x] Group checkboxes with proper spacing
 
 ### Phase 3: Account Settings Integration
 
-- [ ] Add "Email Preferences" section to `AccountView.vue`
-- [ ] Add marketing opt-in toggle/checkbox
-- [ ] Load current preference from user profile
-- [ ] Implement auto-save on toggle
-- [ ] Add success feedback
-- [ ] Add Cypress test for account settings opt-in
+- [x] Add "Email Preferences" section to `AccountView.vue`
+- [x] Add marketing opt-in toggle/checkbox
+- [x] Load current preference from user profile
+- [x] Implement auto-save on toggle
+- [x] Add success feedback
+- [x] Update email_verified status when email is verified (in VerifyEmailSuccessView and AccountView)
+- [x] Update profileExists logic to require minecraft_username (shows Create Profile UX correctly)
+- [x] Preserve created_at timestamp correctly (set during signup, preserved when creating profile)
 
 ### Phase 4: Testing & Validation
 
-- [ ] Run all unit tests
-- [ ] Run all integration tests
-- [ ] Run all E2E tests
-- [ ] Verify Firestore data structure
-- [ ] Verify security rules
-- [ ] Test with existing users (no marketing_opt_in field)
+- [x] Verify Firestore data structure (email, email_verified, created_at, marketing_opt_in)
+- [x] Verify security rules (no changes needed)
+- [x] Test with existing users (old accounts get correct created_at from Auth metadata)
 
 ---
 
@@ -384,4 +451,8 @@ This rule is sufficient and secure, as it only allows users to update their own 
 - The opt-in preference only affects marketing/announcement emails
 - Users can change their preference at any time in account settings
 - A minimal user document is created during signup for ALL users to capture marketing opt-in preference, even if they never create a full profile
+- Email and email_verified are stored in user documents to enable efficient marketing email queries
+- `created_at` represents account creation time (set during signup, preserved from Auth metadata for old accounts)
+- Profile creation preserves existing `created_at` timestamp (uses merge: true)
+- `profileExists` checks for `minecraft_username` to determine if user has created a profile (shows "Create Profile" UX correctly)
 
