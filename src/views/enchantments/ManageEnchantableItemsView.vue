@@ -5,6 +5,7 @@ import { useFirestore } from 'vuefire'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
 import { useAdmin } from '../../utils/admin.js'
 import { ArrowUpIcon, ArrowDownIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
+import { getImageUrl } from '../../utils/image.js'
 
 const db = useFirestore()
 const { user, canBulkUpdate } = useAdmin()
@@ -163,6 +164,12 @@ function resetFilters() {
 	searchQuery.value = ''
 	enchantableFilter.value = 'all'
 }
+
+// Get image URL for enchantable items
+function getEnchantedImageUrl(materialId) {
+	if (!materialId) return null
+	return getImageUrl(`/images/items/${materialId}_enchanted.webp`)
+}
 </script>
 
 <template>
@@ -264,6 +271,10 @@ function resetFilters() {
 										class="checkbox-input" />
 								</th>
 								<th
+									class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+									Image
+								</th>
+								<th
 									@click="setSort('material_id')"
 									class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
 									<div class="flex items-center gap-1">
@@ -305,6 +316,15 @@ function resetFilters() {
 										:checked="isSelected(item.id)"
 										@change="toggleSelectItem(item.id)"
 										class="checkbox-input" />
+								</td>
+								<td class="px-4 py-3">
+									<img
+										v-if="isEnchantable(item) && item.material_id"
+										:src="getEnchantedImageUrl(item.material_id)"
+										:alt="`${item.material_id} enchanted`"
+										class="w-8 h-8 object-contain"
+										loading="lazy"
+										@error="$event.target.style.display = 'none'" />
 								</td>
 								<td class="px-4 py-3">
 									<div class="font-medium text-gray-900">
