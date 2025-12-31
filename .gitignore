@@ -16,6 +16,8 @@ coverage
 .env.*
 service-account.json
 
+/public/images/for_processing 
+
 /cypress/videos/
 /cypress/screenshots/
 /cypress/downloads/

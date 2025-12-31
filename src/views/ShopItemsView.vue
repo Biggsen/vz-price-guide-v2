@@ -268,10 +268,10 @@ const availableItemsForAdding = computed(() => {
 function getItemImageUrl(imagePath, enchantments) {
 	if (!imagePath) return null
 
-	// If item has enchantments, try to use enchanted version (always .gif)
+	// If item has enchantments, try to use enchanted version (always .webp)
 	if (enchantments && enchantments.length > 0) {
-		// Replace extension with _enchanted.gif
-		const enchantedPath = imagePath.replace(/\.(png|webp|gif)$/i, '_enchanted.gif')
+		// Replace extension with _enchanted.webp
+		const enchantedPath = imagePath.replace(/\.(png|webp|gif)$/i, '_enchanted.webp')
 		return getImageUrl(enchantedPath)
 	}
 
