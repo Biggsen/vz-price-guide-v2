@@ -224,6 +224,12 @@ function formatEnchantmentName(enchantmentId) {
 	return enchantmentItem.name || ''
 }
 
+// Format enchantments for title attribute (comma-separated list)
+function formatEnchantmentsForTitle(enchantments) {
+	if (!enchantments || enchantments.length === 0) return ''
+	return enchantments.map(formatEnchantmentName).filter(Boolean).join(', ')
+}
+
 // Group shop items by category for better organization
 const shopItemsByCategory = computed(() => {
 	if (!shopItems.value || !availableItems.value) return {}
@@ -1150,7 +1156,14 @@ const priceAnalysis = computed(() => {
 										<div class="flex-1 min-w-0">
 											<div
 												class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
-												<span>
+												<span
+													:title="
+														!showEnchantments &&
+														row.enchantments &&
+														row.enchantments.length > 0
+															? formatEnchantmentsForTitle(row.enchantments)
+															: ''
+													">
 													{{ row.item }}
 												</span>
 											<div class="flex items-center gap-2 ml-2 flex-shrink-0">
@@ -1372,7 +1385,14 @@ const priceAnalysis = computed(() => {
 									<div class="flex-1 min-w-0">
 										<div
 											class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
-											<span>
+											<span
+												:title="
+													!showEnchantments &&
+													row.enchantments &&
+													row.enchantments.length > 0
+														? formatEnchantmentsForTitle(row.enchantments)
+														: ''
+												">
 												{{ row.item }}
 											</span>
 										<div class="flex items-center gap-2 ml-2 flex-shrink-0">
