@@ -22,7 +22,7 @@ import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
 import { ArrowLeftIcon, PlusIcon, ArrowPathIcon } from '@heroicons/vue/20/solid'
-import { CurrencyDollarIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
+import { CurrencyDollarIcon, ClipboardDocumentCheckIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import {
 	PencilIcon,
 	TrashIcon,
@@ -32,7 +32,7 @@ import {
 	StarIcon as StarIconOutline
 } from '@heroicons/vue/24/outline'
 import { XCircleIcon, StarIcon } from '@heroicons/vue/24/solid'
-import { getImageUrl } from '../utils/image.js'
+import { getImageUrl, extractEnchantmentName } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
 import { enabledCategories } from '../constants.js'
@@ -53,6 +53,7 @@ const shopItemForm = ref(null)
 // View mode settings
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
+const showEnchantments = ref(true) // Show enchantments in item table
 
 // Inline price editing state
 const editingPriceId = ref(null)
@@ -68,6 +69,9 @@ const markingAsChecked = ref(false) // Track if marking items as checked
 const markingItemId = ref(null) // Track which item is being marked as checked
 const catalogStatusLoading = ref(false)
 const catalogStatusError = ref(null)
+
+// Shop settings modal state
+const showShopSettingsModal = ref(false)
 
 // Edit shop modal state
 const showEditShopModal = ref(false)
@@ -260,6 +264,76 @@ const availableItemsForAdding = computed(() => {
 	return availableItems.value.filter((item) => !existingItemIds.includes(item.id))
 })
 
+// Get image URL, preferring enchanted version if item has enchantments
+function getItemImageUrl(imagePath, enchantments) {
+	if (!imagePath) return null
+
+	// If item has enchantments, try to use enchanted version (always .webp)
+	if (enchantments && enchantments.length > 0) {
+		// Replace extension with _enchanted.webp
+		const enchantedPath = imagePath.replace(/\.(png|webp|gif)$/i, '_enchanted.webp')
+		return getImageUrl(enchantedPath)
+	}
+
+	return getImageUrl(imagePath)
+}
+
+// Format enchantment name for display
+function formatEnchantmentName(enchantmentId) {
+	if (!enchantmentId || !availableItems.value) return ''
+
+	// Get enchantment item from availableItems
+	const enchantmentItem = availableItems.value.find((item) => item.id === enchantmentId)
+	if (!enchantmentItem) return ''
+
+	// Try to extract from material_id first (most reliable)
+	const materialId = enchantmentItem.material_id
+	if (materialId && materialId.startsWith('enchanted_book_')) {
+		// Extract enchantment name from material_id like "enchanted_book_aqua_affinity_1"
+		const enchantmentPart = materialId.replace('enchanted_book_', '')
+
+		// Try to extract enchantment with level first (e.g., "unbreaking_3" -> "unbreaking 3")
+		const enchantWithLevelMatch = enchantmentPart.match(/^(.+)_(\d+)$/)
+		if (enchantWithLevelMatch) {
+			const enchantName = enchantWithLevelMatch[1]
+			const level = enchantWithLevelMatch[2]
+
+			// Replace underscores with spaces, then capitalize each word
+			const capitalizedEnchant = enchantName
+				.replace(/_/g, ' ')
+				.replace(/\b\w/g, (l) => l.toUpperCase())
+			
+			// Don't display level 1 for single-level enchantments (max level 1)
+			const maxLevel = enchantmentItem.enchantment_max_level
+			if (level === '1' && maxLevel === 1) {
+				return capitalizedEnchant
+			}
+			
+			return `${capitalizedEnchant} ${level}`
+		}
+
+		// Try enchantment without level (e.g., "silk_touch" -> "silk touch")
+		const enchantWithoutLevelMatch = enchantmentPart.match(/^(.+)$/)
+		if (enchantWithoutLevelMatch) {
+			const enchantName = enchantWithoutLevelMatch[1]
+			// Replace underscores with spaces, then capitalize each word
+			const capitalizedEnchant = enchantName
+				.replace(/_/g, ' ')
+				.replace(/\b\w/g, (l) => l.toUpperCase())
+			return capitalizedEnchant
+		}
+	}
+
+	// Fallback: Use item name
+	return enchantmentItem.name || ''
+}
+
+// Format enchantments for title attribute (comma-separated list)
+function formatEnchantmentsForTitle(enchantments) {
+	if (!enchantments || enchantments.length === 0) return ''
+	return enchantments.map(formatEnchantmentName).filter(Boolean).join(', ')
+}
+
 // Group shop items by category for better organization
 const shopItemsByCategory = computed(() => {
 	if (!shopItems.value || !availableItems.value) return {}
@@ -345,7 +419,7 @@ const baseTableColumns = computed(() => [
 			return valueA - valueB
 		}
 	},
-	{ key: 'actions', label: '', align: 'center', headerAlign: 'center', width: 'w-24' }
+	{ key: 'actions', label: '', align: 'center', headerAlign: 'center', width: 'w-20' }
 ])
 
 // Transform shop items for BaseTable (using shared utility)
@@ -402,6 +476,7 @@ function loadViewSettings() {
 	try {
 		const savedViewMode = localStorage.getItem('shopItemsViewMode')
 		const savedLayout = localStorage.getItem('shopItemsLayout')
+		const savedShowEnchantments = localStorage.getItem('shopItemsShowEnchantments')
 
 		if (savedViewMode && ['categories', 'list'].includes(savedViewMode)) {
 			viewMode.value = savedViewMode
@@ -409,6 +484,10 @@ function loadViewSettings() {
 
 		if (savedLayout && ['comfortable', 'condensed'].includes(savedLayout)) {
 			layout.value = savedLayout
+		}
+
+		if (savedShowEnchantments !== null) {
+			showEnchantments.value = savedShowEnchantments === 'true'
 		}
 	} catch (error) {
 		console.warn('Error loading view settings:', error)
@@ -419,6 +498,7 @@ function saveViewSettings() {
 	try {
 		localStorage.setItem('shopItemsViewMode', viewMode.value)
 		localStorage.setItem('shopItemsLayout', layout.value)
+		localStorage.setItem('shopItemsShowEnchantments', showEnchantments.value.toString())
 	} catch (error) {
 		console.warn('Error saving view settings:', error)
 	}
@@ -494,7 +574,7 @@ watch(selectedShopId, (newShopId) => {
 
 // Save view settings when they change
 watch(
-	[viewMode, layout],
+	[viewMode, layout, showEnchantments],
 	() => {
 		saveViewSettings()
 	},
@@ -1080,57 +1160,36 @@ function getServerName(serverId) {
 		</div>
 
 		<!-- Main content -->
-		<div v-else-if="hasShops && hasServers && selectedShop" class="space-y-8">
-			<!-- Out of Money Checkbox and Add Item Button (Top) -->
-			<div class="mt-4 space-y-2 mb-5">
-				<div v-if="!selectedShop.is_own_shop" class="space-y-1">
-					<label class="flex items-center gap-2 text-sm font-semibold text-gray-800">
-						<input
-							type="checkbox"
-							data-cy="shop-items-fully-cataloged-checkbox"
-							class="checkbox-input"
-							:checked="isShopFullyCataloged"
-							:disabled="catalogStatusLoading"
-							@change="handleCatalogStatusChange($event.target.checked)" />
-						<span class="flex items-center gap-1">
-							Shop is fully cataloged
-							<ClipboardDocumentCheckIcon class="w-4 h-4 text-gray-700" />
-						</span>
-					</label>
-					<p v-if="catalogStatusError" class="text-sm text-red-700">
-						{{ catalogStatusError }}
-					</p>
-				</div>
-				<div v-if="!selectedShop.is_own_shop">
-					<label
-						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
-						<input
-							data-cy="shop-items-out-of-money-checkbox"
-							:checked="isShopOutOfMoney"
-							@change="handleOutOfMoneyChange($event.target.checked)"
-							type="checkbox"
-							class="checkbox-input" />
-						<span class="flex items-center gap-1">
-							Shop owner has run out of money
-							<WalletIcon class="w-4 h-4 text-gray-700" />
-						</span>
-					</label>
-				</div>
-				<div>
-					<label
-						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
-						<input
-							data-cy="shop-items-archive-checkbox"
-							:checked="isShopArchived"
-							@change="handleArchiveChange($event.target.checked)"
-							type="checkbox"
-							class="checkbox-input" />
-						<span>Archive this shop</span>
-					</label>
+		<div v-else-if="hasShops && hasServers && selectedShop">
+			<!-- Settings and Market Overview Buttons (Top) -->
+			<div class="mt-4 mb-5">
+				<div class="flex items-center gap-3">
+					<BaseButton
+						@click="showShopSettingsModal = true"
+						variant="secondary"
+						data-cy="shop-items-settings-button">
+						<template #left-icon>
+							<Cog6ToothIcon />
+						</template>
+						Settings
+					</BaseButton>
+					<RouterLink
+						v-if="selectedShop?.server_id"
+						:to="`/market-overview?serverId=${selectedShop.server_id}`">
+						<BaseButton
+							type="button"
+							variant="tertiary"
+							data-cy="shop-items-market-overview-button">
+							<template #left-icon>
+								<CurrencyDollarIcon class="w-4 h-4" />
+							</template>
+							Market Overview
+						</BaseButton>
+					</RouterLink>
 				</div>
 			</div>
 
-			<!-- Add items and Market overview Buttons -->
+			<!-- Add Item Button -->
 			<div>
 				<div
 					v-if="shopItems && shopItems.length > 0"
@@ -1147,33 +1206,18 @@ function getServerName(serverId) {
 						</template>
 						Add Item
 					</BaseButton>
-					<RouterLink
-						v-if="selectedShop?.server_id"
-						:to="`/market-overview?serverId=${selectedShop.server_id}`"
-						class="w-full sm:w-auto">
-						<BaseButton
-							type="button"
-							variant="tertiary"
-							data-cy="shop-items-market-overview-button"
-							class="w-full justify-center sm:justify-start">
-							<template #left-icon>
-								<CurrencyDollarIcon class="w-4 h-4" />
-							</template>
-							Market Overview
-						</BaseButton>
-					</RouterLink>
 				</div>
 			</div>
 
 			<!-- Inventory -->
-			<div class="mt-8 space-y-6">
+			<div class="mt-4">
 				<div v-if="shopItems.length > 0" class="mb-4">
-					<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-8">
+					<div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-8">
 						<!-- View Mode -->
-						<div class="flex items-center gap-2">
-							<span class="text-sm font-medium text-heavy-metal">View as:</span>
+						<div>
+							<span class="text-sm font-medium text-heavy-metal block">View as:</span>
 							<div
-								class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+								class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
 							<button
 								data-cy="shop-items-view-mode-categories"
 								@click="viewMode = 'categories'"
@@ -1200,10 +1244,10 @@ function getServerName(serverId) {
 						</div>
 
 						<!-- Layout -->
-						<div class="flex items-center gap-2">
-							<span class="text-sm font-medium text-heavy-metal">Layout:</span>
+						<div>
+							<span class="text-sm font-medium text-heavy-metal block">Layout:</span>
 							<div
-								class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+								class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
 							<button
 								data-cy="shop-items-layout-comfortable"
 								@click="layout = 'comfortable'"
@@ -1230,27 +1274,30 @@ function getServerName(serverId) {
 						</div>
 
 						<!-- Mark All as Checked -->
-						<div v-if="!selectedShop.is_own_shop" class="flex items-center gap-2">
-							<BaseButton
-								type="button"
-								variant="secondary"
-								data-cy="shop-items-mark-all-checked-button"
-								@click="handleMarkAllAsChecked"
-								:disabled="markingAsChecked || !shopItems || shopItems.length === 0"
-								class="px-3 py-1.5 text-xs sm:text-sm">
-								<template #left-icon>
-									<ArrowPathIcon
-										:class="[
-											'w-4 h-4',
-											markingAsChecked ? 'animate-spin' : ''
-										]" />
-								</template>
-								{{
-									markingAsChecked
-										? 'Marking...'
-										: 'Mark All as Price Checked Today'
-								}}
-							</BaseButton>
+						<div v-if="!selectedShop.is_own_shop">
+							<span class="text-sm font-medium text-heavy-metal block opacity-0 pointer-events-none">Actions:</span>
+							<div>
+								<BaseButton
+									type="button"
+									variant="secondary"
+									data-cy="shop-items-mark-all-checked-button"
+									@click="handleMarkAllAsChecked"
+									:disabled="markingAsChecked || !shopItems || shopItems.length === 0"
+									class="px-3 py-1.5 text-xs sm:text-sm">
+									<template #left-icon>
+										<ArrowPathIcon
+											:class="[
+												'w-4 h-4',
+												markingAsChecked ? 'animate-spin' : ''
+											]" />
+									</template>
+									{{
+										markingAsChecked
+											? 'Marking...'
+											: 'Mark All as Price Checked Today'
+									}}
+								</BaseButton>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -1285,46 +1332,71 @@ function getServerName(serverId) {
 													'mr-3 flex-shrink-0'
 												]">
 												<img
-													:src="getImageUrl(row.image)"
+													:src="getItemImageUrl(row.image, row.enchantments)"
 													:alt="row.item"
+													@error="$event.target.src = getImageUrl(row.image)"
 													class="w-full h-full object-contain"
 													loading="lazy" />
 											</div>
-											<div
-												class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
-												<span class="truncate">{{ row.item }}</span>
+											<div class="flex-1 min-w-0">
 												<div
-													class="flex items-center gap-2 ml-2 flex-shrink-0">
-													<ArrowPathIcon
-														v-if="showItemSavingSpinner === row.id"
-														class="w-4 h-4 text-gray-500 animate-spin" />
-													<button
-														@click.stop="
-															toggleStar(
-																row.id,
-																row._originalItem?.starred || false
-															)
-														"
-														class="flex-shrink-0 transition-opacity"
-														:class="{
-															'opacity-0 group-hover:opacity-100': !(
-																row._originalItem?.starred || false
-															),
-															'opacity-100':
-																row._originalItem?.starred || false
-														}"
+													class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
+													<span
 														:title="
-															row._originalItem?.starred
-																? 'Unstar item'
-																: 'Star item'
+															!showEnchantments &&
+															row.enchantments &&
+															row.enchantments.length > 0
+																? formatEnchantmentsForTitle(row.enchantments)
+																: ''
 														">
-														<StarIcon
-															v-if="row._originalItem?.starred"
-															class="w-5 h-5 text-gray-asparagus" />
-														<StarIconOutline
-															v-else
-															class="w-5 h-5 text-gray-asparagus" />
-													</button>
+														{{ row.item }}
+													</span>
+													<div
+														class="flex items-center gap-2 ml-2 flex-shrink-0">
+														<ArrowPathIcon
+															v-if="showItemSavingSpinner === row.id"
+															class="w-4 h-4 text-gray-500 animate-spin" />
+														<button
+															@click.stop="
+																toggleStar(
+																	row.id,
+																	row._originalItem?.starred || false
+																)
+															"
+															class="flex-shrink-0 transition-opacity"
+															:class="{
+																'opacity-0 group-hover:opacity-100': !(
+																	row._originalItem?.starred || false
+																),
+																'opacity-100':
+																	row._originalItem?.starred || false
+															}"
+															:title="
+																row._originalItem?.starred
+																	? 'Unstar item'
+																	: 'Star item'
+															">
+															<StarIcon
+																v-if="row._originalItem?.starred"
+																class="w-5 h-5 text-gray-asparagus" />
+															<StarIconOutline
+																v-else
+																class="w-5 h-5 text-gray-asparagus" />
+														</button>
+													</div>
+												</div>
+												<!-- Enchantments Display -->
+												<div
+													v-if="showEnchantments && row.enchantments && row.enchantments.length > 0"
+													class="mt-1 pb-1">
+													<div class="flex flex-wrap gap-1">
+														<span
+															v-for="enchantmentId in row.enchantments"
+															:key="enchantmentId"
+															class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
+															{{ formatEnchantmentName(enchantmentId) }}
+														</span>
+													</div>
 												</div>
 											</div>
 										</div>
@@ -1463,8 +1535,12 @@ function getServerName(serverId) {
 										</BaseIconButton>
 										</div>
 									</template>
-									<template #cell-actions="{ row }">
-										<div class="flex items-center justify-end gap-2">
+									<template #cell-actions="{ row, layout }">
+										<div
+											class="flex items-center justify-end gap-2 px-3"
+											:class="[
+												layout === 'condensed' ? '-mx-2' : '-mx-4'
+											]">
 											<BaseIconButton
 												variant="primary"
 												data-cy="shop-item-edit-button"
@@ -1507,45 +1583,70 @@ function getServerName(serverId) {
 												'mr-3 flex-shrink-0'
 											]">
 											<img
-												:src="getImageUrl(row.image)"
+												:src="getItemImageUrl(row.image, row.enchantments)"
 												:alt="row.item"
+												@error="$event.target.src = getImageUrl(row.image)"
 												class="w-full h-full object-contain"
 												loading="lazy" />
 										</div>
-										<div
-											class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
-											<span class="truncate">{{ row.item }}</span>
-											<div class="flex items-center gap-2 ml-2 flex-shrink-0">
-												<ArrowPathIcon
-													v-if="showItemSavingSpinner === row.id"
-													class="w-4 h-4 text-gray-500 animate-spin" />
-												<button
-													@click.stop="
-														toggleStar(
-															row.id,
-															row._originalItem?.starred || false
-														)
-													"
-													class="flex-shrink-0 transition-opacity"
-													:class="{
-														'opacity-0 group-hover:opacity-100': !(
-															row._originalItem?.starred || false
-														),
-														'opacity-100':
-															row._originalItem?.starred || false
-													}"
+										<div class="flex-1 min-w-0">
+											<div
+												class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
+												<span
 													:title="
-														row._originalItem?.starred
-															? 'Unstar item'
-															: 'Star item'
+														!showEnchantments &&
+														row.enchantments &&
+														row.enchantments.length > 0
+															? formatEnchantmentsForTitle(row.enchantments)
+															: ''
 													">
-													<StarIcon
-														v-if="row._originalItem?.starred"
-														class="w-5 h-5 text-gray-asparagus" />
-													<StarIconOutline
-														v-else
-														class="w-5 h-5 text-gray-asparagus" />
-												</button>
+													{{ row.item }}
+												</span>
+												<div class="flex items-center gap-2 ml-2 flex-shrink-0">
+													<ArrowPathIcon
+														v-if="showItemSavingSpinner === row.id"
+														class="w-4 h-4 text-gray-500 animate-spin" />
+													<button
+														@click.stop="
+															toggleStar(
+																row.id,
+																row._originalItem?.starred || false
+															)
+														"
+														class="flex-shrink-0 transition-opacity"
+														:class="{
+															'opacity-0 group-hover:opacity-100': !(
+																row._originalItem?.starred || false
+															),
+															'opacity-100':
+																row._originalItem?.starred || false
+														}"
+														:title="
+															row._originalItem?.starred
+																? 'Unstar item'
+																: 'Star item'
+														">
+														<StarIcon
+															v-if="row._originalItem?.starred"
+															class="w-5 h-5 text-gray-asparagus" />
+														<StarIconOutline
+															v-else
+															class="w-5 h-5 text-gray-asparagus" />
+													</button>
+												</div>
+											</div>
+											<!-- Enchantments Display -->
+											<div
+												v-if="showEnchantments && row.enchantments && row.enchantments.length > 0"
+												class="mt-1 pb-1">
+												<div class="flex flex-wrap gap-1">
+													<span
+														v-for="enchantmentId in row.enchantments"
+														:key="enchantmentId"
+														class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
+														{{ formatEnchantmentName(enchantmentId) }}
+													</span>
+												</div>
 											</div>
 										</div>
 									</div>
@@ -1674,8 +1775,12 @@ function getServerName(serverId) {
 										</BaseIconButton>
 									</div>
 								</template>
-								<template #cell-actions="{ row }">
-									<div class="flex items-center justify-end gap-2">
+								<template #cell-actions="{ row, layout }">
+									<div
+										class="flex items-center justify-end gap-2 px-3"
+										:class="[
+											layout === 'condensed' ? '-mx-2' : '-mx-4'
+										]">
 										<BaseIconButton
 											variant="primary"
 											aria-label="Edit item"
@@ -1827,5 +1932,80 @@ function getServerName(serverId) {
 				</div>
 			</div>
 		</template>
+	</BaseModal>
+
+	<!-- Shop Settings Modal -->
+	<BaseModal
+		:isOpen="showShopSettingsModal"
+		title="Settings"
+		size="normal"
+		maxWidth="max-w-md"
+		data-cy="shop-items-settings-modal"
+		@close="showShopSettingsModal = false">
+		<div class="space-y-4">
+			<div>
+				<h3 class="text-sm font-semibold text-gray-900 mb-3">Shop settings</h3>
+				<div class="space-y-3">
+					<div v-if="!selectedShop?.is_own_shop" class="space-y-1">
+						<label class="flex items-center gap-2 text-sm font-semibold text-gray-800">
+							<input
+								type="checkbox"
+								data-cy="shop-items-fully-cataloged-checkbox"
+								class="checkbox-input"
+								:checked="isShopFullyCataloged"
+								:disabled="catalogStatusLoading"
+								@change="handleCatalogStatusChange($event.target.checked)" />
+							<span class="flex items-center gap-1">
+								Shop is fully cataloged
+								<ClipboardDocumentCheckIcon class="w-4 h-4 text-gray-700" />
+							</span>
+						</label>
+						<p v-if="catalogStatusError" class="text-sm text-red-700">
+							{{ catalogStatusError }}
+						</p>
+					</div>
+					<div v-if="!selectedShop?.is_own_shop">
+						<label
+							class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+							<input
+								data-cy="shop-items-out-of-money-checkbox"
+								:checked="isShopOutOfMoney"
+								@change="handleOutOfMoneyChange($event.target.checked)"
+								type="checkbox"
+								class="checkbox-input" />
+							<span class="flex items-center gap-1">
+								Shop owner has run out of money
+								<WalletIcon class="w-4 h-4 text-gray-700" />
+							</span>
+						</label>
+					</div>
+					<div>
+						<label
+							class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+							<input
+								data-cy="shop-items-archive-checkbox"
+								:checked="isShopArchived"
+								@change="handleArchiveChange($event.target.checked)"
+								type="checkbox"
+								class="checkbox-input" />
+							<span>Archive this shop</span>
+						</label>
+					</div>
+				</div>
+			</div>
+			<div class="pt-4">
+				<h3 class="text-sm font-semibold text-gray-900 mb-3">Items list</h3>
+				<label
+					class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+					<input
+						data-cy="shop-items-hide-enchantments-checkbox"
+						:checked="!showEnchantments"
+						@change="showEnchantments = !$event.target.checked"
+						type="checkbox"
+						class="checkbox-input" />
+					<span>Hide enchantments</span>
+				</label>
+			</div>
+		</div>
 	</BaseModal>
 </template>

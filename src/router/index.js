@@ -449,6 +449,39 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/admin/enchantments/migrate-items',
+			name: 'enchantments-migrate-items',
+			component: () => import('../views/enchantments/MigrateItemsView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: `Migrate Enchantment Categories - ${siteName}`
+			}
+		},
+		{
+			path: '/admin/enchantments/migrate-books',
+			name: 'enchantments-migrate-books',
+			component: () => import('../views/enchantments/MigrateBooksView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: `Migrate Enchantment Metadata - ${siteName}`
+			}
+		},
+		{
+			path: '/admin/enchantments/manage',
+			name: 'enchantments-manage',
+			component: () => import('../views/enchantments/ManageEnchantableItemsView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: `Manage Enchantable Items - ${siteName}`
+			}
+		},
+		{
 			path: '/crate-rewards',
 			name: 'crate-rewards',
 			component: () => import('../views/CrateRewardManagerView.vue'),

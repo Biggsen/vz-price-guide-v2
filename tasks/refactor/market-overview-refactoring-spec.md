@@ -33,10 +33,10 @@ This document outlines refactoring opportunities for `MarketOverviewView.vue` (1
 
 ## Current State Analysis
 
-### File Sizes (After Refactoring)
+### File Sizes (Current State)
 
--   `MarketOverviewView.vue`: ~996 lines (reduced from 1,046)
--   `ShopItemsView.vue`: ~1,223 lines (reduced from 1,493)
+-   `MarketOverviewView.vue`: 1,500 lines (reduced from 1,046 after utility extraction, but has grown)
+-   `ShopItemsView.vue`: 1,847 lines (reduced from 1,493 after ShopFormModal extraction, but has grown)
 -   `ShopManagerView.vue`: ~737 lines (reduced from 890)
 
 ### Code Duplication Identified
@@ -49,7 +49,7 @@ This document outlines refactoring opportunities for `MarketOverviewView.vue` (1
 
 #### View Settings (High Priority)
 
--   View mode/layout toggle UI: Duplicated in MarketOverviewView and ShopItemsView
+-   View mode/layout toggle UI: Duplicated in MarketOverviewView and ShopItemsView (ViewControls.vue already exists and is used in HomeView)
 -   localStorage view settings: Similar pattern in both views (already identified in shop-refactoring-spec.md)
 -   Sort settings: MarketOverviewView has additional sort settings logic
 
@@ -62,6 +62,15 @@ This document outlines refactoring opportunities for `MarketOverviewView.vue` (1
 
 -   Grouping items by category: Similar logic in MarketOverviewView and ShopItemsView
 -   Category sorting: MarketOverviewView has category ordering logic
+
+#### Enchantment Formatting (Medium Priority)
+
+-   `formatEnchantmentName()` function: Duplicated in MarketOverviewView, ShopItemsView, and CrateSingleView
+-   `formatEnchantmentsForTitle()` function: Duplicated in MarketOverviewView and ShopItemsView
+
+#### Item Image URL (Medium Priority)
+
+-   `getItemImageUrl()` function: Duplicated in MarketOverviewView and ShopItemsView
 
 #### Back Button (Low Priority)
 
@@ -248,87 +257,141 @@ export function transformShopItemForTable(shopItem, options = {}) {
 
 ---
 
-### 2. ViewModeLayoutToggle Component (High Priority)
+### 2. Use Existing ViewControls Component (High Priority)
 
-**Problem**: View mode and layout toggle UI is duplicated in MarketOverviewView (lines 753-810) and ShopItemsView (lines 1007-1060).
+**Problem**: View mode and layout toggle UI is duplicated in MarketOverviewView (lines 1044-1107) and ShopItemsView (lines 1216-1274) even though `ViewControls.vue` already exists and is used in `HomeView.vue`.
 
-**Solution**: Extract into a reusable component.
+**Solution**: Replace inline toggle UI with existing `ViewControls.vue` component and enhance it if needed.
 
-**Location**: `src/components/ViewModeLayoutToggle.vue`
+**Location**: `src/components/ViewControls.vue` (already exists)
 
-**Props**:
+**Current State**: 
+- `ViewControls.vue` already exists at `src/components/ViewControls.vue`
+- Currently used in `HomeView.vue` (lines 388-392)
+- Provides view mode and layout toggles with same functionality
 
+**Enhancements Needed**:
+- Add optional `data-cy` attributes for testing (ShopItemsView and MarketOverviewView have these)
+- Support optional label color variant (currently uses `text-heavy-metal`, MarketOverviewView uses `text-gray-700`)
+- Support optional hover color variant (currently uses `hover:bg-gray-100`, MarketOverviewView uses `hover:bg-sea-mist`)
+
+**Props to Add**:
 ```javascript
 {
-  viewMode: String, // 'categories' | 'list'
-  layout: String, // 'comfortable' | 'condensed'
-  showLabels: Boolean // Show "View as:" and "Layout:" labels
+  dataCyPrefix: String, // Optional prefix for data-cy attributes (e.g., 'shop-items', 'market-overview')
+  labelColor: String, // Optional: 'heavy-metal' (default) or 'gray-700'
+  hoverColor: String // Optional: 'gray-100' (default) or 'sea-mist'
 }
-```
-
-**Events**:
-
--   `@update:viewMode` - Emits when view mode changes
--   `@update:layout` - Emits when layout changes
-
-**Features**:
-
--   View mode toggle (Categories/List)
--   Layout toggle (Comfortable/Compact)
--   Consistent styling across views
--   Optional labels for flexibility
-
-**Template Structure**:
-
-```vue
-<template>
-	<div class="flex flex-wrap items-center gap-6">
-		<!-- View Mode -->
-		<div>
-			<span v-if="showLabels" class="text-sm font-medium text-gray-700 block">View as:</span>
-			<div
-				class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden"
-				:class="{ 'mt-1': showLabels }">
-				<button @click="$emit('update:viewMode', 'categories')" :class="[...]">
-					Categories
-				</button>
-				<button @click="$emit('update:viewMode', 'list')" :class="[...]">List</button>
-			</div>
-		</div>
-
-		<!-- Layout -->
-		<div>
-			<span v-if="showLabels" class="text-sm font-medium text-gray-700 block">Layout:</span>
-			<div
-				class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden"
-				:class="{ 'mt-1': showLabels }">
-				<button @click="$emit('update:layout', 'comfortable')" :class="[...]">
-					Comfortable
-				</button>
-				<button @click="$emit('update:layout', 'condensed')" :class="[...]">Compact</button>
-			</div>
-		</div>
-	</div>
-</template>
 ```
 
 **Usage**:
 
--   Replace toggle UI in MarketOverviewView (lines 753-810)
--   Replace toggle UI in ShopItemsView (lines 1007-1060)
--   Use in other views that need view mode/layout controls
+-   Replace toggle UI in MarketOverviewView (lines 1044-1107)
+-   Replace toggle UI in ShopItemsView (lines 1216-1274)
+-   Standardize UI across HomeView, ShopItemsView, and MarketOverviewView
 
 **Files to Modify**:
 
--   `src/components/ViewModeLayoutToggle.vue` (new)
--   `src/views/MarketOverviewView.vue` (replace lines 753-810)
--   `src/views/ShopItemsView.vue` (replace lines 1007-1060)
+-   `src/components/ViewControls.vue` (enhance with optional props)
+-   `src/views/MarketOverviewView.vue` (replace lines 1044-1107)
+-   `src/views/ShopItemsView.vue` (replace lines 1216-1274)
+
+**Impact**:
+- Remove ~60 lines of duplicated code from MarketOverviewView
+- Remove ~60 lines of duplicated code from ShopItemsView
+- Standardize UI across all three views
 
 ---
 
-### 3. MarketItemsTable Component (High Priority)
+### 3. Enchantment Formatting Utilities (Medium Priority)
 
-**Problem**: BaseTable templates are duplicated for categories/list views in MarketOverviewView (lines 815-1041). Similar duplication exists in ShopItemsView.
+**Problem**: Enchantment formatting functions are duplicated across multiple views:
+- `formatEnchantmentName()` - `MarketOverviewView.vue` (lines 178-225), `ShopItemsView.vue` (lines 282-329), `CrateSingleView.vue` (line 990)
+- `formatEnchantmentsForTitle()` - `MarketOverviewView.vue` (lines 228-231), `ShopItemsView.vue` (lines 332-335)
+
+**Solution**: Extract into shared utility file.
+
+**Location**: `src/utils/enchantments.js` (new)
+
+**Exports**:
+```javascript
+/**
+ * Format enchantment name for display
+ * @param {string} enchantmentId - Enchantment item ID
+ * @param {Array} availableItems - Array of all available items
+ * @returns {string} Formatted enchantment name
+ */
+export function formatEnchantmentName(enchantmentId, availableItems) {
+  // ... existing logic from MarketOverviewView/ShopItemsView
+}
+
+/**
+ * Format enchantments for title attribute (comma-separated list)
+ * @param {Array} enchantments - Array of enchantment IDs
+ * @param {Array} availableItems - Array of all available items
+ * @returns {string} Comma-separated list of formatted enchantment names
+ */
+export function formatEnchantmentsForTitle(enchantments, availableItems) {
+  if (!enchantments || enchantments.length === 0) return ''
+  return enchantments.map(id => formatEnchantmentName(id, availableItems)).filter(Boolean).join(', ')
+}
+```
+
+**Files to Modify**:
+- `src/utils/enchantments.js` (new)
+- `src/views/MarketOverviewView.vue` (replace lines 178-231)
+- `src/views/ShopItemsView.vue` (replace lines 282-335)
+- `src/views/CrateSingleView.vue` (replace line 990)
+
+**Impact**: 
+- Remove ~50 lines of duplicated code
+- Standardize enchantment formatting across all views
+
+---
+
+### 4. Item Image URL Helper (Medium Priority)
+
+**Problem**: `getItemImageUrl()` function is duplicated in `MarketOverviewView.vue` (lines 164-175) and `ShopItemsView.vue` (lines 268-279).
+
+**Solution**: Move to existing `src/utils/image.js` file.
+
+**Location**: `src/utils/image.js` (extend existing)
+
+**Exports**:
+```javascript
+/**
+ * Get image URL, preferring enchanted version if item has enchantments
+ * @param {string} imagePath - Base image path
+ * @param {Array} enchantments - Array of enchantment IDs (optional)
+ * @returns {string|null} Image URL or null if no path
+ */
+export function getItemImageUrl(imagePath, enchantments) {
+  if (!imagePath) return null
+
+  // If item has enchantments, try to use enchanted version (always .webp)
+  if (enchantments && enchantments.length > 0) {
+    const enchantedPath = imagePath.replace(/\.(png|webp|gif)$/i, '_enchanted.webp')
+    return getImageUrl(enchantedPath)
+  }
+
+  return getImageUrl(imagePath)
+}
+```
+
+**Files to Modify**:
+- `src/utils/image.js` (extend)
+- `src/views/MarketOverviewView.vue` (replace lines 164-175)
+- `src/views/ShopItemsView.vue` (replace lines 268-279)
+
+**Impact**: 
+- Remove ~15 lines of duplicated code
+- Centralize image URL logic
+
+---
+
+### 5. MarketItemsTable Component (High Priority)
+
+**Problem**: BaseTable templates are duplicated for categories/list views in MarketOverviewView (lines 1112-1341, 1344-1569). Similar duplication exists in ShopItemsView.
 
 **Solution**: Extract table display into a reusable component that handles both view modes.
 
@@ -384,12 +447,12 @@ export function transformShopItemForTable(shopItem, options = {}) {
 **Files to Modify**:
 
 -   `src/components/MarketItemsTable.vue` (new)
--   `src/views/MarketOverviewView.vue` (replace lines 812-1042)
+-   `src/views/MarketOverviewView.vue` (replace lines 1112-1569)
 -   `src/views/ShopItemsView.vue` (can use same component with different props)
 
 ---
 
-### 4. useViewSettings Composable Enhancement (High Priority)
+### 6. useViewSettings Composable Enhancement (High Priority)
 
 **Problem**: View settings logic is duplicated. MarketOverviewView also has sort settings that could be included.
 
@@ -489,7 +552,7 @@ export function useViewSettings(keyPrefix, defaults = {}) {
 
 ---
 
-### 5. useItemGrouping Composable (Medium Priority)
+### 7. useItemGrouping Composable (Medium Priority)
 
 **Problem**: Item grouping by category logic is duplicated in MarketOverviewView and ShopItemsView.
 
@@ -610,7 +673,7 @@ export function useItemGrouping(shopItems, availableItems, options = {}) {
 
 ---
 
-### 6. BackButton Component (Low Priority)
+### 8. BackButton Component (Low Priority)
 
 **Problem**: Back button implementation varies between views (inline SVG vs BaseButton).
 
@@ -635,7 +698,7 @@ export function useItemGrouping(shopItems, availableItems, options = {}) {
 
 ---
 
-### 7. MarketStats Component (Low Priority)
+### 9. MarketStats Component (Low Priority)
 
 **Problem**: Market stats display in MarketOverviewView (lines 616-654) could be extracted for reuse.
 
@@ -672,13 +735,16 @@ export function useItemGrouping(shopItems, availableItems, options = {}) {
 5. ✅ **COMPLETED** - Update ShopItemsView to use new utilities
 6. ✅ **COMPLETED** - Test all views still work correctly
 
-### Phase 2: UI Components (High Impact)
+### Phase 2: UI Components & Utilities (High Impact)
 
-1. ✅ Create `ViewModeLayoutToggle.vue` component
-2. ✅ Create `MarketItemsTable.vue` component
-3. ✅ Update MarketOverviewView to use new components
-4. ✅ Update ShopItemsView to use new components (if applicable)
-5. ✅ Test view mode switching and table display
+1. ⏳ Enhance existing `ViewControls.vue` component with optional props
+2. ⏳ Create `enchantments.js` utility file
+3. ⏳ Extend `image.js` with `getItemImageUrl()` helper
+4. ⏳ Update MarketOverviewView to use ViewControls and utilities
+5. ⏳ Update ShopItemsView to use ViewControls and utilities
+6. ⏳ Create `MarketItemsTable.vue` component
+7. ⏳ Update MarketOverviewView to use MarketItemsTable
+8. ⏳ Test view mode switching and table display
 
 ### Phase 3: Composables (Code Quality)
 
@@ -703,12 +769,24 @@ export function useItemGrouping(shopItems, availableItems, options = {}) {
 -   [x] ✅ Price formatting displays correctly
 -   [x] ✅ Table transformation produces correct structure
 
-### ViewModeLayoutToggle Component
+### ViewControls Component Enhancement
 
+-   [ ] Component enhanced with optional props (data-cy, label color, hover color)
 -   [ ] Toggle switches between view modes correctly
 -   [ ] Layout changes apply correctly
 -   [ ] Styling matches existing design
--   [ ] Works in both MarketOverviewView and ShopItemsView
+-   [ ] Works in MarketOverviewView, ShopItemsView, and HomeView
+
+### Enchantment Formatting Utilities
+
+-   [ ] formatEnchantmentName works correctly in all views
+-   [ ] formatEnchantmentsForTitle works correctly
+-   [ ] All views updated to use shared utilities
+
+### Item Image URL Helper
+
+-   [ ] getItemImageUrl works correctly with and without enchantments
+-   [ ] All views updated to use shared helper
 
 ### MarketItemsTable Component
 
@@ -728,8 +806,11 @@ export function useItemGrouping(shopItems, availableItems, options = {}) {
 
 ## Success Metrics
 
--   [x] ✅ Reduce `MarketOverviewView.vue` from 1,046 lines to ~996 lines (50 lines removed)
+-   [x] ✅ Reduce `MarketOverviewView.vue` from 1,046 lines (50 lines removed via utilities, but currently at 1,500 lines)
 -   [x] ✅ Eliminate ~100 lines of duplicated utility functions
+-   [ ] Eliminate ~120 lines of duplicated toggle UI (pending - use ViewControls)
+-   [ ] Eliminate ~50 lines of duplicated enchantment formatting (pending)
+-   [ ] Eliminate ~15 lines of duplicated image URL logic (pending)
 -   [ ] Eliminate ~200 lines of duplicated table templates (pending)
 -   [ ] Eliminate ~50 lines of duplicated view settings logic (pending)
 -   [x] ✅ All existing tests pass
@@ -743,10 +824,12 @@ export function useItemGrouping(shopItems, availableItems, options = {}) {
 1. ✅ `formatRelativeDate()` utility
 2. ✅ `calculateProfitMargin()` utility
 3. ✅ `transformShopItemForTable()` utility
-4. ✅ `ViewModeLayoutToggle` component
-5. ✅ `MarketItemsTable` component (with different props)
-6. ✅ `useViewSettings` composable
-7. ✅ `useItemGrouping` composable
+4. ✅ `ViewControls` component (enhance existing)
+5. ✅ `formatEnchantmentName()` utility (new)
+6. ✅ `getItemImageUrl()` helper (new)
+7. ✅ `MarketItemsTable` component (with different props)
+8. ✅ `useViewSettings` composable
+9. ✅ `useItemGrouping` composable
 
 ### Shared Between All Three Views
 

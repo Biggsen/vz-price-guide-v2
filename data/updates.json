@@ -1,5 +1,26 @@
 [
 	{
+		"id": 39,
+		"title": "Enchanted Item Support & Shop Manager Improvements",
+		"date": "2025-12-31",
+		"types": ["Feature", "Enhancement"],
+		"hidden": false,
+		"description": "Shop Manager now supports enchanted items, making it easier to track and price enchanted tools, weapons, armor, and more. Enchantments are validated automatically, so only compatible combinations are allowed—keeping enchanted item pricing clear, consistent, and reliable.\n\nThis update also includes several quality-of-life improvements to streamline everyday shop management.",
+		"changes": [
+			"Enchanted item support – track and price enchanted tools, weapons, armor, and other items",
+			"Automatic compatibility checks – only valid enchantments appear for each item type (e.g. Lure on fishing rods)",
+			"Conflict prevention – incompatible enchantment combinations (e.g. Sharpness + Smite, multiple Protection types) are blocked",
+			"Clear enchantment visibility – see all enchantments directly in shop lists and item detail views",
+			"Enchanted item visuals – added images for enchanted variants where available",
+			"Mark as price checked – quickly flag items as price-checked today from Market Overview",
+			"Stock filters – easily hide out-of-stock or fully stocked items",
+			"Improved modal layout – shop settings are now grouped in a cleaner, more focused modal",
+			"Updated armor images – armor now uses inventory icons instead of 3D renders",
+			"Add Item keyboard shortcut – press 'n' to open Add Item modal",
+			"Note: Enchanted images for spears and flint & steel are not available yet."
+		]
+	},
+	{
 		"id": 38,
 		"title": "Diamond currency support is now available",
 		"date": "2025-12-29",

@@ -24,11 +24,11 @@ function getButtonClasses(isActive) {
 
 <template>
 	<div class="mb-4">
-		<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-8">
+		<div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-8">
 			<!-- View Mode -->
-			<div class="flex items-center gap-2">
-				<span class="text-sm font-medium text-heavy-metal">View as:</span>
-				<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+			<div>
+				<span class="text-sm font-medium text-heavy-metal block">View as:</span>
+				<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
 					<button
 						@click="emit('update:viewMode', 'categories')"
 						:class="[
@@ -46,9 +46,9 @@ function getButtonClasses(isActive) {
 			</div>
 
 			<!-- Layout -->
-			<div class="flex items-center gap-2">
-				<span class="text-sm font-medium text-heavy-metal">Layout:</span>
-				<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+			<div>
+				<span class="text-sm font-medium text-heavy-metal block">Layout:</span>
+				<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
 					<button
 						@click="emit('update:layout', 'comfortable')"
 						:class="[

@@ -3,9 +3,16 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { disabledCategories, enabledCategories } from '../constants.js'
 import { getMajorMinorVersion } from '../utils/serverProfile.js'
+import {
+	isItemEnchantable,
+	getCompatibleEnchantments,
+	hasEnchantmentConflict,
+	getEnchantmentConflictReason
+} from '../utils/enchantments.js'
 import BaseButton from './BaseButton.vue'
+import BaseModal from './BaseModal.vue'
 import { XCircleIcon } from '@heroicons/vue/20/solid'
-import { ArchiveBoxIcon, ArchiveBoxXMarkIcon } from '@heroicons/vue/24/outline'
+import { ArchiveBoxIcon, ArchiveBoxXMarkIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
 	availableItems: {
@@ -40,7 +47,8 @@ const formData = ref({
 	sell_price: null,
 	stock_quantity: null,
 	stock_full: false,
-	notes: ''
+	notes: '',
+	enchantments: []
 })
 
 // Form state
@@ -52,6 +60,13 @@ const dropdownContainer = ref(null)
 const buyPriceInput = ref(null)
 const enableMultipleSelection = ref(false) // Toggle for multiple selection mode
 const selectedItemIds = ref([]) // Track multiple selected items
+
+// Enchantment state
+const enchantmentSearchQuery = ref('')
+const enchantmentHighlightedIndex = ref(-1)
+const enchantmentSearchInput = ref(null)
+const enchantmentDropdownContainer = ref(null)
+const enchantmentError = ref(null)
 
 // Auto-focus search input when form is shown for adding new items
 function focusSearchInput() {
@@ -68,13 +83,17 @@ function resetForm() {
 		sell_price: null,
 		stock_quantity: null,
 		stock_full: false,
-		notes: ''
+		notes: '',
+		enchantments: []
 	}
 	searchQuery.value = ''
 	formError.value = null
 	highlightedIndex.value = -1
 	enableMultipleSelection.value = false
 	selectedItemIds.value = []
+	enchantmentSearchQuery.value = ''
+	enchantmentHighlightedIndex.value = -1
+	enchantmentError.value = null
 }
 
 // Initialize form when editing
@@ -86,7 +105,10 @@ onMounted(() => {
 			sell_price: props.editingItem.sell_price,
 			stock_quantity: props.editingItem.stock_quantity,
 			stock_full: props.editingItem.stock_full || false,
-			notes: props.editingItem.notes || ''
+			notes: props.editingItem.notes || '',
+			enchantments: Array.isArray(props.editingItem.enchantments)
+				? [...props.editingItem.enchantments]
+				: []
 		}
 	} else {
 		resetForm()
@@ -108,7 +130,10 @@ watch(
 				sell_price: newEditingItem.sell_price,
 				stock_quantity: newEditingItem.stock_quantity,
 				stock_full: newEditingItem.stock_full || false,
-				notes: newEditingItem.notes || ''
+				notes: newEditingItem.notes || '',
+				enchantments: Array.isArray(newEditingItem.enchantments)
+					? [...newEditingItem.enchantments]
+					: []
 			}
 		} else {
 			resetForm()
@@ -121,15 +146,59 @@ watch(
 )
 
 // Computed properties
-const selectedItem = computed(
-	() => props.availableItems.find((item) => item.id === formData.value.item_id) || null
-)
+const selectedItem = computed(() => {
+	// When editing, use itemData from editingItem if available
+	if (props.editingItem && props.editingItem.itemData && formData.value.item_id === props.editingItem.item_id) {
+		return props.editingItem.itemData
+	}
+	// Otherwise, look up in availableItems
+	return props.availableItems.find((item) => item.id === formData.value.item_id) || null
+})
 
 const selectedItems = computed(() => {
 	return props.availableItems.filter((item) => selectedItemIds.value.includes(item.id))
 })
 
 const isModalVariant = computed(() => props.displayVariant === 'modal')
+
+// Get all enchantment items
+const allEnchantmentItems = computed(() => {
+	if (!props.availableItems) return []
+	return props.availableItems.filter((item) => item.category === 'enchantments')
+})
+
+// Get compatible enchantments for selected item
+const compatibleEnchantments = computed(() => {
+	if (!selectedItem.value || !allEnchantmentItems.value.length) return []
+	
+	// Hide enchantments for enchanted books themselves
+	if (selectedItem.value.category === 'enchantments') return []
+	
+	// Filter to only compatible enchantments
+	return getCompatibleEnchantments(selectedItem.value, allEnchantmentItems.value)
+})
+
+// Filter enchantments by search query
+const filteredEnchantments = computed(() => {
+	if (!enchantmentSearchQuery.value || enchantmentSearchQuery.value.length < 1) return []
+	
+	const query = enchantmentSearchQuery.value.toLowerCase().trim()
+	return compatibleEnchantments.value.filter((enchantment) => {
+		const name = formatEnchantmentName(enchantment.id).toLowerCase()
+		return name.includes(query)
+	})
+})
+
+// Check if enchantment section should be shown
+const showEnchantmentSection = computed(() => {
+	if (!selectedItem.value) return false
+	
+	// Hide for enchanted books themselves
+	if (selectedItem.value.category === 'enchantments') return false
+	
+	// Show if item is enchantable
+	return isItemEnchantable(selectedItem.value)
+})
 
 // Calculate profit margin when both prices are available
 const profitMargin = computed(() => {
@@ -360,7 +429,8 @@ function handleSubmit() {
 			buy_price: formData.value.buy_price ?? null,
 			sell_price: formData.value.sell_price ?? null,
 			stock_quantity: formData.value.stock_quantity ?? null,
-			notes: formData.value.notes?.trim() || ''
+			notes: formData.value.notes?.trim() || '',
+			enchantments: Array.isArray(formData.value.enchantments) ? [...formData.value.enchantments] : []
 		}
 
 		emit('submit', submitData)
@@ -417,7 +487,8 @@ function handleSubmit() {
 
 		const itemsToSubmit = selectedItemIds.value.map((itemId) => ({
 			...baseData,
-			item_id: itemId
+			item_id: itemId,
+			enchantments: [] // Multiple selection mode doesn't support enchantments per item
 		}))
 
 		emit('submit', itemsToSubmit)
@@ -465,7 +536,8 @@ function handleSubmit() {
 			buy_price: formData.value.buy_price ?? null,
 			sell_price: formData.value.sell_price ?? null,
 			stock_quantity: formData.value.stock_quantity ?? null,
-			notes: formData.value.notes?.trim() || ''
+			notes: formData.value.notes?.trim() || '',
+			enchantments: Array.isArray(formData.value.enchantments) ? [...formData.value.enchantments] : []
 		}
 
 		emit('submit', submitData)
@@ -623,6 +695,10 @@ function handleFormKeyDown(event) {
 // Select item handler (kept for backward compatibility, but not used in new multi-select mode)
 function selectItem(item) {
 	formData.value.item_id = item.id
+	// Clear enchantments when item changes (if new item is not enchantable or is different)
+	if (!isItemEnchantable(item) || item.category === 'enchantments') {
+		formData.value.enchantments = []
+	}
 	searchQuery.value = '' // Clear search query when item is selected
 	highlightedIndex.value = -1 // Reset highlight
 	if (formError.value === 'item_id') {
@@ -652,11 +728,225 @@ function clearSelectedItems() {
 // Clear selected item (single mode)
 function clearSelectedItem() {
 	formData.value.item_id = ''
+	formData.value.enchantments = [] // Clear enchantments when clearing item
 	searchQuery.value = ''
 	highlightedIndex.value = -1
 	if (formError.value === 'item_id') {
 		formError.value = null
 	}
+}
+
+// Enchantment functions
+function removeEnchantment(enchantmentId) {
+	const index = formData.value.enchantments.indexOf(enchantmentId)
+	if (index > -1) {
+		formData.value.enchantments.splice(index, 1)
+	}
+}
+
+// Extract enchantment type and level from enchantment ID
+function getEnchantmentTypeAndLevel(enchantmentId) {
+	const enchantmentItem = allEnchantmentItems.value.find((item) => item.id === enchantmentId)
+	if (!enchantmentItem) return null
+
+	const materialId = enchantmentItem.material_id
+	if (!materialId || !materialId.startsWith('enchanted_book_')) return null
+
+	const enchantmentPart = materialId.replace('enchanted_book_', '')
+	const match = enchantmentPart.match(/^(.+)_(\d+)$/)
+	if (match) {
+		return {
+			type: match[1],
+			level: parseInt(match[2], 10),
+			id: enchantmentId
+		}
+	}
+
+	// Enchantment without level
+	return {
+		type: enchantmentPart,
+		level: 1,
+		id: enchantmentId
+	}
+}
+
+function selectEnchantment(enchantment) {
+	enchantmentError.value = null
+
+	const newEnchantmentData = getEnchantmentTypeAndLevel(enchantment.id)
+	if (!newEnchantmentData) {
+		enchantmentError.value = 'Could not parse enchantment data'
+		return
+	}
+
+	// Check for same enchantment type in existing enchantments
+	const existingEnchantmentIndex = formData.value.enchantments.findIndex((existingId) => {
+		const existingData = getEnchantmentTypeAndLevel(existingId)
+		return existingData && existingData.type === newEnchantmentData.type
+	})
+
+	if (existingEnchantmentIndex !== -1) {
+		// Same enchantment type exists - check if new one is higher level
+		const existingData = getEnchantmentTypeAndLevel(formData.value.enchantments[existingEnchantmentIndex])
+		if (existingData && newEnchantmentData.level > existingData.level) {
+			// Replace lower level with higher level
+			formData.value.enchantments[existingEnchantmentIndex] = enchantment.id
+			enchantmentSearchQuery.value = ''
+			enchantmentHighlightedIndex.value = -1
+			return
+		} else if (existingData && newEnchantmentData.level <= existingData.level) {
+			// New level is same or lower - don't add, but don't show error
+			enchantmentSearchQuery.value = ''
+			enchantmentHighlightedIndex.value = -1
+			return
+		}
+	}
+
+	// Check for conflicts with existing enchantments
+	if (
+		hasEnchantmentConflict(
+			enchantment.id,
+			formData.value.enchantments,
+			allEnchantmentItems.value
+		)
+	) {
+		const reason = getEnchantmentConflictReason(
+			enchantment.id,
+			formData.value.enchantments,
+			allEnchantmentItems.value
+		)
+		enchantmentError.value = reason || 'This enchantment conflicts with existing enchantments'
+		return
+	}
+
+	// Check if already added (exact same enchantment)
+	if (formData.value.enchantments.includes(enchantment.id)) {
+		enchantmentError.value = 'This enchantment is already added'
+		return
+	}
+
+	// Add enchantment
+	formData.value.enchantments.push(enchantment.id)
+	enchantmentSearchQuery.value = ''
+	enchantmentHighlightedIndex.value = -1
+}
+
+// Enchantment keyboard navigation
+function handleEnchantmentKeyDown(event) {
+	if (!filteredEnchantments.value.length) return
+
+	const oldIndex = enchantmentHighlightedIndex.value
+
+	switch (event.key) {
+		case 'ArrowDown':
+			event.preventDefault()
+			if (enchantmentHighlightedIndex.value < 0) {
+				enchantmentHighlightedIndex.value = 0
+			} else {
+				enchantmentHighlightedIndex.value = Math.min(
+					enchantmentHighlightedIndex.value + 1,
+					filteredEnchantments.value.length - 1
+				)
+			}
+			break
+		case 'ArrowUp':
+			event.preventDefault()
+			if (enchantmentHighlightedIndex.value <= 0) {
+				enchantmentHighlightedIndex.value = -1
+			} else {
+				enchantmentHighlightedIndex.value = Math.max(enchantmentHighlightedIndex.value - 1, 0)
+			}
+			break
+		case 'Enter':
+			event.preventDefault()
+			if (
+				enchantmentHighlightedIndex.value >= 0 &&
+				enchantmentHighlightedIndex.value < filteredEnchantments.value.length
+			) {
+				const enchantment = filteredEnchantments.value[enchantmentHighlightedIndex.value]
+				selectEnchantment(enchantment)
+			}
+			break
+		case 'Escape':
+			enchantmentHighlightedIndex.value = -1
+			enchantmentSearchQuery.value = ''
+			break
+	}
+
+	// Scroll highlighted enchantment into view if index changed
+	if (oldIndex !== enchantmentHighlightedIndex.value) {
+		scrollToHighlightedEnchantment()
+	}
+}
+
+function scrollToHighlightedEnchantment() {
+	if (!enchantmentDropdownContainer.value || enchantmentHighlightedIndex.value < 0) return
+
+	setTimeout(() => {
+		const highlightedElement = enchantmentDropdownContainer.value.querySelector('.bg-norway')
+		if (highlightedElement) {
+			highlightedElement.scrollIntoView({
+				behavior: 'smooth',
+				block: 'nearest'
+			})
+		}
+	}, 0)
+}
+
+function handleEnchantmentSearchInput() {
+	enchantmentHighlightedIndex.value = -1
+	if (enchantmentError.value) {
+		enchantmentError.value = null
+	}
+}
+
+function formatEnchantmentName(enchantmentId) {
+	if (!enchantmentId) return ''
+
+	// Get enchantment item from availableItems
+	const enchantmentItem = props.availableItems.find((item) => item.id === enchantmentId)
+	if (!enchantmentItem) return enchantmentId
+
+	// Try to extract from material_id first (most reliable)
+	const materialId = enchantmentItem.material_id
+	if (materialId && materialId.startsWith('enchanted_book_')) {
+		// Extract enchantment name from material_id like "enchanted_book_aqua_affinity_1"
+		const enchantmentPart = materialId.replace('enchanted_book_', '')
+
+		// Try to extract enchantment with level first (e.g., "unbreaking_3" -> "unbreaking 3")
+		const enchantWithLevelMatch = enchantmentPart.match(/^(.+)_(\d+)$/)
+		if (enchantWithLevelMatch) {
+			const enchantName = enchantWithLevelMatch[1]
+			const level = enchantWithLevelMatch[2]
+
+			// Replace underscores with spaces, then capitalize each word
+			const capitalizedEnchant = enchantName
+				.replace(/_/g, ' ')
+				.replace(/\b\w/g, (l) => l.toUpperCase())
+			
+			// Don't display level 1 for single-level enchantments (max level 1)
+			const maxLevel = enchantmentItem.enchantment_max_level
+			if (level === '1' && maxLevel === 1) {
+				return capitalizedEnchant
+			}
+			
+			return `${capitalizedEnchant} ${level}`
+		}
+
+		// Try enchantment without level (e.g., "silk_touch" -> "silk touch")
+		const enchantWithoutLevelMatch = enchantmentPart.match(/^(.+)$/)
+		if (enchantWithoutLevelMatch) {
+			const enchantName = enchantWithoutLevelMatch[1]
+			// Replace underscores with spaces, then capitalize each word
+			const capitalizedEnchant = enchantName
+				.replace(/_/g, ' ')
+				.replace(/\b\w/g, (l) => l.toUpperCase())
+			return capitalizedEnchant
+		}
+	}
+
+	// Fallback: Use item name
+	return enchantmentItem.name || enchantmentId
 }
 
 // Get visual index of an item in the dropdown (accounting for category grouping)
@@ -916,6 +1206,178 @@ defineExpose({
 				</div>
 			</div>
 
+			<!-- Enchantments Section - only show for enchantable items and single selection mode -->
+			<div
+				v-if="showEnchantmentSection && !enableMultipleSelection && !editingItem"
+				class="mt-4">
+				<label for="enchantment-search" class="block text-sm font-medium text-gray-700 mb-1">
+					Enchantments
+				</label>
+				
+				<!-- Selected enchantments display -->
+				<div
+					v-if="formData.enchantments && formData.enchantments.length > 0"
+					class="mb-2 flex flex-wrap gap-2">
+					<div
+						v-for="enchantmentId in formData.enchantments"
+						:key="enchantmentId"
+						class="flex items-center gap-2 pl-3 pr-2 py-1 bg-sea-mist text-heavy-metal rounded-md text-sm font-medium">
+						<span>{{ formatEnchantmentName(enchantmentId) }}</span>
+						<button
+							type="button"
+							@click="removeEnchantment(enchantmentId)"
+							class="text-heavy-metal hover:text-red-700">
+							<XMarkIcon class="w-4 h-4" />
+						</button>
+					</div>
+				</div>
+
+				<!-- Enchantment search input -->
+				<input
+					id="enchantment-search"
+					ref="enchantmentSearchInput"
+					v-model="enchantmentSearchQuery"
+					data-cy="shop-item-enchantment-search-input"
+					@input="handleEnchantmentSearchInput"
+					@keydown="handleEnchantmentKeyDown"
+					type="text"
+					autocomplete="off"
+					placeholder="Search enchantments..."
+					class="block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus" />
+
+				<!-- Error message -->
+				<div
+					v-if="enchantmentError"
+					class="mt-1 text-sm text-red-600 font-semibold flex items-start gap-1">
+					<XCircleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
+					{{ enchantmentError }}
+				</div>
+
+				<!-- Enchantment dropdown -->
+				<div
+					v-if="enchantmentSearchQuery && filteredEnchantments.length > 0"
+					ref="enchantmentDropdownContainer"
+					class="max-h-64 overflow-y-auto border-2 border-gray-asparagus rounded-md bg-white">
+					<div
+						v-for="(enchantment, index) in filteredEnchantments"
+						:key="enchantment.id"
+						data-cy="shop-item-enchantment-dropdown-item"
+						@click="selectEnchantment(enchantment)"
+						:class="[
+							'px-3 py-2 cursor-pointer border-b border-gray-100 flex items-center gap-3',
+							index === enchantmentHighlightedIndex
+								? 'bg-norway text-heavy-metal'
+								: 'hover:bg-sea-mist'
+						]">
+						<div class="flex-1">
+							<div class="font-medium">{{ formatEnchantmentName(enchantment.id) }}</div>
+						</div>
+						<div v-if="enchantment.image" class="w-8 h-8 flex-shrink-0">
+							<img
+								:src="enchantment.image"
+								:alt="formatEnchantmentName(enchantment.id)"
+								class="w-full h-full object-contain" />
+						</div>
+					</div>
+				</div>
+				<div
+					v-else-if="enchantmentSearchQuery && filteredEnchantments.length === 0"
+					class="px-3 py-2 text-sm text-gray-500 italic">
+					No enchantments found
+				</div>
+				<div
+					v-else-if="!enchantmentSearchQuery && compatibleEnchantments.length === 0"
+					class="mt-2 text-sm text-gray-500 italic">
+					No compatible enchantments available for this item
+				</div>
+			</div>
+
+			<!-- Enchantments Section - for editing mode -->
+			<div
+				v-if="showEnchantmentSection && editingItem"
+				class="mt-4">
+				<label for="enchantment-search-edit" class="block text-sm font-medium text-gray-700 mb-1">
+					Enchantments
+				</label>
+				
+				<!-- Selected enchantments display -->
+				<div
+					v-if="formData.enchantments && formData.enchantments.length > 0"
+					class="mb-2 flex flex-wrap gap-2">
+					<div
+						v-for="enchantmentId in formData.enchantments"
+						:key="enchantmentId"
+						class="flex items-center gap-2 pl-3 pr-2 py-1 bg-sea-mist text-heavy-metal rounded-md text-sm font-medium">
+						<span>{{ formatEnchantmentName(enchantmentId) }}</span>
+						<button
+							type="button"
+							@click="removeEnchantment(enchantmentId)"
+							class="text-heavy-metal hover:text-red-700">
+							<XMarkIcon class="w-4 h-4" />
+						</button>
+					</div>
+				</div>
+
+				<!-- Enchantment search input -->
+				<input
+					id="enchantment-search-edit"
+					ref="enchantmentSearchInput"
+					v-model="enchantmentSearchQuery"
+					data-cy="shop-item-enchantment-search-input"
+					@input="handleEnchantmentSearchInput"
+					@keydown="handleEnchantmentKeyDown"
+					type="text"
+					autocomplete="off"
+					placeholder="Search enchantments..."
+					class="block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus" />
+
+				<!-- Error message -->
+				<div
+					v-if="enchantmentError"
+					class="mt-1 text-sm text-red-600 font-semibold flex items-start gap-1">
+					<XCircleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
+					{{ enchantmentError }}
+				</div>
+
+				<!-- Enchantment dropdown -->
+				<div
+					v-if="enchantmentSearchQuery && filteredEnchantments.length > 0"
+					ref="enchantmentDropdownContainer"
+					class="max-h-64 overflow-y-auto border-2 border-gray-asparagus rounded-md bg-white">
+					<div
+						v-for="(enchantment, index) in filteredEnchantments"
+						:key="enchantment.id"
+						data-cy="shop-item-enchantment-dropdown-item"
+						@click="selectEnchantment(enchantment)"
+						:class="[
+							'px-3 py-2 cursor-pointer border-b border-gray-100 flex items-center gap-3',
+							index === enchantmentHighlightedIndex
+								? 'bg-norway text-heavy-metal'
+								: 'hover:bg-sea-mist'
+						]">
+						<div class="flex-1">
+							<div class="font-medium">{{ formatEnchantmentName(enchantment.id) }}</div>
+						</div>
+						<div v-if="enchantment.image" class="w-8 h-8 flex-shrink-0">
+							<img
+								:src="enchantment.image"
+								:alt="formatEnchantmentName(enchantment.id)"
+								class="w-full h-full object-contain" />
+						</div>
+					</div>
+				</div>
+				<div
+					v-else-if="enchantmentSearchQuery && filteredEnchantments.length === 0"
+					class="px-3 py-2 text-sm text-gray-500 italic">
+					No enchantments found
+				</div>
+				<div
+					v-else-if="!enchantmentSearchQuery && compatibleEnchantments.length === 0"
+					class="mt-2 text-sm text-gray-500 italic">
+					No compatible enchantments available for this item
+				</div>
+			</div>
+
 			<!-- Price inputs -->
 			<div class="space-y-4">
 				<div>
@@ -1045,6 +1507,7 @@ defineExpose({
 				</BaseButton>
 			</div>
 		</form>
+
 	</div>
 </template>
 

@@ -5,12 +5,14 @@ import { useRouter, useRoute } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
 import { useShops, useServerShops } from '../utils/shopProfile.js'
 import { useServers, getMajorMinorVersion } from '../utils/serverProfile.js'
-import { useServerShopItems, updateShopItem } from '../utils/shopItems.js'
+import { useServerShopItems, updateShopItem, markShopItemsAsChecked } from '../utils/shopItems.js'
 import { isAdmin, enabledCategories } from '../constants'
 import BaseStatCard from '../components/BaseStatCard.vue'
 import BaseTable from '../components/BaseTable.vue'
 import BaseCard from '../components/BaseCard.vue'
 import BaseButton from '../components/BaseButton.vue'
+import BaseModal from '../components/BaseModal.vue'
+import BaseIconButton from '../components/BaseIconButton.vue'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
@@ -23,6 +25,7 @@ import {
 	CheckCircleIcon,
 	ChevronRightIcon,
 	CurrencyDollarIcon,
+	Cog6ToothIcon,
 	FolderIcon,
 	TagIcon,
 	UserIcon,
@@ -42,10 +45,17 @@ const selectedServerId = ref(route.query.serverId || '')
 const loading = ref(false)
 const error = ref(null)
 const searchQuery = ref('')
+const markingItemId = ref(null)
 
 // View mode state
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
+const showEnchantments = ref(true) // Show enchantments in item table
+const hideOutOfStock = ref(false) // Hide items that are out of stock
+const hideStockFull = ref(false) // Hide items that have full stock
+
+// Settings modal state
+const showSettingsModal = ref(false)
 
 // Sorting state - initialize from sessionStorage if available
 function loadSortSettings() {
@@ -150,6 +160,76 @@ const allItemsQuery = computed(() => {
 
 const availableItems = useCollection(allItemsQuery)
 
+// Get image URL, preferring enchanted version if item has enchantments
+function getItemImageUrl(imagePath, enchantments) {
+	if (!imagePath) return null
+
+	// If item has enchantments, try to use enchanted version (always .webp)
+	if (enchantments && enchantments.length > 0) {
+		// Replace extension with _enchanted.webp
+		const enchantedPath = imagePath.replace(/\.(png|webp|gif)$/i, '_enchanted.webp')
+		return getImageUrl(enchantedPath)
+	}
+
+	return getImageUrl(imagePath)
+}
+
+// Format enchantment name for display
+function formatEnchantmentName(enchantmentId) {
+	if (!enchantmentId || !availableItems.value) return ''
+
+	// Get enchantment item from availableItems
+	const enchantmentItem = availableItems.value.find((item) => item.id === enchantmentId)
+	if (!enchantmentItem) return ''
+
+	// Try to extract from material_id first (most reliable)
+	const materialId = enchantmentItem.material_id
+	if (materialId && materialId.startsWith('enchanted_book_')) {
+		// Extract enchantment name from material_id like "enchanted_book_aqua_affinity_1"
+		const enchantmentPart = materialId.replace('enchanted_book_', '')
+
+		// Try to extract enchantment with level first (e.g., "unbreaking_3" -> "unbreaking 3")
+		const enchantWithLevelMatch = enchantmentPart.match(/^(.+)_(\d+)$/)
+		if (enchantWithLevelMatch) {
+			const enchantName = enchantWithLevelMatch[1]
+			const level = enchantWithLevelMatch[2]
+
+			// Replace underscores with spaces, then capitalize each word
+			const capitalizedEnchant = enchantName
+				.replace(/_/g, ' ')
+				.replace(/\b\w/g, (l) => l.toUpperCase())
+			
+			// Don't display level 1 for single-level enchantments (max level 1)
+			const maxLevel = enchantmentItem.enchantment_max_level
+			if (level === '1' && maxLevel === 1) {
+				return capitalizedEnchant
+			}
+			
+			return `${capitalizedEnchant} ${level}`
+		}
+
+		// Try enchantment without level (e.g., "silk_touch" -> "silk touch")
+		const enchantWithoutLevelMatch = enchantmentPart.match(/^(.+)$/)
+		if (enchantWithoutLevelMatch) {
+			const enchantName = enchantWithoutLevelMatch[1]
+			// Replace underscores with spaces, then capitalize each word
+			const capitalizedEnchant = enchantName
+				.replace(/_/g, ' ')
+				.replace(/\b\w/g, (l) => l.toUpperCase())
+			return capitalizedEnchant
+		}
+	}
+
+	// Fallback: Use item name
+	return enchantmentItem.name || ''
+}
+
+// Format enchantments for title attribute (comma-separated list)
+function formatEnchantmentsForTitle(enchantments) {
+	if (!enchantments || enchantments.length === 0) return ''
+	return enchantments.map(formatEnchantmentName).filter(Boolean).join(', ')
+}
+
 // Group shop items by category for better organization
 const shopItemsByCategory = computed(() => {
 	if (!shopItems.value || !availableItems.value) return {}
@@ -212,33 +292,48 @@ const filteredItemCount = computed(() => {
 	)
 })
 
-// Filtered version for search
+// Filtered version for search and stock filters
 const filteredShopItemsByCategory = computed(() => {
 	if (!shopItemsByCategory.value) return {}
 
 	const query = searchQuery.value.trim().toLowerCase()
-	if (!query) return shopItemsByCategory.value
-
 	const filtered = {}
 
 	Object.entries(shopItemsByCategory.value).forEach(([category, items]) => {
 		const filteredItems = items.filter((item) => {
 			if (!item.itemData?.name) return false
-			const itemName = item.itemData.name.toLowerCase()
 
-			// Split search query by commas only, then trim and filter out empty strings
-			// Spaces within terms are preserved (e.g., "iron ingot" stays as one term)
-			// Comma-separated terms use OR logic (e.g., "iron,ingot" matches items with "iron" OR "ingot")
-			const searchTerms = query
-				.split(',')
-				.map((term) => term.trim())
-				.filter((term) => term.length > 0)
+			// Filter by stock status
+			if (hideOutOfStock.value && item.stock_quantity === 0) {
+				return false
+			}
 
-			// If no valid search terms, return all items
-			if (searchTerms.length === 0) return true
+			if (hideStockFull.value && item.stock_full === true) {
+				return false
+			}
 
-			// Check if item name contains any of the search terms (OR logic for comma-separated terms)
-			return searchTerms.some((term) => itemName.includes(term))
+			// Filter by search query if provided
+			if (query) {
+				const itemName = item.itemData.name.toLowerCase()
+
+				// Split search query by commas only, then trim and filter out empty strings
+				// Spaces within terms are preserved (e.g., "iron ingot" stays as one term)
+				// Comma-separated terms use OR logic (e.g., "iron,ingot" matches items with "iron" OR "ingot")
+				const searchTerms = query
+					.split(',')
+					.map((term) => term.trim())
+					.filter((term) => term.length > 0)
+
+				// If no valid search terms, return all items
+				if (searchTerms.length === 0) return true
+
+				// Check if item name contains any of the search terms (OR logic for comma-separated terms)
+				if (!searchTerms.some((term) => itemName.includes(term))) {
+					return false
+				}
+			}
+
+			return true
 		})
 
 		if (filteredItems.length > 0) {
@@ -391,6 +486,31 @@ async function toggleStar(itemId, currentlyStarred, originalItem) {
 	}
 }
 
+// Mark a single item as checked (updates last_updated)
+async function handleMarkItemAsChecked(itemId, shopId) {
+	if (!shopId || !itemId) return
+
+	markingItemId.value = itemId
+	error.value = null
+
+	try {
+		const now = new Date().toISOString()
+		
+		// Optimistically update local state for large arrays (>30 shops)
+		// For small arrays, VueFire handles reactivity automatically
+		if (serverShopItemsResult.updateItem) {
+			serverShopItemsResult.updateItem(itemId, { last_updated: now })
+		}
+		
+		await markShopItemsAsChecked(shopId, [itemId])
+	} catch (err) {
+		console.error('Error marking item as checked:', err)
+		error.value = err.message || 'Failed to mark item as checked. Please try again.'
+	} finally {
+		markingItemId.value = null
+	}
+}
+
 // Reset search
 function resetSearch() {
 	searchQuery.value = ''
@@ -454,7 +574,7 @@ onMounted(() => {
 
 // Save view settings when they change
 watch(
-	[viewMode, layout, searchQuery],
+	[viewMode, layout, searchQuery, showEnchantments, hideOutOfStock, hideStockFull],
 	() => {
 		saveViewSettings()
 	},
@@ -478,6 +598,9 @@ function loadViewSettings() {
 		const savedViewMode = localStorage.getItem('marketOverviewViewMode')
 		const savedLayout = localStorage.getItem('marketOverviewLayout')
 		const savedSearchQuery = localStorage.getItem('marketOverviewSearchQuery')
+		const savedShowEnchantments = localStorage.getItem('marketOverviewShowEnchantments')
+		const savedHideOutOfStock = localStorage.getItem('marketOverviewHideOutOfStock')
+		const savedHideStockFull = localStorage.getItem('marketOverviewHideStockFull')
 
 		if (savedViewMode && ['categories', 'list'].includes(savedViewMode)) {
 			viewMode.value = savedViewMode
@@ -490,6 +613,18 @@ function loadViewSettings() {
 		if (savedSearchQuery !== null) {
 			searchQuery.value = savedSearchQuery
 		}
+
+		if (savedShowEnchantments !== null) {
+			showEnchantments.value = savedShowEnchantments === 'true'
+		}
+
+		if (savedHideOutOfStock !== null) {
+			hideOutOfStock.value = savedHideOutOfStock === 'true'
+		}
+
+		if (savedHideStockFull !== null) {
+			hideStockFull.value = savedHideStockFull === 'true'
+		}
 	} catch (error) {
 		console.warn('Error loading view settings:', error)
 	}
@@ -500,6 +635,9 @@ function saveViewSettings() {
 		localStorage.setItem('marketOverviewViewMode', viewMode.value)
 		localStorage.setItem('marketOverviewLayout', layout.value)
 		localStorage.setItem('marketOverviewSearchQuery', searchQuery.value)
+		localStorage.setItem('marketOverviewShowEnchantments', showEnchantments.value.toString())
+		localStorage.setItem('marketOverviewHideOutOfStock', hideOutOfStock.value.toString())
+		localStorage.setItem('marketOverviewHideStockFull', hideStockFull.value.toString())
 	} catch (error) {
 		console.warn('Error saving view settings:', error)
 	}
@@ -890,8 +1028,21 @@ const priceAnalysis = computed(() => {
 				</div>
 			</div>
 
+			<!-- Settings Button -->
+			<div v-if="selectedServerId" class="mb-4">
+				<BaseButton
+					@click="showSettingsModal = true"
+					variant="secondary"
+					data-cy="market-overview-settings-button">
+					<template #left-icon>
+						<Cog6ToothIcon />
+					</template>
+					Settings
+				</BaseButton>
+			</div>
+
 			<!-- View Mode and Layout Toggle -->
-			<div v-if="selectedServerId" class="mb-6">
+			<div v-if="selectedServerId" class="mb-4">
 				<div class="flex flex-wrap items-center gap-6">
 					<!-- View Mode -->
 					<div>
@@ -996,14 +1147,25 @@ const priceAnalysis = computed(() => {
 												'mr-3 flex-shrink-0'
 											]">
 											<img
-												:src="getImageUrl(row.image)"
+												:src="getItemImageUrl(row.image, row.enchantments)"
 												:alt="row.item"
+												@error="$event.target.src = getImageUrl(row.image)"
 												class="w-full h-full object-contain"
 												loading="lazy" />
 										</div>
-										<div
-											class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
-											<span class="truncate">{{ row.item }}</span>
+										<div class="flex-1 min-w-0">
+											<div
+												class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
+												<span
+													:title="
+														!showEnchantments &&
+														row.enchantments &&
+														row.enchantments.length > 0
+															? formatEnchantmentsForTitle(row.enchantments)
+															: ''
+													">
+													{{ row.item }}
+												</span>
 											<div class="flex items-center gap-2 ml-2 flex-shrink-0">
 												<button
 													@click.stop="toggleStar(row.id, row._originalItem?.starred || false, row._originalItem)"
@@ -1028,8 +1190,22 @@ const priceAnalysis = computed(() => {
 												</button>
 											</div>
 										</div>
+										<!-- Enchantments Display -->
+										<div
+											v-if="showEnchantments && row.enchantments && row.enchantments.length > 0"
+											class="mt-1 pb-1">
+											<div class="flex flex-wrap gap-1">
+												<span
+													v-for="enchantmentId in row.enchantments"
+													:key="enchantmentId"
+													class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
+													{{ formatEnchantmentName(enchantmentId) }}
+												</span>
+											</div>
+										</div>
 									</div>
-								</template>
+								</div>
+							</template>
 								<template #cell-shop="{ row }">
 									<div
 										@click="navigateToShopItems(row.shopId)"
@@ -1142,8 +1318,21 @@ const priceAnalysis = computed(() => {
 									<div class="text-center">{{ row.profitMargin }}</div>
 								</template>
 								<template #cell-lastUpdated="{ row }">
-									<div class="text-center">
+									<div class="flex items-center justify-end gap-2">
 										<span>{{ row.lastUpdated }}</span>
+										<BaseIconButton
+											v-if="row._originalItem?.shopData && !row._originalItem.shopData.is_own_shop"
+											variant="ghost-in-table"
+											data-cy="market-overview-item-mark-checked-button"
+											:ariaLabel="'Mark as price checked today'"
+											title="Mark as price checked today"
+											:loading="markingItemId === row._originalItem?.id"
+											@click="
+												handleMarkItemAsChecked(row._originalItem?.id, row._originalItem?.shop_id)
+											"
+											:disabled="markingItemId === row._originalItem?.id">
+											<ArrowPathIcon />
+										</BaseIconButton>
 									</div>
 								</template>
 							</BaseTable>
@@ -1187,14 +1376,25 @@ const priceAnalysis = computed(() => {
 											'mr-3 flex-shrink-0'
 										]">
 										<img
-											:src="getImageUrl(row.image)"
+											:src="getItemImageUrl(row.image, row.enchantments)"
 											:alt="row.item"
+											@error="$event.target.src = getImageUrl(row.image)"
 											class="w-full h-full object-contain"
 											loading="lazy" />
 									</div>
-									<div
-										class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
-										<span class="truncate">{{ row.item }}</span>
+									<div class="flex-1 min-w-0">
+										<div
+											class="font-medium text-gray-900 flex items-center justify-between flex-1 min-w-0 relative">
+											<span
+												:title="
+													!showEnchantments &&
+													row.enchantments &&
+													row.enchantments.length > 0
+														? formatEnchantmentsForTitle(row.enchantments)
+														: ''
+												">
+												{{ row.item }}
+											</span>
 										<div class="flex items-center gap-2 ml-2 flex-shrink-0">
 											<button
 												@click.stop="toggleStar(row.id, row._originalItem?.starred || false, row._originalItem)"
@@ -1219,37 +1419,51 @@ const priceAnalysis = computed(() => {
 											</button>
 										</div>
 									</div>
-								</div>
-							</template>
-							<template #cell-shop="{ row }">
+								<!-- Enchantments Display -->
 								<div
-									@click="navigateToShopItems(row.shopId)"
-									data-cy="market-overview-shop-link"
-									class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
-									<template v-if="row.shopPlayer">
-										<img
-											:src="generateMinecraftAvatar(row.shopPlayer)"
-											:alt="row.shopPlayer"
-											class="w-5 h-5 rounded mr-2 flex-shrink-0"
-											@error="$event.target.style.display = 'none'" />
-										<span>
-											{{ row.shopPlayer }}
-											<span v-if="row.shopPlayer !== row.shop">
-												- {{ row.shop }}
-											</span>
+									v-if="showEnchantments && row.enchantments && row.enchantments.length > 0"
+									class="mt-1 pb-1">
+									<div class="flex flex-wrap gap-1">
+										<span
+											v-for="enchantmentId in row.enchantments"
+											:key="enchantmentId"
+											class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
+											{{ formatEnchantmentName(enchantmentId) }}
 										</span>
-									</template>
-									<template v-else>
-										<img
-											v-if="row.shop"
-											:src="generateMinecraftAvatar(row.shop)"
-											:alt="row.shop"
-											class="w-5 h-5 rounded mr-2 flex-shrink-0"
-											@error="$event.target.style.display = 'none'" />
-										<span>{{ row.shop }}</span>
-									</template>
+									</div>
 								</div>
-							</template>
+								</div>
+							</div>
+						</template>
+						<template #cell-shop="{ row }">
+							<div
+								@click="navigateToShopItems(row.shopId)"
+								data-cy="market-overview-shop-link"
+								class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
+								<template v-if="row.shopPlayer">
+									<img
+										:src="generateMinecraftAvatar(row.shopPlayer)"
+										:alt="row.shopPlayer"
+										class="w-5 h-5 rounded mr-2 flex-shrink-0"
+										@error="$event.target.style.display = 'none'" />
+									<span>
+										{{ row.shopPlayer }}
+										<span v-if="row.shopPlayer !== row.shop">
+											- {{ row.shop }}
+										</span>
+									</span>
+								</template>
+								<template v-else>
+									<img
+										v-if="row.shop"
+										:src="generateMinecraftAvatar(row.shop)"
+										:alt="row.shop"
+										class="w-5 h-5 rounded mr-2 flex-shrink-0"
+										@error="$event.target.style.display = 'none'" />
+									<span>{{ row.shop }}</span>
+								</template>
+							</div>
+						</template>
 							<template #cell-buyPrice="{ row, layout }">
 								<div class="flex items-center justify-end gap-2">
 									<div
@@ -1333,8 +1547,21 @@ const priceAnalysis = computed(() => {
 								<div class="text-center">{{ row.profitMargin }}</div>
 							</template>
 							<template #cell-lastUpdated="{ row }">
-								<div class="text-center">
+								<div class="flex items-center justify-end gap-2">
 									<span>{{ row.lastUpdated }}</span>
+									<BaseIconButton
+										v-if="row._originalItem?.shopData && !row._originalItem.shopData.is_own_shop"
+										variant="ghost-in-table"
+										data-cy="market-overview-item-mark-checked-button"
+										:ariaLabel="'Mark as price checked today'"
+										title="Mark as price checked today"
+										:loading="markingItemId === row._originalItem?.id"
+										@click="
+											handleMarkItemAsChecked(row._originalItem?.id, row._originalItem?.shop_id)
+										"
+										:disabled="markingItemId === row._originalItem?.id">
+										<ArrowPathIcon />
+									</BaseIconButton>
 								</div>
 							</template>
 						</BaseTable>
@@ -1343,4 +1570,51 @@ const priceAnalysis = computed(() => {
 			</div>
 		</div>
 	</div>
+
+	<!-- Settings Modal -->
+	<BaseModal
+		:isOpen="showSettingsModal"
+		title="Settings"
+		size="normal"
+		maxWidth="max-w-md"
+		data-cy="market-overview-settings-modal"
+		@close="showSettingsModal = false">
+		<div class="space-y-4">
+			<div>
+				<h3 class="text-sm font-semibold text-gray-900 mb-3">Items list</h3>
+				<div class="space-y-3">
+					<label
+						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+						<input
+							data-cy="market-overview-hide-enchantments-checkbox"
+							:checked="!showEnchantments"
+							@change="showEnchantments = !$event.target.checked"
+							type="checkbox"
+							class="checkbox-input" />
+						<span>Hide enchantments</span>
+					</label>
+					<label
+						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+						<input
+							data-cy="market-overview-hide-out-of-stock-checkbox"
+							:checked="hideOutOfStock"
+							@change="hideOutOfStock = $event.target.checked"
+							type="checkbox"
+							class="checkbox-input" />
+						<span>Hide out of stock</span>
+					</label>
+					<label
+						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+						<input
+							data-cy="market-overview-hide-stock-full-checkbox"
+							:checked="hideStockFull"
+							@change="hideStockFull = $event.target.checked"
+							type="checkbox"
+							class="checkbox-input" />
+						<span>Hide stock full</span>
+					</label>
+				</div>
+			</div>
+		</div>
+	</BaseModal>
 </template>

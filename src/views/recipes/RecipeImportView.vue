@@ -47,12 +47,16 @@ onMounted(async () => {
 // New: Filter recipes by ingredient
 function filterRecipesByIngredient() {
 	if (!selectedIngredient.value) {
-		filteredRecipes.value = [...allRecipes.value]
+		// "All recipes" - only show recipes that haven't been imported yet
+		filteredRecipes.value = allRecipes.value.filter((recipe) => !checkRecipeExists(recipe))
 	} else {
-		filteredRecipes.value = allRecipes.value.filter((recipe) =>
-			recipe.ingredients.some(
-				(ingredient) => ingredient.material_id === selectedIngredient.value
-			)
+		// Filter by ingredient and exclude already-imported recipes
+		filteredRecipes.value = allRecipes.value.filter(
+			(recipe) =>
+				!checkRecipeExists(recipe) &&
+				recipe.ingredients.some(
+					(ingredient) => ingredient.material_id === selectedIngredient.value
+				)
 		)
 	}
 
@@ -85,13 +89,38 @@ function extractAvailableIngredients() {
 		const recipesForIngredient = allRecipes.value.filter((recipe) =>
 			recipe.ingredients.some((ing) => ing.material_id === ingredientId)
 		)
-		// Only include if at least one output item using this ingredient does NOT already have any recipe in a previous version
-		const hasMissing = recipesForIngredient.some((recipe) => {
-			const materialId = recipe.outputItem?.material_id
-			const targetVersionKey = selectedVersion.value.replace('.', '_')
-			const item = dbItems.value.find((item) => item.material_id === materialId)
-			if (!item || !item.recipes_by_version) return true
-			const availableVersions = Object.keys(item.recipes_by_version)
+
+		// Only include ingredient if:
+		// 1. At least one recipe using this ingredient hasn't been imported yet (not already exists)
+		// 2. At least one recipe using this ingredient is valid (not all invalid)
+		const hasUnimported = recipesForIngredient.some((recipe) => !checkRecipeExists(recipe))
+		const hasValid = recipesForIngredient.some(
+			(recipe) => recipe.isValid && !checkRecipeExists(recipe)
+		)
+
+		return hasUnimported && hasValid
+	})
+
+	availableIngredients.value = filtered.sort()
+}
+
+// Check for circular dependencies and prefer compression recipes over decompression
+function checkCircularDependency(recipe, dbItems, targetVersion) {
+	if (!recipe || !recipe.outputItem || !recipe.ingredients) return null
+
+	const outputMaterialId = recipe.outputItem.material_id
+	const outputCount = recipe.outputItem.count || 1
+	const targetVersionKey = targetVersion.replace('.', '_')
+
+	// Check each ingredient to see if it has a recipe that uses this recipe's output
+	for (const ingredient of recipe.ingredients) {
+		const ingredientItem = dbItems.find((item) => item.material_id === ingredient.material_id)
+		if (!ingredientItem || !ingredientItem.recipes_by_version) continue
+
+		// Get recipe for this ingredient (check target version or earlier)
+		let ingredientRecipe = ingredientItem.recipes_by_version[targetVersionKey]
+		if (!ingredientRecipe && ingredientItem.recipes_by_version) {
+			const availableVersions = Object.keys(ingredientItem.recipes_by_version)
 			const sortedVersions = availableVersions.sort((a, b) => {
 				const aVersion = a.replace('_', '.')
 				const bVersion = b.replace('_', '.')
@@ -100,34 +129,60 @@ function extractAvailableIngredients() {
 				if (aMajor !== bMajor) return bMajor - aMajor
 				return bMinor - aMinor
 			})
-			const targetVersion = targetVersionKey.replace('_', '.')
 			const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
 			for (const availableVersion of sortedVersions) {
 				const availableVersionFormatted = availableVersion.replace('_', '.')
 				const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
 				if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
-					return false // recipe exists for this output item in a previous version
+					ingredientRecipe = ingredientItem.recipes_by_version[availableVersion]
+					break
 				}
 			}
-			return true // no recipe exists for this output item in any previous version
-		})
-		if (ingredientId === 'acacia_log') {
-			console.debug(
-				'[Ingredient Filter] acacia_log: hasMissing =',
-				hasMissing,
-				recipesForIngredient
-			)
 		}
-		return hasMissing
-	})
 
-	if (filtered.includes('acacia_log')) {
-		console.debug('[Ingredient Filter] acacia_log is included in dropdown')
-	} else {
-		console.debug('[Ingredient Filter] acacia_log is NOT included in dropdown')
+		if (ingredientRecipe) {
+			// Check if this ingredient's recipe uses the output item as an ingredient
+			const ingredientRecipeIngredients = Array.isArray(ingredientRecipe)
+				? ingredientRecipe
+				: ingredientRecipe.ingredients || []
+			const ingredientRecipeOutputCount = Array.isArray(ingredientRecipe)
+				? 1
+				: ingredientRecipe.output_count || 1
+
+			const createsCircularDependency = ingredientRecipeIngredients.some(
+				(ing) => ing.material_id === outputMaterialId
+			)
+
+			if (createsCircularDependency) {
+				// Determine if this recipe is decompression (1 → many) or compression (many → 1)
+				// Decompression: output_count > 1 and uses the circular ingredient
+				// Compression: output_count = 1 and uses multiple of the circular ingredient
+				const isDecompression = outputCount > 1 && recipe.ingredients.length === 1
+				const isCompression = outputCount === 1 && ingredient.quantity > 1
+
+				if (isDecompression) {
+					return {
+						circular: true,
+						shouldReject: true,
+						ingredient: ingredient.material_id,
+						output: outputMaterialId,
+						message: `Circular dependency detected: ${outputMaterialId} recipe uses ${ingredient.material_id}, but ${ingredient.material_id} recipe uses ${outputMaterialId}. Rejecting decompression recipe (${outputCount}x from 1x) in favor of compression recipe.`
+					}
+				} else if (isCompression) {
+					// Compression recipe is preferred, but still warn
+					return {
+						circular: true,
+						shouldReject: false,
+						ingredient: ingredient.material_id,
+						output: outputMaterialId,
+						message: `Circular dependency detected: ${outputMaterialId} recipe uses ${ingredient.material_id}, but ${ingredient.material_id} recipe uses ${outputMaterialId}. Keeping compression recipe (1x from many).`
+					}
+				}
+			}
+		}
 	}
 
-	availableIngredients.value = filtered.sort()
+	return { circular: false }
 }
 
 // Modified: Start import with filtering
@@ -147,11 +202,23 @@ async function startImport() {
 		idToMaterialMap.value = createIdToMaterialMap(itemsJson)
 		allRecipes.value = processAllRecipes(recipesJson, idToMaterialMap.value)
 
+		// Pre-validate all recipes for circular dependencies
+		allRecipes.value.forEach((recipe) => {
+			if (recipe.isValid && recipe.ingredients.length > 0) {
+				const circularCheck = checkCircularDependency(recipe, dbItems.value, selectedVersion.value)
+				if (circularCheck?.circular && circularCheck.shouldReject) {
+					recipe.errors = recipe.errors || []
+					recipe.errors.push(circularCheck.message)
+					recipe.isValid = false
+				}
+			}
+		})
+
 		// Extract available ingredients for filtering
 		extractAvailableIngredients()
 
-		// Initially show all recipes
-		filteredRecipes.value = [...allRecipes.value]
+		// Initially show only recipes that haven't been imported yet
+		filteredRecipes.value = allRecipes.value.filter((recipe) => !checkRecipeExists(recipe))
 
 		// Pre-check: are all recipes already imported?
 		const allExist = allRecipes.value.every((recipe) => checkRecipeExists(recipe))
@@ -183,7 +250,44 @@ async function startImport() {
 	}
 }
 
-// Check if recipe already exists for this item (with version inheritance and content comparison)
+// Helper function to compare if two recipes are identical
+function recipesAreIdentical(recipe1, recipe2) {
+	if (!recipe1 || !recipe2) return false
+
+	// Compare output count
+	const outputCount1 = Array.isArray(recipe1) ? 1 : recipe1.output_count || 1
+	const outputCount2 = Array.isArray(recipe2) ? 1 : recipe2.output_count || 1
+	if (outputCount1 !== outputCount2) return false
+
+	// Compare ingredients
+	const ingredients1 = Array.isArray(recipe1) ? recipe1 : recipe1.ingredients || []
+	const ingredients2 = Array.isArray(recipe2) ? recipe2 : recipe2.ingredients || []
+
+	if (ingredients1.length !== ingredients2.length) return false
+
+	// Sort ingredients by material_id for comparison
+	const sorted1 = [...ingredients1].sort((a, b) =>
+		a.material_id.localeCompare(b.material_id)
+	)
+	const sorted2 = [...ingredients2].sort((a, b) =>
+		a.material_id.localeCompare(b.material_id)
+	)
+
+	// Compare each ingredient
+	for (let i = 0; i < sorted1.length; i++) {
+		if (
+			sorted1[i].material_id !== sorted2[i].material_id ||
+			sorted1[i].quantity !== sorted2[i].quantity
+		) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// Check if recipe already exists for this item (with version inheritance)
+// Returns true if ANY recipe exists for this item in the target version or earlier versions
 function checkRecipeExists(recipe) {
 	if (!recipe || !recipe.outputItem) return false
 
@@ -230,38 +334,65 @@ function checkRecipeExists(recipe) {
 	return false
 }
 
+// Check if an existing recipe is identical to the new recipe (for display purposes)
+function checkRecipeIsIdentical(recipe) {
+	if (!recipe || !recipe.outputItem) return false
+
+	const materialId = recipe.outputItem.material_id
+	const targetVersionKey = selectedVersion.value.replace('.', '_')
+
+	// Find the item in the database
+	const item = dbItems.value.find((item) => item.material_id === materialId)
+	if (!item || !item.recipes_by_version) return false
+
+	// Convert new recipe to internal format for comparison
+	const newRecipeInternal = toInternalFormat(recipe)
+	if (!newRecipeInternal) return false
+
+	// First check if recipe exists for the exact target version
+	if (item.recipes_by_version[targetVersionKey]) {
+		const existingRecipe = item.recipes_by_version[targetVersionKey]
+		// Compare content - if identical, return true
+		if (recipesAreIdentical(existingRecipe, newRecipeInternal)) {
+			return true
+		}
+	}
+
+	// If not found or different, check earlier versions in descending order
+	const availableVersions = Object.keys(item.recipes_by_version)
+	const sortedVersions = availableVersions.sort((a, b) => {
+		const aVersion = a.replace('_', '.')
+		const bVersion = b.replace('_', '.')
+		const [aMajor, aMinor] = aVersion.split('.').map(Number)
+		const [bMajor, bMinor] = bVersion.split('.').map(Number)
+		if (aMajor !== bMajor) return bMajor - aMajor
+		return bMinor - aMinor
+	})
+
+	const targetVersion = targetVersionKey.replace('_', '.')
+	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+
+	for (const availableVersion of sortedVersions) {
+		const availableVersionFormatted = availableVersion.replace('_', '.')
+		const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
+		if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
+			const existingRecipe = item.recipes_by_version[availableVersion]
+			if (recipesAreIdentical(existingRecipe, newRecipeInternal)) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 // Modified: Work with filtered recipes
 function showNextRecipe() {
 	if (importProgress.value.current < filteredRecipes.value.length) {
 		currentRecipe.value = filteredRecipes.value[importProgress.value.current]
 
-		// Check if recipe already exists (in any previous version)
-		const materialId = currentRecipe.value.outputItem?.material_id
-		const targetVersionKey = selectedVersion.value.replace('.', '_')
-		const item = dbItems.value.find((item) => item.material_id === materialId)
-		let exists = false
-		if (item && item.recipes_by_version) {
-			const availableVersions = Object.keys(item.recipes_by_version)
-			const sortedVersions = availableVersions.sort((a, b) => {
-				const aVersion = a.replace('_', '.')
-				const bVersion = b.replace('_', '.')
-				const [aMajor, aMinor] = aVersion.split('.').map(Number)
-				const [bMajor, bMinor] = bVersion.split('.').map(Number)
-				if (aMajor !== bMajor) return bMajor - aMajor
-				return bMinor - aMinor
-			})
-			const targetVersion = targetVersionKey.replace('_', '.')
-			const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
-			for (const availableVersion of sortedVersions) {
-				const availableVersionFormatted = availableVersion.replace('_', '.')
-				const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
-				if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
-					exists = true
-					break
-				}
-			}
-		}
-		currentRecipe.value.alreadyExists = exists
+		// Check if recipe already exists (using content comparison)
+		currentRecipe.value.alreadyExists = checkRecipeExists(currentRecipe.value)
 
 		// Validate ingredients
 		if (currentRecipe.value.ingredients.length > 0) {
@@ -270,6 +401,22 @@ function showNextRecipe() {
 				dbItems.value
 			)
 			currentRecipe.value.validation = validation
+		}
+
+		// Check for circular dependencies (prefer compression over decompression)
+		const circularCheck = checkCircularDependency(
+			currentRecipe.value,
+			dbItems.value,
+			selectedVersion.value
+		)
+		if (circularCheck?.circular && circularCheck.shouldReject) {
+			currentRecipe.value.errors = currentRecipe.value.errors || []
+			currentRecipe.value.errors.push(circularCheck.message)
+			currentRecipe.value.isValid = false
+		} else if (circularCheck?.circular && !circularCheck.shouldReject) {
+			// Compression recipe - add as warning, not error
+			currentRecipe.value.warnings = currentRecipe.value.warnings || []
+			currentRecipe.value.warnings.push(circularCheck.message)
 		}
 	} else {
 		currentRecipe.value = null
@@ -315,6 +462,9 @@ async function importCurrentRecipe() {
 
 				// Refresh database items to show the newly imported recipe
 				await loadDbItems()
+
+				// Refresh ingredient list after importing (in case all recipes for an ingredient are now imported)
+				extractAvailableIngredients()
 			}
 		}
 	} catch (error) {
@@ -337,6 +487,11 @@ function skipCurrentRecipe() {
 	// Move to next recipe
 	importProgress.value.current++
 	showNextRecipe()
+
+	// Refresh ingredient list after skipping (in case all recipes for an ingredient are now skipped/invalid)
+	if (importProgress.value.current >= filteredRecipes.value.length) {
+		extractAvailableIngredients()
+	}
 }
 
 function getValidationClass(recipe) {
@@ -370,6 +525,37 @@ const recipesLeftToImport = computed(
 	() => filteredRecipes.value.filter((r) => !checkRecipeExists(r)).length
 )
 
+// Check if there are any valid recipes ready to import
+const hasValidRecipesToImport = computed(() => {
+	return allRecipes.value.some((recipe) => recipe.isValid && !checkRecipeExists(recipe))
+})
+
+// Recipe statistics breakdown
+const recipeStatistics = computed(() => {
+	const total = allRecipes.value.length
+	const alreadyImported = allRecipes.value.filter((r) => checkRecipeExists(r)).length
+	const invalid = allRecipes.value.filter((r) => !r.isValid).length
+	const circularRejected = allRecipes.value.filter((r) => {
+		if (!r.isValid && r.errors) {
+			return r.errors.some((e) =>
+				e.includes('Circular dependency') && e.includes('Rejecting decompression')
+			)
+		}
+		return false
+	}).length
+	const validUnimported = allRecipes.value.filter(
+		(r) => r.isValid && !checkRecipeExists(r)
+	).length
+
+	return {
+		total,
+		alreadyImported,
+		invalid,
+		circularRejected,
+		validUnimported
+	}
+})
+
 // Add a computed property to check if a different recipe exists in a previous version
 const previousRecipeInfo = computed(() => {
 	if (!currentRecipe.value || !currentRecipe.value.outputItem) return null
@@ -377,6 +563,12 @@ const previousRecipeInfo = computed(() => {
 	const targetVersionKey = selectedVersion.value.replace('.', '_')
 	const item = dbItems.value.find((item) => item.material_id === materialId)
 	if (!item || !item.recipes_by_version) return null
+
+	const newRecipeInternal = toInternalFormat(currentRecipe.value)
+	if (!newRecipeInternal) return null
+
+	const identical = checkRecipeIsIdentical(currentRecipe.value)
+
 	const availableVersions = Object.keys(item.recipes_by_version)
 	const sortedVersions = availableVersions.sort((a, b) => {
 		const aVersion = a.replace('_', '.')
@@ -395,7 +587,7 @@ const previousRecipeInfo = computed(() => {
 			const existingRecipe = item.recipes_by_version[availableVersion]
 			return {
 				version: availableVersionFormatted,
-				identical: false, // Simplified: always treat as different recipe
+				identical,
 				existingRecipe
 			}
 		}
@@ -483,9 +675,56 @@ watch(selectedVersion, () => {
 				</button>
 			</div>
 
-			<!-- Ingredient Filter Section -->
+			<!-- Recipe Statistics -->
 			<div
 				v-if="allRecipes.length > 0 && !currentRecipe && !allRecipesAlreadyExist"
+				class="mb-6 bg-gray-50 border border-gray-200 rounded p-4">
+				<h4 class="text-md font-semibold mb-3">Recipe Import Statistics</h4>
+				<div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+					<div>
+						<div class="text-gray-600">Total Recipes</div>
+						<div class="text-lg font-semibold">{{ recipeStatistics.total }}</div>
+					</div>
+					<div>
+						<div class="text-gray-600">Already Imported</div>
+						<div class="text-lg font-semibold text-green-600">
+							{{ recipeStatistics.alreadyImported }}
+						</div>
+					</div>
+					<div>
+						<div class="text-gray-600">Invalid</div>
+						<div class="text-lg font-semibold text-red-600">
+							{{ recipeStatistics.invalid }}
+						</div>
+					</div>
+					<div>
+						<div class="text-gray-600">Circular (Rejected)</div>
+						<div class="text-lg font-semibold text-orange-600">
+							{{ recipeStatistics.circularRejected }}
+						</div>
+					</div>
+					<div>
+						<div class="text-gray-600">Ready to Import</div>
+						<div class="text-lg font-semibold text-blue-600">
+							{{ recipeStatistics.validUnimported }}
+						</div>
+					</div>
+				</div>
+				<div
+					v-if="recipeStatistics.validUnimported === 0"
+					class="mt-4 text-center text-gray-600">
+					All available recipes have been processed. No new recipes to import.
+				</div>
+			</div>
+
+			<!-- Ingredient Filter Section -->
+			<div
+				v-if="
+					allRecipes.length > 0 &&
+					!currentRecipe &&
+					!allRecipesAlreadyExist &&
+					hasValidRecipesToImport
+				"
 				class="mb-6">
 				<h4 class="text-md font-semibold mb-3">Filter Recipes by Ingredient</h4>
 
