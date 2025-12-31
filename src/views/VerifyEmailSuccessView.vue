@@ -5,6 +5,7 @@ import { useFirebaseAuth, useCurrentUser } from 'vuefire'
 import { applyActionCode } from '@firebase/auth'
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid'
 import BaseButton from '@/components/BaseButton.vue'
+import { updateEmailVerifiedStatus } from '@/utils/userProfile.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -23,6 +24,15 @@ async function handleEmailVerification() {
 
 	// Check if user is already verified (for test scenarios)
 	if (currentUser.value?.emailVerified) {
+		// Update email_verified status in Firestore if not already set
+		if (auth.currentUser?.uid) {
+			try {
+				await updateEmailVerifiedStatus(auth.currentUser.uid, true)
+			} catch (error) {
+				console.error('Error updating email verified status:', error)
+			}
+		}
+		
 		isSuccess.value = true
 		setTimeout(() => {
 			isRedirecting.value = true
@@ -47,6 +57,21 @@ async function handleEmailVerification() {
 	try {
 		// Apply the verification code
 		await applyActionCode(auth, oobCode)
+		
+		// Reload user to get updated emailVerified status
+		if (auth.currentUser) {
+			await auth.currentUser.reload()
+		}
+		
+		// Update email_verified status in Firestore
+		if (auth.currentUser?.uid) {
+			try {
+				await updateEmailVerifiedStatus(auth.currentUser.uid, true)
+			} catch (error) {
+				console.error('Error updating email verified status:', error)
+			}
+		}
+		
 		isSuccess.value = true
 
 		// Wait a moment to show success message, then redirect

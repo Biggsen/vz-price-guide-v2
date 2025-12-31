@@ -7,6 +7,7 @@ import { CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/BaseButton.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'
+import { saveMarketingOptIn } from '@/utils/userProfile.js'
 
 const userInput = ref({
 	email: '',
@@ -24,6 +25,7 @@ const errorMessage = ref('')
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const termsAccepted = ref(false)
+const marketingOptIn = ref(false)
 
 // Password strength validation
 const passwordStrength = computed(() => {
@@ -89,6 +91,20 @@ async function signUpToFirebase() {
 			userInput.value.email,
 			userInput.value.password
 		)
+
+		// Create minimal user document with marketing opt-in preference, email, and verification status
+		// This ensures we capture the preference even if user never creates a full profile
+		if (userCredential.user) {
+			// Use current time as account creation time (they're signing up now)
+			await saveMarketingOptIn(
+				userCredential.user.uid,
+				marketingOptIn.value,
+				'signup',
+				userCredential.user.email || null,
+				false, // Email not verified yet at signup
+				new Date().toISOString() // Account creation time (signup is happening now)
+			)
+		}
 
 		// Send email verification
 		await sendEmailVerification(userCredential.user)
@@ -295,8 +311,9 @@ function clearError() {
 						</div>
 					</div>
 
-					<!-- Terms Acceptance -->
-					<div>
+					<!-- Terms Acceptance and Marketing Opt-In -->
+					<div class="space-y-2">
+						<!-- Terms Acceptance -->
 						<div class="flex items-start space-x-3">
 							<label class="flex items-center cursor-pointer">
 								<input
@@ -322,6 +339,27 @@ function clearError() {
 									</RouterLink>
 								</span>
 							</label>
+						</div>
+
+						<!-- Marketing Opt-In -->
+						<div>
+							<div class="flex items-start space-x-3">
+								<label class="flex items-center cursor-pointer">
+									<input
+										id="marketing-opt-in"
+										type="checkbox"
+										v-model="marketingOptIn"
+										data-cy="signup-marketing-opt-in"
+										class="checkbox-input mr-2"
+										:disabled="isLoading" />
+									<span class="text-sm text-gray-700">
+										Send me occasional updates about new features and improvements.
+									</span>
+								</label>
+							</div>
+							<p class="text-xs text-gray-500 ml-7 mt-1">
+								No spam. Unsubscribe anytime.
+							</p>
 						</div>
 					</div>
 

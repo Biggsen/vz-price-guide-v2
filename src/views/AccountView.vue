@@ -9,7 +9,9 @@ import {
 	useUserProfile,
 	createUserProfile,
 	updateUserProfile,
-	isMinecraftUsernameTaken
+	isMinecraftUsernameTaken,
+	saveMarketingOptIn,
+	updateEmailVerifiedStatus
 } from '../utils/userProfile.js'
 import BaseButton from '@/components/BaseButton.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'
@@ -27,6 +29,10 @@ const editingProfile = ref(false)
 const successMessage = ref('')
 const minecraftUsernameError = ref('')
 
+// Marketing opt-in state
+const marketingOptIn = ref(false)
+const marketingOptInLoading = ref(false)
+
 // Check for success message from query parameter
 if (route.query.message === 'password-updated') {
 	successMessage.value = 'Password updated successfully.'
@@ -35,8 +41,16 @@ if (route.query.message === 'password-updated') {
 }
 // Reload user if just verified email
 if (route.query.message === 'email-verified' && auth.currentUser) {
-	auth.currentUser.reload().then(() => {
+	auth.currentUser.reload().then(async () => {
 		successMessage.value = 'Email verified successfully.'
+		// Update email_verified status in Firestore
+		if (auth.currentUser?.uid) {
+			try {
+				await updateEmailVerifiedStatus(auth.currentUser.uid, true)
+			} catch (error) {
+				console.error('Error updating email verified status:', error)
+			}
+		}
 		// Clear the query parameter
 		router.replace({ path: '/account', query: {} })
 	})
@@ -63,8 +77,10 @@ const profileFormMode = computed(() =>
 )
 
 // Computed property for profile exists
+// A profile exists only if the user document has a minecraft_username
+// (minimal documents created during signup don't count as profiles)
 const profileExists = computed(() => {
-	return userProfile.value != null
+	return userProfile.value != null && userProfile.value.minecraft_username != null
 })
 
 // Watch for user changes to update the composable
@@ -89,6 +105,15 @@ watch(
 			}
 			// Update checkbox state
 			useMinecraftUsername.value = newProfile.display_name === newProfile.minecraft_username
+			
+			// Update marketing opt-in status
+			if (newProfile.marketing_opt_in) {
+				marketingOptIn.value = newProfile.marketing_opt_in.enabled
+			} else {
+				marketingOptIn.value = false
+			}
+		} else {
+			marketingOptIn.value = false
 		}
 	},
 	{ immediate: true }
@@ -183,6 +208,32 @@ function cancelProfileForm() {
 }
 
 // Removed separate Minecraft edit canceler; unified in save/cancel handlers
+
+// Save marketing opt-in preference
+async function saveMarketingOptInPreference() {
+	if (!user.value?.uid) return
+
+	marketingOptInLoading.value = true
+	try {
+		// Get account creation time from Auth metadata for old accounts without user records
+		const accountCreatedAt = user.value.metadata?.creationTime || null
+		
+		await saveMarketingOptIn(
+			user.value.uid,
+			marketingOptIn.value,
+			'settings',
+			user.value.email || null,
+			user.value.emailVerified || false,
+			accountCreatedAt
+		)
+		successMessage.value = 'Email preferences updated.'
+	} catch (error) {
+		console.error('Error saving marketing opt-in:', error)
+		alert('Failed to update email preferences. Please try again.')
+	} finally {
+		marketingOptInLoading.value = false
+	}
+}
 
 function signOutOfFirebase() {
 	signOut(auth)
@@ -402,6 +453,29 @@ function signOutOfFirebase() {
 						class="rounded-md bg-gray-asparagus px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-highland focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 						Create Profile
 					</button>
+				</div>
+			</div>
+
+			<!-- Email Preferences Section -->
+			<div class="mb-8" data-cy="email-preferences-section">
+				<h2
+					class="block w-full text-lg font-semibold text-gray-900 border-b border-gray-asparagus pb-2 mb-6">
+					Email Preferences
+				</h2>
+				<div class="flex items-center space-x-3">
+					<input
+						type="checkbox"
+						id="account-marketing-opt-in"
+						v-model="marketingOptIn"
+						@change="saveMarketingOptInPreference"
+						data-cy="account-marketing-opt-in"
+						class="checkbox-input"
+						:disabled="marketingOptInLoading" />
+					<label
+						for="account-marketing-opt-in"
+						class="text-base leading-6 text-gray-900">
+						Send me occasional updates about new features and improvements.
+					</label>
 				</div>
 			</div>
 
