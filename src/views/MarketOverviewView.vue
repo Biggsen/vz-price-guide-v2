@@ -5,13 +5,14 @@ import { useRouter, useRoute } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
 import { useShops, useServerShops } from '../utils/shopProfile.js'
 import { useServers, getMajorMinorVersion } from '../utils/serverProfile.js'
-import { useServerShopItems, updateShopItem } from '../utils/shopItems.js'
+import { useServerShopItems, updateShopItem, markShopItemsAsChecked } from '../utils/shopItems.js'
 import { isAdmin, enabledCategories } from '../constants'
 import BaseStatCard from '../components/BaseStatCard.vue'
 import BaseTable from '../components/BaseTable.vue'
 import BaseCard from '../components/BaseCard.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
+import BaseIconButton from '../components/BaseIconButton.vue'
 import { getImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
@@ -44,6 +45,7 @@ const selectedServerId = ref(route.query.serverId || '')
 const loading = ref(false)
 const error = ref(null)
 const searchQuery = ref('')
+const markingItemId = ref(null)
 
 // View mode state
 const viewMode = ref('categories') // 'categories' or 'list'
@@ -162,10 +164,10 @@ const availableItems = useCollection(allItemsQuery)
 function getItemImageUrl(imagePath, enchantments) {
 	if (!imagePath) return null
 
-	// If item has enchantments, try to use enchanted version (always .gif)
+	// If item has enchantments, try to use enchanted version (always .webp)
 	if (enchantments && enchantments.length > 0) {
-		// Replace extension with _enchanted.gif
-		const enchantedPath = imagePath.replace(/\.(png|webp|gif)$/i, '_enchanted.gif')
+		// Replace extension with _enchanted.webp
+		const enchantedPath = imagePath.replace(/\.(png|webp|gif)$/i, '_enchanted.webp')
 		return getImageUrl(enchantedPath)
 	}
 
@@ -475,6 +477,31 @@ async function toggleStar(itemId, currentlyStarred, originalItem) {
 	} catch (err) {
 		console.error('Error toggling star:', err)
 		error.value = err.message || 'Failed to update starred status. Please try again.'
+	}
+}
+
+// Mark a single item as checked (updates last_updated)
+async function handleMarkItemAsChecked(itemId, shopId) {
+	if (!shopId || !itemId) return
+
+	markingItemId.value = itemId
+	error.value = null
+
+	try {
+		const now = new Date().toISOString()
+		
+		// Optimistically update local state for large arrays (>30 shops)
+		// For small arrays, VueFire handles reactivity automatically
+		if (serverShopItemsResult.updateItem) {
+			serverShopItemsResult.updateItem(itemId, { last_updated: now })
+		}
+		
+		await markShopItemsAsChecked(shopId, [itemId])
+	} catch (err) {
+		console.error('Error marking item as checked:', err)
+		error.value = err.message || 'Failed to mark item as checked. Please try again.'
+	} finally {
+		markingItemId.value = null
 	}
 }
 
@@ -1278,8 +1305,21 @@ const priceAnalysis = computed(() => {
 									<div class="text-center">{{ row.profitMargin }}</div>
 								</template>
 								<template #cell-lastUpdated="{ row }">
-									<div class="text-center">
+									<div class="flex items-center justify-end gap-2">
 										<span>{{ row.lastUpdated }}</span>
+										<BaseIconButton
+											v-if="row._originalItem?.shopData && !row._originalItem.shopData.is_own_shop"
+											variant="ghost-in-table"
+											data-cy="market-overview-item-mark-checked-button"
+											:ariaLabel="'Mark as price checked today'"
+											title="Mark as price checked today"
+											:loading="markingItemId === row._originalItem?.id"
+											@click="
+												handleMarkItemAsChecked(row._originalItem?.id, row._originalItem?.shop_id)
+											"
+											:disabled="markingItemId === row._originalItem?.id">
+											<ArrowPathIcon />
+										</BaseIconButton>
 									</div>
 								</template>
 							</BaseTable>
@@ -1487,8 +1527,21 @@ const priceAnalysis = computed(() => {
 								<div class="text-center">{{ row.profitMargin }}</div>
 							</template>
 							<template #cell-lastUpdated="{ row }">
-								<div class="text-center">
+								<div class="flex items-center justify-end gap-2">
 									<span>{{ row.lastUpdated }}</span>
+									<BaseIconButton
+										v-if="row._originalItem?.shopData && !row._originalItem.shopData.is_own_shop"
+										variant="ghost-in-table"
+										data-cy="market-overview-item-mark-checked-button"
+										:ariaLabel="'Mark as price checked today'"
+										title="Mark as price checked today"
+										:loading="markingItemId === row._originalItem?.id"
+										@click="
+											handleMarkItemAsChecked(row._originalItem?.id, row._originalItem?.shop_id)
+										"
+										:disabled="markingItemId === row._originalItem?.id">
+										<ArrowPathIcon />
+									</BaseIconButton>
 								</div>
 							</template>
 						</BaseTable>
