@@ -25,18 +25,24 @@ This document outlines refactoring opportunities for `ShopItemsView.vue` and `Sh
 - ShopItemsTable Component
 - useInlineEditing Composable
 - useViewSettings Composable
+- Use existing ViewControls component (instead of duplicating toggle UI)
+- Enchantment formatting utilities
+- Item image URL helper
 - Component Breakdown
 
 ## Current State Analysis
 
-### File Sizes (After Refactoring)
-- `ShopItemsView.vue`: ~1,223 lines (reduced from 1,493)
+### File Sizes (Current State)
+- `ShopItemsView.vue`: 1,847 lines (reduced from 1,493 after ShopFormModal extraction, but has grown)
 - `ShopManagerView.vue`: ~737 lines (reduced from 890)
 
 ### Code Duplication
 - ~~**Shop Form Modal**: ~150 lines duplicated between both views~~ ✅ **COMPLETED**
 - **Shop Form State Management**: ~100 lines of similar logic
 - **Table Templates**: ~200 lines duplicated for different view modes
+- **View Mode/Layout Toggle UI**: ~60 lines duplicated (ViewControls.vue already exists but not used here)
+- **Enchantment Formatting Functions**: ~50 lines duplicated across ShopItemsView, MarketOverviewView, and CrateSingleView
+- **Item Image URL Logic**: ~15 lines duplicated between ShopItemsView and MarketOverviewView
 
 ## Refactoring Opportunities
 
@@ -316,9 +322,123 @@ export function useInlineEditing() {
 
 ---
 
-### 5. useViewSettings Composable (Low Priority)
+### 5. Use Existing ViewControls Component (High Priority)
 
-**Problem**: View settings localStorage logic in `ShopItemsView.vue` (lines 339-363) could be reused elsewhere.
+**Problem**: View mode and layout toggle UI is duplicated in `ShopItemsView.vue` (lines 1216-1274) even though `ViewControls.vue` already exists and is used in `HomeView.vue`.
+
+**Solution**: Replace inline toggle UI with existing `ViewControls.vue` component.
+
+**Location**: `src/components/ViewControls.vue` (already exists)
+
+**Current Usage**: 
+- `HomeView.vue` already uses `ViewControls.vue` (lines 388-392)
+
+**Enhancements Needed**:
+- Add optional `data-cy` attributes for testing
+- Support optional label color variant (currently uses `text-heavy-metal`, MarketOverviewView uses `text-gray-700`)
+- Support optional hover color variant (currently uses `hover:bg-gray-100`, MarketOverviewView uses `hover:bg-sea-mist`)
+
+**Files to Modify**:
+- `src/components/ViewControls.vue` (enhance with optional props for styling variants and data-cy)
+- `src/views/ShopItemsView.vue` (replace lines 1216-1274 with ViewControls component)
+- `src/views/MarketOverviewView.vue` (replace lines 1044-1107 with ViewControls component)
+
+**Impact**: 
+- Remove ~60 lines of duplicated code from ShopItemsView
+- Remove ~60 lines of duplicated code from MarketOverviewView
+- Standardize UI across HomeView, ShopItemsView, and MarketOverviewView
+
+---
+
+### 6. Enchantment Formatting Utilities (Medium Priority)
+
+**Problem**: Enchantment formatting functions are duplicated across multiple views:
+- `formatEnchantmentName()` - `ShopItemsView.vue` (lines 282-329), `MarketOverviewView.vue` (lines 178-225), `CrateSingleView.vue` (line 990)
+- `formatEnchantmentsForTitle()` - `ShopItemsView.vue` (lines 332-335), `MarketOverviewView.vue` (lines 228-231)
+
+**Solution**: Extract into shared utility file.
+
+**Location**: `src/utils/enchantments.js` (new)
+
+**Exports**:
+```javascript
+/**
+ * Format enchantment name for display
+ * @param {string} enchantmentId - Enchantment item ID
+ * @param {Array} availableItems - Array of all available items
+ * @returns {string} Formatted enchantment name
+ */
+export function formatEnchantmentName(enchantmentId, availableItems) {
+  // ... existing logic from ShopItemsView/MarketOverviewView
+}
+
+/**
+ * Format enchantments for title attribute (comma-separated list)
+ * @param {Array} enchantments - Array of enchantment IDs
+ * @param {Array} availableItems - Array of all available items
+ * @returns {string} Comma-separated list of formatted enchantment names
+ */
+export function formatEnchantmentsForTitle(enchantments, availableItems) {
+  if (!enchantments || enchantments.length === 0) return ''
+  return enchantments.map(id => formatEnchantmentName(id, availableItems)).filter(Boolean).join(', ')
+}
+```
+
+**Files to Modify**:
+- `src/utils/enchantments.js` (new)
+- `src/views/ShopItemsView.vue` (replace lines 282-335)
+- `src/views/MarketOverviewView.vue` (replace lines 178-231)
+- `src/views/CrateSingleView.vue` (replace line 990)
+
+**Impact**: 
+- Remove ~50 lines of duplicated code
+- Standardize enchantment formatting across all views
+
+---
+
+### 7. Item Image URL Helper (Medium Priority)
+
+**Problem**: `getItemImageUrl()` function is duplicated in `ShopItemsView.vue` (lines 268-279) and `MarketOverviewView.vue` (lines 164-175).
+
+**Solution**: Move to existing `src/utils/image.js` file.
+
+**Location**: `src/utils/image.js` (extend existing)
+
+**Exports**:
+```javascript
+/**
+ * Get image URL, preferring enchanted version if item has enchantments
+ * @param {string} imagePath - Base image path
+ * @param {Array} enchantments - Array of enchantment IDs (optional)
+ * @returns {string|null} Image URL or null if no path
+ */
+export function getItemImageUrl(imagePath, enchantments) {
+  if (!imagePath) return null
+
+  // If item has enchantments, try to use enchanted version (always .webp)
+  if (enchantments && enchantments.length > 0) {
+    const enchantedPath = imagePath.replace(/\.(png|webp|gif)$/i, '_enchanted.webp')
+    return getImageUrl(enchantedPath)
+  }
+
+  return getImageUrl(imagePath)
+}
+```
+
+**Files to Modify**:
+- `src/utils/image.js` (extend)
+- `src/views/ShopItemsView.vue` (replace lines 268-279)
+- `src/views/MarketOverviewView.vue` (replace lines 164-175)
+
+**Impact**: 
+- Remove ~15 lines of duplicated code
+- Centralize image URL logic
+
+---
+
+### 8. useViewSettings Composable (Low Priority)
+
+**Problem**: View settings localStorage logic in `ShopItemsView.vue` (lines 474-505) could be reused elsewhere.
 
 **Solution**: Extract into a `useViewSettings.js` composable.
 
@@ -383,11 +503,11 @@ const { viewMode, layout } = useViewSettings('shopItems', {
 
 **Files to Modify**:
 - `src/composables/useViewSettings.js` (new)
-- `src/views/ShopItemsView.vue` (replace view settings logic)
+- `src/views/ShopItemsView.vue` (replace lines 474-505)
 
 ---
 
-### 6. Component Breakdown (Low Priority)
+### 9. Component Breakdown (Low Priority)
 
 **Problem**: `ShopItemsView.vue` is 1,493 lines and handles multiple concerns.
 
@@ -447,17 +567,21 @@ const { viewMode, layout } = useViewSettings('shopItems', {
 4. ✅ **COMPLETED** - Test shop creation and editing flows
 5. ⏳ Create `useShopForm.js` composable (deferred - component works without it)
 
-### Phase 2: Medium Priority (Code Quality)
-1. ✅ Create `ShopItemsTable.vue` component
-2. ✅ Create `useInlineEditing.js` composable
-3. ✅ Refactor `ShopItemsView.vue` to use new components
-4. ✅ Test inline editing functionality
+### Phase 2: Medium Priority (Code Quality & Utilities)
+1. ⏳ Enhance existing `ViewControls.vue` component with optional props
+2. ⏳ Create `enchantments.js` utility file
+3. ⏳ Extend `image.js` with `getItemImageUrl()` helper
+4. ⏳ Update ShopItemsView to use ViewControls and utilities
+5. ⏳ Create `ShopItemsTable.vue` component
+6. ⏳ Create `useInlineEditing.js` composable
+7. ⏳ Refactor `ShopItemsView.vue` to use new components
+8. ⏳ Test inline editing functionality
 
 ### Phase 3: Low Priority (Polish)
-1. ✅ Create `useViewSettings.js` composable
-2. ✅ Create `ShopHeader.vue` component
-3. ✅ Create `ShopItemActions.vue` component
-4. ✅ Final refactoring of `ShopItemsView.vue`
+1. ⏳ Create `useViewSettings.js` composable
+2. ⏳ Create `ShopHeader.vue` component
+3. ⏳ Create `ShopItemActions.vue` component
+4. ⏳ Final refactoring of `ShopItemsView.vue`
 
 ## Testing Checklist
 
@@ -475,6 +599,21 @@ const { viewMode, layout } = useViewSettings('shopItems', {
 - [ ] Form resets to default state
 - [ ] Validation works correctly
 - [ ] Player name syncs with shop name when checkbox checked
+
+### ViewControls Component
+- [ ] Component enhanced with optional props (data-cy, label color, hover color)
+- [ ] Toggle switches between view modes correctly
+- [ ] Layout changes apply correctly
+- [ ] Works in ShopItemsView, MarketOverviewView, and HomeView
+
+### Enchantment Formatting Utilities
+- [ ] formatEnchantmentName works correctly in all views
+- [ ] formatEnchantmentsForTitle works correctly
+- [ ] All views updated to use shared utilities
+
+### Item Image URL Helper
+- [ ] getItemImageUrl works correctly with and without enchantments
+- [ ] All views updated to use shared helper
 
 ### Shop Items Table
 - [ ] Categories view displays correctly
@@ -507,9 +646,12 @@ None expected - all refactoring is internal to the components.
 
 ## Success Metrics
 
-- [x] ✅ Reduce `ShopItemsView.vue` from 1,493 lines to ~1,223 lines (270 lines removed)
+- [x] ✅ Reduce `ShopItemsView.vue` from 1,493 lines (270 lines removed via ShopFormModal, but currently at 1,847 lines)
 - [x] ✅ Reduce `ShopManagerView.vue` from 890 lines to ~737 lines (153 lines removed)
 - [x] ✅ Eliminate ~270 lines of duplicated shop form code
+- [ ] Eliminate ~60 lines of duplicated toggle UI (pending - use ViewControls)
+- [ ] Eliminate ~50 lines of duplicated enchantment formatting (pending)
+- [ ] Eliminate ~15 lines of duplicated image URL logic (pending)
 - [ ] Eliminate ~200 lines of duplicated table template code (pending)
 - [x] ✅ All existing tests pass
 - [x] ✅ No regression in functionality
