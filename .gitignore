@@ -17,6 +17,8 @@ coverage
 service-account.json
 
 /public/images/for_processing 
+/public/images/for_resizing 
+/public/images/for_converting 
 
 /cypress/videos/
 /cypress/screenshots/
