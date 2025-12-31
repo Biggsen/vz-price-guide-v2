@@ -8,7 +8,7 @@ Implement an explicit opt-in system for marketing emails to ensure compliance wi
 
 - Add marketing email opt-in checkbox during user signup
 - Add marketing email opt-in toggle in account settings
-- Store opt-in status, timestamp, and method in user profile
+- Store opt-in status, timestamp, and method in user document (created during signup for all users)
 - Only send marketing emails to users who have opted in
 
 ---
@@ -40,7 +40,7 @@ Implement an explicit opt-in system for marketing emails to ensure compliance wi
 - **Location**: Account page (`AccountView.vue`)
 - **Section Title**: "Email Preferences"
 - **Placement**: After Profile section, before Account Actions section
-- **Visibility**: Only visible to verified users
+- **Visibility**: Visible to all authenticated users
 
 #### Marketing Opt-In Toggle
 
@@ -78,13 +78,14 @@ Add to `users` collection documents:
 
 ### Default Values
 
-- **New Users**: If checkbox is unchecked during signup, `marketing_opt_in` field is not created (or set to `enabled: false`)
-- **Existing Users**: Users created before this feature have no `marketing_opt_in` field, which should be treated as `enabled: false`
+- **New Users**: A minimal user document is created during signup with the `marketing_opt_in` field. The field is always created with `enabled: false` if the checkbox is unchecked, or `enabled: true` if checked. This ensures 100% of new signups have their preference recorded.
+- **Existing Users**: Users created before this feature have no `marketing_opt_in` field, which should be treated as `enabled: false` (explicit opt-out)
 
 ### Data Migration
 
-- Existing users without `marketing_opt_in` field are treated as opted-out
-- No migration script needed - field is created on-demand when user interacts with preference
+- Existing users without `marketing_opt_in` field are treated as opted-out (explicit opt-out)
+- No migration script needed - field is created on-demand when existing users interact with preference in account settings
+- New signups will automatically have the field created during signup
 
 ---
 
@@ -96,8 +97,8 @@ Add to `users` collection documents:
 
 - Add `marketingOptIn` ref (boolean, default: false)
 - Add checkbox in template after terms checkbox
-- Update `signUpToFirebase()` to save opt-in status after account creation
-- Create/update user profile with marketing opt-in data
+- Update `signUpToFirebase()` to create a minimal user document with marketing opt-in status after account creation
+- **Important**: A minimal user document is created for ALL signups (not just those who opt-in) to ensure we capture the preference even if users never create a full profile
 
 **Code Structure**:
 
@@ -109,7 +110,8 @@ const marketingOptIn = ref(false)
 async function signUpToFirebase() {
   // ... existing account creation ...
   
-  // After successful account creation, save marketing opt-in
+  // After successful account creation, create minimal user document with marketing opt-in
+  // This ensures we capture the preference even if user never creates a full profile
   if (userCredential.user) {
     await saveMarketingOptIn(userCredential.user.uid, marketingOptIn.value, 'signup')
   }
@@ -246,7 +248,7 @@ if (!hasMarketingOptIn(userProfile)) {
 ### Integration Tests
 
 - [ ] Signup with marketing opt-in checked saves preference
-- [ ] Signup with marketing opt-in unchecked does not save preference (or saves as false)
+- [ ] Signup with marketing opt-in unchecked saves preference as `enabled: false`
 - [ ] Account settings loads current opt-in status correctly
 - [ ] Toggling opt-in in account settings saves immediately
 - [ ] Opt-in status persists after page reload
@@ -277,17 +279,15 @@ if (!hasMarketingOptIn(userProfile)) {
 
 ### Firestore Security Rules
 
-Update `firestore.rules` to allow users to update their own marketing opt-in:
+**No changes needed** to `firestore.rules`. The existing rule already allows users to write to their own document:
 
 ```javascript
 match /users/{userId} {
-  // Allow users to update their own marketing_opt_in field
-  allow update: if request.auth != null 
-    && request.auth.uid == userId
-    && request.resource.data.diff(resource.data).affectedKeys()
-      .hasOnly(['marketing_opt_in']);
+  allow write: if request.auth != null && request.auth.uid == userId;
 }
 ```
+
+This rule is sufficient and secure, as it only allows users to update their own document. It also supports the existing `updateUserProfile()` function which updates multiple profile fields.
 
 ### Compliance
 
@@ -346,7 +346,7 @@ match /users/{userId} {
 
 - [ ] Add `saveMarketingOptIn()` function to `userProfile.js`
 - [ ] Add `hasMarketingOptIn()` helper function
-- [ ] Update Firestore security rules for marketing_opt_in field
+- [ ] Verify existing Firestore security rules support marketing_opt_in updates (no changes needed)
 - [ ] Test utility functions
 
 ### Phase 2: Signup Integration
@@ -383,4 +383,5 @@ match /users/{userId} {
 - Transactional emails (verification, password reset) are not affected by this preference
 - The opt-in preference only affects marketing/announcement emails
 - Users can change their preference at any time in account settings
+- A minimal user document is created during signup for ALL users to capture marketing opt-in preference, even if they never create a full profile
 
