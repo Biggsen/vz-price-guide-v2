@@ -132,6 +132,11 @@ export async function checkCrateLimit(userId, isAdmin = false) {
  */
 export async function createCrateReward(userId, crateData, isAdmin = false) {
 	try {
+		// Validate name is not empty
+		if (!crateData.name || !crateData.name.trim()) {
+			throw new Error('Crate name is required and cannot be empty')
+		}
+
 		// Check crate limit before creating
 		const limitCheck = await checkCrateLimit(userId, isAdmin)
 

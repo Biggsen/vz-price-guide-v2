@@ -128,6 +128,7 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.token.email_verified == true &&
         request.resource.data.keys().hasAll(['user_id', 'name', 'minecraft_version', 'created_at', 'updated_at']) &&
         request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 &&
         request.resource.data.minecraft_version is string &&
         request.resource.data.user_id == request.auth.uid;
     }
