@@ -1,5 +1,22 @@
 [
 	{
+		"id": 41,
+		"title": "Shop Manager UI & Stock Management Improvements",
+		"date": "2026-12-03",
+		"types": ["Feature", "Enhancement"],
+		"hidden": false,
+		"description": "A set of usability and inventory management improvements to make the Shop Manager clearer, faster to use, and easier to maintain day to day. Layout refinements improve visibility, while new out-of-stock controls help you track and filter unavailable items in your own shops.",
+		"changes": [
+			"Server cards now span full width for improved readability",
+			"Shop tables include a new Description column to quickly identify shop details",
+			"Button order refined for clarity, with consistent white styling applied to the Market Overview button",
+			"Your own shops are now more visible in the Market Overview, with shop names displayed in bold",
+			"Out of stock checkbox now available for your own shops",
+			"Optional setting to hide out-of-stock items when viewing your shops",
+			"Improved inventory tracking for ongoing shop management"
+		]
+	},
+	{
 		"id": 39,
 		"title": "Enchanted Item Support & Shop Manager Improvements",
 		"date": "2025-12-31",
