@@ -1409,8 +1409,8 @@ defineExpose({
 						<XCircleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
 						Buy price must be a valid number greater than or equal to 0
 					</div>
-					<!-- Out of stock checkbox (only for player shops, not own) -->
-					<div v-if="shop && !shop.is_own_shop" class="mt-2">
+					<!-- Out of stock checkbox -->
+					<div v-if="shop" class="mt-2">
 						<label class="flex items-center">
 							<input
 								:checked="formData.stock_quantity === 0"

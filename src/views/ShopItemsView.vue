@@ -54,6 +54,7 @@ const shopItemForm = ref(null)
 const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
 const showEnchantments = ref(true) // Show enchantments in item table
+const hideOutOfStock = ref(false) // Hide items that are out of stock
 
 // Inline price editing state
 const editingPriceId = ref(null)
@@ -341,6 +342,11 @@ const shopItemsByCategory = computed(() => {
 	const grouped = {}
 
 	shopItems.value.forEach((shopItem) => {
+		// Filter out out of stock items if hideOutOfStock is enabled
+		if (hideOutOfStock.value && shopItem.stock_quantity === 0) {
+			return
+		}
+
 		// Find the corresponding item data from the main items collection
 		const itemData = availableItems.value.find((item) => item.id === shopItem.item_id)
 		if (itemData) {
@@ -362,14 +368,22 @@ const shopItemsByCategory = computed(() => {
 const allVisibleShopItems = computed(() => {
 	if (!shopItems.value || !availableItems.value) return []
 
-	return shopItems.value.map((shopItem) => {
-		// Find the corresponding item data from the main items collection
-		const itemData = availableItems.value.find((item) => item.id === shopItem.item_id)
-		return {
-			...shopItem,
-			itemData
-		}
-	})
+	return shopItems.value
+		.filter((shopItem) => {
+			// Filter out out of stock items if hideOutOfStock is enabled
+			if (hideOutOfStock.value && shopItem.stock_quantity === 0) {
+				return false
+			}
+			return true
+		})
+		.map((shopItem) => {
+			// Find the corresponding item data from the main items collection
+			const itemData = availableItems.value.find((item) => item.id === shopItem.item_id)
+			return {
+				...shopItem,
+				itemData
+			}
+		})
 })
 
 // BaseTable column definitions
@@ -477,6 +491,7 @@ function loadViewSettings() {
 		const savedViewMode = localStorage.getItem('shopItemsViewMode')
 		const savedLayout = localStorage.getItem('shopItemsLayout')
 		const savedShowEnchantments = localStorage.getItem('shopItemsShowEnchantments')
+		const savedHideOutOfStock = localStorage.getItem('shopItemsHideOutOfStock')
 
 		if (savedViewMode && ['categories', 'list'].includes(savedViewMode)) {
 			viewMode.value = savedViewMode
@@ -489,6 +504,10 @@ function loadViewSettings() {
 		if (savedShowEnchantments !== null) {
 			showEnchantments.value = savedShowEnchantments === 'true'
 		}
+
+		if (savedHideOutOfStock !== null) {
+			hideOutOfStock.value = savedHideOutOfStock === 'true'
+		}
 	} catch (error) {
 		console.warn('Error loading view settings:', error)
 	}
@@ -499,6 +518,7 @@ function saveViewSettings() {
 		localStorage.setItem('shopItemsViewMode', viewMode.value)
 		localStorage.setItem('shopItemsLayout', layout.value)
 		localStorage.setItem('shopItemsShowEnchantments', showEnchantments.value.toString())
+		localStorage.setItem('shopItemsHideOutOfStock', hideOutOfStock.value.toString())
 	} catch (error) {
 		console.warn('Error saving view settings:', error)
 	}
@@ -574,7 +594,7 @@ watch(selectedShopId, (newShopId) => {
 
 // Save view settings when they change
 watch(
-	[viewMode, layout, showEnchantments],
+	[viewMode, layout, showEnchantments, hideOutOfStock],
 	() => {
 		saveViewSettings()
 	},
@@ -1995,16 +2015,28 @@ function getServerName(serverId) {
 			</div>
 			<div class="pt-4">
 				<h3 class="text-sm font-semibold text-gray-900 mb-3">Items list</h3>
-				<label
-					class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
-					<input
-						data-cy="shop-items-hide-enchantments-checkbox"
-						:checked="!showEnchantments"
-						@change="showEnchantments = !$event.target.checked"
-						type="checkbox"
-						class="checkbox-input" />
-					<span>Hide enchantments</span>
-				</label>
+				<div class="space-y-3">
+					<label
+						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+						<input
+							data-cy="shop-items-hide-enchantments-checkbox"
+							:checked="!showEnchantments"
+							@change="showEnchantments = !$event.target.checked"
+							type="checkbox"
+							class="checkbox-input" />
+						<span>Hide enchantments</span>
+					</label>
+					<label
+						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
+						<input
+							data-cy="shop-items-hide-out-of-stock-checkbox"
+							:checked="hideOutOfStock"
+							@change="hideOutOfStock = $event.target.checked"
+							type="checkbox"
+							class="checkbox-input" />
+						<span>Hide out of stock</span>
+					</label>
+				</div>
 			</div>
 		</div>
 	</BaseModal>
