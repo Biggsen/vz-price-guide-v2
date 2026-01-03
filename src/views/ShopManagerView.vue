@@ -617,7 +617,8 @@ const shopTableColumns = [
 	{ key: 'owner', label: 'Owner', sortable: true },
 	{ key: 'shopName', label: 'Shop Name', sortable: true },
 	{ key: 'location', label: 'Location', sortable: true },
-	{ key: 'actions', label: '', align: 'right', headerAlign: 'right', width: 'w-24' }
+	{ key: 'description', label: 'Description', sortable: true },
+	{ key: 'actions', label: '', align: 'right', headerAlign: 'right', width: 'w-20' }
 ]
 
 function getShopTableRows(serverId) {
@@ -628,7 +629,8 @@ function getShopTableRows(serverId) {
 		owner: getShopOwnerName(shop),
 		ownerAvatar: getShopOwnerAvatar(shop),
 		shopName: shop.name,
-		location: shop.location || null
+		location: shop.location || null,
+		description: shop.description || null
 	}))
 }
 
@@ -640,7 +642,8 @@ function getPlayerShopTableRows(serverId) {
 		owner: getShopOwnerName(shop),
 		ownerAvatar: getShopOwnerAvatar(shop),
 		shopName: shop.name,
-		location: shop.location || null
+		location: shop.location || null,
+		description: shop.description || null
 	}))
 }
 
@@ -897,7 +900,7 @@ function toggleShopsVisibility(serverId) {
 					v-for="server in servers"
 					:key="server.id"
 					variant="tertiary"
-					class="h-full md:col-span-3 lg:col-span-2"
+					class="h-full md:col-span-3 lg:col-span-3"
 					data-cy="server-card">
 					<template #header>
 						<h3 class="text-lg font-semibold text-heavy-metal flex items-center gap-2">
@@ -934,16 +937,6 @@ function toggleShopsVisibility(serverId) {
 								{{ server.description }}
 							</p>
 							<div class="flex gap-2 flex-wrap">
-								<RouterLink
-									v-if="shopsByServer[server.id]?.all.length"
-									:to="`/market-overview?serverId=${server.id}`">
-									<BaseButton variant="secondary">
-										<template #left-icon>
-											<CurrencyDollarIcon class="w-4 h-4" />
-										</template>
-										Market Overview
-									</BaseButton>
-								</RouterLink>
 								<BaseButton
 									variant="secondary"
 									:disabled="shopLoading"
@@ -964,6 +957,16 @@ function toggleShopsVisibility(serverId) {
 									</template>
 									Add Player Shop
 								</BaseButton>
+								<RouterLink
+									v-if="shopsByServer[server.id]?.all.length"
+									:to="`/market-overview?serverId=${server.id}`">
+									<BaseButton variant="tertiary">
+										<template #left-icon>
+											<CurrencyDollarIcon class="w-4 h-4" />
+										</template>
+										Market Overview
+									</BaseButton>
+								</RouterLink>
 							</div>
 							<button
 								v-if="shopsByServer[server.id]?.all.length"
@@ -1044,6 +1047,12 @@ function toggleShopsVisibility(serverId) {
 													class="w-4 h-4 flex-shrink-0 text-gray-900" />
 												<span>{{ row.location }}</span>
 											</div>
+											<span v-else class="text-gray-900 italic">—</span>
+										</template>
+										<template #cell-description="{ row }">
+											<span v-if="row.description" class="text-gray-900">
+												{{ row.description }}
+											</span>
 											<span v-else class="text-gray-900 italic">—</span>
 										</template>
 										<template #cell-actions="{ row }">
@@ -1146,6 +1155,12 @@ function toggleShopsVisibility(serverId) {
 													class="w-4 h-4 flex-shrink-0 text-gray-900" />
 												<span>{{ row.location }}</span>
 											</div>
+											<span v-else class="text-gray-900 italic">—</span>
+										</template>
+										<template #cell-description="{ row }">
+											<span v-if="row.description" class="text-gray-900">
+												{{ row.description }}
+											</span>
 											<span v-else class="text-gray-900 italic">—</span>
 										</template>
 										<template #cell-actions="{ row }">

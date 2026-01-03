@@ -1217,7 +1217,7 @@ const priceAnalysis = computed(() => {
 												:alt="row.shopPlayer"
 												class="w-5 h-5 rounded mr-2 flex-shrink-0"
 												@error="$event.target.style.display = 'none'" />
-											<span>
+											<span :class="{ 'font-semibold': row._originalItem?.shopData?.is_own_shop }">
 												{{ row.shopPlayer }}
 												<span v-if="row.shopPlayer !== row.shop">
 													- {{ row.shop }}
@@ -1231,7 +1231,7 @@ const priceAnalysis = computed(() => {
 												:alt="row.shop"
 												class="w-5 h-5 rounded mr-2 flex-shrink-0"
 												@error="$event.target.style.display = 'none'" />
-											<span>{{ row.shop }}</span>
+											<span :class="{ 'font-semibold': row._originalItem?.shopData?.is_own_shop }">{{ row.shop }}</span>
 										</template>
 									</div>
 								</template>
@@ -1446,7 +1446,7 @@ const priceAnalysis = computed(() => {
 										:alt="row.shopPlayer"
 										class="w-5 h-5 rounded mr-2 flex-shrink-0"
 										@error="$event.target.style.display = 'none'" />
-									<span>
+									<span :class="{ 'font-semibold': row._originalItem?.shopData?.is_own_shop }">
 										{{ row.shopPlayer }}
 										<span v-if="row.shopPlayer !== row.shop">
 											- {{ row.shop }}
@@ -1460,7 +1460,7 @@ const priceAnalysis = computed(() => {
 										:alt="row.shop"
 										class="w-5 h-5 rounded mr-2 flex-shrink-0"
 										@error="$event.target.style.display = 'none'" />
-									<span>{{ row.shop }}</span>
+									<span :class="{ 'font-semibold': row._originalItem?.shopData?.is_own_shop }">{{ row.shop }}</span>
 								</template>
 							</div>
 						</template>
