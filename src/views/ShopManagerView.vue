@@ -532,10 +532,12 @@ async function handleShopSubmit() {
 
 		if (editingShop.value) {
 			await updateShop(editingShop.value.id, shopData)
+			closeShopModals()
 		} else {
-			await createShop(user.value.uid, shopData)
+			const newShop = await createShop(user.value.uid, shopData)
+			closeShopModals()
+			router.push({ name: 'shop', params: { shopId: newShop.id } })
 		}
-		closeShopModals()
 	} catch (err) {
 		console.error('Error saving shop:', err)
 		if (editingShop.value) {
