@@ -2,7 +2,7 @@
 	{
 		"id": 41,
 		"title": "Shop Manager UI & Stock Management Improvements",
-		"date": "2026-12-03",
+		"date": "2026-01-03",
 		"types": ["Feature", "Enhancement"],
 		"hidden": false,
 		"description": "A set of usability and inventory management improvements to make the Shop Manager clearer, faster to use, and easier to maintain day to day. Layout refinements improve visibility, while new out-of-stock controls help you track and filter unavailable items in your own shops.",
