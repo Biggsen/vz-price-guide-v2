@@ -37,6 +37,10 @@ const isCommunityActive = computed(() => {
 	return ['/admin/community', '/admin/suggestions'].includes(route.path)
 })
 
+const isReportsActive = computed(() => {
+	return route.path === '/admin/reports' || route.path.startsWith('/admin/reports/')
+})
+
 const isToolsActive = computed(() => {
 	return (
 		route.path === '/tools' ||
@@ -77,6 +81,12 @@ const isToolsActive = computed(() => {
 				:class="{ 'underline font-semibold': route.path === '/admin/access' }"
 				to="/admin/access">
 				Access
+			</RouterLink>
+			<RouterLink
+				class="hover:underline"
+				:class="{ 'underline font-semibold': isReportsActive }"
+				to="/admin/reports">
+				Reports
 			</RouterLink>
 			<div class="ml-auto">
 				<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>

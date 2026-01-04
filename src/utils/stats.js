@@ -130,3 +130,218 @@ export function useStats() {
 		refresh: fetchStats
 	}
 }
+
+// Get detailed shop manager usage statistics
+export async function getShopManagerStats(excludeUserId = null) {
+	const db = useFirestore()
+
+	try {
+		// Get all collections
+		const [serversSnapshot, shopsSnapshot, shopItemsSnapshot, usersSnapshot] =
+			await Promise.all([
+				getDocs(collection(db, 'servers')),
+				getDocs(collection(db, 'shops')),
+				getDocs(collection(db, 'shop_items')),
+				getDocs(collection(db, 'users'))
+			])
+
+		let servers = serversSnapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data()
+		}))
+		let shops = shopsSnapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data()
+		}))
+		let shopItems = shopItemsSnapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data()
+		}))
+		let users = usersSnapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data()
+		}))
+
+		// Exclude current user's data if provided
+		if (excludeUserId) {
+			// Get shop IDs that belong to excluded user before filtering shops
+			const excludedShopIds = new Set(
+				shopsSnapshot.docs
+					.map((doc) => {
+						const data = doc.data()
+						return data.owner_id === excludeUserId ? doc.id : null
+					})
+					.filter(Boolean)
+			)
+
+			// Filter out excluded user's data
+			servers = servers.filter((server) => server.owner_id !== excludeUserId)
+			shops = shops.filter((shop) => shop.owner_id !== excludeUserId)
+			shopItems = shopItems.filter((item) => !excludedShopIds.has(item.shop_id))
+			users = users.filter((user) => user.id !== excludeUserId)
+		}
+
+		// Basic counts
+		const totalServers = servers.length
+		const totalShops = shops.length
+		const totalShopItems = shopItems.length
+		const totalUsers = users.length
+
+		// Users with shop manager access
+		const usersWithShopManagerAccess = users.filter(
+			(user) => user.shopManager === true
+		).length
+
+		// Active users (users who have created at least one server or shop)
+		const serverOwnerIds = new Set(servers.map((s) => s.owner_id).filter(Boolean))
+		const shopOwnerIds = new Set(shops.map((s) => s.owner_id).filter(Boolean))
+		const activeUserIds = new Set([...serverOwnerIds, ...shopOwnerIds])
+		const activeUsersCount = activeUserIds.size
+
+		// Servers per user
+		const serversByUser = {}
+		servers.forEach((server) => {
+			if (server.owner_id) {
+				serversByUser[server.owner_id] = (serversByUser[server.owner_id] || 0) + 1
+			}
+		})
+		const avgServersPerUser =
+			activeUserIds.size > 0
+				? (totalServers / activeUserIds.size).toFixed(2)
+				: '0.00'
+		const maxServersPerUser = Math.max(...Object.values(serversByUser), 0)
+
+		// Shops per user
+		const shopsByUser = {}
+		shops.forEach((shop) => {
+			if (shop.owner_id) {
+				shopsByUser[shop.owner_id] = (shopsByUser[shop.owner_id] || 0) + 1
+			}
+		})
+		const avgShopsPerUser =
+			activeUserIds.size > 0
+				? (totalShops / activeUserIds.size).toFixed(2)
+				: '0.00'
+		const maxShopsPerUser = Math.max(...Object.values(shopsByUser), 0)
+
+		// Shops per server
+		const shopsByServer = {}
+		shops.forEach((shop) => {
+			if (shop.server_id) {
+				shopsByServer[shop.server_id] = (shopsByServer[shop.server_id] || 0) + 1
+			}
+		})
+		const avgShopsPerServer =
+			totalServers > 0 ? (totalShops / totalServers).toFixed(2) : '0.00'
+		const maxShopsPerServer = Math.max(...Object.values(shopsByServer), 0)
+
+		// Shop items per shop
+		const shopItemsByShop = {}
+		shopItems.forEach((item) => {
+			if (item.shop_id) {
+				shopItemsByShop[item.shop_id] = (shopItemsByShop[item.shop_id] || 0) + 1
+			}
+		})
+		const avgShopItemsPerShop =
+			totalShops > 0 ? (totalShopItems / totalShops).toFixed(2) : '0.00'
+		const maxShopItemsPerShop = Math.max(...Object.values(shopItemsByShop), 0)
+
+		// Recent activity (last 7 days)
+		const sevenDaysAgo = new Date()
+		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+		const recentServers = servers.filter((server) => {
+			if (!server.created_at) return false
+			let createdAt
+			if (server.created_at.toDate) {
+				createdAt = server.created_at.toDate()
+			} else if (server.created_at instanceof Date) {
+				createdAt = server.created_at
+			} else {
+				createdAt = new Date(server.created_at)
+			}
+			return createdAt >= sevenDaysAgo
+		}).length
+
+		const recentShops = shops.filter((shop) => {
+			if (!shop.created_at) return false
+			let createdAt
+			if (shop.created_at.toDate) {
+				createdAt = shop.created_at.toDate()
+			} else if (shop.created_at instanceof Date) {
+				createdAt = shop.created_at
+			} else {
+				createdAt = new Date(shop.created_at)
+			}
+			return createdAt >= sevenDaysAgo
+		}).length
+
+		const recentShopItems = shopItems.filter((item) => {
+			if (!item.last_updated) return false
+			let lastUpdated
+			if (item.last_updated.toDate) {
+				lastUpdated = item.last_updated.toDate()
+			} else if (item.last_updated instanceof Date) {
+				lastUpdated = item.last_updated
+			} else {
+				lastUpdated = new Date(item.last_updated)
+			}
+			return lastUpdated >= sevenDaysAgo
+		}).length
+
+		// Servers with no shops
+		const serversWithShops = new Set(shops.map((s) => s.server_id).filter(Boolean))
+		const serversWithoutShops = servers.filter(
+			(s) => !serversWithShops.has(s.id)
+		).length
+
+		// Shops with no items
+		const shopsWithItems = new Set(shopItems.map((i) => i.shop_id).filter(Boolean))
+		const shopsWithoutItems = shops.filter((s) => !shopsWithItems.has(s.id)).length
+
+		return {
+			totalServers,
+			totalShops,
+			totalShopItems,
+			totalUsers,
+			usersWithShopManagerAccess,
+			activeUsersCount,
+			avgServersPerUser,
+			maxServersPerUser,
+			avgShopsPerUser,
+			maxShopsPerUser,
+			avgShopsPerServer,
+			maxShopsPerServer,
+			avgShopItemsPerShop,
+			maxShopItemsPerShop,
+			recentServers,
+			recentShops,
+			recentShopItems,
+			serversWithoutShops,
+			shopsWithoutItems
+		}
+	} catch (error) {
+		console.error('Error fetching shop manager stats:', error)
+		return {
+			totalServers: 0,
+			totalShops: 0,
+			totalShopItems: 0,
+			totalUsers: 0,
+			usersWithShopManagerAccess: 0,
+			activeUsersCount: 0,
+			avgServersPerUser: '0.00',
+			maxServersPerUser: 0,
+			avgShopsPerUser: '0.00',
+			maxShopsPerUser: 0,
+			avgShopsPerServer: '0.00',
+			maxShopsPerServer: 0,
+			avgShopItemsPerShop: '0.00',
+			maxShopItemsPerShop: 0,
+			recentServers: 0,
+			recentShops: 0,
+			recentShopItems: 0,
+			serversWithoutShops: 0,
+			shopsWithoutItems: 0
+		}
+	}
+}

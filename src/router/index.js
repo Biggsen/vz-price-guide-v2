@@ -447,6 +447,28 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/admin/reports',
+			name: 'admin-reports',
+			component: () => import('../views/ReportsView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: `Reports - ${siteName}`
+			}
+		},
+		{
+			path: '/admin/reports/shop-manager',
+			name: 'admin-reports-shop-manager',
+			component: () => import('../views/ShopManagerStatsView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: `Shop Manager Statistics - ${siteName}`
+			}
+		},
+		{
 			path: '/admin/enchantments/migrate-items',
 			name: 'enchantments-migrate-items',
 			component: () => import('../views/enchantments/MigrateItemsView.vue'),
