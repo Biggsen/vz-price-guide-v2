@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { ArrowDownTrayIcon, UserPlusIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
+import { ArrowDownTrayIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { UserIcon } from '@heroicons/vue/24/solid'
 import { enabledCategories, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
@@ -65,7 +65,7 @@ const authState = computed(() => {
 function getModalAnalyticsContext(extra = {}) {
 	return {
 		page_path: props.pagePath,
-		selected_version: props.selectedVersion,
+		selected_version: selectedVersion.value,
 		view_mode: props.viewMode,
 		layout: props.layout,
 		auth_state: authState.value,
