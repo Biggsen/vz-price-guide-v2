@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { useAdmin } from '../utils/admin.js'
 import { versions, baseEnabledVersions } from '../constants.js'
 import { useRoute } from 'vue-router'
+import { trackModalInteraction } from '../utils/analytics.js'
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
 
@@ -14,6 +15,18 @@ const props = defineProps({
 	selectedVersion: {
 		type: String,
 		required: true
+	},
+	viewMode: {
+		type: String,
+		default: 'categories'
+	},
+	layout: {
+		type: String,
+		default: 'comfortable'
+	},
+	pagePath: {
+		type: String,
+		default: '/'
 	}
 })
 
@@ -24,6 +37,31 @@ const route = useRoute()
 
 // Admin access
 const { user, canEditItems } = useAdmin()
+
+const authState = computed(() => {
+	if (!user.value?.email) return 'anonymous'
+	if (user.value?.emailVerified) return 'signed_in_verified'
+	return 'signed_in_unverified'
+})
+
+function getModalAnalyticsContext(extra = {}) {
+	return {
+		page_path: props.pagePath,
+		selected_version: selectedVersion.value,
+		view_mode: props.viewMode,
+		layout: props.layout,
+		auth_state: authState.value,
+		...extra
+	}
+}
+
+function trackSettingsChange(field, value) {
+	trackModalInteraction('settings', 'change', getModalAnalyticsContext({ field, value }))
+}
+
+function trackSettingsCta(value) {
+	trackModalInteraction('settings', 'cta_click', getModalAnalyticsContext({ field: 'cta', value }))
+}
 
 // Computed property for enabled versions based on user type
 const enabledVersions = computed(() => {
@@ -153,11 +191,23 @@ function selectVersion(version) {
 	// Only allow selecting enabled versions
 	if (enabledVersions.value.includes(version)) {
 		selectedVersion.value = version
+		trackSettingsChange('selectedVersion', version)
 	}
 }
 
-function closeModal() {
-	emit('close')
+function handleBaseModalClose(reason) {
+	trackModalInteraction(
+		'settings',
+		'close',
+		getModalAnalyticsContext({ close_reason: reason || 'x_button' })
+	)
+	emit('close', reason)
+}
+
+function handleCancel() {
+	trackSettingsCta('cancel')
+	trackModalInteraction('settings', 'close', getModalAnalyticsContext({ close_reason: 'cancel' }))
+	emit('close', 'cancel')
 }
 
 // Load settings when modal opens
@@ -185,6 +235,7 @@ watch(
 	() => props.isOpen,
 	(isOpen) => {
 		if (isOpen) {
+			trackModalInteraction('settings', 'open', getModalAnalyticsContext())
 			loadSettings()
 		}
 	}
@@ -192,8 +243,10 @@ watch(
 
 // Save settings when modal closes
 function handleClose() {
+	trackSettingsCta('save')
 	saveSettings()
-	closeModal()
+	trackModalInteraction('settings', 'close', getModalAnalyticsContext({ close_reason: 'save' }))
+	emit('close', 'save')
 }
 
 // Expose methods for parent component
@@ -204,7 +257,7 @@ defineExpose({
 </script>
 
 <template>
-	<BaseModal :isOpen="isOpen" title="Settings" @close="closeModal">
+	<BaseModal :isOpen="isOpen" title="Settings" @close="handleBaseModalClose">
 		<!-- Version Selection -->
 		<div class="mb-6">
 			<label class="block text-sm font-medium text-gray-700 mb-2">Minecraft Version:</label>
@@ -232,6 +285,7 @@ defineExpose({
 			<!-- Mobile: Dropdown -->
 			<select
 				v-model="selectedVersion"
+				@change="trackSettingsChange('selectedVersion', selectedVersion)"
 				class="sm:hidden w-full border-2 border-gray-asparagus rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-asparagus focus:border-transparent">
 				<option
 					v-for="version in versions"
@@ -252,6 +306,7 @@ defineExpose({
 						type="radio"
 						v-model="currencyType"
 						value="money"
+						@change="trackSettingsChange('currencyType', currencyType)"
 						class="mr-2 radio-input"
 						name="currencyType" />
 					<span class="text-sm">Money</span>
@@ -261,6 +316,7 @@ defineExpose({
 						type="radio"
 						v-model="currencyType"
 						value="diamond"
+						@change="trackSettingsChange('currencyType', currencyType)"
 						class="mr-2 radio-input"
 						name="currencyType" />
 					<span class="text-sm">Diamond</span>
@@ -283,6 +339,7 @@ defineExpose({
 						id="priceMultiplier"
 						v-model.number="priceMultiplier"
 						type="number"
+						@change="trackSettingsChange('priceMultiplier', priceMultiplier)"
 						min="0.1"
 						max="10"
 						step="0.1"
@@ -300,6 +357,7 @@ defineExpose({
 						id="sellMargin"
 						v-model.number="sellMarginPercentage"
 						type="number"
+						@change="trackSettingsChange('sellMarginPercentage', sellMarginPercentage)"
 						min="1"
 						max="100"
 						step="1"
@@ -313,6 +371,7 @@ defineExpose({
 					id="roundToWhole"
 					v-model="roundToWhole"
 					type="checkbox"
+					@change="trackSettingsChange('roundToWhole', roundToWhole)"
 					class="checkbox-input" />
 				<label for="roundToWhole" class="text-sm text-gray-700">Round to whole</label>
 			</div>
@@ -322,6 +381,7 @@ defineExpose({
 					id="showFullNumbers"
 					v-model="showFullNumbers"
 					type="checkbox"
+					@change="trackSettingsChange('showFullNumbers', showFullNumbers)"
 					class="checkbox-input" />
 				<label for="showFullNumbers" class="text-sm text-gray-700">
 					Show full numbers (1000 instead of 1k)
@@ -336,6 +396,7 @@ defineExpose({
 					id="showStackSize"
 					v-model="showStackSize"
 					type="checkbox"
+					@change="trackSettingsChange('showStackSize', showStackSize)"
 					class="checkbox-input" />
 				<label for="showStackSize" class="text-sm text-gray-700">Show stack size</label>
 			</div>
@@ -345,6 +406,7 @@ defineExpose({
 					id="hideSellPrices"
 					v-model="hideSellPrices"
 					type="checkbox"
+					@change="trackSettingsChange('hideSellPrices', hideSellPrices)"
 					class="checkbox-input" />
 				<label for="hideSellPrices" class="text-sm text-gray-700">Hide sell prices</label>
 			</div>
@@ -353,7 +415,7 @@ defineExpose({
 		<template #footer>
 			<div class="flex items-center justify-end">
 				<div class="flex space-x-3">
-					<button @click="closeModal" class="btn-secondary--outline">Cancel</button>
+					<button @click="handleCancel" class="btn-secondary--outline">Cancel</button>
 					<BaseButton @click="handleClose" variant="primary">Save Settings</BaseButton>
 				</div>
 			</div>

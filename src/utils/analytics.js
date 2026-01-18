@@ -35,6 +35,44 @@ export function trackEvent(eventName, parameters = {}) {
 }
 
 /**
+ * Track homepage interactions with a single rich event.
+ * @param {string} action - The homepage action (category_click, export_open, etc.)
+ * @param {Object} options - Additional tracking options
+ */
+export function trackHomepageInteraction(action, options = {}) {
+	trackEvent('homepage_interaction', {
+		action,
+		...options
+	})
+}
+
+/**
+ * Track modal interactions with a single rich event.
+ * @param {string} modal - Modal identifier (settings, export)
+ * @param {string} action - Modal action (open, close, change, cta_click, export_click)
+ * @param {Object} options - Additional tracking options
+ */
+export function trackModalInteraction(modal, action, options = {}) {
+	trackEvent('modal_interaction', {
+		modal,
+		action,
+		...options
+	})
+}
+
+/**
+ * Track search intent (GA4 recommended event name).
+ * @param {string} searchTerm - The search term
+ * @param {Object} options - Additional tracking options
+ */
+export function trackSearch(searchTerm, options = {}) {
+	trackEvent('search', {
+		search_term: searchTerm,
+		...options
+	})
+}
+
+/**
  * Track navigation clicks
  * @param {string} action - The navigation action (sign_in, sign_up, home, etc.)
  * @param {Object} options - Additional tracking options
@@ -118,13 +156,12 @@ export function trackExport(format, options = {}) {
 }
 
 /**
- * Track page views (for custom page tracking if needed)
- * @param {string} pageName - The name of the page
- * @param {Object} options - Additional tracking options
+ * Track page views (SPA-friendly).
+ * @param {Object} options - Tracking options
  */
-export function trackPageView(pageName, options = {}) {
+export function trackPageView(options = {}) {
 	trackEvent('page_view', {
-		page_name: pageName,
+		page_location: window.location.href,
 		...options
 	})
 }
