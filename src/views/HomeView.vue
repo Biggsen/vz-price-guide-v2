@@ -17,6 +17,7 @@ import { useEconomyConfig } from '../composables/useEconomyConfig.js'
 import { useFilters } from '../composables/useFilters.js'
 import { useItems } from '../composables/useItems.js'
 import { getImageUrl } from '../utils/image.js'
+import { trackHomepageInteraction, trackSearch } from '../utils/analytics.js'
 import {
 	RocketLaunchIcon,
 	BuildingStorefrontIcon
@@ -97,6 +98,15 @@ function closeHoverPanel() {
 const showExportModal = ref(false)
 const showSettingsModal = ref(false)
 
+function getHomepageAnalyticsContext() {
+	return {
+		page_path: route.path,
+		selected_version: selectedVersion.value,
+		view_mode: viewMode.value,
+		layout: layout.value
+	}
+}
+
 // Alias composable values for easier template access
 const {
 	searchQuery,
@@ -104,14 +114,12 @@ const {
 	selectedVersion,
 	toggleCategory,
 	clearAllCategories,
-	resetFilters,
-	initializeFromQuery
+	resetFilters
 } = filters
 
 const {
 	isLoading,
 	allItemsForCounts,
-	groupedItems,
 	allVisibleItems,
 	categoryCounts: totalCategoryCounts,
 	allCategoriesWithSearch,
@@ -129,7 +137,6 @@ const {
 	viewMode,
 	layout,
 	economyConfig,
-	loadConfig,
 	currencyType,
 	diamondItemId
 } = economyConfigComposable
@@ -185,11 +192,21 @@ onMounted(() => {
 
 // Cleanup scroll listener
 onUnmounted(() => {
+	if (searchDebounceTimer) {
+		clearTimeout(searchDebounceTimer)
+		searchDebounceTimer = null
+	}
 	window.removeEventListener('scroll', handleScroll)
 })
 
 function toggleCategoryFilters() {
 	showCategoryFilters.value = !showCategoryFilters.value
+
+	trackHomepageInteraction('category_filters_visibility_toggle', {
+		...getHomepageAnalyticsContext(),
+		is_category_filters_visible: showCategoryFilters.value,
+		categories_selected_count: visibleCategories.value.length
+	})
 }
 
 function resetCategories() {
@@ -198,6 +215,11 @@ function resetCategories() {
 
 function openExportModal() {
 	showExportModal.value = true
+
+	trackHomepageInteraction('export_open', {
+		...getHomepageAnalyticsContext(),
+		categories_selected_count: visibleCategories.value.length
+	})
 }
 
 function closeExportModal() {
@@ -206,11 +228,94 @@ function closeExportModal() {
 
 function openSettingsModal() {
 	showSettingsModal.value = true
+
+	trackHomepageInteraction('settings_open', {
+		...getHomepageAnalyticsContext(),
+		categories_selected_count: visibleCategories.value.length
+	})
 }
 
 function closeSettingsModal() {
 	showSettingsModal.value = false
 }
+
+function handleToggleCategory(cat) {
+	toggleCategory(cat)
+	trackHomepageInteraction('category_click', {
+		...getHomepageAnalyticsContext(),
+		category: cat,
+		categories_selected_count: visibleCategories.value.length,
+		search_active: Boolean(searchQuery.value && searchQuery.value.trim())
+	})
+}
+
+function handleClearAllCategories() {
+	clearAllCategories()
+	trackHomepageInteraction('categories_clear_all', {
+		...getHomepageAnalyticsContext(),
+		categories_selected_count: 0,
+		search_active: Boolean(searchQuery.value && searchQuery.value.trim())
+	})
+}
+
+function handleViewModeChange(nextViewMode) {
+	const previous = viewMode.value
+	viewMode.value = nextViewMode
+
+	trackHomepageInteraction('view_mode_change', {
+		...getHomepageAnalyticsContext(),
+		from: previous,
+		to: nextViewMode
+	})
+}
+
+function handleLayoutChange(nextLayout) {
+	const previous = layout.value
+	layout.value = nextLayout
+
+	trackHomepageInteraction('layout_change', {
+		...getHomepageAnalyticsContext(),
+		from: previous,
+		to: nextLayout
+	})
+}
+
+let searchDebounceTimer = null
+let lastSentSearchTerm = ''
+watch(
+	searchQuery,
+	(newQuery) => {
+		if (searchDebounceTimer) {
+			clearTimeout(searchDebounceTimer)
+		}
+
+		const trimmed = (newQuery || '').trim()
+		if (!trimmed) return
+
+		searchDebounceTimer = setTimeout(() => {
+			const settled = (searchQuery.value || '').trim()
+			if (!settled) return
+			if (settled === lastSentSearchTerm) return
+
+			const termCount = settled
+				.split(',')
+				.map((t) => t.trim())
+				.filter(Boolean).length
+
+			// Guardrails: avoid single-character noise unless multi-term search
+			if (settled.length < 2 && termCount <= 1) return
+
+			lastSentSearchTerm = settled
+			trackSearch(settled, {
+				...getHomepageAnalyticsContext(),
+				results_count: allVisibleItems.value.length,
+				categories_selected_count: visibleCategories.value.length,
+				term_count: termCount
+			})
+		}, 700)
+	},
+	{ flush: 'post' }
+)
 
 function handleSaveSettings(settings) {
 	// Apply the settings changes
@@ -341,8 +446,8 @@ watch(
 			:total-category-counts="totalCategoryCounts"
 			:all-categories-with-search="allCategoriesWithSearch"
 			:show-category-filters="showCategoryFilters"
-			@toggle-category="toggleCategory"
-			@clear-all="clearAllCategories"
+			@toggle-category="handleToggleCategory"
+			@clear-all="handleClearAllCategories"
 			@toggle-visibility="toggleCategoryFilters" />
 
 		<!-- Customisation Section -->
@@ -388,8 +493,8 @@ watch(
 		<ViewControls
 			:view-mode="viewMode"
 			:layout="layout"
-			@update:view-mode="viewMode = $event"
-			@update:layout="layout = $event" />
+			@update:view-mode="handleViewModeChange"
+			@update:layout="handleLayoutChange" />
 	</div>
 
 	<!-- Categories View -->
@@ -438,12 +543,18 @@ watch(
 		:items="allItemsForCounts"
 		:economyConfig="economyConfig"
 		:selectedVersion="selectedVersion"
+		:viewMode="viewMode"
+		:layout="layout"
+		:pagePath="route.path"
 		@close="closeExportModal" />
 
 	<!-- Settings Modal -->
 	<SettingsModal
 		:isOpen="showSettingsModal"
 		:selectedVersion="selectedVersion"
+		:viewMode="viewMode"
+		:layout="layout"
+		:pagePath="route.path"
 		@close="closeSettingsModal"
 		@save-settings="handleSaveSettings" />
 

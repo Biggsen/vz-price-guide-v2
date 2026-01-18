@@ -1,9 +1,10 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { ArrowDownTrayIcon, UserPlusIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
+import { ArrowDownTrayIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { UserIcon } from '@heroicons/vue/24/solid'
 import { enabledCategories, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
+import { trackModalInteraction } from '../utils/analytics.js'
 import {
 	getEffectivePrice,
 	buyUnitPriceRaw,
@@ -33,6 +34,18 @@ const props = defineProps({
 	selectedVersion: {
 		type: String,
 		required: true
+	},
+	viewMode: {
+		type: String,
+		default: 'categories'
+	},
+	layout: {
+		type: String,
+		default: 'comfortable'
+	},
+	pagePath: {
+		type: String,
+		default: '/'
 	}
 })
 
@@ -42,6 +55,31 @@ const router = useRouter()
 
 // Admin access
 const { user, canEditItems } = useAdmin()
+
+const authState = computed(() => {
+	if (!user.value?.email) return 'anonymous'
+	if (user.value?.emailVerified) return 'signed_in_verified'
+	return 'signed_in_unverified'
+})
+
+function getModalAnalyticsContext(extra = {}) {
+	return {
+		page_path: props.pagePath,
+		selected_version: selectedVersion.value,
+		view_mode: props.viewMode,
+		layout: props.layout,
+		auth_state: authState.value,
+		...extra
+	}
+}
+
+function trackExportChange(field, value) {
+	trackModalInteraction('export', 'change', getModalAnalyticsContext({ field, value }))
+}
+
+function trackExportCta(value) {
+	trackModalInteraction('export', 'cta_click', getModalAnalyticsContext({ field: 'cta', value }))
+}
 
 // Check if user is authenticated and verified
 const isAuthenticated = computed(() => {
@@ -339,11 +377,27 @@ const previewData = computed(() => {
 
 // Export functions
 function exportJSON() {
+	trackModalInteraction(
+		'export',
+		'export_click',
+		getModalAnalyticsContext({
+			export_format: 'json',
+			export_item_count: filteredItems.value.length
+		})
+	)
 	const dataStr = JSON.stringify(exportData.value, null, 2)
 	downloadFile(dataStr, 'json', 'application/json')
 }
 
 function exportYAML() {
+	trackModalInteraction(
+		'export',
+		'export_click',
+		getModalAnalyticsContext({
+			export_format: 'yml',
+			export_item_count: filteredItems.value.length
+		})
+	)
 	// For now, we'll use a simple YAML-like format
 	// In a real implementation, you'd use js-yaml library
 	const yamlStr = generateYAML(exportData.value)
@@ -390,22 +444,39 @@ function downloadFile(content, extension, mimeType) {
 	URL.revokeObjectURL(url)
 }
 
-function closeModal() {
-	emit('close')
+function handleBaseModalClose(reason) {
+	trackModalInteraction(
+		'export',
+		'close',
+		getModalAnalyticsContext({ close_reason: reason || 'x_button' })
+	)
+	emit('close', reason)
+}
+
+function handleCancel() {
+	trackExportCta('cancel')
+	trackModalInteraction('export', 'close', getModalAnalyticsContext({ close_reason: 'cancel' }))
+	emit('close', 'cancel')
 }
 
 function goToSignUp() {
-	closeModal()
+	trackExportCta('create_account')
+	trackModalInteraction('export', 'close', getModalAnalyticsContext({ close_reason: 'cta_click' }))
+	emit('close', 'cta_click')
 	router.push('/signup')
 }
 
 function goToSignIn() {
-	closeModal()
+	trackExportCta('sign_in')
+	trackModalInteraction('export', 'close', getModalAnalyticsContext({ close_reason: 'cta_click' }))
+	emit('close', 'cta_click')
 	router.push('/signin')
 }
 
 function goToVerifyEmail() {
-	closeModal()
+	trackExportCta('verify_email')
+	trackModalInteraction('export', 'close', getModalAnalyticsContext({ close_reason: 'cta_click' }))
+	emit('close', 'cta_click')
 	router.push('/verify-email')
 }
 
@@ -416,6 +487,16 @@ function toggleCategory(category) {
 	} else {
 		selectedCategories.value.push(category)
 	}
+
+	trackModalInteraction(
+		'export',
+		'change',
+		getModalAnalyticsContext({
+			field: 'category',
+			value: category,
+			selected_categories_count: selectedCategories.value.length
+		})
+	)
 }
 
 function togglePriceField(field) {
@@ -425,22 +506,51 @@ function togglePriceField(field) {
 	} else {
 		selectedPriceFields.value.push(field)
 	}
+
+	trackModalInteraction(
+		'export',
+		'change',
+		getModalAnalyticsContext({
+			field: 'price_field',
+			value: field,
+			selected_price_fields_count: selectedPriceFields.value.length
+		})
+	)
 }
 
 function resetCategories() {
 	selectedCategories.value = []
+	trackModalInteraction(
+		'export',
+		'change',
+		getModalAnalyticsContext({
+			field: 'categories_reset',
+			value: true,
+			selected_categories_count: 0
+		})
+	)
 }
 
 function selectVersion(version) {
 	// Only allow selecting enabled versions
 	if (enabledVersions.value.includes(version)) {
 		selectedVersion.value = version
+		trackExportChange('selectedVersion', version)
 	}
 }
+
+watch(
+	() => props.isOpen,
+	(isOpen) => {
+		if (isOpen) {
+			trackModalInteraction('export', 'open', getModalAnalyticsContext())
+		}
+	}
+)
 </script>
 
 <template>
-	<BaseModal :isOpen="isOpen" title="Export Price List" @close="closeModal">
+	<BaseModal :isOpen="isOpen" title="Export Price List" @close="handleBaseModalClose">
 		<!-- Sign-up content for unauthenticated users -->
 		<div v-if="!user?.email" class="text-left pt-2 pb-4 sm:py-4">
 			<div class="mb-8">
@@ -515,6 +625,7 @@ function selectVersion(version) {
 				<div class="block mobile-only">
 					<select
 						v-model="selectedVersion"
+						@change="trackExportChange('selectedVersion', selectedVersion)"
 						class="border-2 border-gray-asparagus rounded px-3 py-1 text-sm focus:outline-none focus:border-black">
 						<option v-for="version in enabledVersions" :key="version" :value="version">
 							{{ version }}
@@ -575,6 +686,7 @@ function selectVersion(version) {
 				<div class="flex items-center space-x-4">
 					<select
 						v-model="sortField"
+						@change="trackExportChange('sortField', sortField)"
 						class="border-2 border-gray-asparagus rounded px-2 py-1 text-sm">
 						<option value="default">Default Order</option>
 						<option value="name">Name</option>
@@ -583,6 +695,7 @@ function selectVersion(version) {
 					<select
 						v-model="sortDirection"
 						v-if="sortField !== 'default'"
+						@change="trackExportChange('sortDirection', sortDirection)"
 						class="border-2 border-gray-asparagus rounded px-2 py-1 text-sm">
 						<option value="asc">Ascending</option>
 						<option value="desc">Descending</option>
@@ -608,7 +721,11 @@ function selectVersion(version) {
 
 					<!-- Round to Whole Numbers -->
 					<label class="flex items-center space-x-2">
-						<input type="checkbox" v-model="roundToWhole" class="checkbox-input" />
+						<input
+							type="checkbox"
+							v-model="roundToWhole"
+							@change="trackExportChange('roundToWhole', roundToWhole)"
+							class="checkbox-input" />
 						<span class="text-sm">Round to whole numbers</span>
 					</label>
 				</div>
@@ -620,7 +737,11 @@ function selectVersion(version) {
 
 				<!-- Include Metadata -->
 				<label class="flex items-center space-x-2">
-					<input type="checkbox" v-model="includeMetadata" class="checkbox-input" />
+					<input
+						type="checkbox"
+						v-model="includeMetadata"
+						@change="trackExportChange('includeMetadata', includeMetadata)"
+						class="checkbox-input" />
 					<span class="text-sm">Include metadata (name, category, stack size)</span>
 				</label>
 			</div>
@@ -651,7 +772,7 @@ function selectVersion(version) {
 					{{ filteredItems.length }} items will be exported
 				</div>
 				<div class="flex justify-center space-x-2 sm:space-x-3">
-					<BaseButton @click="closeModal" variant="tertiary">Cancel</BaseButton>
+					<BaseButton @click="handleCancel" variant="tertiary">Cancel</BaseButton>
 					<BaseButton
 						@click="exportJSON"
 						:disabled="Object.keys(exportData).length === 0"

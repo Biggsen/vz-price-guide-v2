@@ -99,13 +99,13 @@ watch(
 	{ immediate: true }
 )
 
-function closeModal() {
-	emit('close')
+function closeModal(reason) {
+	emit('close', reason)
 }
 
 function handleBackdropClick() {
 	if (props.closeOnBackdrop) {
-		closeModal()
+		closeModal('backdrop')
 	}
 }
 </script>
@@ -134,7 +134,7 @@ function handleBackdropClick() {
 				<h2 :class="['font-semibold text-gray-900', sizeClasses.titleSize]">{{ title }}</h2>
 				<button
 					v-if="showCloseButton"
-					@click="closeModal"
+					@click="closeModal('x_button')"
 					class="text-gray-400 hover:text-gray-600 transition-colors">
 					<XMarkIcon class="w-6 h-6" />
 				</button>

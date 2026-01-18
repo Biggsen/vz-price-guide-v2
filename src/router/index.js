@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import { getCurrentUser } from 'vuefire'
 import { isAdmin } from '../constants'
+import { trackPageView } from '../utils/analytics.js'
 
 const siteName = "verzion's economy price guide for Minecraft"
 
@@ -542,6 +543,24 @@ const router = createRouter({
 			}
 		}
 	]
+})
+
+// SPA page view tracking for real navigation (path changes only).
+// We skip the initial navigation because GA4 already records the first page load via gtag config.
+let hasTrackedInitialPageView = false
+router.afterEach((to, from) => {
+	if (!hasTrackedInitialPageView) {
+		hasTrackedInitialPageView = true
+		return
+	}
+
+	// Avoid treating query-only updates (filters) as full page views
+	if (to.path === from.path) return
+
+	trackPageView({
+		page_path: to.path,
+		page_title: document.title
+	})
 })
 
 router.beforeEach(async (to, from, next) => {

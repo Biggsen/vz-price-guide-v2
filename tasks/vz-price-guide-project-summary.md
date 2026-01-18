@@ -10,7 +10,7 @@
 	"status": "active",
 	"domain": "minecraft",
 	"type": "webapp",
-	"lastUpdated": "2025-12-28",
+	"lastUpdated": "2026-01-18",
 	"links": {
 		"prod": "https://minecraft-economy-price-guide.net/",
 		"staging": null
@@ -86,7 +86,7 @@
 
 Upcoming focus areas:
 
-1. **Marketing Email Opt-In** - Implement explicit opt-in system for marketing emails to ensure compliance with GDPR and CAN-SPAM regulations. Add opt-in checkbox during signup and toggle in account settings.
+1. **GA4 Reporting Setup** - Register custom dimensions for the new homepage analytics events and build a couple of GA4 Explorations (Path + Funnel) to understand how users use the homepage.
 
 2. **Refactors** - Continue code quality improvements through refactoring:
    - Base Input Component Refactor - Standardize form inputs across the application
@@ -125,6 +125,7 @@ Upcoming focus areas:
 -   [x] Crate Rewards Mobile Display - Comprehensive mobile responsive improvements
 -   [x] Duplicate Crate Name Detection - Auto-append number suffixes when importing duplicate crates
 -   [x] Comment to SuggestionMessages Refactor - Refactored comment system to use suggestionMessages terminology, renamed all files and components, updated Firestore collection path
+-   [x] Homepage Analytics (GA4) - Added rich homepage + modal events (categories, settings, export, view/layout, item link clicks) and debounced search tracking
 
 ### Detailed Completed Features
 
@@ -201,6 +202,7 @@ _No features currently in active development._
 -->
 
 -   [ ] Price Export Enhancements - CSV/XLSX support, proper YAML library (js-yaml), dedicated route, stack size override, currency format toggle
+-   [ ] GA4 Reporting Setup - Register custom dimensions for homepage analytics events and build GA4 Explorations (Path + Funnel)
 -   [ ] Suggestions Enhancements - Detail views, advanced filtering/search, status badges, improved admin workflows (note: messaging already implemented via suggestionMessages)
 -   [ ] User Accounts Enhancements - Account settings page, data export, account deletion (GDPR-style cleanup), email preferences, security settings
 -   [ ] Category Filter Sorting - Improve category ordering in filters
@@ -339,6 +341,7 @@ _No active bugs currently - all recent issues have been resolved._
 ### Medium Priority
 
 -   [ ] Price Export Enhancements - CSV/XLSX support (SheetJS), proper YAML library (js-yaml), dedicated route, stack size override, currency format toggle
+-   [ ] GA4 Reporting Setup - Register custom dimensions and build GA4 Explorations for homepage analytics
 -   [ ] User Accounts Enhancements - Account settings page, data export, account deletion (GDPR-style cleanup), email preferences, security settings
 -   [ ] Suggestions Enhancements - Detail views, advanced filtering/search, status badges (note: messaging already implemented)
 -   [ ] Market Overview Refactoring - ViewModeLayoutToggle component, MarketItemsTable component, composables (useViewSettings, useItemGrouping)
@@ -366,7 +369,7 @@ _No active bugs currently - all recent issues have been resolved._
 
 **Overall Status**: Active Development  
 **Completion**: ~87%  
-**Last Major Update**: December 2025
+**Last Major Update**: January 2026
 
 ### Metrics
 
@@ -461,6 +464,7 @@ _No active bugs currently - all recent issues have been resolved._
 
 ### Recent Changes
 
+-   **2026-01-18**: Implemented GA4 homepage analytics instrumentation (rich `homepage_interaction` + `modal_interaction` events, debounced search intent, SPA pageview tracking, consistent modal close reasons). Verified locally with Tag Assistant.
 -   **2025-12-28**: Completed Homepage Refactoring (Phases 1-3) - Reduced HomeView.vue from 988 lines to 309 lines (69% reduction). Extracted composables (useEconomyConfig, useFilters, useItems), created utility functions and constants. Improved code organization, maintainability, and testability. Phase 4 (unit testing) pending.
 -   **2025-12-26**: Added Minecraft 1.21.11 items to catalog including spears, nautilus armor variants, and netherite horse armor - all with accurate pricing.
 -   **2025-12-19**: Shop Manager improvements - Added starring functionality, shop archiving, opportunities improvements with better filtering, cleaner price formatting, fixed notes editing bug, and category ordering consistency.

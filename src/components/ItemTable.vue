@@ -13,6 +13,7 @@ import {
 	formatNumber
 } from '../utils/pricing.js'
 import { getImageUrl, getWikiUrl } from '../utils/image.js'
+import { trackHomepageInteraction } from '../utils/analytics.js'
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { Squares2X2Icon } from '@heroicons/vue/16/solid'
 
@@ -232,6 +233,19 @@ function handleToggleHoverPanel(itemId, event) {
 	props.toggleHoverPanel(itemId)
 }
 
+function handleItemWikiClick(item) {
+	trackHomepageInteraction('item_wiki_click', {
+		page_path: window.location.pathname,
+		selected_version: currentVersion.value,
+		view_mode: props.viewMode,
+		layout: props.layout,
+		category: props.category,
+		item_material_id: item.material_id,
+		item_name: item.name,
+		link_url: getWikiUrl(item)
+	})
+}
+
 // Get recipe for an item based on current version with fallback logic
 function getItemRecipe(item) {
 	if (!item.recipes_by_version || !currentVersion.value) {
@@ -362,6 +376,7 @@ function getItemRecipe(item) {
 						<div class="flex items-center gap-1">
 							<a
 								:href="getWikiUrl(item)"
+								@click="handleItemWikiClick(item)"
 								target="_blank"
 								rel="noopener noreferrer"
 								class="font-normal hover:text-gray-asparagus hover:underline">
