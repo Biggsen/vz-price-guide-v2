@@ -1,5 +1,9 @@
 # Unit Testing Implementation Task Specification
 
+**Status**: Not ready to implement
+
+**Why**: Parts of this spec are out of date with the current repo state (Vitest is already installed/configured), and key implementation details are missing/incorrect (coverage provider/thresholds, and component-testing patterns/examples for `<script setup>`).
+
 ## Overview
 
 Implement a comprehensive unit testing framework for the Vue.js price guide application, focusing on testing utility functions, components, and business logic.
