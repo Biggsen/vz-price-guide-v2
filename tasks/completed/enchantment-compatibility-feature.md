@@ -296,7 +296,7 @@ function getEnchantmentConflictReason(newEnchantment, existingEnchantments, allE
 
 ## UI Updates - Crate Rewards
 
-**See separate spec**: `tasks/enhancement/crate-rewards-enchantment-validation.md`
+**See separate spec**: `tasks/enhancement/not-ready/crate-rewards-enchantment-validation.md`
 
 Phase 3 (Crate Rewards UI integration) has been extracted to a separate specification document for future implementation.
 
@@ -334,6 +334,8 @@ Phase 3 (Crate Rewards UI integration) has been extracted to a separate specific
 
 See `tasks/enhancement/crate-rewards-enchantment-validation.md` for detailed workflow examples.
 
+See `tasks/enhancement/not-ready/crate-rewards-enchantment-validation.md` for the current (not-ready) spec.
+
 ## Dependencies
 
 - **Recipe Import UI Improvements** (`tasks/enhancement/recipe-import-ui-improvements.md`): The list view patterns and bulk import functionality from this enhancement will be used as reference/pattern for the enchanted book metadata migration view. This ensures consistency in admin UI patterns and leverages any improvements made to the recipe import workflow.
@@ -357,7 +359,7 @@ See `tasks/enhancement/crate-rewards-enchantment-validation.md` for detailed wor
 **Implementation**: All utility functions (`isItemEnchantable`, `getCompatibleEnchantments`, `isEnchantmentCompatibleWithItem`, `hasEnchantmentConflict`, `getEnchantmentConflictReason`) are implemented and tested.
 
 ### ⏳ Phase 3: Crate Rewards UI - PENDING
-- **See separate spec**: `tasks/enhancement/crate-rewards-enchantment-validation.md`
+- **See separate spec**: `tasks/enhancement/not-ready/crate-rewards-enchantment-validation.md`
 - Update `CrateSingleView.vue` with filtering and validation
 - Test with various items and enchantment combinations
 
