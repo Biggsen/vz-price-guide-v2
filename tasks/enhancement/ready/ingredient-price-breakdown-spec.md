@@ -2,7 +2,7 @@
 
 ## 📌 Overview
 
-This feature will display the per-ingredient price breakdown for items in the Market Overview table when an item is crafted from a single ingredient type. For example, a "Block of Emerald" costing 900 made from 9 emeralds would display "900" with "(100 per emerald)" shown below.
+This feature will display the implied per-ingredient price breakdown in the Market Overview table when an item is crafted from a single ingredient type. For example, a "Block of Gold" selling for 900 made from 9 gold ingots would display "900" with "(100 per Gold Ingot)" shown below.
 
 **Status**: 📋 **SPECIFICATION** - Not yet implemented
 
@@ -13,57 +13,48 @@ This feature will display the per-ingredient price breakdown for items in the Ma
 - Help users quickly understand the effective price per ingredient for crafted items
 - Provide context for price comparison between blocks and their base ingredients
 - Only show breakdown when it's meaningful (single ingredient type recipes)
-- Use actual shop prices, not price guide prices
+- Use the shop item's actual sell listing to calculate implied per-ingredient price (not price guide prices)
+- Allow users to hide/show breakdown to reduce table noise (opt-in setting)
 
 ## 2. 📋 User Stories
 
 - As a user browsing the Market Overview, I want to see the per-ingredient price for items like emerald blocks so I can quickly compare block prices to individual ingredient prices
 - As a user, I want this information to only appear when it's relevant (single ingredient recipes) so the UI doesn't get cluttered
-- As a user, I want to see shop prices for ingredients, not theoretical price guide prices
+- As a user, I want a quick way to infer ingredient value even when the ingredient is not explicitly sold in shops
 
 ## 3. 🔧 Functional Requirements
 
 ### 3.1 Display Logic
 
 - **Trigger Condition**: Only display breakdown when:
+  - User has enabled the setting (default: off)
   - Item has a recipe with exactly one ingredient type (e.g., 9 emeralds → 1 emerald block)
   - Recipe is available for the current server version (with fallback to previous versions)
-  - Item has valid buy/sell prices
-  - Calculated per-ingredient price is valid (not null/undefined/zero)
+  - Recipe `output_count === 1` (v1 scope)
+  - Item has a valid sell price (`sell_price` is not null/undefined and > 0)
+  - Sell price is currently usable (do not show when sell is struck through due to stock full or shop owner funds = 0)
+  - Calculated per-ingredient price is valid (not null/undefined/zero after formatting)
 
 - **Calculation**:
-  - Buy price per ingredient = `item.buy_price / ingredient.quantity`
   - Sell price per ingredient = `item.sell_price / ingredient.quantity`
-  - Round to 2 decimal places for display
+  - Use `formatPrice()` for display formatting (up to 2 decimals, trailing zeros removed)
 
 - **Display Format**:
-  - Main price displayed normally (e.g., "900")
-  - Breakdown shown below in smaller, gray text: `(100 per emerald)`
-  - Only show when calculated price is valid
+  - Main sell price displayed normally (existing behavior)
+  - Breakdown shown below in smaller, gray text: `(100 per Gold Ingot)`
+  - Ingredient label uses the ingredient item's display name from `availableItems`
 
 ### 3.2 Data Sources
 
 - **Recipe Data**: From `itemData.recipes_by_version` (version-aware with fallback)
-- **Ingredient Prices**: From shop items in the same shop (preferred) or any shop on the server
 - **Item Prices**: From the shop item's `buy_price` and `sell_price` fields
+- **Ingredient Label**: From the ingredient item in `availableItems` (display name)
 
 ### 3.3 Version Handling
 
 - Use server's Minecraft version to determine which recipe version to use
 - Fallback to latest available recipe version ≤ current server version
 - Handle version key format conversion (dots vs underscores: "1.16" vs "1_16")
-
-### 3.4 Ingredient Price Resolution
-
-- **Priority Order**:
-  1. Same shop as the item (most relevant)
-  2. Any shop on the same server
-  3. If no shop price found, don't show breakdown
-
-- **Validation**:
-  - Ingredient must exist in availableItems
-  - Ingredient shop item must have valid buy/sell prices
-  - Skip if ingredient price is null, undefined, or zero
 
 ## 4. 🎨 UI/UX Requirements
 
@@ -90,10 +81,11 @@ This feature will display the per-ingredient price breakdown for items in the Ma
 - **No Recipe**: Don't show breakdown (silent, no error)
 - **Multiple Ingredients**: Don't show breakdown (only single ingredient recipes)
 - **Missing Ingredient Data**: Don't show breakdown if ingredient item not found
-- **Null Prices**: Don't show breakdown if item price is null/undefined
+- **Null Prices**: Don't show breakdown if sell price is null/undefined or <= 0
 - **Zero Quantity**: Don't show breakdown if ingredient quantity is 0
-- **Missing Shop Prices**: Don't show breakdown if ingredient has no shop price
+- **Formatted Zero**: Don't show breakdown if formatted per-ingredient price is `'0'` or `'—'` (prevents noisy “0 per …” output)
 - **Version Mismatch**: Use fallback logic, don't show if no recipe found
+- **Sell Not Usable**: Don't show breakdown when sell is struck through (stock full, or shop owner funds = 0 while sell price > 0)
 
 ## 5. 🏗️ Implementation Plan
 
@@ -120,36 +112,35 @@ This feature will display the per-ingredient price breakdown for items in the Ma
 - Handle version format mismatches
 - Handle empty recipe objects
 
-#### `getSingleIngredientPriceInfo(shopItem, availableItems, shopItems)`
-**Purpose**: Check if item has single-ingredient recipe and calculate per-ingredient prices
+#### `getSingleIngredientSellBreakdown(shopItem, itemData, availableItems, serverVersion)`
+**Purpose**: Check if item has a single-ingredient recipe (output_count = 1) and calculate implied sell price per ingredient for display
 
 **Parameters**:
-- `shopItem`: Shop item object with itemData
-- `availableItems`: Array of all available items
-- `shopItems`: Array of all shop items on server
+- `shopItem`: Shop item object (includes `sell_price`, `stock_full`, and `shopData.owner_funds` in Market Overview context)
+- `itemData`: Item object from `availableItems` (provides `recipes_by_version`)
+- `availableItems`: Array of all available items (for ingredient name lookup)
+- `serverVersion`: Server's Minecraft version (e.g., "1.21")
 
 **Returns**: Object with ingredient info and prices, or null
 
 **Logic**:
 1. Get recipe using `getItemRecipe()`
 2. Check if recipe has exactly one ingredient type
-3. Find ingredient item in availableItems by material_id
-4. Find ingredient shop prices (prefer same shop, then any shop)
-5. Calculate per-ingredient prices
-6. Return structured object or null
+3. Require `recipe.output_count === 1`
+4. Validate `shopItem.sell_price > 0`
+5. Validate sell is usable (not stock full, not owner funds = 0 when sell_price > 0)
+6. Find ingredient item in `availableItems` by `material_id` (for label)
+7. Calculate implied per-ingredient sell price: `sell_price / ingredient.quantity`
+8. Format using `formatPrice()` and suppress output if formatted value is `'0'` or `'—'`
+9. Return structured object or null
 
 **Return Object Structure**:
 ```typescript
 {
   ingredient: { material_id: string, quantity: number },
-  ingredientItemData: Item,
-  ingredientBuyPrice: number | null,
-  ingredientSellPrice: number | null,
-  itemBuyPrice: number,
   itemSellPrice: number,
-  quantity: number,
-  pricePerIngredientBuy: number | null,
-  pricePerIngredientSell: number | null
+  ingredientItemData: Item,
+  pricePerIngredientSell: number
 }
 ```
 
@@ -157,21 +148,25 @@ This feature will display the per-ingredient price breakdown for items in the Ma
 - Handle missing itemData
 - Handle recipes with multiple ingredient types
 - Handle missing ingredient items
-- Handle missing ingredient shop prices
-- Handle zero or null prices
+- Handle missing/invalid sell price
 - Handle division by zero
 
 ### 5.2 Template Updates
 
-#### Buy Price Cell Template
+#### Sell Price Cell Template
 - Update both category view and list view templates
 - Add flex column layout
-- Add conditional breakdown display
-- Use optional chaining for safety
+- Add conditional breakdown display (opt-in setting)
+- Do not show breakdown when sell is struck through (stock full, owner funds = 0 with sell price > 0)
 
-#### Sell Price Cell Template
-- Same updates as buy price cell
-- Separate logic for sell price breakdown
+### 5.3 Settings (Market Overview)
+
+- Add a settings toggle in the Market Overview Settings modal:
+  - Label: "Show ingredient breakdown"
+  - Default: off
+- Persist in localStorage:
+  - Key: `marketOverviewShowIngredientBreakdown`
+  - Value: `'true' | 'false'`
 
 ### 5.3 Safety Considerations
 
@@ -185,7 +180,7 @@ This feature will display the per-ingredient price breakdown for items in the Ma
 
 ### 6.1 Optimization Strategies
 
-- **Memoization**: Consider memoizing `getSingleIngredientPriceInfo()` results per row
+- **Memoization**: Consider memoizing `getSingleIngredientSellBreakdown()` results per row
 - **Computed Properties**: Could compute ingredient info once per row instead of calling function multiple times
 - **Caching**: Cache recipe lookups per item/version combination
 - **Lazy Evaluation**: Only calculate when breakdown will actually be displayed
@@ -207,30 +202,28 @@ This feature will display the per-ingredient price breakdown for items in the Ma
 - Handles version format conversions
 - Handles missing recipes_by_version field
 
-**Test `getSingleIngredientPriceInfo()`**:
-- Returns info for single-ingredient recipes
+**Test `getSingleIngredientSellBreakdown()`**:
+- Returns info for single-ingredient recipes with `output_count === 1`
 - Returns null for multi-ingredient recipes
+- Returns null when `output_count !== 1`
 - Returns null when ingredient not found
-- Returns null when no shop prices available
-- Calculates prices correctly
-- Handles zero/null prices gracefully
-- Prefers same-shop ingredient prices
+- Returns null when sell price is null/undefined/<= 0
+- Returns null when sell is not usable (stock full, or owner funds = 0 with sell price > 0)
+- Calculates per-ingredient sell price correctly
+- Suppresses output when formatted result is `'0'` or `'—'`
 
 ### 7.2 Integration Tests
 
 - Test display in Market Overview with real shop data
 - Test version fallback behavior across different server versions
 - Test with items that have/don't have recipes
-- Test with items that have/don't have ingredient shop prices
 - Test in both category and list view modes
 - Test in both comfortable and condensed layouts
 
 ### 7.3 Edge Case Tests
 
-- Items with recipes but no shop prices
 - Items with shop prices but no recipes
 - Items with recipes but missing ingredient items
-- Items with recipes but ingredient has no shop price
 - Version mismatches and fallbacks
 - Zero quantities
 - Null/undefined prices
@@ -243,6 +236,8 @@ This feature will display the per-ingredient price breakdown for items in the Ma
 - Verify breakdown doesn't appear for multi-ingredient recipes
 - Verify breakdown formatting is correct
 - Verify breakdown works in both view modes
+- Verify breakdown is hidden by default and appears when setting is enabled
+- Verify breakdown does not appear when sell is struck through (stock full / owner funds = 0)
 
 ## 8. 📝 Code Locations
 
@@ -250,7 +245,7 @@ This feature will display the per-ingredient price breakdown for items in the Ma
 
 - `src/views/MarketOverviewView.vue`
   - Add helper functions in script section
-  - Update buyPrice cell templates (category and list views)
+  - Add settings state + localStorage persistence
   - Update sellPrice cell templates (category and list views)
   - Import `formatPrice` from `src/utils/pricing.js`
 
@@ -295,22 +290,15 @@ This feature will display the per-ingredient price breakdown for items in the Ma
 
 - Show breakdown for recipes with multiple ingredients
 - Display as: "(100 per emerald, 50 per gold ingot)"
-- Only when all ingredients have valid shop prices
 - Consider complexity vs value trade-off
 
 ### 10.2 Price Comparison
 
-- Show actual ingredient shop price alongside calculated price
-- Highlight when calculated price differs significantly from actual ingredient price
-- Example: "900 (100 per emerald, actual: 120)"
-- Could indicate arbitrage opportunities
+- Add optional comparison to actual ingredient shop prices (if/when desired)
 
 ### 10.3 Ingredient Price Source Indicator
 
-- Show which shop the ingredient price comes from
-- Tooltip or small indicator showing source shop name
-- Different styling if from different shop
-- Could help users find best deals
+- If ingredient shop price comparisons are added, optionally show which shop the ingredient price came from
 
 ### 10.4 Enhanced Formatting
 
@@ -321,9 +309,8 @@ This feature will display the per-ingredient price breakdown for items in the Ma
 
 ### 10.5 Performance Optimizations
 
-- Memoize ingredient price info per row
+- Memoize ingredient breakdown info per row
 - Cache recipe lookups
-- Batch ingredient price lookups
 - Virtual scrolling for large item lists
 
 ## 11. 📚 Related Documentation
@@ -335,18 +322,19 @@ This feature will display the per-ingredient price breakdown for items in the Ma
 
 ## 12. ❓ Open Questions
 
-1. Should we show breakdown even if ingredient price is from a different shop?
-2. Should we show breakdown if ingredient has no shop price (use price guide as fallback)?
-3. Should we show breakdown for items with 2-3 ingredients (not just single)?
-4. Should we add a setting to enable/disable this feature?
-5. Should we show breakdown in Shop Items View as well, or just Market Overview?
+1. Should we expand beyond `output_count === 1` to cover recipes like sticks/slabs?
+2. Should we add an optional “show in buy column too” mode?
+3. Should we show breakdown in Shop Items View as well, or just Market Overview?
 
 ## 13. ✅ Acceptance Criteria
 
-- [ ] Breakdown displays for single-ingredient recipes with valid prices
+- [ ] Breakdown is hidden by default and only appears when enabled via settings
+- [ ] Breakdown displays in the sell price column for single-ingredient recipes with valid sell prices
 - [ ] Breakdown does not display for multi-ingredient recipes
+- [ ] Breakdown does not display when `output_count !== 1`
 - [ ] Breakdown does not display when recipe is missing
-- [ ] Breakdown does not display when ingredient price is missing
+- [ ] Breakdown does not display when ingredient item data cannot be found for labeling
+- [ ] Breakdown does not display when sell is not usable (stock full, or owner funds = 0 while sell price > 0)
 - [ ] Breakdown works in both category and list view modes
 - [ ] Breakdown works in both comfortable and condensed layouts
 - [ ] Breakdown uses correct price formatting
@@ -359,5 +347,5 @@ This feature will display the per-ingredient price breakdown for items in the Ma
 
 **Status**: 📋 Specification - Ready for implementation
 **Priority**: Medium
-**Estimated Effort**: 4-6 hours
+**Estimated Effort**: 2-4 hours
 **Dependencies**: Recipe feature must be implemented and populated
