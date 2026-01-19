@@ -209,7 +209,7 @@ _No features currently in active development._
 -   [ ] Base Input Component Refactor - Standardize input components
 -   [ ] Email Notifications - Notification system for suggestions and updates, welcome emails, deliverability monitoring
 -   [ ] Hard 404 Spec - Implement proper 404 handling (blocked: spec not implementation-ready)
--   [ ] Netlify Blobs Media Spec - Media storage improvements
+-   [x] Netlify Blobs Media Spec (Abandoned) - Attempted; added complexity without enough value (see `tasks/abandoned/netlify-blobs-media-spec.md`)
 -   [ ] Recipe Version Copy Spec - Recipe versioning improvements
 -   [ ] Shop Manager Phase 7 - Price comparison and market analysis features, search & filtering improvements (owner scope), performance optimizations (pagination/virtual scrolling)
 -   [ ] Shop Manager Enhanced - Public visibility, competitive price comparison, market analysis dashboard, advanced filtering/import/export
@@ -262,7 +262,7 @@ _No features currently in active development._
 -   Base input component refactor
 -   Email notifications spec
 -   Hard 404 spec implementation
--   Netlify Blobs media spec
+-   Netlify Blobs media spec (abandoned)
 
 ---
 

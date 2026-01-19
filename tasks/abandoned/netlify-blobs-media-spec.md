@@ -1,4 +1,16 @@
-# Netlify Blobs Media Management Spec
+# Netlify Blobs Media Management Spec (Abandoned)
+
+## Status
+**Abandoned.**
+
+## Why
+An implementation attempt was made and it increased complexity (extra functions, auth surface area, and operational overhead) without providing enough practical value for this app. The existing approach (repo-managed images + Netlify Image CDN transforms) is simpler, easier to reason about, and “good enough” for the current scale and workflow.
+
+## Notes
+- This document is kept as a reference for what was considered, but it should not be treated as an active spec or roadmap item.
+- If this idea is ever revisited, the authentication model and image listing/browsing approach would need to be redesigned.
+
+---
 
 ## Overview
 This spec describes how to decouple image storage from the repo by using **Netlify Blobs** for uploads and **Netlify Image CDN** for serving transformed images. It removes the need to redeploy the site when adding or updating item images.
@@ -172,3 +184,4 @@ A minimal `/admin/media` page for:
 ✅ Public read, admin-only write  
 ✅ Still uses Netlify’s image transforms and CDN  
 ✅ Zero additional infrastructure or cost for current scale
+
