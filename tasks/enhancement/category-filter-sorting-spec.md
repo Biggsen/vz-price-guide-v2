@@ -1,63 +1,111 @@
-# 🗂️ Category Filter Sorting Enhancement
+# 🗂️ Category Order Preference (Curated vs Alphabetical)
 
 ## 📌 Overview
 
-Players rely on category filters across the price guide to surface specific items quickly. Right now the filter options mirror the insertion order in `enabledCategories`, which makes it harder to scan—particularly on mobile. This spec captures the lightweight work needed to surface the categories alphabetically anywhere they are user-facing.
+Category order is currently **curated** via `enabledCategories` (which intentionally groups related categories like tools/weapons/armor). A previous idea was to force **alphabetical** ordering everywhere, but that risks reducing usability for players who browse by “type of gameplay” rather than category name.
 
-**Status**: 🔄 **ENHANCEMENT** – Behavioural polish to an existing feature
+This enhancement introduces an **optional** user preference for **Category order**:
+
+- **Curated (default)**: preserves the current grouped ordering
+- **Alphabetical (optional)**: sorts category labels A→Z for users who prefer scanning that way
+
+**Status**: 🔄 **ENHANCEMENT** – Low priority polish
+
+---
+
+## ✅ Value Check (Gate)
+
+Do **not** implement this just because it’s tidy.
+
+Proceed only if at least one is true:
+
+- We’re already touching homepage filters/settings UX (low incremental cost)
+- Multiple users explicitly ask for alphabetised categories (support/feedback)
+- We observe meaningful “scan friction” (e.g., session replay notes, repeated mis-clicks, user feedback)
+
+If none of the above: leave curated ordering as-is and revisit later.
 
 ---
 
 ## 🔍 Current Behaviour
 
-- `HomeView` renders category filter chips using `enabledCategories` in declaration order
-- `ExportModal` lists the same categories in the original order for its multi-select
-- Admin/Bulk tooling (`BulkUpdateItemsView`) also iterates `categories`/`enabledCategories` directly
-- Firestore queries already order by `category`, but UI state derives from the unsorted constants
+- Category lists appear in **curated order** because many views iterate `enabledCategories` directly.
+- Some views intentionally rebuild category ordering to “match price guide order” using `enabledCategories`.
+- Firestore queries often order by `category`, but UI ordering is primarily driven by constants and client-side grouping/iteration order.
 
 ---
 
-## 🎯 Goals & Requirements
+## 🎯 Goals
 
-1. Alphabetise category lists everywhere they are presented to the user (chips, checkboxes, dropdowns)
-2. Keep Firestore query logic untouched—sorting is a UI concern only
-3. Preserve disabled category handling (`disabledCategories`) and existing gating logic
-4. Ensure `All categories` affordances still appear ahead of the sorted list where applicable
-5. Avoid mutating the exported `enabledCategories` array in-place to prevent subtle side effects
+1. Provide a **user-selectable** category ordering mode (Curated vs Alphabetical)
+2. Keep **Curated** as the default to preserve existing mental models and grouping
+3. Keep Firestore query/filter logic untouched (ordering is a presentation concern)
+4. Ensure “All categories” affordances remain first where applicable
+5. Avoid in-place mutation of exported arrays to prevent subtle side effects
 
 ---
 
-## 🛠️ Implementation Outline
+## 🚫 Non-Goals
 
-- Add a derived export in `src/constants.js`, e.g. `sortedEnabledCategories`, that copies + sorts `enabledCategories`
-- Update relevant views/components to import and iterate over the sorted export
-	- `HomeView` filter chips and computed helpers that rely on array iteration
-	- `ExportModal` category checklist
-	- `BulkUpdateItemsView` admin filter buttons (maintain admin-specific logic)
-- Touch any other surfaces discovered during audit (e.g. reports, modals) to keep experiences consistent
-- Maintain existing casing transformations (`capitalize`) and counts when swapping arrays
+- Re-categorising items or changing category names
+- Changing Firestore ordering/indexes
+- Forcing one ordering for all users
+- Creating a complex drag-and-drop category ordering UI (out of scope)
+
+---
+
+## 🧭 Scope (Where the preference applies)
+
+Because categories are surfaced in many places (homepage, export, shop manager, crate rewards, admin tools), apply the preference intentionally.
+
+Recommended defaults:
+
+- **Public browsing surfaces (respect preference)**:
+	- Homepage category chips and category sections
+	- Export modal category checklist
+- **Admin/data-entry surfaces (optional / can remain curated)**:
+	- Bulk update category filter buttons
+	- Add/edit item category dropdowns
+
+Note: If the preference is introduced, either:
+
+- apply it consistently across all category lists, **or**
+- explicitly document which surfaces are “fixed curated order” to avoid surprise.
+
+---
+
+## 🛠️ Implementation Outline (Low-cascade)
+
+- Introduce a single source of truth for display order, e.g.:
+	- A small “category order” utility/composable that returns `displayCategories` based on a stored preference
+	- Modes:
+		- `curated`: return a copy of `enabledCategories` as-is
+		- `alphabetical`: return a copy of `enabledCategories` sorted (case-insensitive, stable)
+- Store the preference:
+	- **MVP**: localStorage (per-device)
+	- **Optional later**: persist to user profile for cross-device consistency
+- Update UI components to iterate `displayCategories` instead of raw `enabledCategories` where in scope
+- Keep logic that depends on “enabled categories” (validation/gating) using `enabledCategories` unchanged
 
 ---
 
 ## 🧪 Testing Checklist
 
-- Category chip order is alphabetical on desktop and mobile (`HomeView`)
-- Search + filter state persists when toggling categories after the change
-- Export modal checkboxes display alphabetically and selections persist
-- Bulk update page renders buttons alphabetically and still honours saved state from localStorage
-- Regression check: no console warnings about Vue keys or computed dependencies
+- **Default behavior unchanged**: Curated order remains the default for existing users
+- **Preference toggle works**: Switching to Alphabetical changes category order where in scope
+- **State persistence**: Preference persists across refresh (localStorage MVP)
+- **Filters still behave**: Selected categories, URL params, and counts continue working
+- **No regressions**: No console warnings about Vue keys or computed dependencies
 
 ---
 
 ## 📈 Success Criteria
 
-- Qualitative: Users can scan category lists faster; QA reports improved discoverability
-- Quantitative (post-release observation): Reduced filter toggle time in session replays / feedback
-- No regressions in existing filter persistence or Firestore query performance
+- Qualitative: Users who prefer alphabetical can find categories faster without harming everyone else
+- No regressions in filter persistence or query performance
+- Minimal maintenance burden (order logic is centralized, not copy-pasted)
 
 ---
 
-**Estimate**: < 1 dev day (mostly refactors, minimal new logic)  
-**Risks**: Low – touches shared constants, but limited to UI iteration order only
-
-
+**Estimate**: 0.5–1 dev day (mostly plumbing + refactors)  
+**Risks**: Medium (cascade potential) unless the ordering logic is centralized and scope is explicit
