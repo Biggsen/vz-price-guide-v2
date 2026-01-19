@@ -208,7 +208,7 @@ _No features currently in active development._
 -   [ ] Category Filter Sorting - Improve category ordering in filters
 -   [ ] Base Input Component Refactor - Standardize input components
 -   [ ] Email Notifications - Notification system for suggestions and updates, welcome emails, deliverability monitoring
--   [ ] Hard 404 Spec - Implement proper 404 handling
+-   [ ] Hard 404 Spec - Implement proper 404 handling (blocked: spec not implementation-ready)
 -   [ ] Netlify Blobs Media Spec - Media storage improvements
 -   [ ] Recipe Version Copy Spec - Recipe versioning improvements
 -   [ ] Shop Manager Phase 7 - Price comparison and market analysis features, search & filtering improvements (owner scope), performance optimizations (pagination/virtual scrolling)
