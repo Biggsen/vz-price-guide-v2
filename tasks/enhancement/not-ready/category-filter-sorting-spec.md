@@ -1,5 +1,13 @@
 # 🗂️ Category Order Preference (Curated vs Alphabetical)
 
+## Status
+- **Not ready to implement**
+
+## Blockers / Open Questions
+- **Where the setting lives**: homepage settings modal vs account settings vs both.
+- **Exact scope**: do Shop Manager / Market Overview / Crate Rewards respect the preference, or are they explicitly “fixed curated order”?
+- **Persistence detail**: localStorage key name, default value, and how anonymous vs signed-in users should behave (and whether/when this should later sync to a user profile).
+
 ## 📌 Overview
 
 Category order is currently **curated** via `enabledCategories` (which intentionally groups related categories like tools/weapons/armor). A previous idea was to force **alphabetical** ordering everywhere, but that risks reducing usability for players who browse by “type of gameplay” rather than category name.
@@ -8,8 +16,6 @@ This enhancement introduces an **optional** user preference for **Category order
 
 - **Curated (default)**: preserves the current grouped ordering
 - **Alphabetical (optional)**: sorts category labels A→Z for users who prefer scanning that way
-
-**Status**: 🔄 **ENHANCEMENT** – Low priority polish
 
 ---
 
