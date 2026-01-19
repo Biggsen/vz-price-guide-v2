@@ -23,11 +23,11 @@ _(Updates needed for existing items, such as image updates, corrections, metadat
 ### Pending
 
 - Update images for dyes (Minecraft 1.21)
-- Replace armor images to use inventory icons instead of in-game 3D images
+
 
 ### Completed
 
--
+- Replace armor images to use inventory icons instead of in-game 3D images
 
 ## Notes
 
