@@ -1,5 +1,45 @@
 # Crate Rewards Enchantment Validation
 
+## Status: Needs revision
+
+This spec is directionally correct, but it conflicts with current `CrateSingleView.vue` behavior in a few important places (especially around enchanted books), and it omits several UI/validation details that are required for a smooth implementation.
+
+## Revision notes (what must be clarified/updated)
+
+- **Enchanted book behavior is currently contradictory**
+	- The spec says to return `[]` / hide enchantments if the selected item’s `category === 'enchantments'`.
+	- In `CrateSingleView.vue`, selecting an `enchanted_book_*` item currently normalizes to the base `enchanted_book` and pre-populates enchantments (this is an existing workflow).
+	- Revision needed: explicitly define the supported crate-reward use cases:
+		- **Allow** “enchanted book reward with enchantments” (current behavior), or
+		- **Disallow** enchanting books entirely (and remove/replace the normalization behavior), or
+		- Treat “enchantment items” (category `enchantments`) differently from base `enchanted_book` inventory items.
+
+- **Validation path is incomplete (two add flows)**
+	- The modal adds enchantments via both `saveEnchantment()` and `onEnchantmentSelected()`.
+	- This spec only describes adding conflict validation in `saveEnchantment()`, which would leave the other path unvalidated unless the implementation is consolidated.
+	- Revision needed: specify a single source of truth for adding enchantments so compatibility/conflict checks always run.
+
+- **Conflict error messaging has no defined UI target**
+	- The spec proposes setting `addItemFormError` to the conflict reason string.
+	- In `CrateSingleView.vue`, `addItemFormError` is currently rendered only for specific field errors and won’t reliably display arbitrary conflict messages.
+	- Revision needed: define a dedicated error state (e.g., `enchantmentError`) and where it displays (near the enchantment controls/modal), or explicitly expand the modal’s error rendering rules.
+
+- **No policy for “item changed after adding enchantments”**
+	- If the user changes the selected item, existing enchantments may become invalid.
+	- Revision needed: decide and document one behavior:
+		- auto-clear enchantments on item change, or
+		- auto-prune only incompatible enchantments, or
+		- keep but show warnings and block save until fixed.
+
+- **No rules for duplicates / level replacement**
+	- The crate form stores enchantments as an object keyed by enchantment item id (often with value `1`), and users can add multiple “same type different level” books.
+	- `ShopItemForm.vue` already implements sensible behavior (replace lower level with higher level of the same enchantment type, ignore lower/equal).
+	- Revision needed: specify whether crate rewards should match that behavior, allow duplicates, or enforce one-per-type.
+
+- **Edge case: compatibility filtering when the user already has incompatible enchantments**
+	- Filtering the dropdown prevents new invalid picks, but it doesn’t address already-selected invalid states (e.g., imported YAML or prior saves).
+	- Revision needed: specify defensive validation on save (and/or display) to detect and surface incompatible existing enchantments.
+
 ## Overview
 
 Integrate enchantment compatibility validation into the crate rewards UI (`CrateSingleView.vue`), ensuring users can only select compatible enchantments for items and preventing conflicting enchantment combinations.
