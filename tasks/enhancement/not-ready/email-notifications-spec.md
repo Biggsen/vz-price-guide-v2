@@ -1,16 +1,29 @@
 # Email Notifications for Suggestions - Feature Specification
 
+## Status: Not Ready
+
+This spec is **not implementation-ready yet**. The core approach is defined, but the “Open Questions / Must-Decide Before Implementation” section must be resolved (deep-link target, rate limiting behavior, status change attribution) before building.
+
 ## Overview
 
 Implement email notifications to keep users informed about admin responses to their suggestions. This will improve user engagement and provide better communication between users and admins.
+
+## Current Implementation Reality (Important)
+
+The shipped Suggestions feature already supports a private, one-to-one discussion thread between staff and the suggestion author. Those messages are stored in:
+
+- `suggestions/{suggestionId}/suggestionMessages/{messageId}`
+- Each message includes `userId`, `body`, and an `authorRole` field (`'admin'` or `'user'`).
+
+This spec must align with that reality. If we implement triggers on a different subcollection (like `comments`), notifications will never fire.
 
 ## Scope
 
 ### **Notification Triggers**
 
--   Admin comments on user suggestions
--   Admin status changes to suggestions
--   Optional: Admin replies to user comments
+-   Admin posts a message in a suggestion thread
+-   Admin changes suggestion status
+-   Optional (future): digest / batching / advanced notification schedules
 
 ### **User Experience**
 
@@ -25,26 +38,27 @@ Implement email notifications to keep users informed about admin responses to th
 
 ### **1. Email Triggers**
 
-#### **Admin Comment Notifications**
+#### **Admin Message Notifications (Current Thread Model)**
 
--   **Trigger**: When an admin adds a comment to any suggestion
--   **Recipients**: Original suggestion author
--   **Content**: Suggestion title, admin comment, link to view
--   **Timing**: Immediate (within 5 minutes)
+-   **Trigger**: When a new document is created under `suggestions/{suggestionId}/suggestionMessages/{messageId}` AND the author is a verified admin (see “Admin verification” below)
+-   **Recipients**: The original suggestion author (the `suggestions/{suggestionId}.userId`)
+-   **Content**: Suggestion title, admin display name, message body, link to view conversation
+-   **Timing**: Immediate (best effort; target within 5 minutes)
+-   **Notes**:
+    - This is a linear thread today (no “reply-to messageId”), so “reply notifications” are treated as “new admin message notifications”.
+    - Do not send when the message is authored by the suggestion owner (user reply) unless a future requirement adds “notify admins on user reply”.
 
 #### **Status Change Notifications**
 
 -   **Trigger**: When admin changes suggestion status
 -   **Recipients**: Original suggestion author
--   **Content**: Suggestion title, old status → new status, admin comment (if any)
+-   **Content**: Suggestion title, old status → new status, link to view conversation
 -   **Timing**: Immediate (within 5 minutes)
 
-#### **Comment Reply Notifications**
+#### **(Removed) Comment Reply Notifications**
 
--   **Trigger**: When admin replies to user comment
--   **Recipients**: Comment author
--   **Content**: Suggestion title, admin reply, link to view
--   **Timing**: Immediate (within 5 minutes)
+-   The current data model does not support true threaded replies (no “reply-to”), so this trigger is redundant with “Admin Message Notifications”.
+-   If threaded replies are added later, re-introduce this as a distinct event type with explicit semantics.
 
 ### **2. Email Content**
 
@@ -59,7 +73,7 @@ Hi {user_display_name},
 
 Title: {suggestion_title}
 Status: {current_status}
-Comment: {admin_comment}
+Message: {admin_message}
 
 View full conversation: {link_to_suggestion}
 
@@ -77,16 +91,16 @@ Unsubscribe: {unsubscribe_link}
 
 #### **Notification Settings**
 
--   **Email notifications**: On/Off toggle
--   **Comment notifications**: On/Off toggle
+-   **Suggestion notifications**: master On/Off toggle
+-   **Admin message notifications**: On/Off toggle
 -   **Status change notifications**: On/Off toggle
--   **Comment reply notifications**: On/Off toggle
 
 #### **User Profile Updates**
 
--   Add `email_notifications` object to user profiles
--   Default: All notifications enabled
+-   Store preferences on the user doc in Firestore (`users/{userId}`)
+-   Default: enabled for suggestion notifications (transactional), but user can disable any time
 -   Respect user preferences before sending
+-   Marketing opt-in remains separate and is handled by `marketing_opt_in` (out of scope here)
 
 ---
 
@@ -111,12 +125,13 @@ Unsubscribe: {unsubscribe_link}
 #### **User Profile Updates**
 
 ```javascript
-// Add to existing user profile
-email_notifications: {
-  enabled: boolean,           // Master toggle
-  comments: boolean,         // Admin comments
-  status_changes: boolean,   // Status updates
-  comment_replies: boolean   // Admin replies to comments
+// Add to existing users/{userId} doc
+email_preferences: {
+  suggestions: {
+    enabled: boolean,        // Master toggle for suggestion-related notifications
+    admin_messages: boolean, // New admin message in thread
+    status_changes: boolean  // Status updates
+  }
 }
 ```
 
@@ -127,7 +142,8 @@ email_notifications: {
 {
   userId: string,
   suggestionId: string,
-  type: 'admin_comment' | 'status_change' | 'comment_reply',
+  type: 'admin_message' | 'status_change',
+  eventKey: string, // unique idempotency key for this email event
   sentAt: timestamp,
   status: 'sent' | 'delivered' | 'bounced' | 'failed',
   emailService: 'sendgrid' | 'mailgun',
@@ -137,16 +153,17 @@ email_notifications: {
 
 ### **3. Firebase Functions**
 
-#### **Comment Notification Function**
+#### **Admin Message Notification Function**
 
 ```javascript
 exports.sendAdminCommentEmail = functions.firestore
-	.document('suggestions/{suggestionId}/comments/{commentId}')
+	.document('suggestions/{suggestionId}/suggestionMessages/{messageId}')
 	.onCreate(async (snap, context) => {
-		// Check if comment is from admin
+		// Verify author is actually an admin (do not trust authorRole alone)
 		// Get suggestion details
-		// Get user email preferences
+		// Get user email preferences (email_preferences.suggestions.*)
 		// Send email if enabled
+		// Write email_logs with eventKey to prevent duplicates on retries
 	})
 ```
 
@@ -157,10 +174,24 @@ exports.sendStatusChangeEmail = functions.firestore
 	.document('suggestions/{suggestionId}')
 	.onUpdate(async (change, context) => {
 		// Check if status changed
-		// Get user email preferences
+		// Get user email preferences (email_preferences.suggestions.*)
 		// Send email if enabled
+		// Write email_logs with eventKey to prevent duplicates on retries
 	})
 ```
+
+### **3.1 Admin Verification (Critical)**
+
+-   The function must confirm the message author is a real admin using a trusted source (e.g. Firebase Auth custom claims `admin: true`).
+-   Do not rely solely on a Firestore field like `authorRole` because it can be spoofed unless rules guarantee it cannot.
+
+### **3.2 Idempotency / Deduping (Critical)**
+
+-   Firestore triggers can retry; without idempotency you will send duplicate emails.
+-   Use a deterministic `eventKey` and store it in `email_logs` before/with sending. Example strategies:
+    - Use the function event id (when available) + type
+    - Or use `{type}:{suggestionId}:{messageId}` for message-created events
+    - Or use `{type}:{suggestionId}:{beforeStatus}->{afterStatus}:{timestampBucket}` for status changes
 
 ### **4. Email Templates**
 
@@ -176,7 +207,7 @@ exports.sendStatusChangeEmail = functions.firestore
 -   `{admin_name}`
 -   `{suggestion_title}`
 -   `{suggestion_body}`
--   `{admin_comment}`
+-   `{admin_message}`
 -   `{status_old}` and `{status_new}`
 -   `{link_to_suggestion}`
 -   `{unsubscribe_link}`
@@ -255,9 +286,22 @@ exports.sendStatusChangeEmail = functions.firestore
 
 ### **User Consent**
 
--   Clear opt-in during registration
--   Easy unsubscribe in every email
--   Granular notification controls
+-   Suggestion notifications are transactional/product notifications (not marketing)
+-   Provide granular controls in account settings to disable suggestion notifications
+-   Include a one-click “disable suggestion notifications” link in emails (signed token recommended), plus an in-app settings page
+
+---
+
+## Open Questions / Must-Decide Before Implementation
+
+-   **Email deep-link**: there is no `/suggestions/:id` detail route today. Decide what the email links to:
+    - `/suggestions` (simple), optionally with a query param to highlight/scroll to the suggestion
+    - or introduce a dedicated detail route first
+-   **Rate limiting behavior**: “max 5 emails/user/day” can drop important replies. Decide:
+    - hard cap (drop), or
+    - digest/batching within a time window, or
+    - cap only certain event types
+-   **Status change author**: status updates don’t currently record “who changed status”. If you want “Admin: X changed status”, decide where to store that metadata.
 
 ---
 
