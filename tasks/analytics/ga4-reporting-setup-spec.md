@@ -1,5 +1,40 @@
 # GA4 Reporting Setup Spec
 
+## Status (progress tracker)
+
+**Last updated:** 2026-01-20
+
+### Completed
+
+- [x] Step 0: Confirm correct GA4 property/stream (Realtime/DebugView shows events)
+- [x] Step 1: Create custom definitions (at least the highest-value event-scoped dimensions)
+	- [x] Device type → `device_type`
+	- [x] Action → `action`
+	- [x] Modal → `modal`
+	- [x] Close reason → `close_reason`
+	- [x] Selected version → `selected_version`
+	- [x] View mode → `view_mode`
+	- [x] Layout → `layout`
+- [x] Step 2: Create derived event
+	- [x] `export_open` (from `modal_interaction` where `modal=export` and `action=open`)
+	- [x] `export_download` (from `modal_interaction` where `modal=export` and `action=export_click`)
+- [x] Step 3: Mark key events
+	- [x] `export_download` marked as a **Key event**
+- [x] Step 4: Create Explorations (at least one)
+	- [x] Funnel exploration: “Export funnel” (`page_view` for `/` → `export_open` → `export_download`)
+	- [x] Path exploration: “Homepage usage” (starting point `page_view`, filter `Page path + query string = /`, breakdown by `Device type`)
+
+### Remaining
+
+- [ ] Step 1: Create any remaining custom definitions you want for reporting
+	- [ ] Page path → `page_path`
+	- [ ] Auth state → `auth_state`
+	- [ ] Field → `field`
+	- [ ] Optional: Category → `category`, Search active → `search_active`, Export format → `export_format`
+	- [ ] Optional: event-scoped custom metrics (Integer) used in reports
+- [ ] Step 2: Create additional derived events (recommended for a clean funnel)
+	- [ ] Optional: `settings_open`, `settings_save`
+
 ## Goal
 
 Turn existing GA4 instrumentation into usable reporting:
