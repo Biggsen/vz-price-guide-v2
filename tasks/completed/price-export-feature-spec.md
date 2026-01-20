@@ -21,7 +21,7 @@ Enable authenticated users to export the price list as JSON, YAML, and spreadshe
 -   ✅ **File Naming** - Proper timestamp-based naming
 -   ✅ **Integration** - Used in HomeView with export button
 
-### **Missing Features** (See `tasks/enhancement/price-export-enhancements.md`)
+### **Missing Features** (See `tasks/enhancement/not-ready/price-export-enhancements.md`)
 
 -   ❌ **CSV/XLSX Export** - Only JSON and YAML implemented
 -   ❌ **Proper YAML Library** - Currently using custom YAML generation (works but could be improved)
