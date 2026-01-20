@@ -1,219 +1,129 @@
-# Crate Rewards Enchantment Validation
+# Crate Rewards Enchantment Selection + YAML Export (Modernized)
 
-## Status: Needs revision
+## Status
 
-This spec is directionally correct, but it conflicts with current `CrateSingleView.vue` behavior in a few important places (especially around enchanted books), and it omits several UI/validation details that are required for a smooth implementation.
+Ready to implement.
 
-## Revision notes (what must be clarified/updated)
+This spec modernizes Crate Rewards enchantment handling to match the upgraded enchantment data model and the Shop Manager UX, while keeping Crate Rewards’ CrazyCrates YAML export requirements front-and-center.
 
-- **Enchanted book behavior is currently contradictory**
-	- The spec says to return `[]` / hide enchantments if the selected item’s `category === 'enchantments'`.
-	- In `CrateSingleView.vue`, selecting an `enchanted_book_*` item currently normalizes to the base `enchanted_book` and pre-populates enchantments (this is an existing workflow).
-	- Revision needed: explicitly define the supported crate-reward use cases:
-		- **Allow** “enchanted book reward with enchantments” (current behavior), or
-		- **Disallow** enchanting books entirely (and remove/replace the normalization behavior), or
-		- Treat “enchantment items” (category `enchantments`) differently from base `enchanted_book` inventory items.
+## Goals
 
-- **Validation path is incomplete (two add flows)**
-	- The modal adds enchantments via both `saveEnchantment()` and `onEnchantmentSelected()`.
-	- This spec only describes adding conflict validation in `saveEnchantment()`, which would leave the other path unvalidated unless the implementation is consolidated.
-	- Revision needed: specify a single source of truth for adding enchantments so compatibility/conflict checks always run.
+- Modern enchantment picker UX in `src/views/CrateSingleView.vue` (match Shop Manager add/edit modal experience).
+- Store enchantments as **arrays of enchantment item document IDs**.
+- Keep the existing **base book** workflow for Crate Rewards:
+	- Selecting an `enchanted_book_*` search result normalizes to base `enchanted_book` and pre-populates enchantments.
+	- A base `enchanted_book` reward may contain multiple enchantments.
+- Ensure YAML export produces valid output using canonical IDs (no parsing human display strings).
 
-- **Conflict error messaging has no defined UI target**
-	- The spec proposes setting `addItemFormError` to the conflict reason string.
-	- In `CrateSingleView.vue`, `addItemFormError` is currently rendered only for specific field errors and won’t reliably display arbitrary conflict messages.
-	- Revision needed: define a dedicated error state (e.g., `enchantmentError`) and where it displays (near the enchantment controls/modal), or explicitly expand the modal’s error rendering rules.
+## Non-goals
 
-- **No policy for “item changed after adding enchantments”**
-	- If the user changes the selected item, existing enchantments may become invalid.
-	- Revision needed: decide and document one behavior:
-		- auto-clear enchantments on item change, or
-		- auto-prune only incompatible enchantments, or
-		- keep but show warnings and block save until fixed.
+- No conflict enforcement between enchantments (no “Sharpness vs Smite” blocking).
+- No compatibility filtering between enchantments and items (e.g., “Lure only on fishing rods”).
+	- Enchantments are free once an item is considered enchantable.
 
-- **No rules for duplicates / level replacement**
-	- The crate form stores enchantments as an object keyed by enchantment item id (often with value `1`), and users can add multiple “same type different level” books.
-	- `ShopItemForm.vue` already implements sensible behavior (replace lower level with higher level of the same enchantment type, ignore lower/equal).
-	- Revision needed: specify whether crate rewards should match that behavior, allow duplicates, or enforce one-per-type.
+## Core rules
 
-- **Edge case: compatibility filtering when the user already has incompatible enchantments**
-	- Filtering the dropdown prevents new invalid picks, but it doesn’t address already-selected invalid states (e.g., imported YAML or prior saves).
-	- Revision needed: specify defensive validation on save (and/or display) to detect and surface incompatible existing enchantments.
+### Enchantability gate
 
-## Overview
+- Only **enchantable items** can have enchantments.
+- Base `enchanted_book` is **always enchantable**, regardless of `isItemEnchantable()` result.
 
-Integrate enchantment compatibility validation into the crate rewards UI (`CrateSingleView.vue`), ensuring users can only select compatible enchantments for items and preventing conflicting enchantment combinations.
+### Enchantment picker: what’s selectable
 
-## Prerequisites
+When the selected item is enchantable (or base `enchanted_book`):
 
-This enhancement depends on:
-- **Enchantment Compatibility Feature** (`tasks/enchantment-compatibility-feature.md`): Phases 1 and 2 must be complete
-  - Data migration views must have populated `enchantCategories` and `enchantment_category` fields
-  - Validation utilities in `src/utils/enchantments.js` must be implemented
+- Show enchantment options (each level is a separate option, like Shop Manager).
+- The list is filtered by Minecraft version using the `resource/enchantments_X_Y.json` dataset:
+	- Use the crate’s `minecraft_version` (e.g., `1.20` → `enchantments_1_20.json`).
+	- If the exact file doesn’t exist, fallback to the **nearest previous** available file.
+	- Enforce `maxLevel`: do not offer levels above the version’s `maxLevel` for that enchantment.
 
-## Current State
+### Existing “out-of-range” enchantments remain visible
 
-Enchantment selection in `CrateSingleView.vue` currently shows all enchantments and allows any selection, regardless of item compatibility or enchantment conflicts.
+If a reward already has enchantments that don’t match the version filter (unknown enchantment for that version, or level > `maxLevel`):
 
-## Changes Required
+- Still show them as selected chips (so they’re visible and removable).
+- Do not offer them in the add list.
+- YAML export still includes them (forgiving).
 
-### 1. Filter Enchantment List
+### Single-item consistency (manual add/edit form)
 
-Update `enchantmentItems` computed property to filter based on selected item:
-- Use `getCompatibleEnchantments()` utility from `src/utils/enchantments.js`
-- Only show compatible enchantments in the modal dropdown
-- Return empty array if no item is selected
-- Return empty array if selected item is an enchanted book itself (category === 'enchantments')
+For the current manual add/edit flow (single-item rewards):
 
-### 2. Hide Enchantment Section for Non-Enchantable Items
+- The selected enchantment list is the source of truth.
+- Persist it to both:
+	- `items[0].enchantments` (what the player receives)
+	- `display_enchantments` (what the GUI shows)
+- These must stay in sync to avoid “looks enchanted, gives something else”.
 
-- Hide "Enchantments" section when selected item is not enchantable
-- Hide "Enchantments" section when selected item is an enchanted book itself (category === 'enchantments')
-- Use `isItemEnchantable()` utility to determine visibility
+### Item change behavior
 
-### 3. Validation on Add
+- If the user changes the selected item, **auto-clear all enchantments**.
 
-- When adding enchantment, check for conflicts with existing enchantments
-- Show error message if conflict detected
-- Use `hasEnchantmentConflict()` and `getEnchantmentConflictReason()` utilities
-- Prevent adding conflicting enchantments
+### Same enchantment type replacement (“last selection wins”)
 
-### 4. Visual Feedback
+- Enforce one enchantment per type (e.g., only one Sharpness).
+- Selecting a new level for the same type replaces the previous selection (upgrade or downgrade).
+- This behavior should be consistent in:
+	- Crate Rewards
+	- Shop Manager (current “only replace if higher” is considered incorrect UX and should be updated separately)
 
-- Show warning/error indicators for incompatible selections (defensive check)
-- Display clear error messages when conflicts are detected
-- Disable incompatible options (though they should already be filtered out)
+### Non-enchantable item legacy state
 
-## Implementation Details
+If an item is not enchantable but already has enchantments (legacy/bad data):
 
-### Code Changes in `CrateSingleView.vue`
+- Show the enchantment section so the enchantments are visible.
+- Allow **remove-only** (do not allow adding new enchantments).
+- YAML export still includes any remaining enchantments (forgiving).
 
-#### Import Validation Utilities
+## Data model
 
-```javascript
-import {
-	isItemEnchantable,
-	getCompatibleEnchantments,
-	hasEnchantmentConflict,
-	getEnchantmentConflictReason
-} from '../utils/enchantments.js'
-```
+### Stored format
 
-#### Update `enchantmentItems` Computed Property
+- Store enchantments as arrays of **enchantment item document IDs**.
+- Infer enchantment type + level from the enchantment item’s `material_id` (`enchanted_book_<name>_<level>`), not from display names.
 
-Replace the current implementation (around line 314) with:
+### Legacy format handling
 
-```javascript
-// Enchantment items for selection - filtered by compatibility
-const enchantmentItems = computed(() => {
-	if (!allItems.value) return []
-	const allEnchItems = allItems.value.filter((item) => item.category === 'enchantments')
-	
-	// If no item selected, return empty (shouldn't show enchantments)
-	if (!itemForm.value.item_id) return []
-	
-	const selectedItem = getItemById(itemForm.value.item_id)
-	if (!selectedItem) return []
-	
-	// Hide enchantments for enchanted books themselves
-	if (selectedItem.category === 'enchantments') return []
-	
-	// Filter to only compatible enchantments
-	return getCompatibleEnchantments(selectedItem, allEnchItems)
-})
-```
+If legacy data uses the old object-map shape for enchantments:
 
-#### Update Enchantment Section Visibility
+- Normalize to an array on load/save/export.
 
-Add computed property to determine if enchantment section should be shown:
+## UI implementation notes (`src/views/CrateSingleView.vue`)
 
-```javascript
-const showEnchantmentSection = computed(() => {
-	if (!itemForm.value.item_id) return false
-	const selectedItem = getItemById(itemForm.value.item_id)
-	if (!selectedItem) return false
-	
-	// Hide for enchanted books
-	if (selectedItem.category === 'enchantments') return false
-	
-	// Hide for non-enchantable items
-	return isItemEnchantable(selectedItem)
-})
-```
+- Replace the current simple modal `<select>` with the Shop Manager style:
+	- type-to-search input
+	- dropdown list
+	- keyboard navigation (preferred, can reuse patterns from Shop Manager)
+- Keep the existing “base book normalization” behavior:
+	- selecting `enchanted_book_*` sets the selected item to base `enchanted_book`
+	- pre-populate enchantments from the selected variant
 
-Then conditionally render the enchantment section in the template using `v-if="showEnchantmentSection"`.
+## YAML export requirements (`src/utils/crateRewards.js`)
 
-#### Add Validation to `saveEnchantment()` Function
+### Canonical mapping
 
-Update the function (around line 1158) to include conflict checking:
+- Convert enchantment IDs → `name:level` using the enchantment item’s `material_id`.
+	- expected pattern: `enchanted_book_<name>_<level>`
+- Do not derive name/level from `enchantDoc.name` (string parsing is brittle).
 
-```javascript
-function saveEnchantment() {
-	if (!enchantmentForm.value.enchantment) return
-	
-	const newEnchId = enchantmentForm.value.enchantment
-	const existingEnchIds = Object.keys(itemForm.value.enchantments || {})
-	const allEnchItems = allItems.value.filter(item => item.category === 'enchantments')
-	
-	// Check for conflicts
-	if (hasEnchantmentConflict(newEnchId, existingEnchIds, allEnchItems)) {
-		const reason = getEnchantmentConflictReason(newEnchId, existingEnchIds, allEnchItems)
-		addItemFormError.value = reason
-		return
-	}
-	
-	// No conflict, add the enchantment
-	itemForm.value.enchantments[newEnchId] = 1
-	showEnchantmentModal.value = false
-	enchantmentForm.value = { enchantment: '' }
-}
-```
+### Forgiving fallback (best-effort)
 
-## Example Workflow: Iron Sword
+If an enchantment ID can’t be resolved to a proper `enchanted_book_<name>_<level>`:
 
-1. User selects "iron_sword" item
-   - Item has `enchantCategories: ["weapon", "fire_aspect", "melee_weapon", "durability", "sharp_weapon", "sweeping", "vanishing"]`
-   - System recognizes item is enchantable
-   - Enchantment section is visible
+- Export the best-effort representation available (do not block export).
 
-2. User clicks "Add Enchantment"
-   - Modal opens with filtered list
-   - Shows: Sharpness, Smite, Bane of Arthropods, Fire Aspect, Sweeping Edge, Knockback, Looting, Unbreaking, Mending, etc.
-   - Hides: Lure, Power, Protection, Respiration, Depth Strider, etc.
+### Deterministic sorting on export
 
-3. User selects "Sharpness V"
-   - System validates: compatible (category "sharp_weapon" is in sword's categories)
-   - No existing enchantments, so no conflicts
-   - Enchantment added successfully
+- Sort enchantments for YAML output by:
+	- enchantment name (A→Z)
+	- then level (1→max)
+- UI selection order doesn’t need to be modified; sorting is for export stability.
 
-4. User tries to add "Smite V"
-   - System validates: compatible category
-   - But checks conflicts: Sharpness excludes ["smite", ...]
-   - Shows error: "Cannot combine Sharpness with Smite"
-   - Enchantment not added
+## Success criteria
 
-5. User tries to add "Lure"
-   - Already filtered out of list (not shown)
-   - If somehow selected, validation fails: "Lure can only be applied to fishing rods"
-
-6. User selects an enchanted book as the item
-   - Enchantment section is hidden (enchanted books cannot be enchanted)
-
-## Testing Considerations
-
-- Test with items that cannot be enchanted (should hide section)
-- Test with items that can be enchanted but have no compatible enchantments (edge case - should show empty list)
-- Test all mutual exclusion rules (Sharpness/Smite, Protection types, Silk Touch/Fortune, etc.)
-- Test with enchanted books themselves (should hide enchantment section)
-- Test error message display when conflicts are detected
-- Test that filtered list updates correctly when item selection changes
-
-## Success Criteria
-
-- Users can only see and select compatible enchantments for selected items
-- Conflicting enchantments are prevented with clear error messages
-- Non-enchantable items don't show enchantment options
-- Enchanted books themselves don't show enchantment section
-- All compatibility rules from PrismarineJS data are properly enforced
-- Error messages are user-friendly and actionable
-
+- Crate Rewards enchantment UI matches the Shop Manager UX.
+- Enchantments are stored as arrays of IDs and are exported via `material_id` mapping.
+- Base book normalization stays intact and supports multi-enchantment books.
+- Version-aware filtering works with nearest-previous fallback and maxLevel enforcement.
+- Export is deterministic and forgiving.

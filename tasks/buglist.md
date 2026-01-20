@@ -6,7 +6,33 @@ This document tracks bugs, regressions, and issues discovered during development
 
 ## Active Issues
 
-_No active bugs currently - all recent issues have been resolved._
+### Shop Manager Enchantment Level Cannot Be Downgraded Without Removing
+
+**Status**: 🚧 Active  
+**Priority**: Medium  
+**Type**: UX Bug  
+**Discovered**: 2026-01-20
+
+**Description**:
+In the Shop Manager add/edit item modal, selecting a lower-level enchantment of the same type does not replace a higher-level enchantment that is already selected. Users must remove the higher-level enchantment first, then add the lower level, which is frustrating UX.
+
+**Expected**:
+“Last selection wins” for same-type enchantments (upgrade or downgrade). If Sharpness V is selected and the user selects Sharpness II, the selection should change to Sharpness II.
+
+**Current Behavior**:
+Only upgrades are applied; downgrades are ignored.
+
+**Repro Steps**:
+
+1. Edit a shop item and add an enchantment (e.g., Sharpness V)
+2. Try to select the same enchantment type at a lower level (e.g., Sharpness II)
+3. Observe that the selection does not change
+
+**Likely Root Cause**:
+Replacement logic in `src/components/ShopItemForm.vue` only replaces existing enchantments when the new level is higher.
+
+**Proposed Fix**:
+Always replace the existing enchantment of the same type with the newly selected one (last selection wins).
 
 ---
 
