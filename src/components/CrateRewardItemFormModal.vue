@@ -141,22 +141,22 @@ function updateItemForm(field, value) {
 }
 
 function updateQuantity(value) {
-	// Allow empty string for clearing the field
+	// Allow empty/null for clearing the field (similar to ShopItemForm)
 	if (value === '' || value === null) {
-		updateItemForm('quantity', '')
+		updateItemForm('quantity', null)
 	} else {
 		const numValue = parseInt(value)
-		updateItemForm('quantity', isNaN(numValue) ? '' : numValue)
+		updateItemForm('quantity', isNaN(numValue) ? null : numValue)
 	}
 }
 
 function updateWeight(value) {
-	// Allow empty string for clearing the field
+	// Allow empty/null for clearing the field (similar to ShopItemForm)
 	if (value === '' || value === null) {
-		updateItemForm('weight', '')
+		updateItemForm('weight', null)
 	} else {
 		const numValue = parseInt(value)
-		updateItemForm('weight', isNaN(numValue) ? '' : numValue)
+		updateItemForm('weight', isNaN(numValue) ? null : numValue)
 	}
 }
 
@@ -399,7 +399,7 @@ function updateCustomValue(value) {
 					<div class="flex gap-2">
 					<input
 						id="item-quantity"
-						:value="itemForm.quantity"
+						:value="itemForm.quantity ?? ''"
 						@input="updateQuantity($event.target.value)"
 						type="number"
 						min="1"
@@ -438,7 +438,7 @@ function updateCustomValue(value) {
 					</label>
 					<input
 						id="item-weight"
-						:value="itemForm.weight"
+						:value="itemForm.weight ?? ''"
 						@input="updateWeight($event.target.value)"
 						type="number"
 						min="1"
