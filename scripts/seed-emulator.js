@@ -2072,7 +2072,6 @@ const TEST_DATA = {
 			},
 			enchantCategories: ['durability', 'mining', 'vanishing'],
 			enchantable: true,
-
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -2101,7 +2100,6 @@ const TEST_DATA = {
 			},
 			enchantCategories: ['durability', 'mining', 'vanishing'],
 			enchantable: true,
-
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -2130,7 +2128,6 @@ const TEST_DATA = {
 			},
 			enchantCategories: ['durability', 'mining', 'vanishing'],
 			enchantable: true,
-
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -2187,7 +2184,6 @@ const TEST_DATA = {
 			},
 			enchantCategories: ['durability', 'mining', 'vanishing'],
 			enchantable: true,
-
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -2353,7 +2349,6 @@ const TEST_DATA = {
 			},
 			enchantCategories: ['armor', 'durability', 'equippable', 'foot_armor', 'vanishing'],
 			enchantable: true,
-
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [{ material_id: 'iron_ingot', quantity: 4 }],
@@ -2665,7 +2660,6 @@ const TEST_DATA = {
 			},
 			enchantCategories: ['armor', 'durability', 'equippable', 'foot_armor', 'vanishing'],
 			enchantable: true,
-
 			recipes_by_version: {
 				'1_21': {
 					ingredients: [{ material_id: 'copper_ingot', quantity: 4 }],
