@@ -358,8 +358,8 @@ describe('Crate Rewards', () => {
 			cy.get('[data-cy="item-search-results"]').should('be.visible')
 			cy.get('[data-cy="item-search-results"]').contains('diamond').click()
 
-			// Clear quantity field
-			cy.get('[data-cy="item-quantity-input"]').clear()
+		// Clear quantity field
+		cy.get('[data-cy="item-quantity-input"]').clear().should('have.value', '')
 
 			// Try to submit without quantity
 			cy.get('[data-cy="item-submit-button"]').click()
