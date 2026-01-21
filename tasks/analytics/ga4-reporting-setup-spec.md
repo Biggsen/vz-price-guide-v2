@@ -2,7 +2,7 @@
 
 ## Status (progress tracker)
 
-**Last updated:** 2026-01-20
+**Last updated:** 2026-01-21
 
 ### Completed
 
@@ -15,9 +15,11 @@
 	- [x] Selected version → `selected_version`
 	- [x] View mode → `view_mode`
 	- [x] Layout → `layout`
+	- [x] Auth state → `auth_state`
 - [x] Step 2: Create derived event
 	- [x] `export_open` (from `modal_interaction` where `modal=export` and `action=open`)
 	- [x] `export_download` (from `modal_interaction` where `modal=export` and `action=export_click`)
+	- [x] `export_create_account_click` (from `modal_interaction` where `modal=export`, `action=cta_click`, `field=cta`, `value=create_account`)
 - [x] Step 3: Mark key events
 	- [x] `export_download` marked as a **Key event**
 - [x] Step 4: Create Explorations (at least one)
@@ -28,12 +30,14 @@
 
 - [ ] Step 1: Create any remaining custom definitions you want for reporting
 	- [ ] Page path → `page_path`
-	- [ ] Auth state → `auth_state`
 	- [ ] Field → `field`
 	- [ ] Optional: Category → `category`, Search active → `search_active`, Export format → `export_format`
 	- [ ] Optional: event-scoped custom metrics (Integer) used in reports
 - [ ] Step 2: Create additional derived events (recommended for a clean funnel)
 	- [ ] Optional: `settings_open`, `settings_save`
+	- [ ] Optional: `export_sign_in_click`, `export_verify_email_click`
+- [ ] Step 4: Create additional Explorations (gate analysis)
+	- [ ] Path exploration: “Export gate path” (starting point `export_create_account_click`, Step +1: page path)
 
 ## Goal
 
