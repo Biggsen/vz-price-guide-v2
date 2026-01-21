@@ -35,7 +35,7 @@ import CrateRewardItemRow from '../components/CrateRewardItemRow.vue'
 import CrateRewardItemFormModal from '../components/CrateRewardItemFormModal.vue'
 import CrateEditModal from '../components/CrateEditModal.vue'
 import CrateImportModal from '../components/CrateImportModal.vue'
-import CrateDeleteConfirmationModal from '../components/CrateDeleteConfirmationModal.vue'
+import RewardItemDeleteConfirmationModal from '../components/RewardItemDeleteConfirmationModal.vue'
 import CrateClearAllModal from '../components/CrateClearAllModal.vue'
 import CrateTestRewardsModal from '../components/CrateTestRewardsModal.vue'
 import {
@@ -848,13 +848,9 @@ async function executeDelete() {
 	error.value = null
 
 	try {
-		if (itemToDelete.value.type === 'crate') {
-			await deleteCrateRewardFromDetail()
-		} else if (itemToDelete.value.type === 'item' || itemToDelete.value.type === 'reward') {
-			await deleteCrateRewardItem(itemToDelete.value.id)
-		}
+		await deleteCrateRewardItem(itemToDelete.value.id)
 	} catch (err) {
-		error.value = `Failed to delete ${itemToDelete.value.type}: ` + err.message
+		error.value = `Failed to delete reward: ` + err.message
 	} finally {
 		loading.value = false
 		showDeleteModal.value = false
@@ -1815,7 +1811,7 @@ watch(selectedCrate, (crate) => {
 		@close="closeImportModal" />
 
 	<!-- Delete Confirmation Modal -->
-	<CrateDeleteConfirmationModal
+	<RewardItemDeleteConfirmationModal
 		:isOpen="showDeleteModal"
 		:itemToDelete="itemToDelete"
 		:loading="loading"

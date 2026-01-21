@@ -1,5 +1,4 @@
 <script setup>
-import { computed } from 'vue'
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
 
@@ -23,16 +22,12 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
-
-const modalTitle = computed(() =>
-	props.itemToDelete?.type === 'crate' ? 'Delete Crate Reward' : 'Delete Item'
-)
 </script>
 
 <template>
 	<BaseModal
 		:isOpen="isOpen"
-		:title="modalTitle"
+		title="Delete Reward"
 		size="small"
 		:closeOnBackdrop="false"
 		@close="$emit('close')">
