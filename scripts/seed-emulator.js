@@ -555,8 +555,7 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 2240.0
-			},
-		enchantCategories: ['armor', 'armor_chest', 'durability', 'equippable', 'vanishing'],
+			 ['armor', 'armor_chest', 'durability', 'equippable', 'vanishing'],
 			enchantable: true,
 			recipes_by_version: {
 				'1_16': {
@@ -579,9 +578,9 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 1400.0
-		},
-		enchantCategories: ['armor', 'durability', 'equippable', 'head_armor', 'vanishing']
-		enchantable: true,
+			},
+			enchantCategories: ['armor', 'durability', 'equippable', 'head_armor', 'vanishing'],
+			enchantable: true,
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [{ material_id: 'diamond', quantity: 5 }],
@@ -603,8 +602,8 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 1960.0		},
-		enchantCategories: ['armor', 'durability', 'equippable', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [{ material_id: 'diamond', quantity: 7 }],
@@ -626,8 +625,8 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 1120.0		},
-		enchantCategories: ['armor', 'durability', 'equippable', 'foot_armor', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [{ material_id: 'diamond', quantity: 4 }],
@@ -649,8 +648,8 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 842.0		},
-		enchantCategories: ['durability', 'mining', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -675,8 +674,8 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 842.0		},
-		enchantCategories: ['durability', 'mining', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -701,8 +700,8 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 561.0		},
-		enchantCategories: ['durability', 'vanishing', 'weapon']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -727,8 +726,8 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 282.0		},
-		enchantCategories: ['durability', 'mining', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -753,8 +752,8 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 562.0		},
-		enchantCategories: ['durability', 'mining', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -779,8 +778,8 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 9.0		},
-		enchantCategories: ['bow', 'durability', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -2062,8 +2061,8 @@ const TEST_DATA = {
 			prices_by_version: {
 				'1_16': 62.0,
 				'1_18': 47.0		},
-		enchantCategories: ['durability', 'mining', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -2089,8 +2088,8 @@ const TEST_DATA = {
 			prices_by_version: {
 				'1_16': 62.0,
 				'1_18': 47.0		},
-		enchantCategories: ['durability', 'mining', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -2116,8 +2115,8 @@ const TEST_DATA = {
 			prices_by_version: {
 				'1_16': 22.0,
 				'1_18': 17.0		},
-		enchantCategories: ['durability', 'mining', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -2143,8 +2142,8 @@ const TEST_DATA = {
 			prices_by_version: {
 				'1_16': 41.0,
 				'1_18': 31.0		},
-		enchantCategories: ['durability', 'vanishing', 'weapon']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -2170,8 +2169,8 @@ const TEST_DATA = {
 			prices_by_version: {
 				'1_16': 42.0,
 				'1_18': 32.0		},
-		enchantCategories: ['durability', 'mining', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -2256,8 +2255,8 @@ const TEST_DATA = {
 			prices_by_version: {
 				'1_16': 100.0,
 				'1_18': 75.0		},
-		enchantCategories: ['armor', 'durability', 'equippable', 'head_armor', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [{ material_id: 'iron_ingot', quantity: 5 }],
@@ -2280,8 +2279,8 @@ const TEST_DATA = {
 			prices_by_version: {
 				'1_16': 160.0,
 				'1_18': 120.0		},
-		enchantCategories: ['armor', 'armor_chest', 'durability', 'equippable', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [{ material_id: 'iron_ingot', quantity: 8 }],
@@ -2304,8 +2303,8 @@ const TEST_DATA = {
 			prices_by_version: {
 				'1_16': 140.0,
 				'1_18': 105.0		},
-		enchantCategories: ['armor', 'durability', 'equippable', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [{ material_id: 'iron_ingot', quantity: 7 }],
@@ -2328,8 +2327,8 @@ const TEST_DATA = {
 			prices_by_version: {
 				'1_16': 80.0,
 				'1_18': 60.0		},
-		enchantCategories: ['armor', 'durability', 'equippable', 'foot_armor', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [{ material_id: 'iron_ingot', quantity: 4 }],
@@ -2543,8 +2542,8 @@ const TEST_DATA = {
 			prices_by_version: {
 				'1_16': 32.0,
 				'1_18': 27.0		},
-		enchantCategories: ['durability', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -2637,8 +2636,8 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_21': 12.0		},
-		enchantCategories: ['armor', 'durability', 'equippable', 'foot_armor', 'vanishing']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_21': {
 					ingredients: [{ material_id: 'copper_ingot', quantity: 4 }],
@@ -2660,8 +2659,8 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_21': 12.0		},
-		enchantCategories: ['durability', 'fire_aspect', 'melee_weapon', 'sharp_weapon', 'sweeping', 'vanishing', 'weapon']
-		enchantable: true,
+,
+
 			recipes_by_version: {
 				'1_21': {
 					ingredients: [
