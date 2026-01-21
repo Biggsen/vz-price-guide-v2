@@ -6,7 +6,7 @@ import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
 import { QuestionMarkCircleIcon } from '@heroicons/vue/24/outline'
 
-const props = defineProps({
+defineProps({
 	isOpen: {
 		type: Boolean,
 		required: true
@@ -53,7 +53,7 @@ const props = defineProps({
 	}
 })
 
-const emit = defineEmits(['close'])
+defineEmits(['close'])
 </script>
 
 <template>

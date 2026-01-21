@@ -2,7 +2,7 @@
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
 
-const props = defineProps({
+defineProps({
 	isOpen: {
 		type: Boolean,
 		required: true
@@ -21,7 +21,7 @@ const props = defineProps({
 	}
 })
 
-const emit = defineEmits(['close'])
+defineEmits(['close'])
 </script>
 
 <template>
