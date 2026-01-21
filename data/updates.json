@@ -1,5 +1,13 @@
 [
 	{
+		"id": 42,
+		"title": "Crate Rewards Enchantments Modernized",
+		"date": "2026-01-21",
+		"types": ["Tool", "Enhancement"],
+		"hidden": false,
+		"description": "Crate Rewards enchantments are now aligned with the upgraded enchantment data and the Shop Manager-style UI. Enchantment selection is clearer, YAML export is more reliable, and items with enchantments can display their enchanted image variants."
+	},
+	{
 		"id": 41,
 		"title": "Shop Manager UI & Stock Management Improvements",
 		"date": "2026-01-03",

@@ -9,11 +9,10 @@ import { useServerShopItems, updateShopItem, markShopItemsAsChecked } from '../u
 import { isAdmin, enabledCategories } from '../constants'
 import BaseStatCard from '../components/BaseStatCard.vue'
 import BaseTable from '../components/BaseTable.vue'
-import BaseCard from '../components/BaseCard.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
-import { getImageUrl } from '../utils/image.js'
+import { getImageUrl, getItemImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
 import {
@@ -22,9 +21,7 @@ import {
 	ArrowPathIcon,
 	BellIcon,
 	BuildingStorefrontIcon,
-	CheckCircleIcon,
 	ChevronRightIcon,
-	CurrencyDollarIcon,
 	Cog6ToothIcon,
 	FolderIcon,
 	TagIcon,
@@ -136,7 +133,6 @@ const shopItems = computed(() => {
 })
 
 // Computed properties
-const hasShops = computed(() => shops.value && shops.value.length > 0)
 const hasServers = computed(() => servers.value && servers.value.length > 0)
 const selectedServer = computed(
 	() => servers.value?.find((server) => server.id === selectedServerId.value) || null
@@ -159,20 +155,6 @@ const allItemsQuery = computed(() => {
 })
 
 const availableItems = useCollection(allItemsQuery)
-
-// Get image URL, preferring enchanted version if item has enchantments
-function getItemImageUrl(imagePath, enchantments) {
-	if (!imagePath) return null
-
-	// If item has enchantments, try to use enchanted version (always .webp)
-	if (enchantments && enchantments.length > 0) {
-		// Replace extension with _enchanted.webp
-		const enchantedPath = imagePath.replace(/\.(png|webp|gif)$/i, '_enchanted.webp')
-		return getImageUrl(enchantedPath)
-	}
-
-	return getImageUrl(imagePath)
-}
 
 // Format enchantment name for display
 function formatEnchantmentName(enchantmentId) {
@@ -655,11 +637,6 @@ function saveSortSettings() {
 	} catch (error) {
 		console.warn('Error saving sort settings:', error)
 	}
-}
-
-// Helper functions
-function getServerName(serverId) {
-	return servers.value?.find((server) => server.id === serverId)?.name || 'Unknown Server'
 }
 
 // Market analysis functions
