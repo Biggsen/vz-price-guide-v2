@@ -2068,8 +2068,10 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 62.0,
-				'1_18': 47.0		},
-,
+				'1_18': 47.0
+			},
+			enchantCategories: ['durability', 'mining', 'vanishing'],
+			enchantable: true,
 
 			recipes_by_version: {
 				'1_16': {
@@ -2095,8 +2097,10 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 62.0,
-				'1_18': 47.0		},
-,
+				'1_18': 47.0
+			},
+			enchantCategories: ['durability', 'mining', 'vanishing'],
+			enchantable: true,
 
 			recipes_by_version: {
 				'1_16': {
@@ -2122,8 +2126,10 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 22.0,
-				'1_18': 17.0		},
-,
+				'1_18': 17.0
+			},
+			enchantCategories: ['durability', 'mining', 'vanishing'],
+			enchantable: true,
 
 			recipes_by_version: {
 				'1_16': {
@@ -2177,8 +2183,10 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 42.0,
-				'1_18': 32.0		},
-,
+				'1_18': 32.0
+			},
+			enchantCategories: ['durability', 'mining', 'vanishing'],
+			enchantable: true,
 
 			recipes_by_version: {
 				'1_16': {
@@ -2263,8 +2271,10 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 100.0,
-				'1_18': 75.0		},
-,
+				'1_18': 75.0
+			},
+			enchantCategories: ['armor', 'durability', 'equippable', 'head_armor', 'vanishing'],
+			enchantable: true,
 
 			recipes_by_version: {
 				'1_16': {
@@ -2287,8 +2297,10 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 160.0,
-				'1_18': 120.0		},
-,
+				'1_18': 120.0
+			},
+			enchantCategories: ['armor', 'armor_chest', 'durability', 'equippable', 'vanishing'],
+			enchantable: true,
 
 			recipes_by_version: {
 				'1_16': {
@@ -2311,8 +2323,10 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 140.0,
-				'1_18': 105.0		},
-,
+				'1_18': 105.0
+			},
+			enchantCategories: ['armor', 'durability', 'equippable', 'vanishing'],
+			enchantable: true,
 
 			recipes_by_version: {
 				'1_16': {
@@ -2335,8 +2349,10 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 80.0,
-				'1_18': 60.0		},
-,
+				'1_18': 60.0
+			},
+			enchantCategories: ['armor', 'durability', 'equippable', 'foot_armor', 'vanishing'],
+			enchantable: true,
 
 			recipes_by_version: {
 				'1_16': {
@@ -2645,8 +2661,10 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_21': 12.0		},
-,
+				'1_21': 12.0
+			},
+			enchantCategories: ['armor', 'durability', 'equippable', 'foot_armor', 'vanishing'],
+			enchantable: true,
 
 			recipes_by_version: {
 				'1_21': {
@@ -2668,8 +2686,10 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_21': 12.0		},
-,
+				'1_21': 12.0
+			},
+			enchantCategories: ['armor', 'durability', 'equippable', 'foot_armor', 'vanishing'],
+			enchantable: true,
 
 			recipes_by_version: {
 				'1_21': {
