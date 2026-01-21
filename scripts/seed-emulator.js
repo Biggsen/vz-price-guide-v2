@@ -649,9 +649,10 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_16': 842.0		},
-,
-
+				'1_16': 842.0
+			},
+			enchantCategories: ['durability', 'mining', 'vanishing'],
+			enchantable: true,
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -675,9 +676,10 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_16': 842.0		},
-,
-
+				'1_16': 842.0
+			},
+			enchantCategories: ['durability', 'mining', 'vanishing'],
+			enchantable: true,
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -701,9 +703,10 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_16': 561.0		},
-,
-
+				'1_16': 561.0
+			},
+			enchantCategories: ['durability', 'vanishing', 'weapon'],
+			enchantable: true,
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -727,9 +730,10 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_16': 282.0		},
-,
-
+				'1_16': 282.0
+			},
+			enchantCategories: ['durability', 'mining', 'vanishing'],
+			enchantable: true,
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -753,9 +757,10 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_16': 562.0		},
-,
-
+				'1_16': 562.0
+			},
+			enchantCategories: ['durability', 'mining', 'vanishing'],
+			enchantable: true,
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -779,9 +784,10 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_16': 9.0		},
-,
-
+				'1_16': 9.0
+			},
+			enchantCategories: ['bow', 'durability', 'vanishing'],
+			enchantable: true,
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
