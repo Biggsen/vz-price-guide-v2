@@ -36,6 +36,21 @@ export function getCompatibleEnchantments(item, allEnchantmentItems) {
 	})
 }
 
+// Helper to normalize enchantments stored as either an array (new) or object map (legacy)
+export function getEnchantmentIds(enchantments) {
+	if (!enchantments) return []
+
+	if (Array.isArray(enchantments)) {
+		return enchantments
+	}
+
+	if (typeof enchantments === 'object') {
+		return Object.keys(enchantments)
+	}
+
+	return []
+}
+
 /**
  * Check if a specific enchantment can be applied to an item.
  *

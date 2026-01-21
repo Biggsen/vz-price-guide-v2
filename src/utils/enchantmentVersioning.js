@@ -62,6 +62,23 @@ export function parseEnchantedBookMaterialId(materialId) {
 	return { name: match[1], level: Number(match[2]) }
 }
 
+export function extractEnchantmentsFromMaterialId(materialId) {
+	if (!materialId || !materialId.startsWith('enchanted_book_')) return []
+
+	const parsed = parseEnchantedBookMaterialId(materialId)
+	if (parsed) {
+		return [{ id: parsed.name, level: parsed.level }]
+	}
+
+	// Some sources may omit the level suffix. Assume level 1.
+	const enchantmentPart = materialId.replace('enchanted_book_', '')
+	if (enchantmentPart) {
+		return [{ id: enchantmentPart, level: 1 }]
+	}
+
+	return []
+}
+
 function inferDbEnchantmentName(resourceName, availableNamesSet) {
 	if (!resourceName) return null
 

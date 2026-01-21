@@ -17,20 +17,24 @@ import {
 } from '../utils/crateRewards.js'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { getImageUrl, getItemImageUrl } from '../utils/image.js'
-import { isItemEnchantable } from '../utils/enchantments.js'
+import { isItemEnchantable, getEnchantmentIds } from '../utils/enchantments.js'
+import { stripColorCodes } from '../utils/minecraftText.js'
 import {
 	getEnchantmentDefsForVersion,
 	buildAllowedEnchantmentMaxLevels,
 	isEnchantmentItemAllowedForVersion,
-	parseEnchantedBookMaterialId
+	parseEnchantedBookMaterialId,
+	extractEnchantmentsFromMaterialId
 } from '../utils/enchantmentVersioning.js'
 import { versions, enabledCategories, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
+import { useCategorizedItemSearch } from '../composables/useCategorizedItemSearch.js'
+import { useEnchantmentSearch } from '../composables/useEnchantmentSearch.js'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
+import CrateRewardItemRow from '../components/CrateRewardItemRow.vue'
 import {
 	PlusIcon,
-	MinusIcon,
 	PencilIcon,
 	TrashIcon,
 	ArrowDownTrayIcon,
@@ -118,15 +122,17 @@ const itemForm = ref({
 })
 
 // Item search state
-const searchQuery = ref('')
-const highlightedIndex = ref(-1)
 const searchInput = ref(null)
-const dropdownContainer = ref(null)
 
 // Weight editing state
 const editingWeightId = ref(null)
 const editingWeightValue = ref('')
 const weightInputRefs = ref({})
+
+function setWeightInputRef(id, el) {
+	if (!el) return
+	weightInputRefs.value[id] = el
+}
 
 // Sorting state
 const sortBy = ref('none')
@@ -138,10 +144,7 @@ const isSimulating = ref(false)
 const showTestRewardsModal = ref(false)
 
 // Enchantment state (Shop Manager-style search)
-const enchantmentSearchQuery = ref('')
-const enchantmentHighlightedIndex = ref(-1)
 const enchantmentSearchInput = ref(null)
-const enchantmentDropdownContainer = ref(null)
 
 // Import state
 const importFile = ref(null)
@@ -262,50 +265,16 @@ const availableItems = computed(() => {
 	})
 })
 
-// Filter items based on search query
-const filteredItems = computed(() => {
-	if (!availableItems.value) return []
-
-	const query = searchQuery.value.toLowerCase().trim()
-	if (!query) return availableItems.value
-
-	return availableItems.value.filter(
-		(item) =>
-			item.name?.toLowerCase().includes(query) ||
-			item.material_id?.toLowerCase().includes(query) ||
-			item.category?.toLowerCase().includes(query)
-	)
-})
-
-// Group items by category for better organization
-const itemsByCategory = computed(() => {
-	const grouped = {}
-
-	filteredItems.value.forEach((item) => {
-		const category = item.category || 'Uncategorized'
-		if (!grouped[category]) {
-			grouped[category] = []
-		}
-		grouped[category].push(item)
-	})
-
-	return grouped
-})
-
-// Flattened items list for keyboard navigation
-const flattenedItems = computed(() => {
-	const flattened = []
-	const grouped = itemsByCategory.value
-
-	// Flatten items in the same order they appear visually (by category)
-	Object.keys(grouped).forEach((category) => {
-		grouped[category].forEach((item) => {
-			flattened.push(item)
-		})
-	})
-
-	return flattened
-})
+const {
+	searchQuery,
+	highlightedIndex,
+	dropdownContainer,
+	filteredItems,
+	itemsByCategory,
+	handleKeyDown,
+	handleSearchInput,
+	getItemVisualIndex
+} = useCategorizedItemSearch({ items: availableItems, onSelect: selectItem })
 
 // Selected item for display
 const selectedItem = computed(
@@ -351,15 +320,18 @@ const showEnchantmentsSection = computed(() => {
 	return isSelectedItemEnchantable.value || hasSelectedEnchantments.value
 })
 const canAddEnchantments = computed(() => isSelectedItemEnchantable.value)
-
-const filteredEnchantments = computed(() => {
-	if (!enchantmentSearchQuery.value || enchantmentSearchQuery.value.length < 1) return []
-
-	const query = enchantmentSearchQuery.value.toLowerCase().trim()
-	return enchantmentItems.value.filter((enchantment) => {
-		const name = formatEnchantmentName(enchantment.id).toLowerCase()
-		return name.includes(query)
-	})
+const {
+	searchQuery: enchantmentSearchQuery,
+	highlightedIndex: enchantmentHighlightedIndex,
+	dropdownContainer: enchantmentDropdownContainer,
+	filteredItems: filteredEnchantments,
+	handleSearchInput: handleEnchantmentSearchInput,
+	handleKeyDown: handleEnchantmentKeyDown
+} = useEnchantmentSearch({
+	items: enchantmentItems,
+	getLabel: (enchantment) => formatEnchantmentName(enchantment.id),
+	onSelect: addEnchantmentToForm,
+	minQueryLength: 1
 })
 
 function getEnchantmentTypeForId(enchantmentId) {
@@ -388,71 +360,6 @@ function addEnchantmentToForm(enchantmentItem) {
 	itemForm.value.enchantments = next
 	enchantmentSearchQuery.value = ''
 	enchantmentHighlightedIndex.value = -1
-}
-
-function scrollToHighlightedEnchantment() {
-	if (!enchantmentDropdownContainer.value || enchantmentHighlightedIndex.value < 0) return
-
-	setTimeout(() => {
-		const highlightedElement = enchantmentDropdownContainer.value.querySelector('.bg-norway')
-		if (highlightedElement) {
-			highlightedElement.scrollIntoView({
-				behavior: 'smooth',
-				block: 'nearest'
-			})
-		}
-	}, 0)
-}
-
-function handleEnchantmentSearchInput() {
-	enchantmentHighlightedIndex.value = -1
-}
-
-function handleEnchantmentKeyDown(event) {
-	if (!filteredEnchantments.value.length) return
-
-	const oldIndex = enchantmentHighlightedIndex.value
-
-	switch (event.key) {
-		case 'ArrowDown':
-			event.preventDefault()
-			if (enchantmentHighlightedIndex.value < 0) {
-				enchantmentHighlightedIndex.value = 0
-			} else {
-				enchantmentHighlightedIndex.value = Math.min(
-					enchantmentHighlightedIndex.value + 1,
-					filteredEnchantments.value.length - 1
-				)
-			}
-			break
-		case 'ArrowUp':
-			event.preventDefault()
-			if (enchantmentHighlightedIndex.value <= 0) {
-				enchantmentHighlightedIndex.value = -1
-			} else {
-				enchantmentHighlightedIndex.value = Math.max(enchantmentHighlightedIndex.value - 1, 0)
-			}
-			break
-		case 'Enter':
-			event.preventDefault()
-			if (
-				enchantmentHighlightedIndex.value >= 0 &&
-				enchantmentHighlightedIndex.value < filteredEnchantments.value.length
-			) {
-				const enchantment = filteredEnchantments.value[enchantmentHighlightedIndex.value]
-				addEnchantmentToForm(enchantment)
-			}
-			break
-		case 'Escape':
-			enchantmentSearchQuery.value = ''
-			enchantmentHighlightedIndex.value = -1
-			break
-	}
-
-	// Scroll if highlight changed
-	if (oldIndex !== enchantmentHighlightedIndex.value && enchantmentHighlightedIndex.value >= 0) {
-		scrollToHighlightedEnchantment()
-	}
 }
 
 // Validate crate existence and redirect if not found
@@ -810,36 +717,6 @@ function generateDisplayName(itemForm) {
 	const quantityPrefix = quantity > 1 ? `${quantity}x ` : ''
 
 	return `<white>${quantityPrefix}${capitalizedItemName}`
-}
-
-// Helper function to get enchantment IDs from either array or object format
-function getEnchantmentIds(enchantments) {
-	if (!enchantments) return []
-
-	// Handle array format (new structure)
-	if (Array.isArray(enchantments)) {
-		return enchantments
-	}
-
-	// Handle object format (legacy structure)
-	if (typeof enchantments === 'object') {
-		return Object.keys(enchantments)
-	}
-
-	return []
-}
-
-// Helper function to strip color codes from text
-function stripColorCodes(text) {
-	if (!text) return ''
-
-	// Remove <color> format (e.g., <red>, <blue>, <#ff0000>)
-	let cleaned = text.replace(/<[^>]*>/g, '')
-
-	// Remove § format color codes (e.g., §c, §4, §r)
-	cleaned = cleaned.replace(/§[0-9a-fk-or]/gi, '')
-
-	return cleaned.trim()
 }
 
 async function saveItem() {
@@ -1211,33 +1088,6 @@ function formatEnchantmentName(enchantmentId) {
 		.replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
-// Extract enchantments from material_id (e.g., "enchanted_book_mending_1" -> [{id: "mending", level: 1}])
-function extractEnchantmentsFromMaterialId(materialId) {
-	if (!materialId || !materialId.startsWith('enchanted_book_')) {
-		return []
-	}
-
-	// Remove "enchanted_book_" prefix
-	const enchantmentPart = materialId.replace('enchanted_book_', '')
-
-	// Try to extract enchantment with level first (e.g., "mending_1" -> "mending:1")
-	const enchantWithLevelMatch = enchantmentPart.match(/^(.+)_(\d+)$/)
-	if (enchantWithLevelMatch) {
-		const enchantName = enchantWithLevelMatch[1]
-		const enchantLevel = parseInt(enchantWithLevelMatch[2])
-		return [{ id: enchantName, level: enchantLevel }]
-	}
-
-	// Try to extract enchantment without level (e.g., "silk_touch" -> "silk_touch:1")
-	const enchantWithoutLevelMatch = enchantmentPart.match(/^(.+)$/)
-	if (enchantWithoutLevelMatch) {
-		const enchantName = enchantWithoutLevelMatch[1]
-		return [{ id: enchantName, level: 1 }]
-	}
-
-	return []
-}
-
 // Item search functions
 function selectItem(item) {
 	// Selecting an item resets enchantments
@@ -1522,79 +1372,6 @@ function simulateMultipleOpens(count) {
 
 function clearSimulationResults() {
 	simulationResults.value = []
-}
-
-// Keyboard navigation handlers
-function handleKeyDown(event) {
-	if (!flattenedItems.value.length) return
-
-	const oldIndex = highlightedIndex.value
-
-	switch (event.key) {
-		case 'ArrowDown':
-			event.preventDefault()
-			if (highlightedIndex.value < 0) {
-				highlightedIndex.value = 0
-			} else {
-				highlightedIndex.value = Math.min(
-					highlightedIndex.value + 1,
-					flattenedItems.value.length - 1
-				)
-			}
-			break
-		case 'ArrowUp':
-			event.preventDefault()
-			if (highlightedIndex.value < 0) {
-				highlightedIndex.value = flattenedItems.value.length - 1
-			} else {
-				highlightedIndex.value = Math.max(highlightedIndex.value - 1, 0)
-			}
-			break
-		case 'Enter':
-			event.preventDefault()
-			if (
-				highlightedIndex.value >= 0 &&
-				highlightedIndex.value < flattenedItems.value.length
-			) {
-				selectItem(flattenedItems.value[highlightedIndex.value])
-			}
-			break
-		case 'Escape':
-			event.preventDefault()
-			searchQuery.value = ''
-			highlightedIndex.value = -1
-			break
-	}
-
-	// Auto-scroll the dropdown if needed
-	if (highlightedIndex.value !== oldIndex && dropdownContainer.value) {
-		nextTick(() => {
-			const container = dropdownContainer.value
-			const highlightedElement = container?.querySelector('.bg-norway')
-			if (highlightedElement) {
-				highlightedElement.scrollIntoView({ block: 'nearest' })
-			}
-		})
-	}
-}
-
-function handleSearchInput() {
-	highlightedIndex.value = -1
-}
-
-// Get visual index of an item in the dropdown (accounting for category grouping)
-function getItemVisualIndex(targetCategory, targetCategoryIndex) {
-	let visualIndex = 0
-	const grouped = itemsByCategory.value
-
-	for (const [category, categoryItems] of Object.entries(grouped)) {
-		if (category === targetCategory) {
-			return visualIndex + targetCategoryIndex
-		}
-		visualIndex += categoryItems.length
-	}
-
-	return -1
 }
 
 // Import functions
@@ -1911,240 +1688,32 @@ watch(selectedCrate, (crate) => {
 			<div v-if="rewardItemsPending" class="p-6 text-gray-600">Loading reward items...</div>
 			<div v-else>
 				<div class="divide-y-2 divide-white">
-					<div
+					<CrateRewardItemRow
 						v-for="rewardDoc in sortedRewardDocuments"
 						:key="rewardDoc.id"
-						class="pr-6 max-[640px]:pr-3 bg-norway"
-						data-cy="item-row">
-						<!-- Multi-item indicator badge -->
-						<div
-							v-if="isMultiItemReward(rewardDoc)"
-							class="px-4 py-1 bg-blue-100 border-b border-white">
-							<span class="text-xs font-medium text-blue-800">
-								⚠️ Multi-item reward (imported from YAML, read-only)
-							</span>
-						</div>
-						<div class="flex items-stretch justify-between">
-							<div class="flex-1">
-								<div class="flex items-stretch gap-4 max-[640px]:gap-2">
-									<div
-										class="w-16 max-[640px]:w-12 bg-highland border-r-2 border-white flex items-center justify-center">
-										<img
-											v-if="getDisplayItemImageFromDoc(rewardDoc)"
-											:src="getItemImageUrl(
-												getDisplayItemImageFromDoc(rewardDoc),
-												getEnchantmentIds(rewardDoc.display_enchantments)
-											)"
-											:alt="rewardDoc.display_name"
-											@error="
-												$event.target.src = getImageUrl(
-													getDisplayItemImageFromDoc(rewardDoc)
-												)
-											"
-											loading="lazy"
-											decoding="async"
-											fetchpriority="low"
-											class="max-w-10 max-h-10 max-[640px]:max-w-8 max-[640px]:max-h-8" />
-										<QuestionMarkCircleIcon
-											v-else
-											class="w-8 h-8 max-[640px]:w-6 max-[640px]:h-6 text-white" />
-									</div>
-									<div
-										class="flex-1 flex items-center justify-between max-[640px]:gap-4 max-[450px]:gap-0 max-[450px]:flex-col max-[450px]:items-start">
-										<div
-											class="pt-2 pb-3 max-[640px]:pt-1 max-[640px]:pb-2 max-[450px]:pb-1 max-[450px]:w-full">
-											<h4
-												class="text-sm sm:text-base font-semibold text-gray-900">
-												{{
-													stripColorCodes(
-														rewardDoc.display_name || 'Unknown Reward'
-													)
-												}}
-											</h4>
-											<div class="text-sm text-heavy-metal">
-												<span class="font-medium">Value:</span>
-												{{ getValueDisplay(rewardDoc) }}
-											</div>
-											<!-- Items list (only for multi-item rewards) -->
-											<div
-												v-if="
-													isMultiItemReward(rewardDoc) &&
-													rewardDoc.items &&
-													rewardDoc.items.length > 0
-												"
-												class="mt-2">
-												<div
-													class="text-sm text-heavy-metal font-medium mb-1">
-													Contains {{ rewardDoc.items.length }} items:
-												</div>
-												<div class="space-y-1">
-													<div
-														v-for="(item, idx) in rewardDoc.items"
-														:key="idx"
-														class="text-sm text-heavy-metal flex items-center gap-2">
-														<span>
-															• {{ item.quantity }}x
-															{{
-																getItemById(item.item_id)?.name ||
-																'Unknown'
-															}}
-														</span>
-													</div>
-												</div>
-											</div>
-
-											<!-- Commands Display -->
-											<div
-												v-if="
-													rewardDoc.commands &&
-													rewardDoc.commands.length > 0
-												"
-												class="text-sm text-heavy-metal">
-												<span class="font-medium">Commands:</span>
-												<div class="mt-1 space-y-1">
-													<div
-														v-for="(
-															command, index
-														) in rewardDoc.commands"
-														:key="index"
-														class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-														{{ command }}
-													</div>
-												</div>
-											</div>
-											<!-- Enchantments Display -->
-											<div
-												v-if="
-													rewardDoc.display_enchantments &&
-													getEnchantmentIds(
-														rewardDoc.display_enchantments
-													).length > 0
-												"
-												class="mt-1">
-												<div class="flex flex-wrap gap-1">
-													<span
-														v-for="enchantmentId in getEnchantmentIds(
-															rewardDoc.display_enchantments
-														)"
-														:key="enchantmentId"
-														class="px-2 py-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase">
-														{{ formatEnchantmentName(enchantmentId) }}
-													</span>
-												</div>
-											</div>
-
-											<!-- YAML Preview (Debug) -->
-											<div v-if="showYamlPreview" class="mt-2">
-												<button
-													@click="toggleReviewPanel(rewardDoc.id)"
-													class="flex items-center gap-2 text-sm text-heavy-metal hover:text-gray-800 transition-colors">
-													<svg
-														:class="[
-															'w-4 h-4 transition-transform',
-															isReviewPanelExpanded(rewardDoc.id)
-																? 'rotate-90'
-																: ''
-														]"
-														fill="none"
-														stroke="currentColor"
-														viewBox="0 0 24 24">
-														<path
-															stroke-linecap="round"
-															stroke-linejoin="round"
-															stroke-width="2"
-															d="M9 5l7 7-7 7" />
-													</svg>
-													{{
-														isReviewPanelExpanded(rewardDoc.id)
-															? 'Hide'
-															: 'Show'
-													}}
-													YAML Preview
-												</button>
-
-												<pre
-													v-if="isReviewPanelExpanded(rewardDoc.id)"
-													class="mt-3 text-xs bg-white p-3 rounded border overflow-x-auto"><code>{{ getYamlPreview(rewardDoc) }}</code></pre>
-											</div>
-										</div>
-										<!-- Weight and Chance Boxes -->
-										<div class="flex gap-2 max-[450px]:mt-2 max-[450px]:mb-2">
-											<div
-												class="bg-blue-50 border-2 border-gray-asparagus rounded flex items-stretch">
-												<button
-													@click="decreaseRewardWeight(rewardDoc)"
-													class="flex items-center justify-center px-1 py-1 bg-sea-mist hover:bg-saltpan transition-colors rounded-l border-r-2 border-gray-asparagus min-w-[2rem]"
-													title="Decrease weight by 10">
-													<MinusIcon class="w-4 h-4 text-heavy-metal" />
-												</button>
-												<div
-													v-if="editingWeightId !== rewardDoc.id"
-													@click="startEditWeight(rewardDoc)"
-													class="flex items-center justify-center px-1 py-1 text-center cursor-pointer bg-norway hover:bg-saltpan transition-colors min-w-[2.5rem] border-r-2 border-gray-asparagus">
-													<span
-														class="text-sm sm:text-base font-bold text-heavy-metal"
-														data-cy="item-weight-display">
-														{{ rewardDoc.weight }}
-													</span>
-												</div>
-												<input
-													v-else
-													:ref="
-														(el) => (weightInputRefs[rewardDoc.id] = el)
-													"
-													v-model="editingWeightValue"
-													type="number"
-													min="1"
-													@blur="saveWeight(rewardDoc)"
-													@keyup.enter="saveWeight(rewardDoc)"
-													@keydown.escape="cancelEditWeight"
-													class="px-1 py-1 text-center text-sm sm:text-base font-semibold text-heavy-metal focus:outline-none focus:ring-2 focus:ring-blue-500 w-10 border-r-2 border-gray-asparagus bg-norway [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-													autofocus />
-												<button
-													@click="increaseRewardWeight(rewardDoc)"
-													class="flex items-center justify-center px-1 py-1 bg-sea-mist hover:bg-saltpan transition-colors rounded-r min-w-[2rem]"
-													title="Increase weight by 10">
-													<PlusIcon class="w-4 h-4 text-heavy-metal" />
-												</button>
-											</div>
-											<div
-												class="bg-transparent px-2 py-1 inline-block min-w-[60px] text-center">
-												<span
-													class="text-sm sm:text-base font-semibold text-heavy-metal">
-													{{ getRewardDocChance(rewardDoc).toFixed(1) }}%
-												</span>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div
-								class="flex items-center max-[450px]:items-start max-[450px]:pt-2 gap-2 ml-8 max-[640px]:ml-2">
-								<button
-									v-if="canEditReward(rewardDoc)"
-									@click="startEditReward(rewardDoc)"
-									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-									title="Edit reward"
-									data-cy="edit-item-button">
-									<PencilIcon class="w-4 h-4" />
-								</button>
-								<button
-									v-else
-									disabled
-									class="p-1 bg-gray-300 text-gray-500 cursor-not-allowed rounded"
-									title="Cannot edit multi-item rewards (imported from YAML)">
-									<PencilIcon class="w-4 h-4" />
-								</button>
-								<button
-									@click="confirmRemoveReward(rewardDoc)"
-									class="p-1 bg-gray-asparagus text-white hover:bg-opacity-80 transition-colors rounded"
-									title="Delete reward"
-									data-cy="delete-item-button">
-									<TrashIcon class="w-4 h-4" />
-								</button>
-							</div>
-						</div>
-					</div>
+						:rewardDoc="rewardDoc"
+						:canEdit="canEditReward(rewardDoc)"
+						:isMultiItem="isMultiItemReward(rewardDoc)"
+						:showYamlPreview="showYamlPreview"
+						:getDisplayItemImageFromDoc="getDisplayItemImageFromDoc"
+						:getValueDisplay="getValueDisplay"
+						:getRewardDocChance="getRewardDocChance"
+						:getItemById="getItemById"
+						:formatEnchantmentName="formatEnchantmentName"
+						:getYamlPreview="getYamlPreview"
+						:toggleReviewPanel="toggleReviewPanel"
+						:isReviewPanelExpanded="isReviewPanelExpanded"
+						:editingWeightId="editingWeightId"
+						:editingWeightValue="editingWeightValue"
+						:setWeightInputRef="setWeightInputRef"
+						:startEditWeight="startEditWeight"
+						:saveWeight="saveWeight"
+						:cancelEditWeight="cancelEditWeight"
+						:increaseRewardWeight="increaseRewardWeight"
+						:decreaseRewardWeight="decreaseRewardWeight"
+						@update:editingWeightValue="editingWeightValue = $event"
+						@edit="startEditReward"
+						@delete="confirmRemoveReward" />
 				</div>
 			</div>
 		</div>
