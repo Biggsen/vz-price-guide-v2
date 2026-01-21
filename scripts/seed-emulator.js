@@ -2688,9 +2688,8 @@ const TEST_DATA = {
 			prices_by_version: {
 				'1_21': 12.0
 			},
-			enchantCategories: ['armor', 'durability', 'equippable', 'foot_armor', 'vanishing'],
+			enchantCategories: ['durability', 'fire_aspect', 'melee_weapon', 'sharp_weapon', 'sweeping', 'vanishing', 'weapon'],
 			enchantable: true,
-
 			recipes_by_version: {
 				'1_21': {
 					ingredients: [
