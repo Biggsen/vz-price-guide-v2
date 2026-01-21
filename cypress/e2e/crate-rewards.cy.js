@@ -332,8 +332,8 @@ describe('Crate Rewards', () => {
 			cy.get('[data-cy="item-search-results"]').should('be.visible')
 			cy.get('[data-cy="item-search-results"]').contains('diamond').click()
 
-			cy.get('[data-cy="item-quantity-input"]').clear().type('5')
-			cy.get('[data-cy="item-weight-input"]').clear().type('10')
+			cy.get('[data-cy="item-quantity-input"]').clear().should('have.value', '').type('5', { delay: 0 })
+			cy.get('[data-cy="item-weight-input"]').clear().should('have.value', '').type('10', { delay: 0 })
 
 		// Submit item
 		cy.get('[data-cy="item-submit-button"]').click()
@@ -377,7 +377,7 @@ describe('Crate Rewards', () => {
 			cy.get('[data-cy="item-search-input"]').type('diamond')
 			cy.get('[data-cy="item-search-results"]').should('be.visible')
 			cy.get('[data-cy="item-search-results"]').contains('diamond').click()
-			cy.get('[data-cy="item-quantity-input"]').clear().type('5')
+			cy.get('[data-cy="item-quantity-input"]').clear().should('have.value', '').type('5', { delay: 0 })
 
 			// Clear weight field
 			cy.get('[data-cy="item-weight-input"]').clear()
@@ -396,8 +396,8 @@ describe('Crate Rewards', () => {
 			cy.get('[data-cy="item-search-input"]').type('diamond')
 			cy.get('[data-cy="item-search-results"]').should('be.visible')
 			cy.get('[data-cy="item-search-results"]').contains('diamond').click()
-			cy.get('[data-cy="item-quantity-input"]').clear().type('5')
-			cy.get('[data-cy="item-weight-input"]').clear().type('10')
+			cy.get('[data-cy="item-quantity-input"]').clear().should('have.value', '').type('5', { delay: 0 })
+			cy.get('[data-cy="item-weight-input"]').clear().should('have.value', '').type('10', { delay: 0 })
 			cy.get('[data-cy="item-submit-button"]').click()
 
 			// Wait for item to appear
@@ -408,7 +408,7 @@ describe('Crate Rewards', () => {
 
 			// Update item details
 			cy.get('[data-cy="item-quantity-input"]').clear().type('10')
-			cy.get('[data-cy="item-weight-input"]').clear().type('20')
+			cy.get('[data-cy="item-weight-input"]').clear().should('have.value', '').type('20', { delay: 0 })
 
 			// Save changes
 			cy.get('[data-cy="item-submit-button"]').click()
@@ -424,8 +424,8 @@ describe('Crate Rewards', () => {
 			cy.get('[data-cy="item-search-input"]').type('iron ingot')
 			cy.get('[data-cy="item-search-results"]').should('be.visible')
 			cy.get('[data-cy="item-search-results"]').contains('iron ingot').click()
-			cy.get('[data-cy="item-quantity-input"]').clear().type('3')
-			cy.get('[data-cy="item-weight-input"]').clear().type('15')
+			cy.get('[data-cy="item-quantity-input"]').clear().should('have.value', '').type('3', { delay: 0 })
+			cy.get('[data-cy="item-weight-input"]').clear().should('have.value', '').type('15', { delay: 0 })
 			cy.get('[data-cy="item-submit-button"]').click()
 
 			// Wait for item to appear in the list
@@ -454,8 +454,8 @@ describe('Crate Rewards', () => {
 			cy.get('[data-cy="item-search-input"]').type('Gold')
 			cy.get('[data-cy="item-search-results"]').should('be.visible')
 			cy.get('[data-cy="item-search-results"]').contains('gold ingot').click()
-			cy.get('[data-cy="item-quantity-input"]').clear().type('3')
-			cy.get('[data-cy="item-weight-input"]').clear().type('5')
+			cy.get('[data-cy="item-quantity-input"]').clear().should('have.value', '').type('3', { delay: 0 })
+			cy.get('[data-cy="item-weight-input"]').clear().should('have.value', '').type('5', { delay: 0 })
 			cy.get('[data-cy="item-submit-button"]').click()
 
 			// Wait for both items to appear
@@ -487,8 +487,8 @@ describe('Crate Rewards', () => {
 			cy.get('[data-cy="item-search-input"]').type('diamond')
 			cy.get('[data-cy="item-search-results"]').should('be.visible')
 			cy.get('[data-cy="item-search-results"]').contains('diamond').click()
-			cy.get('[data-cy="item-quantity-input"]').clear().type('5')
-			cy.get('[data-cy="item-weight-input"]').clear().type('10')
+			cy.get('[data-cy="item-quantity-input"]').clear().should('have.value', '').type('5', { delay: 0 })
+			cy.get('[data-cy="item-weight-input"]').clear().should('have.value', '').type('10', { delay: 0 })
 			cy.get('[data-cy="item-submit-button"]').click()
 
 			// Add second item with higher weight
@@ -496,8 +496,8 @@ describe('Crate Rewards', () => {
 			cy.get('[data-cy="item-search-input"]').type('Gold')
 			cy.get('[data-cy="item-search-results"]').should('be.visible')
 			cy.get('[data-cy="item-search-results"]').contains('gold ingot').click()
-			cy.get('[data-cy="item-quantity-input"]').clear().type('3')
-			cy.get('[data-cy="item-weight-input"]').clear().type('20')
+			cy.get('[data-cy="item-quantity-input"]').clear().should('have.value', '').type('3', { delay: 0 })
+			cy.get('[data-cy="item-weight-input"]').clear().should('have.value', '').type('20', { delay: 0 })
 			cy.get('[data-cy="item-submit-button"]').click()
 
 			// Wait for both items to appear
