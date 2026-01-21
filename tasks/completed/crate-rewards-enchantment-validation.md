@@ -2,9 +2,27 @@
 
 ## Status
 
-Ready to implement.
+Completed (2026-01-21).
 
 This spec modernizes Crate Rewards enchantment handling to match the upgraded enchantment data model and the Shop Manager UX, while keeping Crate Rewards’ CrazyCrates YAML export requirements front-and-center.
+
+## Implementation summary
+
+- Crate Rewards uses the Shop Manager-style enchantment UI (chips + search dropdown).
+- Enchantments are stored as arrays of enchantment item document IDs and kept in sync between:
+	- `items[0].enchantments`
+	- `display_enchantments`
+- Version-aware enchantment filtering is enforced using resource enchantment data with nearest-previous fallback.
+- YAML export uses deterministic sorting and derives enchantment `name:level` from enchantment `material_id` (best-effort fallback when needed).
+- Reward item images prefer the `_enchanted.webp` variant when enchantments are present (with fallback to base image).
+
+### Primary implementation references
+
+- `src/views/CrateSingleView.vue`
+- `src/utils/crateRewards.js`
+- `src/utils/enchantmentVersioning.js`
+- `src/utils/image.js` (`getItemImageUrl`)
+- Updates entry: `data/updates.json` (id `42`)
 
 ## Goals
 
@@ -122,8 +140,8 @@ If an enchantment ID can’t be resolved to a proper `enchanted_book_<name>_<lev
 
 ## Success criteria
 
-- Crate Rewards enchantment UI matches the Shop Manager UX.
-- Enchantments are stored as arrays of IDs and are exported via `material_id` mapping.
-- Base book normalization stays intact and supports multi-enchantment books.
-- Version-aware filtering works with nearest-previous fallback and maxLevel enforcement.
-- Export is deterministic and forgiving.
+- [x] Crate Rewards enchantment UI matches the Shop Manager UX.
+- [x] Enchantments are stored as arrays of IDs and are exported via `material_id` mapping.
+- [x] Base book normalization stays intact and supports multi-enchantment books.
+- [x] Version-aware filtering works with nearest-previous fallback and maxLevel enforcement.
+- [x] Export is deterministic and forgiving.
