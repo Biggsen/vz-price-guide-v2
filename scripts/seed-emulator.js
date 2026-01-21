@@ -555,7 +555,8 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 2240.0
-			 ['armor', 'armor_chest', 'durability', 'equippable', 'vanishing'],
+			},
+			enchantCategories: ['armor', 'armor_chest', 'durability', 'equippable', 'vanishing'],
 			enchantable: true,
 			recipes_by_version: {
 				'1_16': {
