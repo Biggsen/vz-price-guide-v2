@@ -141,11 +141,23 @@ function updateItemForm(field, value) {
 }
 
 function updateQuantity(value) {
-	updateItemForm('quantity', Number(value))
+	// Allow empty string for clearing the field
+	if (value === '' || value === null) {
+		updateItemForm('quantity', '')
+	} else {
+		const numValue = parseInt(value)
+		updateItemForm('quantity', isNaN(numValue) ? '' : numValue)
+	}
 }
 
 function updateWeight(value) {
-	updateItemForm('weight', Number(value))
+	// Allow empty string for clearing the field
+	if (value === '' || value === null) {
+		updateItemForm('weight', '')
+	} else {
+		const numValue = parseInt(value)
+		updateItemForm('weight', isNaN(numValue) ? '' : numValue)
+	}
 }
 
 function updateValueSource(value) {

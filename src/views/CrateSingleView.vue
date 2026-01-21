@@ -741,12 +741,12 @@ async function saveItem() {
 		return
 	}
 
-	if (!itemForm.value.quantity || itemForm.value.quantity < 1) {
+	if (!itemForm.value.quantity || itemForm.value.quantity === '' || itemForm.value.quantity < 1) {
 		addItemFormError.value = 'quantity'
 		return
 	}
 
-	if (!itemForm.value.weight || itemForm.value.weight < 1) {
+	if (!itemForm.value.weight || itemForm.value.weight === '' || itemForm.value.weight < 1) {
 		addItemFormError.value = 'weight'
 		return
 	}
