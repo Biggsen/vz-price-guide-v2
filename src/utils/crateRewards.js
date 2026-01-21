@@ -229,8 +229,12 @@ export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 
 		const now = new Date().toISOString()
 
-		// Convert enchantments object to array format for consistency with YAML imports
-		const enchantmentsArray = itemData.enchantments ? Object.keys(itemData.enchantments) : []
+		// Normalize enchantments to array format
+		const enchantmentsArray = Array.isArray(itemData.enchantments)
+			? itemData.enchantments
+			: itemData.enchantments
+				? Object.keys(itemData.enchantments)
+				: []
 
 		// Create NEW structure with single item in items array
 		const rewardDocument = {
@@ -239,7 +243,7 @@ export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 			display_name: itemData.display_name || '',
 			display_item: itemData.display_item || itemData.item_id,
 			display_amount: itemData.display_amount || itemData.quantity || 1,
-			display_enchantments: enchantmentsArray, // Add missing display_enchantments field
+			display_enchantments: enchantmentsArray,
 			value_source: itemData.value_source || 'catalog',
 			custom_value: itemData.value_source === 'custom' ? itemData.custom_value : null,
 			settings: {
@@ -254,7 +258,7 @@ export async function addCrateRewardItem(crateId, itemData, itemDoc = null) {
 				{
 					item_id: itemData.item_id,
 					quantity: itemData.quantity || 1,
-					enchantments: enchantmentsArray, // Convert object to array format
+					enchantments: enchantmentsArray,
 					catalog_item: true,
 					matched: true,
 					name: '' // Only populated for imported items with special names
@@ -405,6 +409,68 @@ export function calculateCrateRewardTotalValue(rewardData, allItems, version = '
 /**
  * Convert an item object back to Crazy Crates item string format
  */
+function parseEnchantmentNameLevelFromMaterialId(materialId) {
+	if (!materialId || !materialId.startsWith('enchanted_book_')) return null
+	const part = materialId.replace('enchanted_book_', '')
+	const match = part.match(/^(.+)_(\d+)$/)
+	if (!match) return null
+	return { name: match[1], level: parseInt(match[2]) || 1 }
+}
+
+function parseEnchantmentNameLevelFromDisplayName(enchantDocName) {
+	if (!enchantDocName) return null
+	const match = enchantDocName.match(/^enchanted book \((.+)\)$/i)
+	if (!match) return null
+
+	const content = match[1].trim()
+	const parts = content.split(' ').filter(Boolean)
+
+	const romanToNumber = {
+		i: 1,
+		ii: 2,
+		iii: 3,
+		iv: 4,
+		v: 5,
+		vi: 6,
+		vii: 7,
+		viii: 8,
+		ix: 9,
+		x: 10
+	}
+
+	const last = parts[parts.length - 1]?.toLowerCase()
+	const hasRomanLevel = last && romanToNumber[last]
+	const level = hasRomanLevel ? romanToNumber[last] : 1
+	const nameParts = hasRomanLevel ? parts.slice(0, -1) : parts
+	const name = nameParts.join('_').toLowerCase()
+
+	if (!name) return null
+	return { name, level }
+}
+
+function getEnchantmentNameLevel(enchantId, allItems = []) {
+	const enchantDoc = allItems.find((i) => i.id === enchantId)
+
+	const fromMaterialId =
+		parseEnchantmentNameLevelFromMaterialId(enchantDoc?.material_id) ||
+		parseEnchantmentNameLevelFromMaterialId(enchantId)
+	if (fromMaterialId) return fromMaterialId
+
+	const fromName = parseEnchantmentNameLevelFromDisplayName(enchantDoc?.name)
+	if (fromName) return fromName
+
+	return { name: (enchantId || '').toString(), level: 1 }
+}
+
+function sortEnchantmentIdsForYaml(enchantIds = [], allItems = []) {
+	return [...enchantIds].sort((a, b) => {
+		const ea = getEnchantmentNameLevel(a, allItems)
+		const eb = getEnchantmentNameLevel(b, allItems)
+		if (ea.name !== eb.name) return ea.name.localeCompare(eb.name)
+		return (ea.level || 0) - (eb.level || 0)
+	})
+}
+
 function itemObjectToItemString(itemObj, allItems = []) {
 	if (!itemObj) return ''
 
@@ -450,49 +516,19 @@ function itemObjectToItemString(itemObj, allItems = []) {
 	}
 
 	// Add enchantments if present
-	if (itemObj.enchantments && itemObj.enchantments.length > 0) {
+	if (
+		itemObj.enchantments &&
+		((Array.isArray(itemObj.enchantments) && itemObj.enchantments.length > 0) ||
+			(typeof itemObj.enchantments === 'object' &&
+				!Array.isArray(itemObj.enchantments) &&
+				Object.keys(itemObj.enchantments).length > 0))
+	) {
 		// Handle new array format (post-flattening removal)
 		if (Array.isArray(itemObj.enchantments)) {
-			itemObj.enchantments.forEach((enchantId) => {
-				const enchantDoc = allItems.find((i) => i.id === enchantId)
-				if (enchantDoc && enchantDoc.name) {
-					// Extract enchantment name from "enchanted book (unbreaking iii)"
-					const match = enchantDoc.name.match(/^enchanted book \((.+)\)$/)
-					if (match) {
-						const contentInParentheses = match[1].trim()
-						const parts = contentInParentheses.split(' ')
-
-						// Find the last part that's a roman numeral
-						const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v']
-						let levelIndex = -1
-						let romanLevel = null
-
-						for (let i = parts.length - 1; i >= 0; i--) {
-							if (romanNumerals.includes(parts[i].toLowerCase())) {
-								levelIndex = i
-								romanLevel = parts[i].toLowerCase()
-								break
-							}
-						}
-
-						// Extract enchantment name (everything except the level)
-						const enchantmentParts =
-							levelIndex >= 0 ? parts.slice(0, levelIndex) : parts
-						const enchantment = enchantmentParts.join('_')
-
-						// Convert roman numerals to numbers
-						const levelMap = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 }
-						const displayLevel = romanLevel ? levelMap[romanLevel] : 1
-
-						itemString += `, ${enchantment}:${displayLevel}`
-					} else {
-						// Fallback if name doesn't match expected format
-						itemString += `, ${enchantId}:1`
-					}
-				} else {
-					// Fallback if enchantment item not found
-					itemString += `, ${enchantId}:1`
-				}
+			const sorted = sortEnchantmentIdsForYaml(itemObj.enchantments, allItems)
+			sorted.forEach((enchantId) => {
+				const { name, level } = getEnchantmentNameLevel(enchantId, allItems)
+				itemString += `, ${name}:${level || 1}`
 			})
 		}
 		// Handle old object format for backward compatibility
@@ -500,47 +536,23 @@ function itemObjectToItemString(itemObj, allItems = []) {
 			typeof itemObj.enchantments === 'object' &&
 			Object.keys(itemObj.enchantments).length > 0
 		) {
-			Object.entries(itemObj.enchantments).forEach(([enchantId, level]) => {
-				const enchantDoc = allItems.find((i) => i.id === enchantId)
-				if (enchantDoc && enchantDoc.name) {
-					// Extract enchantment name from "enchanted book (unbreaking iii)"
-					const match = enchantDoc.name.match(/^enchanted book \((.+)\)$/)
-					if (match) {
-						const contentInParentheses = match[1].trim()
-						const parts = contentInParentheses.split(' ')
-
-						// Find the last part that's a roman numeral
-						const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v']
-						let levelIndex = -1
-						let romanLevel = null
-
-						for (let i = parts.length - 1; i >= 0; i--) {
-							if (romanNumerals.includes(parts[i].toLowerCase())) {
-								levelIndex = i
-								romanLevel = parts[i].toLowerCase()
-								break
-							}
-						}
-
-						// Extract enchantment name (everything except the level)
-						const enchantmentParts =
-							levelIndex >= 0 ? parts.slice(0, levelIndex) : parts
-						const enchantment = enchantmentParts.join('_')
-
-						// Convert roman numerals to numbers
-						const levelMap = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 }
-						const displayLevel = romanLevel ? levelMap[romanLevel] : level
-
-						itemString += `, ${enchantment}:${displayLevel}`
-					} else {
-						// Fallback if name doesn't match expected format
-						itemString += `, ${enchantId}:${level}`
-					}
-				} else {
-					// Fallback if enchantment item not found
-					itemString += `, ${enchantId}:${level}`
+			const entries = Object.entries(itemObj.enchantments).map(([enchantId, level]) => {
+				const parsed = getEnchantmentNameLevel(enchantId, allItems)
+				return {
+					enchantId,
+					name: parsed.name,
+					level: parseInt(level) || parsed.level || 1
 				}
 			})
+
+			entries
+				.sort((a, b) => {
+					if (a.name !== b.name) return a.name.localeCompare(b.name)
+					return (a.level || 0) - (b.level || 0)
+				})
+				.forEach((e) => {
+					itemString += `, ${e.name}:${e.level || 1}`
+				})
 		}
 	}
 
@@ -636,47 +648,10 @@ export function generateCrazyCratesYaml(crateReward, rewardDocuments, allItems, 
 		// Add DisplayEnchantments if the item has enchantments
 		if (formattedItem.displayEnchantments && formattedItem.displayEnchantments.length > 0) {
 			yamlLines.push(`      DisplayEnchantments:`)
-			formattedItem.displayEnchantments.forEach((enchantmentId) => {
-				// Convert enchantment ID to human-readable format
-				const enchantDoc = allItems.find((i) => i.id === enchantmentId)
-				if (enchantDoc && enchantDoc.name) {
-					// Extract enchantment name from "enchanted book (unbreaking iii)"
-					const match = enchantDoc.name.match(/^enchanted book \((.+)\)$/)
-					if (match) {
-						const contentInParentheses = match[1].trim()
-						const parts = contentInParentheses.split(' ')
-
-						// Find the last part that's a roman numeral
-						const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v']
-						let levelIndex = -1
-						let romanLevel = null
-
-						for (let i = parts.length - 1; i >= 0; i--) {
-							if (romanNumerals.includes(parts[i].toLowerCase())) {
-								levelIndex = i
-								romanLevel = parts[i].toLowerCase()
-								break
-							}
-						}
-
-						// Extract enchantment name (everything except the level)
-						const enchantmentParts =
-							levelIndex >= 0 ? parts.slice(0, levelIndex) : parts
-						const enchantment = enchantmentParts.join('_')
-
-						// Convert roman numerals to numbers
-						const levelMap = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 }
-						const displayLevel = romanLevel ? levelMap[romanLevel] : 1
-
-						yamlLines.push(`        - "${enchantment}:${displayLevel}"`)
-					} else {
-						// Fallback if name doesn't match expected format
-						yamlLines.push(`        - "${enchantmentId}"`)
-					}
-				} else {
-					// Fallback if enchantment item not found
-					yamlLines.push(`        - "${enchantmentId}"`)
-				}
+			const sorted = sortEnchantmentIdsForYaml(formattedItem.displayEnchantments, allItems)
+			sorted.forEach((enchantmentId) => {
+				const { name, level } = getEnchantmentNameLevel(enchantmentId, allItems)
+				yamlLines.push(`        - "${name}:${level || 1}"`)
 			})
 		}
 

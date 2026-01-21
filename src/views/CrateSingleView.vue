@@ -18,6 +18,13 @@ import {
 } from '../utils/crateRewards.js'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { getImageUrl } from '../utils/image.js'
+import { isItemEnchantable } from '../utils/enchantments.js'
+import {
+	getEnchantmentDefsForVersion,
+	buildAllowedEnchantmentMaxLevels,
+	isEnchantmentItemAllowedForVersion,
+	parseEnchantedBookMaterialId
+} from '../utils/enchantmentVersioning.js'
 import { versions, enabledCategories, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import BaseButton from '../components/BaseButton.vue'
@@ -108,7 +115,7 @@ const itemForm = ref({
 	item_id: '',
 	quantity: 1,
 	weight: 50,
-	enchantments: {},
+	enchantments: [],
 	value_source: 'catalog',
 	custom_value: null
 })
@@ -133,11 +140,11 @@ const simulationResults = ref([])
 const isSimulating = ref(false)
 const showTestRewardsModal = ref(false)
 
-// Enchantment state
-const showEnchantmentModal = ref(false)
-const enchantmentForm = ref({
-	enchantment: ''
-})
+// Enchantment state (Shop Manager-style search)
+const enchantmentSearchQuery = ref('')
+const enchantmentHighlightedIndex = ref(-1)
+const enchantmentSearchInput = ref(null)
+const enchantmentDropdownContainer = ref(null)
 
 // Import state
 const importFile = ref(null)
@@ -310,11 +317,148 @@ const selectedItem = computed(
 	() => availableItems.value.find((item) => item.id === itemForm.value.item_id) || null
 )
 
-// Enchantment items for selection
-const enchantmentItems = computed(() => {
+// Enchantment items (raw)
+const allEnchantmentItems = computed(() => {
 	if (!allItems.value) return []
 	return allItems.value.filter((item) => item.category === 'enchantments')
 })
+
+const enchantmentDefsForVersion = computed(() => {
+	const version = selectedCrate.value?.minecraft_version || '1.20'
+	return getEnchantmentDefsForVersion(version)
+})
+
+const allowedEnchantmentMaxLevels = computed(() => {
+	return buildAllowedEnchantmentMaxLevels(enchantmentDefsForVersion.value.defs, allEnchantmentItems.value)
+})
+
+// Enchantment items for selection (version + maxLevel filtered)
+const enchantmentItems = computed(() => {
+	return allEnchantmentItems.value.filter((item) =>
+		isEnchantmentItemAllowedForVersion(item, allowedEnchantmentMaxLevels.value)
+	)
+})
+
+const selectedItemForEnchantments = computed(() => getItemById(itemForm.value.item_id))
+const isBaseEnchantedBookSelected = computed(
+	() => selectedItemForEnchantments.value?.material_id === 'enchanted_book'
+)
+const isSelectedItemEnchantable = computed(() => {
+	if (!selectedItemForEnchantments.value) return false
+	if (isBaseEnchantedBookSelected.value) return true
+	return isItemEnchantable(selectedItemForEnchantments.value)
+})
+const hasSelectedEnchantments = computed(
+	() => getEnchantmentIds(itemForm.value.enchantments).length > 0
+)
+const showEnchantmentsSection = computed(() => {
+	if (!itemForm.value.item_id) return false
+	return isSelectedItemEnchantable.value || hasSelectedEnchantments.value
+})
+const canAddEnchantments = computed(() => isSelectedItemEnchantable.value)
+
+const filteredEnchantments = computed(() => {
+	if (!enchantmentSearchQuery.value || enchantmentSearchQuery.value.length < 1) return []
+
+	const query = enchantmentSearchQuery.value.toLowerCase().trim()
+	return enchantmentItems.value.filter((enchantment) => {
+		const name = formatEnchantmentName(enchantment.id).toLowerCase()
+		return name.includes(query)
+	})
+})
+
+function getEnchantmentTypeForId(enchantmentId) {
+	const enchantDoc = allItems.value?.find((i) => i.id === enchantmentId)
+	const parsed = parseEnchantedBookMaterialId(enchantDoc?.material_id || enchantmentId)
+	return parsed?.name || null
+}
+
+function addEnchantmentToForm(enchantmentItem) {
+	if (!canAddEnchantments.value) return
+	if (!enchantmentItem?.id) return
+
+	const newType = parseEnchantedBookMaterialId(enchantmentItem.material_id)?.name
+	if (!newType) return
+
+	const existing = getEnchantmentIds(itemForm.value.enchantments)
+	const next = [...existing]
+	const existingIndex = next.findIndex((id) => getEnchantmentTypeForId(id) === newType)
+
+	if (existingIndex >= 0) {
+		next[existingIndex] = enchantmentItem.id
+	} else {
+		next.push(enchantmentItem.id)
+	}
+
+	itemForm.value.enchantments = next
+	enchantmentSearchQuery.value = ''
+	enchantmentHighlightedIndex.value = -1
+}
+
+function scrollToHighlightedEnchantment() {
+	if (!enchantmentDropdownContainer.value || enchantmentHighlightedIndex.value < 0) return
+
+	setTimeout(() => {
+		const highlightedElement = enchantmentDropdownContainer.value.querySelector('.bg-norway')
+		if (highlightedElement) {
+			highlightedElement.scrollIntoView({
+				behavior: 'smooth',
+				block: 'nearest'
+			})
+		}
+	}, 0)
+}
+
+function handleEnchantmentSearchInput() {
+	enchantmentHighlightedIndex.value = -1
+}
+
+function handleEnchantmentKeyDown(event) {
+	if (!filteredEnchantments.value.length) return
+
+	const oldIndex = enchantmentHighlightedIndex.value
+
+	switch (event.key) {
+		case 'ArrowDown':
+			event.preventDefault()
+			if (enchantmentHighlightedIndex.value < 0) {
+				enchantmentHighlightedIndex.value = 0
+			} else {
+				enchantmentHighlightedIndex.value = Math.min(
+					enchantmentHighlightedIndex.value + 1,
+					filteredEnchantments.value.length - 1
+				)
+			}
+			break
+		case 'ArrowUp':
+			event.preventDefault()
+			if (enchantmentHighlightedIndex.value <= 0) {
+				enchantmentHighlightedIndex.value = -1
+			} else {
+				enchantmentHighlightedIndex.value = Math.max(enchantmentHighlightedIndex.value - 1, 0)
+			}
+			break
+		case 'Enter':
+			event.preventDefault()
+			if (
+				enchantmentHighlightedIndex.value >= 0 &&
+				enchantmentHighlightedIndex.value < filteredEnchantments.value.length
+			) {
+				const enchantment = filteredEnchantments.value[enchantmentHighlightedIndex.value]
+				addEnchantmentToForm(enchantment)
+			}
+			break
+		case 'Escape':
+			enchantmentSearchQuery.value = ''
+			enchantmentHighlightedIndex.value = -1
+			break
+	}
+
+	// Scroll if highlight changed
+	if (oldIndex !== enchantmentHighlightedIndex.value && enchantmentHighlightedIndex.value >= 0) {
+		scrollToHighlightedEnchantment()
+	}
+}
 
 // Validate crate existence and redirect if not found
 watch(
@@ -428,7 +572,7 @@ function startAddItem() {
 		item_id: '',
 		quantity: 1,
 		weight: 50,
-		enchantments: {},
+		enchantments: [],
 		value_source: 'catalog',
 		custom_value: null
 	}
@@ -630,16 +774,9 @@ function startEditReward(rewardDoc) {
 			item_id: singleItem.item_id,
 			quantity: singleItem.quantity,
 			weight: rewardDoc.weight,
-			enchantments: {}, // Convert array to object for form
+			enchantments: getEnchantmentIds(singleItem.enchantments),
 			value_source: rewardDoc.value_source || 'catalog',
 			custom_value: rewardDoc.custom_value || null
-		}
-
-		// Convert enchantments array to object for editing
-		if (singleItem.enchantments && Array.isArray(singleItem.enchantments)) {
-			singleItem.enchantments.forEach((enchId) => {
-				itemForm.value.enchantments[enchId] = 1
-			})
 		}
 	} else {
 		// Handle rewards without items (command rewards, etc.)
@@ -647,7 +784,7 @@ function startEditReward(rewardDoc) {
 			item_id: null, // No item ID for command rewards
 			quantity: rewardDoc.display_amount || 1,
 			weight: rewardDoc.weight,
-			enchantments: {},
+			enchantments: [],
 			value_source: rewardDoc.value_source || 'catalog',
 			custom_value: rewardDoc.custom_value || null
 		}
@@ -782,16 +919,17 @@ async function saveItem() {
 
 			// Handle items and enchantments only for item-based rewards
 			if (hasItems) {
+				const enchantmentIds = getEnchantmentIds(itemForm.value.enchantments)
 				updates.items = [
 					{
 						...singleItem,
 						// Only update item_id for catalog items, preserve original for unknown items
 						item_id: isCatalogItem ? itemForm.value.item_id : singleItem.item_id,
 						quantity: itemForm.value.quantity,
-						enchantments: Object.keys(itemForm.value.enchantments || {})
+						enchantments: enchantmentIds
 					}
 				]
-				updates.display_enchantments = Object.keys(itemForm.value.enchantments || {})
+				updates.display_enchantments = enchantmentIds
 			} else {
 				// For itemless rewards, clear items and enchantments
 				updates.items = []
@@ -818,10 +956,12 @@ async function saveItem() {
 			item_id: '',
 			quantity: 1,
 			weight: 50,
-			enchantments: {},
+			enchantments: [],
 			value_source: 'catalog',
 			custom_value: null
 		}
+		enchantmentSearchQuery.value = ''
+		enchantmentHighlightedIndex.value = -1
 	} catch (err) {
 		console.error('Error in saveItem:', err)
 		addItemFormError.value = 'Failed to save item: ' + err.message
@@ -1010,6 +1150,16 @@ function formatEnchantmentName(enchantmentId) {
 			const capitalizedEnchant = enchantName
 				.replace(/_/g, ' ')
 				.replace(/\b\w/g, (l) => l.toUpperCase())
+
+			// Don't display level 1 for single-level enchantments
+			const maxLevel =
+				Number(enchantmentItem.enchantment_max_level) ||
+				Number(allowedEnchantmentMaxLevels.value?.get(enchantName)) ||
+				null
+			if (level === '1' && maxLevel === 1) {
+				return capitalizedEnchant
+			}
+
 			return `${capitalizedEnchant} ${level}`
 		}
 
@@ -1049,6 +1199,16 @@ function formatEnchantmentName(enchantmentId) {
 				X: '10'
 			}
 			const displayLevel = levelMap[level] || level
+
+			// Don't display level 1 for single-level enchantments
+			const maxLevel =
+				Number(enchantmentItem.enchantment_max_level) ||
+				Number(allowedEnchantmentMaxLevels.value?.get(enchantment.toLowerCase().replace(/ /g, '_'))) ||
+				null
+			if (displayLevel === '1' && maxLevel === 1) {
+				return capitalizedEnchantment
+			}
+
 			return `${capitalizedEnchantment} ${displayLevel}`
 		} else {
 			// No level found, just return the enchantment name
@@ -1092,6 +1252,11 @@ function extractEnchantmentsFromMaterialId(materialId) {
 
 // Item search functions
 function selectItem(item) {
+	// Selecting an item resets enchantments
+	itemForm.value.enchantments = []
+	enchantmentSearchQuery.value = ''
+	enchantmentHighlightedIndex.value = -1
+
 	// Check if this is an enchanted book that needs normalization
 	if (
 		item.material_id &&
@@ -1111,7 +1276,6 @@ function selectItem(item) {
 
 			// Add the extracted enchantments to the form
 			if (extractedEnchantments.length > 0) {
-				itemForm.value.enchantments = {}
 				extractedEnchantments.forEach((enchantment) => {
 					// Find the catalog item by material_id and use its document ID
 					const enchantmentMaterialId = `enchanted_book_${enchantment.id}_${enchantment.level}`
@@ -1119,7 +1283,7 @@ function selectItem(item) {
 						(item) => item.material_id === enchantmentMaterialId
 					)
 					if (enchantmentItem) {
-						itemForm.value.enchantments[enchantmentItem.id] = enchantment.level
+						itemForm.value.enchantments.push(enchantmentItem.id)
 					}
 				})
 			}
@@ -1138,44 +1302,15 @@ function selectItem(item) {
 
 function clearSelectedItem() {
 	itemForm.value.item_id = ''
-	itemForm.value.enchantments = {} // Clear enchantments when clearing item
+	itemForm.value.enchantments = [] // Clear enchantments when clearing item
+	enchantmentSearchQuery.value = ''
+	enchantmentHighlightedIndex.value = -1
 	searchQuery.value = ''
 	highlightedIndex.value = -1
 }
 
-// Enchantment functions
-function addEnchantment() {
-	showEnchantmentModal.value = true
-	enchantmentForm.value = {
-		enchantment: ''
-	}
-}
-
-function removeEnchantment(enchantment) {
-	delete itemForm.value.enchantments[enchantment]
-}
-
-function saveEnchantment() {
-	if (enchantmentForm.value.enchantment) {
-		itemForm.value.enchantments[enchantmentForm.value.enchantment] = 1
-		showEnchantmentModal.value = false
-	}
-}
-
-function onEnchantmentSelected() {
-	if (enchantmentForm.value.enchantment) {
-		// Add the enchantment immediately
-		itemForm.value.enchantments[enchantmentForm.value.enchantment] = 1
-		// Close the modal
-		showEnchantmentModal.value = false
-	}
-}
-
-function cancelEnchantment() {
-	showEnchantmentModal.value = false
-	enchantmentForm.value = {
-		enchantment: ''
-	}
+function removeEnchantment(enchantmentId) {
+	itemForm.value.enchantments = itemForm.value.enchantments.filter((id) => id !== enchantmentId)
 }
 
 // Review panel functions
@@ -1208,46 +1343,23 @@ function getYamlPreview(rewardDoc) {
 	// Add DisplayEnchantments if present
 	if (formatted.displayEnchantments && formatted.displayEnchantments.length > 0) {
 		yaml += `      DisplayEnchantments:\n`
-		formatted.displayEnchantments.forEach((enchantmentId) => {
-			// Convert enchantment ID to human-readable format
+		const toNameLevel = (enchantmentId) => {
 			const enchantDoc = allItems.value.find((i) => i.id === enchantmentId)
-			if (enchantDoc && enchantDoc.name) {
-				// Extract enchantment name from "enchanted book (unbreaking iii)"
-				const match = enchantDoc.name.match(/^enchanted book \((.+)\)$/)
-				if (match) {
-					const contentInParentheses = match[1].trim()
-					const parts = contentInParentheses.split(' ')
+			const parsed = parseEnchantedBookMaterialId(enchantDoc?.material_id || enchantmentId)
+			if (parsed) return parsed
+			return { name: enchantmentId, level: 1 }
+		}
 
-					// Find the last part that's a roman numeral
-					const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v']
-					let levelIndex = -1
-					let romanLevel = null
+		const sorted = [...formatted.displayEnchantments].sort((a, b) => {
+			const ea = toNameLevel(a)
+			const eb = toNameLevel(b)
+			if (ea.name !== eb.name) return ea.name.localeCompare(eb.name)
+			return (ea.level || 0) - (eb.level || 0)
+		})
 
-					for (let i = parts.length - 1; i >= 0; i--) {
-						if (romanNumerals.includes(parts[i].toLowerCase())) {
-							levelIndex = i
-							romanLevel = parts[i].toLowerCase()
-							break
-						}
-					}
-
-					// Extract enchantment name (everything except the level)
-					const enchantmentParts = levelIndex >= 0 ? parts.slice(0, levelIndex) : parts
-					const enchantment = enchantmentParts.join('_')
-
-					// Convert roman numerals to numbers
-					const levelMap = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 }
-					const displayLevel = romanLevel ? levelMap[romanLevel] : 1
-
-					yaml += `        - "${enchantment}:${displayLevel}"\n`
-				} else {
-					// Fallback if name doesn't match expected format
-					yaml += `        - "${enchantmentId}"\n`
-				}
-			} else {
-				// Fallback if enchantment item not found
-				yaml += `        - "${enchantmentId}"\n`
-			}
+		sorted.forEach((enchantmentId) => {
+			const { name, level } = toNameLevel(enchantmentId)
+			yaml += `        - "${name}:${level || 1}"\n`
 		})
 	}
 
@@ -1645,7 +1757,7 @@ watch(selectedCrate, (crate) => {
 								class="max-[640px]:basis-full max-[640px]:flex max-[640px]:items-center max-[640px]:gap-4">
 								<span>
 									<span class="font-medium">Rewards:</span>
-									{{ rewardDocuments?.length || 0 }}
+									{{ rewardDocuments?.length || 0 }}&nbsp;
 								</span>
 								<span>
 									<span class="font-medium">Created:</span>
@@ -2317,6 +2429,85 @@ watch(selectedCrate, (crate) => {
 					</div>
 				</div>
 
+				<!-- Enchantments (Shop Manager UI) - placed directly under selected item -->
+				<div
+					v-if="
+						(!editingRewardDoc || (editingRewardDoc.items && editingRewardDoc.items.length > 0)) &&
+						showEnchantmentsSection
+					"
+					class="mt-4">
+					<label
+						for="enchantment-search"
+						class="block text-sm font-medium text-gray-700 mb-1">
+						Enchantments
+					</label>
+
+					<!-- Selected enchantments display -->
+					<div
+						v-if="itemForm.enchantments && itemForm.enchantments.length > 0"
+						class="mb-2 flex flex-wrap gap-2">
+						<div
+							v-for="enchantmentId in itemForm.enchantments"
+							:key="enchantmentId"
+							class="flex items-center gap-2 pl-3 pr-2 py-1 bg-sea-mist text-heavy-metal rounded-md text-sm font-medium">
+							<span>{{ formatEnchantmentName(enchantmentId) }}</span>
+							<button
+								type="button"
+								@click="removeEnchantment(enchantmentId)"
+								class="text-heavy-metal hover:text-red-700">
+								<XMarkIconMini class="w-4 h-4" />
+							</button>
+						</div>
+					</div>
+
+					<!-- Enchantment search input -->
+					<input
+						id="enchantment-search"
+						ref="enchantmentSearchInput"
+						v-model="enchantmentSearchQuery"
+						@input="handleEnchantmentSearchInput"
+						@keydown="handleEnchantmentKeyDown"
+						type="text"
+						autocomplete="off"
+						:disabled="!canAddEnchantments"
+						placeholder="Search enchantments..."
+						class="block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus" />
+
+					<!-- Enchantment dropdown -->
+					<div
+						v-if="canAddEnchantments && enchantmentSearchQuery && filteredEnchantments.length > 0"
+						ref="enchantmentDropdownContainer"
+						class="max-h-64 overflow-y-auto border-2 border-gray-asparagus rounded-md bg-white">
+						<div
+							v-for="(enchantment, index) in filteredEnchantments"
+							:key="enchantment.id"
+							@click="addEnchantmentToForm(enchantment)"
+							:class="[
+								'px-3 py-2 cursor-pointer border-b border-gray-100 flex items-center gap-3 justify-between',
+								index === enchantmentHighlightedIndex
+									? 'bg-norway text-heavy-metal'
+									: 'hover:bg-sea-mist'
+							]">
+							<div class="flex-1">
+								<div class="font-medium">
+									{{ formatEnchantmentName(enchantment.id) }}
+								</div>
+							</div>
+							<div v-if="enchantment.image" class="w-8 h-8 flex-shrink-0">
+								<img
+									:src="getImageUrl(enchantment.image)"
+									:alt="formatEnchantmentName(enchantment.id)"
+									class="w-full h-full object-contain" />
+							</div>
+						</div>
+					</div>
+					<div
+						v-else-if="canAddEnchantments && enchantmentSearchQuery && filteredEnchantments.length === 0"
+						class="px-3 py-2 text-sm text-gray-500 italic">
+						No enchantments found
+					</div>
+				</div>
+
 				<div class="space-y-4">
 					<!-- Quantity field - only show for item-based rewards -->
 					<div v-if="!editingRewardDoc || (editingRewardDoc.items && editingRewardDoc.items.length > 0)">
@@ -2436,34 +2627,6 @@ watch(selectedCrate, (crate) => {
 					</div>
 				</div>
 
-				<!-- Enchantments Section - only show for item-based rewards -->
-				<div v-if="!editingRewardDoc || (editingRewardDoc.items && editingRewardDoc.items.length > 0)" class="mt-4">
-					<div class="flex items-center justify-between mb-2">
-						<label class="text-sm font-medium text-gray-700">Enchantments</label>
-						<BaseButton
-							type="button"
-							@click="addEnchantment"
-							variant="secondary"
-							class="text-sm">
-							+ Add Enchantment
-						</BaseButton>
-					</div>
-					<div v-if="Object.keys(itemForm.enchantments).length > 0" class="flex flex-wrap gap-2">
-						<div
-							v-for="(level, enchantment, index) in itemForm.enchantments"
-							:key="index"
-							class="flex items-center gap-2 pl-3 pr-2 py-1 bg-sea-mist text-heavy-metal rounded-md text-sm font-medium">
-							<span>{{ formatEnchantmentName(enchantment) }}</span>
-							<button
-								type="button"
-								@click="removeEnchantment(enchantment)"
-								class="text-heavy-metal hover:text-red-700">
-								<XMarkIconMini class="w-4 h-4" />
-							</button>
-						</div>
-					</div>
-					<div v-else class="text-sm text-gray-500 italic">No enchantments added</div>
-				</div>
 			</form>
 
 			<template #footer>
@@ -2483,31 +2646,6 @@ watch(selectedCrate, (crate) => {
 				</div>
 			</template>
 		</BaseModal>
-
-	<!-- Enchantment Selection Modal -->
-	<BaseModal
-		:isOpen="showEnchantmentModal"
-		title="Add Enchantment"
-		maxWidth="max-w-md"
-		@close="cancelEnchantment">
-		<form @submit.prevent="saveEnchantment" class="space-y-4">
-			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-1">Enchantment</label>
-				<select
-					v-model="enchantmentForm.enchantment"
-					@change="onEnchantmentSelected"
-					class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
-					<option value="">Select an enchantment...</option>
-					<option
-						v-for="enchantment in enchantmentItems"
-						:key="enchantment.id"
-						:value="enchantment.id">
-						{{ formatEnchantmentName(enchantment.id) }}
-					</option>
-				</select>
-			</div>
-		</form>
-	</BaseModal>
 
 	<!-- Import YAML Modal -->
 	<BaseModal
