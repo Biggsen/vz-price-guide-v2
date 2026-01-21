@@ -601,9 +601,10 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_16': 1960.0		},
-,
-
+				'1_16': 1960.0
+			},
+			enchantCategories: ['armor', 'durability', 'equippable', 'vanishing'],
+			enchantable: true,
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [{ material_id: 'diamond', quantity: 7 }],
@@ -624,9 +625,10 @@ const TEST_DATA = {
 			version_removed: null,
 			pricing_type: 'dynamic',
 			prices_by_version: {
-				'1_16': 1120.0		},
-,
-
+				'1_16': 1120.0
+			},
+			enchantCategories: ['armor', 'durability', 'equippable', 'foot_armor', 'vanishing'],
+			enchantable: true,
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [{ material_id: 'diamond', quantity: 4 }],
@@ -2141,9 +2143,10 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 41.0,
-				'1_18': 31.0		},
-,
-
+				'1_18': 31.0
+			},
+			enchantCategories: ['durability', 'vanishing', 'weapon'],
+			enchantable: true,
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
@@ -2541,9 +2544,10 @@ const TEST_DATA = {
 			pricing_type: 'dynamic',
 			prices_by_version: {
 				'1_16': 32.0,
-				'1_18': 27.0		},
-,
-
+				'1_18': 27.0
+			},
+			enchantCategories: ['durability', 'vanishing'],
+			enchantable: true,
 			recipes_by_version: {
 				'1_16': {
 					ingredients: [
