@@ -18,6 +18,30 @@ export function getImageUrl(imageUrl, options = {}) {
 }
 
 /**
+ * Get an item image URL, preferring the enchanted variant when enchantments exist.
+ * For enchanted items, we swap the original extension for "_enchanted.webp".
+ *
+ * @param {string} imagePath - The original item image path (e.g., "/images/items/diamond_sword.png")
+ * @param {Array|string|Object|null} enchantments - Enchantments (typically an array of enchantment IDs)
+ * @param {Object} options - Optional image processing options passed to getImageUrl
+ * @returns {string|null} The processed image URL
+ */
+export function getItemImageUrl(imagePath, enchantments, options = {}) {
+	if (!imagePath) return null
+
+	const hasEnchantments = Array.isArray(enchantments)
+		? enchantments.length > 0
+		: Boolean(enchantments && Object.keys(enchantments).length > 0)
+
+	if (hasEnchantments) {
+		const enchantedPath = imagePath.replace(/\.(png|webp|gif)$/i, '_enchanted.webp')
+		return getImageUrl(enchantedPath, options)
+	}
+
+	return getImageUrl(imagePath, options)
+}
+
+/**
  * Extract enchantment name from enchanted book material_id
  * @param {string} materialId - The material_id (e.g., "enchanted_book_unbreaking_1")
  * @returns {string|null} - The enchantment name (e.g., "unbreaking") or null if not an enchanted book

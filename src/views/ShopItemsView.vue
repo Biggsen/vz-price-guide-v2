@@ -10,7 +10,6 @@ import {
 	addShopItem,
 	updateShopItem,
 	deleteShopItem,
-	bulkUpdateShopItems,
 	markShopItemsAsChecked
 } from '../utils/shopItems.js'
 import ShopItemForm from '../components/ShopItemForm.vue'
@@ -31,8 +30,8 @@ import {
 	WalletIcon,
 	StarIcon as StarIconOutline
 } from '@heroicons/vue/24/outline'
-import { XCircleIcon, StarIcon } from '@heroicons/vue/24/solid'
-import { getImageUrl, extractEnchantmentName } from '../utils/image.js'
+import { StarIcon } from '@heroicons/vue/24/solid'
+import { getImageUrl, getItemImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
 import { enabledCategories } from '../constants.js'
@@ -264,20 +263,6 @@ const availableItemsForAdding = computed(() => {
 	const existingItemIds = shopItems.value.map((shopItem) => shopItem.item_id)
 	return availableItems.value.filter((item) => !existingItemIds.includes(item.id))
 })
-
-// Get image URL, preferring enchanted version if item has enchantments
-function getItemImageUrl(imagePath, enchantments) {
-	if (!imagePath) return null
-
-	// If item has enchantments, try to use enchanted version (always .webp)
-	if (enchantments && enchantments.length > 0) {
-		// Replace extension with _enchanted.webp
-		const enchantedPath = imagePath.replace(/\.(png|webp|gif)$/i, '_enchanted.webp')
-		return getImageUrl(enchantedPath)
-	}
-
-	return getImageUrl(imagePath)
-}
 
 // Format enchantment name for display
 function formatEnchantmentName(enchantmentId) {
@@ -770,22 +755,6 @@ async function confirmDeleteItem() {
 	}
 }
 
-async function handleBulkUpdate(itemsArray) {
-	if (!selectedShopId.value || !itemsArray.length) return
-
-	loading.value = true
-	error.value = null
-
-	try {
-		await bulkUpdateShopItems(selectedShopId.value, itemsArray)
-	} catch (err) {
-		console.error('Error bulk updating shop items:', err)
-		error.value = err.message || 'Failed to bulk update shop items. Please try again.'
-	} finally {
-		loading.value = false
-	}
-}
-
 // Mark all items in shop as checked (updates last_updated)
 async function handleMarkAllAsChecked() {
 	if (!selectedShopId.value || !shopItems.value || shopItems.value.length === 0) return
@@ -952,8 +921,6 @@ async function saveNotes(row, newNotes) {
 
 		try {
 			await handleQuickEdit(updatedItem)
-		} catch (err) {
-			throw err
 		} finally {
 			// Clear saving state
 			savingNotesId.value = null
@@ -1015,16 +982,6 @@ function closeEditShopModal() {
 	resetShopForm()
 }
 
-function handleShopFundsInput(event) {
-	const value = event.target.value
-	if (value === '' || value === null) {
-		shopForm.value.owner_funds = null
-	} else {
-		const numValue = parseFloat(value)
-		shopForm.value.owner_funds = Number.isNaN(numValue) ? null : numValue
-	}
-}
-
 async function submitEditShop() {
 	if (!editingShop.value) return
 
@@ -1070,10 +1027,6 @@ async function submitEditShop() {
 }
 
 // Helper functions
-function getShopName(shopId) {
-	return shops.value?.find((shop) => shop.id === shopId)?.name || 'Unknown Shop'
-}
-
 function getServerName(serverId) {
 	return servers.value?.find((server) => server.id === serverId)?.name || 'Unknown Server'
 }

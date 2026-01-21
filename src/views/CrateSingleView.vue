@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
-import { useCurrentUser, useFirestore, useCollection, useDocument } from 'vuefire'
+import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
 import { useRouter, useRoute } from 'vue-router'
 import { query, collection, orderBy, doc, updateDoc, where, getDocs } from 'firebase/firestore'
 import {
@@ -13,11 +13,10 @@ import {
 	downloadCrateRewardYaml,
 	formatRewardItemForYaml,
 	importCrateRewardsFromYaml,
-	validateYamlForMultipleItems,
-	getUniqueCrateName
+	validateYamlForMultipleItems
 } from '../utils/crateRewards.js'
 import { getEffectivePrice } from '../utils/pricing.js'
-import { getImageUrl } from '../utils/image.js'
+import { getImageUrl, getItemImageUrl } from '../utils/image.js'
 import { isItemEnchantable } from '../utils/enchantments.js'
 import {
 	getEnchantmentDefsForVersion,
@@ -38,8 +37,6 @@ import {
 	ArrowUpTrayIcon,
 	ArrowLeftIcon,
 	ClipboardIcon,
-	XMarkIcon,
-	CheckIcon,
 	CheckCircleIcon,
 	ExclamationTriangleIcon,
 	ArrowUpIcon,
@@ -170,14 +167,12 @@ watch(
 const {
 	crateReward,
 	pending: crateRewardPending,
-	error: crateRewardError
 } = useCrateReward(selectedCrateId)
 
 // Get items for selected crate reward
 const {
 	rewardDocuments,
 	pending: rewardItemsPending,
-	error: rewardItemsError
 } = useCrateRewardItems(selectedCrateId)
 
 // Watch for when rewardDocuments data is loaded
@@ -600,12 +595,6 @@ function setQuantityToStack() {
 function getItemById(itemId) {
 	if (!allItems.value) return null
 	return allItems.value.find((item) => item.id === itemId) || null
-}
-
-function getItemName(itemId, rewardItem = null) {
-	const item = getItemById(itemId)
-	const name = rewardItem?.display_name || item?.name || 'Unknown Item'
-	return stripColorCodes(name)
 }
 
 // ===== DOCUMENT-BASED HELPER FUNCTIONS =====
@@ -1055,7 +1044,6 @@ function copyRewardList() {
 		.map((rewardDoc) => {
 			if (isMultiItemReward(rewardDoc)) {
 				// For multi-item rewards, show summary
-				const totalValue = getRewardDocValue(rewardDoc)
 				const chance = getRewardDocChance(rewardDoc).toFixed(1)
 				return `${stripColorCodes(
 					rewardDoc.display_name || 'Multi-item Reward'
@@ -1676,7 +1664,7 @@ function readFileContent(file) {
 	return new Promise((resolve, reject) => {
 		const reader = new FileReader()
 		reader.onload = (e) => resolve(e.target.result)
-		reader.onerror = (e) => reject(new Error('Failed to read file'))
+		reader.onerror = () => reject(new Error('Failed to read file'))
 		reader.readAsText(file)
 	})
 }
@@ -1943,10 +1931,16 @@ watch(selectedCrate, (crate) => {
 										class="w-16 max-[640px]:w-12 bg-highland border-r-2 border-white flex items-center justify-center">
 										<img
 											v-if="getDisplayItemImageFromDoc(rewardDoc)"
-											:src="
-												getImageUrl(getDisplayItemImageFromDoc(rewardDoc))
-											"
+											:src="getItemImageUrl(
+												getDisplayItemImageFromDoc(rewardDoc),
+												getEnchantmentIds(rewardDoc.display_enchantments)
+											)"
 											:alt="rewardDoc.display_name"
+											@error="
+												$event.target.src = getImageUrl(
+													getDisplayItemImageFromDoc(rewardDoc)
+												)
+											"
 											loading="lazy"
 											decoding="async"
 											fetchpriority="low"
@@ -2921,8 +2915,16 @@ watch(selectedCrate, (crate) => {
 							<div class="flex items-start gap-2 mb-1">
 								<img
 									v-if="getDisplayItemImageFromDoc(result.item)"
-									:src="getImageUrl(getDisplayItemImageFromDoc(result.item))"
+									:src="getItemImageUrl(
+										getDisplayItemImageFromDoc(result.item),
+										getEnchantmentIds(result.item.display_enchantments)
+									)"
 									:alt="result.item.display_name"
+									@error="
+										$event.target.src = getImageUrl(
+											getDisplayItemImageFromDoc(result.item)
+										)
+									"
 									loading="lazy"
 									decoding="async"
 									fetchpriority="low"
