@@ -31,10 +31,13 @@ import { useAdmin } from '../utils/admin.js'
 import { useCategorizedItemSearch } from '../composables/useCategorizedItemSearch.js'
 import { useEnchantmentSearch } from '../composables/useEnchantmentSearch.js'
 import BaseButton from '../components/BaseButton.vue'
-import BaseModal from '../components/BaseModal.vue'
 import CrateRewardItemRow from '../components/CrateRewardItemRow.vue'
 import CrateRewardItemFormModal from '../components/CrateRewardItemFormModal.vue'
 import CrateEditModal from '../components/CrateEditModal.vue'
+import CrateImportModal from '../components/CrateImportModal.vue'
+import CrateDeleteConfirmationModal from '../components/CrateDeleteConfirmationModal.vue'
+import CrateClearAllModal from '../components/CrateClearAllModal.vue'
+import CrateTestRewardsModal from '../components/CrateTestRewardsModal.vue'
 import {
 	PlusIcon,
 	PencilIcon,
@@ -43,7 +46,6 @@ import {
 	ArrowUpTrayIcon,
 	ArrowLeftIcon,
 	ClipboardIcon,
-	CheckCircleIcon,
 	ExclamationTriangleIcon,
 	ArrowUpIcon,
 	ArrowDownIcon,
@@ -1802,206 +1804,31 @@ watch(selectedCrate, (crate) => {
 		@close="showAddItemForm = false; editingRewardDoc = null; addItemFormError = null" />
 
 	<!-- Import YAML Modal -->
-	<BaseModal
+	<CrateImportModal
 		:isOpen="showImportModal"
-		title="Import Crate"
-		maxWidth="max-w-md"
-		@close="closeImportModal">
-		<div class="space-y-4">
-			<div>
-				<label for="yaml-file-input" class="block text-sm font-medium text-gray-700 mb-1">
-					Select YAML File
-				</label>
-				<input
-					id="yaml-file-input"
-					type="file"
-					accept=".yml,.yaml"
-					@change="handleFileSelect"
-					class="block w-full pr-3 py-1 mt-2 mb-2 text-gray-900 font-sans" />
-				<p class="text-xs text-gray-500 mt-1">
-					Upload a complete CrazyCrates YAML file with
-					<code>Crate: { Prizes: {} }</code>
-					format.
-				</p>
-			</div>
-
-			<!-- Error Display -->
-			<div v-if="importModalError" class="p-3 bg-red-50 border-l-4 border-l-red-500">
-				<div class="flex items-start">
-					<ExclamationTriangleIcon class="w-6 h-6 text-red-600 mr-2 flex-shrink-0" />
-					<div>
-						<div class="text-heavy-metal font-medium">Import failed</div>
-						<div class="text-heavy-metal text-sm mt-1">
-							{{ importModalError.replace('Import failed: ', '') }}
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Import Results -->
-			<div v-if="importResult" class="space-y-3">
-				<!-- Success Message -->
-				<div
-					v-if="importResult.success"
-					class="p-3 bg-semantic-success-light border-l-4 border-l-semantic-success">
-					<div class="flex items-start">
-						<CheckCircleIcon class="w-6 h-6 text-heavy-metal mr-2 flex-shrink-0" />
-						<div>
-							<div class="text-heavy-metal font-medium">
-								Import completed successfully!
-							</div>
-							<div class="text-heavy-metal text-sm mt-1">
-								{{ importResult.importedCount }} of
-								{{ importResult.totalPrizes }} prizes imported
-								<span v-if="importResult.errorCount > 0">
-									({{ importResult.errorCount }} failed)
-								</span>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<!-- Warnings -->
-				<div
-					v-if="importResult.warnings && importResult.warnings.length > 0"
-					class="p-3 bg-yellow-50 border-l-4 border-l-yellow-400 rounded">
-					<div class="flex items-start">
-						<ExclamationTriangleIcon
-							class="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" />
-						<div class="flex-1">
-							<div class="text-yellow-800 font-medium mb-2">
-								Warnings ({{ importResult.warningCount }}):
-							</div>
-							<div class="text-yellow-700 text-sm space-y-1 max-h-32 overflow-y-auto">
-								<div v-for="warning in importResult.warnings" :key="warning">
-									• {{ warning }}
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<!-- Errors -->
-				<div
-					v-if="importResult.errors && importResult.errors.length > 0"
-					class="p-3 bg-red-50 border-l-4 border-l-red-400 rounded">
-					<div class="flex items-start">
-						<ExclamationTriangleIcon
-							class="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
-						<div class="flex-1">
-							<div class="text-red-800 font-medium mb-2">
-								Errors ({{ importResult.errorCount }}):
-							</div>
-							<div class="text-red-700 text-sm space-y-1 max-h-32 overflow-y-auto">
-								<div v-for="error in importResult.errors" :key="error">
-									• {{ error }}
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<template #footer>
-			<div class="flex items-center justify-end">
-				<div class="flex space-x-3">
-					<button type="button" @click="closeImportModal" class="btn-secondary--outline">
-						{{ importResult ? 'Close' : 'Cancel' }}
-					</button>
-					<BaseButton
-						v-if="!importResult"
-						@click="importYamlFile"
-						:disabled="!importFile || isImporting"
-						variant="primary">
-						{{ isImporting ? 'Importing...' : 'Import' }}
-					</BaseButton>
-				</div>
-			</div>
-		</template>
-	</BaseModal>
+		:importFile="importFile"
+		:importResult="importResult"
+		:importModalError="importModalError"
+		:isImporting="isImporting"
+		:handleFileSelect="handleFileSelect"
+		:importYamlFile="importYamlFile"
+		@close="closeImportModal" />
 
 	<!-- Delete Confirmation Modal -->
-	<!-- prettier-ignore -->
-	<BaseModal
-			:isOpen="showDeleteModal"
-			:title="`Delete ${itemToDelete?.type === 'crate' ? 'Crate Reward' : 'Item'}`"
-			size="small"
-			@close="showDeleteModal = false; itemToDelete = null">
-			<div class="space-y-4">
-				<div>
-					<h3 class="font-normal text-gray-900">
-						Are you sure you want to delete <span class="font-semibold">{{ itemToDelete?.name }}</span>?
-					</h3>
-				</div>
-			</div>
-
-			<template #footer>
-				<div class="flex items-center justify-end p-4">
-					<div class="flex space-x-3">
-						<!-- prettier-ignore -->
-						<button
-							type="button"
-							@click="showDeleteModal = false; itemToDelete = null"
-							class="btn-secondary--outline"
-							data-cy="cancel-delete-item-button">
-							Cancel
-						</button>
-						<BaseButton
-							@click="executeDelete"
-							:disabled="loading"
-							variant="primary"
-							class="bg-semantic-danger hover:bg-opacity-90"
-							data-cy="confirm-delete-item-button">
-							{{ loading ? 'Deleting...' : 'Delete' }}
-						</BaseButton>
-					</div>
-				</div>
-			</template>
-		</BaseModal>
+	<CrateDeleteConfirmationModal
+		:isOpen="showDeleteModal"
+		:itemToDelete="itemToDelete"
+		:loading="loading"
+		:executeDelete="executeDelete"
+		@close="showDeleteModal = false; itemToDelete = null" />
 
 	<!-- Clear All Confirmation Modal -->
-	<BaseModal
+	<CrateClearAllModal
 		:isOpen="showClearAllModal"
-		title="Clear All Items"
-		size="small"
-		@close="showClearAllModal = false">
-		<div class="space-y-4">
-			<div>
-				<h3 class="font-normal text-gray-900">
-					Are you sure you want to clear
-					<span class="font-semibold">ALL</span>
-					items from this crate?
-				</h3>
-				<p class="text-sm text-gray-600 mt-2">
-					This action cannot be undone and will permanently delete all
-					{{ rewardDocuments?.length || 0 }} rewards.
-				</p>
-			</div>
-		</div>
-
-		<template #footer>
-			<div class="flex items-center justify-end p-4">
-				<div class="flex space-x-3">
-					<button
-						type="button"
-						@click="showClearAllModal = false"
-						class="btn-secondary--outline"
-						data-cy="cancel-clear-all-button">
-						Cancel
-					</button>
-					<BaseButton
-						@click="clearAllRewards"
-						:disabled="loading"
-						variant="primary"
-						class="bg-semantic-danger hover:bg-opacity-90"
-						data-cy="confirm-clear-all-button">
-						{{ loading ? 'Clearing...' : 'Clear All' }}
-					</BaseButton>
-				</div>
-			</div>
-		</template>
-	</BaseModal>
+		:rewardCount="rewardDocuments?.length || 0"
+		:loading="loading"
+		:clearAllRewards="clearAllRewards"
+		@close="showClearAllModal = false" />
 
 	<!-- Copy Success Toast -->
 	<div
@@ -2018,130 +1845,19 @@ watch(selectedCrate, (crate) => {
 	</div>
 
 	<!-- Test Rewards Modal -->
-	<BaseModal
+	<CrateTestRewardsModal
 		:isOpen="showTestRewardsModal"
-		title="Test Crate Rewards"
-		maxWidth="max-w-4xl"
-		@close="showTestRewardsModal = false">
-		<div class="space-y-6">
-			<!-- Simulation Controls -->
-			<div class="flex items-center gap-4 flex-wrap">
-				<div class="flex gap-2">
-					<BaseButton
-						@click="simulateCrateOpen"
-						:disabled="!rewardDocuments?.length || isSimulating"
-						variant="primary">
-						Open 1 Crate
-					</BaseButton>
-					<BaseButton
-						@click="simulateMultipleOpens(10)"
-						:disabled="!rewardDocuments?.length || isSimulating"
-						variant="primary">
-						Open 10 Crates
-					</BaseButton>
-					<BaseButton
-						@click="simulateMultipleOpens(50)"
-						:disabled="!rewardDocuments?.length || isSimulating"
-						variant="primary">
-						Open 50 Crates
-					</BaseButton>
-				</div>
-				<BaseButton
-					@click="clearSimulationResults"
-					:disabled="!simulationResults.length"
-					variant="tertiary"
-					class="ml-auto">
-					Clear Results
-				</BaseButton>
-				<div v-if="isSimulating" class="text-sm text-gray-700 font-medium">
-					Simulating...
-				</div>
-			</div>
-
-			<!-- Simulation Results -->
-			<div
-				v-if="simulationResults.length > 0"
-				class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-				<h4 class="text-sm font-medium text-gray-700 mb-3">
-					Recent Simulation Results ({{ simulationResults.length }}):
-				</h4>
-				<div class="max-h-[60vh] overflow-y-auto">
-					<div
-						class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-						<div
-							v-for="result in simulationResults"
-							:key="result.id"
-							class="p-2 bg-white rounded border">
-							<div class="flex items-start gap-2 mb-1">
-								<img
-									v-if="getDisplayItemImageFromDoc(result.item)"
-									:src="getItemImageUrl(
-										getDisplayItemImageFromDoc(result.item),
-										getEnchantmentIds(result.item.display_enchantments)
-									)"
-									:alt="result.item.display_name"
-									@error="
-										$event.target.src = getImageUrl(
-											getDisplayItemImageFromDoc(result.item)
-										)
-									"
-									loading="lazy"
-									decoding="async"
-									fetchpriority="low"
-									class="max-w-6 max-h-6 object-contain" />
-								<QuestionMarkCircleIcon v-else class="w-6 h-6 text-gray-400" />
-								<div class="flex-1 min-w-0">
-									<div class="text-xs font-medium text-gray-900 truncate">
-										{{
-											stripColorCodes(result.item.display_name) ||
-											stripColorCodes(result.itemData?.name) ||
-											'Unknown'
-										}}
-									</div>
-									<div class="text-xs text-gray-500">
-										{{ getRewardDocChance(result.item).toFixed(1) }}% chance
-									</div>
-									<!-- Multi-item indicator -->
-									<div
-										v-if="isMultiItemReward(result.item)"
-										class="text-xs text-blue-600 font-medium">
-										{{ result.item.items.length }} items
-									</div>
-									<!-- Enchantments Display -->
-									<div
-										v-if="
-											result.item.display_enchantments &&
-											getEnchantmentIds(result.item.display_enchantments)
-												.length > 0
-										"
-										class="mt-1">
-										<div class="flex flex-wrap gap-x-2 gap-y-1">
-											<span
-												v-for="enchantmentId in getEnchantmentIds(
-													result.item.display_enchantments
-												)"
-												:key="enchantmentId"
-												class="text-heavy-metal text-[10px] font-medium capitalize leading-none">
-												{{ formatEnchantmentName(enchantmentId) }}
-											</span>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Empty State -->
-			<div v-else class="text-center py-8 text-gray-500">
-				<p>
-					No simulation results yet. Click a button above to start testing your crate
-					rewards!
-				</p>
-			</div>
-		</div>
-	</BaseModal>
+		:rewardDocuments="rewardDocuments"
+		:simulationResults="simulationResults"
+		:isSimulating="isSimulating"
+		:getDisplayItemImageFromDoc="getDisplayItemImageFromDoc"
+		:getRewardDocChance="getRewardDocChance"
+		:isMultiItemReward="isMultiItemReward"
+		:formatEnchantmentName="formatEnchantmentName"
+		:simulateCrateOpen="simulateCrateOpen"
+		:simulateMultipleOpens="simulateMultipleOpens"
+		:clearSimulationResults="clearSimulationResults"
+		@close="showTestRewardsModal = false" />
 </template>
 
 <style scoped>
