@@ -335,12 +335,15 @@ describe('Crate Rewards', () => {
 			cy.get('[data-cy="item-quantity-input"]').clear().type('5')
 			cy.get('[data-cy="item-weight-input"]').clear().type('10')
 
-			// Submit item
-			cy.get('[data-cy="item-submit-button"]').click()
+		// Submit item
+		cy.get('[data-cy="item-submit-button"]').click()
 
-			// Should show the item in the list
-			cy.get('[data-cy="item-list"]').should('be.visible')
-			cy.get('[data-cy="item-row"]').should('contain', '5x Diamond')
+		// Wait for modal to close
+		cy.get('[data-cy="add-item-button"]').should('be.visible')
+
+		// Should show the item in the list
+		cy.get('[data-cy="item-list"]').should('be.visible')
+		cy.get('[data-cy="item-row"]').should('contain', '5x Diamond')
 
 			// Should show the correct weight
 			cy.get('[data-cy="item-weight-display"]').should('contain', '10')
