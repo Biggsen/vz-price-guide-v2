@@ -256,13 +256,11 @@ const allItemsQuery = computed(() => {
 
 const availableItems = useCollection(allItemsQuery)
 
-// Filter out items that are already in the shop
-const availableItemsForAdding = computed(() => {
-	if (!availableItems.value || !shopItems.value) return availableItems.value || []
+const availableItemsForAdding = computed(() => availableItems.value || [])
 
-	const existingItemIds = shopItems.value.map((shopItem) => shopItem.item_id)
-	return availableItems.value.filter((item) => !existingItemIds.includes(item.id))
-})
+const existingItemIdsInShop = computed(() =>
+	(shopItems.value || []).map((s) => s.item_id)
+)
 
 // Format enchantment name for display
 function formatEnchantmentName(enchantmentId) {
@@ -1826,6 +1824,7 @@ function getServerName(serverId) {
 			ref="shopItemForm"
 			:available-items="availableItemsForAdding"
 			:editing-item="editingItem"
+			:existing-item-ids="existingItemIdsInShop"
 			:server="selectedServer"
 			:shop="selectedShop"
 			display-variant="modal"

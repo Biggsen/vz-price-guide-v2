@@ -11,11 +11,16 @@ import {
 } from '../utils/enchantments.js'
 import BaseButton from './BaseButton.vue'
 import BaseModal from './BaseModal.vue'
+import NotificationBanner from './NotificationBanner.vue'
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 import { ArchiveBoxIcon, ArchiveBoxXMarkIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
 	availableItems: {
+		type: Array,
+		default: () => []
+	},
+	existingItemIds: {
 		type: Array,
 		default: () => []
 	},
@@ -160,6 +165,15 @@ const selectedItems = computed(() => {
 })
 
 const isModalVariant = computed(() => props.displayVariant === 'modal')
+
+const showAlreadyInShopNotice = computed(() => {
+	if (props.editingItem || !(props.existingItemIds || []).length) return false
+	const ids = props.existingItemIds || []
+	if (enableMultipleSelection.value) {
+		return selectedItemIds.value.some((id) => ids.includes(id))
+	}
+	return !!formData.value.item_id && ids.includes(formData.value.item_id)
+})
 
 // Get all enchantment items
 const allEnchantmentItems = computed(() => {
@@ -1099,6 +1113,13 @@ defineExpose({
 							class="mt-2 text-sm text-gray-900 hover:text-gray-700 underline">
 							Clear all selections
 						</button>
+						<NotificationBanner
+							v-if="showAlreadyInShopNotice"
+							type="info"
+							size="compact"
+							title="Already in shop"
+							message="One or more of these items have already been added to this shop"
+							class="mt-2" />
 					</div>
 
 					<!-- Item selection dropdown -->
@@ -1186,6 +1207,13 @@ defineExpose({
 						class="mt-2 text-sm text-gray-900 hover:text-gray-700 underline">
 						Select different item
 					</button>
+					<NotificationBanner
+						v-if="showAlreadyInShopNotice"
+						type="info"
+						size="compact"
+						title="Already in shop"
+						message="This item has already been added to this shop"
+						class="mt-2" />
 				</div>
 			</div>
 
