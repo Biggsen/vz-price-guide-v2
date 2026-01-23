@@ -23,6 +23,11 @@ const props = defineProps({
 	icon: {
 		type: [Object, Function],
 		default: null
+	},
+	size: {
+		type: String,
+		default: 'default',
+		validator: (value) => ['default', 'compact'].includes(value)
 	}
 })
 
@@ -56,12 +61,18 @@ const IconComponent = props.icon || config.icon
 <template>
 	<div :class="['border-l-4', config.borderColor]">
 		<div class="border-l-2 border-l-white">
-			<div :class="['p-3', config.backgroundColor]">
-				<div class="flex items-start">
-					<IconComponent class="w-6 h-6 text-heavy-metal mr-2 flex-shrink-0" />
+			<div :class="[size === 'compact' ? 'p-2' : 'p-3', config.backgroundColor]">
+				<div :class="['flex', size === 'compact' ? 'items-center' : 'items-start']">
+					<IconComponent
+						:class="[
+							'text-heavy-metal mr-2 flex-shrink-0',
+							size === 'compact' ? 'w-5 h-5' : 'w-6 h-6'
+						]" />
 					<div>
-						<div class="text-heavy-metal font-medium">{{ title }}</div>
-						<div class="text-heavy-metal text-sm mt-1">
+						<div v-if="size === 'default'" class="text-heavy-metal font-medium">
+							{{ title }}
+						</div>
+						<div :class="['text-heavy-metal text-sm', size === 'default' ? 'mt-1' : '']">
 							{{ message }}
 						</div>
 					</div>

@@ -1389,6 +1389,33 @@ const baseTableRows = [
 					message="This success alert uses a custom rocket icon instead of the default checkmark."
 					:icon="RocketLaunchIcon" />
 			</div>
+
+			<h3 class="text-lg font-semibold text-gray-800 mt-8 mb-4">Compact variant</h3>
+			<div class="space-y-4">
+				<NotificationBanner
+					size="compact"
+					type="success"
+					title="Success"
+					message="This is a success message with helpful information." />
+
+				<NotificationBanner
+					size="compact"
+					type="error"
+					title="Error"
+					message="This is an error message with important information." />
+
+				<NotificationBanner
+					size="compact"
+					type="warning"
+					title="Warning"
+					message="This is a warning message with cautionary information." />
+
+				<NotificationBanner
+					size="compact"
+					type="info"
+					title="Info"
+					message="This is an informational message with helpful details." />
+			</div>
 		</section>
 
 		<!-- Spacing & Layout -->
