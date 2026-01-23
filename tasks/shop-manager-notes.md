@@ -26,6 +26,7 @@ _(None currently)_
 
 -   Inline price editing on the market overview would be great.
 -   Would be good to see starred items only.
+-   Being able to click on an icon in the item row to set it as out of stock (instead of having to go into edit item).
 
 ### Completed
 
@@ -38,6 +39,7 @@ _(None currently)_
 -   ~~In shop, the categories view needs to be ordered as on the price guide.~~ ✅ Fixed: Category ordering in shop manager category view now matches price guide order (using `enabledCategories` from constants).
 -   ~~Would be good to archive shops when they disappear from the pshops. They might return so I'd rather not delete them fully.~~ ✅ Implemented: Shop archiving feature added. Users can archive shops via checkbox in ShopItemsView. Archived shops are filtered out from Market Overview but visible in Shop Manager with "(Archived)" label. Archive status persists and shops can be unarchived.
 -   ~~Opportunities need to take into account out of stock.~~ ✅ Implemented: Opportunities feature now filters out items that are out of stock. Buy prices are only included if `stock_quantity !== 0`, and sell prices are only included if `!stock_full`. Additional filtering ensures out-of-stock shops don't appear in opportunities.
+-   ~~You need to be able to add the same item more than once (e.g. weapons and swords with different enchantments). A little indicator in the add item modal would work, just telling you that item has already been added.~~ ✅ Implemented: Removed filter that hid items already in shop from add-item dropdown. Added NotificationBanner (info, compact) in add-item modal when selected item(s) are already in the shop, placed below "Select different item" / "Clear all selections".
 
 ## Notes
 
