@@ -1,4 +1,9 @@
 ﻿# Analysis Notes
 
-This folder contains AI-assisted architecture and codebase analysis.
-Source code is treated as read-only. Only notes here are committed.
+AI-assisted codebase analysis artifacts.
+
+Rules:
+- Source code is treated as read-only during analysis.
+- Only `analysis-notes/` files may be edited by the assistant.
+- All artifacts are committed to the repo.
+
