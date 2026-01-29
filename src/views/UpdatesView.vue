@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import updatesData from '../../data/updates.json'
 import roadmapData from '../../data/roadmap.json'
 import { roadmapStatusLegend } from '../constants.js'
+import BaseDetails from '../components/BaseDetails.vue'
 
 // Load data from JSON files and convert date strings to Date objects
 const updates = ref(
@@ -258,23 +259,17 @@ function formatCompletionDate(dateString) {
 			</h2>
 
 			<!-- Status Legend -->
-			<details class="mb-6">
-				<summary
-					class="cursor-pointer text-sm font-semibold text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded">
-					Status Legend
-				</summary>
-				<div class="mt-3">
-					<ul class="space-y-1 text-sm">
-						<li v-for="[status, statusInfo] in sortedStatusLegend" :key="status">
-							<span
-								:style="getStatusStyle(status)"
-								class="inline-block w-3 h-3 rounded-full mr-2"></span>
-							<strong>{{ status }}:</strong>
-							{{ statusInfo.description }}
-						</li>
-					</ul>
-				</div>
-			</details>
+			<BaseDetails summary="Status Legend" class="mb-6">
+				<ul class="space-y-1 text-sm">
+					<li v-for="[status, statusInfo] in sortedStatusLegend" :key="status">
+						<span
+							:style="getStatusStyle(status)"
+							class="inline-block w-3 h-3 rounded-full mr-2"></span>
+						<strong>{{ status }}:</strong>
+						{{ statusInfo.description }}
+					</li>
+				</ul>
+			</BaseDetails>
 
 			<div class="space-y-4">
 				<div v-for="phase in displayedRoadmap" :key="phase.id" class="py-3">

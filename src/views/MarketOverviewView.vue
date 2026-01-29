@@ -7,6 +7,7 @@ import { useShops, useServerShops } from '../utils/shopProfile.js'
 import { useServers, getMajorMinorVersion } from '../utils/serverProfile.js'
 import { useServerShopItems, updateShopItem, markShopItemsAsChecked } from '../utils/shopItems.js'
 import { isAdmin, enabledCategories } from '../constants'
+import BaseDetails from '../components/BaseDetails.vue'
 import BaseStatCard from '../components/BaseStatCard.vue'
 import BaseTable from '../components/BaseTable.vue'
 import BaseButton from '../components/BaseButton.vue'
@@ -21,7 +22,6 @@ import {
 	ArrowPathIcon,
 	BellIcon,
 	BuildingStorefrontIcon,
-	ChevronRightIcon,
 	Cog6ToothIcon,
 	FolderIcon,
 	TagIcon,
@@ -180,13 +180,13 @@ function formatEnchantmentName(enchantmentId) {
 			const capitalizedEnchant = enchantName
 				.replace(/_/g, ' ')
 				.replace(/\b\w/g, (l) => l.toUpperCase())
-			
+
 			// Don't display level 1 for single-level enchantments (max level 1)
 			const maxLevel = enchantmentItem.enchantment_max_level
 			if (level === '1' && maxLevel === 1) {
 				return capitalizedEnchant
 			}
-			
+
 			return `${capitalizedEnchant} ${level}`
 		}
 
@@ -224,12 +224,12 @@ const shopItemsByCategory = computed(() => {
 		if (itemData) {
 			// Add shop data for market overview
 			const shopData = serverShops.value?.find((shop) => shop.id === shopItem.shop_id)
-			
+
 			// Skip items from archived shops (treat undefined as not archived)
-			if (!shopData || (shopData.archived === true)) {
+			if (!shopData || shopData.archived === true) {
 				return
 			}
-			
+
 			const category = itemData.category || 'Uncategorized'
 			if (!grouped[category]) {
 				grouped[category] = []
@@ -448,15 +448,15 @@ function navigateToShopItems(shopId) {
 async function toggleStar(itemId, currentlyStarred, originalItem) {
 	// Try multiple ways to get the shop_item document ID
 	const shopItemId = itemId || originalItem?.id || originalItem?._originalItem?.id
-	
+
 	if (!shopItemId) {
 		console.error('Cannot star item: missing item ID', { itemId, originalItem })
 		return
 	}
-	
+
 	try {
 		await updateShopItem(shopItemId, { starred: !currentlyStarred })
-		
+
 		// Optimistically update local state for large arrays (>30 shops)
 		// For small arrays, VueFire handles reactivity automatically
 		if (serverShopItemsResult.updateItem) {
@@ -477,13 +477,13 @@ async function handleMarkItemAsChecked(itemId, shopId) {
 
 	try {
 		const now = new Date().toISOString()
-		
+
 		// Optimistically update local state for large arrays (>30 shops)
 		// For small arrays, VueFire handles reactivity automatically
 		if (serverShopItemsResult.updateItem) {
 			serverShopItemsResult.updateItem(itemId, { last_updated: now })
 		}
-		
+
 		await markShopItemsAsChecked(shopId, [itemId])
 	} catch (err) {
 		console.error('Error marking item as checked:', err)
@@ -675,7 +675,7 @@ const priceAnalysis = computed(() => {
 		if (shop?.is_own_shop) {
 			return
 		}
-		
+
 		// Skip archived shops (treat undefined as not archived)
 		if (shop?.archived === true) {
 			return
@@ -867,16 +867,14 @@ const priceAnalysis = computed(() => {
 				v-if="selectedServer && priceAnalysis && priceAnalysis.opportunities.length > 0"
 				class="mb-6"
 				data-cy="market-overview-opportunities-section">
-				<details class="group">
-					<summary
-						data-cy="market-overview-opportunities-toggle"
-						class="text-lg font-semibold text-gray-900 mb-3 cursor-pointer list-none flex items-center gap-2">
-						<BellIcon class="w-5 h-5" />
-						<span>Opportunities</span>
-						<ChevronRightIcon
-							class="w-5 h-5 transition-transform duration-200 group-open:rotate-90" />
-					</summary>
-					<div class="space-y-4 mt-3">
+				<BaseDetails
+					summary="Opportunities"
+					size="large"
+					data-cy="market-overview-opportunities-toggle">
+					<template #icon>
+						<BellIcon />
+					</template>
+					<div class="space-y-4">
 						<div
 							v-for="opportunity in priceAnalysis.opportunities"
 							:key="opportunity.itemId"
@@ -962,7 +960,7 @@ const priceAnalysis = computed(() => {
 							</div>
 						</div>
 					</div>
-				</details>
+				</BaseDetails>
 			</div>
 
 			<!-- Search input -->
@@ -1112,10 +1110,12 @@ const priceAnalysis = computed(() => {
 									category.slice(1).toLowerCase()
 								">
 								<template #cell-item="{ row, layout }">
-									<div 
+									<div
 										class="flex items-center group"
 										:class="[
-											layout === 'condensed' ? '-mx-2 -my-1 px-2 py-1' : '-mx-4 -my-3 px-4 py-3'
+											layout === 'condensed'
+												? '-mx-2 -my-1 px-2 py-1'
+												: '-mx-4 -my-3 px-4 py-3'
 										]">
 										<div
 											v-if="row.image"
@@ -1138,51 +1138,75 @@ const priceAnalysis = computed(() => {
 														!showEnchantments &&
 														row.enchantments &&
 														row.enchantments.length > 0
-															? formatEnchantmentsForTitle(row.enchantments)
+															? formatEnchantmentsForTitle(
+																	row.enchantments
+															  )
 															: ''
 													">
 													{{ row.item }}
 												</span>
-											<div class="flex items-center gap-2 ml-2 flex-shrink-0">
-												<button
-													@click.stop="toggleStar(row.id, row._originalItem?.starred || false, row._originalItem)"
-													class="flex-shrink-0 transition-opacity"
-													:class="{
-														'opacity-0 group-hover:opacity-100': !(row._originalItem?.starred || false),
-														'opacity-100': row._originalItem?.starred || false
-													}"
-													:title="row._originalItem?.starred ? 'Unstar item' : 'Star item'">
-													<StarIcon
-														v-if="row._originalItem?.starred"
-														:class="[
-															layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
-															'text-gray-asparagus'
-														]" />
-													<StarIconOutline
-														v-else
-														:class="[
-															layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
-															'text-gray-asparagus'
-														]" />
-												</button>
+												<div
+													class="flex items-center gap-2 ml-2 flex-shrink-0">
+													<button
+														@click.stop="
+															toggleStar(
+																row.id,
+																row._originalItem?.starred || false,
+																row._originalItem
+															)
+														"
+														class="flex-shrink-0 transition-opacity"
+														:class="{
+															'opacity-0 group-hover:opacity-100': !(
+																row._originalItem?.starred || false
+															),
+															'opacity-100':
+																row._originalItem?.starred || false
+														}"
+														:title="
+															row._originalItem?.starred
+																? 'Unstar item'
+																: 'Star item'
+														">
+														<StarIcon
+															v-if="row._originalItem?.starred"
+															:class="[
+																layout === 'condensed'
+																	? 'w-4 h-4'
+																	: 'w-5 h-5',
+																'text-gray-asparagus'
+															]" />
+														<StarIconOutline
+															v-else
+															:class="[
+																layout === 'condensed'
+																	? 'w-4 h-4'
+																	: 'w-5 h-5',
+																'text-gray-asparagus'
+															]" />
+													</button>
+												</div>
 											</div>
-										</div>
-										<!-- Enchantments Display -->
-										<div
-											v-if="showEnchantments && row.enchantments && row.enchantments.length > 0"
-											class="mt-1 pb-1">
-											<div class="flex flex-wrap gap-1">
-												<span
-													v-for="enchantmentId in row.enchantments"
-													:key="enchantmentId"
-													class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
-													{{ formatEnchantmentName(enchantmentId) }}
-												</span>
+											<!-- Enchantments Display -->
+											<div
+												v-if="
+													showEnchantments &&
+													row.enchantments &&
+													row.enchantments.length > 0
+												"
+												class="mt-1 pb-1">
+												<div class="flex flex-wrap gap-1">
+													<span
+														v-for="enchantmentId in row.enchantments"
+														:key="enchantmentId"
+														class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
+														{{ formatEnchantmentName(enchantmentId) }}
+													</span>
+												</div>
 											</div>
 										</div>
 									</div>
-								</div>
-							</template>
+								</template>
 								<template #cell-shop="{ row }">
 									<div
 										@click="navigateToShopItems(row.shopId)"
@@ -1194,7 +1218,11 @@ const priceAnalysis = computed(() => {
 												:alt="row.shopPlayer"
 												class="w-5 h-5 rounded mr-2 flex-shrink-0"
 												@error="$event.target.style.display = 'none'" />
-											<span :class="{ 'font-semibold': row._originalItem?.shopData?.is_own_shop }">
+											<span
+												:class="{
+													'font-semibold':
+														row._originalItem?.shopData?.is_own_shop
+												}">
 												{{ row.shopPlayer }}
 												<span v-if="row.shopPlayer !== row.shop">
 													- {{ row.shop }}
@@ -1208,7 +1236,13 @@ const priceAnalysis = computed(() => {
 												:alt="row.shop"
 												class="w-5 h-5 rounded mr-2 flex-shrink-0"
 												@error="$event.target.style.display = 'none'" />
-											<span :class="{ 'font-semibold': row._originalItem?.shopData?.is_own_shop }">{{ row.shop }}</span>
+											<span
+												:class="{
+													'font-semibold':
+														row._originalItem?.shopData?.is_own_shop
+												}">
+												{{ row.shop }}
+											</span>
 										</template>
 									</div>
 								</template>
@@ -1298,14 +1332,20 @@ const priceAnalysis = computed(() => {
 									<div class="flex items-center justify-end gap-2">
 										<span>{{ row.lastUpdated }}</span>
 										<BaseIconButton
-											v-if="row._originalItem?.shopData && !row._originalItem.shopData.is_own_shop"
+											v-if="
+												row._originalItem?.shopData &&
+												!row._originalItem.shopData.is_own_shop
+											"
 											variant="ghost-in-table"
 											data-cy="market-overview-item-mark-checked-button"
 											:ariaLabel="'Mark as price checked today'"
 											title="Mark as price checked today"
 											:loading="markingItemId === row._originalItem?.id"
 											@click="
-												handleMarkItemAsChecked(row._originalItem?.id, row._originalItem?.shop_id)
+												handleMarkItemAsChecked(
+													row._originalItem?.id,
+													row._originalItem?.shop_id
+												)
 											"
 											:disabled="markingItemId === row._originalItem?.id">
 											<ArrowPathIcon />
@@ -1341,10 +1381,12 @@ const priceAnalysis = computed(() => {
 							@sort="handleSort"
 							caption="All Items">
 							<template #cell-item="{ row, layout }">
-								<div 
+								<div
 									class="flex items-center group"
 									:class="[
-										layout === 'condensed' ? '-mx-2 -my-1 px-2 py-1' : '-mx-4 -my-3 px-4 py-3'
+										layout === 'condensed'
+											? '-mx-2 -my-1 px-2 py-1'
+											: '-mx-4 -my-3 px-4 py-3'
 									]">
 									<div
 										v-if="row.image"
@@ -1367,80 +1409,113 @@ const priceAnalysis = computed(() => {
 													!showEnchantments &&
 													row.enchantments &&
 													row.enchantments.length > 0
-														? formatEnchantmentsForTitle(row.enchantments)
+														? formatEnchantmentsForTitle(
+																row.enchantments
+														  )
 														: ''
 												">
 												{{ row.item }}
 											</span>
-										<div class="flex items-center gap-2 ml-2 flex-shrink-0">
-											<button
-												@click.stop="toggleStar(row.id, row._originalItem?.starred || false, row._originalItem)"
-												class="flex-shrink-0 transition-opacity"
-												:class="{
-													'opacity-0 group-hover:opacity-100': !(row._originalItem?.starred || false),
-													'opacity-100': row._originalItem?.starred || false
-												}"
-												:title="row._originalItem?.starred ? 'Unstar item' : 'Star item'">
-												<StarIcon
-													v-if="row._originalItem?.starred"
-													:class="[
-														layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
-														'text-gray-asparagus'
-													]" />
-												<StarIconOutline
-													v-else
-													:class="[
-														layout === 'condensed' ? 'w-4 h-4' : 'w-5 h-5',
-														'text-gray-asparagus'
-													]" />
-											</button>
+											<div class="flex items-center gap-2 ml-2 flex-shrink-0">
+												<button
+													@click.stop="
+														toggleStar(
+															row.id,
+															row._originalItem?.starred || false,
+															row._originalItem
+														)
+													"
+													class="flex-shrink-0 transition-opacity"
+													:class="{
+														'opacity-0 group-hover:opacity-100': !(
+															row._originalItem?.starred || false
+														),
+														'opacity-100':
+															row._originalItem?.starred || false
+													}"
+													:title="
+														row._originalItem?.starred
+															? 'Unstar item'
+															: 'Star item'
+													">
+													<StarIcon
+														v-if="row._originalItem?.starred"
+														:class="[
+															layout === 'condensed'
+																? 'w-4 h-4'
+																: 'w-5 h-5',
+															'text-gray-asparagus'
+														]" />
+													<StarIconOutline
+														v-else
+														:class="[
+															layout === 'condensed'
+																? 'w-4 h-4'
+																: 'w-5 h-5',
+															'text-gray-asparagus'
+														]" />
+												</button>
+											</div>
+										</div>
+										<!-- Enchantments Display -->
+										<div
+											v-if="
+												showEnchantments &&
+												row.enchantments &&
+												row.enchantments.length > 0
+											"
+											class="mt-1 pb-1">
+											<div class="flex flex-wrap gap-1">
+												<span
+													v-for="enchantmentId in row.enchantments"
+													:key="enchantmentId"
+													class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
+													{{ formatEnchantmentName(enchantmentId) }}
+												</span>
+											</div>
 										</div>
 									</div>
-								<!-- Enchantments Display -->
+								</div>
+							</template>
+							<template #cell-shop="{ row }">
 								<div
-									v-if="showEnchantments && row.enchantments && row.enchantments.length > 0"
-									class="mt-1 pb-1">
-									<div class="flex flex-wrap gap-1">
+									@click="navigateToShopItems(row.shopId)"
+									data-cy="market-overview-shop-link"
+									class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
+									<template v-if="row.shopPlayer">
+										<img
+											:src="generateMinecraftAvatar(row.shopPlayer)"
+											:alt="row.shopPlayer"
+											class="w-5 h-5 rounded mr-2 flex-shrink-0"
+											@error="$event.target.style.display = 'none'" />
 										<span
-											v-for="enchantmentId in row.enchantments"
-											:key="enchantmentId"
-											class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
-											{{ formatEnchantmentName(enchantmentId) }}
+											:class="{
+												'font-semibold':
+													row._originalItem?.shopData?.is_own_shop
+											}">
+											{{ row.shopPlayer }}
+											<span v-if="row.shopPlayer !== row.shop">
+												- {{ row.shop }}
+											</span>
 										</span>
-									</div>
-								</div>
-								</div>
-							</div>
-						</template>
-						<template #cell-shop="{ row }">
-							<div
-								@click="navigateToShopItems(row.shopId)"
-								data-cy="market-overview-shop-link"
-								class="flex items-center text-md text-gray-900 cursor-pointer hover:text-gray-asparagus hover:underline transition-colors">
-								<template v-if="row.shopPlayer">
-									<img
-										:src="generateMinecraftAvatar(row.shopPlayer)"
-										:alt="row.shopPlayer"
-										class="w-5 h-5 rounded mr-2 flex-shrink-0"
-										@error="$event.target.style.display = 'none'" />
-									<span :class="{ 'font-semibold': row._originalItem?.shopData?.is_own_shop }">
-										{{ row.shopPlayer }}
-										<span v-if="row.shopPlayer !== row.shop">
-											- {{ row.shop }}
+									</template>
+									<template v-else>
+										<img
+											v-if="row.shop"
+											:src="generateMinecraftAvatar(row.shop)"
+											:alt="row.shop"
+											class="w-5 h-5 rounded mr-2 flex-shrink-0"
+											@error="$event.target.style.display = 'none'" />
+										<span
+											:class="{
+												'font-semibold':
+													row._originalItem?.shopData?.is_own_shop
+											}">
+											{{ row.shop }}
 										</span>
-									</span>
-								</template>
-								<template v-else>
-									<img
-										v-if="row.shop"
-										:src="generateMinecraftAvatar(row.shop)"
-										:alt="row.shop"
-										class="w-5 h-5 rounded mr-2 flex-shrink-0"
-										@error="$event.target.style.display = 'none'" />
-									<span :class="{ 'font-semibold': row._originalItem?.shopData?.is_own_shop }">{{ row.shop }}</span>
-								</template>
-							</div>
-						</template>
+									</template>
+								</div>
+							</template>
 							<template #cell-buyPrice="{ row, layout }">
 								<div class="flex items-center justify-end gap-2">
 									<div
@@ -1527,14 +1602,20 @@ const priceAnalysis = computed(() => {
 								<div class="flex items-center justify-end gap-2">
 									<span>{{ row.lastUpdated }}</span>
 									<BaseIconButton
-										v-if="row._originalItem?.shopData && !row._originalItem.shopData.is_own_shop"
+										v-if="
+											row._originalItem?.shopData &&
+											!row._originalItem.shopData.is_own_shop
+										"
 										variant="ghost-in-table"
 										data-cy="market-overview-item-mark-checked-button"
 										:ariaLabel="'Mark as price checked today'"
 										title="Mark as price checked today"
 										:loading="markingItemId === row._originalItem?.id"
 										@click="
-											handleMarkItemAsChecked(row._originalItem?.id, row._originalItem?.shop_id)
+											handleMarkItemAsChecked(
+												row._originalItem?.id,
+												row._originalItem?.shop_id
+											)
 										"
 										:disabled="markingItemId === row._originalItem?.id">
 										<ArrowPathIcon />

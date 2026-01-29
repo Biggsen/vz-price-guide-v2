@@ -6,6 +6,7 @@ import {
 	ChartBarIcon,
 	Cog6ToothIcon,
 	CurrencyDollarIcon,
+	InformationCircleIcon,
 	PencilIcon,
 	RocketLaunchIcon,
 	TrashIcon,
@@ -14,6 +15,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseCard from '@/components/BaseCard.vue'
+import BaseDetails from '@/components/BaseDetails.vue'
 import BaseIconButton from '@/components/BaseIconButton.vue'
 import BaseStatCard from '@/components/BaseStatCard.vue'
 import BaseTable from '@/components/BaseTable.vue'
@@ -1415,6 +1417,129 @@ const baseTableRows = [
 					type="info"
 					title="Info"
 					message="This is an informational message with helpful details." />
+			</div>
+		</section>
+
+		<!-- Collapsible / Details -->
+		<section class="mb-12">
+			<h2 class="text-2xl font-bold text-gray-900 mb-6">Collapsible / Details</h2>
+			<p class="text-gray-600 mb-6 max-w-3xl">
+				The
+				<code class="bg-gray-100 px-1 rounded">BaseDetails</code>
+				component wraps the native HTML details element with consistent styling: chevron on
+				the right that rotates when open, keyboard-accessible focus ring, and smooth
+				transitions.
+			</p>
+
+			<div class="space-y-8">
+				<!-- Basic Example -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Basic Usage</h3>
+					<BaseDetails summary="Click to expand">
+						<p class="text-gray-700">
+							This is the collapsible content. It can contain any HTML or Vue
+							components you need.
+						</p>
+					</BaseDetails>
+				</div>
+
+				<!-- Open by Default -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Open by Default</h3>
+					<BaseDetails summary="This starts expanded" :open="true">
+						<p class="text-gray-700">
+							Use the
+							<code class="bg-gray-100 px-1 rounded">:open="true"</code>
+							prop to have the details expanded on initial render.
+						</p>
+					</BaseDetails>
+				</div>
+
+				<!-- Large Size -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">Large Size</h3>
+					<BaseDetails summary="Larger Collapsible Section" size="large">
+						<template #icon>
+							<ChartBarIcon />
+						</template>
+						<p class="text-gray-700">
+							Use
+							<code class="bg-gray-100 px-1 rounded">size="large"</code>
+							for more prominent section headers. Great for page-level collapsible
+							sections.
+						</p>
+					</BaseDetails>
+				</div>
+
+				<!-- With Icon -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">With Icon</h3>
+					<BaseDetails summary="More Information">
+						<template #icon>
+							<InformationCircleIcon />
+						</template>
+						<p class="text-gray-700">
+							Use the
+							<code class="bg-gray-100 px-1 rounded">#icon</code>
+							slot to add an icon before the summary text.
+						</p>
+					</BaseDetails>
+				</div>
+
+				<!-- With Rich Content -->
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold text-gray-800">With Rich Content</h3>
+					<BaseDetails summary="Status Legend Example">
+						<ul class="space-y-1 text-sm">
+							<li>
+								<span
+									class="inline-block w-3 h-3 rounded-full mr-2 bg-blue-500"></span>
+								<strong>In Progress:</strong>
+								Currently being worked on
+							</li>
+							<li>
+								<span
+									class="inline-block w-3 h-3 rounded-full mr-2 bg-yellow-500"></span>
+								<strong>Pending:</strong>
+								Not yet started
+							</li>
+							<li>
+								<span
+									class="inline-block w-3 h-3 rounded-full mr-2 bg-green-500"></span>
+								<strong>Completed:</strong>
+								Finished and deployed
+							</li>
+						</ul>
+					</BaseDetails>
+				</div>
+
+				<!-- Code Example -->
+				<div class="space-y-2">
+					<h3 class="text-lg font-semibold text-gray-800">Usage</h3>
+					<div class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto">
+						<pre><code>&lt;BaseDetails summary="Click to expand"&gt;
+  &lt;p&gt;Your content here&lt;/p&gt;
+&lt;/BaseDetails&gt;
+
+&lt;!-- Open by default --&gt;
+&lt;BaseDetails summary="Expanded" :open="true"&gt;
+  &lt;p&gt;Content visible on load&lt;/p&gt;
+&lt;/BaseDetails&gt;
+
+&lt;!-- With icon --&gt;
+&lt;BaseDetails summary="More Information"&gt;
+  &lt;template #icon&gt;
+    &lt;InformationCircleIcon /&gt;
+  &lt;/template&gt;
+  &lt;p&gt;Content with an icon&lt;/p&gt;
+&lt;/BaseDetails&gt;
+
+&lt;!-- Large size --&gt;
+&lt;BaseDetails summary="Section Header" size="large"&gt;
+  &lt;p&gt;Larger text and icons&lt;/p&gt;
+&lt;/BaseDetails&gt;</code></pre>
+					</div>
+				</div>
 			</div>
 		</section>
 
