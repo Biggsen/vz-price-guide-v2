@@ -14,10 +14,12 @@ import {
 	getDiamondPricing,
 	getDiamondShulkerPricing
 } from '../utils/pricing.js'
+import { isDonationsEnabled, createDonationCheckout, saveExportIntent } from '../utils/donations.js'
 import { useRouter } from 'vue-router'
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
 import BaseDetails from './BaseDetails.vue'
+import DonationSelector from './DonationSelector.vue'
 
 const props = defineProps({
 	isOpen: {
@@ -47,6 +49,10 @@ const props = defineProps({
 	pagePath: {
 		type: String,
 		default: '/'
+	},
+	donationCancelled: {
+		type: Boolean,
+		default: false
 	}
 })
 
@@ -118,6 +124,29 @@ const includeMetadata = ref(false)
 const sortField = ref('default') // 'default', 'name', 'buy', 'sell'
 const sortDirection = ref('asc') // 'asc', 'desc' (only used when sortField !== 'default')
 const roundToWhole = ref(false) // Round to whole numbers
+
+// Donation state
+const donationAmount = ref(0)
+const isProcessingPayment = ref(false)
+const donationError = ref('')
+const showDonations = computed(() => isDonationsEnabled())
+const showCancelledMessage = ref(false)
+
+// Watch for donation cancelled prop
+watch(
+	() => props.donationCancelled,
+	(cancelled) => {
+		if (cancelled) {
+			donationAmount.value = 0
+			showCancelledMessage.value = true
+			// Auto-hide message after 5 seconds
+			setTimeout(() => {
+				showCancelledMessage.value = false
+			}, 5000)
+		}
+	},
+	{ immediate: true }
+)
 
 // Watch for prop changes and update local state
 watch(
@@ -384,14 +413,79 @@ const previewData = computed(() => {
 	return items
 })
 
-// Export functions
+// Build export config for sessionStorage
+function buildExportConfig(format) {
+	return {
+		format,
+		version: selectedVersion.value,
+		categories: selectedCategories.value.length > 0 ? selectedCategories.value : null,
+		priceFields: selectedPriceFields.value,
+		sortField: sortField.value,
+		sortDirection: sortDirection.value,
+		roundToWhole: roundToWhole.value,
+		includeMetadata: includeMetadata.value,
+		itemCount: filteredItems.value.length
+	}
+}
+
+// Handle export with optional donation
+async function handleExport(format) {
+	if (donationAmount.value > 0) {
+		await initiateCheckout(format)
+	} else {
+		if (format === 'json') {
+			exportJSON()
+		} else {
+			exportYAML()
+		}
+	}
+}
+
+// Initiate Stripe checkout for donation
+async function initiateCheckout(format) {
+	isProcessingPayment.value = true
+	donationError.value = ''
+
+	try {
+		const exportConfig = buildExportConfig(format)
+
+		// Save export intent to sessionStorage
+		saveExportIntent(exportConfig)
+
+		trackModalInteraction(
+			'export',
+			'donation_checkout_initiated',
+			getModalAnalyticsContext({
+				export_format: format,
+				donation_amount: donationAmount.value,
+				export_item_count: filteredItems.value.length
+			})
+		)
+
+		// Create Stripe checkout session
+		const { url } = await createDonationCheckout({
+			amount: donationAmount.value,
+			exportConfig
+		})
+
+		// Redirect to Stripe
+		window.location.href = url
+	} catch (error) {
+		console.error('Checkout error:', error)
+		donationError.value = error.message || 'Failed to start checkout. Please try again.'
+		isProcessingPayment.value = false
+	}
+}
+
+// Export functions (direct download, no donation)
 function exportJSON() {
 	trackModalInteraction(
 		'export',
 		'export_click',
 		getModalAnalyticsContext({
 			export_format: 'json',
-			export_item_count: filteredItems.value.length
+			export_item_count: filteredItems.value.length,
+			donation_amount: donationAmount.value
 		})
 	)
 	const dataStr = JSON.stringify(exportData.value, null, 2)
@@ -404,7 +498,8 @@ function exportYAML() {
 		'export_click',
 		getModalAnalyticsContext({
 			export_format: 'yml',
-			export_item_count: filteredItems.value.length
+			export_item_count: filteredItems.value.length,
+			donation_amount: donationAmount.value
 		})
 	)
 	// For now, we'll use a simple YAML-like format
@@ -789,30 +884,57 @@ watch(
 		</div>
 
 		<template v-if="isAuthenticated" #footer>
-			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-				<div class="text-sm text-gray-600 text-center sm:text-left">
-					{{ filteredItems.length }} items will be exported
+			<div class="space-y-4">
+				<!-- Donation Cancelled Message -->
+				<div
+					v-if="showCancelledMessage"
+					class="p-3 bg-semantic-info-light border border-horizon rounded-lg text-sm text-gray-700">
+					Donation cancelled — you can still export for $0
 				</div>
-				<div class="flex justify-center space-x-2 sm:space-x-3">
-					<BaseButton @click="handleCancel" variant="tertiary">Cancel</BaseButton>
-					<BaseButton
-						@click="exportJSON"
-						:disabled="Object.keys(exportData).length === 0"
-						variant="primary">
-						<template #left-icon>
-							<ArrowDownTrayIcon />
-						</template>
-						JSON
-					</BaseButton>
-					<BaseButton
-						@click="exportYAML"
-						:disabled="Object.keys(exportData).length === 0"
-						variant="primary">
-						<template #left-icon>
-							<ArrowDownTrayIcon />
-						</template>
-						YAML
-					</BaseButton>
+
+				<!-- Donation Section -->
+				<div v-if="showDonations" class="border-t border-gray-200 pt-4">
+					<DonationSelector v-model="donationAmount" :disabled="isProcessingPayment" />
+				</div>
+
+				<!-- Error message -->
+				<p v-if="donationError" class="text-sm text-semantic-danger text-center">
+					{{ donationError }}
+				</p>
+
+				<!-- Item count and buttons -->
+				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+					<div class="text-sm text-gray-600 text-center sm:text-left">
+						{{ filteredItems.length }} items will be exported
+					</div>
+					<div class="flex justify-center space-x-2 sm:space-x-3">
+						<BaseButton
+							@click="handleCancel"
+							variant="tertiary"
+							:disabled="isProcessingPayment">
+							Cancel
+						</BaseButton>
+						<BaseButton
+							@click="handleExport('json')"
+							:disabled="Object.keys(exportData).length === 0 || isProcessingPayment"
+							:loading="isProcessingPayment"
+							variant="primary">
+							<template #left-icon>
+								<ArrowDownTrayIcon />
+							</template>
+							JSON
+						</BaseButton>
+						<BaseButton
+							@click="handleExport('yml')"
+							:disabled="Object.keys(exportData).length === 0 || isProcessingPayment"
+							:loading="isProcessingPayment"
+							variant="primary">
+							<template #left-icon>
+								<ArrowDownTrayIcon />
+							</template>
+							YAML
+						</BaseButton>
+					</div>
 				</div>
 			</div>
 		</template>

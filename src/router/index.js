@@ -129,6 +129,17 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/export-success',
+			name: 'export-success',
+			component: () => import('../views/ExportSuccessView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				title: `Export Complete - ${siteName}`,
+				noindex: true
+			}
+		},
+		{
 			path: '/reset-password',
 			name: 'reset-password',
 			component: () => import('../views/ResetPasswordView.vue'),

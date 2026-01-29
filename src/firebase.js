@@ -2,6 +2,7 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
 import { getAuth, connectAuthEmulator } from 'firebase/auth'
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions'
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -28,6 +29,7 @@ const isProductionDatabase = firebaseConfig.projectId === 'vz-price-guide'
 
 export const db = getFirestore(firebaseApp)
 export const auth = getAuth(firebaseApp)
+export const functions = getFunctions(firebaseApp, 'us-central1')
 
 // Safety warning for production database access
 if (typeof window !== 'undefined' && isProductionDatabase && !useEmulators) {
@@ -51,5 +53,10 @@ if (useEmulators && typeof window !== 'undefined') {
 		const hostname = window.location.hostname
 		connectAuthEmulator(auth, `http://${hostname}:9099`, { disableWarnings: true })
 		console.log('🔐 Connected to Auth emulator')
+	} catch {}
+	try {
+		const hostname = window.location.hostname
+		connectFunctionsEmulator(functions, hostname, 5001)
+		console.log('⚡ Connected to Functions emulator')
 	} catch {}
 }
