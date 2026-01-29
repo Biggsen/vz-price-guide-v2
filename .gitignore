@@ -33,4 +33,3 @@ service-account.json
 *.njsproj
 *.sln
 *.sw?
-.aider*
