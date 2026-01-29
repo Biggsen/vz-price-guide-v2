@@ -161,7 +161,7 @@ Reusable component for donation amount selection:
 
 #### New Function: `verifyDonationSession`
 
-**Purpose**: Verify payment was successful before allowing export download. Called from success page.
+**Purpose**: Verify payment was successful before allowing export download. Called from success page. Also returns metadata for sessionStorage fallback recovery.
 
 **Input**:
 
@@ -177,7 +177,12 @@ Reusable component for donation amount selection:
 {
 	"verified": true,
 	"amount": 1000,
-	"currency": "usd"
+	"currency": "usd",
+	"metadata": {
+		"exportFormat": "json",
+		"exportVersion": "1.21",
+		"configHash": "abc123"
+	}
 }
 ```
 
@@ -186,7 +191,8 @@ Reusable component for donation amount selection:
 1. Retrieve Checkout Session from Stripe using `sessionId`
 2. Verify `payment_status === "paid"`
 3. Optionally verify amount matches allowed tiers
-4. Return verification result
+4. Update user profile in Firestore: `hasDonated: true`, `lastDonatedAt: serverTimestamp()`
+5. Return verification result + session metadata (enables fallback if sessionStorage is missing)
 
 This approach avoids webhook complexity while preventing "fake success URL" abuse.
 
@@ -223,6 +229,23 @@ For reliable donation tracking (deferred to post-MVP):
 ---
 
 ## Data Model
+
+### User Profile Updates
+
+Add donation tracking fields to existing user documents:
+
+```yaml
+/users/{userId}:
+    # ... existing fields ...
+    hasDonated: boolean # true after first successful donation
+    lastDonatedAt: timestamp # updated on each donation
+```
+
+**Use cases:**
+
+-   Show subtle "thank you" badge or hide donation prompt for recent donors
+-   Analytics on donor retention
+-   Future: donor-only perks or recognition
 
 ### Donations Collection (Optional - for tracking)
 
@@ -264,13 +287,32 @@ sessionStorage.setItem(
 
 On success page:
 
-1. Read `exportIntent` from sessionStorage
-2. Verify session with backend (see `verifyDonationSession` function)
-3. Regenerate export data using stored config
-4. Trigger download
-5. Clear `exportIntent`
+1. Read `exportIntent` from sessionStorage (primary)
+2. If missing (different browser/tab), recover minimal config from Stripe metadata via backend (fallback)
+3. Verify session with backend (see `verifyDonationSession` function)
+4. Regenerate export data using **current prices at time of generation** (no locking)
+5. Trigger download
+6. Clear `exportIntent`
 
 **TTL**: Consider invalid if older than 30 minutes (Stripe sessions expire).
+
+### Idempotency (prevent double downloads)
+
+Track completed downloads in localStorage to prevent duplicates on page refresh:
+
+```javascript
+// On successful download
+const downloaded = JSON.parse(localStorage.getItem('downloadedSessions') || '[]')
+downloaded.push(sessionId)
+localStorage.setItem('downloadedSessions', JSON.stringify(downloaded.slice(-50))) // Keep last 50
+
+// Before auto-download
+const downloaded = JSON.parse(localStorage.getItem('downloadedSessions') || '[]')
+if (downloaded.includes(sessionId)) {
+	// Show "already downloaded" message with manual download button
+	return
+}
+```
 
 ---
 
@@ -341,9 +383,13 @@ const session = await stripe.checkout.sessions.create({
 	success_url: `${baseUrl}/export-success?session_id={CHECKOUT_SESSION_ID}`,
 	cancel_url: `${baseUrl}/?donation_cancelled=true`, // Triggers modal re-open with message
 	metadata: {
+		// Minimal config for fallback recovery (if sessionStorage unavailable)
+		userId: userId,
 		exportFormat: format,
 		exportVersion: version,
-		itemCount: itemCount.toString()
+		itemCount: itemCount.toString(),
+		// Hash of full config for validation (optional)
+		configHash: hashExportConfig(exportConfig)
 	}
 })
 ```
@@ -352,7 +398,7 @@ const session = await stripe.checkout.sessions.create({
 
 ## Implementation Tasks
 
-### Phase 1: Stripe Setup & Backend
+### Phase 1: Foundation (Backend & Config)
 
 -   [ ] **Task 1.1**: Add Stripe dependency to functions
 
@@ -363,6 +409,7 @@ const session = await stripe.checkout.sessions.create({
 
     -   Validate input (amount, URLs)
     -   Create Checkout session
+    -   Store minimal export config in Stripe metadata (user_id, config hash) as fallback
     -   Return session URL
     -   Handle errors gracefully
 
@@ -371,63 +418,109 @@ const session = await stripe.checkout.sessions.create({
     -   Accept `sessionId` parameter
     -   Retrieve session from Stripe API
     -   Verify `payment_status === "paid"`
-    -   Return verification result
+    -   Update user profile: set `hasDonated: true`, `lastDonatedAt: now`
+    -   Return verification result + metadata (for sessionStorage fallback recovery)
 
--   [ ] **Task 1.4**: Test functions locally
+-   [ ] **Task 1.4**: Add feature flag
+
+    -   `VITE_DONATIONS_ENABLED` environment variable (default: `false`)
+    -   Update `env.production.example` with Stripe config
+    -   Graceful degradation when disabled
+
+-   [ ] **Task 1.5**: Test functions locally
     -   Use Firebase emulator
     -   Verify Stripe test mode integration
 
-### Phase 2: Frontend - Donation UI
+### Phase 2: UI Components
 
--   [ ] **Task 2.1**: Add donation state to ExportModal
+-   [ ] **Task 2.1**: Create DonationSelector component
+
+    -   Pill buttons for preset amounts ($0, $10, $20, $50)
+    -   Custom amount input with validation (min $1, max $500)
+    -   Responsive layout (stack on mobile)
+    -   Emits `update:amount` event
+
+-   [ ] **Task 2.2**: Add donation state to ExportModal
 
     -   `donationAmount` ref
     -   `customAmount` ref
     -   `isProcessingPayment` ref
+    -   Conditionally render DonationSelector based on feature flag
 
--   [ ] **Task 2.2**: Create donation selector UI
+-   [ ] **Task 2.3**: Basic component tests
+    -   DonationSelector interactions
+    -   Amount validation logic
 
-    -   Pill buttons for preset amounts
-    -   Custom amount input with validation
-    -   Responsive layout (stack on mobile)
+### Phase 3: Integration (First "It Works" Milestone)
 
--   [ ] **Task 2.3**: Modify export button behaviour
+-   [ ] **Task 3.1**: Add export config persistence
+
+    -   Save config to sessionStorage before redirect
+    -   Include timestamp for TTL validation (30 min)
+
+-   [ ] **Task 3.2**: Modify export button behaviour
 
     -   Check donation amount before export
-    -   If $0, download immediately
-    -   If >$0, call checkout function and redirect
+    -   If $0, download immediately (existing behaviour)
+    -   If >$0, call `createDonationCheckout` and redirect to Stripe
 
--   [ ] **Task 2.4**: Add export config persistence
-    -   Save config to sessionStorage before redirect
-    -   Clear after successful download
+-   [ ] **Task 3.3**: Wire frontend to Cloud Functions
+    -   Call `createDonationCheckout` with export config
+    -   Handle loading/error states
+    -   Redirect to Stripe Checkout URL
 
-### Phase 3: Success Page
+### Phase 4: Success Page
 
--   [ ] **Task 3.1**: Create `ExportSuccessView.vue`
+-   [ ] **Task 4.1**: Create `ExportSuccessView.vue`
 
+    -   Loading state ("Verifying payment...")
     -   Thank-you message with donation amount
-    -   Loading state while verifying
     -   Error state if verification fails
-    -   Auto-download trigger on success
     -   Manual download button fallback
     -   Link back to home
 
--   [ ] **Task 3.2**: Add route to router
+-   [ ] **Task 4.2**: Add route to router
 
     -   `/export-success` path
-    -   Handle query params (`session_id`, `format`)
+    -   Handle query param `session_id`
 
--   [ ] **Task 3.3**: Implement verification + download flow
+-   [ ] **Task 4.3**: Implement verification + download flow
 
-    -   Read `exportIntent` from sessionStorage
+    -   Read `exportIntent` from sessionStorage (primary)
+    -   If missing, recover minimal config from Stripe metadata via `verifyDonationSession` (fallback)
     -   Call `verifyDonationSession` with `session_id`
-    -   If verified: regenerate export data, trigger download
+    -   If verified: regenerate export data using current prices, trigger download
     -   If failed: show error, link to retry
-    -   Clear `exportIntent` after download
 
-### Phase 4: Analytics & Polish
+-   [ ] **Task 4.4**: Add idempotency protection
+    -   Track downloaded sessions in localStorage (`downloadedSessions`)
+    -   Check before auto-download to prevent duplicates on refresh
+    -   Clear `exportIntent` from sessionStorage after download
 
--   [ ] **Task 4.1**: Add analytics events
+### Phase 5: Edge Cases & Polish
+
+-   [ ] **Task 5.1**: Handle cancelled checkout
+
+    -   Detect `?donation_cancelled=true` query param
+    -   Re-open ExportModal automatically
+    -   Show non-blocking message: "Donation cancelled — you can still export for $0"
+    -   Reset donation amount to $0
+    -   Preserve export config (version, categories, etc.)
+
+-   [ ] **Task 5.2**: Handle other edge cases
+
+    -   Browser back button during checkout
+    -   `exportIntent` TTL expiry (30 min) — show friendly error, link to retry
+    -   Stripe session expiry
+
+-   [ ] **Task 5.3**: Donor recognition (optional)
+
+    -   Read `hasDonated` / `lastDonatedAt` from user profile
+    -   Option A: Hide donation section for users who donated in last 30 days
+    -   Option B: Show subtle "Thanks for your support!" instead of prompt
+    -   Option C: Always show prompt but pre-select $0
+
+-   [ ] **Task 5.4**: Add analytics events
 
     -   `donation_prompt_viewed`
     -   `donation_amount_selected`
@@ -435,37 +528,25 @@ const session = await stripe.checkout.sessions.create({
     -   `donation_completed`
     -   `donation_cancelled`
 
--   [ ] **Task 4.2**: Handle edge cases
+### Phase 6: Testing & Validation
 
-    -   Cancelled checkout return (show message, reset donation to $0, re-open modal)
-    -   Browser back button during checkout
-    -   `exportIntent` TTL expiry (30 min)
-    -   Stripe session expiry
-
--   [ ] **Task 4.3**: Add feature flag
-    -   `VITE_DONATIONS_ENABLED` environment variable
-    -   Graceful degradation when disabled
-
-### Phase 5: Testing
-
--   [ ] **Task 5.1**: Unit tests
+-   [ ] **Task 6.1**: Unit tests
 
     -   Donation amount validation
     -   Export config serialisation
+    -   TTL checking logic
+    -   Idempotency key logic
 
--   [ ] **Task 5.2**: Component tests
+-   [ ] **Task 6.2**: E2E tests
 
-    -   DonationSelector interactions
-    -   ExportModal with donation flow
+    -   Full flow up to Stripe redirect (mock checkout)
+    -   Success page with mock session verification
+    -   Cancelled flow return to modal
 
--   [ ] **Task 5.3**: E2E tests
-
-    -   Full flow up to Stripe redirect
-    -   Success page download trigger
-
--   [ ] **Task 5.4**: Manual Stripe testing
-    -   Test card payments
-    -   Verify webhook delivery (if implemented)
+-   [ ] **Task 6.3**: Manual Stripe testing
+    -   Test card payments (success, decline, auth required)
+    -   Verify success page download works
+    -   Test fallback recovery when sessionStorage is missing
 
 ---
 
@@ -567,19 +648,24 @@ If issues arise post-launch:
 
 ## Design Decisions
 
-| Decision        | Choice                          | Rationale                                                                                              |
-| --------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Guest donations | No - require verified account   | Same as export. Avoids ownership questions, rate limit abuse, "paid but didn't get file" support cases |
-| Currency        | USD only                        | Simplicity for MVP                                                                                     |
-| Receipts        | Stripe automatic                | No custom email infrastructure needed                                                                  |
-| Refunds         | Honor all requests              | Good faith policy                                                                                      |
-| Minimum amount  | $1                              | Stripe minimum, reasonable floor                                                                       |
-| Webhook for MVP | No - verify session server-side | Simpler. Call Stripe API on success redirect to confirm `payment_status === "paid"`                    |
-| Cancel UX       | Return to modal, reset to $0    | Low drama, no dead-end state                                                                           |
+| Decision        | Choice                           | Rationale                                                                                               |
+| --------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Guest donations | No - require verified account    | Same as export. Avoids ownership questions, rate limit abuse, "paid but didn't get file" support cases  |
+| Currency        | USD only                         | Simplicity for MVP                                                                                      |
+| Receipts        | Stripe automatic                 | No custom email infrastructure needed                                                                   |
+| Refunds         | Honor all requests               | Good faith policy                                                                                       |
+| Minimum amount  | $1                               | Stripe minimum, reasonable floor                                                                        |
+| Webhook for MVP | No - verify session server-side  | Simpler. Call Stripe API on success redirect to confirm `payment_status === "paid"`                     |
+| Cancel UX       | Return to modal, reset to $0     | Low drama, no dead-end state                                                                            |
+| Data staleness  | Use current prices at generation | No locking needed. Exports reflect prices at download time, not checkout time. Acceptable for donations |
+| Config recovery | sessionStorage + Stripe metadata | Primary: sessionStorage. Fallback: minimal config in Stripe metadata for cross-browser/tab scenarios    |
+| Idempotency     | Track session_id in localStorage | Prevents double downloads on page refresh                                                               |
+| Donor tracking  | `hasDonated` + `lastDonatedAt`   | Enables recognition, analytics, and optionally hiding prompt for recent donors                          |
 
 ---
 
 **Status**: 📋 Planning
 **Priority**: Medium
 **Dependencies**: Stripe account, Firebase Functions
-**Estimated Effort**: 2-3 days implementation + testing
+**Phases**: 6 (Foundation → UI → Integration → Success Page → Polish → Testing)
+**Estimated Effort**: 3-4 days implementation + testing
