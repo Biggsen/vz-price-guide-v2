@@ -17,6 +17,7 @@ import {
 import { useRouter } from 'vue-router'
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
+import BaseDetails from './BaseDetails.vue'
 
 const props = defineProps({
 	isOpen: {
@@ -140,7 +141,9 @@ const priceMultiplier = computed(() => props.economyConfig.priceMultiplier || 1)
 const sellMargin = computed(() => props.economyConfig.sellMargin || 0.3)
 const currencyType = computed(() => props.economyConfig.currencyType || 'money')
 const diamondItemId = computed(() => props.economyConfig.diamondItemId)
-const diamondRoundingDirection = computed(() => props.economyConfig.diamondRoundingDirection || 'nearest')
+const diamondRoundingDirection = computed(
+	() => props.economyConfig.diamondRoundingDirection || 'nearest'
+)
 
 // Find diamond item from all items
 const diamondItem = computed(() => {
@@ -148,11 +151,17 @@ const diamondItem = computed(() => {
 		// Fallback: try to find by material_id 'diamond'
 		return props.items?.find((item) => item.material_id === 'diamond') || null
 	}
-	return props.items?.find((item) => item.id === diamondItemId.value || item.material_id === 'diamond') || null
+	return (
+		props.items?.find(
+			(item) => item.id === diamondItemId.value || item.material_id === 'diamond'
+		) || null
+	)
 })
 
 // Check if we're in diamond currency mode
-const isDiamondCurrency = computed(() => currencyType.value === 'diamond' && diamondItem.value !== null)
+const isDiamondCurrency = computed(
+	() => currencyType.value === 'diamond' && diamondItem.value !== null
+)
 
 // Available price fields - labels change based on currency type
 const priceFields = computed(() => {
@@ -461,21 +470,33 @@ function handleCancel() {
 
 function goToSignUp() {
 	trackExportCta('create_account')
-	trackModalInteraction('export', 'close', getModalAnalyticsContext({ close_reason: 'cta_click' }))
+	trackModalInteraction(
+		'export',
+		'close',
+		getModalAnalyticsContext({ close_reason: 'cta_click' })
+	)
 	emit('close', 'cta_click')
 	router.push('/signup')
 }
 
 function goToSignIn() {
 	trackExportCta('sign_in')
-	trackModalInteraction('export', 'close', getModalAnalyticsContext({ close_reason: 'cta_click' }))
+	trackModalInteraction(
+		'export',
+		'close',
+		getModalAnalyticsContext({ close_reason: 'cta_click' })
+	)
 	emit('close', 'cta_click')
 	router.push('/signin')
 }
 
 function goToVerifyEmail() {
 	trackExportCta('verify_email')
-	trackModalInteraction('export', 'close', getModalAnalyticsContext({ close_reason: 'cta_click' }))
+	trackModalInteraction(
+		'export',
+		'close',
+		getModalAnalyticsContext({ close_reason: 'cta_click' })
+	)
 	emit('close', 'cta_click')
 	router.push('/verify-email')
 }
@@ -681,88 +702,89 @@ watch(
 			</div>
 
 			<!-- Sort Order -->
-			<div class="mb-6">
-				<label class="block text-sm font-medium text-gray-700 mb-2">Sort Order</label>
-				<div class="flex items-center space-x-4">
-					<select
-						v-model="sortField"
-						@change="trackExportChange('sortField', sortField)"
-						class="border-2 border-gray-asparagus rounded px-2 py-1 text-sm">
-						<option value="default">Default Order</option>
-						<option value="name">Name</option>
-						<option value="buy">Buy Price</option>
-					</select>
-					<select
-						v-model="sortDirection"
-						v-if="sortField !== 'default'"
-						@change="trackExportChange('sortDirection', sortDirection)"
-						class="border-2 border-gray-asparagus rounded px-2 py-1 text-sm">
-						<option value="asc">Ascending</option>
-						<option value="desc">Descending</option>
-					</select>
-				</div>
+			<div class="mb-3">
+				<BaseDetails summary="Sort Order">
+					<div class="flex items-center space-x-4">
+						<select
+							v-model="sortField"
+							@change="trackExportChange('sortField', sortField)"
+							class="border-2 border-gray-asparagus rounded px-2 py-1 text-sm">
+							<option value="default">Default Order</option>
+							<option value="name">Name</option>
+							<option value="buy">Buy Price</option>
+						</select>
+						<select
+							v-model="sortDirection"
+							v-if="sortField !== 'default'"
+							@change="trackExportChange('sortDirection', sortDirection)"
+							class="border-2 border-gray-asparagus rounded px-2 py-1 text-sm">
+							<option value="asc">Ascending</option>
+							<option value="desc">Descending</option>
+						</select>
+					</div>
+				</BaseDetails>
 			</div>
 
 			<!-- Price Fields Selection -->
-			<div class="mb-6">
-				<label class="block text-sm font-medium text-gray-700 mb-2">Price Fields</label>
-				<div class="space-y-2">
-					<label
-						v-for="field in priceFields"
-						:key="field.key"
-						class="flex items-center space-x-2">
-						<input
-							type="checkbox"
-							:checked="selectedPriceFields.includes(field.key)"
-							@change="togglePriceField(field.key)"
-							class="checkbox-input" />
-						<span class="text-sm">{{ field.label }}</span>
-					</label>
+			<div class="mb-3">
+				<BaseDetails summary="Price Fields">
+					<div class="space-y-2">
+						<label
+							v-for="field in priceFields"
+							:key="field.key"
+							class="flex items-center space-x-2">
+							<input
+								type="checkbox"
+								:checked="selectedPriceFields.includes(field.key)"
+								@change="togglePriceField(field.key)"
+								class="checkbox-input" />
+							<span class="text-sm">{{ field.label }}</span>
+						</label>
 
-					<!-- Round to Whole Numbers -->
-					<label class="flex items-center space-x-2">
-						<input
-							type="checkbox"
-							v-model="roundToWhole"
-							@change="trackExportChange('roundToWhole', roundToWhole)"
-							class="checkbox-input" />
-						<span class="text-sm">Round to whole numbers</span>
-					</label>
-				</div>
+						<!-- Round to Whole Numbers -->
+						<label class="flex items-center space-x-2">
+							<input
+								type="checkbox"
+								v-model="roundToWhole"
+								@change="trackExportChange('roundToWhole', roundToWhole)"
+								class="checkbox-input" />
+							<span class="text-sm">Round to whole numbers</span>
+						</label>
+					</div>
+				</BaseDetails>
 			</div>
 
 			<!-- Advanced Options -->
-			<div class="mb-6 space-y-4">
-				<h3 class="text-sm font-medium text-gray-700">Advanced Options</h3>
-
-				<!-- Include Metadata -->
-				<label class="flex items-center space-x-2">
-					<input
-						type="checkbox"
-						v-model="includeMetadata"
-						@change="trackExportChange('includeMetadata', includeMetadata)"
-						class="checkbox-input" />
-					<span class="text-sm">Include metadata (name, category, stack size)</span>
-				</label>
+			<div class="mb-3">
+				<BaseDetails summary="Advanced Options">
+					<label class="flex items-center space-x-2">
+						<input
+							type="checkbox"
+							v-model="includeMetadata"
+							@change="trackExportChange('includeMetadata', includeMetadata)"
+							class="checkbox-input" />
+						<span class="text-sm">Include metadata (name, category, stack size)</span>
+					</label>
+				</BaseDetails>
 			</div>
 
 			<!-- Preview -->
 			<div v-if="Object.keys(previewData).length > 0">
-				<h3 class="text-sm font-medium text-gray-700 mb-2">
-					Preview ({{ Object.keys(previewData).length }} items)
-				</h3>
-				<div class="bg-gray-50 rounded-md p-3 max-h-32 overflow-y-auto text-xs font-mono">
-					<pre>{{
-						JSON.stringify(
-							Object.fromEntries(Object.entries(previewData).slice(0, 3)),
-							null,
-							2
-						)
-					}}</pre>
-					<span v-if="Object.keys(previewData).length > 3" class="text-gray-500">
-						... and {{ Object.keys(previewData).length - 3 }} more items
-					</span>
-				</div>
+				<BaseDetails :summary="`Preview (${Object.keys(previewData).length} items)`">
+					<div
+						class="bg-gray-50 rounded-md p-3 max-h-32 overflow-y-auto text-xs font-mono">
+						<pre>{{
+							JSON.stringify(
+								Object.fromEntries(Object.entries(previewData).slice(0, 3)),
+								null,
+								2
+							)
+						}}</pre>
+						<span v-if="Object.keys(previewData).length > 3" class="text-gray-500">
+							... and {{ Object.keys(previewData).length - 3 }} more items
+						</span>
+					</div>
+				</BaseDetails>
 			</div>
 		</div>
 
