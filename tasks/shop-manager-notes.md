@@ -28,6 +28,7 @@ _(None currently)_
 -   Would be good to see starred items only.
 -   Being able to click on an icon in the item row to set it as out of stock (instead of having to go into edit item).
 -   Being able to add custom items (e.g. chest organiser, which is a wooden hoe) that aren’t in the main price guide.
+-   Would be good to be able to add full shulkers to shops.
 
 ### Completed
 
