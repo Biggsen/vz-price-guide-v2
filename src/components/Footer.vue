@@ -1,7 +1,7 @@
 <template>
 	<footer class="p-3 mt-12">
 		<div class="flex gap-4 text-sm">
-			<p class="text-heavy-metal text-sm">© 2025</p>
+			<p class="text-heavy-metal text-sm">© 2026</p>
 			<router-link to="/privacy-policy" class="text-heavy-metal underline">
 				<span class="sm:hidden">Privacy</span>
 				<span class="hidden sm:inline">Privacy Policy</span>
@@ -26,6 +26,9 @@
 				<span class="hidden sm:inline">Discord</span>
 			</a>
 			or email support@minecraft-economy-price-guide.net
+		</p>
+		<p class="text-gray-500 text-xs mt-2">
+			Not affiliated with Mojang or Microsoft. Minecraft is a trademark of Mojang Studios.
 		</p>
 	</footer>
 </template>
