@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFirestore, useCollection } from 'vuefire'
 import { query, collection, orderBy, where } from 'firebase/firestore'
@@ -257,6 +257,17 @@ async function triggerDownload() {
 	}
 }
 
+// Watch for items to load after verification completes
+watch(
+	() => allItems.value?.length,
+	(length) => {
+		// Trigger download when items load, but only if verified and not yet downloaded
+		if (length > 0 && isVerified.value && exportConfig.value && !hasDownloaded.value) {
+			triggerDownload()
+		}
+	}
+)
+
 // Main verification flow
 async function verifyAndDownload() {
 	const sessionId = route.query.session_id
@@ -316,7 +327,7 @@ async function verifyAndDownload() {
 		// Clear the export intent
 		clearExportIntent()
 
-		// Wait for items to load, then auto-download
+		// Auto-download if items already loaded, otherwise watcher will handle it
 		if (allItems.value && allItems.value.length > 0) {
 			await triggerDownload()
 		}

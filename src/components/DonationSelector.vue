@@ -123,7 +123,8 @@ function handleCustomBlur() {
 	customError.value = error
 
 	if (!error) {
-		emit('update:modelValue', parseFloat(customAmount.value))
+		const amount = customAmount.value === '' ? 0 : parseFloat(customAmount.value)
+		emit('update:modelValue', amount)
 	} else {
 		// Reset to $0 if invalid
 		emit('update:modelValue', 0)
