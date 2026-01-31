@@ -125,6 +125,52 @@ const isProcessingPayment = ref(false)
 const donationError = ref('')
 const showDonations = computed(() => isDonationsEnabled())
 
+// localStorage key for export settings persistence
+const EXPORT_SETTINGS_KEY = 'exportSettings'
+
+// Load saved export settings from localStorage
+function loadExportSettings() {
+	try {
+		const saved = localStorage.getItem(EXPORT_SETTINGS_KEY)
+		if (saved) {
+			const settings = JSON.parse(saved)
+			if (Array.isArray(settings.categories)) {
+				selectedCategories.value = settings.categories
+			}
+			if (Array.isArray(settings.priceFields)) {
+				selectedPriceFields.value = settings.priceFields
+			}
+			if (settings.sortField) {
+				sortField.value = settings.sortField
+			}
+			if (settings.sortDirection) {
+				sortDirection.value = settings.sortDirection
+			}
+			if (typeof settings.includeMetadata === 'boolean') {
+				includeMetadata.value = settings.includeMetadata
+			}
+		}
+	} catch (e) {
+		console.warn('Failed to load export settings:', e)
+	}
+}
+
+// Save export settings to localStorage
+function saveExportSettings() {
+	try {
+		const settings = {
+			categories: selectedCategories.value,
+			priceFields: selectedPriceFields.value,
+			sortField: sortField.value,
+			sortDirection: sortDirection.value,
+			includeMetadata: includeMetadata.value
+		}
+		localStorage.setItem(EXPORT_SETTINGS_KEY, JSON.stringify(settings))
+	} catch (e) {
+		console.warn('Failed to save export settings:', e)
+	}
+}
+
 function handleCurrencyUpdate(currency) {
 	donationCurrency.value = currency
 }
@@ -555,6 +601,8 @@ watch(
 	() => props.isOpen,
 	(isOpen) => {
 		if (isOpen) {
+			// Load saved export settings from localStorage
+			loadExportSettings()
 			trackModalInteraction('export', 'open', getModalAnalyticsContext())
 			// Track donation prompt viewed if user is authenticated and donations enabled
 			if (isAuthenticated.value && showDonations.value) {
@@ -566,6 +614,15 @@ watch(
 			}
 		}
 	}
+)
+
+// Watch persistable settings and save to localStorage on change
+watch(
+	[selectedCategories, selectedPriceFields, sortField, sortDirection, includeMetadata],
+	() => {
+		saveExportSettings()
+	},
+	{ deep: true }
 )
 </script>
 
