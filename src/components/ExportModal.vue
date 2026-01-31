@@ -908,13 +908,25 @@ watch(
 		</div>
 
 		<template v-if="isAuthenticated" #footer>
-			<div class="space-y-6">
+			<div class="space-y-4 sm:space-y-6">
 				<!-- Donation Section -->
 				<div v-if="showDonations">
-					<DonationSelector
-						v-model="donationAmount"
-						:disabled="isProcessingPayment"
-						@update:currency="handleCurrencyUpdate" />
+					<!-- Mobile: Collapsible -->
+					<div class="mobile-only -mt-2">
+						<BaseDetails summary="Support the Project">
+							<DonationSelector
+								v-model="donationAmount"
+								:disabled="isProcessingPayment"
+								@update:currency="handleCurrencyUpdate" />
+						</BaseDetails>
+					</div>
+					<!-- Desktop: Direct -->
+					<div class="desktop-only">
+						<DonationSelector
+							v-model="donationAmount"
+							:disabled="isProcessingPayment"
+							@update:currency="handleCurrencyUpdate" />
+					</div>
 				</div>
 
 				<!-- Error message -->
@@ -923,15 +935,17 @@ watch(
 				</p>
 
 				<!-- Item count and buttons -->
-				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-					<div class="text-sm text-gray-600 text-center sm:text-left">
-						{{ filteredItems.length }} items will be exported
+				<div class="flex items-center justify-between gap-3">
+					<div class="text-sm text-gray-600">
+						{{ filteredItems.length }} items
+						<span class="hidden-xs">will be exported</span>
 					</div>
-					<div class="flex justify-center space-x-2 sm:space-x-3">
+					<div class="flex gap-2 sm:gap-3">
 						<BaseButton
 							@click="handleCancel"
 							variant="tertiary"
-							:disabled="isProcessingPayment">
+							:disabled="isProcessingPayment"
+							class="hidden sm:inline-flex">
 							Cancel
 						</BaseButton>
 						<BaseButton
@@ -942,7 +956,8 @@ watch(
 							<template #left-icon>
 								<ArrowDownTrayIcon />
 							</template>
-							Export JSON
+							<span class="sm:hidden">JSON</span>
+							<span class="hidden sm:inline">Export JSON</span>
 						</BaseButton>
 						<BaseButton
 							@click="handleExport('yml')"
@@ -952,7 +967,8 @@ watch(
 							<template #left-icon>
 								<ArrowDownTrayIcon />
 							</template>
-							Export YAML
+							<span class="sm:hidden">YAML</span>
+							<span class="hidden sm:inline">Export YAML</span>
 						</BaseButton>
 					</div>
 				</div>
@@ -967,8 +983,8 @@ watch(
 	accent-color: theme('colors.gray-asparagus');
 }
 
-/* Custom breakpoint at 400px */
-@media (max-width: 399px) {
+/* Breakpoint at sm (640px) */
+@media (max-width: 639px) {
 	.mobile-only {
 		display: block !important;
 	}
@@ -977,12 +993,19 @@ watch(
 	}
 }
 
-@media (min-width: 400px) {
+@media (min-width: 640px) {
 	.mobile-only {
 		display: none !important;
 	}
 	.desktop-only {
 		display: block !important;
+	}
+}
+
+/* Hide below 400px */
+@media (max-width: 399px) {
+	.hidden-xs {
+		display: none !important;
 	}
 }
 </style>
