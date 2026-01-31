@@ -137,10 +137,26 @@ watch(
 	(cancelled) => {
 		if (cancelled) {
 			donationAmount.value = 0
+			trackModalInteraction(
+				'export',
+				'donation_cancelled',
+				getModalAnalyticsContext({ returned_from: 'stripe_checkout' })
+			)
 		}
 	},
 	{ immediate: true }
 )
+
+// Track donation amount selection
+watch(donationAmount, (newAmount, oldAmount) => {
+	if (newAmount !== oldAmount) {
+		trackModalInteraction(
+			'export',
+			'donation_amount_selected',
+			getModalAnalyticsContext({ donation_amount: newAmount })
+		)
+	}
+})
 
 // Watch for prop changes and update local state
 watch(
@@ -654,6 +670,14 @@ watch(
 	(isOpen) => {
 		if (isOpen) {
 			trackModalInteraction('export', 'open', getModalAnalyticsContext())
+			// Track donation prompt viewed if user is authenticated and donations enabled
+			if (isAuthenticated.value && showDonations.value) {
+				trackModalInteraction(
+					'export',
+					'donation_prompt_viewed',
+					getModalAnalyticsContext()
+				)
+			}
 		}
 	}
 )

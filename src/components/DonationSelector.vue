@@ -15,7 +15,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const presets = [
-	{ value: 0, label: 'No thanks' },
+	{ value: 0, label: '$0 (free)' },
 	{ value: 10, label: '$10' },
 	{ value: 20, label: '$20' },
 	{ value: 50, label: '$50' }
