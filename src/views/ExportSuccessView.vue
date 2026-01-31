@@ -29,7 +29,14 @@ const isDownloading = ref(false)
 const hasDownloaded = ref(false)
 const errorMessage = ref('')
 const donationAmount = ref(0)
+const donationCurrency = ref('usd')
 const exportConfig = ref(null)
+
+// Currency symbol helper
+function getCurrencySymbol(currency) {
+	const symbols = { usd: '$', gbp: '£', eur: '€' }
+	return symbols[currency?.toLowerCase()] || '$'
+}
 
 // Load items from Firestore
 const itemsQuery = query(
@@ -230,7 +237,8 @@ async function verifyAndDownload() {
 		}
 
 		isVerified.value = true
-		donationAmount.value = (result.amount || 0) / 100 // Convert cents to dollars
+		donationAmount.value = (result.amount || 0) / 100 // Convert cents to currency units
+		donationCurrency.value = result.currency || 'usd'
 
 		// Get export config from sessionStorage (primary) or Stripe metadata (fallback)
 		let config = getExportIntent()
@@ -324,7 +332,8 @@ onMounted(() => {
 			<h1 class="text-3xl font-bold text-gray-900 mb-4">Thank you</h1>
 
 			<p class="text-gray-600 mb-4">
-				Your ${{ donationAmount.toFixed(2) }} contribution helps support the Price Guide and
+				Your {{ getCurrencySymbol(donationCurrency)
+				}}{{ donationAmount.toFixed(2) }} contribution helps support the Price Guide and
 				allows me to keep it accurate and up to date, and improve it over time. Donations
 				like this make it possible to work on new features and refinements.
 			</p>
