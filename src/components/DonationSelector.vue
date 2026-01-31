@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 
 const props = defineProps({
 	modelValue: {
@@ -24,6 +24,7 @@ const presets = [
 const isCustomSelected = ref(false)
 const customAmount = ref('')
 const customError = ref('')
+const customInput = ref(null)
 
 // Track which preset is selected (or null if custom)
 const selectedPreset = computed(() => {
@@ -33,9 +34,12 @@ const selectedPreset = computed(() => {
 
 // Validate custom amount
 function validateCustomAmount(value) {
+	if (value === '') {
+		return '' // Empty is fine, just defaults to $0
+	}
 	const num = parseFloat(value)
-	if (isNaN(num) || value === '') {
-		return 'Enter an amount'
+	if (isNaN(num)) {
+		return 'Enter a valid amount'
 	}
 	if (num < 1) {
 		return 'Minimum $1'
@@ -62,6 +66,10 @@ function selectCustom() {
 			emit('update:modelValue', parseFloat(customAmount.value))
 		}
 	}
+	// Focus the input
+	nextTick(() => {
+		customInput.value?.focus()
+	})
 }
 
 function handleCustomInput(event) {
@@ -97,52 +105,52 @@ watch(
 
 <template>
 	<div class="donation-selector">
-		<div class="flex items-center gap-1.5 mb-2 text-gray-700">
-			<span class="text-lg">☕</span>
-			<span class="text-sm font-medium">Love the guide? Buy us a coffee!</span>
+		<div class="mb-2 text-gray-700">
+			<p class="text-sm font-medium">
+				If you find the Price Guide useful, please consider supporting it.
+			</p>
+			<p class="text-sm text-gray-500">
+				Supporting is optional — exporting is always available.
+			</p>
 		</div>
 
-		<div class="flex flex-wrap items-center gap-2">
-			<!-- Preset buttons -->
-			<button
-				v-for="preset in presets"
-				:key="preset.value"
-				type="button"
-				:disabled="disabled"
-				@click="selectPreset(preset.value)"
-				:class="[
-					'px-3 py-1.5 text-sm font-medium rounded-full border-2 transition-colors',
-					'focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-asparagus',
-					selectedPreset === preset.value && !isCustomSelected
-						? 'bg-gray-asparagus text-white border-gray-asparagus'
-						: 'bg-white text-gray-700 border-gray-300 hover:border-gray-asparagus hover:bg-norway',
-					disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-				]">
-				{{ preset.label }}
-			</button>
+		<div class="flex flex-wrap items-center gap-3">
+			<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
+				<!-- Preset buttons -->
+				<button
+					v-for="preset in presets"
+					:key="preset.value"
+					type="button"
+					:disabled="disabled"
+					@click="selectPreset(preset.value)"
+					:class="[
+						'px-3 py-1 text-sm font-medium border-r border-gray-asparagus',
+						selectedPreset === preset.value && !isCustomSelected
+							? 'bg-gray-asparagus text-white'
+							: 'bg-norway text-heavy-metal hover:bg-gray-100',
+						disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+					]">
+					{{ preset.label }}
+				</button>
 
-			<!-- Custom amount -->
-			<div class="flex items-center gap-1">
+				<!-- Custom amount -->
 				<button
 					type="button"
 					:disabled="disabled"
 					@click="selectCustom"
 					:class="[
-						'px-3 py-1.5 text-sm font-medium rounded-l-full border-2 border-r-0 transition-colors',
-						'focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-asparagus',
+						'px-3 py-1 text-sm font-medium border-r border-gray-asparagus',
 						isCustomSelected
-							? 'bg-gray-asparagus text-white border-gray-asparagus'
-							: 'bg-white text-gray-700 border-gray-300 hover:border-gray-asparagus hover:bg-norway',
+							? 'bg-gray-asparagus text-white'
+							: 'bg-norway text-heavy-metal hover:bg-gray-100',
 						disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
 					]">
 					Custom
 				</button>
-				<div class="relative">
-					<span
-						class="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-gray-500 pointer-events-none">
-						$
-					</span>
+				<div class="relative flex items-center bg-white">
+					<span class="absolute left-2 text-sm text-gray-500 pointer-events-none">$</span>
 					<input
+						ref="customInput"
 						type="text"
 						inputmode="decimal"
 						:value="customAmount"
@@ -152,29 +160,25 @@ watch(
 						:disabled="disabled"
 						placeholder="0"
 						:class="[
-							'w-16 pl-5 pr-2 py-1.5 text-sm border-2 rounded-r-full transition-colors',
-							'focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-asparagus',
-							isCustomSelected
-								? 'border-gray-asparagus'
-								: 'border-gray-300 hover:border-gray-asparagus',
-							customError ? 'border-semantic-danger' : '',
-							disabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'bg-white'
+							'w-14 pl-5 pr-2 py-1 text-sm border-0 focus:outline-none',
+							customError ? 'bg-red-50' : 'bg-white',
+							disabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : ''
 						]" />
 				</div>
 			</div>
+
+			<!-- Thank you message when paid amount selected -->
+			<p
+				v-if="modelValue > 0 && !customError"
+				class="text-sm text-semantic-success flex items-center gap-1">
+				<span>💚</span>
+				<span>Thanks for your support!</span>
+			</p>
+
+			<!-- Error message -->
+			<p v-if="customError && isCustomSelected" class="text-xs text-semantic-danger">
+				{{ customError }}
+			</p>
 		</div>
-
-		<!-- Error message -->
-		<p v-if="customError && isCustomSelected" class="mt-1 text-xs text-semantic-danger">
-			{{ customError }}
-		</p>
-
-		<!-- Thank you message when paid amount selected -->
-		<p
-			v-else-if="modelValue > 0"
-			class="mt-2 text-xs text-semantic-success flex items-center gap-1">
-			<span>💚</span>
-			<span>Thanks for supporting the guide!</span>
-		</p>
 	</div>
 </template>

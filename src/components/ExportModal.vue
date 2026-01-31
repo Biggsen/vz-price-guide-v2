@@ -884,7 +884,7 @@ watch(
 		</div>
 
 		<template v-if="isAuthenticated" #footer>
-			<div class="space-y-4">
+			<div class="space-y-6">
 				<!-- Donation Cancelled Message -->
 				<div
 					v-if="showCancelledMessage"
@@ -893,7 +893,7 @@ watch(
 				</div>
 
 				<!-- Donation Section -->
-				<div v-if="showDonations" class="border-t border-gray-200 pt-4">
+				<div v-if="showDonations">
 					<DonationSelector v-model="donationAmount" :disabled="isProcessingPayment" />
 				</div>
 
@@ -922,7 +922,7 @@ watch(
 							<template #left-icon>
 								<ArrowDownTrayIcon />
 							</template>
-							JSON
+							Export JSON
 						</BaseButton>
 						<BaseButton
 							@click="handleExport('yml')"
@@ -932,7 +932,7 @@ watch(
 							<template #left-icon>
 								<ArrowDownTrayIcon />
 							</template>
-							YAML
+							Export YAML
 						</BaseButton>
 					</div>
 				</div>
