@@ -21,7 +21,5 @@ export const STORAGE_KEYS = {
 	CURRENCY_TYPE: 'currencyType',
 	DIAMOND_ITEM_ID: 'diamondItemId',
 	DIAMOND_ROUNDING_DIRECTION: 'diamondRoundingDirection',
-	DIAMOND_CURRENCY_ANNOUNCEMENT_DISMISSED: 'diamondCurrencyAnnouncementDismissed',
-	ENCHANTMENT_SUPPORT_ANNOUNCEMENT_DISMISSED: 'enchantmentSupportAnnouncementDismissed'
+	FEATURE_ANNOUNCEMENT_DISMISSED: 'featureAnnouncementDismissed'
 }
-

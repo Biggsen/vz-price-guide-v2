@@ -18,7 +18,7 @@ import { useFilters } from '../composables/useFilters.js'
 import { useItems } from '../composables/useItems.js'
 import { getImageUrl } from '../utils/image.js'
 import { trackHomepageInteraction, trackSearch } from '../utils/analytics.js'
-import { RocketLaunchIcon, BuildingStorefrontIcon } from '@heroicons/vue/24/solid'
+import { RocketLaunchIcon } from '@heroicons/vue/24/solid'
 import { Cog6ToothIcon, ArrowDownTrayIcon, ArrowUpIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -55,23 +55,14 @@ const openHoverPanel = ref(null) // Track which item has hover panel open (item.
 const showExportFeature = ref(true) // Set to true to enable export functionality
 const disableAlert = ref(false) // Set to true to disable all alerts regardless of showAlert state
 
-// Enchantment support announcement state
-const enchantmentSupportAnnouncementStorageKey =
-	STORAGE_KEYS.ENCHANTMENT_SUPPORT_ANNOUNCEMENT_DISMISSED
-const showEnchantmentSupportAnnouncement = ref(true)
+// Feature announcement state (reusable template for new announcements)
+// To enable: set showFeatureAnnouncement to true and update the template content
+const featureAnnouncementStorageKey = STORAGE_KEYS.FEATURE_ANNOUNCEMENT_DISMISSED
+const showFeatureAnnouncement = ref(false) // Disabled by default - set to true when you have a new announcement
 
-function dismissEnchantmentSupportAnnouncement() {
-	showEnchantmentSupportAnnouncement.value = false
-	localStorage.setItem(enchantmentSupportAnnouncementStorageKey, 'true')
-}
-
-// Diamond currency announcement state
-const diamondCurrencyAnnouncementStorageKey = STORAGE_KEYS.DIAMOND_CURRENCY_ANNOUNCEMENT_DISMISSED
-const showDiamondCurrencyAnnouncement = ref(true)
-
-function dismissDiamondCurrencyAnnouncement() {
-	showDiamondCurrencyAnnouncement.value = false
-	localStorage.setItem(diamondCurrencyAnnouncementStorageKey, 'true')
+function dismissFeatureAnnouncement() {
+	showFeatureAnnouncement.value = false
+	localStorage.setItem(featureAnnouncementStorageKey, 'true')
 }
 
 // Functions to manage shared hover panel state
@@ -170,18 +161,10 @@ function handleScroll() {
 onMounted(() => {
 	filters.initializeFromQuery()
 
-	// Check if Enchantment Support announcement was previously dismissed
-	const enchantmentSupportDismissed = localStorage.getItem(
-		enchantmentSupportAnnouncementStorageKey
-	)
-	if (enchantmentSupportDismissed === 'true') {
-		showEnchantmentSupportAnnouncement.value = false
-	}
-
-	// Check if Diamond Currency announcement was previously dismissed
-	const diamondCurrencyDismissed = localStorage.getItem(diamondCurrencyAnnouncementStorageKey)
-	if (diamondCurrencyDismissed === 'true') {
-		showDiamondCurrencyAnnouncement.value = false
+	// Check if feature announcement was previously dismissed
+	const featureAnnouncementDismissed = localStorage.getItem(featureAnnouncementStorageKey)
+	if (featureAnnouncementDismissed === 'true') {
+		showFeatureAnnouncement.value = false
 	}
 
 	// Initialize economy config from localStorage
@@ -392,55 +375,23 @@ watch(
 </script>
 
 <template>
-	<!-- Enchantment Support Announcement -->
+	<!-- Feature Announcement Banner (template - update content when enabling) -->
 	<div
-		v-if="!disableAlert && showEnchantmentSupportAnnouncement"
-		class="bg-semantic-info-light border-l-4 border-l-semantic-info text-heavy-metal p-2 sm:p-4 relative mb-4">
-		<div class="flex items-center justify-between">
-			<div class="flex items-center">
-				<BuildingStorefrontIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
-				<span class="text-sm sm:text-base">
-					<strong>Enchanted items in Shop Manager!</strong>
-					You can now track and price enchanted items.
-					<span></span>
-					<router-link to="/updates" class="underline hover:text-gray-asparagus">
-						<span>Read more</span>
-					</router-link>
-				</span>
-			</div>
-			<button
-				@click="dismissEnchantmentSupportAnnouncement"
-				class="text-gray-asparagus hover:text-heavy-metal ml-2 sm:ml-4 p-1"
-				aria-label="Dismiss announcement"
-				data-cy="dismiss-enchantment-alert">
-				<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
-					<path
-						fill-rule="evenodd"
-						d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-						clip-rule="evenodd"></path>
-				</svg>
-			</button>
-		</div>
-	</div>
-
-	<!-- Diamond Currency Announcement -->
-	<div
-		v-if="!disableAlert && showDiamondCurrencyAnnouncement"
+		v-if="!disableAlert && showFeatureAnnouncement"
 		class="bg-semantic-info-light border-l-4 border-l-semantic-info text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
 				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					<strong>Diamond currency is now available!</strong>
-					The price guide now supports diamond-based currency.
-					<span></span>
+					<strong>New feature announcement!</strong>
+					Update this text with your announcement.
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
 						<span>Read more</span>
 					</router-link>
 				</span>
 			</div>
 			<button
-				@click="dismissDiamondCurrencyAnnouncement"
+				@click="dismissFeatureAnnouncement"
 				class="text-gray-asparagus hover:text-heavy-metal ml-2 sm:ml-4 p-1"
 				aria-label="Dismiss announcement"
 				data-cy="dismiss-alert">
