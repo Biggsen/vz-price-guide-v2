@@ -5,15 +5,8 @@ import { UserIcon } from '@heroicons/vue/24/solid'
 import { enabledCategories, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { trackModalInteraction } from '../utils/analytics.js'
-import {
-	getEffectivePrice,
-	buyUnitPriceRaw,
-	sellUnitPriceRaw,
-	buyStackPriceRaw,
-	sellStackPriceRaw,
-	getDiamondPricing,
-	getDiamondShulkerPricing
-} from '../utils/pricing.js'
+import { getEffectivePrice } from '../utils/pricing.js'
+import { generateExportData, serializeYAML } from '../utils/exportData.js'
 import { isDonationsEnabled, createDonationCheckout, saveExportIntent } from '../utils/donations.js'
 import { useRouter } from 'vue-router'
 import BaseModal from './BaseModal.vue'
@@ -310,116 +303,22 @@ const sortedFilteredItems = computed(() => {
 	})
 })
 
-// Generate export data - always flat structure
+// Generate export data using shared utility
 const exportData = computed(() => {
-	const itemsToProcess = sortedFilteredItems.value
-	const data = {}
-
-	itemsToProcess.forEach((item) => {
-		const versionKey = selectedVersion.value.replace('.', '_')
-		const basePrice = getEffectivePrice(item, versionKey)
-		const stackSize = item.stack || 64
-
-		const itemData = {}
-
-		// Add metadata if requested
-		if (includeMetadata.value) {
-			itemData.name = item.name
-			itemData.category = item.category
-			itemData.stack = stackSize
-		}
-
-		// Handle diamond currency vs money currency differently
-		if (isDiamondCurrency.value && diamondItem.value) {
-			// Diamond currency: export ratio objects with simpler property names
-			const diamondPricing = getDiamondPricing(
-				item,
-				diamondItem.value,
-				versionKey,
-				sellMargin.value,
-				diamondRoundingDirection.value
-			)
-			const shulkerPricing = getDiamondShulkerPricing(
-				item,
-				diamondItem.value,
-				versionKey,
-				sellMargin.value,
-				diamondRoundingDirection.value
-			)
-
-			if (selectedPriceFields.value.includes('unit_buy')) {
-				itemData.buy = diamondPricing.buy
-			}
-			if (selectedPriceFields.value.includes('unit_sell')) {
-				itemData.sell = diamondPricing.sell
-			}
-			if (selectedPriceFields.value.includes('stack_buy')) {
-				itemData.shulker_buy = shulkerPricing.buy
-			}
-			if (selectedPriceFields.value.includes('stack_sell')) {
-				itemData.shulker_sell = shulkerPricing.sell
-			}
-		} else {
-			// Money currency: export raw numbers with existing property names
-			if (selectedPriceFields.value.includes('unit_buy')) {
-				itemData.unit_buy = buyUnitPriceRaw(
-					basePrice,
-					priceMultiplier.value,
-					roundToWhole.value
-				)
-			}
-			if (selectedPriceFields.value.includes('unit_sell')) {
-				itemData.unit_sell = sellUnitPriceRaw(
-					basePrice,
-					priceMultiplier.value,
-					sellMargin.value,
-					roundToWhole.value
-				)
-			}
-			if (selectedPriceFields.value.includes('stack_buy')) {
-				itemData.stack_buy = buyStackPriceRaw(
-					basePrice,
-					stackSize,
-					priceMultiplier.value,
-					roundToWhole.value
-				)
-			}
-			if (selectedPriceFields.value.includes('stack_sell')) {
-				itemData.stack_sell = sellStackPriceRaw(
-					basePrice,
-					stackSize,
-					priceMultiplier.value,
-					sellMargin.value,
-					roundToWhole.value
-				)
-			}
-		}
-
-		data[item.material_id] = itemData
-	})
-
-	// Add metadata about the export
-	data._export_metadata = {
-		source: "Verzion's Economy Price Guide",
-		url: 'https://minecraft-economy-price-guide.net',
+	return generateExportData(sortedFilteredItems.value, {
 		version: selectedVersion.value,
-		export_date: new Date().toISOString(),
-		item_count: itemsToProcess.length,
-		currency_type: currencyType.value,
-		price_multiplier: priceMultiplier.value,
-		sell_margin: sellMargin.value,
-		round_to_whole: roundToWhole.value,
-		sort_field: sortField.value,
-		sort_direction: sortField.value === 'default' ? 'curated' : sortDirection.value
-	}
-
-	// Add diamond-specific metadata if applicable
-	if (isDiamondCurrency.value && diamondItem.value) {
-		data._export_metadata.diamond_item_id = diamondItem.value.material_id
-		data._export_metadata.diamond_rounding_direction = diamondRoundingDirection.value
-	}
-
-	return data
+		priceFields: selectedPriceFields.value,
+		roundToWhole: roundToWhole.value,
+		includeMetadata: includeMetadata.value,
+		priceMultiplier: priceMultiplier.value,
+		sellMargin: sellMargin.value,
+		currencyType: currencyType.value,
+		diamondItem: diamondItem.value,
+		diamondRoundingDirection: diamondRoundingDirection.value,
+		sortField: sortField.value,
+		sortDirection: sortDirection.value,
+		isDonation: false
+	})
 })
 
 // Preview data without metadata
@@ -428,7 +327,7 @@ const previewData = computed(() => {
 	return items
 })
 
-// Build export config for sessionStorage
+// Build export config for sessionStorage (used by donation flow)
 function buildExportConfig(format) {
 	return {
 		format,
@@ -439,7 +338,13 @@ function buildExportConfig(format) {
 		sortDirection: sortDirection.value,
 		roundToWhole: roundToWhole.value,
 		includeMetadata: includeMetadata.value,
-		itemCount: filteredItems.value.length
+		itemCount: filteredItems.value.length,
+		// Economy settings for parity with direct export
+		priceMultiplier: priceMultiplier.value,
+		sellMargin: sellMargin.value,
+		currencyType: currencyType.value,
+		diamondItemId: diamondItem.value?.material_id || null,
+		diamondRoundingDirection: diamondRoundingDirection.value
 	}
 }
 
@@ -518,33 +423,8 @@ function exportYAML() {
 			donation_amount: donationAmount.value
 		})
 	)
-	// For now, we'll use a simple YAML-like format
-	// In a real implementation, you'd use js-yaml library
-	const yamlStr = generateYAML(exportData.value)
+	const yamlStr = serializeYAML(exportData.value)
 	downloadFile(yamlStr, 'yml', 'text/yaml')
-}
-
-function generateYAML(data) {
-	let yaml = ''
-	for (const [key, value] of Object.entries(data)) {
-		if (key === '_export_metadata') {
-			// Skip metadata in YAML for cleaner output
-			continue
-		}
-		yaml += `${key}:\n`
-		for (const [field, val] of Object.entries(value)) {
-			// Handle ratio objects for diamond currency
-			if (typeof val === 'object' && val !== null && 'diamonds' in val && 'quantity' in val) {
-				yaml += `  ${field}:\n`
-				yaml += `    diamonds: ${val.diamonds}\n`
-				yaml += `    quantity: ${val.quantity}\n`
-			} else {
-				yaml += `  ${field}: ${val}\n`
-			}
-		}
-		yaml += '\n'
-	}
-	return yaml
 }
 
 function downloadFile(content, extension, mimeType) {

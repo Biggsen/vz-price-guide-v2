@@ -14,13 +14,8 @@ import {
 	hasSessionBeenDownloaded,
 	markSessionAsDownloaded
 } from '@/utils/donations.js'
-import {
-	getEffectivePrice,
-	buyUnitPriceRaw,
-	sellUnitPriceRaw,
-	buyStackPriceRaw,
-	sellStackPriceRaw
-} from '@/utils/pricing.js'
+import { getEffectivePrice } from '@/utils/pricing.js'
+import { generateExportData, serializeYAML, findDiamondItem } from '@/utils/exportData.js'
 import { trackModalInteraction } from '@/utils/analytics.js'
 
 const route = useRoute()
@@ -116,85 +111,6 @@ function sortItems(items, config) {
 	})
 }
 
-// Generate export data
-function generateExportData(items, config) {
-	const data = {}
-	const versionKey = config.version.replace('.', '_')
-	const priceMultiplier = 1 // Default multiplier
-	const sellMargin = 0.3 // Default margin
-
-	items.forEach((item) => {
-		const basePrice = getEffectivePrice(item, versionKey)
-		const stackSize = item.stack || 64
-		const itemData = {}
-
-		// Add metadata if requested
-		if (config.includeMetadata) {
-			itemData.name = item.name
-			itemData.category = item.category
-			itemData.stack = stackSize
-		}
-
-		// Add price fields
-		if (config.priceFields?.includes('unit_buy')) {
-			itemData.unit_buy = buyUnitPriceRaw(basePrice, priceMultiplier, config.roundToWhole)
-		}
-		if (config.priceFields?.includes('unit_sell')) {
-			itemData.unit_sell = sellUnitPriceRaw(
-				basePrice,
-				priceMultiplier,
-				sellMargin,
-				config.roundToWhole
-			)
-		}
-		if (config.priceFields?.includes('stack_buy')) {
-			itemData.stack_buy = buyStackPriceRaw(
-				basePrice,
-				stackSize,
-				priceMultiplier,
-				config.roundToWhole
-			)
-		}
-		if (config.priceFields?.includes('stack_sell')) {
-			itemData.stack_sell = sellStackPriceRaw(
-				basePrice,
-				stackSize,
-				priceMultiplier,
-				sellMargin,
-				config.roundToWhole
-			)
-		}
-
-		data[item.material_id] = itemData
-	})
-
-	// Add export metadata
-	data._export_metadata = {
-		source: "Verzion's Economy Price Guide",
-		url: 'https://minecraft-economy-price-guide.net',
-		version: config.version,
-		export_date: new Date().toISOString(),
-		item_count: items.length,
-		donated: true
-	}
-
-	return data
-}
-
-// Generate YAML string
-function generateYAML(data) {
-	let yaml = ''
-	for (const [key, value] of Object.entries(data)) {
-		if (key === '_export_metadata') continue
-		yaml += `${key}:\n`
-		for (const [field, val] of Object.entries(value)) {
-			yaml += `  ${field}: ${val}\n`
-		}
-		yaml += '\n'
-	}
-	return yaml
-}
-
 // Download file
 function downloadFile(content, extension, mimeType, config) {
 	const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
@@ -224,15 +140,34 @@ async function triggerDownload() {
 		const filtered = filterItems(allItems.value, exportConfig.value)
 		const sorted = sortItems(filtered, exportConfig.value)
 
-		// Generate export data
-		const data = generateExportData(sorted, exportConfig.value)
+		// Find diamond item if needed for diamond currency mode
+		const diamondItem =
+			exportConfig.value.currencyType === 'diamond'
+				? findDiamondItem(allItems.value, exportConfig.value.diamondItemId)
+				: null
+
+		// Generate export data using shared utility with full config
+		const data = generateExportData(sorted, {
+			version: exportConfig.value.version,
+			priceFields: exportConfig.value.priceFields,
+			roundToWhole: exportConfig.value.roundToWhole,
+			includeMetadata: exportConfig.value.includeMetadata,
+			priceMultiplier: exportConfig.value.priceMultiplier ?? 1,
+			sellMargin: exportConfig.value.sellMargin ?? 0.3,
+			currencyType: exportConfig.value.currencyType ?? 'money',
+			diamondItem,
+			diamondRoundingDirection: exportConfig.value.diamondRoundingDirection ?? 'nearest',
+			sortField: exportConfig.value.sortField,
+			sortDirection: exportConfig.value.sortDirection,
+			isDonation: true
+		})
 
 		// Download based on format
 		if (exportConfig.value.format === 'json') {
 			const dataStr = JSON.stringify(data, null, 2)
 			downloadFile(dataStr, 'json', 'application/json', exportConfig.value)
 		} else {
-			const yamlStr = generateYAML(data)
+			const yamlStr = serializeYAML(data)
 			downloadFile(yamlStr, 'yml', 'text/yaml', exportConfig.value)
 		}
 
@@ -310,7 +245,13 @@ async function verifyAndDownload() {
 				sortDirection: 'asc',
 				roundToWhole: false,
 				includeMetadata: false,
-				categories: null // All categories
+				categories: null, // All categories
+				// Economy settings with defaults
+				priceMultiplier: 1,
+				sellMargin: 0.3,
+				currencyType: 'money',
+				diamondItemId: null,
+				diamondRoundingDirection: 'nearest'
 			}
 		}
 

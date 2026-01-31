@@ -36,6 +36,46 @@ Always replace the existing enchantment of the same type with the newly selected
 
 ---
 
+### Export Modal Settings Reset on Reopen
+
+**Status**: 🚧 Active  
+**Priority**: Low  
+**Type**: UX Issue  
+**Discovered**: 2026-01-31
+
+**Description**:
+When opening the Export Modal, all settings (categories, sort order, price fields, metadata toggle, round to whole) reset to their defaults. Users who export frequently must reconfigure their preferences each time.
+
+**Expected**:
+Export settings should persist between modal opens (within the same session or across sessions).
+
+**Current Behavior**:
+All `ref()` values are initialized with defaults on component creation:
+
+-   `selectedCategories`: empty array
+-   `sortField`: 'default'
+-   `sortDirection`: 'asc'
+-   `includeMetadata`: false
+-   `selectedPriceFields`: all four fields
+
+Only `roundToWhole` syncs from `economyConfig`, and `selectedVersion` syncs from props.
+
+**Likely Root Cause**:
+No persistence mechanism (localStorage, Pinia store) exists for export-specific settings. Values are initialized fresh each time the component mounts.
+
+**Proposed Fix**:
+Add localStorage persistence for export settings:
+
+1. Save settings to localStorage on change
+2. Restore from localStorage on component mount
+3. Consider session-only vs cross-session persistence based on UX preference
+
+**Files Affected**:
+
+-   `src/components/ExportModal.vue`
+
+---
+
 ## Resolved Issues
 
 ### Settings Price Modifiers Not Persisting in UI

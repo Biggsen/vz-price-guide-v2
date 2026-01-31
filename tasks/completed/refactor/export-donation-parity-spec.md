@@ -4,9 +4,9 @@
 
 The donation export flow produces different output than direct export due to duplicated logic with hardcoded defaults. This spec addresses the parity issue by extracting shared export generation logic.
 
-**Status**: 🟡 Ready for implementation  
-**Branch**: `feature/export-donations` (on top of existing work)  
-**Priority**: High (blocks donation feature release)
+**Status**: ✅ Complete  
+**Branch**: `feature/export-donations`  
+**Completed**: 2026-01-31
 
 ---
 
@@ -109,38 +109,38 @@ The export config passed to `generateExportData` must include ALL settings that 
 
 ### Phase 1: Extract Shared Utility
 
--   [ ] Create `src/utils/exportData.js`
--   [ ] Move pricing/transform logic from `ExportModal.vue` computed to utility
--   [ ] Move `generateYAML()` logic to utility
--   [ ] Export: `generateExportData()`, `serializeJSON()`, `serializeYAML()`
+-   [x] Create `src/utils/exportData.js`
+-   [x] Move pricing/transform logic from `ExportModal.vue` computed to utility
+-   [x] Move `generateYAML()` logic to utility
+-   [x] Export: `generateExportData()`, `serializeJSON()`, `serializeYAML()`
 
 ### Phase 2: Update ExportModal
 
--   [ ] Import shared utility
--   [ ] Replace `exportData` computed with call to `generateExportData()`
--   [ ] Update `buildExportConfig()` to include economy settings:
+-   [x] Import shared utility
+-   [x] Replace `exportData` computed with call to `generateExportData()`
+-   [x] Update `buildExportConfig()` to include economy settings:
     -   `priceMultiplier`
     -   `sellMargin`
     -   `currencyType`
     -   `diamondItemId`
     -   `diamondRoundingDirection`
--   [ ] Verify direct export still works identically
+-   [x] Verify direct export still works identically
 
 ### Phase 3: Update ExportSuccessView
 
--   [ ] Import shared utility
--   [ ] Replace local `generateExportData()` with shared version
--   [ ] Replace local `generateYAML()` with shared version
--   [ ] Use full config from sessionStorage (no hardcoded defaults)
--   [ ] Diamond currency: diamond item lookup already available via `allItems`
+-   [x] Import shared utility
+-   [x] Replace local `generateExportData()` with shared version
+-   [x] Replace local `generateYAML()` with shared version
+-   [x] Use full config from sessionStorage (no hardcoded defaults)
+-   [x] Diamond currency: diamond item lookup already available via `allItems`
 
 ### Phase 4: Verification
 
--   [ ] Test direct export (money mode) - should be identical
--   [ ] Test direct export (diamond mode) - should be identical
--   [ ] Test donation export (money mode) - should now match direct
--   [ ] Test donation export (diamond mode) - should now match direct
--   [ ] Verify metadata includes correct settings in both paths
+-   [x] Test direct export (money mode) - should be identical
+-   [x] Test direct export (diamond mode) - should be identical
+-   [x] Test donation export (money mode) - should now match direct
+-   [x] Test donation export (diamond mode) - should now match direct
+-   [x] Verify metadata includes correct settings in both paths
 
 ---
 
@@ -158,22 +158,22 @@ The export config passed to `generateExportData` must include ALL settings that 
 
 ### Direct Export (ExportModal)
 
--   [ ] Money mode with default settings
--   [ ] Money mode with custom multiplier (e.g., 1.5x)
--   [ ] Money mode with custom margin (e.g., 0.4)
--   [ ] Money mode with round-to-whole enabled
--   [ ] Diamond mode with default rounding
--   [ ] Diamond mode with custom rounding direction
--   [ ] JSON format output correct
--   [ ] YAML format output correct
+-   [x] Money mode with default settings
+-   [x] Money mode with custom multiplier (e.g., 1.5x)
+-   [x] Money mode with custom margin (e.g., 0.4)
+-   [x] Money mode with round-to-whole enabled
+-   [x] Diamond mode with default rounding
+-   [x] Diamond mode with custom rounding direction
+-   [x] JSON format output correct
+-   [x] YAML format output correct
 
 ### Donation Export (ExportSuccessView)
 
--   [ ] Money mode with default settings → matches direct export
--   [ ] Money mode with custom multiplier → matches direct export
--   [ ] Money mode with custom margin → matches direct export
--   [ ] Diamond mode → matches direct export
--   [ ] Metadata includes correct settings
+-   [x] Money mode with default settings → matches direct export
+-   [x] Money mode with custom multiplier → matches direct export
+-   [x] Money mode with custom margin → matches direct export
+-   [x] Diamond mode → matches direct export
+-   [x] Metadata includes correct settings
 
 ---
 
