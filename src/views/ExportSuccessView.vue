@@ -3,8 +3,9 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFirestore, useCollection } from 'vuefire'
 import { query, collection, orderBy, where } from 'firebase/firestore'
-import { CheckCircleIcon, XCircleIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/solid'
+import { XCircleIcon, ArrowDownTrayIcon, HeartIcon } from '@heroicons/vue/24/solid'
 import BaseButton from '@/components/BaseButton.vue'
+import NotificationBanner from '@/components/NotificationBanner.vue'
 import { enabledCategories } from '@/constants.js'
 import {
 	verifyDonationSession,
@@ -31,7 +32,6 @@ const isLoading = ref(true)
 const isVerified = ref(false)
 const isDownloading = ref(false)
 const hasDownloaded = ref(false)
-const alreadyDownloaded = ref(false)
 const errorMessage = ref('')
 const donationAmount = ref(0)
 const exportConfig = ref(null)
@@ -267,13 +267,9 @@ async function verifyAndDownload() {
 		return
 	}
 
-	// Check idempotency - already downloaded?
+	// Check idempotency - already downloaded? Silently redirect to home
 	if (hasSessionBeenDownloaded(sessionId)) {
-		alreadyDownloaded.value = true
-		isVerified.value = true
-		isLoading.value = false
-		// Still try to get export config for manual download
-		exportConfig.value = getExportIntent()
+		router.replace('/')
 		return
 	}
 
@@ -345,11 +341,10 @@ onMounted(() => {
 </script>
 
 <template>
-	<div class="p-4 py-8 max-w-xl">
+	<div class="p-4 py-8 max-w-2xl">
 		<!-- Loading State -->
-		<div v-if="isLoading" class="text-center">
-			<div
-				class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-norway mb-4">
+		<div v-if="isLoading">
+			<div class="flex items-center justify-center h-12 w-12 rounded-full bg-norway mb-4">
 				<svg
 					class="animate-spin h-6 w-6 text-gray-asparagus"
 					xmlns="http://www.w3.org/2000/svg"
@@ -374,33 +369,25 @@ onMounted(() => {
 
 		<!-- Success State -->
 		<div v-else-if="isVerified && !errorMessage" class="max-w-xl">
-			<div class="mb-4 flex items-center gap-3">
-				<h1 class="text-3xl font-bold text-gray-900">Thank You!</h1>
-				<CheckCircleIcon class="w-8 h-8 text-semantic-success" />
-			</div>
+			<h1 class="text-3xl font-bold text-gray-900 mb-4">Thank you</h1>
 
-			<p class="text-gray-600 mb-2">
-				Your ${{ donationAmount.toFixed(2) }} donation helps keep the price guide running.
-				You're basically a Minecraft economy MVP now.
+			<p class="text-gray-600 mb-4">
+				Your ${{ donationAmount.toFixed(2) }} contribution helps support the Price Guide and
+				allows me to keep it accurate and up to date, and improve it over time. Donations
+				like this make it possible to work on new features and refinements.
 			</p>
 
-			<!-- Already downloaded message -->
-			<div
-				v-if="alreadyDownloaded"
-				class="mb-6 p-4 bg-semantic-info-light border border-horizon rounded-lg">
-				<p class="text-sm text-gray-700">
-					Your export file was already downloaded. If you need it again, click the button
-					below.
-				</p>
-			</div>
+			<p class="text-gray-600 mb-2">Thanks again for supporting the project.</p>
+
+			<p class="text-sm text-gray-500 mt-4 mb-6">- verzion</p>
 
 			<!-- Download status -->
-			<div v-else-if="hasDownloaded" class="mb-6 p-4 bg-semantic-success-light rounded-lg">
-				<p class="text-sm text-semantic-success flex items-center gap-2">
-					<CheckCircleIcon class="w-5 h-5" />
-					Your export file has been downloaded!
-				</p>
-			</div>
+			<NotificationBanner
+				v-if="hasDownloaded"
+				type="success"
+				size="compact"
+				message="Your export file has been downloaded!"
+				class="mb-6" />
 
 			<!-- Action Buttons -->
 			<div class="flex flex-col items-start gap-3 mb-4">
@@ -415,22 +402,7 @@ onMounted(() => {
 					Download Export
 				</BaseButton>
 
-				<BaseButton
-					v-else-if="alreadyDownloaded && exportConfig"
-					@click="triggerDownload"
-					:loading="isDownloading"
-					variant="secondary">
-					<template #left-icon>
-						<ArrowDownTrayIcon />
-					</template>
-					Download Again
-				</BaseButton>
-
-				<button
-					@click="goToHome"
-					class="text-sm text-gray-700 hover:text-gray-900 underline">
-					Return to Price Guide
-				</button>
+				<BaseButton @click="goToHome" variant="tertiary">Return to Price Guide</BaseButton>
 			</div>
 		</div>
 
@@ -445,11 +417,7 @@ onMounted(() => {
 			<!-- Action Buttons -->
 			<div class="flex flex-col items-start gap-3 mb-4">
 				<BaseButton @click="goToExport" variant="primary">Try Export Again</BaseButton>
-				<button
-					@click="goToHome"
-					class="text-sm text-gray-700 hover:text-gray-900 underline">
-					Return to Price Guide
-				</button>
+				<BaseButton @click="goToHome" variant="tertiary">Return to Price Guide</BaseButton>
 			</div>
 		</div>
 	</div>

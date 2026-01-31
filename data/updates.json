@@ -1,5 +1,13 @@
 [
 	{
+		"id": 43,
+		"title": "Support for the Price Guide",
+		"date": "2026-01-31",
+		"types": ["Support"],
+		"hidden": false,
+		"description": "Exporting price data remains fully available for free.\n\nI've added a support step during exports for those who wish to contribute to the ongoing maintenance and improvement of the Price Guide. This helps me keep the data accurate and up to date, and work on new features over time, without affecting access or functionality.\n\nIf you wish to support the Price Guide, you can also visit the [donation page](https://donate.stripe.com/bJecN4fMTgsU5d3cC6bII00)."
+	},
+	{
 		"id": 42,
 		"title": "Crate Rewards Enchantments Modernized",
 		"date": "2026-01-21",

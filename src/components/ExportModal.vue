@@ -130,19 +130,13 @@ const donationAmount = ref(0)
 const isProcessingPayment = ref(false)
 const donationError = ref('')
 const showDonations = computed(() => isDonationsEnabled())
-const showCancelledMessage = ref(false)
 
-// Watch for donation cancelled prop
+// Reset donation amount when cancelled
 watch(
 	() => props.donationCancelled,
 	(cancelled) => {
 		if (cancelled) {
 			donationAmount.value = 0
-			showCancelledMessage.value = true
-			// Auto-hide message after 5 seconds
-			setTimeout(() => {
-				showCancelledMessage.value = false
-			}, 5000)
 		}
 	},
 	{ immediate: true }
@@ -885,13 +879,6 @@ watch(
 
 		<template v-if="isAuthenticated" #footer>
 			<div class="space-y-6">
-				<!-- Donation Cancelled Message -->
-				<div
-					v-if="showCancelledMessage"
-					class="p-3 bg-semantic-info-light border border-horizon rounded-lg text-sm text-gray-700">
-					Donation cancelled — you can still export for $0
-				</div>
-
 				<!-- Donation Section -->
 				<div v-if="showDonations">
 					<DonationSelector v-model="donationAmount" :disabled="isProcessingPayment" />

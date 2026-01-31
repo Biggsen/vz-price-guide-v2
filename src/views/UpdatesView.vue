@@ -126,6 +126,15 @@ function getUpdateTypeClass(type) {
 	return classes[type] || 'bg-gray-100 text-gray-800'
 }
 
+// Parse markdown-style links [text](url) in descriptions
+function parseLinks(text) {
+	if (!text) return ''
+	return text.replace(
+		/\[([^\]]+)\]\(([^)]+)\)/g,
+		'<a href="$2" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-600">$1</a>'
+	)
+}
+
 function getStatusClass(status) {
 	const classes = {
 		Completed: 'bg-green-100 text-green-800',
@@ -196,7 +205,9 @@ function formatCompletionDate(dateString) {
 						</span>
 						<h3 class="text-xl font-semibold text-gray-800">{{ update.title }}</h3>
 					</div>
-					<p class="text-gray-700 whitespace-pre-line">{{ update.description }}</p>
+					<p
+						class="text-gray-700 whitespace-pre-line"
+						v-html="parseLinks(update.description)"></p>
 					<div v-if="update.link" class="mt-3">
 						<a
 							:href="update.link"

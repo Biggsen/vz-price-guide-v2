@@ -121,8 +121,8 @@ exports.createDonationCheckout = onCall(
 						price_data: {
 							currency: currency,
 							product_data: {
-								name: 'VZ Price Guide Donation',
-								description: `Export support - ${exportConfig.itemCount || 0} items`
+								name: "Verzion's Price Guide Donation",
+								description: 'Supporting the Price Guide'
 							},
 							unit_amount: amount
 						},

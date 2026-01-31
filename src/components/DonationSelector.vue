@@ -32,6 +32,15 @@ const selectedPreset = computed(() => {
 	return presets.find((p) => p.value === props.modelValue)?.value ?? null
 })
 
+// Check if a valid paid donation is selected
+const hasValidDonation = computed(() => {
+	if (props.modelValue <= 0) return false
+	if (!isCustomSelected.value) return true // Preset is selected
+	// For custom: check that input is a valid number >= 1
+	const num = parseFloat(customAmount.value)
+	return !isNaN(num) && num >= 1 && !customError.value
+})
+
 // Validate custom amount
 function validateCustomAmount(value) {
 	if (value === '') {
@@ -145,7 +154,7 @@ watch(
 							: 'bg-norway text-heavy-metal hover:bg-gray-100',
 						disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
 					]">
-					Custom
+					Amount
 				</button>
 				<div class="relative flex items-center bg-white">
 					<span class="absolute left-2 text-sm text-gray-500 pointer-events-none">$</span>
@@ -167,9 +176,9 @@ watch(
 				</div>
 			</div>
 
-			<!-- Thank you message when paid amount selected -->
+			<!-- Thank you message when valid paid amount selected -->
 			<p
-				v-if="modelValue > 0 && !customError"
+				v-if="hasValidDonation"
 				class="text-sm text-semantic-success flex items-center gap-1">
 				<span>💚</span>
 				<span>Thanks for your support!</span>
