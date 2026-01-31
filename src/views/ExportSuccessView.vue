@@ -1,0 +1,385 @@
+<script setup>
+import { ref, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useFirestore, useCollection } from 'vuefire'
+import { query, collection, orderBy, where } from 'firebase/firestore'
+import { XCircleIcon, ArrowDownTrayIcon, HeartIcon } from '@heroicons/vue/24/solid'
+import BaseButton from '@/components/BaseButton.vue'
+import NotificationBanner from '@/components/NotificationBanner.vue'
+import { enabledCategories } from '@/constants.js'
+import {
+	verifyDonationSession,
+	getExportIntent,
+	clearExportIntent,
+	hasSessionBeenDownloaded,
+	markSessionAsDownloaded
+} from '@/utils/donations.js'
+import { getEffectivePrice } from '@/utils/pricing.js'
+import { generateExportData, serializeYAML, findDiamondItem } from '@/utils/exportData.js'
+import { trackModalInteraction } from '@/utils/analytics.js'
+
+const route = useRoute()
+const router = useRouter()
+const db = useFirestore()
+
+// State
+const isLoading = ref(true)
+const isVerified = ref(false)
+const isDownloading = ref(false)
+const hasDownloaded = ref(false)
+const errorMessage = ref('')
+const donationAmount = ref(0)
+const donationCurrency = ref('usd')
+const exportConfig = ref(null)
+
+// Currency symbol helper
+function getCurrencySymbol(currency) {
+	const symbols = { usd: '$', gbp: '£', eur: '€' }
+	return symbols[currency?.toLowerCase()] || '$'
+}
+
+// Load items from Firestore
+const itemsQuery = query(
+	collection(db, 'items'),
+	where('category', 'in', enabledCategories),
+	orderBy('category', 'asc'),
+	orderBy('subcategory', 'asc'),
+	orderBy('name', 'asc')
+)
+const allItems = useCollection(itemsQuery)
+
+// Helper function to check version
+function isVersionLessOrEqual(itemVersion, targetVersion) {
+	if (!itemVersion || !targetVersion) return false
+	const [itemMajor, itemMinor] = itemVersion.split('.').map(Number)
+	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+	if (itemMajor < targetMajor) return true
+	if (itemMajor > targetMajor) return false
+	return itemMinor <= targetMinor
+}
+
+function shouldShowItemForVersion(item, selectedVersion) {
+	if (!item.version || !isVersionLessOrEqual(item.version, selectedVersion)) {
+		return false
+	}
+	if (item.version_removed && isVersionLessOrEqual(item.version_removed, selectedVersion)) {
+		return false
+	}
+	return true
+}
+
+// Filter items based on export config
+function filterItems(items, config) {
+	let filtered = items
+
+	// Filter by version
+	filtered = filtered.filter((item) => shouldShowItemForVersion(item, config.version))
+
+	// Filter by categories if specified
+	if (config.categories && config.categories.length > 0) {
+		filtered = filtered.filter((item) => config.categories.includes(item.category))
+	}
+
+	// Filter out items with 0 base price
+	const versionKey = config.version.replace('.', '_')
+	filtered = filtered.filter((item) => {
+		const basePrice = getEffectivePrice(item, versionKey)
+		return basePrice > 0
+	})
+
+	return filtered
+}
+
+// Sort items based on config
+function sortItems(items, config) {
+	if (config.sortField === 'default') {
+		return items // Keep original order
+	}
+
+	return [...items].sort((a, b) => {
+		let valueA, valueB
+
+		if (config.sortField === 'name') {
+			valueA = a.name?.toLowerCase() || ''
+			valueB = b.name?.toLowerCase() || ''
+			const comparison = valueA.localeCompare(valueB)
+			return config.sortDirection === 'asc' ? comparison : -comparison
+		}
+
+		if (config.sortField === 'buy') {
+			const versionKey = config.version.replace('.', '_')
+			valueA = getEffectivePrice(a, versionKey)
+			valueB = getEffectivePrice(b, versionKey)
+			const comparison = valueA - valueB
+			return config.sortDirection === 'asc' ? comparison : -comparison
+		}
+
+		return 0
+	})
+}
+
+// Download file
+function downloadFile(content, extension, mimeType, config) {
+	const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+	const versionKey = config.version.replace('.', '_')
+	const filename = `prices_${versionKey}_${timestamp}.${extension}`
+
+	const blob = new Blob([content], { type: mimeType })
+	const url = URL.createObjectURL(blob)
+
+	const link = document.createElement('a')
+	link.href = url
+	link.download = filename
+	document.body.appendChild(link)
+	link.click()
+	document.body.removeChild(link)
+	URL.revokeObjectURL(url)
+}
+
+// Trigger export download
+async function triggerDownload() {
+	if (!exportConfig.value || !allItems.value) return
+
+	isDownloading.value = true
+
+	try {
+		// Filter and sort items
+		const filtered = filterItems(allItems.value, exportConfig.value)
+		const sorted = sortItems(filtered, exportConfig.value)
+
+		// Find diamond item if needed for diamond currency mode
+		const diamondItem =
+			exportConfig.value.currencyType === 'diamond'
+				? findDiamondItem(allItems.value, exportConfig.value.diamondItemId)
+				: null
+
+		// Generate export data using shared utility with full config
+		const data = generateExportData(sorted, {
+			version: exportConfig.value.version,
+			priceFields: exportConfig.value.priceFields,
+			roundToWhole: exportConfig.value.roundToWhole,
+			includeMetadata: exportConfig.value.includeMetadata,
+			priceMultiplier: exportConfig.value.priceMultiplier ?? 1,
+			sellMargin: exportConfig.value.sellMargin ?? 0.3,
+			currencyType: exportConfig.value.currencyType ?? 'money',
+			diamondItem,
+			diamondRoundingDirection: exportConfig.value.diamondRoundingDirection ?? 'nearest',
+			sortField: exportConfig.value.sortField,
+			sortDirection: exportConfig.value.sortDirection,
+			isDonation: true
+		})
+
+		// Download based on format
+		if (exportConfig.value.format === 'json') {
+			const dataStr = JSON.stringify(data, null, 2)
+			downloadFile(dataStr, 'json', 'application/json', exportConfig.value)
+		} else {
+			const yamlStr = serializeYAML(data)
+			downloadFile(yamlStr, 'yml', 'text/yaml', exportConfig.value)
+		}
+
+		// Mark as downloaded (idempotency)
+		const sessionId = route.query.session_id
+		if (sessionId) {
+			markSessionAsDownloaded(sessionId)
+		}
+
+		hasDownloaded.value = true
+
+		trackModalInteraction('export', 'donation_export_completed', {
+			donation_amount: donationAmount.value,
+			export_format: exportConfig.value.format,
+			export_item_count: sorted.length
+		})
+	} catch (error) {
+		console.error('Download error:', error)
+		errorMessage.value = 'Failed to generate export file. Please try again.'
+	} finally {
+		isDownloading.value = false
+	}
+}
+
+// Watch for items to load after verification completes
+watch(
+	() => allItems.value?.length,
+	(length) => {
+		// Trigger download when items load, but only if verified and not yet downloaded
+		if (length > 0 && isVerified.value && exportConfig.value && !hasDownloaded.value) {
+			triggerDownload()
+		}
+	}
+)
+
+// Main verification flow
+async function verifyAndDownload() {
+	const sessionId = route.query.session_id
+
+	if (!sessionId) {
+		errorMessage.value = 'Missing session ID. Please try exporting again.'
+		isLoading.value = false
+		return
+	}
+
+	// Check idempotency - already downloaded? Silently redirect to home
+	if (hasSessionBeenDownloaded(sessionId)) {
+		router.replace('/')
+		return
+	}
+
+	try {
+		// Verify the payment
+		const result = await verifyDonationSession(sessionId)
+
+		if (!result.verified) {
+			errorMessage.value = result.reason || 'Payment not verified. Please try again.'
+			isLoading.value = false
+			return
+		}
+
+		isVerified.value = true
+		donationAmount.value = (result.amount || 0) / 100 // Convert cents to currency units
+		donationCurrency.value = result.currency || 'usd'
+
+		// Get export config from sessionStorage (primary) or Stripe metadata (fallback)
+		let config = getExportIntent()
+
+		if (!config && result.metadata) {
+			// Fallback: reconstruct minimal config from Stripe metadata
+			config = {
+				format: result.metadata.exportFormat || 'json',
+				version: result.metadata.exportVersion || '1.21',
+				priceFields: ['unit_buy', 'unit_sell', 'stack_buy', 'stack_sell'],
+				sortField: 'default',
+				sortDirection: 'asc',
+				roundToWhole: false,
+				includeMetadata: false,
+				categories: null, // All categories
+				// Economy settings with defaults
+				priceMultiplier: 1,
+				sellMargin: 0.3,
+				currencyType: 'money',
+				diamondItemId: null,
+				diamondRoundingDirection: 'nearest'
+			}
+		}
+
+		if (!config) {
+			errorMessage.value =
+				'Export configuration not found. The session may have expired. Please try exporting again.'
+			isLoading.value = false
+			return
+		}
+
+		exportConfig.value = config
+		isLoading.value = false
+
+		// Clear the export intent
+		clearExportIntent()
+
+		// Auto-download if items already loaded, otherwise watcher will handle it
+		if (allItems.value && allItems.value.length > 0) {
+			await triggerDownload()
+		}
+	} catch (error) {
+		console.error('Verification error:', error)
+		errorMessage.value = error.message || 'Failed to verify payment. Please contact support.'
+		isLoading.value = false
+	}
+}
+
+function goToHome() {
+	router.push('/')
+}
+
+function goToExport() {
+	router.push('/?openExport=true')
+}
+
+onMounted(() => {
+	verifyAndDownload()
+})
+</script>
+
+<template>
+	<div class="p-4 py-8 max-w-2xl">
+		<!-- Loading State -->
+		<div v-if="isLoading">
+			<div class="flex items-center justify-center h-12 w-12 rounded-full bg-norway mb-4">
+				<svg
+					class="animate-spin h-6 w-6 text-gray-asparagus"
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24">
+					<circle
+						class="opacity-25"
+						cx="12"
+						cy="12"
+						r="10"
+						stroke="currentColor"
+						stroke-width="4"></circle>
+					<path
+						class="opacity-75"
+						fill="currentColor"
+						d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+			</div>
+			<h1 class="text-3xl font-bold text-gray-900 mb-2">Verifying Payment</h1>
+			<p class="text-gray-600">Please wait while we confirm your donation...</p>
+		</div>
+
+		<!-- Success State -->
+		<div v-else-if="isVerified && !errorMessage" class="max-w-xl">
+			<h1 class="text-3xl font-bold text-gray-900 mb-4">Thank you</h1>
+
+			<p class="text-gray-600 mb-4">
+				Your {{ getCurrencySymbol(donationCurrency)
+				}}{{ donationAmount.toFixed(2) }} contribution helps support the Price Guide and
+				allows me to keep it accurate and up to date, and improve it over time. Donations
+				like this make it possible to work on new features and refinements.
+			</p>
+
+			<p class="text-gray-600 mb-2">Thanks again for supporting the project.</p>
+
+			<p class="text-sm text-gray-500 mt-4 mb-6">- verzion</p>
+
+			<!-- Download status -->
+			<NotificationBanner
+				v-if="hasDownloaded"
+				type="success"
+				size="compact"
+				message="Your export file has been downloaded!"
+				class="mb-6" />
+
+			<!-- Action Buttons -->
+			<div class="flex flex-col items-start gap-3 mb-4">
+				<BaseButton
+					v-if="exportConfig && !hasDownloaded"
+					@click="triggerDownload"
+					:loading="isDownloading"
+					variant="primary">
+					<template #left-icon>
+						<ArrowDownTrayIcon />
+					</template>
+					Download Export
+				</BaseButton>
+
+				<BaseButton @click="goToHome" variant="tertiary">Return to Price Guide</BaseButton>
+			</div>
+		</div>
+
+		<!-- Error State -->
+		<div v-else class="max-w-xl">
+			<div class="mb-4 flex items-center gap-3">
+				<h1 class="text-3xl font-bold text-gray-900">Something Went Wrong</h1>
+				<XCircleIcon class="w-8 h-8 text-semantic-danger" />
+			</div>
+			<p class="text-gray-600 mb-6">{{ errorMessage }}</p>
+
+			<!-- Action Buttons -->
+			<div class="flex flex-col items-start gap-3 mb-4">
+				<BaseButton @click="goToExport" variant="primary">Try Export Again</BaseButton>
+				<BaseButton @click="goToHome" variant="tertiary">Return to Price Guide</BaseButton>
+			</div>
+		</div>
+	</div>
+</template>

@@ -38,6 +38,47 @@ Always replace the existing enchantment of the same type with the newly selected
 
 ## Resolved Issues
 
+### Export Modal Settings Reset on Reopen
+
+**Status**: ✅ Resolved  
+**Priority**: Low  
+**Type**: UX Issue  
+**Discovered**: 2026-01-31  
+**Resolved**: 2026-01-31
+
+**Description**:
+When opening the Export Modal, all settings (categories, sort order, price fields, metadata toggle) reset to their defaults. Users who export frequently had to reconfigure their preferences each time.
+
+**Root Cause**:
+No persistence mechanism existed for export-specific settings. Values were initialized fresh each time the component mounted.
+
+**Solution Implemented**:
+Added localStorage persistence for export settings:
+
+-   Settings saved to `exportSettings` key on any change
+-   Settings restored from localStorage when modal opens
+-   Watcher monitors all persistable settings and auto-saves
+
+**What Persists**:
+
+-   `selectedCategories`
+-   `selectedPriceFields`
+-   `sortField`
+-   `sortDirection`
+-   `includeMetadata`
+
+**What Doesn't Persist (by design)**:
+
+-   `selectedVersion` (synced from homepage)
+-   `roundToWhole` (synced from economy config)
+-   `donationAmount` (always resets to $0)
+
+**Files Modified**:
+
+-   `src/components/ExportModal.vue`
+
+---
+
 ### Settings Price Modifiers Not Persisting in UI
 
 **Status**: ✅ Resolved  

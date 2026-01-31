@@ -5,18 +5,14 @@ import { UserIcon } from '@heroicons/vue/24/solid'
 import { enabledCategories, baseEnabledVersions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { trackModalInteraction } from '../utils/analytics.js'
-import {
-	getEffectivePrice,
-	buyUnitPriceRaw,
-	sellUnitPriceRaw,
-	buyStackPriceRaw,
-	sellStackPriceRaw,
-	getDiamondPricing,
-	getDiamondShulkerPricing
-} from '../utils/pricing.js'
+import { getEffectivePrice } from '../utils/pricing.js'
+import { generateExportData, serializeYAML } from '../utils/exportData.js'
+import { isDonationsEnabled, createDonationCheckout, saveExportIntent } from '../utils/donations.js'
 import { useRouter } from 'vue-router'
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
+import BaseDetails from './BaseDetails.vue'
+import DonationSelector from './DonationSelector.vue'
 
 const props = defineProps({
 	isOpen: {
@@ -46,6 +42,10 @@ const props = defineProps({
 	pagePath: {
 		type: String,
 		default: '/'
+	},
+	donationCancelled: {
+		type: Boolean,
+		default: false
 	}
 })
 
@@ -118,6 +118,90 @@ const sortField = ref('default') // 'default', 'name', 'buy', 'sell'
 const sortDirection = ref('asc') // 'asc', 'desc' (only used when sortField !== 'default')
 const roundToWhole = ref(false) // Round to whole numbers
 
+// Donation state
+const donationAmount = ref(0)
+const donationCurrency = ref('usd')
+const isProcessingPayment = ref(false)
+const donationError = ref('')
+const showDonations = computed(() => isDonationsEnabled())
+
+// localStorage key for export settings persistence
+const EXPORT_SETTINGS_KEY = 'exportSettings'
+
+// Load saved export settings from localStorage
+function loadExportSettings() {
+	try {
+		const saved = localStorage.getItem(EXPORT_SETTINGS_KEY)
+		if (saved) {
+			const settings = JSON.parse(saved)
+			if (Array.isArray(settings.categories)) {
+				selectedCategories.value = settings.categories
+			}
+			if (Array.isArray(settings.priceFields)) {
+				selectedPriceFields.value = settings.priceFields
+			}
+			if (settings.sortField) {
+				sortField.value = settings.sortField
+			}
+			if (settings.sortDirection) {
+				sortDirection.value = settings.sortDirection
+			}
+			if (typeof settings.includeMetadata === 'boolean') {
+				includeMetadata.value = settings.includeMetadata
+			}
+		}
+	} catch (e) {
+		console.warn('Failed to load export settings:', e)
+	}
+}
+
+// Save export settings to localStorage
+function saveExportSettings() {
+	try {
+		const settings = {
+			categories: selectedCategories.value,
+			priceFields: selectedPriceFields.value,
+			sortField: sortField.value,
+			sortDirection: sortDirection.value,
+			includeMetadata: includeMetadata.value
+		}
+		localStorage.setItem(EXPORT_SETTINGS_KEY, JSON.stringify(settings))
+	} catch (e) {
+		console.warn('Failed to save export settings:', e)
+	}
+}
+
+function handleCurrencyUpdate(currency) {
+	donationCurrency.value = currency
+}
+
+// Reset donation amount when cancelled
+watch(
+	() => props.donationCancelled,
+	(cancelled) => {
+		if (cancelled) {
+			donationAmount.value = 0
+			trackModalInteraction(
+				'export',
+				'donation_cancelled',
+				getModalAnalyticsContext({ returned_from: 'stripe_checkout' })
+			)
+		}
+	},
+	{ immediate: true }
+)
+
+// Track donation amount selection
+watch(donationAmount, (newAmount, oldAmount) => {
+	if (newAmount !== oldAmount) {
+		trackModalInteraction(
+			'export',
+			'donation_amount_selected',
+			getModalAnalyticsContext({ donation_amount: newAmount })
+		)
+	}
+})
+
 // Watch for prop changes and update local state
 watch(
 	() => props.selectedVersion,
@@ -140,7 +224,9 @@ const priceMultiplier = computed(() => props.economyConfig.priceMultiplier || 1)
 const sellMargin = computed(() => props.economyConfig.sellMargin || 0.3)
 const currencyType = computed(() => props.economyConfig.currencyType || 'money')
 const diamondItemId = computed(() => props.economyConfig.diamondItemId)
-const diamondRoundingDirection = computed(() => props.economyConfig.diamondRoundingDirection || 'nearest')
+const diamondRoundingDirection = computed(
+	() => props.economyConfig.diamondRoundingDirection || 'nearest'
+)
 
 // Find diamond item from all items
 const diamondItem = computed(() => {
@@ -148,11 +234,17 @@ const diamondItem = computed(() => {
 		// Fallback: try to find by material_id 'diamond'
 		return props.items?.find((item) => item.material_id === 'diamond') || null
 	}
-	return props.items?.find((item) => item.id === diamondItemId.value || item.material_id === 'diamond') || null
+	return (
+		props.items?.find(
+			(item) => item.id === diamondItemId.value || item.material_id === 'diamond'
+		) || null
+	)
 })
 
 // Check if we're in diamond currency mode
-const isDiamondCurrency = computed(() => currencyType.value === 'diamond' && diamondItem.value !== null)
+const isDiamondCurrency = computed(
+	() => currencyType.value === 'diamond' && diamondItem.value !== null
+)
 
 // Available price fields - labels change based on currency type
 const priceFields = computed(() => {
@@ -257,116 +349,22 @@ const sortedFilteredItems = computed(() => {
 	})
 })
 
-// Generate export data - always flat structure
+// Generate export data using shared utility
 const exportData = computed(() => {
-	const itemsToProcess = sortedFilteredItems.value
-	const data = {}
-
-	itemsToProcess.forEach((item) => {
-		const versionKey = selectedVersion.value.replace('.', '_')
-		const basePrice = getEffectivePrice(item, versionKey)
-		const stackSize = item.stack || 64
-
-		const itemData = {}
-
-		// Add metadata if requested
-		if (includeMetadata.value) {
-			itemData.name = item.name
-			itemData.category = item.category
-			itemData.stack = stackSize
-		}
-
-		// Handle diamond currency vs money currency differently
-		if (isDiamondCurrency.value && diamondItem.value) {
-			// Diamond currency: export ratio objects with simpler property names
-			const diamondPricing = getDiamondPricing(
-				item,
-				diamondItem.value,
-				versionKey,
-				sellMargin.value,
-				diamondRoundingDirection.value
-			)
-			const shulkerPricing = getDiamondShulkerPricing(
-				item,
-				diamondItem.value,
-				versionKey,
-				sellMargin.value,
-				diamondRoundingDirection.value
-			)
-
-			if (selectedPriceFields.value.includes('unit_buy')) {
-				itemData.buy = diamondPricing.buy
-			}
-			if (selectedPriceFields.value.includes('unit_sell')) {
-				itemData.sell = diamondPricing.sell
-			}
-			if (selectedPriceFields.value.includes('stack_buy')) {
-				itemData.shulker_buy = shulkerPricing.buy
-			}
-			if (selectedPriceFields.value.includes('stack_sell')) {
-				itemData.shulker_sell = shulkerPricing.sell
-			}
-		} else {
-			// Money currency: export raw numbers with existing property names
-			if (selectedPriceFields.value.includes('unit_buy')) {
-				itemData.unit_buy = buyUnitPriceRaw(
-					basePrice,
-					priceMultiplier.value,
-					roundToWhole.value
-				)
-			}
-			if (selectedPriceFields.value.includes('unit_sell')) {
-				itemData.unit_sell = sellUnitPriceRaw(
-					basePrice,
-					priceMultiplier.value,
-					sellMargin.value,
-					roundToWhole.value
-				)
-			}
-			if (selectedPriceFields.value.includes('stack_buy')) {
-				itemData.stack_buy = buyStackPriceRaw(
-					basePrice,
-					stackSize,
-					priceMultiplier.value,
-					roundToWhole.value
-				)
-			}
-			if (selectedPriceFields.value.includes('stack_sell')) {
-				itemData.stack_sell = sellStackPriceRaw(
-					basePrice,
-					stackSize,
-					priceMultiplier.value,
-					sellMargin.value,
-					roundToWhole.value
-				)
-			}
-		}
-
-		data[item.material_id] = itemData
-	})
-
-	// Add metadata about the export
-	data._export_metadata = {
-		source: "Verzion's Economy Price Guide",
-		url: 'https://minecraft-economy-price-guide.net',
+	return generateExportData(sortedFilteredItems.value, {
 		version: selectedVersion.value,
-		export_date: new Date().toISOString(),
-		item_count: itemsToProcess.length,
-		currency_type: currencyType.value,
-		price_multiplier: priceMultiplier.value,
-		sell_margin: sellMargin.value,
-		round_to_whole: roundToWhole.value,
-		sort_field: sortField.value,
-		sort_direction: sortField.value === 'default' ? 'curated' : sortDirection.value
-	}
-
-	// Add diamond-specific metadata if applicable
-	if (isDiamondCurrency.value && diamondItem.value) {
-		data._export_metadata.diamond_item_id = diamondItem.value.material_id
-		data._export_metadata.diamond_rounding_direction = diamondRoundingDirection.value
-	}
-
-	return data
+		priceFields: selectedPriceFields.value,
+		roundToWhole: roundToWhole.value,
+		includeMetadata: includeMetadata.value,
+		priceMultiplier: priceMultiplier.value,
+		sellMargin: sellMargin.value,
+		currencyType: currencyType.value,
+		diamondItem: diamondItem.value,
+		diamondRoundingDirection: diamondRoundingDirection.value,
+		sortField: sortField.value,
+		sortDirection: sortDirection.value,
+		isDonation: false
+	})
 })
 
 // Preview data without metadata
@@ -375,14 +373,86 @@ const previewData = computed(() => {
 	return items
 })
 
-// Export functions
+// Build export config for sessionStorage (used by donation flow)
+function buildExportConfig(format) {
+	return {
+		format,
+		version: selectedVersion.value,
+		categories: selectedCategories.value.length > 0 ? selectedCategories.value : null,
+		priceFields: selectedPriceFields.value,
+		sortField: sortField.value,
+		sortDirection: sortDirection.value,
+		roundToWhole: roundToWhole.value,
+		includeMetadata: includeMetadata.value,
+		itemCount: filteredItems.value.length,
+		// Economy settings for parity with direct export
+		priceMultiplier: priceMultiplier.value,
+		sellMargin: sellMargin.value,
+		currencyType: currencyType.value,
+		diamondItemId: diamondItem.value?.material_id || null,
+		diamondRoundingDirection: diamondRoundingDirection.value
+	}
+}
+
+// Handle export with optional donation
+async function handleExport(format) {
+	if (donationAmount.value > 0) {
+		await initiateCheckout(format)
+	} else {
+		if (format === 'json') {
+			exportJSON()
+		} else {
+			exportYAML()
+		}
+	}
+}
+
+// Initiate Stripe checkout for donation
+async function initiateCheckout(format) {
+	isProcessingPayment.value = true
+	donationError.value = ''
+
+	try {
+		const exportConfig = buildExportConfig(format)
+
+		// Save export intent to sessionStorage
+		saveExportIntent(exportConfig)
+
+		trackModalInteraction(
+			'export',
+			'donation_checkout_initiated',
+			getModalAnalyticsContext({
+				export_format: format,
+				donation_amount: donationAmount.value,
+				export_item_count: filteredItems.value.length
+			})
+		)
+
+		// Create Stripe checkout session
+		const { url } = await createDonationCheckout({
+			amount: donationAmount.value,
+			currency: donationCurrency.value,
+			exportConfig
+		})
+
+		// Redirect to Stripe
+		window.location.href = url
+	} catch (error) {
+		console.error('Checkout error:', error)
+		donationError.value = error.message || 'Failed to start checkout. Please try again.'
+		isProcessingPayment.value = false
+	}
+}
+
+// Export functions (direct download, no donation)
 function exportJSON() {
 	trackModalInteraction(
 		'export',
 		'export_click',
 		getModalAnalyticsContext({
 			export_format: 'json',
-			export_item_count: filteredItems.value.length
+			export_item_count: filteredItems.value.length,
+			donation_amount: donationAmount.value
 		})
 	)
 	const dataStr = JSON.stringify(exportData.value, null, 2)
@@ -395,36 +465,12 @@ function exportYAML() {
 		'export_click',
 		getModalAnalyticsContext({
 			export_format: 'yml',
-			export_item_count: filteredItems.value.length
+			export_item_count: filteredItems.value.length,
+			donation_amount: donationAmount.value
 		})
 	)
-	// For now, we'll use a simple YAML-like format
-	// In a real implementation, you'd use js-yaml library
-	const yamlStr = generateYAML(exportData.value)
+	const yamlStr = serializeYAML(exportData.value)
 	downloadFile(yamlStr, 'yml', 'text/yaml')
-}
-
-function generateYAML(data) {
-	let yaml = ''
-	for (const [key, value] of Object.entries(data)) {
-		if (key === '_export_metadata') {
-			// Skip metadata in YAML for cleaner output
-			continue
-		}
-		yaml += `${key}:\n`
-		for (const [field, val] of Object.entries(value)) {
-			// Handle ratio objects for diamond currency
-			if (typeof val === 'object' && val !== null && 'diamonds' in val && 'quantity' in val) {
-				yaml += `  ${field}:\n`
-				yaml += `    diamonds: ${val.diamonds}\n`
-				yaml += `    quantity: ${val.quantity}\n`
-			} else {
-				yaml += `  ${field}: ${val}\n`
-			}
-		}
-		yaml += '\n'
-	}
-	return yaml
 }
 
 function downloadFile(content, extension, mimeType) {
@@ -461,21 +507,33 @@ function handleCancel() {
 
 function goToSignUp() {
 	trackExportCta('create_account')
-	trackModalInteraction('export', 'close', getModalAnalyticsContext({ close_reason: 'cta_click' }))
+	trackModalInteraction(
+		'export',
+		'close',
+		getModalAnalyticsContext({ close_reason: 'cta_click' })
+	)
 	emit('close', 'cta_click')
 	router.push('/signup')
 }
 
 function goToSignIn() {
 	trackExportCta('sign_in')
-	trackModalInteraction('export', 'close', getModalAnalyticsContext({ close_reason: 'cta_click' }))
+	trackModalInteraction(
+		'export',
+		'close',
+		getModalAnalyticsContext({ close_reason: 'cta_click' })
+	)
 	emit('close', 'cta_click')
 	router.push('/signin')
 }
 
 function goToVerifyEmail() {
 	trackExportCta('verify_email')
-	trackModalInteraction('export', 'close', getModalAnalyticsContext({ close_reason: 'cta_click' }))
+	trackModalInteraction(
+		'export',
+		'close',
+		getModalAnalyticsContext({ close_reason: 'cta_click' })
+	)
 	emit('close', 'cta_click')
 	router.push('/verify-email')
 }
@@ -543,9 +601,28 @@ watch(
 	() => props.isOpen,
 	(isOpen) => {
 		if (isOpen) {
+			// Load saved export settings from localStorage
+			loadExportSettings()
 			trackModalInteraction('export', 'open', getModalAnalyticsContext())
+			// Track donation prompt viewed if user is authenticated and donations enabled
+			if (isAuthenticated.value && showDonations.value) {
+				trackModalInteraction(
+					'export',
+					'donation_prompt_viewed',
+					getModalAnalyticsContext()
+				)
+			}
 		}
 	}
+)
+
+// Watch persistable settings and save to localStorage on change
+watch(
+	[selectedCategories, selectedPriceFields, sortField, sortDirection, includeMetadata],
+	() => {
+		saveExportSettings()
+	},
+	{ deep: true }
 )
 </script>
 
@@ -681,116 +758,156 @@ watch(
 			</div>
 
 			<!-- Sort Order -->
-			<div class="mb-6">
-				<label class="block text-sm font-medium text-gray-700 mb-2">Sort Order</label>
-				<div class="flex items-center space-x-4">
-					<select
-						v-model="sortField"
-						@change="trackExportChange('sortField', sortField)"
-						class="border-2 border-gray-asparagus rounded px-2 py-1 text-sm">
-						<option value="default">Default Order</option>
-						<option value="name">Name</option>
-						<option value="buy">Buy Price</option>
-					</select>
-					<select
-						v-model="sortDirection"
-						v-if="sortField !== 'default'"
-						@change="trackExportChange('sortDirection', sortDirection)"
-						class="border-2 border-gray-asparagus rounded px-2 py-1 text-sm">
-						<option value="asc">Ascending</option>
-						<option value="desc">Descending</option>
-					</select>
-				</div>
+			<div class="mb-3">
+				<BaseDetails summary="Sort Order">
+					<div class="flex items-center space-x-4">
+						<select
+							v-model="sortField"
+							@change="trackExportChange('sortField', sortField)"
+							class="border-2 border-gray-asparagus rounded px-2 py-1 text-sm">
+							<option value="default">Default Order</option>
+							<option value="name">Name</option>
+							<option value="buy">Buy Price</option>
+						</select>
+						<select
+							v-model="sortDirection"
+							v-if="sortField !== 'default'"
+							@change="trackExportChange('sortDirection', sortDirection)"
+							class="border-2 border-gray-asparagus rounded px-2 py-1 text-sm">
+							<option value="asc">Ascending</option>
+							<option value="desc">Descending</option>
+						</select>
+					</div>
+				</BaseDetails>
 			</div>
 
 			<!-- Price Fields Selection -->
-			<div class="mb-6">
-				<label class="block text-sm font-medium text-gray-700 mb-2">Price Fields</label>
-				<div class="space-y-2">
-					<label
-						v-for="field in priceFields"
-						:key="field.key"
-						class="flex items-center space-x-2">
-						<input
-							type="checkbox"
-							:checked="selectedPriceFields.includes(field.key)"
-							@change="togglePriceField(field.key)"
-							class="checkbox-input" />
-						<span class="text-sm">{{ field.label }}</span>
-					</label>
+			<div class="mb-3">
+				<BaseDetails summary="Price Fields">
+					<div class="space-y-2">
+						<label
+							v-for="field in priceFields"
+							:key="field.key"
+							class="flex items-center space-x-2">
+							<input
+								type="checkbox"
+								:checked="selectedPriceFields.includes(field.key)"
+								@change="togglePriceField(field.key)"
+								class="checkbox-input" />
+							<span class="text-sm">{{ field.label }}</span>
+						</label>
 
-					<!-- Round to Whole Numbers -->
-					<label class="flex items-center space-x-2">
-						<input
-							type="checkbox"
-							v-model="roundToWhole"
-							@change="trackExportChange('roundToWhole', roundToWhole)"
-							class="checkbox-input" />
-						<span class="text-sm">Round to whole numbers</span>
-					</label>
-				</div>
+						<!-- Round to Whole Numbers -->
+						<label class="flex items-center space-x-2">
+							<input
+								type="checkbox"
+								v-model="roundToWhole"
+								@change="trackExportChange('roundToWhole', roundToWhole)"
+								class="checkbox-input" />
+							<span class="text-sm">Round to whole numbers</span>
+						</label>
+					</div>
+				</BaseDetails>
 			</div>
 
 			<!-- Advanced Options -->
-			<div class="mb-6 space-y-4">
-				<h3 class="text-sm font-medium text-gray-700">Advanced Options</h3>
-
-				<!-- Include Metadata -->
-				<label class="flex items-center space-x-2">
-					<input
-						type="checkbox"
-						v-model="includeMetadata"
-						@change="trackExportChange('includeMetadata', includeMetadata)"
-						class="checkbox-input" />
-					<span class="text-sm">Include metadata (name, category, stack size)</span>
-				</label>
+			<div class="mb-3">
+				<BaseDetails summary="Advanced Options">
+					<label class="flex items-center space-x-2">
+						<input
+							type="checkbox"
+							v-model="includeMetadata"
+							@change="trackExportChange('includeMetadata', includeMetadata)"
+							class="checkbox-input" />
+						<span class="text-sm">Include metadata (name, category, stack size)</span>
+					</label>
+				</BaseDetails>
 			</div>
 
 			<!-- Preview -->
 			<div v-if="Object.keys(previewData).length > 0">
-				<h3 class="text-sm font-medium text-gray-700 mb-2">
-					Preview ({{ Object.keys(previewData).length }} items)
-				</h3>
-				<div class="bg-gray-50 rounded-md p-3 max-h-32 overflow-y-auto text-xs font-mono">
-					<pre>{{
-						JSON.stringify(
-							Object.fromEntries(Object.entries(previewData).slice(0, 3)),
-							null,
-							2
-						)
-					}}</pre>
-					<span v-if="Object.keys(previewData).length > 3" class="text-gray-500">
-						... and {{ Object.keys(previewData).length - 3 }} more items
-					</span>
-				</div>
+				<BaseDetails :summary="`Preview (${Object.keys(previewData).length} items)`">
+					<div
+						class="bg-gray-50 rounded-md p-3 max-h-32 overflow-y-auto text-xs font-mono">
+						<pre>{{
+							JSON.stringify(
+								Object.fromEntries(Object.entries(previewData).slice(0, 3)),
+								null,
+								2
+							)
+						}}</pre>
+						<span v-if="Object.keys(previewData).length > 3" class="text-gray-500">
+							... and {{ Object.keys(previewData).length - 3 }} more items
+						</span>
+					</div>
+				</BaseDetails>
 			</div>
 		</div>
 
 		<template v-if="isAuthenticated" #footer>
-			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-				<div class="text-sm text-gray-600 text-center sm:text-left">
-					{{ filteredItems.length }} items will be exported
+			<div class="space-y-4 sm:space-y-6">
+				<!-- Donation Section -->
+				<div v-if="showDonations">
+					<!-- Mobile: Collapsible -->
+					<div class="mobile-only -mt-2">
+						<BaseDetails summary="Support the Project">
+							<DonationSelector
+								v-model="donationAmount"
+								:disabled="isProcessingPayment"
+								@update:currency="handleCurrencyUpdate" />
+						</BaseDetails>
+					</div>
+					<!-- Desktop: Direct -->
+					<div class="desktop-only">
+						<DonationSelector
+							v-model="donationAmount"
+							:disabled="isProcessingPayment"
+							@update:currency="handleCurrencyUpdate" />
+					</div>
 				</div>
-				<div class="flex justify-center space-x-2 sm:space-x-3">
-					<BaseButton @click="handleCancel" variant="tertiary">Cancel</BaseButton>
-					<BaseButton
-						@click="exportJSON"
-						:disabled="Object.keys(exportData).length === 0"
-						variant="primary">
-						<template #left-icon>
-							<ArrowDownTrayIcon />
-						</template>
-						JSON
-					</BaseButton>
-					<BaseButton
-						@click="exportYAML"
-						:disabled="Object.keys(exportData).length === 0"
-						variant="primary">
-						<template #left-icon>
-							<ArrowDownTrayIcon />
-						</template>
-						YAML
-					</BaseButton>
+
+				<!-- Error message -->
+				<p v-if="donationError" class="text-sm text-semantic-danger text-center">
+					{{ donationError }}
+				</p>
+
+				<!-- Item count and buttons -->
+				<div class="flex items-center justify-between gap-3">
+					<div class="text-sm text-gray-600">
+						{{ filteredItems.length }} items
+						<span class="hidden-xs">will be exported</span>
+					</div>
+					<div class="flex gap-2 sm:gap-3">
+						<BaseButton
+							@click="handleCancel"
+							variant="tertiary"
+							:disabled="isProcessingPayment"
+							class="hidden sm:inline-flex">
+							Cancel
+						</BaseButton>
+						<BaseButton
+							@click="handleExport('json')"
+							:disabled="Object.keys(exportData).length === 0 || isProcessingPayment"
+							:loading="isProcessingPayment"
+							variant="primary">
+							<template #left-icon>
+								<ArrowDownTrayIcon />
+							</template>
+							<span class="sm:hidden">JSON</span>
+							<span class="hidden sm:inline">Export JSON</span>
+						</BaseButton>
+						<BaseButton
+							@click="handleExport('yml')"
+							:disabled="Object.keys(exportData).length === 0 || isProcessingPayment"
+							:loading="isProcessingPayment"
+							variant="primary">
+							<template #left-icon>
+								<ArrowDownTrayIcon />
+							</template>
+							<span class="sm:hidden">YAML</span>
+							<span class="hidden sm:inline">Export YAML</span>
+						</BaseButton>
+					</div>
 				</div>
 			</div>
 		</template>
@@ -803,8 +920,8 @@ watch(
 	accent-color: theme('colors.gray-asparagus');
 }
 
-/* Custom breakpoint at 400px */
-@media (max-width: 399px) {
+/* Breakpoint at sm (640px) */
+@media (max-width: 639px) {
 	.mobile-only {
 		display: block !important;
 	}
@@ -813,12 +930,19 @@ watch(
 	}
 }
 
-@media (min-width: 400px) {
+@media (min-width: 640px) {
 	.mobile-only {
 		display: none !important;
 	}
 	.desktop-only {
 		display: block !important;
+	}
+}
+
+/* Hide below 400px */
+@media (max-width: 399px) {
+	.hidden-xs {
+		display: none !important;
 	}
 }
 </style>
