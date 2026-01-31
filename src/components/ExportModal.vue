@@ -127,9 +127,14 @@ const roundToWhole = ref(false) // Round to whole numbers
 
 // Donation state
 const donationAmount = ref(0)
+const donationCurrency = ref('usd')
 const isProcessingPayment = ref(false)
 const donationError = ref('')
 const showDonations = computed(() => isDonationsEnabled())
+
+function handleCurrencyUpdate(currency) {
+	donationCurrency.value = currency
+}
 
 // Reset donation amount when cancelled
 watch(
@@ -475,6 +480,7 @@ async function initiateCheckout(format) {
 		// Create Stripe checkout session
 		const { url } = await createDonationCheckout({
 			amount: donationAmount.value,
+			currency: donationCurrency.value,
 			exportConfig
 		})
 
@@ -905,7 +911,10 @@ watch(
 			<div class="space-y-6">
 				<!-- Donation Section -->
 				<div v-if="showDonations">
-					<DonationSelector v-model="donationAmount" :disabled="isProcessingPayment" />
+					<DonationSelector
+						v-model="donationAmount"
+						:disabled="isProcessingPayment"
+						@update:currency="handleCurrencyUpdate" />
 				</div>
 
 				<!-- Error message -->

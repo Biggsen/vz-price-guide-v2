@@ -6,6 +6,67 @@ export function isDonationsEnabled() {
 	return import.meta.env.VITE_DONATIONS_ENABLED === 'true'
 }
 
+// Currency configuration
+const CURRENCY_CONFIG = {
+	GBP: { code: 'gbp', symbol: '£' },
+	EUR: { code: 'eur', symbol: '€' },
+	USD: { code: 'usd', symbol: '$' }
+}
+
+// EU country language prefixes (Eurozone)
+const EU_LANG_PREFIXES = [
+	'de', // German
+	'fr', // French
+	'es', // Spanish
+	'it', // Italian
+	'nl', // Dutch
+	'pt', // Portuguese
+	'be', // Belgian (not a language, but included for completeness)
+	'at', // Austrian (not a language)
+	'fi', // Finnish
+	'el', // Greek
+	'sk', // Slovak
+	'sl', // Slovenian
+	'lv', // Latvian
+	'lt', // Lithuanian
+	'et', // Estonian
+	'mt', // Maltese
+	'cy', // Welsh (but Cyprus uses EUR)
+	'lu', // Luxembourgish
+	'ga', // Irish
+	'hr' // Croatian
+]
+
+/**
+ * Detects the user's preferred currency based on browser locale
+ * @returns {{ code: string, symbol: string }}
+ */
+export function detectCurrency() {
+	const locale = navigator.language || 'en-US'
+
+	// UK -> GBP
+	if (locale === 'en-GB') {
+		return CURRENCY_CONFIG.GBP
+	}
+
+	// EU countries -> EUR
+	const langPrefix = locale.split('-')[0].toLowerCase()
+	if (EU_LANG_PREFIXES.includes(langPrefix)) {
+		return CURRENCY_CONFIG.EUR
+	}
+
+	// Default -> USD (US, Canada, Australia, and everyone else)
+	return CURRENCY_CONFIG.USD
+}
+
+/**
+ * Gets the currency configuration (for external use)
+ * @returns {{ code: string, symbol: string }}
+ */
+export function getCurrency() {
+	return detectCurrency()
+}
+
 // Session storage key for export intent
 const EXPORT_INTENT_KEY = 'exportIntent'
 const DOWNLOADED_SESSIONS_KEY = 'downloadedSessions'
@@ -14,14 +75,15 @@ const TTL_MS = 30 * 60 * 1000 // 30 minutes
 /**
  * Creates a Stripe Checkout session for donation
  * @param {Object} params
- * @param {number} params.amount - Amount in dollars (will be converted to cents)
+ * @param {number} params.amount - Amount in local currency (will be converted to cents/pence)
+ * @param {string} params.currency - Currency code (e.g., 'usd', 'gbp', 'eur')
  * @param {Object} params.exportConfig - Export configuration
  * @param {string} params.exportConfig.format - 'json' or 'yml'
  * @param {string} params.exportConfig.version - Minecraft version
  * @param {number} params.exportConfig.itemCount - Number of items
  * @returns {Promise<{sessionId: string, url: string}>}
  */
-export async function createDonationCheckout({ amount, exportConfig }) {
+export async function createDonationCheckout({ amount, currency, exportConfig }) {
 	const createCheckout = httpsCallable(functions, 'createDonationCheckout')
 
 	const baseUrl = window.location.origin
@@ -29,8 +91,8 @@ export async function createDonationCheckout({ amount, exportConfig }) {
 	const cancelUrl = `${baseUrl}/?donation_cancelled=true`
 
 	const result = await createCheckout({
-		amount: Math.round(amount * 100), // Convert dollars to cents
-		currency: 'usd',
+		amount: Math.round(amount * 100), // Convert to smallest currency unit (cents/pence)
+		currency: currency || 'usd',
 		exportConfig,
 		successUrl,
 		cancelUrl

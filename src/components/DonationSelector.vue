@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
+import { getCurrency } from '@/utils/donations.js'
 
 const props = defineProps({
 	modelValue: {
@@ -12,14 +13,21 @@ const props = defineProps({
 	}
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'update:currency'])
 
-const presets = [
-	{ value: 0, label: '$0 (free)' },
-	{ value: 10, label: '$10' },
-	{ value: 20, label: '$20' },
-	{ value: 50, label: '$50' }
-]
+// Detect currency once on component mount
+const currency = getCurrency()
+
+// Emit currency immediately so parent can use it
+emit('update:currency', currency.code)
+
+// Generate presets with localized currency symbol
+const presets = computed(() => [
+	{ value: 0, label: `${currency.symbol}0 (free)` },
+	{ value: 10, label: `${currency.symbol}10` },
+	{ value: 20, label: `${currency.symbol}20` },
+	{ value: 50, label: `${currency.symbol}50` }
+])
 
 const isCustomSelected = ref(false)
 const customAmount = ref('')
@@ -29,7 +37,7 @@ const customInput = ref(null)
 // Track which preset is selected (or null if custom)
 const selectedPreset = computed(() => {
 	if (isCustomSelected.value) return null
-	return presets.find((p) => p.value === props.modelValue)?.value ?? null
+	return presets.value.find((p) => p.value === props.modelValue)?.value ?? null
 })
 
 // Check if a valid paid donation is selected
@@ -44,17 +52,17 @@ const hasValidDonation = computed(() => {
 // Validate custom amount
 function validateCustomAmount(value) {
 	if (value === '') {
-		return '' // Empty is fine, just defaults to $0
+		return '' // Empty is fine, just defaults to 0
 	}
 	const num = parseFloat(value)
 	if (isNaN(num)) {
 		return 'Enter a valid amount'
 	}
 	if (num < 1) {
-		return 'Minimum $1'
+		return `Minimum ${currency.symbol}1`
 	}
 	if (num > 500) {
-		return 'Maximum $500'
+		return `Maximum ${currency.symbol}500`
 	}
 	return ''
 }
@@ -105,7 +113,7 @@ function handleCustomBlur() {
 watch(
 	() => props.modelValue,
 	(newValue) => {
-		if (isCustomSelected.value && !presets.some((p) => p.value === newValue)) {
+		if (isCustomSelected.value && !presets.value.some((p) => p.value === newValue)) {
 			customAmount.value = newValue > 0 ? String(newValue) : ''
 		}
 	}
@@ -157,7 +165,9 @@ watch(
 					Amount
 				</button>
 				<div class="relative flex items-center bg-white">
-					<span class="absolute left-2 text-sm text-gray-500 pointer-events-none">$</span>
+					<span class="absolute left-2 text-sm text-gray-500 pointer-events-none">
+						{{ currency.symbol }}
+					</span>
 					<input
 						ref="customInput"
 						type="text"
