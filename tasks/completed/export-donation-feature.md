@@ -608,8 +608,12 @@ If issues arise post-launch:
 
 ---
 
-**Status**: ✅ Implemented (pending production deployment & testing)
-**Priority**: Medium
-**Dependencies**: Stripe account, Firebase Functions
-**Phases**: 6 (Foundation → UI → Integration → Success Page → Polish → Testing)
+**Status**: ✅ Complete  
+**Completed**: 2026-01-31  
+**Deployed**: Production live with `VITE_DONATIONS_ENABLED=true`
+
+**Deferred items**:
+- Task 2.3: Component tests (DonationSelector)
+- Task 5.3: Donor recognition (hide prompt for recent donors)
+
 **Testing**: See [Export Donation Testing Specification](../testing/export-donation-testing.md)
