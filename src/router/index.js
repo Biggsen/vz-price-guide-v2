@@ -534,6 +534,17 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/admin/random-picker',
+			name: 'admin-random-picker',
+			component: () => import('../views/RandomPickerView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: `Random Picker - ${siteName}`
+			}
+		},
+		{
 			path: '/dev/yaml-import',
 			name: 'yaml-import-dev',
 			component: () => import('../views/YamlImportDevView.vue'),

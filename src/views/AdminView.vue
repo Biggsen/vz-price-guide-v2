@@ -87,6 +87,22 @@ const { user, isAdmin, canViewMissingItems, canAddItems, canBulkUpdate } = useAd
 					management.
 				</p>
 			</RouterLink>
+
+			<!-- Random Picker -->
+			<RouterLink
+				to="/admin/random-picker"
+				class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-indigo-300">
+				<div class="flex items-center mb-4">
+					<div
+						class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+						<SparklesIcon class="w-6 h-6 text-indigo-600" />
+					</div>
+					<h3 class="text-lg font-semibold text-gray-900 ml-3">Random Picker</h3>
+				</div>
+				<p class="text-gray-600 text-sm">
+					Pick random categories or items from the price guide.
+				</p>
+			</RouterLink>
 		</div>
 
 		<!-- Recipe Management -->
