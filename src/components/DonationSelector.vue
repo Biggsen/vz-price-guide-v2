@@ -24,9 +24,9 @@ emit('update:currency', currency.code)
 // Generate presets with localized currency symbol (for pill buttons)
 const presets = computed(() => [
 	{ value: 0, label: `${currency.symbol}0 (free)` },
+	{ value: 5, label: `${currency.symbol}5` },
 	{ value: 10, label: `${currency.symbol}10` },
-	{ value: 20, label: `${currency.symbol}20` },
-	{ value: 50, label: `${currency.symbol}50` }
+	{ value: 20, label: `${currency.symbol}20` }
 ])
 
 // Presets for mobile dropdown (includes custom option)
