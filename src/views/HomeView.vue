@@ -109,8 +109,7 @@ const {
 	categoryCounts: totalCategoryCounts,
 	allCategoriesWithSearch,
 	filteredGroupedItems,
-	totalItemCount,
-	getCacheStats
+	totalItemCount
 } = items
 
 const {
@@ -441,7 +440,7 @@ watch(
 			</BaseButton>
 		</div>
 
-		<div class="mb-4 text-sm text-gray-asparagus font-medium">
+		<div class="mb-4 text-sm text-gray-asparagus font-medium h-9 flex items-center">
 			<span v-if="isLoading">Loading price guide...</span>
 			<span v-else>
 				<div class="flex items-center gap-2">
@@ -457,12 +456,6 @@ watch(
 						class="w-6 h-6"
 						title="Diamond Currency Mode" />
 				</div>
-				<span v-if="canEditItems" class="ml-4 text-xs text-gray-500">
-					Cache: {{ getCacheStats().hits }}/{{
-						getCacheStats().hits + getCacheStats().misses
-					}}
-					hits ({{ getCacheStats().size }} entries)
-				</span>
 			</span>
 		</div>
 
