@@ -57,6 +57,11 @@ export function useFilters(enabledVersions) {
 
 		if (versionParam && enabledVersions.value.includes(versionParam)) {
 			selectedVersion.value = versionParam
+		} else {
+			const savedVersion = localStorage.getItem('selectedVersion')
+			if (savedVersion && enabledVersions.value.includes(savedVersion)) {
+				selectedVersion.value = savedVersion
+			}
 		}
 	}
 
