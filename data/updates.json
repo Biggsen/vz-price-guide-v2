@@ -1,5 +1,19 @@
 [
 	{
+		"id": 44,
+		"title": "Homepage Improvements & Fixes",
+		"date": "2026-02-25",
+		"types": ["Enhancement", "Fix"],
+		"hidden": false,
+		"description": "A set of quality-of-life improvements to the price guide homepage. Your search query and selected categories now stay put when you refresh, version selection no longer resets, and the desktop layout has been refined.",
+		"changes": [
+			"Your search text and category selections now stay until you click Reset",
+			"Fixed version selection reverting to 1.21 after returning",
+			"Settings and Export buttons moved next to the search bar for a cleaner layout",
+			"Reduced layout shifting during page load"
+		]
+	},
+	{
 		"id": 43,
 		"title": "Support for the Price Guide",
 		"date": "2026-01-31",

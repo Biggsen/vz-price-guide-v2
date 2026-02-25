@@ -2,6 +2,9 @@ import { ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { enabledCategories, baseEnabledVersions } from '../constants.js'
 
+const HOMEPAGE_SEARCH_KEY = 'homepageSearchQuery'
+const HOMEPAGE_CATEGORIES_KEY = 'homepageVisibleCategories'
+
 export function useFilters(enabledVersions) {
 	const route = useRoute()
 	const router = useRouter()
@@ -10,6 +13,41 @@ export function useFilters(enabledVersions) {
 	const searchQuery = ref('')
 	const visibleCategories = shallowRef([])
 	const selectedVersion = ref(baseEnabledVersions[baseEnabledVersions.length - 1])
+
+	function persistSearch() {
+		try {
+			const q = searchQuery.value || ''
+			if (q) {
+				localStorage.setItem(HOMEPAGE_SEARCH_KEY, q)
+			} else {
+				localStorage.removeItem(HOMEPAGE_SEARCH_KEY)
+			}
+		} catch (e) {
+			// ignore
+		}
+	}
+
+	function persistCategories() {
+		try {
+			const cats = visibleCategories.value
+			if (cats.length > 0) {
+				localStorage.setItem(HOMEPAGE_CATEGORIES_KEY, JSON.stringify(cats))
+			} else {
+				localStorage.removeItem(HOMEPAGE_CATEGORIES_KEY)
+			}
+		} catch (e) {
+			// ignore
+		}
+	}
+
+	function clearPersistedFilters() {
+		try {
+			localStorage.removeItem(HOMEPAGE_SEARCH_KEY)
+			localStorage.removeItem(HOMEPAGE_CATEGORIES_KEY)
+		} catch (e) {
+			// ignore
+		}
+	}
 
 	// Methods
 	function toggleCategory(cat) {
@@ -30,33 +68,62 @@ export function useFilters(enabledVersions) {
 	function resetFilters() {
 		visibleCategories.value = []
 		searchQuery.value = ''
+		clearPersistedFilters()
 	}
 
 	function updateSearchQuery(query) {
 		searchQuery.value = query
 	}
 
-	// Initialize from URL query parameters
+	// Initialize from URL query parameters (URL > persisted > defaults)
 	function initializeFromQuery() {
 		const catParam = route.query.cat
 		const versionParam = route.query.version
 
 		if (catParam !== undefined) {
 			if (catParam === '') {
-				// Empty cat param means no categories selected (show all)
 				visibleCategories.value = []
 			} else {
 				const selectedCategories = catParam
 					.split(',')
 					.map((c) => c.trim())
 					.filter((c) => enabledCategories.includes(c))
-				// Set to selected categories (non-empty array means specific categories)
 				visibleCategories.value = selectedCategories
+			}
+		} else {
+			try {
+				const saved = localStorage.getItem(HOMEPAGE_CATEGORIES_KEY)
+				if (saved) {
+					const parsed = JSON.parse(saved)
+					if (Array.isArray(parsed)) {
+						visibleCategories.value = parsed.filter((c) => enabledCategories.includes(c))
+					}
+				}
+			} catch (e) {
+				// ignore
+			}
+		}
+
+		if (route.query.q !== undefined) {
+			searchQuery.value = route.query.q || ''
+		} else {
+			try {
+				const saved = localStorage.getItem(HOMEPAGE_SEARCH_KEY)
+				if (saved !== null) {
+					searchQuery.value = saved
+				}
+			} catch (e) {
+				// ignore
 			}
 		}
 
 		if (versionParam && enabledVersions.value.includes(versionParam)) {
 			selectedVersion.value = versionParam
+		} else {
+			const savedVersion = localStorage.getItem('selectedVersion')
+			if (savedVersion && enabledVersions.value.includes(savedVersion)) {
+				selectedVersion.value = savedVersion
+			}
 		}
 	}
 
@@ -84,6 +151,25 @@ export function useFilters(enabledVersions) {
 		[visibleCategories, selectedVersion],
 		() => {
 			updateQuery()
+		},
+		{ deep: true }
+	)
+
+	// Persist search with debounce (avoid hammering localStorage on every keystroke)
+	let searchDebounceTimer = null
+	watch(searchQuery, () => {
+		if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+		searchDebounceTimer = setTimeout(() => {
+			persistSearch()
+			searchDebounceTimer = null
+		}, 300)
+	})
+
+	// Persist categories immediately on toggle
+	watch(
+		visibleCategories,
+		() => {
+			persistCategories()
 		},
 		{ deep: true }
 	)

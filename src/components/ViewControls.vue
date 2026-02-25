@@ -14,7 +14,7 @@ const emit = defineEmits(['update:viewMode', 'update:layout'])
 
 function getButtonClasses(isActive) {
 	return [
-		'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition',
+		'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium',
 		isActive
 			? 'bg-gray-asparagus text-white'
 			: 'bg-norway text-heavy-metal hover:bg-gray-100'

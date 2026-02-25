@@ -109,8 +109,7 @@ const {
 	categoryCounts: totalCategoryCounts,
 	allCategoriesWithSearch,
 	filteredGroupedItems,
-	totalItemCount,
-	getCacheStats
+	totalItemCount
 } = items
 
 const {
@@ -409,7 +408,25 @@ watch(
 		<SearchBar
 			:model-value="searchQuery"
 			@update:model-value="searchQuery = $event"
-			@reset="resetCategories" />
+			@reset="resetCategories">
+			<template #trailing>
+				<BaseButton @click="openSettingsModal" variant="secondary">
+					<template #left-icon>
+						<Cog6ToothIcon />
+					</template>
+					Settings
+				</BaseButton>
+				<BaseButton
+					v-if="showExportFeature || canEditItems"
+					@click="openExportModal"
+					variant="secondary">
+					<template #left-icon>
+						<ArrowDownTrayIcon />
+					</template>
+					Export price list
+				</BaseButton>
+			</template>
+		</SearchBar>
 
 		<CategoryFilters
 			:visible-categories="visibleCategories"
@@ -422,26 +439,7 @@ watch(
 			@clear-all="handleClearAllCategories"
 			@toggle-visibility="toggleCategoryFilters" />
 
-		<!-- Customisation Section -->
-		<div class="mb-4 flex items-center gap-4">
-			<BaseButton @click="openSettingsModal" variant="secondary">
-				<template #left-icon>
-					<Cog6ToothIcon />
-				</template>
-				Settings
-			</BaseButton>
-			<BaseButton
-				v-if="showExportFeature || canEditItems"
-				@click="openExportModal"
-				variant="secondary">
-				<template #left-icon>
-					<ArrowDownTrayIcon />
-				</template>
-				Export price list
-			</BaseButton>
-		</div>
-
-		<div class="mb-4 text-sm text-gray-asparagus font-medium">
+		<div class="text-sm text-gray-asparagus font-medium h-9 flex items-center">
 			<span v-if="isLoading">Loading price guide...</span>
 			<span v-else>
 				<div class="flex items-center gap-2">
@@ -457,12 +455,6 @@ watch(
 						class="w-6 h-6"
 						title="Diamond Currency Mode" />
 				</div>
-				<span v-if="canEditItems" class="ml-4 text-xs text-gray-500">
-					Cache: {{ getCacheStats().hits }}/{{
-						getCacheStats().hits + getCacheStats().misses
-					}}
-					hits ({{ getCacheStats().size }} entries)
-				</span>
 			</span>
 		</div>
 

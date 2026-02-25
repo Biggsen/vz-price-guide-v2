@@ -6,6 +6,7 @@ import { useRoute } from 'vue-router'
 import { trackModalInteraction } from '../utils/analytics.js'
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
+import VersionSelector from './VersionSelector.vue'
 
 const props = defineProps({
 	isOpen: {
@@ -187,14 +188,6 @@ function saveSettings() {
 	})
 }
 
-function selectVersion(version) {
-	// Only allow selecting enabled versions
-	if (enabledVersions.value.includes(version)) {
-		selectedVersion.value = version
-		trackSettingsChange('selectedVersion', version)
-	}
-}
-
 function handleBaseModalClose(reason) {
 	trackModalInteraction(
 		'settings',
@@ -259,43 +252,11 @@ defineExpose({
 <template>
 	<BaseModal :isOpen="isOpen" title="Settings" @close="handleBaseModalClose">
 		<!-- Version Selection -->
-		<div class="mb-6">
-			<label class="block text-sm font-medium text-gray-700 mb-2">Minecraft Version:</label>
-
-			<!-- Desktop: Button Pills -->
-			<div
-				class="hidden sm:inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-				<button
-					v-for="version in versions"
-					:key="version"
-					@click="selectVersion(version)"
-					:class="[
-						selectedVersion === version
-							? 'bg-gray-asparagus text-white'
-							: enabledVersions.includes(version)
-							? 'bg-norway text-heavy-metal hover:bg-gray-100'
-							: 'bg-gray-200 text-gray-400 cursor-not-allowed',
-						'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0',
-						!enabledVersions.includes(version) ? 'opacity-60' : ''
-					]">
-					{{ version }}
-				</button>
-			</div>
-
-			<!-- Mobile: Dropdown -->
-			<select
-				v-model="selectedVersion"
-				@change="trackSettingsChange('selectedVersion', selectedVersion)"
-				class="sm:hidden w-full border-2 border-gray-asparagus rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-asparagus focus:border-transparent">
-				<option
-					v-for="version in versions"
-					:key="version"
-					:value="version"
-					:disabled="!enabledVersions.includes(version)">
-					{{ version }}{{ !enabledVersions.includes(version) ? ' (Admin only)' : '' }}
-				</option>
-			</select>
-		</div>
+		<VersionSelector
+			v-model="selectedVersion"
+			:versions="versions"
+			:enabled-versions="enabledVersions"
+			@update:model-value="trackSettingsChange('selectedVersion', selectedVersion)" />
 
 		<!-- Currency Type -->
 		<div class="mb-6">

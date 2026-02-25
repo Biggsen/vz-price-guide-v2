@@ -14,7 +14,7 @@ import {
 } from '../utils/pricing.js'
 import { getImageUrl, getWikiUrl } from '../utils/image.js'
 import { trackHomepageInteraction } from '../utils/analytics.js'
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
+import { computed, ref, reactive, watch, onMounted, onUnmounted } from 'vue'
 import { Squares2X2Icon } from '@heroicons/vue/16/solid'
 
 // Sorting state
@@ -24,6 +24,9 @@ const sortDirection = ref('asc') // 'asc' or 'desc'
 // Track if user has clicked on any recipe icon (like a dismissible banner)
 // Check localStorage on component mount
 const hasClickedRecipe = ref(localStorage.getItem('hasClickedRecipe') === 'true')
+
+// Track which item images have finished loading (for subtle loader)
+const loadedImages = reactive({})
 
 // Mobile detection (below 640px, Tailwind's sm breakpoint)
 const isMobile = ref(false)
@@ -447,18 +450,46 @@ function getItemRecipe(item) {
 							</span>
 						</div>
 					</th>
-					<td width="5%">
-						<img
-							:src="getImageUrl(item.image)"
-							:alt="item.name"
-							loading="lazy"
-							decoding="async"
-							fetchpriority="low"
-							:class="
-								layout === 'condensed'
-									? 'max-w-[20px] lg:max-w-[30px]'
-									: 'max-w-[30px] lg:max-w-[50px]'
-							" />
+					<td width="5%" class="relative">
+						<div class="flex items-center justify-center">
+							<svg
+								v-if="!loadedImages[item.id]"
+								:class="[
+									'animate-spin text-amulet absolute',
+									layout === 'condensed' ? 'w-3 h-3' : 'w-4 h-4'
+								]"
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+								aria-hidden="true">
+								<circle
+									class="opacity-25"
+									cx="12"
+									cy="12"
+									r="10"
+									stroke="currentColor"
+									stroke-width="4"></circle>
+								<path
+									class="opacity-75"
+									fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
+							<img
+								:src="getImageUrl(item.image)"
+								:alt="item.name"
+								loading="lazy"
+								decoding="async"
+								fetchpriority="low"
+								@load="loadedImages[item.id] = true"
+								@error="loadedImages[item.id] = true"
+								:class="[
+									'transition-opacity duration-150',
+									loadedImages[item.id] ? 'opacity-100' : 'opacity-0',
+									layout === 'condensed'
+										? 'max-w-[20px] lg:max-w-[30px]'
+										: 'max-w-[30px] lg:max-w-[50px]'
+								]" />
+						</div>
 					</td>
 					<!-- Unit Buy Price -->
 					<td class="text-center">
@@ -635,6 +666,10 @@ tbody {
 	td {
 		@apply bg-norway;
 	}
+
+	tr {
+		height: 60px;
+	}
 }
 
 th,
@@ -658,6 +693,7 @@ td {
 	}
 
 	tbody tr {
+		height: 36px;
 		@apply leading-tight;
 	}
 }
