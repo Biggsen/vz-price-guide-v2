@@ -439,7 +439,7 @@ watch(
 			@clear-all="handleClearAllCategories"
 			@toggle-visibility="toggleCategoryFilters" />
 
-		<div class="mb-4 text-sm text-gray-asparagus font-medium h-9 flex items-center">
+		<div class="text-sm text-gray-asparagus font-medium h-9 flex items-center">
 			<span v-if="isLoading">Loading price guide...</span>
 			<span v-else>
 				<div class="flex items-center gap-2">
