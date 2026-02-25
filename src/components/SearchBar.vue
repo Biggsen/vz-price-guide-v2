@@ -14,7 +14,7 @@ const emit = defineEmits(['update:modelValue', 'reset'])
 
 <template>
 	<div class="my-4 flex flex-col lg:flex-row gap-2 items-start">
-		<div class="flex flex-row gap-2 w-full lg:flex-1 lg:min-w-0 lg:max-w-md">
+		<div class="flex flex-row gap-2 w-full lg:flex-1 lg:min-w-0">
 			<div class="flex-1 min-w-0 sm:max-w-md">
 				<input
 					type="text"
