@@ -408,7 +408,25 @@ watch(
 		<SearchBar
 			:model-value="searchQuery"
 			@update:model-value="searchQuery = $event"
-			@reset="resetCategories" />
+			@reset="resetCategories">
+			<template #trailing>
+				<BaseButton @click="openSettingsModal" variant="secondary">
+					<template #left-icon>
+						<Cog6ToothIcon />
+					</template>
+					Settings
+				</BaseButton>
+				<BaseButton
+					v-if="showExportFeature || canEditItems"
+					@click="openExportModal"
+					variant="secondary">
+					<template #left-icon>
+						<ArrowDownTrayIcon />
+					</template>
+					Export price list
+				</BaseButton>
+			</template>
+		</SearchBar>
 
 		<CategoryFilters
 			:visible-categories="visibleCategories"
@@ -420,25 +438,6 @@ watch(
 			@toggle-category="handleToggleCategory"
 			@clear-all="handleClearAllCategories"
 			@toggle-visibility="toggleCategoryFilters" />
-
-		<!-- Customisation Section -->
-		<div class="mb-4 flex items-center gap-4">
-			<BaseButton @click="openSettingsModal" variant="secondary">
-				<template #left-icon>
-					<Cog6ToothIcon />
-				</template>
-				Settings
-			</BaseButton>
-			<BaseButton
-				v-if="showExportFeature || canEditItems"
-				@click="openExportModal"
-				variant="secondary">
-				<template #left-icon>
-					<ArrowDownTrayIcon />
-				</template>
-				Export price list
-			</BaseButton>
-		</div>
 
 		<div class="mb-4 text-sm text-gray-asparagus font-medium h-9 flex items-center">
 			<span v-if="isLoading">Loading price guide...</span>
