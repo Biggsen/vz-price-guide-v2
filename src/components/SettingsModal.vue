@@ -275,7 +275,7 @@ defineExpose({
 							: enabledVersions.includes(version)
 							? 'bg-norway text-heavy-metal hover:bg-gray-100'
 							: 'bg-gray-200 text-gray-400 cursor-not-allowed',
-						'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0',
+						'px-3 py-1 text-sm font-medium border-r border-gray-asparagus last:border-r-0',
 						!enabledVersions.includes(version) ? 'opacity-60' : ''
 					]">
 					{{ version }}
