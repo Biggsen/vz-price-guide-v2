@@ -13,6 +13,7 @@ import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
 import BaseDetails from './BaseDetails.vue'
 import DonationSelector from './DonationSelector.vue'
+import VersionSelector from './VersionSelector.vue'
 
 const props = defineProps({
 	isOpen: {
@@ -589,14 +590,6 @@ function resetCategories() {
 	)
 }
 
-function selectVersion(version) {
-	// Only allow selecting enabled versions
-	if (enabledVersions.value.includes(version)) {
-		selectedVersion.value = version
-		trackExportChange('selectedVersion', version)
-	}
-}
-
 watch(
 	() => props.isOpen,
 	(isOpen) => {
@@ -693,41 +686,10 @@ watch(
 		<!-- Regular export content for authenticated users -->
 		<div v-else>
 			<!-- Version Selection -->
-			<div class="mb-6">
-				<label class="block text-sm font-medium text-gray-700 mb-2">
-					Minecraft Version:
-				</label>
-
-				<!-- Mobile: Dropdown -->
-				<div class="block mobile-only">
-					<select
-						v-model="selectedVersion"
-						@change="trackExportChange('selectedVersion', selectedVersion)"
-						class="border-2 border-gray-asparagus rounded px-3 py-1 text-sm focus:outline-none focus:border-black">
-						<option v-for="version in enabledVersions" :key="version" :value="version">
-							{{ version }}
-						</option>
-					</select>
-				</div>
-
-				<!-- Desktop: Button Group -->
-				<div class="hidden desktop-only">
-					<div class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden">
-						<button
-							v-for="version in enabledVersions"
-							:key="version"
-							@click="selectVersion(version)"
-							:class="[
-								selectedVersion === version
-									? 'bg-gray-asparagus text-white'
-									: 'bg-norway text-heavy-metal hover:bg-gray-100',
-								'px-3 py-1 text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
-							]">
-							{{ version }}
-						</button>
-					</div>
-				</div>
-			</div>
+			<VersionSelector
+				v-model="selectedVersion"
+				:versions="enabledVersions"
+				@update:model-value="trackExportChange('selectedVersion', selectedVersion)" />
 
 			<!-- Categories Selection -->
 			<div class="mb-6">
