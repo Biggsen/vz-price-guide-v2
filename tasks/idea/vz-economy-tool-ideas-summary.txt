@@ -1,0 +1,148 @@
+VZ Price Guide - Economy Tool Ideas Summary
+
+1. "Factorio-style" Minecraft Economy Calculator
+
+Core idea:
+Turn VZ Price Guide from a price lookup tool into a Minecraft economy design tool by using the existing item catalog, recipe graph, and custom pricing system to calculate full crafting dependency chains.
+
+What it means:
+- Start from a small set of base resource prices
+- Automatically derive prices for crafted items
+- Traverse recipes as a dependency graph
+- Show how an item's value is built from its ingredients
+
+Example:
+log = 4
+iron ingot = 8
+
+Then derive:
+- planks
+- sticks
+- tools
+- armor
+- blocks
+- redstone items
+- etc.
+
+Why it is powerful:
+- Server owners often price economies manually
+- Crafting chains can accidentally create exploits
+- A dependency engine exposes how values propagate through the economy
+- This is similar in spirit to Factorio calculators, but applied to Minecraft server economies
+
+Possible output for an item:
+Iron Pickaxe
+- 3 iron ingots
+- 2 sticks
+- sticks come from planks
+- planks come from logs
+
+So the tool can show both:
+- the final expected craft cost
+- the chain of dependencies that produced that cost
+
+Strategic value:
+This would shift the product from:
+- "Minecraft Price Guide"
+
+toward:
+- "Minecraft Economy Designer"
+- "Minecraft Economy Calculator"
+
+This is a much more distinctive tool for server owners.
+
+
+2. Craft Profit / Loss in Shop Manager
+
+Core idea:
+Add a Craft Cost and Profit/Loss comparison directly into Shop Manager so server owners can immediately see whether a crafted item is underpriced, overpriced, exploitable, or economically broken.
+
+What it does:
+For each craftable item in a shop:
+- calculate ingredient cost using prices from that same shop
+- compare that craft cost to the item's configured shop price
+- show the difference as profit or loss
+
+Example:
+Iron Ingot = 8
+Iron Block recipe = 9 x Iron Ingot
+Expected craft cost = 72
+
+If shop price for Iron Block = 65:
+- Profit/Loss = -7
+- Meaning crafting and selling loses value
+
+If shop price = 80:
+- Profit/Loss = +8
+- Meaning the recipe creates profit
+
+Why it matters:
+- Detects crafting exploits quickly
+- Helps balance economies without spreadsheets
+- Gives Shop Manager an economy analysis role, not just data entry
+- Creates a practical balancing workflow for server owners
+
+Recommended UI:
+Add columns such as:
+- Craft Cost
+- Delta (Profit/Loss)
+- optional Delta %
+
+Optional detail panel:
+When clicking an item, show:
+- recipe ingredients
+- ingredient prices
+- calculated craft cost
+- current shop price
+- final profit/loss
+
+Suggested v1 rules:
+- Use only prices available inside the current shop
+- If ingredients are missing, show unavailable
+- Respect recipe output counts
+- Cache calculations for performance
+
+Useful extra filters:
+- Show profitable crafts only
+- Show loss-making crafts only
+- Show items with missing ingredients only
+
+
+3. Why these two ideas fit together
+
+The Craft Profit/Loss feature is the small, high-ROI first step.
+The "Factorio-style" economy calculator is the larger evolution.
+
+Path:
+Step 1:
+- Add craft cost and profit/loss to Shop Manager
+
+Step 2:
+- Add recipe breakdowns and dependency visibility
+
+Step 3:
+- Allow server owners to set base material prices and derive the rest
+
+Step 4:
+- Detect economy imbalances and crafting loops across the whole guide
+
+In short:
+- Craft Profit/Loss = practical first feature
+- Factorio-style calculator = bigger long-term product direction
+
+
+4. Bottom line
+
+You already have most of the hard parts:
+- item database
+- recipe data
+- pricing logic
+- Shop Manager structure
+
+That means these ideas are not a new product from scratch.
+They are a natural extension of what VZ Price Guide already is.
+
+The biggest opportunity here is that VZ Price Guide could become:
+- not just a guide
+- not just a shop manager
+- but a proper Minecraft economy balancing tool

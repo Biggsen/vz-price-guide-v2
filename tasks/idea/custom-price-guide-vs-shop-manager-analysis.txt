@@ -1,0 +1,184 @@
+
+VZ Price Guide – Custom Price Guide vs Shop Manager Analysis
+
+Context
+While designing a "User Custom Price Guide" feature, it became clear that much of the required functionality already exists in the current Shop Manager feature. The analysis below summarizes how the two concepts overlap and what the real gap is.
+
+------------------------------------------------------------
+
+1. Original Goal: Custom Price Guide
+
+The idea behind the custom price guide was:
+
+- Allow users to create their own price guide based on the main item catalog
+- Set their own prices for items
+- Organize items into categories
+- Optionally use dynamic pricing based on recipes
+- Recalculate prices automatically using ingredient prices
+
+In short, the goal was to let server owners design their own economy using the main guide as the base dataset.
+
+This resulted in a spec involving:
+
+- user_price_guides
+- user_price_guide_items
+- static vs dynamic pricing
+- recipe-based recalculation
+- ingredient validation
+- bulk ingredient helpers
+
+
+------------------------------------------------------------
+
+2. What Shop Manager Already Does
+
+The Shop Manager already implements most of this idea in practice.
+
+A shop currently allows users to:
+
+- Create a shop tied to a server
+- Add items from the main catalog
+- Set custom prices
+- Organize items by category
+- Store notes
+- Track item pricing within a server context
+
+Conceptually:
+
+Shop Manager entity        = Custom Price Guide
+Shop Items                 = Custom Price Guide Items
+
+Example structure:
+
+Shop: "VZ Market"
+Server: Verdux
+Version: 1.21.8
+
+Items:
+- iron ingot → 8
+- iron block → 65
+- diamond → 250
+
+
+------------------------------------------------------------
+
+3. What the Custom Price Guide Spec Adds
+
+The spec mainly introduces three capabilities not currently in Shop Manager.
+
+A) Recipe-Based Pricing (Dynamic Pricing)
+
+Items could optionally calculate their price from ingredients.
+
+Example:
+
+Iron Ingot = 8
+Iron Block = 9 × 8 = 72
+
+Instead of manually entering the block price, the system calculates it.
+
+B) Ingredient Validation
+
+If a dynamic item depends on ingredients not yet present in the guide, the system warns the user.
+
+Example:
+
+Trying to calculate "Iron Block" without "Iron Ingot" defined.
+
+Possible helper:
+
+"Add all missing ingredients".
+
+C) Bulk Recalculation
+
+A button allowing users to recalculate all dynamic items after base prices change.
+
+Example workflow:
+
+1. Update iron ingot price
+2. Click "Recalculate"
+3. All iron-based recipes update automatically
+
+
+------------------------------------------------------------
+
+4. Architectural Insight
+
+Instead of building a completely separate "User Price Guide" system, the simpler path is:
+
+Treat Shop Manager as the Custom Price Guide system.
+
+Extend it slightly with:
+
+- dynamic recipe pricing
+- ingredient validation
+- recalculation tools
+
+Conceptually:
+
+Main Price Guide
+      ↓
+User Shop / Market (custom prices)
+      ↓
+Optional recipe calculations
+
+
+------------------------------------------------------------
+
+5. Practical Outcome
+
+This means the existing Shop Manager already solves most of the custom price guide problem.
+
+The missing capabilities are mainly:
+
+- price propagation through recipes
+- dynamic price calculation
+- economic analysis (profit/loss)
+
+These features can be added on top of Shop Manager rather than creating a new system.
+
+
+------------------------------------------------------------
+
+6. Strategic Insight
+
+Once dynamic pricing and recipe analysis are added, the system becomes more than a price guide.
+
+It becomes a tool for designing and balancing Minecraft server economies.
+
+Possible evolution:
+
+Step 1
+Add craft cost and profit/loss comparison.
+
+Step 2
+Expose recipe ingredient breakdowns.
+
+Step 3
+Allow server owners to set base resource prices and derive item prices.
+
+Step 4
+Detect crafting exploits and profit loops.
+
+This moves the platform from:
+
+"Minecraft Price Guide"
+
+toward:
+
+"Minecraft Economy Design Tool".
+
+
+------------------------------------------------------------
+
+7. Bottom Line
+
+The custom price guide concept was already partially implemented through Shop Manager.
+
+Instead of introducing a new system, the more efficient path is:
+
+- Use Shop Manager as the foundation
+- Add recipe-based pricing
+- Add economy analysis features
+
+This keeps the architecture simpler and builds on an existing feature users already understand.
