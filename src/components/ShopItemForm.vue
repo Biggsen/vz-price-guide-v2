@@ -9,6 +9,7 @@ import {
 	hasEnchantmentConflict,
 	getEnchantmentConflictReason
 } from '../utils/enchantments.js'
+import { computeRecipePriceForShop } from '../utils/serverShopRecipes.js'
 import BaseButton from './BaseButton.vue'
 import BaseModal from './BaseModal.vue'
 import NotificationBanner from './NotificationBanner.vue'
@@ -36,6 +37,14 @@ const props = defineProps({
 		type: Object,
 		default: null
 	},
+	shopItemsForRecipe: {
+		type: Array,
+		default: () => []
+	},
+	serverVersionKey: {
+		type: String,
+		default: ''
+	},
 	displayVariant: {
 		type: String,
 		default: 'card',
@@ -50,10 +59,62 @@ const formData = ref({
 	item_id: '',
 	buy_price: null,
 	sell_price: null,
+	pricing_type: 'manual',
 	stock_quantity: null,
 	stock_full: false,
 	notes: '',
 	enchantments: []
+})
+
+const isServerShop = computed(() => Boolean(props.shop?.server_shop))
+
+// Server shop: computed recipe buy and sell prices (when pricing type is from_recipe)
+const recipePriceResult = computed(() => {
+	if (!isServerShop.value || !props.availableItems?.length || !props.serverVersionKey) {
+		return { buy: { price: null, error: null }, sell: { price: null, error: null } }
+	}
+	const guideItem = props.availableItems.find((g) => g.id === formData.value.item_id)
+	if (!guideItem) return { buy: { price: null, error: null }, sell: { price: null, error: null } }
+	const guideByMaterialId = {}
+	props.availableItems.forEach((i) => {
+		if (i.material_id) guideByMaterialId[i.material_id] = i
+	})
+	const shopItems = [...(props.shopItemsForRecipe || [])]
+	const existing = shopItems.find((s) => s.item_id === formData.value.item_id)
+	if (!existing) {
+		shopItems.push({
+			item_id: formData.value.item_id,
+			buy_price: formData.value.buy_price,
+			sell_price: formData.value.sell_price,
+			pricing_type: formData.value.pricing_type
+		})
+	}
+	const byItemId = {}
+	shopItems.forEach((s) => { byItemId[s.item_id] = s })
+	const current = byItemId[formData.value.item_id] || {
+		...formData.value,
+		item_id: formData.value.item_id
+	}
+	if (formData.value.pricing_type !== 'from_recipe') {
+		return { buy: { price: null, error: null }, sell: { price: null, error: null } }
+	}
+	const buyResult = computeRecipePriceForShop(
+		current,
+		guideItem,
+		byItemId,
+		guideByMaterialId,
+		props.serverVersionKey,
+		'buy'
+	)
+	const sellResult = computeRecipePriceForShop(
+		current,
+		guideItem,
+		byItemId,
+		guideByMaterialId,
+		props.serverVersionKey,
+		'sell'
+	)
+	return { buy: buyResult, sell: sellResult }
 })
 
 // Form state
@@ -86,6 +147,7 @@ function resetForm() {
 		item_id: '',
 		buy_price: null,
 		sell_price: null,
+		pricing_type: 'manual',
 		stock_quantity: null,
 		stock_full: false,
 		notes: '',
@@ -108,6 +170,12 @@ onMounted(() => {
 			item_id: props.editingItem.item_id,
 			buy_price: props.editingItem.buy_price,
 			sell_price: props.editingItem.sell_price,
+			pricing_type:
+				props.editingItem.pricing_type === 'from_recipe' ||
+				props.editingItem.buy_pricing_type === 'from_recipe' ||
+				props.editingItem.sell_pricing_type === 'from_recipe'
+					? 'from_recipe'
+					: 'manual',
 			stock_quantity: props.editingItem.stock_quantity,
 			stock_full: props.editingItem.stock_full || false,
 			notes: props.editingItem.notes || '',
@@ -133,6 +201,12 @@ watch(
 				item_id: newEditingItem.item_id,
 				buy_price: newEditingItem.buy_price,
 				sell_price: newEditingItem.sell_price,
+				pricing_type:
+					newEditingItem.pricing_type === 'from_recipe' ||
+					newEditingItem.buy_pricing_type === 'from_recipe' ||
+					newEditingItem.sell_pricing_type === 'from_recipe'
+						? 'from_recipe'
+						: 'manual',
 				stock_quantity: newEditingItem.stock_quantity,
 				stock_full: newEditingItem.stock_full || false,
 				notes: newEditingItem.notes || '',
@@ -328,70 +402,79 @@ const flattenedItems = computed(() => {
 	return flattened
 })
 
-// Form validation
-const isFormValid = computed(() => {
-	// For editing, use single item validation
-	if (props.editingItem) {
-		const hasItemId = !!formData.value.item_id
-		const hasBuyPrice =
-			formData.value.buy_price !== null &&
-			formData.value.buy_price !== undefined &&
-			formData.value.buy_price !== ''
-		const hasSellPrice =
-			formData.value.sell_price !== null &&
-			formData.value.sell_price !== undefined &&
-			formData.value.sell_price !== ''
-		const hasAtLeastOnePrice = hasBuyPrice || hasSellPrice
-
-		if (!hasItemId) {
-			return false
-		}
-
-		if (!hasAtLeastOnePrice) {
-			return false
-		}
-
-		if (hasBuyPrice && (isNaN(formData.value.buy_price) || formData.value.buy_price < 0)) {
-			return false
-		}
-
-		if (hasSellPrice && (isNaN(formData.value.sell_price) || formData.value.sell_price < 0)) {
-			return false
-		}
-
-		return true
+// Helper: effective buy/sell price validity (server shop from_recipe uses computed buy/sell from recipe)
+function effectiveHasBuyPrice() {
+	if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
+		return !recipePriceResult.value.buy.error && recipePriceResult.value.buy.price != null
 	}
-
-	// For adding new items, check based on selection mode
-	const hasItem = enableMultipleSelection.value
-		? selectedItemIds.value.length > 0
-		: !!formData.value.item_id
-	const hasBuyPrice =
+	return (
 		formData.value.buy_price !== null &&
 		formData.value.buy_price !== undefined &&
 		formData.value.buy_price !== ''
-	const hasSellPrice =
+	)
+}
+function effectiveHasSellPrice() {
+	if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
+		return !recipePriceResult.value.sell.error && recipePriceResult.value.sell.price != null
+	}
+	return (
 		formData.value.sell_price !== null &&
 		formData.value.sell_price !== undefined &&
 		formData.value.sell_price !== ''
-	const hasAtLeastOnePrice = hasBuyPrice || hasSellPrice
+	)
+}
 
-	if (!hasItem) {
-		return false
+// Form validation
+const isFormValid = computed(() => {
+	const hasBuyPrice = effectiveHasBuyPrice()
+	const hasSellPrice = effectiveHasSellPrice()
+	const hasAtLeastOnePrice =
+		isServerShop.value && formData.value.pricing_type === 'from_recipe'
+			? hasBuyPrice && hasSellPrice
+			: hasBuyPrice || hasSellPrice
+
+	// For editing, use single item validation
+	if (props.editingItem) {
+		const hasItemId = !!formData.value.item_id
+		if (!hasItemId) return false
+		if (!hasAtLeastOnePrice) return false
+		if (
+			!(isServerShop.value && formData.value.pricing_type === 'from_recipe') &&
+			hasBuyPrice &&
+			(isNaN(formData.value.buy_price) || formData.value.buy_price < 0)
+		) {
+			return false
+		}
+		if (
+			!(isServerShop.value && formData.value.pricing_type === 'from_recipe') &&
+			hasSellPrice &&
+			(isNaN(formData.value.sell_price) || formData.value.sell_price < 0)
+		) {
+			return false
+		}
+		return true
 	}
 
-	if (!hasAtLeastOnePrice) {
+	// For adding new items
+	const hasItem = enableMultipleSelection.value
+		? selectedItemIds.value.length > 0
+		: !!formData.value.item_id
+	if (!hasItem) return false
+	if (!hasAtLeastOnePrice) return false
+	if (
+		!(isServerShop.value && formData.value.pricing_type === 'from_recipe') &&
+		hasBuyPrice &&
+		(isNaN(formData.value.buy_price) || formData.value.buy_price < 0)
+	) {
 		return false
 	}
-
-	if (hasBuyPrice && (isNaN(formData.value.buy_price) || formData.value.buy_price < 0)) {
+	if (
+		!(isServerShop.value && formData.value.pricing_type === 'from_recipe') &&
+		hasSellPrice &&
+		(isNaN(formData.value.sell_price) || formData.value.sell_price < 0)
+	) {
 		return false
 	}
-
-	if (hasSellPrice && (isNaN(formData.value.sell_price) || formData.value.sell_price < 0)) {
-		return false
-	}
-
 	return true
 })
 
@@ -407,14 +490,25 @@ function handleSubmit() {
 			return
 		}
 
-		// Validate at least one price
-		if (!formData.value.buy_price && !formData.value.sell_price) {
+		// Validate at least one price (or valid recipe prices for server shop from_recipe)
+		if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
+			if (
+				recipePriceResult.value.buy.error ||
+				recipePriceResult.value.sell.error ||
+				recipePriceResult.value.buy.price == null ||
+				recipePriceResult.value.sell.price == null
+			) {
+				formError.value = 'prices'
+				return
+			}
+		} else if (!formData.value.buy_price && !formData.value.sell_price) {
 			formError.value = 'prices'
 			return
 		}
 
-		// Validate buy price if provided
+		// Validate buy price if provided (skip when from_recipe — already validated above)
 		if (
+			formData.value.pricing_type !== 'from_recipe' &&
 			formData.value.buy_price !== null &&
 			formData.value.buy_price !== undefined &&
 			formData.value.buy_price !== ''
@@ -425,8 +519,9 @@ function handleSubmit() {
 			}
 		}
 
-		// Validate sell price if provided
+		// Validate sell price if provided (skip when from_recipe — already validated above)
 		if (
+			formData.value.pricing_type !== 'from_recipe' &&
 			formData.value.sell_price !== null &&
 			formData.value.sell_price !== undefined &&
 			formData.value.sell_price !== ''
@@ -438,10 +533,17 @@ function handleSubmit() {
 		}
 
 		// Clean up form data before submitting
+		let buyPrice = formData.value.buy_price ?? null
+		let sellPrice = formData.value.sell_price ?? null
+		if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
+			if (recipePriceResult.value.buy.price != null) buyPrice = recipePriceResult.value.buy.price
+			if (recipePriceResult.value.sell.price != null) sellPrice = recipePriceResult.value.sell.price
+		}
 		const submitData = {
 			...formData.value,
-			buy_price: formData.value.buy_price ?? null,
-			sell_price: formData.value.sell_price ?? null,
+			buy_price: buyPrice,
+			sell_price: sellPrice,
+			pricing_type: formData.value.pricing_type || 'manual',
 			stock_quantity: formData.value.stock_quantity ?? null,
 			notes: formData.value.notes?.trim() || '',
 			enchantments: Array.isArray(formData.value.enchantments) ? [...formData.value.enchantments] : []
@@ -460,7 +562,7 @@ function handleSubmit() {
 			return
 		}
 
-		// Validate at least one price
+		// Validate at least one price (multi-select does not support from_recipe, so no recipe check)
 		if (!formData.value.buy_price && !formData.value.sell_price) {
 			formError.value = 'prices'
 			return
@@ -490,10 +592,11 @@ function handleSubmit() {
 			}
 		}
 
-		// Create array of items with shared form data
+		// Create array of items with shared form data (multi-select does not support from_recipe)
 		const baseData = {
 			buy_price: formData.value.buy_price ?? null,
 			sell_price: formData.value.sell_price ?? null,
+			pricing_type: formData.value.pricing_type || 'manual',
 			stock_quantity: formData.value.stock_quantity ?? null,
 			stock_full: formData.value.stock_full || false,
 			notes: formData.value.notes?.trim() || ''
@@ -502,7 +605,7 @@ function handleSubmit() {
 		const itemsToSubmit = selectedItemIds.value.map((itemId) => ({
 			...baseData,
 			item_id: itemId,
-			enchantments: [] // Multiple selection mode doesn't support enchantments per item
+			enchantments: []
 		}))
 
 		emit('submit', itemsToSubmit)
@@ -514,14 +617,25 @@ function handleSubmit() {
 			return
 		}
 
-		// Validate at least one price
-		if (!formData.value.buy_price && !formData.value.sell_price) {
+		// Validate at least one price (or valid recipe prices for server shop from_recipe)
+		if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
+			if (
+				recipePriceResult.value.buy.error ||
+				recipePriceResult.value.sell.error ||
+				recipePriceResult.value.buy.price == null ||
+				recipePriceResult.value.sell.price == null
+			) {
+				formError.value = 'prices'
+				return
+			}
+		} else if (!formData.value.buy_price && !formData.value.sell_price) {
 			formError.value = 'prices'
 			return
 		}
 
-		// Validate buy price if provided
+		// Validate buy price if provided (skip when from_recipe — already validated above)
 		if (
+			formData.value.pricing_type !== 'from_recipe' &&
 			formData.value.buy_price !== null &&
 			formData.value.buy_price !== undefined &&
 			formData.value.buy_price !== ''
@@ -532,8 +646,9 @@ function handleSubmit() {
 			}
 		}
 
-		// Validate sell price if provided
+		// Validate sell price if provided (skip when from_recipe — already validated above)
 		if (
+			formData.value.pricing_type !== 'from_recipe' &&
 			formData.value.sell_price !== null &&
 			formData.value.sell_price !== undefined &&
 			formData.value.sell_price !== ''
@@ -545,10 +660,17 @@ function handleSubmit() {
 		}
 
 		// Clean up form data before submitting
+		let buyPrice = formData.value.buy_price ?? null
+		let sellPrice = formData.value.sell_price ?? null
+		if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
+			if (recipePriceResult.value.buy.price != null) buyPrice = recipePriceResult.value.buy.price
+			if (recipePriceResult.value.sell.price != null) sellPrice = recipePriceResult.value.sell.price
+		}
 		const submitData = {
 			...formData.value,
-			buy_price: formData.value.buy_price ?? null,
-			sell_price: formData.value.sell_price ?? null,
+			buy_price: buyPrice,
+			sell_price: sellPrice,
+			pricing_type: formData.value.pricing_type || 'manual',
 			stock_quantity: formData.value.stock_quantity ?? null,
 			notes: formData.value.notes?.trim() || '',
 			enchantments: Array.isArray(formData.value.enchantments) ? [...formData.value.enchantments] : []
@@ -672,6 +794,34 @@ function handleMultipleSelectionToggle(checked) {
 // Check if item is selected
 function isItemSelected(itemId) {
 	return selectedItemIds.value.includes(itemId)
+}
+
+// Category selection (multiple selection mode)
+function isCategoryFullySelected(category) {
+	const items = orderedItemsByCategory.value[category] || []
+	return items.length > 0 && items.every((item) => selectedItemIds.value.includes(item.id))
+}
+
+function isCategoryPartiallySelected(category) {
+	const items = orderedItemsByCategory.value[category] || []
+	if (items.length === 0) return false
+	const selectedCount = items.filter((item) => selectedItemIds.value.includes(item.id)).length
+	return selectedCount > 0 && selectedCount < items.length
+}
+
+function toggleCategorySelection(category) {
+	const items = orderedItemsByCategory.value[category] || []
+	const ids = items.map((i) => i.id)
+	const allSelected = ids.every((id) => selectedItemIds.value.includes(id))
+	if (allSelected) {
+		selectedItemIds.value = selectedItemIds.value.filter((id) => !ids.includes(id))
+	} else {
+		const toAdd = ids.filter((id) => !selectedItemIds.value.includes(id))
+		selectedItemIds.value = [...selectedItemIds.value, ...toAdd]
+	}
+	if (formError.value === 'item_id') {
+		formError.value = null
+	}
 }
 
 // Remove selected item
@@ -1131,8 +1281,20 @@ defineExpose({
 							v-for="(categoryItems, category) in orderedItemsByCategory"
 							:key="category">
 							<div
-								class="px-3 py-2 bg-gray-100 text-sm font-medium text-gray-700 border-b">
-								{{ category }}
+								:class="[
+									'px-3 py-2 border-b flex items-center gap-3 text-sm font-medium text-gray-700',
+									enableMultipleSelection ? 'bg-gray-100 cursor-pointer hover:bg-gray-200' : 'bg-gray-100'
+								]"
+								@click="enableMultipleSelection && toggleCategorySelection(category)">
+								<input
+									v-if="enableMultipleSelection"
+									type="checkbox"
+									:checked="isCategoryFullySelected(category)"
+									:indeterminate.prop="isCategoryPartiallySelected(category)"
+									class="checkbox-input flex-shrink-0"
+									@click.stop
+									@change.stop="toggleCategorySelection(category)" />
+								<span class="flex-1">{{ category }}</span>
 							</div>
 							<div
 								v-for="(item, categoryIndex) in categoryItems"
@@ -1406,6 +1568,31 @@ defineExpose({
 				</div>
 			</div>
 
+			<!-- Server shop: pricing type (Custom vs Recipe) -->
+			<div v-if="isServerShop" class="space-y-4">
+				<div>
+					<label for="pricing-type" class="block text-sm font-medium text-gray-700 mb-1">
+						Pricing type
+					</label>
+					<p class="text-xs text-gray-500 mb-1">
+						Custom: enter prices yourself. Recipe: buy and sell are computed from ingredients in this shop (all must have both prices set).
+					</p>
+					<select
+						id="pricing-type"
+						v-model="formData.pricing_type"
+						class="mt-2 block w-full max-w-[200px] rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
+						<option value="manual">Custom</option>
+						<option value="from_recipe">Recipe</option>
+					</select>
+					<div v-if="recipePriceResult.buy.error" class="mt-1 text-sm text-red-600">
+						Buy: {{ recipePriceResult.buy.error }}
+					</div>
+					<div v-else-if="recipePriceResult.sell.error" class="mt-1 text-sm text-red-600">
+						Sell: {{ recipePriceResult.sell.error }}
+					</div>
+				</div>
+			</div>
+
 			<!-- Price inputs -->
 			<div class="space-y-4">
 				<div>
@@ -1415,7 +1602,17 @@ defineExpose({
 					<p class="text-xs text-gray-500 mb-1">
 						This is the amount players need to pay for the item
 					</p>
+					<div
+						v-if="isServerShop && formData.pricing_type === 'from_recipe'"
+						class="mt-2 text-sm text-gray-700">
+						<span v-if="recipePriceResult.buy.error" class="text-red-600">{{ recipePriceResult.buy.error }}</span>
+						<span v-else-if="recipePriceResult.buy.price != null">
+							{{ typeof recipePriceResult.buy.price === 'number' ? parseFloat(recipePriceResult.buy.price.toFixed(2)).toString() : recipePriceResult.buy.price }} (Recipe)
+						</span>
+						<span v-else>—</span>
+					</div>
 					<input
+						v-else
 						id="buy-price"
 						ref="buyPriceInput"
 						data-cy="shop-item-buy-price-input"
@@ -1437,8 +1634,8 @@ defineExpose({
 						<XCircleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
 						Buy price must be a valid number greater than or equal to 0
 					</div>
-					<!-- Out of stock checkbox -->
-					<div v-if="shop" class="mt-2">
+					<!-- Out of stock checkbox (hidden for server shops) -->
+					<div v-if="shop && !isServerShop" class="mt-2">
 						<label class="flex items-center">
 							<input
 								:checked="formData.stock_quantity === 0"
@@ -1460,7 +1657,16 @@ defineExpose({
 					<p class="text-xs text-gray-500 mb-1">
 						This is the amount players get when selling the item to a shop
 					</p>
-					<div class="flex items-center gap-2">
+					<div
+						v-if="isServerShop && formData.pricing_type === 'from_recipe'"
+						class="mt-2 text-sm text-gray-700">
+						<span v-if="recipePriceResult.sell.error" class="text-red-600">{{ recipePriceResult.sell.error }}</span>
+						<span v-else-if="recipePriceResult.sell.price != null">
+							{{ typeof recipePriceResult.sell.price === 'number' ? parseFloat(recipePriceResult.sell.price.toFixed(2)).toString() : recipePriceResult.sell.price }} (Recipe)
+						</span>
+						<span v-else>—</span>
+					</div>
+					<div v-else class="flex items-center gap-2">
 						<input
 							id="sell-price"
 							data-cy="shop-item-sell-price-input"

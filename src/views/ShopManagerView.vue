@@ -191,6 +191,7 @@ const shopForm = ref({
 	location: '',
 	description: '',
 	is_own_shop: false,
+	server_shop: false,
 	owner_funds: null
 })
 
@@ -248,17 +249,20 @@ const shopsByServer = computed(() => {
 	// Initialize groups for each server
 	servers.value.forEach((server) => {
 		grouped[server.id] = {
+			serverShop: null,
 			own: [],
 			player: [],
 			all: []
 		}
 	})
 
-	// Group shops by server
+	// Group shops by server (server shop is separate; "own" = owner's player shops only)
 	shops.value.forEach((shop) => {
 		if (shop.server_id && grouped[shop.server_id]) {
 			grouped[shop.server_id].all.push(shop)
-			if (shop.is_own_shop) {
+			if (shop.server_shop === true) {
+				grouped[shop.server_id].serverShop = shop
+			} else if (shop.is_own_shop) {
 				grouped[shop.server_id].own.push(shop)
 			} else {
 				grouped[shop.server_id].player.push(shop)
@@ -431,6 +435,7 @@ function resetShopForm() {
 		location: '',
 		description: '',
 		is_own_shop: false,
+		server_shop: false,
 		owner_funds: null
 	}
 	usePlayerAsShopName.value = false
@@ -444,6 +449,25 @@ function showCreateShopForm(serverId = '', isOwnShop = null) {
 	presetShopType.value = typeof isOwnShop === 'boolean' ? isOwnShop : null
 	if (serverId) shopForm.value.server_id = serverId
 	if (typeof isOwnShop === 'boolean') shopForm.value.is_own_shop = isOwnShop
+	shopForm.value.server_shop = false
+	shopCreateError.value = null
+	shopEditError.value = null
+	shopNameValidationError.value = null
+	shopServerValidationError.value = null
+	shopPlayerValidationError.value = null
+	shopError.value = null
+}
+
+function showCreateServerShopForm(serverId) {
+	showShopForm.value = true
+	editingShop.value = null
+	resetShopForm()
+	presetServerId.value = serverId || null
+	presetShopType.value = true
+	shopForm.value.server_id = serverId
+	shopForm.value.is_own_shop = true
+	shopForm.value.server_shop = true
+	shopForm.value.name = 'Server Shop'
 	shopCreateError.value = null
 	shopEditError.value = null
 	shopNameValidationError.value = null
@@ -464,6 +488,7 @@ function showEditShopForm(shop) {
 		location: shop.location || '',
 		description: shop.description || '',
 		is_own_shop: Boolean(shop.is_own_shop),
+		server_shop: Boolean(shop.server_shop),
 		owner_funds:
 			shop.owner_funds === null || shop.owner_funds === undefined ? null : shop.owner_funds
 	}
@@ -534,6 +559,14 @@ async function handleShopSubmit() {
 			await updateShop(editingShop.value.id, shopData)
 			closeShopModals()
 		} else {
+			if (shopData.server_shop && shopData.server_id) {
+				const others = (shops.value || []).filter(
+					(s) => s.server_id === shopData.server_id && s.server_shop === true
+				)
+				for (const s of others) {
+					await updateShop(s.id, { server_shop: false })
+				}
+			}
 			const newShop = await createShop(user.value.uid, shopData)
 			closeShopModals()
 			router.push({ name: 'shop', params: { shopId: newShop.id } })
@@ -939,6 +972,30 @@ function toggleShopsVisibility(serverId) {
 								{{ server.description }}
 							</p>
 							<div class="flex gap-2 flex-wrap">
+								<RouterLink
+									v-if="shopsByServer[server.id]?.serverShop"
+									:to="{
+										name: 'shop',
+										params: { shopId: shopsByServer[server.id].serverShop.id }
+									}">
+									<BaseButton variant="secondary" data-cy="server-shop-button">
+										<template #left-icon>
+											<BuildingStorefrontIcon class="w-4 h-4" />
+										</template>
+										Server Shop
+									</BaseButton>
+								</RouterLink>
+								<BaseButton
+									v-else
+									variant="secondary"
+									:disabled="shopLoading"
+									@click="showCreateServerShopForm(server.id)"
+									data-cy="server-shop-create-button">
+									<template #left-icon>
+										<PlusIcon class="w-4 h-4" />
+									</template>
+									Server Shop
+								</BaseButton>
 								<BaseButton
 									variant="secondary"
 									:disabled="shopLoading"

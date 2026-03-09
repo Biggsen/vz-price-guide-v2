@@ -21,7 +21,12 @@ import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
 import { ArrowLeftIcon, PlusIcon, ArrowPathIcon } from '@heroicons/vue/20/solid'
-import { CurrencyDollarIcon, ClipboardDocumentCheckIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
+import {
+	CurrencyDollarIcon,
+	ClipboardDocumentCheckIcon,
+	Cog6ToothIcon,
+	ArrowDownTrayIcon
+} from '@heroicons/vue/24/outline'
 import {
 	PencilIcon,
 	TrashIcon,
@@ -34,6 +39,7 @@ import { StarIcon } from '@heroicons/vue/24/solid'
 import { getImageUrl, getItemImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
+import { recalculateRecipePricesForShop, versionToKey } from '../utils/serverShopRecipes.js'
 import { enabledCategories } from '../constants.js'
 
 const user = useCurrentUser()
@@ -69,6 +75,9 @@ const markingAsChecked = ref(false) // Track if marking items as checked
 const markingItemId = ref(null) // Track which item is being marked as checked
 const catalogStatusLoading = ref(false)
 const catalogStatusError = ref(null)
+const recalculateLoading = ref(false)
+const recalculateError = ref(null)
+const recalculateSuccess = ref(null)
 
 // Shop settings modal state
 const showShopSettingsModal = ref(false)
@@ -89,6 +98,7 @@ const shopForm = ref({
 	location: '',
 	description: '',
 	is_own_shop: false,
+	server_shop: false,
 	owner_funds: null
 })
 
@@ -100,6 +110,7 @@ function resetShopForm() {
 		location: '',
 		description: '',
 		is_own_shop: false,
+		server_shop: false,
 		owner_funds: null
 	}
 	usePlayerAsShopName.value = false
@@ -147,6 +158,13 @@ const isShopFullyCataloged = computed(() => {
 
 const isShopArchived = computed(() => {
 	return Boolean(selectedShop.value?.archived)
+})
+
+const isServerShop = computed(() => Boolean(selectedShop.value?.server_shop))
+
+const serverVersionKey = computed(() => {
+	if (!selectedServer.value?.minecraft_version) return '1_21'
+	return versionToKey(getMajorMinorVersion(selectedServer.value.minecraft_version))
 })
 
 async function handleOutOfMoneyChange(checked) {
@@ -258,9 +276,7 @@ const availableItems = useCollection(allItemsQuery)
 
 const availableItemsForAdding = computed(() => availableItems.value || [])
 
-const existingItemIdsInShop = computed(() =>
-	(shopItems.value || []).map((s) => s.item_id)
-)
+const existingItemIdsInShop = computed(() => (shopItems.value || []).map((s) => s.item_id))
 
 // Format enchantment name for display
 function formatEnchantmentName(enchantmentId) {
@@ -286,13 +302,13 @@ function formatEnchantmentName(enchantmentId) {
 			const capitalizedEnchant = enchantName
 				.replace(/_/g, ' ')
 				.replace(/\b\w/g, (l) => l.toUpperCase())
-			
+
 			// Don't display level 1 for single-level enchantments (max level 1)
 			const maxLevel = enchantmentItem.enchantment_max_level
 			if (level === '1' && maxLevel === 1) {
 				return capitalizedEnchant
 			}
-			
+
 			return `${capitalizedEnchant} ${level}`
 		}
 
@@ -369,59 +385,76 @@ const allVisibleShopItems = computed(() => {
 		})
 })
 
-// BaseTable column definitions
-const baseTableColumns = computed(() => [
-	{ key: 'item', label: 'Item', sortable: true, headerAlign: 'center' },
-	{
-		key: 'buyPrice',
-		label: 'Buy Price',
-		align: 'right',
-		headerAlign: 'center',
-		sortable: true,
-		width: 'w-32'
-	},
-	{
-		key: 'sellPrice',
-		label: 'Sell Price',
-		align: 'right',
-		headerAlign: 'center',
-		sortable: true,
-		width: 'w-32'
-	},
-	{
-		key: 'profitMargin',
-		label: 'Profit %',
-		align: 'center',
-		headerAlign: 'center',
-		sortable: true,
-		width: 'w-32',
-		sortFn: (a, b) => {
-			// Extract numeric value from formatted string (e.g., "66.7%" -> 66.7)
-			const valueA = a.profitMargin === '—' ? -Infinity : parseFloat(a.profitMargin) || 0
-			const valueB = b.profitMargin === '—' ? -Infinity : parseFloat(b.profitMargin) || 0
-			return valueA - valueB
+// BaseTable column definitions (add Pricing column for server shop)
+const baseTableColumns = computed(() => {
+	const cols = [
+		{ key: 'item', label: 'Item', sortable: true, headerAlign: 'center' },
+		{
+			key: 'buyPrice',
+			label: 'Buy Price',
+			align: 'right',
+			headerAlign: 'center',
+			sortable: true,
+			width: 'w-32'
+		},
+		{
+			key: 'sellPrice',
+			label: 'Sell Price',
+			align: 'right',
+			headerAlign: 'center',
+			sortable: true,
+			width: 'w-32'
 		}
-	},
-	{ key: 'notes', label: 'Notes', sortable: true, headerAlign: 'center' },
-	{
-		key: 'lastUpdated',
-		label: 'Last Updated',
-		sortable: true,
-		headerAlign: 'center',
-		width: 'w-40',
-		sortFn: (a, b) => {
-			// Sort by timestamp
-			const valueA = a._lastUpdatedTimestamp || 0
-			const valueB = b._lastUpdatedTimestamp || 0
-			return valueA - valueB
-		}
-	},
-	{ key: 'actions', label: '', align: 'center', headerAlign: 'center', width: 'w-20' }
-])
+	]
+	if (isServerShop.value) {
+		cols.push({
+			key: 'pricingTypes',
+			label: 'Pricing',
+			align: 'center',
+			headerAlign: 'center',
+			sortable: true,
+			width: 'w-40'
+		})
+	}
+	cols.push(
+		{
+			key: 'profitMargin',
+			label: 'Profit %',
+			align: 'center',
+			headerAlign: 'center',
+			sortable: true,
+			width: 'w-32',
+			sortFn: (a, b) => {
+				const valueA = a.profitMargin === '—' ? -Infinity : parseFloat(a.profitMargin) || 0
+				const valueB = b.profitMargin === '—' ? -Infinity : parseFloat(b.profitMargin) || 0
+				return valueA - valueB
+			}
+		},
+		{ key: 'notes', label: 'Notes', sortable: true, headerAlign: 'center' },
+		{
+			key: 'lastUpdated',
+			label: 'Last Updated',
+			sortable: true,
+			headerAlign: 'center',
+			width: 'w-40',
+			sortFn: (a, b) => {
+				const valueA = a._lastUpdatedTimestamp || 0
+				const valueB = b._lastUpdatedTimestamp || 0
+				return valueA - valueB
+			}
+		},
+		{ key: 'actions', label: '', align: 'center', headerAlign: 'center', width: 'w-20' }
+	)
+	return cols
+})
 
 // Transform shop items for BaseTable (using shared utility)
 function transformShopItemForTable(shopItem) {
-	return transformShopItem(shopItem, { includeNotes: true, includeActions: true })
+	return transformShopItem(shopItem, {
+		includeNotes: true,
+		includeActions: true,
+		includePricingTypes: isServerShop.value
+	})
 }
 
 // BaseTable rows for list view
@@ -888,6 +921,20 @@ function cancelEditPrice() {
 	editingPriceType.value = null
 }
 
+function isFromRecipePricing(shopItem) {
+	if (!shopItem) return false
+	return (
+		shopItem.pricing_type === 'from_recipe' ||
+		shopItem.buy_pricing_type === 'from_recipe' ||
+		shopItem.sell_pricing_type === 'from_recipe'
+	)
+}
+
+function formatPriceDisplay(value) {
+	if (value == null || value === '' || isNaN(Number(value)) || Number(value) === 0) return '—'
+	return parseFloat(Number(value).toFixed(2)).toString()
+}
+
 // Inline notes editing functions
 function startEditNotes(itemId) {
 	editingNotesId.value = itemId
@@ -960,6 +1007,7 @@ function openEditShopModal() {
 		location: selectedShop.value.location || '',
 		description: selectedShop.value.description || '',
 		is_own_shop: Boolean(selectedShop.value.is_own_shop),
+		server_shop: Boolean(selectedShop.value.server_shop),
 		owner_funds:
 			selectedShop.value.owner_funds === null || selectedShop.value.owner_funds === undefined
 				? null
@@ -1007,6 +1055,7 @@ async function submitEditShop() {
 			location: shopForm.value.location?.trim() || '',
 			description: shopForm.value.description?.trim() || '',
 			is_own_shop: editingShop.value.is_own_shop,
+			server_shop: shopForm.value.server_shop,
 			owner_funds: editingShop.value.owner_funds
 		}
 
@@ -1021,6 +1070,61 @@ async function submitEditShop() {
 		shopFormError.value = err.message || 'Failed to update shop. Please try again.'
 	} finally {
 		shopFormLoading.value = false
+	}
+}
+
+// Server shop: export price list (JSON)
+function exportShopPrices() {
+	if (!selectedShop.value || !shopItems.value || !availableItems.value) return
+	const rows = shopItems.value.map((si) => {
+		const guide = availableItems.value.find((g) => g.id === si.item_id)
+		return {
+			item_name: guide?.name || si.item_id,
+			category: guide?.category || '',
+			buy_price: si.buy_price,
+			sell_price: si.sell_price,
+			pricing_type: si.pricing_type || (si.buy_pricing_type === 'from_recipe' || si.sell_pricing_type === 'from_recipe' ? 'from_recipe' : 'manual'),
+			notes: si.notes || ''
+		}
+	})
+	const blob = new Blob([JSON.stringify(rows, null, 2)], {
+		type: 'application/json'
+	})
+	const url = URL.createObjectURL(blob)
+	const a = document.createElement('a')
+	a.href = url
+	a.download = `${selectedShop.value.name || 'shop'}-prices.json`
+	a.click()
+	URL.revokeObjectURL(url)
+}
+
+// Server shop: recalculate all from-recipe prices
+async function recalculateRecipePrices() {
+	if (!selectedShopId.value || !shopItems.value || !availableItems.value) return
+	recalculateLoading.value = true
+	recalculateError.value = null
+	recalculateSuccess.value = null
+	try {
+		const { updated, errors } = await recalculateRecipePricesForShop(
+			selectedShopId.value,
+			shopItems.value,
+			availableItems.value,
+			serverVersionKey.value
+		)
+		if (errors.length > 0) {
+			recalculateError.value =
+				errors.length === 1
+					? errors[0].error
+					: `${errors.length} items had errors. First: ${errors[0].error}`
+		}
+		if (updated.length > 0) {
+			recalculateSuccess.value =
+				updated.length === 1 ? '1 price updated.' : `${updated.length} prices updated.`
+		}
+	} catch (err) {
+		recalculateError.value = err.message || 'Recalculation failed.'
+	} finally {
+		recalculateLoading.value = false
 	}
 }
 
@@ -1132,9 +1236,9 @@ function getServerName(serverId) {
 
 		<!-- Main content -->
 		<div v-else-if="hasShops && hasServers && selectedShop">
-			<!-- Settings and Market Overview Buttons (Top) -->
+			<!-- Settings, Export, Recalculate, Market Overview Buttons (Top) -->
 			<div class="mt-4 mb-5">
-				<div class="flex items-center gap-3">
+				<div class="flex flex-wrap items-center gap-3">
 					<BaseButton
 						@click="showShopSettingsModal = true"
 						variant="secondary"
@@ -1144,8 +1248,42 @@ function getServerName(serverId) {
 						</template>
 						Settings
 					</BaseButton>
+					<template v-if="isServerShop">
+						<BaseButton
+							type="button"
+							variant="secondary"
+							:disabled="!shopItems?.length"
+							data-cy="shop-items-export-button"
+							@click="exportShopPrices">
+							<template #left-icon>
+								<ArrowDownTrayIcon class="w-4 h-4" />
+							</template>
+							Export
+						</BaseButton>
+						<BaseButton
+							type="button"
+							variant="secondary"
+							:disabled="recalculateLoading || !shopItems?.length"
+							data-cy="shop-items-recalculate-button"
+							@click="recalculateRecipePrices">
+							<template #left-icon>
+								<ArrowPathIcon
+									class="w-4 h-4"
+									:class="{ 'animate-spin': recalculateLoading }" />
+							</template>
+							{{
+								recalculateLoading ? 'Recalculating…' : 'Recalculate recipe prices'
+							}}
+						</BaseButton>
+						<p v-if="recalculateSuccess" class="text-sm text-green-700">
+							{{ recalculateSuccess }}
+						</p>
+						<p v-if="recalculateError" class="text-sm text-red-700">
+							{{ recalculateError }}
+						</p>
+					</template>
 					<RouterLink
-						v-if="selectedShop?.server_id"
+						v-if="selectedShop?.server_id && !selectedShop?.server_shop"
 						:to="`/market-overview?serverId=${selectedShop.server_id}`">
 						<BaseButton
 							type="button"
@@ -1189,28 +1327,28 @@ function getServerName(serverId) {
 							<span class="text-sm font-medium text-heavy-metal block">View as:</span>
 							<div
 								class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
-							<button
-								data-cy="shop-items-view-mode-categories"
-								@click="viewMode = 'categories'"
-								:class="[
-									viewMode === 'categories'
-										? 'bg-gray-asparagus text-white'
-										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
-								]">
-								Categories
-							</button>
-							<button
-								data-cy="shop-items-view-mode-list"
-								@click="viewMode = 'list'"
-								:class="[
-									viewMode === 'list'
-										? 'bg-gray-asparagus text-white'
-										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
-								]">
-								List
-							</button>
+								<button
+									data-cy="shop-items-view-mode-categories"
+									@click="viewMode = 'categories'"
+									:class="[
+										viewMode === 'categories'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-gray-100',
+										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+									]">
+									Categories
+								</button>
+								<button
+									data-cy="shop-items-view-mode-list"
+									@click="viewMode = 'list'"
+									:class="[
+										viewMode === 'list'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-gray-100',
+										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
+									]">
+									List
+								</button>
 							</div>
 						</div>
 
@@ -1219,41 +1357,46 @@ function getServerName(serverId) {
 							<span class="text-sm font-medium text-heavy-metal block">Layout:</span>
 							<div
 								class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
-							<button
-								data-cy="shop-items-layout-comfortable"
-								@click="layout = 'comfortable'"
-								:class="[
-									layout === 'comfortable'
-										? 'bg-gray-asparagus text-white'
-										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
-								]">
-								Comfortable
-							</button>
-							<button
-								data-cy="shop-items-layout-compact"
-								@click="layout = 'condensed'"
-								:class="[
-									layout === 'condensed'
-										? 'bg-gray-asparagus text-white'
-										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
-								]">
-								Compact
-							</button>
+								<button
+									data-cy="shop-items-layout-comfortable"
+									@click="layout = 'comfortable'"
+									:class="[
+										layout === 'comfortable'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-gray-100',
+										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+									]">
+									Comfortable
+								</button>
+								<button
+									data-cy="shop-items-layout-compact"
+									@click="layout = 'condensed'"
+									:class="[
+										layout === 'condensed'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-gray-100',
+										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
+									]">
+									Compact
+								</button>
 							</div>
 						</div>
 
 						<!-- Mark All as Checked -->
 						<div v-if="!selectedShop.is_own_shop">
-							<span class="text-sm font-medium text-heavy-metal block opacity-0 pointer-events-none">Actions:</span>
+							<span
+								class="text-sm font-medium text-heavy-metal block opacity-0 pointer-events-none">
+								Actions:
+							</span>
 							<div>
 								<BaseButton
 									type="button"
 									variant="secondary"
 									data-cy="shop-items-mark-all-checked-button"
 									@click="handleMarkAllAsChecked"
-									:disabled="markingAsChecked || !shopItems || shopItems.length === 0"
+									:disabled="
+										markingAsChecked || !shopItems || shopItems.length === 0
+									"
 									class="px-3 py-1.5 text-xs sm:text-sm">
 									<template #left-icon>
 										<ArrowPathIcon
@@ -1303,9 +1446,13 @@ function getServerName(serverId) {
 													'mr-3 flex-shrink-0'
 												]">
 												<img
-													:src="getItemImageUrl(row.image, row.enchantments)"
+													:src="
+														getItemImageUrl(row.image, row.enchantments)
+													"
 													:alt="row.item"
-													@error="$event.target.src = getImageUrl(row.image)"
+													@error="
+														$event.target.src = getImageUrl(row.image)
+													"
 													class="w-full h-full object-contain"
 													loading="lazy" />
 											</div>
@@ -1317,7 +1464,9 @@ function getServerName(serverId) {
 															!showEnchantments &&
 															row.enchantments &&
 															row.enchantments.length > 0
-																? formatEnchantmentsForTitle(row.enchantments)
+																? formatEnchantmentsForTitle(
+																		row.enchantments
+																  )
 																: ''
 														">
 														{{ row.item }}
@@ -1331,16 +1480,20 @@ function getServerName(serverId) {
 															@click.stop="
 																toggleStar(
 																	row.id,
-																	row._originalItem?.starred || false
+																	row._originalItem?.starred ||
+																		false
 																)
 															"
 															class="flex-shrink-0 transition-opacity"
 															:class="{
-																'opacity-0 group-hover:opacity-100': !(
-																	row._originalItem?.starred || false
-																),
+																'opacity-0 group-hover:opacity-100':
+																	!(
+																		row._originalItem
+																			?.starred || false
+																	),
 																'opacity-100':
-																	row._originalItem?.starred || false
+																	row._originalItem?.starred ||
+																	false
 															}"
 															:title="
 																row._originalItem?.starred
@@ -1358,14 +1511,20 @@ function getServerName(serverId) {
 												</div>
 												<!-- Enchantments Display -->
 												<div
-													v-if="showEnchantments && row.enchantments && row.enchantments.length > 0"
+													v-if="
+														showEnchantments &&
+														row.enchantments &&
+														row.enchantments.length > 0
+													"
 													class="mt-1 pb-1">
 													<div class="flex flex-wrap gap-1">
 														<span
 															v-for="enchantmentId in row.enchantments"
 															:key="enchantmentId"
 															class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
-															{{ formatEnchantmentName(enchantmentId) }}
+															{{
+																formatEnchantmentName(enchantmentId)
+															}}
 														</span>
 													</div>
 												</div>
@@ -1383,7 +1542,19 @@ function getServerName(serverId) {
 													aria-label="Out of stock" />
 												<span class="sr-only">Out of stock</span>
 											</div>
+											<template v-if="isFromRecipePricing(row._originalItem)">
+												<span
+													:class="[
+														'text-right',
+														row._originalItem?.stock_quantity === 0 && 'line-through'
+													]">
+													{{
+														formatPriceDisplay(row._originalItem?.buy_price)
+													}}
+												</span>
+											</template>
 											<InlinePriceInput
+												v-else
 												:value="row._originalItem?.buy_price"
 												:layout="layout"
 												:is-editing="
@@ -1444,7 +1615,21 @@ function getServerName(serverId) {
 													}}
 												</span>
 											</div>
+											<template v-if="isFromRecipePricing(row._originalItem)">
+												<span
+													:class="[
+														'text-right',
+														(row._originalItem?.stock_full ||
+															(isShopOutOfMoney && row._originalItem?.sell_price > 0)) &&
+															'line-through'
+													]">
+													{{
+														formatPriceDisplay(row._originalItem?.sell_price)
+													}}
+												</span>
+											</template>
 											<InlinePriceInput
+												v-else
 												:value="row._originalItem?.sell_price"
 												:layout="layout"
 												:is-editing="
@@ -1491,27 +1676,25 @@ function getServerName(serverId) {
 									<template #cell-lastUpdated="{ row }">
 										<div class="flex items-center justify-end gap-2">
 											<span>{{ row.lastUpdated }}</span>
-										<BaseIconButton
-											v-if="!selectedShop.is_own_shop"
-											variant="ghost-in-table"
-											data-cy="shop-item-mark-checked-button"
-											:ariaLabel="'Mark as price checked today'"
-											title="Mark as price checked today"
-											:loading="markingItemId === row._originalItem?.id"
-											@click="
-												handleMarkItemAsChecked(row._originalItem?.id)
-											"
-											:disabled="markingItemId === row._originalItem?.id">
-											<ArrowPathIcon />
-										</BaseIconButton>
+											<BaseIconButton
+												v-if="!selectedShop.is_own_shop"
+												variant="ghost-in-table"
+												data-cy="shop-item-mark-checked-button"
+												:ariaLabel="'Mark as price checked today'"
+												title="Mark as price checked today"
+												:loading="markingItemId === row._originalItem?.id"
+												@click="
+													handleMarkItemAsChecked(row._originalItem?.id)
+												"
+												:disabled="markingItemId === row._originalItem?.id">
+												<ArrowPathIcon />
+											</BaseIconButton>
 										</div>
 									</template>
 									<template #cell-actions="{ row, layout }">
 										<div
 											class="flex items-center justify-end gap-2 px-3"
-											:class="[
-												layout === 'condensed' ? '-mx-2' : '-mx-4'
-											]">
+											:class="[layout === 'condensed' ? '-mx-2' : '-mx-4']">
 											<BaseIconButton
 												variant="primary"
 												data-cy="shop-item-edit-button"
@@ -1568,12 +1751,15 @@ function getServerName(serverId) {
 														!showEnchantments &&
 														row.enchantments &&
 														row.enchantments.length > 0
-															? formatEnchantmentsForTitle(row.enchantments)
+															? formatEnchantmentsForTitle(
+																	row.enchantments
+															  )
 															: ''
 													">
 													{{ row.item }}
 												</span>
-												<div class="flex items-center gap-2 ml-2 flex-shrink-0">
+												<div
+													class="flex items-center gap-2 ml-2 flex-shrink-0">
 													<ArrowPathIcon
 														v-if="showItemSavingSpinner === row.id"
 														class="w-4 h-4 text-gray-500 animate-spin" />
@@ -1608,7 +1794,11 @@ function getServerName(serverId) {
 											</div>
 											<!-- Enchantments Display -->
 											<div
-												v-if="showEnchantments && row.enchantments && row.enchantments.length > 0"
+												v-if="
+													showEnchantments &&
+													row.enchantments &&
+													row.enchantments.length > 0
+												"
 												class="mt-1 pb-1">
 												<div class="flex flex-wrap gap-1">
 													<span
@@ -1633,7 +1823,17 @@ function getServerName(serverId) {
 												aria-label="Out of stock" />
 											<span class="sr-only">Out of stock</span>
 										</div>
+										<template v-if="isFromRecipePricing(row._originalItem)">
+											<span
+												:class="[
+													'text-right',
+													row._originalItem?.stock_quantity === 0 && 'line-through'
+												]">
+												{{ formatPriceDisplay(row._originalItem?.buy_price) }}
+											</span>
+										</template>
 										<InlinePriceInput
+											v-else
 											:value="row._originalItem?.buy_price"
 											:layout="layout"
 											:is-editing="
@@ -1690,7 +1890,19 @@ function getServerName(serverId) {
 												}}
 											</span>
 										</div>
+										<template v-if="isFromRecipePricing(row._originalItem)">
+											<span
+												:class="[
+													'text-right',
+													(row._originalItem?.stock_full ||
+														(isShopOutOfMoney && row._originalItem?.sell_price > 0)) &&
+														'line-through'
+												]">
+												{{ formatPriceDisplay(row._originalItem?.sell_price) }}
+											</span>
+										</template>
 										<InlinePriceInput
+											v-else
 											:value="row._originalItem?.sell_price"
 											:layout="layout"
 											:is-editing="
@@ -1749,9 +1961,7 @@ function getServerName(serverId) {
 								<template #cell-actions="{ row, layout }">
 									<div
 										class="flex items-center justify-end gap-2 px-3"
-										:class="[
-											layout === 'condensed' ? '-mx-2' : '-mx-4'
-										]">
+										:class="[layout === 'condensed' ? '-mx-2' : '-mx-4']">
 										<BaseIconButton
 											variant="primary"
 											aria-label="Edit item"
@@ -1771,7 +1981,10 @@ function getServerName(serverId) {
 					</div>
 				</div>
 
-				<div v-else class="bg-white rounded-lg pt-6 pr-6 pb-6" data-cy="shop-items-empty-state">
+				<div
+					v-else
+					class="bg-white rounded-lg pt-6 pr-6 pb-6"
+					data-cy="shop-items-empty-state">
 					<div class="text-gray-600">
 						<p class="text-lg font-medium mb-2">No items in this shop yet</p>
 						<p class="text-sm">Click "Add Item" to get started with your shop items.</p>
@@ -1827,6 +2040,8 @@ function getServerName(serverId) {
 			:existing-item-ids="existingItemIdsInShop"
 			:server="selectedServer"
 			:shop="selectedShop"
+			:shop-items-for-recipe="shopItems || []"
+			:server-version-key="serverVersionKey"
 			display-variant="modal"
 			@submit="handleItemSubmit"
 			@cancel="cancelForm" />
@@ -1979,6 +2194,7 @@ function getServerName(serverId) {
 						<span>Hide enchantments</span>
 					</label>
 					<label
+						v-if="!selectedShop?.server_shop"
 						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
 						<input
 							data-cy="shop-items-hide-out-of-stock-checkbox"

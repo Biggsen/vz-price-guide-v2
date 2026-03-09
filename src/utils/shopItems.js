@@ -61,6 +61,7 @@ export async function addShopItem(shopId, itemId, itemData) {
 			item_id: itemId,
 			buy_price: itemData.buy_price ?? null,
 			sell_price: itemData.sell_price ?? null,
+			pricing_type: itemData.pricing_type === 'from_recipe' ? 'from_recipe' : 'manual',
 			previous_buy_price: null,
 			previous_sell_price: null,
 			previous_price_date: null,

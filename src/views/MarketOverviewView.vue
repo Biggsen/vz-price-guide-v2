@@ -100,17 +100,17 @@ const serverIdForQuery = computed(() => {
 })
 const { shops: allServerShops } = useServerShops(serverIdForQuery)
 
-// Filter shops based on admin status
+// Filter shops based on admin status; exclude server shops (Market Overview is player shops only)
 // Note: useServerShops and useShops already filter out archived shops client-side
 const serverShops = computed(() => {
+	let list = []
 	if (userIsAdmin.value) {
-		// Admins can see all shops on the server (already filtered by useServerShops)
-		return allServerShops.value || []
+		list = allServerShops.value || []
 	} else {
-		// Non-admins (including shopManager) can only see their own shops on the server (already filtered by useShops)
 		if (!shops.value || !selectedServerId.value) return []
-		return shops.value.filter((shop) => shop.server_id === selectedServerId.value)
+		list = shops.value.filter((shop) => shop.server_id === selectedServerId.value)
 	}
+	return list.filter((shop) => shop.server_shop !== true)
 })
 
 // Get shop IDs for all shops on server
