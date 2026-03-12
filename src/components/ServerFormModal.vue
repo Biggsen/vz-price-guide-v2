@@ -244,6 +244,30 @@ function handleSubmit() {
 			</div>
 
 			<div>
+				<p class="block text-sm font-medium text-gray-700 mb-2">
+					Do you own or manage this server?
+				</p>
+				<div class="space-y-2">
+					<label class="flex items-center gap-2 cursor-pointer">
+						<input
+							v-model="localFormData.user_manages_server"
+							:value="false"
+							type="radio"
+							class="rounded-full border-gray-300 text-gray-asparagus focus:ring-gray-asparagus" />
+						<span class="text-sm text-gray-900">No – I play on this server</span>
+					</label>
+					<label class="flex items-center gap-2 cursor-pointer">
+						<input
+							v-model="localFormData.user_manages_server"
+							:value="true"
+							type="radio"
+							class="rounded-full border-gray-300 text-gray-asparagus focus:ring-gray-asparagus" />
+						<span class="text-sm text-gray-900">Yes – I manage this server</span>
+					</label>
+				</div>
+			</div>
+
+			<div>
 				<label
 					:for="`${inputPrefix}-description`"
 					class="block text-sm font-medium text-gray-700 mb-1">

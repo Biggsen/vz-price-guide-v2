@@ -38,11 +38,8 @@ export async function addShopItem(shopId, itemId, itemData) {
 	// Validation
 	if (!shopId) throw new Error('Shop ID is required')
 	if (!itemId) throw new Error('Item ID is required')
-	if (!itemData.buy_price && !itemData.sell_price) {
-		throw new Error('At least one price (buy or sell) is required')
-	}
 
-	// Validate price values
+	// Validate price values (both can be null for catalog bulk-add)
 	if (itemData.buy_price !== null && itemData.buy_price !== undefined) {
 		if (isNaN(itemData.buy_price) || itemData.buy_price < 0) {
 			throw new Error('Buy price must be a valid positive number')
@@ -233,11 +230,7 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 			if (!itemData.item_id) {
 				throw new Error('Item ID is required for each item')
 			}
-			if (!itemData.buy_price && !itemData.sell_price) {
-				throw new Error('At least one price (buy or sell) is required for each item')
-			}
-
-			// Validate price values
+			// Validate price values (both can be null for catalog bulk-add)
 			if (itemData.buy_price !== null && itemData.buy_price !== undefined) {
 				if (isNaN(itemData.buy_price) || itemData.buy_price < 0) {
 					throw new Error(

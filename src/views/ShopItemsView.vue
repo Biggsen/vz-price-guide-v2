@@ -388,14 +388,20 @@ const allVisibleShopItems = computed(() => {
 // BaseTable column definitions (add Pricing column for server shop)
 const baseTableColumns = computed(() => {
 	const cols = [
-		{ key: 'item', label: 'Item', sortable: true, headerAlign: 'center' },
+		{
+			key: 'item',
+			label: 'Item',
+			sortable: true,
+			headerAlign: 'center',
+			width: 'min-w-64 w-64'
+		},
 		{
 			key: 'buyPrice',
 			label: 'Buy Price',
 			align: 'right',
 			headerAlign: 'center',
 			sortable: true,
-			width: 'w-32'
+			width: 'w-20'
 		},
 		{
 			key: 'sellPrice',
@@ -403,7 +409,7 @@ const baseTableColumns = computed(() => {
 			align: 'right',
 			headerAlign: 'center',
 			sortable: true,
-			width: 'w-32'
+			width: 'w-20'
 		}
 	]
 	if (isServerShop.value) {
@@ -413,7 +419,7 @@ const baseTableColumns = computed(() => {
 			align: 'center',
 			headerAlign: 'center',
 			sortable: true,
-			width: 'w-40'
+			width: 'w-24'
 		})
 	}
 	cols.push(
@@ -423,7 +429,7 @@ const baseTableColumns = computed(() => {
 			align: 'center',
 			headerAlign: 'center',
 			sortable: true,
-			width: 'w-32',
+			width: 'w-20',
 			sortFn: (a, b) => {
 				const valueA = a.profitMargin === '—' ? -Infinity : parseFloat(a.profitMargin) || 0
 				const valueB = b.profitMargin === '—' ? -Infinity : parseFloat(b.profitMargin) || 0
@@ -436,7 +442,7 @@ const baseTableColumns = computed(() => {
 			label: 'Last Updated',
 			sortable: true,
 			headerAlign: 'center',
-			width: 'w-40',
+			width: 'w-24',
 			sortFn: (a, b) => {
 				const valueA = a._lastUpdatedTimestamp || 0
 				const valueB = b._lastUpdatedTimestamp || 0

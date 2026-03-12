@@ -107,7 +107,8 @@ const defaultVersion = minecraftVersions[0]?.value || '1.21'
 const serverForm = ref({
 	name: '',
 	minecraft_version: defaultVersion,
-	description: ''
+	description: '',
+	user_manages_server: false
 })
 
 const showShopForm = ref(false)
@@ -319,7 +320,8 @@ function resetServerForm() {
 	serverForm.value = {
 		name: '',
 		minecraft_version: defaultVersion,
-		description: ''
+		description: '',
+		user_manages_server: false
 	}
 }
 
@@ -339,7 +341,8 @@ function showEditServerForm(server) {
 	serverForm.value = {
 		name: server.name,
 		minecraft_version: server.minecraft_version,
-		description: server.description || ''
+		description: server.description || '',
+		user_manages_server: server.user_manages_server === true
 	}
 	formError.value = null
 	nameValidationError.value = null
@@ -467,7 +470,7 @@ function showCreateServerShopForm(serverId) {
 	shopForm.value.server_id = serverId
 	shopForm.value.is_own_shop = true
 	shopForm.value.server_shop = true
-	shopForm.value.name = 'Server Shop'
+	shopForm.value.name = 'Admin Shop'
 	shopCreateError.value = null
 	shopEditError.value = null
 	shopNameValidationError.value = null
@@ -894,9 +897,9 @@ function toggleShopsVisibility(serverId) {
 		<!-- Header -->
 		<div class="mb-8">
 			<div>
-				<h1 class="text-3xl font-bold text-gray-900 mb-2">Player Shop Manager</h1>
+				<h1 class="text-3xl font-bold text-gray-900 mb-2">Shop Manager</h1>
 				<p class="text-gray-600">
-					Manage your shops and other player shops across all your servers.
+					Track shops and prices across Minecraft servers.
 				</p>
 			</div>
 			<div class="mt-4">
@@ -917,7 +920,7 @@ function toggleShopsVisibility(serverId) {
 		<!-- Other Section -->
 		<div class="mb-8">
 			<h2 class="text-2xl font-semibold text-gray-700 border-b-2 border-gray-asparagus pb-2">
-				My Servers and Shops
+				Servers and Shops
 			</h2>
 		</div>
 
@@ -965,8 +968,11 @@ function toggleShopsVisibility(serverId) {
 					</template>
 					<template #body>
 						<div class="flex flex-col gap-4">
-							<div class="text-xs uppercase tracking-wide text-gray-500">
-								Version {{ server.minecraft_version || 'n/a' }}
+							<div class="flex items-center gap-2 flex-wrap text-xs uppercase tracking-wide text-gray-500">
+								<span>Version {{ server.minecraft_version || 'n/a' }}</span>
+								<span class="px-1.5 py-0.5 rounded font-medium bg-semantic-info text-white">
+									{{ server.user_manages_server ? 'Owner/Manager' : 'Player' }}
+								</span>
 							</div>
 							<p v-if="server.description" class="text-sm text-gray-600">
 								{{ server.description }}
@@ -982,7 +988,7 @@ function toggleShopsVisibility(serverId) {
 										<template #left-icon>
 											<BuildingStorefrontIcon class="w-4 h-4" />
 										</template>
-										Server Shop
+										Admin Shop
 									</BaseButton>
 								</RouterLink>
 								<BaseButton
@@ -994,7 +1000,7 @@ function toggleShopsVisibility(serverId) {
 									<template #left-icon>
 										<PlusIcon class="w-4 h-4" />
 									</template>
-									Server Shop
+									Admin Shop
 								</BaseButton>
 								<BaseButton
 									variant="secondary"
@@ -1134,11 +1140,8 @@ function toggleShopsVisibility(serverId) {
 												</BaseIconButton>
 											</div>
 										</template>
-										<template #empty>No personal shops yet.</template>
+										<template #empty></template>
 									</BaseTable>
-									<p v-else class="text-sm italic text-gray-500 mt-2">
-										No personal shops yet.
-									</p>
 								</div>
 								<div>
 									<BaseTable
@@ -1242,11 +1245,8 @@ function toggleShopsVisibility(serverId) {
 												</BaseIconButton>
 											</div>
 										</template>
-										<template #empty>No player shops tracked.</template>
+										<template #empty></template>
 									</BaseTable>
-									<p v-else class="text-sm italic text-gray-500 mt-2">
-										No player shops tracked.
-									</p>
 								</div>
 							</div>
 						</div>

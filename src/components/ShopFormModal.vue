@@ -219,22 +219,6 @@ function handleClose() {
 				</div>
 			</div>
 
-			<!-- Use as server shop (only for own shops) -->
-			<div v-if="shopForm.is_own_shop" class="flex items-center gap-2">
-				<input
-					:id="isEditMode ? 'edit-shop-server-shop' : 'shop-server-shop'"
-					:checked="shopForm.server_shop"
-					@change="updateFormField('server_shop', $event.target.checked)"
-					type="checkbox"
-					class="checkbox-input"
-					data-cy="shop-server-shop-checkbox" />
-				<label
-					:for="isEditMode ? 'edit-shop-server-shop' : 'shop-server-shop'"
-					class="text-sm text-gray-700 cursor-pointer">
-					Use as server shop
-				</label>
-			</div>
-
 			<!-- Server Selection (only when creating and no preset server) -->
 			<div v-if="showServerDropdown">
 				<label for="shop-server" class="block text-sm font-medium text-gray-700 mb-1">
@@ -265,8 +249,8 @@ function handleClose() {
 				</div>
 			</div>
 
-			<!-- Location Input -->
-			<div>
+			<!-- Location Input (hidden when creating admin shop) -->
+			<div v-if="isEditMode || !shopForm.server_shop">
 				<label
 					:for="isEditMode ? 'edit-shop-location' : 'shop-location'"
 					class="block text-sm font-medium text-gray-700 mb-1">

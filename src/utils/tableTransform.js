@@ -12,7 +12,9 @@ function formatPricingType(shopItem) {
 		(shopItem.buy_pricing_type === 'from_recipe' || shopItem.sell_pricing_type === 'from_recipe'
 			? 'from_recipe'
 			: 'manual')
-	return type === 'from_recipe' ? 'Recipe' : 'Custom'
+	if (type === 'from_recipe') return 'Recipe'
+	if (type === 'base') return 'Base'
+	return 'Custom'
 }
 
 /**
