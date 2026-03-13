@@ -385,7 +385,7 @@ const allVisibleShopItems = computed(() => {
 		})
 })
 
-// BaseTable column definitions (add Pricing column for server shop)
+// BaseTable column definitions (percentage widths; last column keeps fixed width)
 const baseTableColumns = computed(() => {
 	const cols = [
 		{
@@ -393,7 +393,7 @@ const baseTableColumns = computed(() => {
 			label: 'Item',
 			sortable: true,
 			headerAlign: 'center',
-			width: 'min-w-64 w-64'
+			widthStyle: { width: '26%' }
 		},
 		{
 			key: 'buyPrice',
@@ -401,7 +401,7 @@ const baseTableColumns = computed(() => {
 			align: 'right',
 			headerAlign: 'center',
 			sortable: true,
-			width: 'w-20'
+			widthStyle: { width: '11%' }
 		},
 		{
 			key: 'sellPrice',
@@ -409,7 +409,7 @@ const baseTableColumns = computed(() => {
 			align: 'right',
 			headerAlign: 'center',
 			sortable: true,
-			width: 'w-20'
+			widthStyle: { width: '11%' }
 		}
 	]
 	if (isServerShop.value) {
@@ -419,7 +419,7 @@ const baseTableColumns = computed(() => {
 			align: 'center',
 			headerAlign: 'center',
 			sortable: true,
-			width: 'w-24'
+			widthStyle: { width: '9%' }
 		})
 	}
 	cols.push(
@@ -429,20 +429,26 @@ const baseTableColumns = computed(() => {
 			align: 'center',
 			headerAlign: 'center',
 			sortable: true,
-			width: 'w-20',
+			widthStyle: { width: '11%' },
 			sortFn: (a, b) => {
 				const valueA = a.profitMargin === '—' ? -Infinity : parseFloat(a.profitMargin) || 0
 				const valueB = b.profitMargin === '—' ? -Infinity : parseFloat(b.profitMargin) || 0
 				return valueA - valueB
 			}
 		},
-		{ key: 'notes', label: 'Notes', sortable: true, headerAlign: 'center' },
+		{
+			key: 'notes',
+			label: 'Notes',
+			sortable: true,
+			headerAlign: 'center',
+			widthStyle: { width: '18%' }
+		},
 		{
 			key: 'lastUpdated',
 			label: 'Last Updated',
 			sortable: true,
 			headerAlign: 'center',
-			width: 'w-24',
+			widthStyle: { width: '14%' },
 			sortFn: (a, b) => {
 				const valueA = a._lastUpdatedTimestamp || 0
 				const valueB = b._lastUpdatedTimestamp || 0
@@ -1089,7 +1095,11 @@ function exportShopPrices() {
 			category: guide?.category || '',
 			buy_price: si.buy_price,
 			sell_price: si.sell_price,
-			pricing_type: si.pricing_type || (si.buy_pricing_type === 'from_recipe' || si.sell_pricing_type === 'from_recipe' ? 'from_recipe' : 'manual'),
+			pricing_type:
+				si.pricing_type ||
+				(si.buy_pricing_type === 'from_recipe' || si.sell_pricing_type === 'from_recipe'
+					? 'from_recipe'
+					: 'manual'),
 			notes: si.notes || ''
 		}
 	})
@@ -1552,10 +1562,13 @@ function getServerName(serverId) {
 												<span
 													:class="[
 														'text-right',
-														row._originalItem?.stock_quantity === 0 && 'line-through'
+														row._originalItem?.stock_quantity === 0 &&
+															'line-through'
 													]">
 													{{
-														formatPriceDisplay(row._originalItem?.buy_price)
+														formatPriceDisplay(
+															row._originalItem?.buy_price
+														)
 													}}
 												</span>
 											</template>
@@ -1626,11 +1639,15 @@ function getServerName(serverId) {
 													:class="[
 														'text-right',
 														(row._originalItem?.stock_full ||
-															(isShopOutOfMoney && row._originalItem?.sell_price > 0)) &&
+															(isShopOutOfMoney &&
+																row._originalItem?.sell_price >
+																	0)) &&
 															'line-through'
 													]">
 													{{
-														formatPriceDisplay(row._originalItem?.sell_price)
+														formatPriceDisplay(
+															row._originalItem?.sell_price
+														)
 													}}
 												</span>
 											</template>
@@ -1833,9 +1850,12 @@ function getServerName(serverId) {
 											<span
 												:class="[
 													'text-right',
-													row._originalItem?.stock_quantity === 0 && 'line-through'
+													row._originalItem?.stock_quantity === 0 &&
+														'line-through'
 												]">
-												{{ formatPriceDisplay(row._originalItem?.buy_price) }}
+												{{
+													formatPriceDisplay(row._originalItem?.buy_price)
+												}}
 											</span>
 										</template>
 										<InlinePriceInput
@@ -1901,10 +1921,15 @@ function getServerName(serverId) {
 												:class="[
 													'text-right',
 													(row._originalItem?.stock_full ||
-														(isShopOutOfMoney && row._originalItem?.sell_price > 0)) &&
+														(isShopOutOfMoney &&
+															row._originalItem?.sell_price > 0)) &&
 														'line-through'
 												]">
-												{{ formatPriceDisplay(row._originalItem?.sell_price) }}
+												{{
+													formatPriceDisplay(
+														row._originalItem?.sell_price
+													)
+												}}
 											</span>
 										</template>
 										<InlinePriceInput

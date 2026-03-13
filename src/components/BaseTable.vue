@@ -53,17 +53,23 @@ const sortField = ref(props.initialSortField || '')
 const sortDirection = ref(props.initialSortDirection || 'asc') // 'asc' or 'desc'
 
 // Watch for prop changes to update internal state
-watch(() => props.initialSortField, (newValue) => {
-	if (newValue !== sortField.value) {
-		sortField.value = newValue || ''
+watch(
+	() => props.initialSortField,
+	(newValue) => {
+		if (newValue !== sortField.value) {
+			sortField.value = newValue || ''
+		}
 	}
-})
+)
 
-watch(() => props.initialSortDirection, (newValue) => {
-	if (newValue !== sortDirection.value) {
-		sortDirection.value = newValue || 'asc'
+watch(
+	() => props.initialSortDirection,
+	(newValue) => {
+		if (newValue !== sortDirection.value) {
+			sortDirection.value = newValue || 'asc'
+		}
 	}
-})
+)
 
 // Computed sorted rows
 const sortedRows = computed(() => {

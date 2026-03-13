@@ -977,20 +977,24 @@ function toggleShopsVisibility(serverId) {
 							<p v-if="server.description" class="text-sm text-gray-600">
 								{{ server.description }}
 							</p>
-							<div class="flex gap-2 flex-wrap">
-								<RouterLink
-									v-if="shopsByServer[server.id]?.serverShop"
-									:to="{
-										name: 'shop',
-										params: { shopId: shopsByServer[server.id].serverShop.id }
-									}">
-									<BaseButton variant="secondary" data-cy="server-shop-button">
-										<template #left-icon>
-											<BuildingStorefrontIcon class="w-4 h-4" />
-										</template>
-										Admin Shop
-									</BaseButton>
-								</RouterLink>
+							<div class="flex flex-col gap-1">
+								<label class="text-xs font-medium text-gray-600 uppercase tracking-wide">
+									Server Shop
+								</label>
+								<div class="flex gap-2 flex-wrap">
+									<RouterLink
+										v-if="shopsByServer[server.id]?.serverShop"
+										:to="{
+											name: 'shop',
+											params: { shopId: shopsByServer[server.id].serverShop.id }
+										}">
+										<BaseButton variant="secondary" data-cy="server-shop-button">
+											<template #left-icon>
+												<BuildingStorefrontIcon class="w-4 h-4" />
+											</template>
+											Manage Admin Shop
+										</BaseButton>
+									</RouterLink>
 								<BaseButton
 									v-else
 									variant="secondary"
@@ -1000,31 +1004,39 @@ function toggleShopsVisibility(serverId) {
 									<template #left-icon>
 										<PlusIcon class="w-4 h-4" />
 									</template>
-									Admin Shop
+									Create Admin Shop
 								</BaseButton>
-								<BaseButton
-									variant="secondary"
-									:disabled="shopLoading"
-									@click="showCreateShopForm(server.id, true)"
-									data-cy="shop-manager-add-shop-button">
-									<template #left-icon>
-										<PlusIcon class="w-4 h-4" />
-									</template>
-									Add My Shop
-								</BaseButton>
-								<BaseButton
-									variant="secondary"
-									:disabled="shopLoading"
-									@click="showCreateShopForm(server.id, false)"
-									data-cy="shop-manager-add-shop-button">
-									<template #left-icon>
-										<PlusIcon class="w-4 h-4" />
-									</template>
-									Add Player Shop
-								</BaseButton>
-								<RouterLink
-									v-if="shopsByServer[server.id]?.all.length"
-									:to="`/market-overview?serverId=${server.id}`">
+								</div>
+							</div>
+							<div class="flex flex-col gap-1">
+								<label class="text-xs font-medium text-gray-600 uppercase tracking-wide">
+									Player shops
+								</label>
+								<div class="flex gap-2 flex-wrap">
+									<BaseButton
+										variant="secondary"
+										:disabled="shopLoading"
+										@click="showCreateShopForm(server.id, true)"
+										data-cy="shop-manager-add-shop-button">
+										<template #left-icon>
+											<PlusIcon class="w-4 h-4" />
+										</template>
+										Add My Shop
+									</BaseButton>
+									<BaseButton
+										variant="secondary"
+										:disabled="shopLoading"
+										@click="showCreateShopForm(server.id, false)"
+										data-cy="shop-manager-add-shop-button">
+										<template #left-icon>
+											<PlusIcon class="w-4 h-4" />
+										</template>
+										Add Player Shop
+									</BaseButton>
+								</div>
+							</div>
+							<div v-if="shopsByServer[server.id]?.all.length" class="flex gap-2 flex-wrap">
+								<RouterLink :to="`/market-overview?serverId=${server.id}`">
 									<BaseButton variant="tertiary">
 										<template #left-icon>
 											<CurrencyDollarIcon class="w-4 h-4" />
