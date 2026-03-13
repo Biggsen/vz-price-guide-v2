@@ -78,6 +78,7 @@ const catalogStatusError = ref(null)
 const recalculateLoading = ref(false)
 const recalculateError = ref(null)
 const recalculateSuccess = ref(null)
+const searchQuery = ref('')
 
 // Shop settings modal state
 const showShopSettingsModal = ref(false)
@@ -476,6 +477,53 @@ const baseTableRows = computed(() => {
 	return allVisibleShopItems.value.map(transformShopItemForTable)
 })
 
+// Search terms from query (comma-separated, OR logic; only for server shop)
+function getSearchTerms() {
+	if (!isServerShop.value || !searchQuery.value?.trim()) return []
+	return searchQuery.value
+		.trim()
+		.toLowerCase()
+		.split(',')
+		.map((t) => t.trim())
+		.filter((t) => t.length > 0)
+}
+
+// Filter rows by item name matching any search term
+function rowMatchesSearch(row) {
+	const terms = getSearchTerms()
+	if (terms.length === 0) return true
+	const name = (row?.item ?? '').toLowerCase()
+	return terms.some((term) => name.includes(term))
+}
+
+// Filtered list rows (when server shop + search)
+const filteredBaseTableRows = computed(() => {
+	if (!isServerShop.value || getSearchTerms().length === 0) return baseTableRows.value
+	return baseTableRows.value.filter(rowMatchesSearch)
+})
+
+// Filtered category rows (when server shop + search)
+const filteredBaseTableRowsByCategory = computed(() => {
+	if (!isServerShop.value || getSearchTerms().length === 0) return baseTableRowsByCategory.value
+	const filtered = {}
+	Object.entries(baseTableRowsByCategory.value || {}).forEach(([category, rows]) => {
+		const match = rows.filter(rowMatchesSearch)
+		if (match.length > 0) filtered[category] = match
+	})
+	return filtered
+})
+
+// Count of items matching current search (server shop)
+const filteredItemCount = computed(() => {
+	if (!isServerShop.value || getSearchTerms().length === 0) return 0
+	if (viewMode.value === 'list') return filteredBaseTableRows.value.length
+	return Object.values(filteredBaseTableRowsByCategory.value).reduce((s, rows) => s + rows.length, 0)
+})
+
+function resetSearch() {
+	searchQuery.value = ''
+}
+
 // BaseTable rows grouped by category
 const baseTableRowsByCategory = computed(() => {
 	if (!shopItemsByCategory.value || !availableItems.value) return {}
@@ -511,6 +559,14 @@ const sortedCategories = computed(() => {
 	})
 
 	return orderedCategories
+})
+
+// Categories to show (when search active, only categories with matches)
+const sortedCategoriesForDisplay = computed(() => {
+	const categories = sortedCategories.value
+	if (!isServerShop.value || getSearchTerms().length === 0) return categories
+	const filteredKeys = Object.keys(filteredBaseTableRowsByCategory.value || {})
+	return categories.filter((c) => filteredKeys.includes(c))
 })
 
 // Load and save view settings from localStorage
@@ -1252,9 +1308,45 @@ function getServerName(serverId) {
 
 		<!-- Main content -->
 		<div v-else-if="hasShops && hasServers && selectedShop">
-			<!-- Settings, Export, Recalculate, Market Overview Buttons (Top) -->
-			<div class="mt-4 mb-5">
-				<div class="flex flex-wrap items-center gap-3">
+			<!-- Search + Settings/Export row (search left, actions right; homepage-style layout) -->
+			<div class="mt-4 mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+				<!-- Left: Search (Admin Shop only when items exist) -->
+				<div class="flex-1 sm:max-w-md">
+					<template v-if="isServerShop && shopItems && shopItems.length > 0">
+						<label for="admin-shop-item-search" class="block text-sm font-medium text-gray-700 mb-2">
+							Search Items
+						</label>
+						<div class="flex flex-row gap-2">
+							<input
+								id="admin-shop-item-search"
+								type="text"
+								v-model="searchQuery"
+								data-cy="admin-shop-search-input"
+								placeholder="Search for items..."
+								class="border-2 border-gray-asparagus rounded px-3 py-2 w-full mb-1 h-10 flex-1" />
+							<BaseButton
+								@click="resetSearch"
+								variant="tertiary"
+								data-cy="admin-shop-reset-search-button"
+								class="flex-shrink-0 h-10">
+								<ArrowPathIcon class="w-4 h-4 sm:mr-1.5" />
+								<span class="hidden sm:inline">Reset</span>
+							</BaseButton>
+						</div>
+						<p class="text-xs text-gray-500 mt-1">
+							Tip: Use commas to search multiple terms
+						</p>
+						<div v-if="searchQuery && getSearchTerms().length > 0" class="mt-2 text-sm text-gray-600">
+							<span v-if="filteredItemCount > 0">
+								Showing {{ filteredItemCount }} item{{ filteredItemCount === 1 ? '' : 's' }}
+								matching "{{ searchQuery }}"
+							</span>
+							<span v-else>No items found matching "{{ searchQuery }}"</span>
+						</div>
+					</template>
+				</div>
+				<!-- Right: Settings, Export, Recalculate, Market Overview -->
+				<div class="flex flex-wrap items-center gap-3 sm:ml-4 sm:flex-shrink-0">
 					<BaseButton
 						@click="showShopSettingsModal = true"
 						variant="secondary"
@@ -1291,10 +1383,10 @@ function getServerName(serverId) {
 								recalculateLoading ? 'Recalculating…' : 'Recalculate recipe prices'
 							}}
 						</BaseButton>
-						<p v-if="recalculateSuccess" class="text-sm text-green-700">
+						<p v-if="recalculateSuccess" class="text-sm text-green-700 basis-full">
 							{{ recalculateSuccess }}
 						</p>
-						<p v-if="recalculateError" class="text-sm text-red-700">
+						<p v-if="recalculateError" class="text-sm text-red-700 basis-full">
 							{{ recalculateError }}
 						</p>
 					</template>
@@ -1436,10 +1528,10 @@ function getServerName(serverId) {
 					<!-- BaseTable Implementation (New) -->
 					<div class="mb-8">
 						<template v-if="viewMode === 'categories'">
-							<div v-for="category in sortedCategories" :key="category" class="mb-6">
+							<div v-for="category in sortedCategoriesForDisplay" :key="category" class="mb-6">
 								<BaseTable
 									:columns="baseTableColumns"
-									:rows="baseTableRowsByCategory[category]"
+									:rows="isServerShop && getSearchTerms().length > 0 ? (filteredBaseTableRowsByCategory[category] || []) : baseTableRowsByCategory[category]"
 									row-key="id"
 									:layout="layout"
 									:hoverable="true"
@@ -1741,7 +1833,7 @@ function getServerName(serverId) {
 						<template v-else>
 							<BaseTable
 								:columns="baseTableColumns"
-								:rows="baseTableRows"
+								:rows="isServerShop && getSearchTerms().length > 0 ? filteredBaseTableRows : baseTableRows"
 								row-key="id"
 								:layout="layout"
 								:hoverable="true">
