@@ -172,6 +172,33 @@ export async function deleteShopItem(itemId) {
 	}
 }
 
+const BATCH_DELETE_LIMIT = 500
+
+/**
+ * Delete all shop items for a shop (batch deletes, respects Firestore limit).
+ * @param {string} shopId
+ * @returns {Promise<number>} number of items deleted
+ */
+export async function bulkDeleteShopItems(shopId) {
+	if (!shopId) throw new Error('Shop ID is required')
+
+	const db = getFirestore()
+	const q = query(collection(db, 'shop_items'), where('shop_id', '==', shopId))
+	const snapshot = await getDocs(q)
+	if (snapshot.empty) return 0
+
+	const docIds = snapshot.docs.map((d) => d.id)
+	let deleted = 0
+	for (let i = 0; i < docIds.length; i += BATCH_DELETE_LIMIT) {
+		const chunk = docIds.slice(i, i + BATCH_DELETE_LIMIT)
+		const batch = writeBatch(db)
+		chunk.forEach((id) => batch.delete(doc(db, 'shop_items', id)))
+		await batch.commit()
+		deleted += chunk.length
+	}
+	return deleted
+}
+
 // Get shop items
 export async function getShopItems(shopId) {
 	if (!shopId) throw new Error('Shop ID is required')
@@ -304,18 +331,20 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 					results.push({ id: itemData.id, ...updatedData })
 				}
 			} else {
-				// Create new item
+				// Create new item (match addShopItem payload so Firestore rules accept)
 				const newDocRef = doc(collection(db, 'shop_items'))
 				const shopItem = {
 					shop_id: shopId,
 					item_id: itemData.item_id,
 					buy_price: itemData.buy_price ?? null,
 					sell_price: itemData.sell_price ?? null,
+					pricing_type: itemData.pricing_type === 'from_recipe' ? 'from_recipe' : 'manual',
 					previous_buy_price: null,
 					previous_sell_price: null,
 					previous_price_date: null,
 					stock_quantity: itemData.stock_quantity ?? null,
 					stock_full: itemData.stock_full || false,
+					starred: false,
 					notes: itemData.notes?.trim() || '',
 					enchantments: Array.isArray(itemData.enchantments) ? itemData.enchantments : [],
 					last_updated: new Date().toISOString()

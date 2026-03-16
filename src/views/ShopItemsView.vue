@@ -10,8 +10,14 @@ import {
 	addShopItem,
 	updateShopItem,
 	deleteShopItem,
-	markShopItemsAsChecked
+	markShopItemsAsChecked,
+	bulkUpdateShopItems,
+	bulkDeleteShopItems
 } from '../utils/shopItems.js'
+import {
+	parseEconomyShopGuiYaml,
+	mapToGuideItems
+} from '../utils/economyShopGuiImport.js'
 import ShopItemForm from '../components/ShopItemForm.vue'
 import ShopFormModal from '../components/ShopFormModal.vue'
 import BaseTable from '../components/BaseTable.vue'
@@ -25,7 +31,8 @@ import {
 	CurrencyDollarIcon,
 	ClipboardDocumentCheckIcon,
 	Cog6ToothIcon,
-	ArrowDownTrayIcon
+	ArrowDownTrayIcon,
+	ArrowUpTrayIcon
 } from '@heroicons/vue/24/outline'
 import {
 	PencilIcon,
@@ -79,6 +86,12 @@ const recalculateLoading = ref(false)
 const recalculateError = ref(null)
 const recalculateSuccess = ref(null)
 const searchQuery = ref('')
+const importLoading = ref(false)
+const importError = ref(null)
+const importSuccess = ref(null)
+const economyShopGuiFileInput = ref(null)
+const clearAllItemsLoading = ref(false)
+const showClearAllModal = ref(false)
 
 // Shop settings modal state
 const showShopSettingsModal = ref(false)
@@ -854,6 +867,30 @@ async function confirmDeleteItem() {
 	}
 }
 
+function openClearAllModal() {
+	if (!shopItems.value?.length) return
+	showClearAllModal.value = true
+}
+
+function closeClearAllModal() {
+	showClearAllModal.value = false
+}
+
+async function confirmClearAllItems() {
+	if (!selectedShopId.value || !shopItems.value?.length) return
+	clearAllItemsLoading.value = true
+	error.value = null
+	try {
+		await bulkDeleteShopItems(selectedShopId.value)
+		closeClearAllModal()
+	} catch (err) {
+		console.error('Error clearing shop items:', err)
+		error.value = err.message || 'Failed to clear items. Please try again.'
+	} finally {
+		clearAllItemsLoading.value = false
+	}
+}
+
 // Mark all items in shop as checked (updates last_updated)
 async function handleMarkAllAsChecked() {
 	if (!selectedShopId.value || !shopItems.value || shopItems.value.length === 0) return
@@ -1200,6 +1237,61 @@ async function recalculateRecipePrices() {
 	}
 }
 
+const BULK_IMPORT_CHUNK_SIZE = 400
+
+function triggerEconomyShopGuiImport() {
+	importError.value = null
+	importSuccess.value = null
+	economyShopGuiFileInput.value?.click()
+}
+
+async function onEconomyShopGuiFileSelected(event) {
+	const file = event.target?.files?.[0]
+	event.target.value = ''
+	if (!file || !selectedShopId.value || !availableItems.value?.length) return
+	importLoading.value = true
+	importError.value = null
+	importSuccess.value = null
+	try {
+		const text = await file.text()
+		const entries = parseEconomyShopGuiYaml(text)
+		if (entries.length === 0) {
+			importError.value = 'No valid items found in the YAML file. Expected structure: pages.page*.items.* with material, buy, sell.'
+			return
+		}
+		const existingIds = (shopItems.value || []).map((s) => s.item_id)
+		const { toAdd, unmapped, skipped } = mapToGuideItems(
+			entries,
+			availableItems.value,
+			existingIds
+		)
+		if (toAdd.length === 0) {
+			importSuccess.value =
+				skipped > 0
+					? `All ${entries.length} items were already in the shop or could not be matched.`
+					: `No items could be matched to your price guide. ${unmapped.length} unique materials had no match (e.g. ${(unmapped.slice(0, 3)).join(', ') || '—'}).`
+			return
+		}
+		let imported = 0
+		for (let i = 0; i < toAdd.length; i += BULK_IMPORT_CHUNK_SIZE) {
+			const chunk = toAdd.slice(i, i + BULK_IMPORT_CHUNK_SIZE)
+			await bulkUpdateShopItems(selectedShopId.value, chunk)
+			imported += chunk.length
+		}
+		const parts = [`Imported ${imported} item${imported === 1 ? '' : 's'}.`]
+		if (skipped > 0) parts.push(`${skipped} skipped (already in shop).`)
+		if (unmapped.length > 0) {
+			const sample = unmapped.slice(0, 5).join(', ')
+			parts.push(`${unmapped.length} material(s) not in guide (e.g. ${sample}).`)
+		}
+		importSuccess.value = parts.join(' ')
+	} catch (err) {
+		importError.value = err.message || 'Import failed.'
+	} finally {
+		importLoading.value = false
+	}
+}
+
 // Helper functions
 function getServerName(serverId) {
 	return servers.value?.find((server) => server.id === serverId)?.name || 'Unknown Server'
@@ -1368,6 +1460,26 @@ function getServerName(serverId) {
 							</template>
 							Export
 						</BaseButton>
+						<input
+							ref="economyShopGuiFileInput"
+							type="file"
+							accept=".yml,.yaml"
+							class="hidden"
+							aria-label="Import EconomyShopGUI YAML"
+							@change="onEconomyShopGuiFileSelected" />
+						<BaseButton
+							type="button"
+							variant="secondary"
+							:disabled="importLoading || !availableItems?.length"
+							data-cy="shop-items-import-economyshopgui-button"
+							@click="triggerEconomyShopGuiImport">
+							<template #left-icon>
+								<ArrowUpTrayIcon
+									class="w-4 h-4"
+									:class="{ 'animate-spin': importLoading }" />
+							</template>
+							{{ importLoading ? 'Importing…' : 'Import YAML' }}
+						</BaseButton>
 						<BaseButton
 							type="button"
 							variant="secondary"
@@ -1388,6 +1500,12 @@ function getServerName(serverId) {
 						</p>
 						<p v-if="recalculateError" class="text-sm text-red-700 basis-full">
 							{{ recalculateError }}
+						</p>
+						<p v-if="importSuccess" class="text-sm text-green-700 basis-full">
+							{{ importSuccess }}
+						</p>
+						<p v-if="importError" class="text-sm text-red-700 basis-full">
+							{{ importError }}
 						</p>
 					</template>
 					<RouterLink
@@ -2114,8 +2232,8 @@ function getServerName(serverId) {
 					</div>
 				</div>
 
-				<!-- Add Item Button -->
-				<div class="mt-4 flex justify-start">
+				<!-- Add Item Button (below tables) -->
+				<div class="mt-4 flex flex-col items-start gap-2">
 					<BaseButton
 						type="button"
 						variant="primary"
@@ -2127,6 +2245,16 @@ function getServerName(serverId) {
 						</template>
 						Add Item
 					</BaseButton>
+					<button
+						v-if="shopItems && shopItems.length > 0"
+						type="button"
+						class="flex items-center gap-1.5 text-sm text-gray-asparagus hover:text-highland hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+						:disabled="clearAllItemsLoading"
+						data-cy="shop-items-clear-all-button"
+						@click="openClearAllModal">
+						<TrashIcon class="w-4 h-4 flex-shrink-0" />
+						{{ clearAllItemsLoading ? 'Clearing…' : 'Clear all items' }}
+					</button>
 				</div>
 			</div>
 		</div>
@@ -2238,6 +2366,48 @@ function getServerName(serverId) {
 						:disabled="loading"
 						@click="confirmDeleteItem">
 						{{ loading ? 'Deleting...' : 'Delete' }}
+					</BaseButton>
+				</div>
+			</div>
+		</template>
+	</BaseModal>
+
+	<!-- Clear All Items confirmation -->
+	<BaseModal
+		:isOpen="showClearAllModal"
+		title="Clear All Items"
+		size="small"
+		data-cy="shop-items-clear-all-modal"
+		@close="closeClearAllModal">
+		<div class="space-y-4">
+			<div>
+				<p class="font-normal text-gray-900">
+					Are you sure you want to clear <strong>ALL</strong> items from this shop?
+				</p>
+				<p class="text-sm text-gray-600 mt-2">
+					This action cannot be undone and will permanently delete all
+					{{ shopItems?.length || 0 }} item{{ (shopItems?.length || 0) === 1 ? '' : 's' }}.
+				</p>
+			</div>
+		</div>
+		<template #footer>
+			<div class="flex items-center justify-end p-4">
+				<div class="flex space-x-3">
+					<button
+						type="button"
+						class="btn-secondary--outline"
+						data-cy="shop-items-clear-all-cancel-button"
+						@click="closeClearAllModal">
+						Cancel
+					</button>
+					<BaseButton
+						type="button"
+						variant="primary"
+						data-cy="shop-items-clear-all-confirm-button"
+						class="bg-semantic-danger hover:bg-opacity-90"
+						:disabled="clearAllItemsLoading"
+						@click="confirmClearAllItems">
+						{{ clearAllItemsLoading ? 'Clearing…' : 'Clear All' }}
 					</BaseButton>
 				</div>
 			</div>
