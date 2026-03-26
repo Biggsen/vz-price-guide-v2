@@ -1,4 +1,5 @@
 import yaml from 'js-yaml'
+import { getRecipeForItem } from './serverShopRecipes.js'
 
 /**
  * Normalize EconomyShopGUI material (e.g. CALCITE, ANDESITE_SLAB) to lowercase with underscores
@@ -68,8 +69,7 @@ export function mapToGuideItems(entries, guideItems, existingItemIds, serverVers
 		const recipes = guideItem?.recipes_by_version
 		if (!recipes || typeof recipes !== 'object') return false
 		if (!serverVersionKey) return Object.keys(recipes).length > 0
-		const dottedVersionKey = serverVersionKey.replace('_', '.')
-		return Boolean(recipes[serverVersionKey] || recipes[dottedVersionKey])
+		return getRecipeForItem(guideItem, serverVersionKey) !== null
 	}
 
 	for (const { material, buy, sell } of entries) {

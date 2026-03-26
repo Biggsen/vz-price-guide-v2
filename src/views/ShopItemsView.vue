@@ -18,6 +18,7 @@ import {
 	parseEconomyShopGuiYaml,
 	mapToGuideItems
 } from '../utils/economyShopGuiImport.js'
+import { classifyUnmappedImportMaterials } from '../utils/shopImportUnmapped.js'
 import ShopItemForm from '../components/ShopItemForm.vue'
 import ShopFormModal from '../components/ShopFormModal.vue'
 import BaseTable from '../components/BaseTable.vue'
@@ -1269,11 +1270,30 @@ async function onEconomyShopGuiFileSelected(event) {
 			existingIds,
 			serverVersionKey.value
 		)
+		const serverMM = getMajorMinorVersion(selectedServer.value?.minecraft_version)
+		let unmappedNewerThanServer = []
+		let unmappedNotInDatabase = []
+		let unmappedOther = []
+		if (unmapped.length > 0) {
+			try {
+				const c = await classifyUnmappedImportMaterials(db, unmapped, serverMM)
+				unmappedNewerThanServer = c.newerThanServer
+				unmappedNotInDatabase = c.notInDatabase
+				unmappedOther = c.otherUnmatched
+			} catch (classifyErr) {
+				console.warn('Could not classify unmapped import materials:', classifyErr)
+				unmappedNotInDatabase = unmapped
+			}
+		}
 		if (toAdd.length === 0) {
 			importResultSummary.value = {
 				imported: 0,
 				skipped,
 				unmapped,
+				serverMinecraftLabel: serverMM,
+				unmappedNewerThanServer,
+				unmappedNotInDatabase,
+				unmappedOther,
 				totalEntries: entries.length
 			}
 			showImportResultsModal.value = true
@@ -1289,6 +1309,10 @@ async function onEconomyShopGuiFileSelected(event) {
 			imported,
 			skipped,
 			unmapped,
+			serverMinecraftLabel: serverMM,
+			unmappedNewerThanServer,
+			unmappedNotInDatabase,
+			unmappedOther,
 			totalEntries: entries.length
 		}
 		showImportResultsModal.value = true
@@ -2535,21 +2559,65 @@ function getServerName(serverId) {
 					<p class="text-lg font-bold text-amber-800">{{ importResultSummary.skipped }}</p>
 				</div>
 				<div class="rounded border border-red-200 bg-red-50 px-3 py-2">
-					<p class="text-xs font-semibold uppercase tracking-wide text-red-700">Not in guide</p>
+					<p class="text-xs font-semibold uppercase tracking-wide text-red-700">Not imported</p>
 					<p class="text-lg font-bold text-red-800">
 						{{ importResultSummary.unmapped.length }}
 					</p>
 				</div>
 			</div>
-			<div v-if="importResultSummary.unmapped.length > 0" class="space-y-2">
-				<p class="text-sm font-semibold text-gray-900">Unmapped materials</p>
-				<p class="text-xs text-gray-500">
-					Showing first {{ Math.min(importResultSummary.unmapped.length, 30) }}.
+			<div v-if="importResultSummary.unmapped.length > 0" class="space-y-4">
+				<p v-if="importResultSummary.serverMinecraftLabel" class="text-sm text-gray-700">
+					This shop's server runs Minecraft
+					<strong>{{ importResultSummary.serverMinecraftLabel }}</strong>. Only items that exist in
+					the guide for that version can be added; newer blocks are skipped.
 				</p>
-				<div class="max-h-48 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3">
-					<p class="text-sm text-gray-700 break-words">
-						{{ importResultSummary.unmapped.slice(0, 30).join(', ') }}
+				<div
+					v-if="(importResultSummary.unmappedNewerThanServer || []).length > 0"
+					class="space-y-2">
+					<p class="text-sm font-semibold text-gray-900">
+						Not available in Minecraft {{ importResultSummary.serverMinecraftLabel }}
 					</p>
+					<p class="text-xs text-gray-600">
+						These materials are in the database for a newer Minecraft version than this server, so
+						they are not offered for this shop.
+					</p>
+					<div class="max-h-40 overflow-y-auto rounded border border-amber-200 bg-amber-50 p-3">
+						<ul class="text-sm text-gray-800 list-disc list-inside space-y-1">
+							<li
+								v-for="row in importResultSummary.unmappedNewerThanServer.slice(0, 30)"
+								:key="row.material">
+								<span class="font-mono">{{ row.material }}</span>
+								<span class="text-gray-600">
+									(Minecraft {{ row.itemVersion }})
+								</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div
+					v-if="(importResultSummary.unmappedNotInDatabase || []).length > 0"
+					class="space-y-2">
+					<p class="text-sm font-semibold text-gray-900">Not found in the item database</p>
+					<p class="text-xs text-gray-600">
+						No matching guide item for this material id (check spelling or modded names).
+					</p>
+					<div class="max-h-32 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3">
+						<p class="text-sm text-gray-700 break-words font-mono">
+							{{ importResultSummary.unmappedNotInDatabase.slice(0, 30).join(', ') }}
+						</p>
+					</div>
+				</div>
+				<div v-if="(importResultSummary.unmappedOther || []).length > 0" class="space-y-2">
+					<p class="text-sm font-semibold text-gray-900">Could not match to the guide</p>
+					<p class="text-xs text-gray-600">
+						These exist in the database for this Minecraft version but did not match the import list
+						(often a different material id than the YAML name).
+					</p>
+					<div class="max-h-32 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3">
+						<p class="text-sm text-gray-700 break-words font-mono">
+							{{ importResultSummary.unmappedOther.slice(0, 30).join(', ') }}
+						</p>
+					</div>
 				</div>
 			</div>
 		</div>
