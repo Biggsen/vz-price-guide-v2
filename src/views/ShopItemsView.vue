@@ -34,7 +34,8 @@ import {
 	ClipboardDocumentCheckIcon,
 	Cog6ToothIcon,
 	ArrowDownTrayIcon,
-	ArrowUpTrayIcon
+	ArrowUpTrayIcon,
+	ArrowUpIcon
 } from '@heroicons/vue/24/outline'
 import {
 	PencilIcon,
@@ -69,6 +70,16 @@ const viewMode = ref('categories') // 'categories' or 'list'
 const layout = ref('comfortable') // 'comfortable' or 'condensed'
 const showEnchantments = ref(true) // Show enchantments in item table
 const hideOutOfStock = ref(false) // Hide items that are out of stock
+
+const showBackToTop = ref(false)
+
+function scrollToTop() {
+	window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function handleShopPageScroll() {
+	showBackToTop.value = window.scrollY > 300
+}
 
 // Inline price editing state
 const editingPriceId = ref(null)
@@ -735,6 +746,9 @@ onMounted(() => {
 
 	// Add keyboard shortcut listener
 	document.addEventListener('keydown', handleKeyDown)
+
+	window.addEventListener('scroll', handleShopPageScroll)
+	handleShopPageScroll()
 })
 
 watch(
@@ -843,6 +857,8 @@ onUnmounted(() => {
 
 	// Remove keyboard shortcut listener
 	document.removeEventListener('keydown', handleKeyDown)
+
+	window.removeEventListener('scroll', handleShopPageScroll)
 })
 
 // Form handlers
@@ -2790,4 +2806,14 @@ function getServerName(serverId) {
 			</div>
 		</template>
 	</BaseModal>
+
+	<button
+		v-if="showBackToTop"
+		type="button"
+		class="fixed bottom-6 right-6 z-50 bg-amulet text-white p-3 opacity-50 hover:opacity-100 transition-all duration-200 flex items-center justify-center"
+		aria-label="Back to top"
+		data-cy="shop-items-back-to-top"
+		@click="scrollToTop">
+		<ArrowUpIcon class="w-6 h-6" />
+	</button>
 </template>
