@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, shallowRef, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
@@ -27,6 +27,7 @@ import InlineNotesInput from '../components/InlineNotesInput.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
+import CategoryFilters from '../components/CategoryFilters.vue'
 import { ArrowLeftIcon, PlusIcon, ArrowPathIcon } from '@heroicons/vue/20/solid'
 import {
 	CurrencyDollarIcon,
@@ -87,6 +88,8 @@ const recalculateLoading = ref(false)
 const recalculateError = ref(null)
 const recalculateSuccess = ref(null)
 const searchQuery = ref('')
+const shopVisibleCategories = shallowRef([])
+const showShopCategoryFilters = ref(false)
 const importLoading = ref(false)
 const importError = ref(null)
 const economyShopGuiFileInput = ref(null)
@@ -492,53 +495,6 @@ const baseTableRows = computed(() => {
 	return allVisibleShopItems.value.map(transformShopItemForTable)
 })
 
-// Search terms from query (comma-separated, OR logic; only for server shop)
-function getSearchTerms() {
-	if (!isServerShop.value || !searchQuery.value?.trim()) return []
-	return searchQuery.value
-		.trim()
-		.toLowerCase()
-		.split(',')
-		.map((t) => t.trim())
-		.filter((t) => t.length > 0)
-}
-
-// Filter rows by item name matching any search term
-function rowMatchesSearch(row) {
-	const terms = getSearchTerms()
-	if (terms.length === 0) return true
-	const name = (row?.item ?? '').toLowerCase()
-	return terms.some((term) => name.includes(term))
-}
-
-// Filtered list rows (when server shop + search)
-const filteredBaseTableRows = computed(() => {
-	if (!isServerShop.value || getSearchTerms().length === 0) return baseTableRows.value
-	return baseTableRows.value.filter(rowMatchesSearch)
-})
-
-// Filtered category rows (when server shop + search)
-const filteredBaseTableRowsByCategory = computed(() => {
-	if (!isServerShop.value || getSearchTerms().length === 0) return baseTableRowsByCategory.value
-	const filtered = {}
-	Object.entries(baseTableRowsByCategory.value || {}).forEach(([category, rows]) => {
-		const match = rows.filter(rowMatchesSearch)
-		if (match.length > 0) filtered[category] = match
-	})
-	return filtered
-})
-
-// Count of items matching current search (server shop)
-const filteredItemCount = computed(() => {
-	if (!isServerShop.value || getSearchTerms().length === 0) return 0
-	if (viewMode.value === 'list') return filteredBaseTableRows.value.length
-	return Object.values(filteredBaseTableRowsByCategory.value).reduce((s, rows) => s + rows.length, 0)
-})
-
-function resetSearch() {
-	searchQuery.value = ''
-}
-
 // BaseTable rows grouped by category
 const baseTableRowsByCategory = computed(() => {
 	if (!shopItemsByCategory.value || !availableItems.value) return {}
@@ -576,13 +532,147 @@ const sortedCategories = computed(() => {
 	return orderedCategories
 })
 
-// Categories to show (when search active, only categories with matches)
-const sortedCategoriesForDisplay = computed(() => {
-	const categories = sortedCategories.value
-	if (!isServerShop.value || getSearchTerms().length === 0) return categories
-	const filteredKeys = Object.keys(filteredBaseTableRowsByCategory.value || {})
-	return categories.filter((c) => filteredKeys.includes(c))
+// Search terms from query (comma-separated, OR logic; only for server shop)
+function getSearchTerms() {
+	if (!isServerShop.value || !searchQuery.value?.trim()) return []
+	return searchQuery.value
+		.trim()
+		.toLowerCase()
+		.split(',')
+		.map((t) => t.trim())
+		.filter((t) => t.length > 0)
+}
+
+// Filter rows by item name matching any search term
+function rowMatchesSearch(row) {
+	const terms = getSearchTerms()
+	if (terms.length === 0) return true
+	const name = (row?.item ?? '').toLowerCase()
+	return terms.some((term) => name.includes(term))
+}
+
+// Filtered list rows (when server shop + search)
+const filteredBaseTableRows = computed(() => {
+	if (!isServerShop.value || getSearchTerms().length === 0) return baseTableRows.value
+	return baseTableRows.value.filter(rowMatchesSearch)
 })
+
+// Filtered category rows (when server shop + search)
+const filteredBaseTableRowsByCategory = computed(() => {
+	if (!isServerShop.value || getSearchTerms().length === 0) return baseTableRowsByCategory.value
+	const filtered = {}
+	Object.entries(baseTableRowsByCategory.value || {}).forEach(([category, rows]) => {
+		const match = rows.filter(rowMatchesSearch)
+		if (match.length > 0) filtered[category] = match
+	})
+	return filtered
+})
+
+// Categories to show (search narrows set; chips narrow further)
+const sortedCategoriesForDisplay = computed(() => {
+	let categories = sortedCategories.value
+	if (isServerShop.value && getSearchTerms().length > 0) {
+		const filteredKeys = Object.keys(filteredBaseTableRowsByCategory.value || {})
+		categories = categories.filter((c) => filteredKeys.includes(c))
+	}
+	if (shopVisibleCategories.value.length > 0) {
+		categories = categories.filter((c) => shopVisibleCategories.value.includes(c))
+	}
+	return categories
+})
+
+// Count of items matching current search (server shop), after category chip filter
+const filteredItemCount = computed(() => {
+	if (!isServerShop.value || getSearchTerms().length === 0) return 0
+	if (viewMode.value === 'list') return listRowsForDisplay.value.length
+	return sortedCategoriesForDisplay.value.reduce((sum, cat) => {
+		const useFiltered = getSearchTerms().length > 0
+		const src = useFiltered ? filteredBaseTableRowsByCategory.value : baseTableRowsByCategory.value
+		return sum + (src[cat] || []).length
+	}, 0)
+})
+
+// Homepage-style category chips: counts per guide category (shop inventory only)
+const shopTotalCategoryCounts = computed(() => {
+	const out = {}
+	for (const cat of enabledCategories) {
+		out[cat] = (baseTableRowsByCategory.value[cat] || []).length
+	}
+	return out
+})
+
+const shopAllCategoriesWithSearch = computed(() => {
+	const acc = {}
+	const terms = getSearchTerms()
+	for (const cat of enabledCategories) {
+		const rows = baseTableRowsByCategory.value[cat] || []
+		acc[cat] = terms.length === 0 ? rows : rows.filter(rowMatchesSearch)
+	}
+	return acc
+})
+
+const shopCategoryFilterTotalItemCount = computed(() => {
+	if (getSearchTerms().length === 0) return baseTableRows.value.length
+	return filteredBaseTableRows.value.length
+})
+
+// List view rows after search + category chip filter
+const listRowsForDisplay = computed(() => {
+	const base =
+		isServerShop.value && getSearchTerms().length > 0
+			? filteredBaseTableRows.value
+			: baseTableRows.value
+	if (shopVisibleCategories.value.length === 0) return base
+	return base.filter((row) => {
+		const cat = row._originalItem?.itemData?.category || 'Uncategorized'
+		return shopVisibleCategories.value.includes(cat)
+	})
+})
+
+function resetSearch() {
+	searchQuery.value = ''
+}
+
+function loadShopVisibleCategories(shopId) {
+	if (!shopId) return []
+	try {
+		const raw = localStorage.getItem(`shopItemsVisibleCategories_${shopId}`)
+		if (!raw) return []
+		const parsed = JSON.parse(raw)
+		if (!Array.isArray(parsed)) return []
+		return parsed.filter((c) => enabledCategories.includes(c))
+	} catch {
+		return []
+	}
+}
+
+function persistShopVisibleCategories() {
+	if (!selectedShopId.value) return
+	try {
+		localStorage.setItem(
+			`shopItemsVisibleCategories_${selectedShopId.value}`,
+			JSON.stringify(shopVisibleCategories.value)
+		)
+	} catch {
+		// ignore
+	}
+}
+
+function handleShopToggleCategory(cat) {
+	const cur = shopVisibleCategories.value
+	const idx = cur.indexOf(cat)
+	if (idx !== -1) {
+		shopVisibleCategories.value = cur.filter((c) => c !== cat)
+	} else {
+		shopVisibleCategories.value = [...cur, cat]
+	}
+	persistShopVisibleCategories()
+}
+
+function handleShopClearCategories() {
+	shopVisibleCategories.value = []
+	persistShopVisibleCategories()
+}
 
 // Load and save view settings from localStorage
 function loadViewSettings() {
@@ -690,6 +780,18 @@ watch(selectedShopId, (newShopId) => {
 		})
 	}
 })
+
+watch(
+	() => selectedShopId.value,
+	(id) => {
+		if (!id) {
+			shopVisibleCategories.value = []
+			return
+		}
+		shopVisibleCategories.value = loadShopVisibleCategories(id)
+	},
+	{ immediate: true }
+)
 
 // Save view settings when they change
 watch(
@@ -1521,6 +1623,19 @@ function getServerName(serverId) {
 				</div>
 			</div>
 
+			<CategoryFilters
+				v-if="shopItems && shopItems.length > 0"
+				:visible-categories="shopVisibleCategories"
+				:search-query="searchQuery"
+				:total-item-count="shopCategoryFilterTotalItemCount"
+				:total-category-counts="shopTotalCategoryCounts"
+				:all-categories-with-search="shopAllCategoriesWithSearch"
+				:show-category-filters="showShopCategoryFilters"
+				data-cy="shop-items-category-filters"
+				@toggle-category="handleShopToggleCategory"
+				@clear-all="handleShopClearCategories"
+				@toggle-visibility="showShopCategoryFilters = !showShopCategoryFilters" />
+
 			<!-- Add Item Button -->
 			<div>
 				<div
@@ -1974,7 +2089,7 @@ function getServerName(serverId) {
 						<template v-else>
 							<BaseTable
 								:columns="baseTableColumns"
-								:rows="isServerShop && getSearchTerms().length > 0 ? filteredBaseTableRows : baseTableRows"
+								:rows="listRowsForDisplay"
 								row-key="id"
 								:layout="layout"
 								:hoverable="true">
@@ -2555,7 +2670,9 @@ function getServerName(serverId) {
 					<p class="text-lg font-bold text-green-800">{{ importResultSummary.imported }}</p>
 				</div>
 				<div class="rounded border border-amber-200 bg-amber-50 px-3 py-2">
-					<p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Skipped</p>
+					<p class="text-xs font-semibold uppercase tracking-wide text-amber-700">
+						Skipped (already in shop)
+					</p>
 					<p class="text-lg font-bold text-amber-800">{{ importResultSummary.skipped }}</p>
 				</div>
 				<div class="rounded border border-red-200 bg-red-50 px-3 py-2">
@@ -2565,11 +2682,17 @@ function getServerName(serverId) {
 					</p>
 				</div>
 			</div>
+			<p class="text-xs text-gray-500">
+				<strong class="font-medium text-gray-600">Skipped</strong> counts rows that were already in
+				this shop. <strong class="font-medium text-gray-600">Not imported</strong> counts YAML lines
+				that could not be added.
+			</p>
 			<div v-if="importResultSummary.unmapped.length > 0" class="space-y-4">
 				<p v-if="importResultSummary.serverMinecraftLabel" class="text-sm text-gray-700">
 					This shop's server runs Minecraft
-					<strong>{{ importResultSummary.serverMinecraftLabel }}</strong>. Only items that exist in
-					the guide for that version can be added; newer blocks are skipped.
+					<strong>{{ importResultSummary.serverMinecraftLabel }}</strong>. Only guide items for that
+					version can be added here, so YAML entries for blocks from a newer Minecraft version are
+					not imported.
 				</p>
 				<div
 					v-if="(importResultSummary.unmappedNewerThanServer || []).length > 0"
