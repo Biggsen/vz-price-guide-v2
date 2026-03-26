@@ -79,7 +79,7 @@ service cloud.firestore {
         request.resource.data.stock_full is bool &&
         (request.resource.data.starred == null || request.resource.data.starred is bool) &&
         (request.resource.data.pricing_type == null ||
-         request.resource.data.pricing_type in ['manual', 'from_recipe']);
+         request.resource.data.pricing_type in ['manual', 'from_recipe', 'base']);
     }
     // Suggestions: Users can read/write their own, admins can read/update/delete all
     match /suggestions/{suggestionId} {

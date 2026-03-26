@@ -88,8 +88,9 @@ const recalculateSuccess = ref(null)
 const searchQuery = ref('')
 const importLoading = ref(false)
 const importError = ref(null)
-const importSuccess = ref(null)
 const economyShopGuiFileInput = ref(null)
+const showImportResultsModal = ref(false)
+const importResultSummary = ref(null)
 const clearAllItemsLoading = ref(false)
 const showClearAllModal = ref(false)
 
@@ -1241,7 +1242,8 @@ const BULK_IMPORT_CHUNK_SIZE = 400
 
 function triggerEconomyShopGuiImport() {
 	importError.value = null
-	importSuccess.value = null
+	importResultSummary.value = null
+	showImportResultsModal.value = false
 	economyShopGuiFileInput.value?.click()
 }
 
@@ -1251,7 +1253,8 @@ async function onEconomyShopGuiFileSelected(event) {
 	if (!file || !selectedShopId.value || !availableItems.value?.length) return
 	importLoading.value = true
 	importError.value = null
-	importSuccess.value = null
+	importResultSummary.value = null
+	showImportResultsModal.value = false
 	try {
 		const text = await file.text()
 		const entries = parseEconomyShopGuiYaml(text)
@@ -1263,13 +1266,17 @@ async function onEconomyShopGuiFileSelected(event) {
 		const { toAdd, unmapped, skipped } = mapToGuideItems(
 			entries,
 			availableItems.value,
-			existingIds
+			existingIds,
+			serverVersionKey.value
 		)
 		if (toAdd.length === 0) {
-			importSuccess.value =
-				skipped > 0
-					? `All ${entries.length} items were already in the shop or could not be matched.`
-					: `No items could be matched to your price guide. ${unmapped.length} unique materials had no match (e.g. ${(unmapped.slice(0, 3)).join(', ') || '—'}).`
+			importResultSummary.value = {
+				imported: 0,
+				skipped,
+				unmapped,
+				totalEntries: entries.length
+			}
+			showImportResultsModal.value = true
 			return
 		}
 		let imported = 0
@@ -1278,13 +1285,13 @@ async function onEconomyShopGuiFileSelected(event) {
 			await bulkUpdateShopItems(selectedShopId.value, chunk)
 			imported += chunk.length
 		}
-		const parts = [`Imported ${imported} item${imported === 1 ? '' : 's'}.`]
-		if (skipped > 0) parts.push(`${skipped} skipped (already in shop).`)
-		if (unmapped.length > 0) {
-			const sample = unmapped.slice(0, 5).join(', ')
-			parts.push(`${unmapped.length} material(s) not in guide (e.g. ${sample}).`)
+		importResultSummary.value = {
+			imported,
+			skipped,
+			unmapped,
+			totalEntries: entries.length
 		}
-		importSuccess.value = parts.join(' ')
+		showImportResultsModal.value = true
 	} catch (err) {
 		importError.value = err.message || 'Import failed.'
 	} finally {
@@ -1400,14 +1407,18 @@ function getServerName(serverId) {
 
 		<!-- Main content -->
 		<div v-else-if="hasShops && hasServers && selectedShop">
+			<input
+				ref="economyShopGuiFileInput"
+				type="file"
+				accept=".yml,.yaml"
+				class="hidden"
+				aria-label="Import EconomyShopGUI YAML"
+				@change="onEconomyShopGuiFileSelected" />
 			<!-- Search + Settings/Export row (search left, actions right; homepage-style layout) -->
 			<div class="mt-4 mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 				<!-- Left: Search (Admin Shop only when items exist) -->
 				<div class="flex-1 sm:max-w-md">
-					<template v-if="isServerShop && shopItems && shopItems.length > 0">
-						<label for="admin-shop-item-search" class="block text-sm font-medium text-gray-700 mb-2">
-							Search Items
-						</label>
+					<template v-if="isServerShop">
 						<div class="flex flex-row gap-2">
 							<input
 								id="admin-shop-item-search"
@@ -1460,49 +1471,11 @@ function getServerName(serverId) {
 							</template>
 							Export
 						</BaseButton>
-						<input
-							ref="economyShopGuiFileInput"
-							type="file"
-							accept=".yml,.yaml"
-							class="hidden"
-							aria-label="Import EconomyShopGUI YAML"
-							@change="onEconomyShopGuiFileSelected" />
-						<BaseButton
-							type="button"
-							variant="secondary"
-							:disabled="importLoading || !availableItems?.length"
-							data-cy="shop-items-import-economyshopgui-button"
-							@click="triggerEconomyShopGuiImport">
-							<template #left-icon>
-								<ArrowUpTrayIcon
-									class="w-4 h-4"
-									:class="{ 'animate-spin': importLoading }" />
-							</template>
-							{{ importLoading ? 'Importing…' : 'Import YAML' }}
-						</BaseButton>
-						<BaseButton
-							type="button"
-							variant="secondary"
-							:disabled="recalculateLoading || !shopItems?.length"
-							data-cy="shop-items-recalculate-button"
-							@click="recalculateRecipePrices">
-							<template #left-icon>
-								<ArrowPathIcon
-									class="w-4 h-4"
-									:class="{ 'animate-spin': recalculateLoading }" />
-							</template>
-							{{
-								recalculateLoading ? 'Recalculating…' : 'Recalculate recipe prices'
-							}}
-						</BaseButton>
 						<p v-if="recalculateSuccess" class="text-sm text-green-700 basis-full">
 							{{ recalculateSuccess }}
 						</p>
 						<p v-if="recalculateError" class="text-sm text-red-700 basis-full">
 							{{ recalculateError }}
-						</p>
-						<p v-if="importSuccess" class="text-sm text-green-700 basis-full">
-							{{ importSuccess }}
 						</p>
 						<p v-if="importError" class="text-sm text-red-700 basis-full">
 							{{ importError }}
@@ -1541,6 +1514,32 @@ function getServerName(serverId) {
 						</template>
 						Add Item
 					</BaseButton>
+					<template v-if="isServerShop">
+						<BaseButton
+							type="button"
+							variant="secondary"
+							:disabled="importLoading || !availableItems?.length"
+							data-cy="shop-items-import-economyshopgui-button"
+							@click="triggerEconomyShopGuiImport">
+							<template #left-icon>
+								<ArrowUpTrayIcon class="w-4 h-4" :class="{ 'animate-spin': importLoading }" />
+							</template>
+							{{ importLoading ? 'Importing…' : 'Import YAML' }}
+						</BaseButton>
+						<BaseButton
+							type="button"
+							variant="secondary"
+							:disabled="recalculateLoading || !shopItems?.length"
+							data-cy="shop-items-recalculate-button"
+							@click="recalculateRecipePrices">
+							<template #left-icon>
+								<ArrowPathIcon
+									class="w-4 h-4"
+									:class="{ 'animate-spin': recalculateLoading }" />
+							</template>
+							{{ recalculateLoading ? 'Recalculating…' : 'Recalculate recipe prices' }}
+						</BaseButton>
+					</template>
 				</div>
 			</div>
 
@@ -2228,12 +2227,12 @@ function getServerName(serverId) {
 					data-cy="shop-items-empty-state">
 					<div class="text-gray-600">
 						<p class="text-lg font-medium mb-2">No items in this shop yet</p>
-						<p class="text-sm">Click "Add Item" to get started with your shop items.</p>
+						<p class="text-sm">Add or import items to get started with your shop.</p>
 					</div>
 				</div>
 
 				<!-- Add Item Button (below tables) -->
-				<div class="mt-4 flex flex-col items-start gap-2">
+				<div class="mt-4 flex flex-row flex-wrap items-center gap-2">
 					<BaseButton
 						type="button"
 						variant="primary"
@@ -2243,7 +2242,19 @@ function getServerName(serverId) {
 						<template #left-icon>
 							<PlusIcon />
 						</template>
-						Add Item
+						Add items
+					</BaseButton>
+					<BaseButton
+						v-if="isServerShop && (!shopItems || shopItems.length === 0)"
+						type="button"
+						variant="secondary"
+						:disabled="importLoading || !availableItems?.length"
+						data-cy="shop-items-import-economyshopgui-button-empty"
+						@click="triggerEconomyShopGuiImport">
+						<template #left-icon>
+							<ArrowUpTrayIcon class="w-4 h-4" :class="{ 'animate-spin': importLoading }" />
+						</template>
+						{{ importLoading ? 'Importing…' : 'Import YAML' }}
 					</BaseButton>
 					<button
 						v-if="shopItems && shopItems.length > 0"
@@ -2500,5 +2511,58 @@ function getServerName(serverId) {
 				</div>
 			</div>
 		</div>
+	</BaseModal>
+
+	<BaseModal
+		:isOpen="showImportResultsModal"
+		title="Import results"
+		size="normal"
+		maxWidth="max-w-2xl"
+		data-cy="shop-items-import-results-modal"
+		@close="showImportResultsModal = false">
+		<div v-if="importResultSummary" class="space-y-4">
+			<p class="text-sm text-gray-700">
+				Processed {{ importResultSummary.totalEntries }} YAML
+				entry{{ importResultSummary.totalEntries === 1 ? '' : 'ies' }}.
+			</p>
+			<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+				<div class="rounded border border-green-200 bg-green-50 px-3 py-2">
+					<p class="text-xs font-semibold uppercase tracking-wide text-green-700">Imported</p>
+					<p class="text-lg font-bold text-green-800">{{ importResultSummary.imported }}</p>
+				</div>
+				<div class="rounded border border-amber-200 bg-amber-50 px-3 py-2">
+					<p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Skipped</p>
+					<p class="text-lg font-bold text-amber-800">{{ importResultSummary.skipped }}</p>
+				</div>
+				<div class="rounded border border-red-200 bg-red-50 px-3 py-2">
+					<p class="text-xs font-semibold uppercase tracking-wide text-red-700">Not in guide</p>
+					<p class="text-lg font-bold text-red-800">
+						{{ importResultSummary.unmapped.length }}
+					</p>
+				</div>
+			</div>
+			<div v-if="importResultSummary.unmapped.length > 0" class="space-y-2">
+				<p class="text-sm font-semibold text-gray-900">Unmapped materials</p>
+				<p class="text-xs text-gray-500">
+					Showing first {{ Math.min(importResultSummary.unmapped.length, 30) }}.
+				</p>
+				<div class="max-h-48 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3">
+					<p class="text-sm text-gray-700 break-words">
+						{{ importResultSummary.unmapped.slice(0, 30).join(', ') }}
+					</p>
+				</div>
+			</div>
+		</div>
+		<template #footer>
+			<div class="flex items-center justify-end p-4">
+				<BaseButton
+					type="button"
+					variant="primary"
+					data-cy="shop-items-import-results-close-button"
+					@click="showImportResultsModal = false">
+					Close
+				</BaseButton>
+			</div>
+		</template>
 	</BaseModal>
 </template>

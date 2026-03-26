@@ -1,7 +1,6 @@
 import { useFirestore, useDocument, useCollection } from 'vuefire'
 import {
 	doc,
-	setDoc,
 	getDoc,
 	getFirestore,
 	collection,
@@ -12,11 +11,15 @@ import {
 	where,
 	orderBy,
 	writeBatch,
-	arrayUnion,
-	arrayRemove,
 	getDocs
 } from 'firebase/firestore'
 import { ref, computed, unref, watch } from 'vue'
+
+function normalizePricingType(pricingType) {
+	if (pricingType === 'from_recipe') return 'from_recipe'
+	if (pricingType === 'base') return 'base'
+	return 'manual'
+}
 
 // Check if shop item exists
 export async function shopItemExists(itemId) {
@@ -58,7 +61,7 @@ export async function addShopItem(shopId, itemId, itemData) {
 			item_id: itemId,
 			buy_price: itemData.buy_price ?? null,
 			sell_price: itemData.sell_price ?? null,
-			pricing_type: itemData.pricing_type === 'from_recipe' ? 'from_recipe' : 'manual',
+			pricing_type: normalizePricingType(itemData.pricing_type),
 			previous_buy_price: null,
 			previous_sell_price: null,
 			previous_price_date: null,
@@ -338,7 +341,7 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 					item_id: itemData.item_id,
 					buy_price: itemData.buy_price ?? null,
 					sell_price: itemData.sell_price ?? null,
-					pricing_type: itemData.pricing_type === 'from_recipe' ? 'from_recipe' : 'manual',
+					pricing_type: normalizePricingType(itemData.pricing_type),
 					previous_buy_price: null,
 					previous_sell_price: null,
 					previous_price_date: null,

@@ -46,11 +46,12 @@ export function parseEconomyShopGuiYaml(yamlText) {
 /**
  * Map parsed EconomyShopGUI entries to guide items and classify for import.
  * @param {{ material: string, buy: number|null, sell: number|null }[]} entries
- * @param {Array<{ id: string, material_id?: string, name?: string }>} guideItems
+ * @param {Array<{ id: string, material_id?: string, name?: string, recipes_by_version?: Object }>} guideItems
  * @param {Set<string>|string[]} existingItemIds - item_ids already in the shop (skip)
- * @returns {{ toAdd: Array<{ item_id: string, buy_price: number|null, sell_price: number|null }>, unmapped: string[], skipped: number }}
+ * @param {string} [serverVersionKey] - version key like "1_20"
+ * @returns {{ toAdd: Array<{ item_id: string, buy_price: number|null, sell_price: number|null, pricing_type: 'manual' | 'base' }>, unmapped: string[], skipped: number }}
  */
-export function mapToGuideItems(entries, guideItems, existingItemIds) {
+export function mapToGuideItems(entries, guideItems, existingItemIds, serverVersionKey) {
 	const existing = new Set(existingItemIds || [])
 	const byMaterial = {}
 	;(guideItems || []).forEach((item) => {
@@ -62,6 +63,14 @@ export function mapToGuideItems(entries, guideItems, existingItemIds) {
 	const toAdd = []
 	const unmapped = []
 	let skipped = 0
+
+	function hasRecipeForVersion(guideItem) {
+		const recipes = guideItem?.recipes_by_version
+		if (!recipes || typeof recipes !== 'object') return false
+		if (!serverVersionKey) return Object.keys(recipes).length > 0
+		const dottedVersionKey = serverVersionKey.replace('_', '.')
+		return Boolean(recipes[serverVersionKey] || recipes[dottedVersionKey])
+	}
 
 	for (const { material, buy, sell } of entries) {
 		const guide = byMaterial[material]
@@ -76,7 +85,8 @@ export function mapToGuideItems(entries, guideItems, existingItemIds) {
 		toAdd.push({
 			item_id: guide.id,
 			buy_price: buy,
-			sell_price: sell
+			sell_price: sell,
+			pricing_type: hasRecipeForVersion(guide) ? 'manual' : 'base'
 		})
 		existing.add(guide.id)
 	}

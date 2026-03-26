@@ -15,6 +15,7 @@
 //   consistency with other scripts in this repo.
 
 const path = require('path')
+const fs = require('fs')
 const readline = require('readline')
 const admin = require('firebase-admin')
 
@@ -36,16 +37,6 @@ function isProductionProject(projectId) {
 
 function isDryRun() {
 	return process.env.DRY_RUN === 'true' || process.env.DRY_RUN === '1'
-}
-
-// Generate random ID similar to production format (e.g., bqPQpZccWWwziLEJZkHm)
-function generateRandomId() {
-	const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-	let result = ''
-	for (let i = 0; i < 20; i++) {
-		result += chars.charAt(Math.floor(Math.random() * chars.length))
-	}
-	return result
 }
 
 async function confirmProductionOperation(projectId) {
@@ -91,7 +82,7 @@ function initializeAdminApp() {
 	// Non-emulator path: use service-account if present, otherwise fall back to env/defaults
 	try {
 		const serviceAccountPath = path.resolve(__dirname, '../service-account.json')
-		// eslint-disable-next-line import/no-dynamic-require, global-require
+		// eslint-disable-next-line global-require
 		const serviceAccount = require(serviceAccountPath)
 		admin.initializeApp({
 			credential: admin.credential.cert(serviceAccount),
@@ -161,6 +152,132 @@ const FIXED_TIMESTAMP = new Date('2025-09-19T10:30:00.000Z').toISOString()
 
 function nowIso() {
 	return FIXED_TIMESTAMP
+}
+
+function boolEnv(name, defaultValue = false) {
+	const raw = (process.env[name] || '').toString().toLowerCase().trim()
+	if (!raw) return defaultValue
+	return raw === '1' || raw === 'true' || raw === 'yes'
+}
+
+function getSnapshotPath() {
+	return path.resolve(__dirname, process.env.SEED_ITEMS_SNAPSHOT || '../seed/items-prod-Full.json')
+}
+
+function loadSnapshotItems() {
+	const snapshotPath = getSnapshotPath()
+	if (!fs.existsSync(snapshotPath)) {
+		throw new Error(`Snapshot file not found: ${snapshotPath}`)
+	}
+
+	const raw = fs.readFileSync(snapshotPath, 'utf8')
+	const parsed = JSON.parse(raw)
+	const items = Array.isArray(parsed?.items) ? parsed.items : null
+	if (!items) {
+		throw new Error(`Snapshot file is invalid (expected { items: [] }): ${snapshotPath}`)
+	}
+
+	console.log(`[seed] Loaded snapshot items: ${items.length} from ${snapshotPath}`)
+	return items
+}
+
+function buildSeedPayload() {
+	const useSnapshotItems = boolEnv('USE_SNAPSHOT_ITEMS', true)
+	const fallbackItems = TEST_DATA.items
+	const seedItems = useSnapshotItems ? loadSnapshotItems() : fallbackItems
+
+	console.log(
+		`[seed] Items source: ${useSnapshotItems ? 'snapshot' : 'legacy'} (${seedItems.length} items)`
+	)
+
+	const legacyIdToMaterial = new Map(
+		fallbackItems.filter((item) => item.id && item.material_id).map((item) => [item.id, item.material_id])
+	)
+	const seededMaterialToId = new Map(
+		seedItems.filter((item) => item.id && item.material_id).map((item) => [item.material_id, item.id])
+	)
+	const seededIds = new Set(seedItems.map((item) => item.id))
+
+	let remappedCount = 0
+	let unresolvedCount = 0
+
+	function remapItemId(itemId, context) {
+		if (!itemId) return itemId
+		if (seededIds.has(itemId)) return itemId
+
+		const materialId = legacyIdToMaterial.get(itemId)
+		if (!materialId) {
+			unresolvedCount++
+			console.warn(`[seed][remap] Unresolved ${context}: legacy item id "${itemId}" has no material map`)
+			return itemId
+		}
+
+		const mappedId = seededMaterialToId.get(materialId)
+		if (!mappedId) {
+			unresolvedCount++
+			console.warn(
+				`[seed][remap] Unresolved ${context}: no seeded id found for material "${materialId}"`
+			)
+			return itemId
+		}
+
+		if (mappedId !== itemId) remappedCount++
+		return mappedId
+	}
+
+	const shop_items = TEST_DATA.shop_items.map((entry) => ({
+		...entry,
+		item_id: remapItemId(entry.item_id, `shop_item/${entry.id}`)
+	}))
+
+	const recipes = TEST_DATA.recipes.map((entry) => ({
+		...entry,
+		item_id: remapItemId(entry.item_id, `recipe/${entry.id}`)
+	}))
+
+	const crate_reward_items = TEST_DATA.crate_reward_items.map((entry) => {
+		const remappedItems = (entry.items || []).map((item, index) => {
+			const remappedEnchantments = Array.isArray(item.enchantments)
+				? item.enchantments.map((id) =>
+						remapItemId(id, `crate_reward_item/${entry.id}/items/${index}/enchantments`)
+					)
+				: item.enchantments
+
+			return {
+				...item,
+				item_id: remapItemId(item.item_id, `crate_reward_item/${entry.id}/items/${index}`),
+				enchantments: remappedEnchantments
+			}
+		})
+
+		const remappedDisplayEnchantments = Array.isArray(entry.display_enchantments)
+			? entry.display_enchantments.map((id) =>
+					remapItemId(id, `crate_reward_item/${entry.id}/display_enchantments`)
+				)
+			: entry.display_enchantments
+
+		const remappedEntry = {
+			...entry,
+			display_item: remapItemId(entry.display_item, `crate_reward_item/${entry.id}/display_item`),
+			items: remappedItems
+		}
+		if (Array.isArray(entry.display_enchantments)) {
+			remappedEntry.display_enchantments = remappedDisplayEnchantments
+		}
+		return remappedEntry
+	})
+
+	console.log(
+		`[seed] Item id remap summary: remapped=${remappedCount}, unresolved=${unresolvedCount}`
+	)
+
+	return {
+		...TEST_DATA,
+		items: seedItems,
+		shop_items,
+		recipes,
+		crate_reward_items
+	}
 }
 
 const TEST_DATA = {
@@ -2942,11 +3059,12 @@ async function seedEmulator() {
 
 	// Run safety check first
 	await safetyCheck()
+	const seedPayload = buildSeedPayload()
 
 	try {
 		// Auth users
 		console.log('🔐 Seeding Auth users...')
-		for (const user of TEST_DATA.users) {
+		for (const user of seedPayload.users) {
 			if (isDryRun()) {
 				console.log(`  [DRY_RUN] Would create/update auth user: ${user.email}`)
 				continue
@@ -2955,7 +3073,9 @@ async function seedEmulator() {
 			let existing = null
 			try {
 				existing = await auth.getUser(user.id)
-			} catch {}
+			} catch (_error) {
+				// User doesn't exist yet (or can't be fetched); we'll create/update below.
+			}
 
 			// Set emailVerified based on user ID
 			const emailVerified = user.id !== 'test-user-unverified'
@@ -2990,7 +3110,7 @@ async function seedEmulator() {
 
 		// Users (profiles only — never store auth credentials in Firestore)
 		console.log('👥 Seeding users...')
-		for (const user of TEST_DATA.users) {
+		for (const user of seedPayload.users) {
 			// Skip creating profile for unverified user and verified user without profile
 			if (user.id === 'test-user-unverified' || user.id === 'test-user-verified-no-profile') {
 				const reason = user.id === 'test-user-unverified' ? 'unverified' : 'no profile'
@@ -3011,58 +3131,58 @@ async function seedEmulator() {
 
 		// Servers
 		console.log('🖥️  Seeding servers...')
-		for (const server of TEST_DATA.servers) {
+		for (const server of seedPayload.servers) {
 			await upsertDoc('servers', server.id, server)
 			console.log(`  ✓ ${server.name}`)
 		}
 
 		// Shops
 		console.log('🏪 Seeding shops...')
-		for (const shop of TEST_DATA.shops) {
+		for (const shop of seedPayload.shops) {
 			await upsertDoc('shops', shop.id, shop)
 			console.log(`  ✓ ${shop.name}`)
 		}
 
 		// Items
 		console.log('📦 Seeding items...')
-		for (const item of TEST_DATA.items) {
+		for (const item of seedPayload.items) {
 			await upsertDoc('items', item.id, item)
 			console.log(`  ✓ ${item.name}`)
 		}
 
 		// Shop Items
 		console.log('💰 Seeding shop items...')
-		for (const si of TEST_DATA.shop_items) {
+		for (const si of seedPayload.shop_items) {
 			await upsertDoc('shop_items', si.id, si)
 			console.log(`  ✓ ${si.item_id} → ${si.shop_id}`)
 		}
 
 		// Suggestions
 		console.log('💡 Seeding suggestions...')
-		for (const s of TEST_DATA.suggestions) {
+		for (const s of seedPayload.suggestions) {
 			await upsertDoc('suggestions', s.id, s)
 			console.log(`  ✓ ${s.title}`)
 		}
 
 		// Recipes
 		console.log('📋 Seeding recipes...')
-		for (const r of TEST_DATA.recipes) {
+		for (const r of seedPayload.recipes) {
 			await upsertDoc('recipes', r.id, r)
 			console.log(`  ✓ ${r.item_id} recipe`)
 		}
 
 		// Crate Rewards
 		console.log('🎁 Seeding crate rewards...')
-		for (const cr of TEST_DATA.crate_rewards) {
+		for (const cr of seedPayload.crate_rewards) {
 			await upsertDoc('crate_rewards', cr.id, cr)
 			console.log(`  ✓ ${cr.name}`)
 		}
 
 		// Crate Reward Items
 		console.log('🎁 Seeding crate reward items...')
-		for (const cri of TEST_DATA.crate_reward_items) {
+		for (const cri of seedPayload.crate_reward_items) {
 			await upsertDoc('crate_reward_items', cri.id, cri)
-			console.log(`  ✓ ${cri.item_id} → ${cri.crate_reward_id}`)
+			console.log(`  ✓ ${cri.id} → ${cri.crate_reward_id}`)
 		}
 
 		console.log('🎉 Seeding complete!')
