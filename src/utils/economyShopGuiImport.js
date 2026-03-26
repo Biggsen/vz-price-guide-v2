@@ -48,12 +48,25 @@ export function parseEconomyShopGuiYaml(yamlText) {
 }
 
 /**
+ * Guide items with no usable category must not be imported (shop UI groups by category).
+ * @param {string|null|undefined} category
+ * @returns {boolean}
+ */
+export function isImportableGuideCategory(category) {
+	if (category == null) return false
+	const s = String(category).trim()
+	if (!s) return false
+	if (s.toLowerCase() === 'uncategorized') return false
+	return true
+}
+
+/**
  * Map parsed EconomyShopGUI entries to guide items and classify for import.
  * @param {{ material: string, buy: number|null, sell: number|null }[]} entries
- * @param {Array<{ id: string, material_id?: string, name?: string, recipes_by_version?: Object }>} guideItems
+ * @param {Array<{ id: string, material_id?: string, name?: string, category?: string, recipes_by_version?: Object }>} guideItems
  * @param {Set<string>|string[]} existingItemIds - item_ids already in the shop (skip)
  * @param {string} [serverVersionKey] - version key like "1_20"
- * @returns {{ toAdd: Array<{ item_id: string, buy_price: number|null, sell_price: number|null, pricing_type: 'manual' | 'base' }>, unmapped: string[], skipped: number }}
+ * @returns {{ toAdd: Array<{ item_id: string, buy_price: number|null, sell_price: number|null, pricing_type: 'manual' | 'base' }>, unmapped: string[], unmappedMissingCategory: string[], skipped: number }}
  */
 export function mapToGuideItems(entries, guideItems, existingItemIds, serverVersionKey) {
 	const existing = new Set(existingItemIds || [])
@@ -66,6 +79,7 @@ export function mapToGuideItems(entries, guideItems, existingItemIds, serverVers
 
 	const toAdd = []
 	const unmapped = []
+	const unmappedMissingCategory = []
 	let skipped = 0
 
 	function hasRecipeForVersion(guideItem) {
@@ -81,6 +95,10 @@ export function mapToGuideItems(entries, guideItems, existingItemIds, serverVers
 			if (!unmapped.includes(material)) unmapped.push(material)
 			continue
 		}
+		if (!isImportableGuideCategory(guide.category)) {
+			if (!unmappedMissingCategory.includes(material)) unmappedMissingCategory.push(material)
+			continue
+		}
 		if (existing.has(guide.id)) {
 			skipped += 1
 			continue
@@ -94,5 +112,5 @@ export function mapToGuideItems(entries, guideItems, existingItemIds, serverVers
 		existing.add(guide.id)
 	}
 
-	return { toAdd, unmapped, skipped }
+	return { toAdd, unmapped, unmappedMissingCategory, skipped }
 }

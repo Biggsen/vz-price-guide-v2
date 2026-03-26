@@ -379,6 +379,16 @@ const shopItemsByCategory = computed(() => {
 		}
 	})
 
+	// Match homepage / useItems.js: subcategory asc, then name asc within each category
+	Object.keys(grouped).forEach((cat) => {
+		grouped[cat].sort((a, b) => {
+			const subA = a.itemData?.subcategory || ''
+			const subB = b.itemData?.subcategory || ''
+			if (subA !== subB) return subA.localeCompare(subB)
+			return (a.itemData?.name || '').localeCompare(b.itemData?.name || '')
+		})
+	})
+
 	return grouped
 })
 
@@ -1366,7 +1376,7 @@ async function onEconomyShopGuiFileSelected(event) {
 			return
 		}
 		const existingIds = (shopItems.value || []).map((s) => s.item_id)
-		const { toAdd, unmapped, skipped } = mapToGuideItems(
+		const { toAdd, unmapped, unmappedMissingCategory, skipped } = mapToGuideItems(
 			entries,
 			availableItems.value,
 			existingIds,
@@ -1392,6 +1402,7 @@ async function onEconomyShopGuiFileSelected(event) {
 				imported: 0,
 				skipped,
 				unmapped,
+				unmappedMissingCategory,
 				serverMinecraftLabel: serverMM,
 				unmappedNewerThanServer,
 				unmappedNotInDatabase,
@@ -1411,6 +1422,7 @@ async function onEconomyShopGuiFileSelected(event) {
 			imported,
 			skipped,
 			unmapped,
+			unmappedMissingCategory,
 			serverMinecraftLabel: serverMM,
 			unmappedNewerThanServer,
 			unmappedNotInDatabase,
@@ -2678,14 +2690,17 @@ function getServerName(serverId) {
 				<div class="rounded border border-red-200 bg-red-50 px-3 py-2">
 					<p class="text-xs font-semibold uppercase tracking-wide text-red-700">Not imported</p>
 					<p class="text-lg font-bold text-red-800">
-						{{ importResultSummary.unmapped.length }}
+						{{
+							(importResultSummary.unmapped || []).length +
+							(importResultSummary.unmappedMissingCategory || []).length
+						}}
 					</p>
 				</div>
 			</div>
 			<p class="text-xs text-gray-500">
 				<strong class="font-medium text-gray-600">Skipped</strong> counts rows that were already in
 				this shop. <strong class="font-medium text-gray-600">Not imported</strong> counts YAML lines
-				that could not be added.
+				that could not be added (no guide match, or guide item missing a category).
 			</p>
 			<div v-if="importResultSummary.unmapped.length > 0" class="space-y-4">
 				<p v-if="importResultSummary.serverMinecraftLabel" class="text-sm text-gray-700">
@@ -2741,6 +2756,25 @@ function getServerName(serverId) {
 							{{ importResultSummary.unmappedOther.slice(0, 30).join(', ') }}
 						</p>
 					</div>
+				</div>
+			</div>
+			<div
+				v-if="(importResultSummary.unmappedMissingCategory || []).length > 0"
+				class="space-y-2 rounded border border-red-100 bg-red-50/50 p-3">
+				<p class="text-sm font-semibold text-gray-900">Missing category in guide</p>
+				<p class="text-xs text-gray-600">
+					These materials matched a guide item, but that item has no category or is Uncategorized,
+					so it was not imported.
+				</p>
+				<div class="max-h-32 overflow-y-auto rounded border border-red-200 bg-white p-3">
+					<ul class="text-sm text-gray-800 list-disc list-inside space-y-1">
+						<li
+							v-for="mat in (importResultSummary.unmappedMissingCategory || []).slice(0, 30)"
+							:key="mat">
+							<span class="font-mono">{{ mat }}</span>
+							<span class="text-gray-500"> — Missing category in guide</span>
+						</li>
+					</ul>
 				</div>
 			</div>
 		</div>
