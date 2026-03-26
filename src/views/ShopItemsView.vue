@@ -96,8 +96,8 @@ const markingItemId = ref(null) // Track which item is being marked as checked
 const catalogStatusLoading = ref(false)
 const catalogStatusError = ref(null)
 const recalculateLoading = ref(false)
-const recalculateError = ref(null)
-const recalculateSuccess = ref(null)
+const showRecalculateResultsModal = ref(false)
+const recalculateResultSummary = ref(null)
 const searchQuery = ref('')
 const shopVisibleCategories = shallowRef([])
 const showShopCategoryFilters = ref(false)
@@ -1337,12 +1337,16 @@ function exportShopPrices() {
 	URL.revokeObjectURL(url)
 }
 
+function guideNameForItemId(itemId) {
+	const g = availableItems.value?.find((i) => i.id === itemId)
+	return g?.name || itemId
+}
+
 // Server shop: recalculate all from-recipe prices
 async function recalculateRecipePrices() {
 	if (!selectedShopId.value || !shopItems.value || !availableItems.value) return
 	recalculateLoading.value = true
-	recalculateError.value = null
-	recalculateSuccess.value = null
+	recalculateResultSummary.value = null
 	try {
 		const { updated, errors } = await recalculateRecipePricesForShop(
 			selectedShopId.value,
@@ -1350,18 +1354,15 @@ async function recalculateRecipePrices() {
 			availableItems.value,
 			serverVersionKey.value
 		)
-		if (errors.length > 0) {
-			recalculateError.value =
-				errors.length === 1
-					? errors[0].error
-					: `${errors.length} items had errors. First: ${errors[0].error}`
-		}
-		if (updated.length > 0) {
-			recalculateSuccess.value =
-				updated.length === 1 ? '1 price updated.' : `${updated.length} prices updated.`
-		}
+		recalculateResultSummary.value = { updated, errors, fetchError: null }
+		showRecalculateResultsModal.value = true
 	} catch (err) {
-		recalculateError.value = err.message || 'Recalculation failed.'
+		recalculateResultSummary.value = {
+			updated: [],
+			errors: [],
+			fetchError: err.message || 'Recalculation failed.'
+		}
+		showRecalculateResultsModal.value = true
 	} finally {
 		recalculateLoading.value = false
 	}
@@ -1625,12 +1626,6 @@ function getServerName(serverId) {
 							</template>
 							Export
 						</BaseButton>
-						<p v-if="recalculateSuccess" class="text-sm text-green-700 basis-full">
-							{{ recalculateSuccess }}
-						</p>
-						<p v-if="recalculateError" class="text-sm text-red-700 basis-full">
-							{{ recalculateError }}
-						</p>
 						<p v-if="importError" class="text-sm text-red-700 basis-full">
 							{{ importError }}
 						</p>
@@ -2801,6 +2796,90 @@ function getServerName(serverId) {
 					variant="primary"
 					data-cy="shop-items-import-results-close-button"
 					@click="showImportResultsModal = false">
+					Close
+				</BaseButton>
+			</div>
+		</template>
+	</BaseModal>
+
+	<BaseModal
+		:isOpen="showRecalculateResultsModal"
+		title="Recipe price recalculation"
+		size="normal"
+		maxWidth="max-w-2xl"
+		data-cy="shop-items-recalculate-results-modal"
+		@close="showRecalculateResultsModal = false">
+		<div v-if="recalculateResultSummary" class="space-y-4">
+			<div
+				v-if="recalculateResultSummary.fetchError"
+				class="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+				{{ recalculateResultSummary.fetchError }}
+			</div>
+			<template v-else>
+				<p
+					v-if="
+						recalculateResultSummary.updated.length === 0 &&
+						recalculateResultSummary.errors.length === 0
+					"
+					class="text-sm text-gray-700">
+					No recipe-based prices were updated. This shop may have no items using
+					<strong>from recipe</strong> pricing, or costs did not change.
+				</p>
+				<div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+					<div class="rounded border border-green-200 bg-green-50 px-3 py-2">
+						<p class="text-xs font-semibold uppercase tracking-wide text-green-700">
+							Prices updated
+						</p>
+						<p class="text-lg font-bold text-green-800">
+							{{ recalculateResultSummary.updated.length }}
+						</p>
+					</div>
+					<div class="rounded border border-amber-200 bg-amber-50 px-3 py-2">
+						<p class="text-xs font-semibold uppercase tracking-wide text-amber-800">Issues</p>
+						<p class="text-lg font-bold text-amber-900">
+							{{ recalculateResultSummary.errors.length }}
+						</p>
+					</div>
+				</div>
+				<div v-if="recalculateResultSummary.updated.length > 0" class="space-y-2">
+					<p class="text-sm font-semibold text-gray-900">Updated items</p>
+					<div class="max-h-48 overflow-y-auto rounded border border-green-100 bg-white p-3">
+						<ul class="text-sm text-gray-800 list-disc list-inside space-y-1">
+							<li
+								v-for="row in recalculateResultSummary.updated.slice(0, 50)"
+								:key="row.id">
+								{{ guideNameForItemId(row.item_id) }}
+								<span
+									v-if="row.buy_price != null || row.sell_price != null"
+									class="text-gray-600">
+									(buy {{ row.buy_price ?? '—' }}, sell {{ row.sell_price ?? '—' }})
+								</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div v-if="recalculateResultSummary.errors.length > 0" class="space-y-2">
+					<p class="text-sm font-semibold text-gray-900">Could not recalculate</p>
+					<div class="max-h-40 overflow-y-auto rounded border border-amber-200 bg-amber-50/50 p-3">
+						<ul class="text-sm text-gray-800 list-disc list-inside space-y-2">
+							<li
+								v-for="(err, idx) in recalculateResultSummary.errors.slice(0, 30)"
+								:key="idx">
+								<span class="font-medium">{{ err.name || guideNameForItemId(err.item_id) }}</span>
+								<span class="text-red-700"> — {{ err.error }}</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</template>
+		</div>
+		<template #footer>
+			<div class="flex items-center justify-end p-4">
+				<BaseButton
+					type="button"
+					variant="primary"
+					data-cy="shop-items-recalculate-results-close-button"
+					@click="showRecalculateResultsModal = false">
 					Close
 				</BaseButton>
 			</div>
