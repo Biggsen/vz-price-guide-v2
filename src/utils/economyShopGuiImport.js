@@ -35,10 +35,13 @@ export function parseEconomyShopGuiYaml(yamlText) {
 			if (!material) continue
 			const buy = typeof item.buy === 'number' ? item.buy : parseFloat(item.buy)
 			const sell = typeof item.sell === 'number' ? item.sell : parseFloat(item.sell)
-			const key = `${material}:${buy}:${sell}`
+			// EconomyShopGUI uses -1 for "disabled" buy/sell; we store null for missing prices
+			const buyNorm = isNaN(buy) ? null : buy < 0 ? null : buy
+			const sellNorm = isNaN(sell) ? null : sell < 0 ? null : sell
+			const key = `${material}:${buyNorm}:${sellNorm}`
 			if (seen.has(key)) continue
 			seen.add(key)
-			entries.push({ material, buy: isNaN(buy) ? null : buy, sell: isNaN(sell) ? null : sell })
+			entries.push({ material, buy: buyNorm, sell: sellNorm })
 		}
 	}
 	return entries
