@@ -3,6 +3,7 @@ import { ref, shallowRef, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
+import JSZip from 'jszip'
 import { useAllShops, updateShop } from '../utils/shopProfile.js'
 import { useServers, getMajorMinorVersion } from '../utils/serverProfile.js'
 import {
@@ -18,6 +19,7 @@ import {
 	parseEconomyShopGuiYaml,
 	mapToGuideItems
 } from '../utils/economyShopGuiImport.js'
+import { buildEconomyShopGuiExportFiles } from '../utils/economyShopGuiExport.js'
 import { classifyUnmappedImportMaterials } from '../utils/shopImportUnmapped.js'
 import ShopItemForm from '../components/ShopItemForm.vue'
 import ShopFormModal from '../components/ShopFormModal.vue'
@@ -111,6 +113,7 @@ const searchQuery = ref('')
 const shopVisibleCategories = shallowRef([])
 const showShopCategoryFilters = ref(false)
 const importLoading = ref(false)
+const exportLoading = ref(false)
 const importError = ref(null)
 const economyShopGuiFileInput = ref(null)
 const showImportResultsModal = ref(false)
@@ -1483,33 +1486,44 @@ async function submitEditShop() {
 	}
 }
 
-// Server shop: export price list (JSON)
-function exportShopPrices() {
+// Server shop: export EconomyShopGUI files (shops/*.yml + sections/*.yml)
+async function exportShopPrices() {
 	if (!selectedShop.value || !shopItems.value || !availableItems.value) return
-	const rows = shopItems.value.map((si) => {
-		const guide = availableItems.value.find((g) => g.id === si.item_id)
-		return {
-			item_name: guide?.name || si.item_id,
-			category: guide?.category || '',
-			buy_price: si.buy_price,
-			sell_price: si.sell_price,
-			pricing_type:
-				si.pricing_type ||
-				(si.buy_pricing_type === 'from_recipe' || si.sell_pricing_type === 'from_recipe'
-					? 'from_recipe'
-					: 'manual'),
-			notes: si.notes || ''
+	exportLoading.value = true
+	error.value = null
+	try {
+		const { files, exportedCategories } = buildEconomyShopGuiExportFiles(
+			shopItems.value,
+			availableItems.value
+		)
+		if (!files.length) {
+			error.value =
+				'Nothing to export. Ensure this admin shop has items mapped to categories and guide materials.'
+			return
 		}
-	})
-	const blob = new Blob([JSON.stringify(rows, null, 2)], {
-		type: 'application/json'
-	})
-	const url = URL.createObjectURL(blob)
-	const a = document.createElement('a')
-	a.href = url
-	a.download = `${selectedShop.value.name || 'shop'}-prices.json`
-	a.click()
-	URL.revokeObjectURL(url)
+
+		const zip = new JSZip()
+		for (const file of files) {
+			zip.file(file.path, file.content)
+		}
+		const blob = await zip.generateAsync({ type: 'blob' })
+		const url = URL.createObjectURL(blob)
+		const a = document.createElement('a')
+		const shopNameSlug = String(selectedShop.value.name || 'shop')
+			.trim()
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '')
+		a.href = url
+		a.download = `${shopNameSlug || 'shop'}-economyshopgui-${exportedCategories.length}-sections.zip`
+		a.click()
+		URL.revokeObjectURL(url)
+	} catch (err) {
+		console.error('Error exporting EconomyShopGUI files:', err)
+		error.value = err.message || 'Failed to export EconomyShopGUI files.'
+	} finally {
+		exportLoading.value = false
+	}
 }
 
 function guideNameForItemId(itemId) {
@@ -1793,13 +1807,13 @@ function getServerName(serverId) {
 						<BaseButton
 							type="button"
 							variant="secondary"
-							:disabled="!shopItems?.length"
+							:disabled="!shopItems?.length || exportLoading"
 							data-cy="shop-items-export-button"
 							@click="exportShopPrices">
 							<template #left-icon>
-								<ArrowDownTrayIcon class="w-4 h-4" />
+								<ArrowDownTrayIcon class="w-4 h-4" :class="{ 'animate-spin': exportLoading }" />
 							</template>
-							Export
+							{{ exportLoading ? 'Exporting…' : 'Export' }}
 						</BaseButton>
 						<p v-if="importError" class="text-sm text-red-700 basis-full">
 							{{ importError }}

@@ -58,6 +58,11 @@ export const BUKKIT_ENCHANT_TO_VANILLA = {
 	PIERCING: 'piercing'
 }
 
+/** @type {Record<string, string>} */
+export const VANILLA_TO_BUKKIT_ENCHANT = Object.fromEntries(
+	Object.entries(BUKKIT_ENCHANT_TO_VANILLA).map(([bukkit, vanilla]) => [vanilla, bukkit])
+)
+
 /**
  * Resolve an enchantment name from EconomyShopGUI YAML (Bukkit enum, vanilla id, or minecraft:)
  * to the vanilla snake_case key used in guide material_ids.
@@ -76,4 +81,24 @@ export function bukkitEnchantmentToVanillaKey(raw) {
 	}
 
 	return withoutNs.toLowerCase().replace(/\s+/g, '_')
+}
+
+/**
+ * Resolve a vanilla snake_case enchantment key (or minecraft:<key>) to a Bukkit enum name.
+ * Returns null when the value is empty/invalid.
+ * @param {string} raw
+ * @returns {string|null}
+ */
+export function vanillaEnchantmentToBukkitKey(raw) {
+	if (raw == null || typeof raw !== 'string') return null
+	const trimmed = raw.trim()
+	if (!trimmed) return null
+
+	const withoutNs = trimmed.replace(/^minecraft:/i, '')
+	const vanilla = withoutNs.toLowerCase().replace(/\s+/g, '_')
+	if (VANILLA_TO_BUKKIT_ENCHANT[vanilla]) {
+		return VANILLA_TO_BUKKIT_ENCHANT[vanilla]
+	}
+
+	return vanilla.toUpperCase()
 }
