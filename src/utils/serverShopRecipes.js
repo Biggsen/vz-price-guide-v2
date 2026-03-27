@@ -51,6 +51,41 @@ export function getRecipeForItem(guideItem, versionKey) {
 }
 
 /**
+ * Detect circular recipe dependencies (direct or indirect) for an item.
+ * Uses the same version fallback rules as getRecipeForItem.
+ * @param {Object} guideItem
+ * @param {Record<string, Object>} guideByMaterialId
+ * @param {string} versionKey
+ * @param {Set<string>} path
+ * @returns {boolean}
+ */
+export function hasCircularRecipeDependency(
+	guideItem,
+	guideByMaterialId,
+	versionKey,
+	path = new Set()
+) {
+	if (!guideItem?.material_id) return false
+	if (path.has(guideItem.material_id)) return true
+
+	const recipe = getRecipeForItem(guideItem, versionKey)
+	if (!recipe?.ingredients?.length) return false
+
+	const nextPath = new Set(path)
+	nextPath.add(guideItem.material_id)
+
+	for (const ingredient of recipe.ingredients) {
+		const ingredientGuideItem = guideByMaterialId?.[ingredient.material_id]
+		if (!ingredientGuideItem) continue
+		if (hasCircularRecipeDependency(ingredientGuideItem, guideByMaterialId, versionKey, nextPath)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+/**
  * Build map: material_id -> guide item (first match)
  * @param {Array} guideItems
  * @returns {Record<string, Object>}
@@ -102,6 +137,10 @@ export function computeRecipePriceForShop(
 	const recipe = getRecipeForItem(guideItem, versionKey)
 	if (!recipe) {
 		return { price: null, error: 'No recipe for this item' }
+	}
+
+	if (hasCircularRecipeDependency(guideItem, guideByMaterialId, versionKey)) {
+		return { price: null, error: `Circular dependency: ${guideItem.name || guideItem.material_id}` }
 	}
 
 	const priceField = priceKind === 'buy' ? 'buy_price' : 'sell_price'

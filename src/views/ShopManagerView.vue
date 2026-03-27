@@ -979,7 +979,7 @@ function toggleShopsVisibility(serverId) {
 							</p>
 							<div class="flex flex-col gap-1">
 								<label class="text-xs font-medium text-gray-600 uppercase tracking-wide">
-									Server Shop
+									Admin shop
 								</label>
 								<div class="flex gap-2 flex-wrap">
 									<RouterLink
@@ -1004,7 +1004,7 @@ function toggleShopsVisibility(serverId) {
 									<template #left-icon>
 										<PlusIcon class="w-4 h-4" />
 									</template>
-									Create Admin Shop
+									Add Admin Shop
 								</BaseButton>
 								</div>
 							</div>

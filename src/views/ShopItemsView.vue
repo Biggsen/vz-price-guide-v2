@@ -29,13 +29,15 @@ import BaseModal from '../components/BaseModal.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
 import CategoryFilters from '../components/CategoryFilters.vue'
 import { ArrowLeftIcon, PlusIcon, ArrowPathIcon } from '@heroicons/vue/20/solid'
+import { Squares2X2Icon } from '@heroicons/vue/24/solid'
 import {
 	CurrencyDollarIcon,
 	ClipboardDocumentCheckIcon,
 	Cog6ToothIcon,
 	ArrowDownTrayIcon,
 	ArrowUpTrayIcon,
-	ArrowUpIcon
+	ArrowUpIcon,
+	ArrowPathRoundedSquareIcon
 } from '@heroicons/vue/24/outline'
 import {
 	PencilIcon,
@@ -49,7 +51,12 @@ import { StarIcon } from '@heroicons/vue/24/solid'
 import { getImageUrl, getItemImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
-import { recalculateRecipePricesForShop, versionToKey } from '../utils/serverShopRecipes.js'
+import {
+	recalculateRecipePricesForShop,
+	versionToKey,
+	getRecipeForItem,
+	hasCircularRecipeDependency
+} from '../utils/serverShopRecipes.js'
 import { enabledCategories } from '../constants.js'
 
 const user = useCurrentUser()
@@ -96,6 +103,7 @@ const markingItemId = ref(null) // Track which item is being marked as checked
 const catalogStatusLoading = ref(false)
 const catalogStatusError = ref(null)
 const recalculateLoading = ref(false)
+const switchingPricingItemId = ref(null)
 const showRecalculateResultsModal = ref(false)
 const recalculateResultSummary = ref(null)
 const searchQuery = ref('')
@@ -282,27 +290,42 @@ watch(
 	}
 )
 
-// Get all items from the main collection for the item selector
-const allItemsQuery = computed(() => {
-	if (!selectedShop.value?.server_id) return null
+// Guide items query: bind only once `selectedServer` resolves (shop + servers loaded).
+// A computed query alone could leave useCollection stuck empty until another reactive
+// bump (e.g. shop update); driving the query from `selectedServer` fixes Unknown Item names.
+const allItemsQuery = ref(null)
 
-	// Get the server to determine Minecraft version
-	const server = servers.value?.find((s) => s.id === selectedShop.value.server_id)
-	if (!server) return null
-
-	// Use major.minor version for filtering (extract from full version if needed)
-	const majorMinorVersion = getMajorMinorVersion(server.minecraft_version)
-
-	return query(
-		collection(db, 'items'),
-		where('version', '<=', majorMinorVersion),
-		orderBy('version', 'asc'),
-		orderBy('category', 'asc'),
-		orderBy('name', 'asc')
-	)
-})
+watch(
+	selectedServer,
+	(server) => {
+		if (!server) {
+			allItemsQuery.value = null
+			return
+		}
+		const majorMinorVersion = getMajorMinorVersion(server.minecraft_version)
+		if (!majorMinorVersion) {
+			allItemsQuery.value = null
+			return
+		}
+		allItemsQuery.value = query(
+			collection(db, 'items'),
+			where('version', '<=', majorMinorVersion),
+			orderBy('version', 'asc'),
+			orderBy('category', 'asc'),
+			orderBy('name', 'asc')
+		)
+	},
+	{ immediate: true }
+)
 
 const availableItems = useCollection(allItemsQuery)
+const guideItemsByMaterialId = computed(() => {
+	const map = {}
+	;(availableItems.value || []).forEach((item) => {
+		if (item.material_id) map[item.material_id] = item
+	})
+	return map
+})
 
 const availableItemsForAdding = computed(() => availableItems.value || [])
 
@@ -456,7 +479,7 @@ const baseTableColumns = computed(() => {
 		cols.push({
 			key: 'pricingTypes',
 			label: 'Pricing',
-			align: 'center',
+			align: 'left',
 			headerAlign: 'center',
 			sortable: true,
 			widthStyle: { width: '9%' }
@@ -502,11 +525,21 @@ const baseTableColumns = computed(() => {
 
 // Transform shop items for BaseTable (using shared utility)
 function transformShopItemForTable(shopItem) {
-	return transformShopItem(shopItem, {
+	const transformed = transformShopItem(shopItem, {
 		includeNotes: true,
 		includeActions: true,
 		includePricingTypes: isServerShop.value
 	})
+	if (isServerShop.value) {
+		const effectivePricingType = getEffectivePricingType(shopItem)
+		transformed.pricingTypes =
+			effectivePricingType === 'from_recipe'
+				? 'Recipe'
+				: effectivePricingType === 'base'
+					? 'Base'
+					: 'Custom'
+	}
+	return transformed
 }
 
 // BaseTable rows for list view
@@ -1157,12 +1190,109 @@ function cancelEditPrice() {
 }
 
 function isFromRecipePricing(shopItem) {
-	if (!shopItem) return false
+	return getEffectivePricingType(shopItem) === 'from_recipe'
+}
+
+function getStoredPricingType(shopItem) {
+	if (!shopItem) return 'manual'
 	return (
-		shopItem.pricing_type === 'from_recipe' ||
-		shopItem.buy_pricing_type === 'from_recipe' ||
-		shopItem.sell_pricing_type === 'from_recipe'
+		shopItem.pricing_type ||
+		(shopItem.buy_pricing_type === 'from_recipe' || shopItem.sell_pricing_type === 'from_recipe'
+			? 'from_recipe'
+			: 'manual')
 	)
+}
+
+function getEffectivePricingType(shopItem) {
+	const storedType = getStoredPricingType(shopItem)
+	const hasUsableRecipe = hasUsableRecipeForPricing(shopItem)
+
+	if (storedType === 'from_recipe') {
+		if (!hasUsableRecipe) return 'base'
+		return 'from_recipe'
+	}
+	if (storedType === 'base') return 'base'
+	if (storedType === 'manual' && !hasUsableRecipe) {
+		return 'base'
+	}
+	return storedType
+}
+
+function hasUsableRecipeForPricing(shopItem) {
+	const guideItem =
+		shopItem?.itemData ||
+		(availableItems.value || []).find((item) => item.id === shopItem?.item_id)
+	const recipe = guideItem ? getRecipeForItem(guideItem, serverVersionKey.value) : null
+	const hasCircularRecipe = guideItem
+		? hasCircularRecipeDependency(
+				guideItem,
+				guideItemsByMaterialId.value,
+				serverVersionKey.value
+			)
+		: false
+	return Boolean(recipe) && !hasCircularRecipe
+}
+
+function canSwitchCustomToRecipe(shopItem) {
+	if (!isServerShop.value || !shopItem?.id) return false
+	return getStoredPricingType(shopItem) === 'manual' && hasUsableRecipeForPricing(shopItem)
+}
+
+function canSwitchRecipeToCustom(shopItem) {
+	if (!isServerShop.value || !shopItem?.id) return false
+	return getStoredPricingType(shopItem) === 'from_recipe'
+}
+
+async function switchCustomToRecipe(shopItem) {
+	if (!selectedShopId.value || !availableItems.value || !canSwitchCustomToRecipe(shopItem)) return
+	switchingPricingItemId.value = shopItem.id
+	error.value = null
+	try {
+		await updateShopItem(shopItem.id, {
+			pricing_type: 'from_recipe',
+			buy_pricing_type: 'from_recipe',
+			sell_pricing_type: 'from_recipe'
+		})
+		const patchedShopItems = (shopItems.value || []).map((si) =>
+			si.id === shopItem.id
+				? {
+						...si,
+						pricing_type: 'from_recipe',
+						buy_pricing_type: 'from_recipe',
+						sell_pricing_type: 'from_recipe'
+					}
+				: si
+		)
+		await recalculateRecipePricesForShop(
+			selectedShopId.value,
+			patchedShopItems,
+			availableItems.value,
+			serverVersionKey.value
+		)
+	} catch (err) {
+		console.error('Error switching pricing type to recipe:', err)
+		error.value = err.message || 'Failed to switch pricing type. Please try again.'
+	} finally {
+		switchingPricingItemId.value = null
+	}
+}
+
+async function switchRecipeToCustom(shopItem) {
+	if (!canSwitchRecipeToCustom(shopItem)) return
+	switchingPricingItemId.value = shopItem.id
+	error.value = null
+	try {
+		await updateShopItem(shopItem.id, {
+			pricing_type: 'manual',
+			buy_pricing_type: 'manual',
+			sell_pricing_type: 'manual'
+		})
+	} catch (err) {
+		console.error('Error switching pricing type to custom:', err)
+		error.value = err.message || 'Failed to switch pricing type. Please try again.'
+	} finally {
+		switchingPricingItemId.value = null
+	}
 }
 
 function formatPriceDisplay(value) {
@@ -1918,6 +2048,48 @@ function getServerName(serverId) {
 											</div>
 										</div>
 									</template>
+									<template #cell-pricingTypes="{ row }">
+										<span
+											class="inline-flex items-center justify-start gap-1 text-left">
+											<PencilIcon
+												v-if="row.pricingTypes === 'Base'"
+												class="w-3.5 h-3.5 shrink-0 text-highland"
+												aria-hidden="true" />
+											<PencilIcon
+												v-if="row.pricingTypes === 'Custom'"
+												class="w-3.5 h-3.5 shrink-0 text-highland"
+												aria-hidden="true" />
+											<Squares2X2Icon
+												v-if="row.pricingTypes === 'Recipe'"
+												class="w-3.5 h-3.5 shrink-0 text-highland"
+												aria-hidden="true" />
+											{{ row.pricingTypes }}
+											<BaseIconButton
+												v-if="canSwitchCustomToRecipe(row._originalItem)"
+												variant="ghost-in-table"
+												aria-label="Switch to recipe pricing"
+												title="Switch to recipe pricing"
+												:loading="switchingPricingItemId === row._originalItem?.id"
+												:disabled="
+													switchingPricingItemId === row._originalItem?.id
+												"
+												@click.stop="switchCustomToRecipe(row._originalItem)">
+												<ArrowPathRoundedSquareIcon />
+											</BaseIconButton>
+											<BaseIconButton
+												v-if="canSwitchRecipeToCustom(row._originalItem)"
+												variant="ghost-in-table"
+												aria-label="Switch to custom pricing"
+												title="Switch to custom pricing"
+												:loading="switchingPricingItemId === row._originalItem?.id"
+												:disabled="
+													switchingPricingItemId === row._originalItem?.id
+												"
+												@click.stop="switchRecipeToCustom(row._originalItem)">
+												<ArrowPathRoundedSquareIcon />
+											</BaseIconButton>
+										</span>
+									</template>
 									<template #cell-buyPrice="{ row, layout }">
 										<div class="flex items-center justify-end gap-2">
 											<div
@@ -1932,7 +2104,7 @@ function getServerName(serverId) {
 											<template v-if="isFromRecipePricing(row._originalItem)">
 												<span
 													:class="[
-														'text-right',
+														'text-right text-gray-600',
 														row._originalItem?.stock_quantity === 0 &&
 															'line-through'
 													]">
@@ -2008,7 +2180,7 @@ function getServerName(serverId) {
 											<template v-if="isFromRecipePricing(row._originalItem)">
 												<span
 													:class="[
-														'text-right',
+														'text-right text-gray-600',
 														(row._originalItem?.stock_full ||
 															(isShopOutOfMoney &&
 																row._originalItem?.sell_price >
@@ -2206,6 +2378,44 @@ function getServerName(serverId) {
 										</div>
 									</div>
 								</template>
+								<template #cell-pricingTypes="{ row }">
+									<span
+										class="inline-flex items-center justify-start gap-1 text-left">
+										<PencilIcon
+											v-if="row.pricingTypes === 'Base'"
+											class="w-3.5 h-3.5 shrink-0 text-highland"
+											aria-hidden="true" />
+										<PencilIcon
+											v-if="row.pricingTypes === 'Custom'"
+											class="w-3.5 h-3.5 shrink-0 text-highland"
+											aria-hidden="true" />
+										<Squares2X2Icon
+											v-if="row.pricingTypes === 'Recipe'"
+											class="w-3.5 h-3.5 shrink-0 text-highland"
+											aria-hidden="true" />
+										{{ row.pricingTypes }}
+										<BaseIconButton
+											v-if="canSwitchCustomToRecipe(row._originalItem)"
+											variant="ghost-in-table"
+											aria-label="Switch to recipe pricing"
+											title="Switch to recipe pricing"
+											:loading="switchingPricingItemId === row._originalItem?.id"
+											:disabled="switchingPricingItemId === row._originalItem?.id"
+											@click.stop="switchCustomToRecipe(row._originalItem)">
+											<ArrowPathRoundedSquareIcon />
+										</BaseIconButton>
+										<BaseIconButton
+											v-if="canSwitchRecipeToCustom(row._originalItem)"
+											variant="ghost-in-table"
+											aria-label="Switch to custom pricing"
+											title="Switch to custom pricing"
+											:loading="switchingPricingItemId === row._originalItem?.id"
+											:disabled="switchingPricingItemId === row._originalItem?.id"
+											@click.stop="switchRecipeToCustom(row._originalItem)">
+											<ArrowPathRoundedSquareIcon />
+										</BaseIconButton>
+									</span>
+								</template>
 								<template #cell-buyPrice="{ row, layout }">
 									<div class="flex items-center justify-end gap-2">
 										<div
@@ -2220,7 +2430,7 @@ function getServerName(serverId) {
 										<template v-if="isFromRecipePricing(row._originalItem)">
 											<span
 												:class="[
-													'text-right',
+													'text-right text-gray-600',
 													row._originalItem?.stock_quantity === 0 &&
 														'line-through'
 												]">
@@ -2290,7 +2500,7 @@ function getServerName(serverId) {
 										<template v-if="isFromRecipePricing(row._originalItem)">
 											<span
 												:class="[
-													'text-right',
+													'text-right text-gray-600',
 													(row._originalItem?.stock_full ||
 														(isShopOutOfMoney &&
 															row._originalItem?.sell_price > 0)) &&
@@ -2394,40 +2604,43 @@ function getServerName(serverId) {
 				</div>
 
 				<!-- Add Item Button (below tables) -->
-				<div class="mt-4 flex flex-row flex-wrap items-center gap-2">
-					<BaseButton
-						type="button"
-						variant="primary"
-						data-cy="shop-items-add-item-button-bottom"
-						@click="showAddItemForm"
-						:disabled="!selectedShop">
-						<template #left-icon>
-							<PlusIcon />
-						</template>
-						Add items
-					</BaseButton>
+				<div class="mt-4 flex flex-row flex-wrap items-start gap-2">
+					<div class="flex flex-col items-start gap-4">
+						<BaseButton
+							type="button"
+							variant="primary"
+							data-cy="shop-items-add-item-button-bottom"
+							@click="showAddItemForm"
+							:disabled="!selectedShop">
+							<template #left-icon>
+								<PlusIcon />
+							</template>
+							Add items
+						</BaseButton>
+						<button
+							v-if="shopItems && shopItems.length > 0"
+							type="button"
+							class="flex items-center gap-1.5 text-sm text-gray-asparagus hover:text-highland hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+							:disabled="clearAllItemsLoading"
+							data-cy="shop-items-clear-all-button"
+							@click="openClearAllModal">
+							<TrashIcon class="w-4 h-4 flex-shrink-0" />
+							{{ clearAllItemsLoading ? 'Clearing…' : 'Clear all items' }}
+						</button>
+					</div>
 					<BaseButton
 						v-if="isServerShop && (!shopItems || shopItems.length === 0)"
 						type="button"
 						variant="secondary"
 						:disabled="importLoading || !availableItems?.length"
 						data-cy="shop-items-import-economyshopgui-button-empty"
-						@click="triggerEconomyShopGuiImport">
+						@click="triggerEconomyShopGuiImport"
+						class="self-start">
 						<template #left-icon>
 							<ArrowUpTrayIcon class="w-4 h-4" :class="{ 'animate-spin': importLoading }" />
 						</template>
 						{{ importLoading ? 'Importing…' : 'Import YAML' }}
 					</BaseButton>
-					<button
-						v-if="shopItems && shopItems.length > 0"
-						type="button"
-						class="flex items-center gap-1.5 text-sm text-gray-asparagus hover:text-highland hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
-						:disabled="clearAllItemsLoading"
-						data-cy="shop-items-clear-all-button"
-						@click="openClearAllModal">
-						<TrashIcon class="w-4 h-4 flex-shrink-0" />
-						{{ clearAllItemsLoading ? 'Clearing…' : 'Clear all items' }}
-					</button>
 				</div>
 			</div>
 		</div>

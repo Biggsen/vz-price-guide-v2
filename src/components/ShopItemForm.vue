@@ -11,7 +11,8 @@ import {
 } from '../utils/enchantments.js'
 import {
 	computeRecipePriceForShop,
-	getRecipeForItem
+	getRecipeForItem,
+	hasCircularRecipeDependency
 } from '../utils/serverShopRecipes.js'
 import BaseButton from './BaseButton.vue'
 import BaseModal from './BaseModal.vue'
@@ -278,7 +279,13 @@ const selectedItem = computed(() => {
 
 const hasRecipeForSelectedItem = computed(() => {
 	if (!isServerShop.value || !props.serverVersionKey || !selectedItem.value) return false
-	return !!getRecipeForItem(selectedItem.value, props.serverVersionKey)
+	const recipe = getRecipeForItem(selectedItem.value, props.serverVersionKey)
+	if (!recipe) return false
+	const guideByMaterialId = {}
+	;(props.availableItems || []).forEach((item) => {
+		if (item.material_id) guideByMaterialId[item.material_id] = item
+	})
+	return !hasCircularRecipeDependency(selectedItem.value, guideByMaterialId, props.serverVersionKey)
 })
 
 // Sync pricing_type to base when selected item has no recipe (server shop)
@@ -1669,7 +1676,7 @@ defineExpose({
 					</label>
 					<p class="text-xs text-gray-500 mb-1">
 						<template v-if="selectedItem && !hasRecipeForSelectedItem">
-							Base: uses the item's base price (no recipe available).
+							Base: uses the item's base price (no usable recipe available).
 						</template>
 						<template v-else>
 							Custom: enter prices yourself. Recipe: buy and sell are computed from ingredients in this shop (all must have both prices set).
