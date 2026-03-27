@@ -55,7 +55,8 @@ import {
 	recalculateRecipePricesForShop,
 	versionToKey,
 	getRecipeForItem,
-	hasCircularRecipeDependency
+	hasCircularRecipeDependency,
+	computeRecipePriceForShop
 } from '../utils/serverShopRecipes.js'
 import { enabledCategories } from '../constants.js'
 
@@ -1233,9 +1234,53 @@ function hasUsableRecipeForPricing(shopItem) {
 	return Boolean(recipe) && !hasCircularRecipe
 }
 
+function canComputeRecipePricesForPricingSwitch(shopItem) {
+	if (!shopItem) return false
+
+	const guideItem =
+		shopItem.itemData || (availableItems.value || []).find((item) => item.id === shopItem.item_id)
+	if (!guideItem) return false
+
+	const byMaterialId = guideItemsByMaterialId.value || {}
+	const byItemId = {}
+	;(shopItems.value || []).forEach((si) => {
+		if (si?.item_id) byItemId[si.item_id] = si
+	})
+	const currentItem = byItemId[shopItem.item_id]
+	if (!currentItem) return false
+
+	const buyResult = computeRecipePriceForShop(
+		currentItem,
+		guideItem,
+		byItemId,
+		byMaterialId,
+		serverVersionKey.value,
+		'buy'
+	)
+	const sellResult = computeRecipePriceForShop(
+		currentItem,
+		guideItem,
+		byItemId,
+		byMaterialId,
+		serverVersionKey.value,
+		'sell'
+	)
+
+	return (
+		!buyResult.error &&
+		!sellResult.error &&
+		buyResult.price != null &&
+		sellResult.price != null
+	)
+}
+
 function canSwitchCustomToRecipe(shopItem) {
 	if (!isServerShop.value || !shopItem?.id) return false
-	return getStoredPricingType(shopItem) === 'manual' && hasUsableRecipeForPricing(shopItem)
+	return (
+		getStoredPricingType(shopItem) === 'manual' &&
+		hasUsableRecipeForPricing(shopItem) &&
+		canComputeRecipePricesForPricingSwitch(shopItem)
+	)
 }
 
 function canSwitchRecipeToCustom(shopItem) {
