@@ -2,26 +2,83 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, getDocs, doc, updateDoc, deleteField } from 'firebase/firestore'
 import { versions } from '../../constants.js'
 import { useAdmin } from '../../utils/admin.js'
 import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
+import BaseModal from '../../components/BaseModal.vue'
+import BaseButton from '../../components/BaseButton.vue'
 
 const db = useFirestore()
 const { user, canBulkUpdate } = useAdmin()
 
+const RECIPE_MANAGE_STORAGE_KEYS = {
+	searchQuery: 'recipeManageSearchQuery',
+	selectedVersion: 'recipeManageSelectedVersion',
+	showOnlyInvalid: 'recipeManageShowOnlyInvalid',
+	showOnlyCircular: 'recipeManageShowOnlyCircular'
+}
+
+function readRecipeManageViewSettings() {
+	const defaults = {
+		searchQuery: '',
+		selectedVersion: 'all',
+		showOnlyInvalid: false,
+		showOnlyCircular: false
+	}
+	try {
+		const savedSearch = localStorage.getItem(RECIPE_MANAGE_STORAGE_KEYS.searchQuery)
+		const savedVersion = localStorage.getItem(RECIPE_MANAGE_STORAGE_KEYS.selectedVersion)
+		const savedInvalid = localStorage.getItem(RECIPE_MANAGE_STORAGE_KEYS.showOnlyInvalid)
+		const savedCircular = localStorage.getItem(RECIPE_MANAGE_STORAGE_KEYS.showOnlyCircular)
+
+		if (savedSearch !== null) {
+			defaults.searchQuery = savedSearch
+		}
+		if (savedVersion === 'all' || (savedVersion && versions.includes(savedVersion))) {
+			defaults.selectedVersion = savedVersion
+		}
+		if (savedInvalid !== null) {
+			defaults.showOnlyInvalid = savedInvalid === 'true'
+		}
+		if (savedCircular !== null) {
+			defaults.showOnlyCircular = savedCircular === 'true'
+		}
+	} catch (error) {
+		console.warn('Error loading recipe manage view settings:', error)
+	}
+	return defaults
+}
+
+function saveRecipeManageViewSettings() {
+	try {
+		localStorage.setItem(RECIPE_MANAGE_STORAGE_KEYS.searchQuery, searchQuery.value)
+		localStorage.setItem(RECIPE_MANAGE_STORAGE_KEYS.selectedVersion, selectedVersion.value)
+		localStorage.setItem(RECIPE_MANAGE_STORAGE_KEYS.showOnlyInvalid, showOnlyInvalid.value.toString())
+		localStorage.setItem(RECIPE_MANAGE_STORAGE_KEYS.showOnlyCircular, showOnlyCircular.value.toString())
+	} catch (error) {
+		console.warn('Error saving recipe manage view settings:', error)
+	}
+}
+
+const initialRecipeManage = readRecipeManageViewSettings()
+
 // State management
 const loading = ref(true)
 const dbItems = ref([])
-const selectedVersion = ref('all') // Changed from '1.16' to 'all'
+const selectedVersion = ref(initialRecipeManage.selectedVersion)
 
 // Management section state
 const existingRecipes = ref([])
-const searchQuery = ref('')
-const showOnlyInvalid = ref(false)
-const showOnlyCircular = ref(false)
+const searchQuery = ref(initialRecipeManage.searchQuery)
+const showOnlyInvalid = ref(initialRecipeManage.showOnlyInvalid)
+const showOnlyCircular = ref(initialRecipeManage.showOnlyCircular)
 const sortKey = ref('material_id')
 const sortAsc = ref(true)
+
+const deletingRowKey = ref(null)
+const deleteError = ref(null)
+const recipePendingDelete = ref(null)
 
 // Load database items
 async function loadDbItems() {
@@ -239,6 +296,20 @@ watch(selectedVersion, async () => {
 	await loadExistingRecipes()
 })
 
+watch(
+	[searchQuery, selectedVersion, showOnlyInvalid, showOnlyCircular],
+	() => {
+		saveRecipeManageViewSettings()
+	},
+	{ deep: true }
+)
+
+function resetRecipeManageFilters() {
+	searchQuery.value = ''
+	showOnlyInvalid.value = false
+	showOnlyCircular.value = false
+}
+
 // Management functionality
 const filteredExistingRecipes = computed(() => {
 	const query = searchQuery.value.trim().toLowerCase()
@@ -333,6 +404,68 @@ function getSortIcon(field) {
 	return sortAsc.value ? 'up' : 'down'
 }
 
+function recipeRowKey(recipe) {
+	return `${recipe.id}|${recipe.version}`
+}
+
+function requestDeleteRecipe(recipe) {
+	if (!canBulkUpdate.value) return
+	recipePendingDelete.value = recipe
+}
+
+function closeDeleteRecipeModal() {
+	if (deletingRowKey.value) return
+	recipePendingDelete.value = null
+}
+
+async function confirmDeleteRecipeFromModal() {
+	const recipe = recipePendingDelete.value
+	if (!recipe || !canBulkUpdate.value) return
+
+	const item = dbItems.value.find((i) => i.id === recipe.id)
+	if (!item?.recipes_by_version) {
+		deleteError.value = 'Item or recipe not found. Try refreshing the page.'
+		recipePendingDelete.value = null
+		return
+	}
+
+	const versionKey = recipe.version.replace('.', '_')
+	if (!item.recipes_by_version[versionKey]) {
+		deleteError.value = 'This recipe version is no longer on the item. Try refreshing the page.'
+		recipePendingDelete.value = null
+		return
+	}
+
+	deletingRowKey.value = recipeRowKey(recipe)
+	deleteError.value = null
+
+	try {
+		const remainingRecipes = { ...item.recipes_by_version }
+		delete remainingRecipes[versionKey]
+		const hasOtherRecipes = Object.keys(remainingRecipes).length > 0
+
+		const itemRef = doc(db, 'items', item.id)
+		const updateData = {}
+
+		if (hasOtherRecipes) {
+			updateData[`recipes_by_version.${versionKey}`] = deleteField()
+		} else {
+			updateData.recipes_by_version = deleteField()
+			updateData.pricing_type = 'static'
+		}
+
+		await updateDoc(itemRef, updateData)
+		await loadDbItems()
+		await loadExistingRecipes()
+		recipePendingDelete.value = null
+	} catch (err) {
+		console.error('Error deleting recipe:', err)
+		deleteError.value = 'Failed to delete recipe'
+	} finally {
+		deletingRowKey.value = null
+	}
+}
+
 // Update getIngredientDisplay to return an array of strings
 function getIngredientDisplay(ingredients) {
 	return ingredients.map((ing) => `${ing.quantity}x ${ing.material_id}`)
@@ -374,6 +507,19 @@ function highlightMatch(text) {
 
 		<h1 class="text-3xl font-bold text-gray-900 mb-6">Manage Recipes</h1>
 
+		<div
+			v-if="deleteError"
+			class="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700"
+			role="alert">
+			{{ deleteError }}
+			<button
+				type="button"
+				class="ml-2 underline"
+				@click="deleteError = null">
+				Dismiss
+			</button>
+		</div>
+
 		<div v-if="loading">Loading...</div>
 		<div v-else>
 			<!-- Search and filters -->
@@ -386,13 +532,7 @@ function highlightMatch(text) {
 						class="border-2 border-gray-asparagus rounded px-3 py-1 flex-1" />
 					<button
 						type="button"
-						@click="
-							() => {
-								searchQuery = ''
-								showOnlyInvalid = false
-								showOnlyCircular = false
-							}
-						"
+						@click="resetRecipeManageFilters"
 						class="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 border border-gray-300">
 						Reset
 					</button>
@@ -604,7 +744,10 @@ function highlightMatch(text) {
 											Edit
 										</RouterLink>
 										<button
-											class="rounded bg-semantic-danger px-3 py-1 text-sm text-white hover:bg-opacity-80 transition-colors">
+											type="button"
+											:disabled="deletingRowKey === recipeRowKey(recipe)"
+											class="rounded bg-semantic-danger px-3 py-1 text-sm text-white hover:bg-opacity-80 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+											@click="requestDeleteRecipe(recipe)">
 											Delete
 										</button>
 									</div>
@@ -619,6 +762,51 @@ function highlightMatch(text) {
 				No recipes found. Import some recipes first.
 			</div>
 		</div>
+
+		<BaseModal
+			:isOpen="recipePendingDelete !== null"
+			title="Delete recipe"
+			size="small"
+			:closeOnBackdrop="deletingRowKey === null"
+			data-cy="recipe-manage-delete-modal"
+			@close="closeDeleteRecipeModal">
+			<div class="space-y-4">
+				<div>
+					<h3 class="font-normal text-gray-900">
+						Delete the
+						<span class="font-semibold">{{ recipePendingDelete?.version }}</span>
+						recipe for
+						<span class="font-semibold">{{
+							recipePendingDelete?.name || recipePendingDelete?.material_id
+						}}</span>
+						?
+					</h3>
+					<p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
+				</div>
+			</div>
+			<template #footer>
+				<div class="flex items-center justify-end p-4">
+					<div class="flex space-x-3">
+						<button
+							type="button"
+							class="btn-secondary--outline"
+							data-cy="recipe-manage-delete-cancel"
+							:disabled="deletingRowKey !== null"
+							@click="closeDeleteRecipeModal">
+							Cancel
+						</button>
+						<BaseButton
+							variant="primary"
+							class="bg-semantic-danger hover:bg-opacity-90"
+							data-cy="recipe-manage-delete-confirm"
+							:disabled="deletingRowKey !== null"
+							@click="confirmDeleteRecipeFromModal">
+							{{ deletingRowKey !== null ? 'Deleting...' : 'Delete' }}
+						</BaseButton>
+					</div>
+				</div>
+			</template>
+		</BaseModal>
 	</div>
 
 	<div v-else-if="user?.email" class="p-4 pt-8">

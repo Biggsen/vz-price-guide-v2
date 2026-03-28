@@ -8,6 +8,8 @@ import { useAdmin } from '../utils/admin.js'
 import { validateIngredientsInDatabase } from '../utils/recipes.js'
 import { calculateRecipePrice, getEffectivePrice, customRoundPrice } from '../utils/pricing.js'
 import BackButton from '../components/BackButton.vue'
+import BaseModal from '../components/BaseModal.vue'
+import BaseButton from '../components/BaseButton.vue'
 import { TrashIcon, PlusIcon } from '@heroicons/vue/24/outline'
 
 const db = useFirestore()
@@ -20,6 +22,7 @@ const loading = ref(true)
 const saving = ref(false)
 const error = ref(null)
 const success = ref(false)
+const showDeleteRecipeModal = ref(false)
 
 // Recipe data
 const item = ref(null)
@@ -317,14 +320,17 @@ async function saveRecipe() {
 	}
 }
 
+function closeDeleteRecipeModal() {
+	if (!saving.value) {
+		showDeleteRecipeModal.value = false
+	}
+}
+
 // Delete recipe
 async function deleteRecipe() {
 	if (!canBulkUpdate.value) {
 		error.value = 'You do not have permission to delete recipes'
-		return
-	}
-
-	if (!confirm('Are you sure you want to delete this recipe? This action cannot be undone.')) {
+		showDeleteRecipeModal.value = false
 		return
 	}
 
@@ -353,6 +359,7 @@ async function deleteRecipe() {
 
 		await updateDoc(itemRef, updateData)
 
+		showDeleteRecipeModal.value = false
 		success.value = true
 
 		// Redirect back to recipe management after a short delay
@@ -602,11 +609,12 @@ onMounted(() => {
 					</button>
 
 					<button
+						type="button"
 						v-if="item?.recipes_by_version?.[selectedVersion.replace('.', '_')]"
-						@click="deleteRecipe"
+						@click="showDeleteRecipeModal = true"
 						:disabled="saving"
 						class="inline-flex items-center px-4 py-2 bg-semantic-danger text-white text-sm font-medium rounded-md hover:bg-semantic-danger/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-semantic-danger disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
-						{{ saving ? 'Deleting...' : 'Delete Recipe' }}
+						Delete Recipe
 					</button>
 
 					<RouterLink
@@ -617,6 +625,49 @@ onMounted(() => {
 				</div>
 			</div>
 		</div>
+
+		<BaseModal
+			:isOpen="showDeleteRecipeModal"
+			title="Delete recipe"
+			size="small"
+			:closeOnBackdrop="!saving"
+			data-cy="edit-recipe-delete-modal"
+			@close="closeDeleteRecipeModal">
+			<div class="space-y-4">
+				<div>
+					<h3 class="font-normal text-gray-900">
+						Delete the
+						<span class="font-semibold">{{ selectedVersion }}</span>
+						recipe for
+						<span class="font-semibold">{{ item?.name || item?.material_id }}</span>
+						?
+					</h3>
+					<p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
+				</div>
+			</div>
+			<template #footer>
+				<div class="flex items-center justify-end p-4">
+					<div class="flex space-x-3">
+						<button
+							type="button"
+							class="btn-secondary--outline"
+							data-cy="edit-recipe-delete-cancel"
+							:disabled="saving"
+							@click="closeDeleteRecipeModal">
+							Cancel
+						</button>
+						<BaseButton
+							variant="primary"
+							class="bg-semantic-danger hover:bg-opacity-90"
+							data-cy="edit-recipe-delete-confirm"
+							:disabled="saving"
+							@click="deleteRecipe">
+							{{ saving ? 'Deleting...' : 'Delete' }}
+						</BaseButton>
+					</div>
+				</div>
+			</template>
+		</BaseModal>
 	</div>
 
 	<div v-else-if="user?.email" class="p-4 pt-8">
