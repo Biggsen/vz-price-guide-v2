@@ -588,9 +588,9 @@ const sortedCategories = computed(() => {
 	return orderedCategories
 })
 
-// Search terms from query (comma-separated, OR logic; only for server shop)
+// Search terms from query (comma-separated, OR logic)
 function getSearchTerms() {
-	if (!isServerShop.value || !searchQuery.value?.trim()) return []
+	if (!searchQuery.value?.trim()) return []
 	return searchQuery.value
 		.trim()
 		.toLowerCase()
@@ -607,15 +607,15 @@ function rowMatchesSearch(row) {
 	return terms.some((term) => name.includes(term))
 }
 
-// Filtered list rows (when server shop + search)
+// Filtered list rows (when search active)
 const filteredBaseTableRows = computed(() => {
-	if (!isServerShop.value || getSearchTerms().length === 0) return baseTableRows.value
+	if (getSearchTerms().length === 0) return baseTableRows.value
 	return baseTableRows.value.filter(rowMatchesSearch)
 })
 
-// Filtered category rows (when server shop + search)
+// Filtered category rows (when search active)
 const filteredBaseTableRowsByCategory = computed(() => {
-	if (!isServerShop.value || getSearchTerms().length === 0) return baseTableRowsByCategory.value
+	if (getSearchTerms().length === 0) return baseTableRowsByCategory.value
 	const filtered = {}
 	Object.entries(baseTableRowsByCategory.value || {}).forEach(([category, rows]) => {
 		const match = rows.filter(rowMatchesSearch)
@@ -627,7 +627,7 @@ const filteredBaseTableRowsByCategory = computed(() => {
 // Categories to show (search narrows set; chips narrow further)
 const sortedCategoriesForDisplay = computed(() => {
 	let categories = sortedCategories.value
-	if (isServerShop.value && getSearchTerms().length > 0) {
+	if (getSearchTerms().length > 0) {
 		const filteredKeys = Object.keys(filteredBaseTableRowsByCategory.value || {})
 		categories = categories.filter((c) => filteredKeys.includes(c))
 	}
@@ -637,9 +637,9 @@ const sortedCategoriesForDisplay = computed(() => {
 	return categories
 })
 
-// Count of items matching current search (server shop), after category chip filter
+// Count of items matching current search, after category chip filter
 const filteredItemCount = computed(() => {
-	if (!isServerShop.value || getSearchTerms().length === 0) return 0
+	if (getSearchTerms().length === 0) return 0
 	if (viewMode.value === 'list') return listRowsForDisplay.value.length
 	return sortedCategoriesForDisplay.value.reduce((sum, cat) => {
 		const useFiltered = getSearchTerms().length > 0
@@ -675,9 +675,7 @@ const shopCategoryFilterTotalItemCount = computed(() => {
 // List view rows after search + category chip filter
 const listRowsForDisplay = computed(() => {
 	const base =
-		isServerShop.value && getSearchTerms().length > 0
-			? filteredBaseTableRows.value
-			: baseTableRows.value
+		getSearchTerms().length > 0 ? filteredBaseTableRows.value : baseTableRows.value
 	if (shopVisibleCategories.value.length === 0) return base
 	return base.filter((row) => {
 		const cat = row._originalItem?.itemData?.category || 'Uncategorized'
@@ -1779,37 +1777,35 @@ function getServerName(serverId) {
 				@change="onEconomyShopGuiFileSelected" />
 			<!-- Search + Settings/Export row (search left, actions right; homepage-style layout) -->
 			<div class="mt-4 mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-				<!-- Left: Search (Admin Shop only when items exist) -->
+				<!-- Left: Search (all shop types) -->
 				<div class="flex-1 sm:max-w-md">
-					<template v-if="isServerShop">
-						<div class="flex flex-row gap-2">
-							<input
-								id="admin-shop-item-search"
-								type="text"
-								v-model="searchQuery"
-								data-cy="admin-shop-search-input"
-								placeholder="Search for items..."
-								class="border-2 border-gray-asparagus rounded px-3 py-2 w-full mb-1 h-10 flex-1" />
-							<BaseButton
-								@click="resetSearch"
-								variant="tertiary"
-								data-cy="admin-shop-reset-search-button"
-								class="flex-shrink-0 h-10">
-								<ArrowPathIcon class="w-4 h-4 sm:mr-1.5" />
-								<span class="hidden sm:inline">Reset</span>
-							</BaseButton>
-						</div>
-						<p class="text-xs text-gray-500 mt-1">
-							Tip: Use commas to search multiple terms
-						</p>
-						<div v-if="searchQuery && getSearchTerms().length > 0" class="mt-2 text-sm text-gray-600">
-							<span v-if="filteredItemCount > 0">
-								Showing {{ filteredItemCount }} item{{ filteredItemCount === 1 ? '' : 's' }}
-								matching "{{ searchQuery }}"
-							</span>
-							<span v-else>No items found matching "{{ searchQuery }}"</span>
-						</div>
-					</template>
+					<div class="flex flex-row gap-2">
+						<input
+							id="shop-items-item-search"
+							type="text"
+							v-model="searchQuery"
+							data-cy="shop-items-search-input"
+							placeholder="Search for items..."
+							class="border-2 border-gray-asparagus rounded px-3 py-2 w-full mb-1 h-10 flex-1" />
+						<BaseButton
+							@click="resetSearch"
+							variant="tertiary"
+							data-cy="shop-items-reset-search-button"
+							class="flex-shrink-0 h-10">
+							<ArrowPathIcon class="w-4 h-4 sm:mr-1.5" />
+							<span class="hidden sm:inline">Reset</span>
+						</BaseButton>
+					</div>
+					<p class="text-xs text-gray-500 mt-1">
+						Tip: Use commas to search multiple terms
+					</p>
+					<div v-if="searchQuery && getSearchTerms().length > 0" class="mt-2 text-sm text-gray-600">
+						<span v-if="filteredItemCount > 0">
+							Showing {{ filteredItemCount }} item{{ filteredItemCount === 1 ? '' : 's' }}
+							matching "{{ searchQuery }}"
+						</span>
+						<span v-else>No items found matching "{{ searchQuery }}"</span>
+					</div>
 				</div>
 				<!-- Right: Settings, Export, Recalculate, Market Overview -->
 				<div class="flex flex-wrap items-center gap-3 sm:ml-4 sm:flex-shrink-0">
@@ -2018,7 +2014,11 @@ function getServerName(serverId) {
 							<div v-for="category in sortedCategoriesForDisplay" :key="category" class="mb-6">
 								<BaseTable
 									:columns="baseTableColumns"
-									:rows="isServerShop && getSearchTerms().length > 0 ? (filteredBaseTableRowsByCategory[category] || []) : baseTableRowsByCategory[category]"
+									:rows="
+										getSearchTerms().length > 0
+											? filteredBaseTableRowsByCategory[category] || []
+											: baseTableRowsByCategory[category]
+									"
 									row-key="id"
 									:layout="layout"
 									:hoverable="true"
