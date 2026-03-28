@@ -1,7 +1,7 @@
 {
   "meta": {
     "source_project_id": "vz-price-guide",
-    "exported_at": "2026-03-26T15:51:10.482Z",
+    "exported_at": "2026-03-28T15:00:41.239Z",
     "total_items_in_source": 1806,
     "exported_item_count": 1806,
     "limit_applied": 0,
@@ -7116,17 +7116,6 @@
       "url": "https://minecraft.fandom.com/wiki/Coal",
       "subcategory": "coal",
       "version": "1.16",
-      "recipes_by_version": {
-        "1_16": {
-          "ingredients": [
-            {
-              "material_id": "coal_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
-      },
       "pricing_type": "static",
       "version_removed": "",
       "prices_by_version": {
@@ -7220,25 +7209,6 @@
       "stack": 64,
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
       "version": "1.20",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "coast_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "cobblestone",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "coast armor trim smithing template",
       "category": "armor",
@@ -8288,17 +8258,6 @@
       "price": 6,
       "category": "ores",
       "subcategory": "copper",
-      "recipes_by_version": {
-        "1_17": {
-          "ingredients": [
-            {
-              "material_id": "copper_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
-      },
       "pricing_type": "static",
       "version_removed": "",
       "prices_by_version": {
@@ -11467,17 +11426,6 @@
       "url": "https://minecraft.fandom.com/wiki/Diamond",
       "subcategory": "diamond",
       "version": "1.16",
-      "recipes_by_version": {
-        "1_16": {
-          "ingredients": [
-            {
-              "material_id": "diamond_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
-      },
       "pricing_type": "static",
       "version_removed": "",
       "prices_by_version": {
@@ -12292,17 +12240,6 @@
       "prices_by_version": {
         "1_16": 2
       },
-      "recipes_by_version": {
-        "1_16": {
-          "ingredients": [
-            {
-              "material_id": "dried_kelp_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
-      },
       "pricing_type": "static",
       "version_removed": "",
       "image": "/images/items/dried_kelp.png"
@@ -12418,25 +12355,6 @@
       "stack": 64,
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
       "version": "1.20",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "dune_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "sandstone",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "dune armor trim smithing template",
       "category": "armor",
@@ -12533,17 +12451,6 @@
       "version": "1.16",
       "prices_by_version": {
         "1_16": 100
-      },
-      "recipes_by_version": {
-        "1_16": {
-          "ingredients": [
-            {
-              "material_id": "emerald_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
       },
       "pricing_type": "static",
       "version_removed": "",
@@ -16089,25 +15996,6 @@
       "stack": 64,
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
       "version": "1.20",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "eye_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "end_stone",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "eye armor trim smithing template",
       "category": "armor",
@@ -17180,17 +17068,6 @@
       "url": "https://minecraft.fandom.com/wiki/Gold_Ingot",
       "subcategory": "gold",
       "version": "1.16",
-      "recipes_by_version": {
-        "1_16": {
-          "ingredients": [
-            {
-              "material_id": "gold_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
-      },
       "pricing_type": "static",
       "version_removed": "",
       "prices_by_version": {
@@ -19058,21 +18935,6 @@
       "url": "https://minecraft.fandom.com/wiki/Honey_Bottle",
       "subcategory": "",
       "version": "1.16",
-      "recipes_by_version": {
-        "1_16": {
-          "ingredients": [
-            {
-              "material_id": "honey_block",
-              "quantity": 1
-            },
-            {
-              "material_id": "glass_bottle",
-              "quantity": 4
-            }
-          ],
-          "output_count": 4
-        }
-      },
       "pricing_type": "static",
       "version_removed": "",
       "prices_by_version": {
@@ -19264,25 +19126,6 @@
       "stack": 64,
       "version": "1.20",
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "host_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "terracotta",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "host armor trim smithing template",
       "category": "armor",
@@ -19828,17 +19671,6 @@
       "url": "https://minecraft.fandom.com/wiki/Iron_Ingot",
       "subcategory": "iron",
       "version": "1.16",
-      "recipes_by_version": {
-        "1_16": {
-          "ingredients": [
-            {
-              "material_id": "iron_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
-      },
       "pricing_type": "static",
       "version_removed": "",
       "prices_by_version": {
@@ -20877,17 +20709,6 @@
       "version": "1.16",
       "prices_by_version": {
         "1_16": 5
-      },
-      "recipes_by_version": {
-        "1_16": {
-          "ingredients": [
-            {
-              "material_id": "lapis_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
       },
       "pricing_type": "static",
       "version_removed": "",
@@ -26330,25 +26151,6 @@
       "subcategory": "",
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
       "version": "1.20",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "netherite_upgrade_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "netherrack",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "netherite upgrade smithing template",
       "category": "nether",
@@ -32153,25 +31955,6 @@
       "stack": 64,
       "version": "1.20",
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "raiser_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "terracotta",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "raiser armor trim smithing template",
       "category": "armor",
@@ -32209,17 +31992,6 @@
       "price": 6,
       "category": "ores",
       "subcategory": "copper",
-      "recipes_by_version": {
-        "1_17": {
-          "ingredients": [
-            {
-              "material_id": "raw_copper_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
-      },
       "pricing_type": "static",
       "version_removed": "",
       "prices_by_version": {
@@ -32267,17 +32039,6 @@
       "price": 50,
       "category": "ores",
       "subcategory": "gold",
-      "recipes_by_version": {
-        "1_17": {
-          "ingredients": [
-            {
-              "material_id": "raw_gold_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
-      },
       "pricing_type": "static",
       "version_removed": "",
       "prices_by_version": {
@@ -32324,17 +32085,6 @@
       "price": 20,
       "category": "ores",
       "subcategory": "iron",
-      "recipes_by_version": {
-        "1_17": {
-          "ingredients": [
-            {
-              "material_id": "raw_iron_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
-      },
       "pricing_type": "static",
       "version_removed": "",
       "prices_by_version": {
@@ -33127,17 +32877,6 @@
       "prices_by_version": {
         "1_16": 3
       },
-      "recipes_by_version": {
-        "1_16": {
-          "ingredients": [
-            {
-              "material_id": "redstone_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
-      },
       "pricing_type": "static",
       "version_removed": "",
       "image": "/images/items/redstone.png"
@@ -33488,7 +33227,6 @@
       "stack": 64,
       "price": 1,
       "subcategory": "",
-      "category": "spawn",
       "url": "https://minecraft.fandom.com/wiki/Respawn_Anchor",
       "version": "1.16",
       "version_removed": null,
@@ -33511,7 +33249,8 @@
       "prices_by_version": {
         "1_16": 204
       },
-      "image": "/images/items/respawn_anchor.png"
+      "image": "/images/items/respawn_anchor.png",
+      "category": "nether"
     },
     {
       "id": "K13VOBcCQZIRGWADSYrE",
@@ -33519,25 +33258,6 @@
       "stack": 64,
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
       "version": "1.20",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "rib_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "netherrack",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "rib armor trim smithing template",
       "category": "armor",
@@ -34013,25 +33733,6 @@
       "stack": 64,
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
       "version": "1.20",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "sentry_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "cobblestone",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "sentry armor trim smithing template",
       "category": "armor",
@@ -34049,25 +33750,6 @@
       "stack": 64,
       "version": "1.20",
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "shaper_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "terracotta",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "shaper armor trim smithing template",
       "category": "armor",
@@ -34319,25 +34001,6 @@
       "stack": 64,
       "version": "1.20",
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "silence_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "cobbled_deepslate",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "silence armor trim smithing template",
       "category": "armor",
@@ -34480,17 +34143,6 @@
       "material_id": "slime_ball",
       "prices_by_version": {
         "1_16": 10
-      },
-      "recipes_by_version": {
-        "1_16": {
-          "ingredients": [
-            {
-              "material_id": "slime_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
       },
       "pricing_type": "static",
       "version_removed": "",
@@ -34969,25 +34621,6 @@
       "stack": 64,
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
       "version": "1.20",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "snout_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "blackstone",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "snout armor trim smithing template",
       "category": "armor",
@@ -35316,25 +34949,6 @@
       "stack": 64,
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
       "version": "1.20",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "spire_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "purpur_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "spire armor trim smithing template",
       "category": "armor",
@@ -38085,25 +37699,6 @@
       "stack": 64,
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
       "version": "1.20",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "tide_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "prismarine",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "tide armor trim smithing template",
       "category": "armor",
@@ -38901,25 +38496,6 @@
       "stack": 64,
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
       "version": "1.20",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "vex_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "cobblestone",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "vex armor trim smithing template",
       "category": "armor",
@@ -39022,25 +38598,6 @@
       "stack": 64,
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
       "version": "1.20",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "ward_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "cobbled_deepslate",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "ward armor trim smithing template",
       "category": "armor",
@@ -41475,25 +41032,6 @@
       "stack": 64,
       "version": "1.20",
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "wayfinder_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "terracotta",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "wayfinder armor trim smithing template",
       "category": "armor",
@@ -41869,17 +41407,6 @@
       "version": "1.16",
       "prices_by_version": {
         "1_16": 2
-      },
-      "recipes_by_version": {
-        "1_16": {
-          "ingredients": [
-            {
-              "material_id": "hay_block",
-              "quantity": 1
-            }
-          ],
-          "output_count": 9
-        }
       },
       "pricing_type": "static",
       "version_removed": "",
@@ -42336,25 +41863,6 @@
       "stack": 64,
       "url": "https://minecraft.fandom.com/wiki/Smithing_Template",
       "version": "1.20",
-      "recipes_by_version": {
-        "1_20": {
-          "ingredients": [
-            {
-              "material_id": "diamond",
-              "quantity": 7
-            },
-            {
-              "material_id": "wild_armor_trim_smithing_template",
-              "quantity": 1
-            },
-            {
-              "material_id": "mossy_cobblestone",
-              "quantity": 1
-            }
-          ],
-          "output_count": 2
-        }
-      },
       "version_removed": "",
       "name": "wild armor trim smithing template",
       "category": "armor",
