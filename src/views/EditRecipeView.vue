@@ -338,6 +338,7 @@ function closeDeleteRecipeModal() {
 async function confirmDeleteRecipe() {
 	if (!canBulkUpdate.value) {
 		error.value = 'You do not have permission to delete recipes'
+		showDeleteRecipeModal.value = false
 		return
 	}
 
@@ -616,8 +617,8 @@ onMounted(() => {
 					</button>
 
 					<button
-						v-if="item?.recipes_by_version?.[selectedVersion.replace('.', '_')]"
 						type="button"
+						v-if="item?.recipes_by_version?.[selectedVersion.replace('.', '_')]"
 						@click="openDeleteRecipeModal"
 						:disabled="saving"
 						class="inline-flex items-center px-4 py-2 bg-semantic-danger text-white text-sm font-medium rounded-md hover:bg-semantic-danger/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-semantic-danger disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
@@ -637,6 +638,7 @@ onMounted(() => {
 			:isOpen="showDeleteRecipeModal"
 			title="Delete recipe"
 			size="small"
+			:closeOnBackdrop="!saving"
 			data-cy="edit-recipe-delete-modal"
 			@close="closeDeleteRecipeModal">
 			<div class="space-y-4">
@@ -665,8 +667,8 @@ onMounted(() => {
 						<BaseButton
 							type="button"
 							variant="primary"
-							data-cy="edit-recipe-delete-confirm"
 							class="bg-semantic-danger hover:bg-opacity-90"
+							data-cy="edit-recipe-delete-confirm"
 							:disabled="saving"
 							@click="confirmDeleteRecipe">
 							{{ saving ? 'Deleting...' : 'Delete' }}
