@@ -4,6 +4,10 @@
  */
 
 import { updateShopItem } from './shopItems.js'
+import {
+	normalizeMaterialIdKey,
+	buildMergedGuideByMaterialId
+} from './guideItemMaterialPick.js'
 
 /**
  * Normalize version to key format (e.g. "1.21" -> "1_21")
@@ -75,42 +79,22 @@ export function hasCircularRecipeDependency(
 	nextPath.add(guideItem.material_id)
 
 	for (const ingredient of recipe.ingredients) {
-		const ingredientGuideItem = guideByMaterialId?.[ingredient.material_id]
+		const ingKey = normalizeMaterialIdKey(ingredient.material_id)
+		const ingredientGuideItem = guideByMaterialId?.[ingKey]
 		if (!ingredientGuideItem) continue
-		if (hasCircularRecipeDependency(ingredientGuideItem, guideByMaterialId, versionKey, nextPath)) {
+		if (
+			hasCircularRecipeDependency(
+				ingredientGuideItem,
+				guideByMaterialId,
+				versionKey,
+				nextPath
+			)
+		) {
 			return true
 		}
 	}
 
 	return false
-}
-
-/**
- * Build map: material_id -> guide item (first match)
- * @param {Array} guideItems
- * @returns {Record<string, Object>}
- */
-function guideItemsByMaterialId(guideItems) {
-	const map = {}
-	;(guideItems || []).forEach((item) => {
-		if (item.material_id && !map[item.material_id]) {
-			map[item.material_id] = item
-		}
-	})
-	return map
-}
-
-/**
- * Build map: item_id -> shop item for this shop
- * @param {Array} shopItems
- * @returns {Record<string, Object>}
- */
-function shopItemsByItemId(shopItems) {
-	const map = {}
-	;(shopItems || []).forEach((si) => {
-		if (si.item_id) map[si.item_id] = si
-	})
-	return map
 }
 
 /**
@@ -140,14 +124,20 @@ export function computeRecipePriceForShop(
 	}
 
 	if (hasCircularRecipeDependency(guideItem, guideByMaterialId, versionKey)) {
-		return { price: null, error: `Circular dependency: ${guideItem.name || guideItem.material_id}` }
+		return {
+			price: null,
+			error: `Circular dependency: ${guideItem.name || guideItem.material_id}`
+		}
 	}
 
 	const priceField = priceKind === 'buy' ? 'buy_price' : 'sell_price'
 	const priceLabel = priceKind === 'buy' ? 'buy' : 'sell'
 
 	if (visited.has(guideItem.material_id)) {
-		return { price: null, error: `Circular dependency: ${guideItem.name || guideItem.material_id}` }
+		return {
+			price: null,
+			error: `Circular dependency: ${guideItem.name || guideItem.material_id}`
+		}
 	}
 	visited.add(guideItem.material_id)
 
@@ -155,7 +145,7 @@ export function computeRecipePriceForShop(
 	for (const ing of recipe.ingredients) {
 		const matId = ing.material_id
 		const qty = ing.quantity || 1
-		const ingGuideItem = guideByMaterialId[matId]
+		const ingGuideItem = guideByMaterialId[normalizeMaterialIdKey(matId)]
 		if (!ingGuideItem) {
 			visited.delete(guideItem.material_id)
 			return { price: null, error: `Ingredient ${matId} not in item list` }
@@ -169,11 +159,16 @@ export function computeRecipePriceForShop(
 			}
 		}
 		const ingPrice = ingShopItem[priceField]
-		if (ingPrice == null || (typeof ingPrice === 'number' && (isNaN(ingPrice) || ingPrice < 0))) {
+		if (
+			ingPrice == null ||
+			(typeof ingPrice === 'number' && (isNaN(ingPrice) || ingPrice < 0))
+		) {
 			visited.delete(guideItem.material_id)
 			return {
 				price: null,
-				error: `Add [${ingGuideItem.name || matId}] to this shop with a ${priceLabel} price first.`
+				error: `Add [${
+					ingGuideItem.name || matId
+				}] to this shop with a ${priceLabel} price first.`
 			}
 		}
 		if (ingShopItem.pricing_type === 'from_recipe') {
@@ -228,11 +223,14 @@ export async function recalculateRecipePricesForShop(
 ) {
 	const updated = []
 	const errors = []
-	const byMaterialId = guideItemsByMaterialId(guideItems)
+	const byMaterialId = buildMergedGuideByMaterialId(guideItems)
 	const version = versionKey || '1_21'
 
 	const needRecalc = shopItems.filter(
-		(si) => si.pricing_type === 'from_recipe' || si.buy_pricing_type === 'from_recipe' || si.sell_pricing_type === 'from_recipe'
+		(si) =>
+			si.pricing_type === 'from_recipe' ||
+			si.buy_pricing_type === 'from_recipe' ||
+			si.sell_pricing_type === 'from_recipe'
 	)
 	if (needRecalc.length === 0) return { updated, errors }
 
@@ -293,11 +291,19 @@ export async function recalculateRecipePricesForShop(
 					'sell'
 				)
 				if (buyResult.error && !seenErrorsThisPass.has(shopItem.item_id)) {
-					errors.push({ item_id: shopItem.item_id, name: guideItem.name, error: buyResult.error })
+					errors.push({
+						item_id: shopItem.item_id,
+						name: guideItem.name,
+						error: buyResult.error
+					})
 					seenErrorsThisPass.add(shopItem.item_id)
 				}
 				if (sellResult.error && !seenErrorsThisPass.has(shopItem.item_id)) {
-					errors.push({ item_id: shopItem.item_id, name: guideItem.name, error: sellResult.error })
+					errors.push({
+						item_id: shopItem.item_id,
+						name: guideItem.name,
+						error: sellResult.error
+					})
 					seenErrorsThisPass.add(shopItem.item_id)
 				}
 				let newBuy = cur.buy_price
@@ -310,8 +316,10 @@ export async function recalculateRecipePricesForShop(
 					if (buyResult.price != null) updates.buy_price = newBuy
 					if (sellResult.price != null) updates.sell_price = newSell
 					pricesByShopItemId.set(shopItem.id, {
-						buy_price: updates.buy_price !== undefined ? updates.buy_price : cur.buy_price,
-						sell_price: updates.sell_price !== undefined ? updates.sell_price : cur.sell_price
+						buy_price:
+							updates.buy_price !== undefined ? updates.buy_price : cur.buy_price,
+						sell_price:
+							updates.sell_price !== undefined ? updates.sell_price : cur.sell_price
 					})
 					anyChanged = true
 				}

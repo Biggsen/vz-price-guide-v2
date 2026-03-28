@@ -1,0 +1,39 @@
+pages:
+  page1:
+    gui-rows: 3
+    items:
+      '1':
+        material: APPLE
+        buy: 10
+        sell: 2.5
+        slot: 11
+      '4':
+        material: COOKED_SALMON
+        buy: 6.3
+        sell: 1.58
+        slot: 12
+      '10':
+        material: BAKED_POTATO
+        buy: 5.25
+        sell: 1.32
+        slot: 13
+      '11':
+        material: COOKED_BEEF
+        buy: 6.3
+        sell: 1.58
+        slot: 14
+      '12':
+        material: COOKED_CHICKEN
+        buy: 6.3
+        sell: 1.58
+        slot: 15
+      '14':
+        material: COOKED_PORKCHOP
+        buy: 6.3
+        sell: 1.58
+        slot: 16
+      '21':
+        material: BEETROOT_SOUP
+        buy: 38.72
+        sell: 9.68
+        slot: 17

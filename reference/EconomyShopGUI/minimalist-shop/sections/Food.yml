@@ -1,0 +1,25 @@
+enable: true
+slot: 16
+title: '       &8&l<<=== &6&lFood &8&l===>>       '
+hidden: false
+sub-section: false
+display-item: false
+fill-item:
+  material: GRAY_STAINED_GLASS_PANE
+  name: ' '
+nav-bar:
+  mode: SELF
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: ' '
+  items:
+    GoBack:
+      material: NETHER_STAR
+      name: '%translations-back%'
+      action: BACK
+      slot: 5
+item:
+  material: COOKED_BEEF
+  displayname: '&6&lFood'
+  lore: '&eHungry?'
+  

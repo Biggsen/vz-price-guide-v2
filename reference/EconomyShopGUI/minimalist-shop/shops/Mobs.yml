@@ -1,0 +1,64 @@
+pages:
+  page1:
+    gui-rows: 4
+    items:
+      '1':
+        material: ARROW
+        buy: 2.26
+        sell: 0.57
+        slot: 12
+      '2':
+        material: BLAZE_POWDER
+        buy: 2.63
+        sell: 0.66
+        slot: 13
+      '4':
+        material: BONE
+        buy: 6
+        sell: 1.5
+        slot: 14
+      '5':
+        material: ENDER_PEARL
+        buy: 7
+        sell: 1.75
+        slot: 15
+      '6':
+        material: FEATHER
+        buy: 6
+        sell: 1.5
+        slot: 16
+      '7':
+        material: FERMENTED_SPIDER_EYE
+        buy: 9.57
+        sell: 2.4
+        slot: 20
+      '9':
+        material: GUNPOWDER
+        buy: 15.5
+        sell: 3.88
+        slot: 21
+      '10':
+        material: MAGMA_CREAM
+        buy: 8.01
+        sell: 2.01
+        slot: 22
+      '15':
+        material: ROTTEN_FLESH
+        buy: 5
+        sell: 1.25
+        slot: 23
+      '16':
+        material: SLIME_BALL
+        buy: 5
+        sell: 1.25
+        slot: 24
+      '17':
+        material: SPIDER_EYE
+        buy: 7
+        sell: 1.75
+        slot: 25
+      '18':
+        material: STRING
+        buy: 7
+        sell: 1.75
+        slot: 26

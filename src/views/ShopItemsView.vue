@@ -4,6 +4,7 @@ import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
 import JSZip from 'jszip'
+import yaml from 'js-yaml'
 import { useAllShops, updateShop } from '../utils/shopProfile.js'
 import { useServers, getMajorMinorVersion } from '../utils/serverProfile.js'
 import {
@@ -19,6 +20,7 @@ import {
 	parseEconomyShopGuiYaml,
 	mapToGuideItems
 } from '../utils/economyShopGuiImport.js'
+import { parseVzPriceGuideYaml, isVzPriceGuideExportShape } from '../utils/vzPriceGuideImport.js'
 import { buildEconomyShopGuiExportFiles } from '../utils/economyShopGuiExport.js'
 import { classifyUnmappedImportMaterials } from '../utils/shopImportUnmapped.js'
 import ShopItemForm from '../components/ShopItemForm.vue'
@@ -57,10 +59,10 @@ import {
 	recalculateRecipePricesForShop,
 	versionToKey,
 	getRecipeForItem,
-	hasCircularRecipeDependency,
 	computeRecipePriceForShop
 } from '../utils/serverShopRecipes.js'
 import { enabledCategories } from '../constants.js'
+import { buildMergedGuideByMaterialId } from '../utils/guideItemMaterialPick.js'
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -323,13 +325,9 @@ watch(
 )
 
 const availableItems = useCollection(allItemsQuery)
-const guideItemsByMaterialId = computed(() => {
-	const map = {}
-	;(availableItems.value || []).forEach((item) => {
-		if (item.material_id) map[item.material_id] = item
-	})
-	return map
-})
+const guideItemsByMaterialId = computed(() =>
+	buildMergedGuideByMaterialId(availableItems.value || [])
+)
 
 const availableItemsForAdding = computed(() => availableItems.value || [])
 
@@ -1227,14 +1225,7 @@ function hasUsableRecipeForPricing(shopItem) {
 		shopItem?.itemData ||
 		(availableItems.value || []).find((item) => item.id === shopItem?.item_id)
 	const recipe = guideItem ? getRecipeForItem(guideItem, serverVersionKey.value) : null
-	const hasCircularRecipe = guideItem
-		? hasCircularRecipeDependency(
-				guideItem,
-				guideItemsByMaterialId.value,
-				serverVersionKey.value
-			)
-		: false
-	return Boolean(recipe) && !hasCircularRecipe
+	return Boolean(recipe)
 }
 
 function canComputeRecipePricesForPricingSwitch(shopItem) {
@@ -1576,9 +1567,35 @@ async function onEconomyShopGuiFileSelected(event) {
 	showImportResultsModal.value = false
 	try {
 		const text = await file.text()
-		const entries = parseEconomyShopGuiYaml(text)
+		let data
+		try {
+			data = yaml.load(text)
+		} catch (yamlErr) {
+			importError.value = yamlErr?.message || 'Could not parse YAML.'
+			return
+		}
+		if (!data || typeof data !== 'object') {
+			importError.value = 'Invalid or empty YAML.'
+			return
+		}
+
+		let entries
+		let importFormat
+		if (data.pages && typeof data.pages === 'object') {
+			importFormat = 'economyshopgui'
+			entries = parseEconomyShopGuiYaml(text)
+		} else if (isVzPriceGuideExportShape(data)) {
+			importFormat = 'vz'
+			entries = parseVzPriceGuideYaml(text)
+		} else {
+			importError.value =
+				'Unrecognized YAML. Use EconomyShopGUI shops YAML (pages...) or a VZ Price Guide export (material keys with unit_buy / unit_sell).'
+			return
+		}
+
 		if (entries.length === 0) {
-			importError.value = 'No valid items found in the YAML file. Expected structure: pages.page*.items.* with material, buy, sell.'
+			importError.value =
+				'No valid items found. For EconomyShopGUI: pages.page*.items.* with material, buy, sell. For VZ Price Guide: material keys with unit_buy and unit_sell.'
 			return
 		}
 		const existingIds = (shopItems.value || []).map((s) => s.item_id)
@@ -1605,6 +1622,7 @@ async function onEconomyShopGuiFileSelected(event) {
 		}
 		if (toAdd.length === 0) {
 			importResultSummary.value = {
+				importFormat,
 				imported: 0,
 				skipped,
 				unmapped,
@@ -1625,6 +1643,7 @@ async function onEconomyShopGuiFileSelected(event) {
 			imported += chunk.length
 		}
 		importResultSummary.value = {
+			importFormat,
 			imported,
 			skipped,
 			unmapped,
@@ -1756,7 +1775,7 @@ function getServerName(serverId) {
 				type="file"
 				accept=".yml,.yaml"
 				class="hidden"
-				aria-label="Import EconomyShopGUI YAML"
+				aria-label="Import shop YAML (VZ Price Guide or EconomyShopGUI)"
 				@change="onEconomyShopGuiFileSelected" />
 			<!-- Search + Settings/Export row (search left, actions right; homepage-style layout) -->
 			<div class="mt-4 mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -1863,7 +1882,7 @@ function getServerName(serverId) {
 						<template #left-icon>
 							<PlusIcon />
 						</template>
-						Add Item
+						Add items
 					</BaseButton>
 					<template v-if="isServerShop">
 						<BaseButton
@@ -1875,7 +1894,7 @@ function getServerName(serverId) {
 							<template #left-icon>
 								<ArrowUpTrayIcon class="w-4 h-4" :class="{ 'animate-spin': importLoading }" />
 							</template>
-							{{ importLoading ? 'Importing…' : 'Import YAML' }}
+							{{ importLoading ? 'Importing…' : 'Import' }}
 						</BaseButton>
 						<BaseButton
 							type="button"
@@ -2698,7 +2717,7 @@ function getServerName(serverId) {
 						<template #left-icon>
 							<ArrowUpTrayIcon class="w-4 h-4" :class="{ 'animate-spin': importLoading }" />
 						</template>
-						{{ importLoading ? 'Importing…' : 'Import YAML' }}
+						{{ importLoading ? 'Importing…' : 'Import' }}
 					</BaseButton>
 				</div>
 			</div>
@@ -2957,7 +2976,12 @@ function getServerName(serverId) {
 		<div v-if="importResultSummary" class="space-y-4">
 			<p class="text-sm text-gray-700">
 				Processed {{ importResultSummary.totalEntries }} YAML
-				entry{{ importResultSummary.totalEntries === 1 ? '' : 'ies' }}.
+				entry{{ importResultSummary.totalEntries === 1 ? '' : 'ies' }}
+				<span v-if="importResultSummary.importFormat === 'vz'"> (VZ Price Guide)</span>
+				<span v-else-if="importResultSummary.importFormat === 'economyshopgui'">
+					(EconomyShopGUI)
+				</span>
+				.
 			</p>
 			<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
 				<div class="rounded border border-green-200 bg-green-50 px-3 py-2">

@@ -75,9 +75,15 @@ function buildShopsYamlForCategory(items) {
 
 		const slot = idx % ITEMS_PER_SHOP_PAGE
 		const itemKey = String(idx + 1)
-		const buy = item.buy_price == null || isNaN(Number(item.buy_price)) ? -1 : Number(item.buy_price)
+		// EconomyShopGUI uses -1 to disable buy/sell; treat 0 as disabled to avoid accidental free trades.
+		const buy =
+			item.buy_price == null || isNaN(Number(item.buy_price)) || Number(item.buy_price) <= 0
+				? -1
+				: Number(item.buy_price)
 		const sell =
-			item.sell_price == null || isNaN(Number(item.sell_price)) ? -1 : Number(item.sell_price)
+			item.sell_price == null || isNaN(Number(item.sell_price)) || Number(item.sell_price) <= 0
+				? -1
+				: Number(item.sell_price)
 
 		pages[pageKey].items[itemKey] = {
 			material: item.material,

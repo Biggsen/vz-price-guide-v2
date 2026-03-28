@@ -1,16 +1,13 @@
 import yaml from 'js-yaml'
 import { bukkitEnchantmentToVanillaKey } from './bukkitToVanillaEnchantment.js'
 import { getRecipeForItem } from './serverShopRecipes.js'
+import {
+	normalizeMaterialIdKey,
+	pickBetterGuideForMaterial
+} from './guideItemMaterialPick.js'
 
-/**
- * Normalize EconomyShopGUI material (e.g. CALCITE, ANDESITE_SLAB) to lowercase with underscores
- * to match guide item material_id / name.
- * @param {string} material
- * @returns {string}
- */
 export function normalizeMaterialId(material) {
-	if (!material || typeof material !== 'string') return ''
-	return material.trim().toLowerCase().replace(/\s+/g, '_')
+	return normalizeMaterialIdKey(material)
 }
 
 /**
@@ -173,7 +170,8 @@ export function mapToGuideItems(entries, guideItems, existingItemIds, serverVers
 	;(guideItems || []).forEach((item) => {
 		const raw = (item.material_id || item.name || '').toString().trim()
 		const mid = raw.toLowerCase().replace(/\s+/g, '_')
-		if (mid && !byMaterial[mid]) byMaterial[mid] = item
+		if (!mid) return
+		byMaterial[mid] = pickBetterGuideForMaterial(byMaterial[mid], item)
 	})
 
 	const toAdd = []
@@ -202,11 +200,12 @@ export function mapToGuideItems(entries, guideItems, existingItemIds, serverVers
 			skipped += 1
 			continue
 		}
+		const hasRv = hasRecipeForVersion(guide)
 		toAdd.push({
 			item_id: guide.id,
 			buy_price: buy,
 			sell_price: sell,
-			pricing_type: hasRecipeForVersion(guide) ? 'manual' : 'base'
+			pricing_type: hasRv ? 'manual' : 'base'
 		})
 		existing.add(guide.id)
 	}

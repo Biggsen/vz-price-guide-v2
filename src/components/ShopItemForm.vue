@@ -9,13 +9,13 @@ import {
 	hasEnchantmentConflict,
 	getEnchantmentConflictReason
 } from '../utils/enchantments.js'
+import { computeRecipePriceForShop, getRecipeForItem } from '../utils/serverShopRecipes.js'
 import {
-	computeRecipePriceForShop,
-	getRecipeForItem,
-	hasCircularRecipeDependency
-} from '../utils/serverShopRecipes.js'
+	buildMergedGuideByMaterialId,
+	canonicalGuideItemForMaterial,
+	normalizeMaterialIdKey
+} from '../utils/guideItemMaterialPick.js'
 import BaseButton from './BaseButton.vue'
-import BaseModal from './BaseModal.vue'
 import NotificationBanner from './NotificationBanner.vue'
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 import { ArchiveBoxIcon, ArchiveBoxXMarkIcon, XMarkIcon } from '@heroicons/vue/24/outline'
@@ -79,10 +79,7 @@ const recipePriceResult = computed(() => {
 	}
 	const guideItem = props.availableItems.find((g) => g.id === formData.value.item_id)
 	if (!guideItem) return { buy: { price: null, error: null }, sell: { price: null, error: null } }
-	const guideByMaterialId = {}
-	props.availableItems.forEach((i) => {
-		if (i.material_id) guideByMaterialId[i.material_id] = i
-	})
+	const guideByMaterialId = buildMergedGuideByMaterialId(props.availableItems)
 	const shopItems = [...(props.shopItemsForRecipe || [])]
 	const existing = shopItems.find((s) => s.item_id === formData.value.item_id)
 	if (!existing) {
@@ -137,10 +134,7 @@ const recipeDisplay = computed(() => {
 	if (!guideItem) return null
 	const recipe = getRecipeForItem(guideItem, props.serverVersionKey)
 	if (!recipe?.ingredients?.length) return null
-	const byMaterialId = {}
-	props.availableItems.forEach((i) => {
-		if (i.material_id) byMaterialId[i.material_id] = i
-	})
+	const byMaterialId = buildMergedGuideByMaterialId(props.availableItems)
 	const shopItems = [...(props.shopItemsForRecipe || [])]
 	const existing = shopItems.find((s) => s.item_id === formData.value.item_id)
 	if (!existing) {
@@ -155,9 +149,9 @@ const recipeDisplay = computed(() => {
 	shopItems.forEach((s) => {
 		if (s.item_id) shopByItemId[s.item_id] = s
 	})
-	return {
+		return {
 		ingredients: recipe.ingredients.map((ing) => {
-			const item = byMaterialId[ing.material_id]
+			const item = byMaterialId[normalizeMaterialIdKey(ing.material_id)]
 			const shopItem = item ? shopByItemId[item.id] : null
 			const buyPrice =
 				shopItem?.buy_price != null && !isNaN(Number(shopItem.buy_price))
@@ -201,14 +195,6 @@ function focusSearchInput() {
 	if (searchInput.value) {
 		searchInput.value.focus()
 	}
-}
-
-function selectMissingIngredient(itemId) {
-	if (!itemId) return
-	formData.value.item_id = itemId
-	formData.value.pricing_type = 'manual'
-	formData.value.buy_price = null
-	formData.value.sell_price = null
 }
 
 // Reset form data
@@ -277,15 +263,12 @@ const selectedItem = computed(() => {
 	return props.availableItems.find((item) => item.id === formData.value.item_id) || null
 })
 
+// "Usable recipe" for UI: guide has a recipe for this MC version. Do not use
+// hasCircularRecipeDependency here — it false-positives when the same material appears
+// on multiple paths (e.g. armor → diamond → diamond block → diamond).
 const hasRecipeForSelectedItem = computed(() => {
 	if (!isServerShop.value || !props.serverVersionKey || !selectedItem.value) return false
-	const recipe = getRecipeForItem(selectedItem.value, props.serverVersionKey)
-	if (!recipe) return false
-	const guideByMaterialId = {}
-	;(props.availableItems || []).forEach((item) => {
-		if (item.material_id) guideByMaterialId[item.material_id] = item
-	})
-	return !hasCircularRecipeDependency(selectedItem.value, guideByMaterialId, props.serverVersionKey)
+	return getRecipeForItem(selectedItem.value, props.serverVersionKey) != null
 })
 
 // Sync pricing_type to base when selected item has no recipe (server shop)
@@ -856,11 +839,14 @@ function handleSearchInput() {
 
 // Toggle item selection (for multiple selection)
 function toggleItemSelection(item) {
-	const index = selectedItemIds.value.indexOf(item.id)
+	const best = isServerShop.value
+		? canonicalGuideItemForMaterial(props.availableItems, item)
+		: item
+	const index = selectedItemIds.value.indexOf(best.id)
 	if (index > -1) {
 		selectedItemIds.value.splice(index, 1)
 	} else {
-		selectedItemIds.value.push(item.id)
+		selectedItemIds.value.push(best.id)
 	}
 	if (formError.value === 'item_id') {
 		formError.value = null
@@ -953,9 +939,16 @@ function handleFormKeyDown(event) {
 
 // Select item handler (kept for backward compatibility, but not used in new multi-select mode)
 function selectItem(item) {
-	formData.value.item_id = item.id
+	const best = isServerShop.value
+		? canonicalGuideItemForMaterial(props.availableItems, item)
+		: item
+	formData.value.item_id = best.id
+	if (isServerShop.value && props.serverVersionKey) {
+		const recipe = getRecipeForItem(best, props.serverVersionKey)
+		formData.value.pricing_type = recipe ? 'manual' : 'base'
+	}
 	// Clear enchantments when item changes (if new item is not enchantable or is different)
-	if (!isItemEnchantable(item) || item.category === 'enchantments') {
+	if (!isItemEnchantable(best) || best.category === 'enchantments') {
 		formData.value.enchantments = []
 	}
 	searchQuery.value = '' // Clear search query when item is selected
@@ -1235,16 +1228,6 @@ function handlePriceInput(field, event) {
 	} else {
 		const numValue = parseFloat(value)
 		formData.value[field] = isNaN(numValue) ? null : numValue
-	}
-}
-
-function handleQuantityInput(event) {
-	const value = event.target.value
-	if (value === '' || value === null) {
-		formData.value.stock_quantity = null
-	} else {
-		const numValue = parseInt(value)
-		formData.value.stock_quantity = isNaN(numValue) ? null : numValue
 	}
 }
 
@@ -1796,7 +1779,7 @@ defineExpose({
 						Sell Price
 					</label>
 					<p class="text-xs text-gray-500 mb-1">
-						This is the amount players get when selling the item to a shop
+						This is the amount players get when selling the item
 					</p>
 					<div class="flex items-center gap-2">
 						<input

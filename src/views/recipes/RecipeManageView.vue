@@ -2,10 +2,12 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, getDocs, doc, getDoc, updateDoc, deleteField } from 'firebase/firestore'
 import { versions } from '../../constants.js'
 import { useAdmin } from '../../utils/admin.js'
 import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
+import BaseModal from '../../components/BaseModal.vue'
+import BaseButton from '../../components/BaseButton.vue'
 
 const db = useFirestore()
 const { user, canBulkUpdate } = useAdmin()
@@ -22,6 +24,10 @@ const showOnlyInvalid = ref(false)
 const showOnlyCircular = ref(false)
 const sortKey = ref('material_id')
 const sortAsc = ref(true)
+const deletingRowKey = ref(null)
+const deleteError = ref(null)
+const showDeleteRecipeModal = ref(false)
+const recipePendingDelete = ref(null)
 
 // Load database items
 async function loadDbItems() {
@@ -69,7 +75,6 @@ function checkCircularDependency(recipe, item, dbItems, versionKey) {
 	if (!recipe || !recipe.ingredients || recipe.ingredients.length === 0) return false
 
 	const outputMaterialId = item.material_id
-	const outputCount = recipe.output_count || 1
 
 	// Check each ingredient to see if it has a recipe that uses this recipe's output
 	for (const ingredient of recipe.ingredients) {
@@ -111,11 +116,6 @@ function checkCircularDependency(recipe, item, dbItems, versionKey) {
 			)
 
 			if (createsCircularDependency) {
-				// Determine if this recipe is decompression (1 → many) or compression (many → 1)
-				const isDecompression = outputCount > 1 && recipe.ingredients.length === 1
-				const isCompression = outputCount === 1 && ingredient.quantity > 1
-
-				// Return true if it's a circular dependency (both types are circular, but we want to show both)
 				return true
 			}
 		}
@@ -343,6 +343,81 @@ function getOutputDisplay(recipe) {
 	return `${outputCount}x`
 }
 
+function rowKey(recipe) {
+	return `${recipe.id}-${recipe.version}`
+}
+
+function openDeleteRecipeModal(recipe) {
+	if (!canBulkUpdate.value) return
+	deleteError.value = null
+	recipePendingDelete.value = recipe
+	showDeleteRecipeModal.value = true
+}
+
+function closeDeleteRecipeModal() {
+	if (deletingRowKey.value) return
+	showDeleteRecipeModal.value = false
+	recipePendingDelete.value = null
+}
+
+async function confirmDeleteRecipe() {
+	const recipe = recipePendingDelete.value
+	if (!canBulkUpdate.value || !recipe) return
+
+	deleteError.value = null
+	const versionKey = recipe.version.replace('.', '_')
+	const key = rowKey(recipe)
+	deletingRowKey.value = key
+
+	try {
+		const itemRef = doc(db, 'items', recipe.id)
+		const snap = await getDoc(itemRef)
+
+		if (!snap.exists()) {
+			deleteError.value = 'Item no longer exists. Refreshing list.'
+			showDeleteRecipeModal.value = false
+			recipePendingDelete.value = null
+			await loadDbItems()
+			await loadExistingRecipes()
+			return
+		}
+
+		const data = snap.data()
+		const recipesByVersion = data.recipes_by_version || {}
+
+		if (!recipesByVersion[versionKey]) {
+			showDeleteRecipeModal.value = false
+			recipePendingDelete.value = null
+			await loadDbItems()
+			await loadExistingRecipes()
+			return
+		}
+
+		const remainingRecipes = { ...recipesByVersion }
+		delete remainingRecipes[versionKey]
+		const hasOtherRecipes = Object.keys(remainingRecipes).length > 0
+
+		const updateData = {}
+		if (hasOtherRecipes) {
+			updateData[`recipes_by_version.${versionKey}`] = deleteField()
+		} else {
+			updateData.recipes_by_version = deleteField()
+			updateData.pricing_type = 'static'
+		}
+
+		await updateDoc(itemRef, updateData)
+		showDeleteRecipeModal.value = false
+		recipePendingDelete.value = null
+		await loadDbItems()
+		await loadExistingRecipes()
+	} catch (err) {
+		console.error('Error deleting recipe:', err)
+		deleteError.value = 'Failed to delete recipe. Try again.'
+	} finally {
+		deletingRowKey.value = null
+	}
+}
+
 // Add a method to highlight search matches
 function highlightMatch(text) {
 	const query = searchQuery.value.trim()
@@ -436,6 +511,13 @@ function highlightMatch(text) {
 					</label>
 				</div>
 			</div>
+
+			<p
+				v-if="deleteError"
+				class="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+				role="alert">
+				{{ deleteError }}
+			</p>
 
 			<!-- Recipe count -->
 			<div class="mb-4 text-sm text-gray-600">
@@ -604,8 +686,16 @@ function highlightMatch(text) {
 											Edit
 										</RouterLink>
 										<button
-											class="rounded bg-semantic-danger px-3 py-1 text-sm text-white hover:bg-opacity-80 transition-colors">
-											Delete
+											type="button"
+											:disabled="deletingRowKey === rowKey(recipe)"
+											class="rounded bg-semantic-danger px-3 py-1 text-sm text-white hover:bg-opacity-80 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+											data-cy="delete-recipe-button"
+											@click="openDeleteRecipeModal(recipe)">
+											{{
+												deletingRowKey === rowKey(recipe)
+													? 'Deleting...'
+													: 'Delete'
+											}}
 										</button>
 									</div>
 								</td>
@@ -619,6 +709,52 @@ function highlightMatch(text) {
 				No recipes found. Import some recipes first.
 			</div>
 		</div>
+
+		<BaseModal
+			:isOpen="showDeleteRecipeModal"
+			title="Delete recipe"
+			size="small"
+			data-cy="recipe-delete-modal"
+			@close="closeDeleteRecipeModal">
+			<div class="space-y-4">
+				<div>
+					<h3 class="font-normal text-gray-900">
+						Delete recipe for
+						<span class="font-semibold">
+							{{ recipePendingDelete?.name || recipePendingDelete?.material_id }}
+						</span>
+						<span class="text-gray-600">
+							({{ recipePendingDelete?.material_id }}, Minecraft
+							{{ recipePendingDelete?.version }})?
+						</span>
+					</h3>
+					<p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
+				</div>
+			</div>
+			<template #footer>
+				<div class="flex items-center justify-end p-4">
+					<div class="flex space-x-3">
+						<button
+							type="button"
+							class="btn-secondary--outline"
+							data-cy="recipe-delete-modal-cancel"
+							:disabled="!!deletingRowKey"
+							@click="closeDeleteRecipeModal">
+							Cancel
+						</button>
+						<BaseButton
+							type="button"
+							variant="primary"
+							data-cy="recipe-delete-modal-confirm"
+							class="bg-semantic-danger hover:bg-opacity-90"
+							:disabled="!!deletingRowKey"
+							@click="confirmDeleteRecipe">
+							{{ deletingRowKey ? 'Deleting...' : 'Delete' }}
+						</BaseButton>
+					</div>
+				</div>
+			</template>
+		</BaseModal>
 	</div>
 
 	<div v-else-if="user?.email" class="p-4 pt-8">
