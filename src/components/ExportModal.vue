@@ -788,7 +788,7 @@ watch(
 
 			<!-- Preview -->
 			<div v-if="Object.keys(previewData).length > 0">
-				<BaseDetails :summary="`Preview (${Object.keys(previewData).length} items)`">
+				<BaseDetails summary="Preview">
 					<div
 						class="bg-gray-50 rounded-md p-3 max-h-32 overflow-y-auto text-xs font-mono">
 						<pre>{{

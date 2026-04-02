@@ -32,6 +32,7 @@ import InlinePriceInput from '../components/InlinePriceInput.vue'
 import InlineNotesInput from '../components/InlineNotesInput.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
+import BaseDetails from '../components/BaseDetails.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
 import CategoryFilters from '../components/CategoryFilters.vue'
 import { ArrowLeftIcon, PlusIcon, ArrowPathIcon } from '@heroicons/vue/20/solid'
@@ -339,6 +340,11 @@ const guideItemsByMaterialId = computed(() =>
 )
 
 const availableItemsForAdding = computed(() => availableItems.value || [])
+
+const shopExportPreviewData = computed(() => {
+	if (!shopItems.value?.length || !availableItems.value?.length) return {}
+	return buildVzPriceGuideShopExportData(shopItems.value, availableItems.value)
+})
 
 const existingItemIdsInShop = computed(() => (shopItems.value || []).map((s) => s.item_id))
 
@@ -3280,10 +3286,32 @@ function getServerName(serverId) {
 				</div>
 			</div>
 
-			<div v-if="exportModalDestination === 'standard'">
+			<div v-if="exportModalDestination === 'standard'" class="space-y-4">
 				<p class="text-sm text-gray-600">
 					Export this shop’s prices in the standard price guide format.
 				</p>
+				<div v-if="Object.keys(shopExportPreviewData).length > 0">
+					<BaseDetails
+						summary="Preview"
+						data-cy="shop-items-export-standard-preview">
+						<div
+							class="bg-gray-50 rounded-md p-3 max-h-32 overflow-y-auto text-xs font-mono">
+							<pre>{{
+								JSON.stringify(
+									Object.fromEntries(Object.entries(shopExportPreviewData).slice(0, 3)),
+									null,
+									2
+								)
+							}}</pre>
+							<span
+								v-if="Object.keys(shopExportPreviewData).length > 3"
+								class="text-gray-500">
+								... and
+								{{ Object.keys(shopExportPreviewData).length - 3 }} more items
+							</span>
+						</div>
+					</BaseDetails>
+				</div>
 			</div>
 
 			<div v-if="exportModalDestination === 'economy_shop_gui'">

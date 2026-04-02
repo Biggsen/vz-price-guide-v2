@@ -46,10 +46,14 @@ export function buildStandardPriceGuideItemPayload(item, opts) {
 	const stackSize = item.stack || 64
 	if (unitBuy != null) {
 		entry.unit_buy = unitBuy
-		entry.stack_buy = unitBuy * stackSize
 	}
 	if (unitSell != null) {
 		entry.unit_sell = unitSell
+	}
+	if (unitBuy != null) {
+		entry.stack_buy = unitBuy * stackSize
+	}
+	if (unitSell != null) {
 		entry.stack_sell = unitSell * stackSize
 	}
 	return entry
