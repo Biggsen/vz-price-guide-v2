@@ -22,6 +22,8 @@ import {
 } from '../utils/economyShopGuiImport.js'
 import { parseVzPriceGuideYaml, isVzPriceGuideExportShape } from '../utils/vzPriceGuideImport.js'
 import { buildEconomyShopGuiExportFiles } from '../utils/economyShopGuiExport.js'
+import { buildVzPriceGuideShopExportData } from '../utils/shopVzPriceGuideExport.js'
+import { serializeJSON, serializeYAML } from '../utils/exportData.js'
 import { classifyUnmappedImportMaterials } from '../utils/shopImportUnmapped.js'
 import ShopItemForm from '../components/ShopItemForm.vue'
 import ShopFormModal from '../components/ShopFormModal.vue'
@@ -116,6 +118,9 @@ const shopVisibleCategories = shallowRef([])
 const showShopCategoryFilters = ref(false)
 const importLoading = ref(false)
 const exportLoading = ref(false)
+const showExportModal = ref(false)
+const exportModalDestination = ref('standard')
+const priceGuideExportBusy = ref(false)
 const importError = ref(null)
 const economyShopGuiFileInput = ref(null)
 const showImportResultsModal = ref(false)
@@ -205,6 +210,10 @@ const isShopArchived = computed(() => {
 })
 
 const isServerShop = computed(() => Boolean(selectedShop.value?.server_shop))
+
+const exportModalBusy = computed(
+	() => exportLoading.value || priceGuideExportBusy.value
+)
 
 const serverVersionKey = computed(() => {
 	if (!selectedServer.value?.minecraft_version) return '1_21'
@@ -1475,6 +1484,56 @@ async function submitEditShop() {
 	}
 }
 
+function shopExportNameSlug() {
+	return String(selectedShop.value?.name || 'shop')
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '') || 'shop'
+}
+
+function downloadTextFile(filename, text, mimeType) {
+	const blob = new Blob([text], { type: `${mimeType};charset=utf-8` })
+	const url = URL.createObjectURL(blob)
+	const a = document.createElement('a')
+	a.href = url
+	a.download = filename
+	a.click()
+	URL.revokeObjectURL(url)
+}
+
+function openShopExportModal() {
+	error.value = null
+	showExportModal.value = true
+}
+
+// Server shop: VZ Price Guide shape (material_id keys, unit/stack prices), no main-site settings
+async function exportShopPriceGuide(format) {
+	if (!selectedShop.value || !shopItems.value || !availableItems.value) return
+	priceGuideExportBusy.value = true
+	error.value = null
+	try {
+		const data = buildVzPriceGuideShopExportData(shopItems.value, availableItems.value)
+		if (!Object.keys(data).length) {
+			error.value = 'Nothing to export. Add shop items with guide materials assigned.'
+			return
+		}
+		const slug = shopExportNameSlug()
+		if (format === 'json') {
+			const text = serializeJSON(data, false)
+			downloadTextFile(`${slug}-price-guide.json`, text, 'application/json')
+		} else {
+			const text = serializeYAML(data, false)
+			downloadTextFile(`${slug}-price-guide.yaml`, text, 'text/yaml')
+		}
+	} catch (err) {
+		console.error('Error exporting price guide file:', err)
+		error.value = err.message || 'Failed to export price guide file.'
+	} finally {
+		priceGuideExportBusy.value = false
+	}
+}
+
 // Server shop: export EconomyShopGUI files (shops/*.yml + sections/*.yml)
 async function exportShopPrices() {
 	if (!selectedShop.value || !shopItems.value || !availableItems.value) return
@@ -1498,13 +1557,9 @@ async function exportShopPrices() {
 		const blob = await zip.generateAsync({ type: 'blob' })
 		const url = URL.createObjectURL(blob)
 		const a = document.createElement('a')
-		const shopNameSlug = String(selectedShop.value.name || 'shop')
-			.trim()
-			.toLowerCase()
-			.replace(/[^a-z0-9]+/g, '-')
-			.replace(/^-+|-+$/g, '')
+		const slug = shopExportNameSlug()
 		a.href = url
-		a.download = `${shopNameSlug || 'shop'}-economyshopgui-${exportedCategories.length}-sections.zip`
+		a.download = `${slug}-economyshopgui-${exportedCategories.length}-sections.zip`
 		a.click()
 		URL.revokeObjectURL(url)
 	} catch (err) {
@@ -1822,13 +1877,13 @@ function getServerName(serverId) {
 						<BaseButton
 							type="button"
 							variant="secondary"
-							:disabled="!shopItems?.length || exportLoading"
+							:disabled="!shopItems?.length"
 							data-cy="shop-items-export-button"
-							@click="exportShopPrices">
+							@click="openShopExportModal">
 							<template #left-icon>
-								<ArrowDownTrayIcon class="w-4 h-4" :class="{ 'animate-spin': exportLoading }" />
+								<ArrowDownTrayIcon class="w-4 h-4" />
 							</template>
-							{{ exportLoading ? 'Exporting…' : 'Export' }}
+							Export
 						</BaseButton>
 						<p v-if="importError" class="text-sm text-red-700 basis-full">
 							{{ importError }}
@@ -3178,6 +3233,128 @@ function getServerName(serverId) {
 					@click="showRecalculateResultsModal = false">
 					Close
 				</BaseButton>
+			</div>
+		</template>
+	</BaseModal>
+
+	<BaseModal
+		:isOpen="showExportModal"
+		title="Export shop"
+		data-cy="shop-items-export-modal"
+		@close="showExportModal = false">
+		<div class="space-y-5">
+			<div>
+				<span class="text-sm font-medium text-heavy-metal block">Export as:</span>
+				<div
+					class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1"
+					role="tablist"
+					aria-label="Export destination">
+					<button
+						type="button"
+						role="tab"
+						:aria-selected="exportModalDestination === 'standard'"
+						data-cy="shop-items-export-tab-standard"
+						@click="exportModalDestination = 'standard'"
+						:class="[
+							exportModalDestination === 'standard'
+								? 'bg-gray-asparagus text-white'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100',
+							'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-asparagus'
+						]">
+						Standard
+					</button>
+					<button
+						type="button"
+						role="tab"
+						:aria-selected="exportModalDestination === 'economy_shop_gui'"
+						data-cy="shop-items-export-tab-economy-shop-gui"
+						@click="exportModalDestination = 'economy_shop_gui'"
+						:class="[
+							exportModalDestination === 'economy_shop_gui'
+								? 'bg-gray-asparagus text-white'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100',
+							'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-asparagus'
+						]">
+						EconomyShopGUI
+					</button>
+				</div>
+			</div>
+
+			<div v-if="exportModalDestination === 'standard'">
+				<p class="text-sm text-gray-600">
+					Export this shop’s prices in the standard price guide format.
+				</p>
+			</div>
+
+			<div v-if="exportModalDestination === 'economy_shop_gui'">
+				<p class="text-sm text-gray-600">
+					Export EconomyShopGUI <code class="text-xs bg-gray-100 px-1 rounded">shops</code> and
+					<code class="text-xs bg-gray-100 px-1 rounded">sections</code> YAML files as a ZIP
+					archive.
+				</p>
+			</div>
+		</div>
+
+		<template #footer>
+			<div class="space-y-4 sm:space-y-6">
+				<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+					<div class="text-sm text-gray-600">
+						{{ shopItems?.length ?? 0 }}
+						item{{ (shopItems?.length ?? 0) === 1 ? '' : 's' }}
+						<span class="hidden sm:inline"> in this shop</span>
+					</div>
+					<div class="flex flex-wrap items-center gap-2 sm:gap-3 sm:justify-end">
+						<BaseButton
+							type="button"
+							variant="tertiary"
+							class="hidden sm:inline-flex"
+							data-cy="shop-items-export-modal-cancel"
+							@click="showExportModal = false">
+							Cancel
+						</BaseButton>
+						<template v-if="exportModalDestination === 'standard'">
+							<BaseButton
+								type="button"
+								variant="primary"
+								:disabled="!shopItems?.length || exportModalBusy"
+								:loading="priceGuideExportBusy"
+								data-cy="shop-items-export-price-guide-json"
+								@click="exportShopPriceGuide('json')">
+								<template #left-icon>
+									<ArrowDownTrayIcon class="w-4 h-4" />
+								</template>
+								<span class="sm:hidden">JSON</span>
+								<span class="hidden sm:inline">Export JSON</span>
+							</BaseButton>
+							<BaseButton
+								type="button"
+								variant="primary"
+								:disabled="!shopItems?.length || exportModalBusy"
+								:loading="priceGuideExportBusy"
+								data-cy="shop-items-export-price-guide-yaml"
+								@click="exportShopPriceGuide('yaml')">
+								<template #left-icon>
+									<ArrowDownTrayIcon class="w-4 h-4" />
+								</template>
+								<span class="sm:hidden">YAML</span>
+								<span class="hidden sm:inline">Export YAML</span>
+							</BaseButton>
+						</template>
+						<BaseButton
+							v-else
+							type="button"
+							variant="primary"
+							:disabled="!shopItems?.length || exportModalBusy"
+							:loading="exportLoading"
+							data-cy="shop-items-export-economy-shop-gui-zip"
+							@click="exportShopPrices">
+							<template #left-icon>
+								<ArrowDownTrayIcon class="w-4 h-4" />
+							</template>
+							Export
+						</BaseButton>
+					</div>
+				</div>
 			</div>
 		</template>
 	</BaseModal>
