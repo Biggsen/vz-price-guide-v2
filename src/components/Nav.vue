@@ -24,6 +24,7 @@ import { getFirestore, doc, getDoc } from 'firebase/firestore'
 import { navigationHandlers } from '../utils/analytics.js'
 import { checkSuggestionUpdates, markSuggestionsAsSeen } from '../utils/suggestionNotifications.js'
 import updatesData from '../../data/updates.json'
+import { DISCORD_INVITE_URL } from '../constants/socialLinks.js'
 
 const props = defineProps({
 	activeMainNav: {
@@ -370,6 +371,29 @@ onUnmounted(() => {
 				</div>
 			</RouterLink>
 
+			<a
+				:href="DISCORD_INVITE_URL"
+				target="_blank"
+				rel="noopener noreferrer"
+				@click="
+					() => {
+						handleNavigationClick('Discord')
+						closeMenu()
+					}
+				"
+				class="block px-3 py-2 transition-colors hover:bg-gray-700 hover:text-white">
+				<div class="flex items-center gap-2">
+					<img
+						src="/images/social/discord-symbol.svg"
+						alt=""
+						width="16"
+						height="12"
+						class="w-4 h-3 object-contain shrink-0"
+						aria-hidden="true" />
+					<span>Discord</span>
+				</div>
+			</a>
+
 			<!-- Admin section (only for admins) -->
 			<div v-if="isAdmin">
 				<button
@@ -593,6 +617,24 @@ onUnmounted(() => {
 				</span>
 			</div>
 		</RouterLink>
+
+		<a
+			:href="DISCORD_INVITE_URL"
+			target="_blank"
+			rel="noopener noreferrer"
+			@click="handleNavigationClick('Discord')"
+			class="px-3 max-[800px]:px-2 py-2 rounded transition-colors whitespace-nowrap hover:bg-gray-700 hover:text-white">
+			<div class="flex items-center gap-2">
+				<img
+					src="/images/social/discord-symbol.svg"
+					alt=""
+					width="16"
+					height="12"
+					class="w-4 h-3 object-contain shrink-0 max-[900px]:hidden"
+					aria-hidden="true" />
+				<span>Discord</span>
+			</div>
+		</a>
 
 		<!-- Admin section (only for admins) -->
 		<RouterLink

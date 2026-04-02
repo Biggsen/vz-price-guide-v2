@@ -1,3 +1,7 @@
+<script setup>
+import { DISCORD_INVITE_URL } from '../constants/socialLinks.js'
+</script>
+
 <template>
 	<footer class="p-3 mt-12">
 		<div class="flex gap-4 text-sm">
@@ -18,7 +22,7 @@
 		<p class="text-gray-500 text-sm mt-2">
 			Need help? Join my
 			<a
-				href="https://discord.gg/bz6ckxGZKw"
+				:href="DISCORD_INVITE_URL"
 				target="_blank"
 				rel="noopener noreferrer"
 				class="text-heavy-metal underline">
