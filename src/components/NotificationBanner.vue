@@ -72,7 +72,11 @@ const IconComponent = props.icon || config.icon
 						<div v-if="size === 'default'" class="text-heavy-metal font-medium">
 							{{ title }}
 						</div>
-						<div :class="['text-heavy-metal text-sm', size === 'default' ? 'mt-1' : '']">
+						<div
+							:class="[
+								'text-heavy-metal text-sm whitespace-pre-line',
+								size === 'default' ? 'mt-1' : ''
+							]">
 							{{ message }}
 						</div>
 					</div>

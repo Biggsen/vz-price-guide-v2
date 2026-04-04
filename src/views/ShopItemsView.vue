@@ -14,7 +14,10 @@ import {
 	deleteShopItem,
 	markShopItemsAsChecked,
 	bulkUpdateShopItems,
-	bulkDeleteShopItems
+	bulkDeleteShopItems,
+	DEFAULT_MAX_SHOP_ITEMS_PER_SHOP,
+	getMaxShopItemsForShop,
+	getShopItemCountForShop
 } from '../utils/shopItems.js'
 import {
 	parseEconomyShopGuiYaml,
@@ -32,6 +35,7 @@ import InlinePriceInput from '../components/InlinePriceInput.vue'
 import InlineNotesInput from '../components/InlineNotesInput.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
+import NotificationBanner from '../components/NotificationBanner.vue'
 import BaseDetails from '../components/BaseDetails.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
 import CategoryFilters from '../components/CategoryFilters.vue'
@@ -66,6 +70,9 @@ import {
 } from '../utils/serverShopRecipes.js'
 import { enabledCategories } from '../constants.js'
 import { buildMergedGuideByMaterialId } from '../utils/guideItemMaterialPick.js'
+
+/** Firestore batch writes cap at 500 ops; stay under for multi-add creates. */
+const MULTI_ADD_SHOP_ITEMS_CHUNK = 400
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -122,9 +129,10 @@ const exportLoading = ref(false)
 const showExportModal = ref(false)
 const exportModalDestination = ref('standard')
 const priceGuideExportBusy = ref(false)
-const importError = ref(null)
-const economyShopGuiFileInput = ref(null)
-const showImportResultsModal = ref(false)
+const showShopYamlImportModal = ref(false)
+const shopYamlImportFile = ref(null)
+const shopImportModalError = ref(null)
+const shopYamlFileInput = ref(null)
 const importResultSummary = ref(null)
 const clearAllItemsLoading = ref(false)
 const showClearAllModal = ref(false)
@@ -197,6 +205,15 @@ const hasServers = computed(() => servers.value && servers.value.length > 0)
 const selectedShop = computed(
 	() => shops.value?.find((shop) => shop.id === selectedShopId.value) || null
 )
+
+/** Matches `getMaxShopItemsForShop` (Firestore); used for labels and disabling controls. */
+const shopItemSlotsMax = computed(() => {
+	const raw = selectedShop.value?.max_shop_items
+	if (typeof raw === 'number' && Number.isInteger(raw) && raw >= 1) return raw
+	return DEFAULT_MAX_SHOP_ITEMS_PER_SHOP
+})
+
+const shopAtItemLimit = computed(() => shopItems.value.length >= shopItemSlotsMax.value)
 
 const isShopOutOfMoney = computed(() => {
 	return selectedShop.value?.owner_funds === 0
@@ -991,9 +1008,9 @@ async function handleItemSubmit(itemData) {
 		} else {
 			// Add new shop item(s) - handle both single item and array
 			if (Array.isArray(itemData)) {
-				// Multiple items - add each one
-				for (const item of itemData) {
-					await addShopItem(selectedShopId.value, item.item_id, item)
+				for (let offset = 0; offset < itemData.length; offset += MULTI_ADD_SHOP_ITEMS_CHUNK) {
+					const chunk = itemData.slice(offset, offset + MULTI_ADD_SHOP_ITEMS_CHUNK)
+					await bulkUpdateShopItems(selectedShopId.value, chunk)
 				}
 			} else {
 				// Single item (backward compatibility)
@@ -1609,32 +1626,60 @@ async function recalculateRecipePrices() {
 
 const BULK_IMPORT_CHUNK_SIZE = 400
 
-function triggerEconomyShopGuiImport() {
-	importError.value = null
-	importResultSummary.value = null
-	showImportResultsModal.value = false
-	economyShopGuiFileInput.value?.click()
+function openShopYamlImportModal() {
+	if (!availableItems.value?.length) return
+	shopImportModalError.value = null
+	showShopYamlImportModal.value = true
 }
 
-async function onEconomyShopGuiFileSelected(event) {
-	const file = event.target?.files?.[0]
-	event.target.value = ''
-	if (!file || !selectedShopId.value || !availableItems.value?.length) return
-	importLoading.value = true
-	importError.value = null
+function closeShopYamlImportModal() {
+	showShopYamlImportModal.value = false
+	shopYamlImportFile.value = null
 	importResultSummary.value = null
-	showImportResultsModal.value = false
+	shopImportModalError.value = null
+	const input = shopYamlFileInput.value
+	if (input) input.value = ''
+}
+
+function handleShopYamlImportFileSelect(event) {
+	const file = event.target?.files?.[0]
+	if (!file) return
+	const ok =
+		file.type === 'text/yaml' ||
+		file.name.toLowerCase().endsWith('.yml') ||
+		file.name.toLowerCase().endsWith('.yaml')
+	if (!ok) {
+		shopImportModalError.value = 'Please select a valid YAML file (.yml or .yaml)'
+		event.target.value = ''
+		return
+	}
+	shopYamlImportFile.value = file
+	importResultSummary.value = null
+	shopImportModalError.value = null
+}
+
+async function runShopYamlImport() {
+	if (!shopYamlImportFile.value) {
+		shopImportModalError.value = 'No file selected'
+		return
+	}
+	if (!selectedShopId.value || !availableItems.value?.length) return
+
+	importLoading.value = true
+	shopImportModalError.value = null
+	const file = shopYamlImportFile.value
+
 	try {
 		const text = await file.text()
 		let data
 		try {
 			data = yaml.load(text)
 		} catch (yamlErr) {
-			importError.value = yamlErr?.message || 'Could not parse YAML.'
+			shopImportModalError.value = yamlErr?.message || 'Could not parse YAML.'
 			return
 		}
 		if (!data || typeof data !== 'object') {
-			importError.value = 'Invalid or empty YAML.'
+			shopImportModalError.value = 'Invalid or empty YAML.'
 			return
 		}
 
@@ -1647,13 +1692,13 @@ async function onEconomyShopGuiFileSelected(event) {
 			importFormat = 'vz'
 			entries = parseVzPriceGuideYaml(text)
 		} else {
-			importError.value =
+			shopImportModalError.value =
 				'Unrecognized YAML. Use EconomyShopGUI shops YAML (pages...) or a VZ Price Guide export (material keys with unit_buy / unit_sell).'
 			return
 		}
 
 		if (entries.length === 0) {
-			importError.value =
+			shopImportModalError.value =
 				'No valid items found. For EconomyShopGUI: pages.page*.items.* with material, buy, sell. For VZ Price Guide: material keys with unit_buy and unit_sell.'
 			return
 		}
@@ -1692,7 +1737,16 @@ async function onEconomyShopGuiFileSelected(event) {
 				unmappedOther,
 				totalEntries: entries.length
 			}
-			showImportResultsModal.value = true
+			return
+		}
+		const maxItems = await getMaxShopItemsForShop(db, selectedShopId.value)
+		const currentCount = await getShopItemCountForShop(db, selectedShopId.value)
+		const fileNewItemCount = toAdd.length
+		if (currentCount + fileNewItemCount > maxItems) {
+			const exceededBy = currentCount + fileNewItemCount - maxItems
+			shopImportModalError.value =
+				`Limit exceeded by ${exceededBy} items\n` +
+				`(${fileNewItemCount} in file • ${maxItems} max • ${currentCount} already in shop)`
 			return
 		}
 		let imported = 0
@@ -1713,13 +1767,57 @@ async function onEconomyShopGuiFileSelected(event) {
 			unmappedOther,
 			totalEntries: entries.length
 		}
-		showImportResultsModal.value = true
+		if (imported > 0) {
+			shopYamlImportFile.value = null
+			const input = shopYamlFileInput.value
+			if (input) input.value = ''
+		}
 	} catch (err) {
-		importError.value = err.message || 'Import failed.'
+		shopImportModalError.value = err.message || 'Import failed.'
 	} finally {
 		importLoading.value = false
 	}
 }
+
+const shopImportResultsBanner = computed(() => {
+	const s = importResultSummary.value
+	if (!s) return null
+	const imported = s.imported
+	const skipped = s.skipped
+	const notImported =
+		(s.unmapped || []).length + (s.unmappedMissingCategory || []).length
+
+	const countsMessage = `Imported: ${imported}\nSkipped: ${skipped}${
+		notImported > 0 ? `\nNot imported: ${notImported}` : ''
+	}`
+
+	if (notImported === 0 && skipped === 0) {
+		return {
+			type: 'success',
+			title: 'Import completed successfully!',
+			message: `Imported: ${imported}`
+		}
+	}
+	if (notImported === 0) {
+		return {
+			type: 'warning',
+			title: 'Import completed',
+			message: `Imported: ${imported}\nSkipped: ${skipped}`
+		}
+	}
+	if (imported === 0 && skipped === 0) {
+		return {
+			type: 'error',
+			title: 'Nothing could be imported',
+			message: countsMessage
+		}
+	}
+	return {
+		type: 'error',
+		title: 'Import completed with issues',
+		message: countsMessage
+	}
+})
 
 // Helper functions
 function getServerName(serverId) {
@@ -1780,13 +1878,16 @@ function getServerName(serverId) {
 						<span class="font-medium">Version:</span>
 						{{ selectedServer.minecraft_version }}
 					</span>
+					<span>
+						<span class="font-medium">Items:</span>
+						{{ shopItems.length }}/{{ shopItemSlotsMax }}
+						<span v-if="shopAtItemLimit" class="text-amber-700 font-medium">
+							— shop is full; remove items to add or import more
+						</span>
+					</span>
 					<span v-if="selectedShop.location">
 						<span class="font-medium">Location:</span>
 						{{ selectedShop.location }}
-					</span>
-					<span v-if="selectedShop.created_at">
-						<span class="font-medium">Created:</span>
-						{{ new Date(selectedShop.created_at).toLocaleDateString() }}
 					</span>
 				</div>
 			</div>
@@ -1829,13 +1930,6 @@ function getServerName(serverId) {
 
 		<!-- Main content -->
 		<div v-else-if="hasShops && hasServers && selectedShop">
-			<input
-				ref="economyShopGuiFileInput"
-				type="file"
-				accept=".yml,.yaml"
-				class="hidden"
-				aria-label="Import shop YAML (VZ Price Guide or EconomyShopGUI)"
-				@change="onEconomyShopGuiFileSelected" />
 			<!-- Search + Settings/Export row (search left, actions right; homepage-style layout) -->
 			<div class="mt-4 mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 				<!-- Left: Search (all shop types) -->
@@ -1891,9 +1985,6 @@ function getServerName(serverId) {
 							</template>
 							Export
 						</BaseButton>
-						<p v-if="importError" class="text-sm text-red-700 basis-full">
-							{{ importError }}
-						</p>
 					</template>
 					<RouterLink
 						v-if="selectedShop?.server_id && !selectedShop?.server_shop"
@@ -1934,7 +2025,7 @@ function getServerName(serverId) {
 						variant="primary"
 						data-cy="shop-items-add-item-button"
 						@click="showAddItemForm"
-						:disabled="!selectedShop"
+						:disabled="!selectedShop || shopAtItemLimit"
 						class="w-full sm:w-auto justify-center sm:justify-start">
 						<template #left-icon>
 							<PlusIcon />
@@ -1945,13 +2036,13 @@ function getServerName(serverId) {
 						<BaseButton
 							type="button"
 							variant="secondary"
-							:disabled="importLoading || !availableItems?.length"
+							:disabled="!availableItems?.length || shopAtItemLimit"
 							data-cy="shop-items-import-economyshopgui-button"
-							@click="triggerEconomyShopGuiImport">
+							@click="openShopYamlImportModal">
 							<template #left-icon>
-								<ArrowUpTrayIcon class="w-4 h-4" :class="{ 'animate-spin': importLoading }" />
+								<ArrowUpTrayIcon class="w-4 h-4" />
 							</template>
-							{{ importLoading ? 'Importing…' : 'Import' }}
+							Import
 						</BaseButton>
 						<BaseButton
 							type="button"
@@ -2750,7 +2841,7 @@ function getServerName(serverId) {
 							variant="primary"
 							data-cy="shop-items-add-item-button-bottom"
 							@click="showAddItemForm"
-							:disabled="!selectedShop">
+							:disabled="!selectedShop || shopAtItemLimit">
 							<template #left-icon>
 								<PlusIcon />
 							</template>
@@ -2771,14 +2862,14 @@ function getServerName(serverId) {
 						v-if="isServerShop && (!shopItems || shopItems.length === 0)"
 						type="button"
 						variant="secondary"
-						:disabled="importLoading || !availableItems?.length"
+						:disabled="!availableItems?.length || shopAtItemLimit"
 						data-cy="shop-items-import-economyshopgui-button-empty"
-						@click="triggerEconomyShopGuiImport"
+						@click="openShopYamlImportModal"
 						class="self-start">
 						<template #left-icon>
-							<ArrowUpTrayIcon class="w-4 h-4" :class="{ 'animate-spin': importLoading }" />
+							<ArrowUpTrayIcon class="w-4 h-4" />
 						</template>
-						{{ importLoading ? 'Importing…' : 'Import' }}
+						Import
 					</BaseButton>
 				</div>
 			</div>
@@ -3028,133 +3119,162 @@ function getServerName(serverId) {
 	</BaseModal>
 
 	<BaseModal
-		:isOpen="showImportResultsModal"
-		title="Import results"
+		:isOpen="showShopYamlImportModal"
+		title="Import shop items"
 		size="normal"
-		maxWidth="max-w-2xl"
+		maxWidth="max-w-md"
+		:closeOnBackdrop="false"
 		data-cy="shop-items-import-results-modal"
-		@close="showImportResultsModal = false">
-		<div v-if="importResultSummary" class="space-y-4">
-			<p class="text-sm text-gray-700">
-				Processed {{ importResultSummary.totalEntries }} YAML
-				entry{{ importResultSummary.totalEntries === 1 ? '' : 'ies' }}
-				<span v-if="importResultSummary.importFormat === 'vz'"> (VZ Price Guide)</span>
-				<span v-else-if="importResultSummary.importFormat === 'economyshopgui'">
-					(EconomyShopGUI)
-				</span>
-				.
+		@close="closeShopYamlImportModal">
+		<div class="space-y-4">
+			<p
+				v-if="shopAtItemLimit"
+				class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+				This shop already has {{ shopItemSlotsMax }} items (the maximum). Remove some items before
+				importing.
 			</p>
-			<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-				<div class="rounded border border-green-200 bg-green-50 px-3 py-2">
-					<p class="text-xs font-semibold uppercase tracking-wide text-green-700">Imported</p>
-					<p class="text-lg font-bold text-green-800">{{ importResultSummary.imported }}</p>
-				</div>
-				<div class="rounded border border-amber-200 bg-amber-50 px-3 py-2">
-					<p class="text-xs font-semibold uppercase tracking-wide text-amber-700">
-						Skipped (already in shop)
-					</p>
-					<p class="text-lg font-bold text-amber-800">{{ importResultSummary.skipped }}</p>
-				</div>
-				<div class="rounded border border-red-200 bg-red-50 px-3 py-2">
-					<p class="text-xs font-semibold uppercase tracking-wide text-red-700">Not imported</p>
-					<p class="text-lg font-bold text-red-800">
-						{{
-							(importResultSummary.unmapped || []).length +
-							(importResultSummary.unmappedMissingCategory || []).length
-						}}
-					</p>
-				</div>
-			</div>
-			<p class="text-xs text-gray-500">
-				<strong class="font-medium text-gray-600">Skipped</strong> counts rows that were already in
-				this shop. <strong class="font-medium text-gray-600">Not imported</strong> counts YAML lines
-				that could not be added (no guide match, or guide item missing a category).
-			</p>
-			<div v-if="importResultSummary.unmapped.length > 0" class="space-y-4">
-				<p v-if="importResultSummary.serverMinecraftLabel" class="text-sm text-gray-700">
-					This shop's server runs Minecraft
-					<strong>{{ importResultSummary.serverMinecraftLabel }}</strong>. Only guide items for that
-					version can be added here, so YAML entries for blocks from a newer Minecraft version are
-					not imported.
+			<div>
+				<label
+					for="shop-yaml-file-input"
+					class="block text-sm font-medium text-gray-700 mb-1">
+					Select YAML file
+				</label>
+				<input
+					id="shop-yaml-file-input"
+					ref="shopYamlFileInput"
+					type="file"
+					accept=".yml,.yaml"
+					data-cy="shop-items-yaml-import-file-input"
+					class="block w-full pr-3 py-1 mt-2 mb-2 text-gray-900 font-sans"
+					@change="handleShopYamlImportFileSelect" />
+				<p class="text-xs text-gray-500 mt-1">
+					Upload an EconomyShopGUI shop YAML or VZ price guide export
 				</p>
+			</div>
+
+			<NotificationBanner
+				v-if="shopImportModalError"
+				type="error"
+				title="Import failed"
+				:message="shopImportModalError" />
+
+			<div v-if="importResultSummary" class="space-y-4">
+				<NotificationBanner
+					v-if="shopImportResultsBanner"
+					data-cy="shop-items-import-results-banner"
+					:type="shopImportResultsBanner.type"
+					:title="shopImportResultsBanner.title"
+					:message="shopImportResultsBanner.message" />
+				<p v-if="importResultSummary.skipped > 0" class="text-xs text-gray-500">
+					Skipped items were already in this shop
+				</p>
+				<p
+					v-if="
+						(importResultSummary.unmapped || []).length +
+							(importResultSummary.unmappedMissingCategory || []).length >
+						0
+					"
+					class="text-xs text-gray-500">
+					<strong class="font-medium text-gray-600">Not imported</strong> counts YAML lines that
+					could not be added (no guide match, or guide item missing a category).
+				</p>
+				<div v-if="importResultSummary.unmapped.length > 0" class="space-y-4">
+					<p v-if="importResultSummary.serverMinecraftLabel" class="text-sm text-gray-700">
+						This shop's server runs Minecraft
+						<strong>{{ importResultSummary.serverMinecraftLabel }}</strong>. Only guide items for
+						that version can be added here, so YAML entries for blocks from a newer Minecraft
+						version are not imported.
+					</p>
+					<div
+						v-if="(importResultSummary.unmappedNewerThanServer || []).length > 0"
+						class="space-y-2">
+						<p class="text-sm font-semibold text-gray-900">
+							Not available in Minecraft {{ importResultSummary.serverMinecraftLabel }}
+						</p>
+						<p class="text-xs text-gray-600">
+							These materials are in the database for a newer Minecraft version than this server,
+							so they are not offered for this shop.
+						</p>
+						<div class="max-h-40 overflow-y-auto rounded border border-amber-200 bg-amber-50 p-3">
+							<ul class="text-sm text-gray-800 list-disc list-inside space-y-1">
+								<li
+									v-for="row in importResultSummary.unmappedNewerThanServer.slice(0, 30)"
+									:key="row.material">
+									<span class="font-mono">{{ row.material }}</span>
+									<span class="text-gray-600">
+										(Minecraft {{ row.itemVersion }})
+									</span>
+								</li>
+							</ul>
+						</div>
+					</div>
+					<div
+						v-if="(importResultSummary.unmappedNotInDatabase || []).length > 0"
+						class="space-y-2">
+						<p class="text-sm font-semibold text-gray-900">Not found in the item database</p>
+						<p class="text-xs text-gray-600">
+							No matching guide item for this material id (check spelling or modded names).
+						</p>
+						<div class="max-h-32 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3">
+							<p class="text-sm text-gray-700 break-words font-mono">
+								{{ importResultSummary.unmappedNotInDatabase.slice(0, 30).join(', ') }}
+							</p>
+						</div>
+					</div>
+					<div v-if="(importResultSummary.unmappedOther || []).length > 0" class="space-y-2">
+						<p class="text-sm font-semibold text-gray-900">Could not match to the guide</p>
+						<p class="text-xs text-gray-600">
+							These exist in the database for this Minecraft version but did not match the import
+							list (often a different material id than the YAML name).
+						</p>
+						<div class="max-h-32 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3">
+							<p class="text-sm text-gray-700 break-words font-mono">
+								{{ importResultSummary.unmappedOther.slice(0, 30).join(', ') }}
+							</p>
+						</div>
+					</div>
+				</div>
 				<div
-					v-if="(importResultSummary.unmappedNewerThanServer || []).length > 0"
-					class="space-y-2">
-					<p class="text-sm font-semibold text-gray-900">
-						Not available in Minecraft {{ importResultSummary.serverMinecraftLabel }}
-					</p>
+					v-if="(importResultSummary.unmappedMissingCategory || []).length > 0"
+					class="space-y-2 rounded border border-red-100 bg-red-50/50 p-3">
+					<p class="text-sm font-semibold text-gray-900">Missing category in guide</p>
 					<p class="text-xs text-gray-600">
-						These materials are in the database for a newer Minecraft version than this server, so
-						they are not offered for this shop.
+						These materials matched a guide item, but that item has no category or is Uncategorized,
+						so it was not imported.
 					</p>
-					<div class="max-h-40 overflow-y-auto rounded border border-amber-200 bg-amber-50 p-3">
+					<div class="max-h-32 overflow-y-auto rounded border border-red-200 bg-white p-3">
 						<ul class="text-sm text-gray-800 list-disc list-inside space-y-1">
 							<li
-								v-for="row in importResultSummary.unmappedNewerThanServer.slice(0, 30)"
-								:key="row.material">
-								<span class="font-mono">{{ row.material }}</span>
-								<span class="text-gray-600">
-									(Minecraft {{ row.itemVersion }})
-								</span>
+								v-for="mat in (importResultSummary.unmappedMissingCategory || []).slice(0, 30)"
+								:key="mat">
+								<span class="font-mono">{{ mat }}</span>
+								<span class="text-gray-500"> — Missing category in guide</span>
 							</li>
 						</ul>
 					</div>
 				</div>
-				<div
-					v-if="(importResultSummary.unmappedNotInDatabase || []).length > 0"
-					class="space-y-2">
-					<p class="text-sm font-semibold text-gray-900">Not found in the item database</p>
-					<p class="text-xs text-gray-600">
-						No matching guide item for this material id (check spelling or modded names).
-					</p>
-					<div class="max-h-32 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3">
-						<p class="text-sm text-gray-700 break-words font-mono">
-							{{ importResultSummary.unmappedNotInDatabase.slice(0, 30).join(', ') }}
-						</p>
-					</div>
-				</div>
-				<div v-if="(importResultSummary.unmappedOther || []).length > 0" class="space-y-2">
-					<p class="text-sm font-semibold text-gray-900">Could not match to the guide</p>
-					<p class="text-xs text-gray-600">
-						These exist in the database for this Minecraft version but did not match the import list
-						(often a different material id than the YAML name).
-					</p>
-					<div class="max-h-32 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3">
-						<p class="text-sm text-gray-700 break-words font-mono">
-							{{ importResultSummary.unmappedOther.slice(0, 30).join(', ') }}
-						</p>
-					</div>
-				</div>
-			</div>
-			<div
-				v-if="(importResultSummary.unmappedMissingCategory || []).length > 0"
-				class="space-y-2 rounded border border-red-100 bg-red-50/50 p-3">
-				<p class="text-sm font-semibold text-gray-900">Missing category in guide</p>
-				<p class="text-xs text-gray-600">
-					These materials matched a guide item, but that item has no category or is Uncategorized,
-					so it was not imported.
-				</p>
-				<div class="max-h-32 overflow-y-auto rounded border border-red-200 bg-white p-3">
-					<ul class="text-sm text-gray-800 list-disc list-inside space-y-1">
-						<li
-							v-for="mat in (importResultSummary.unmappedMissingCategory || []).slice(0, 30)"
-							:key="mat">
-							<span class="font-mono">{{ mat }}</span>
-							<span class="text-gray-500"> — Missing category in guide</span>
-						</li>
-					</ul>
-				</div>
 			</div>
 		</div>
 		<template #footer>
-			<div class="flex items-center justify-end p-4">
-				<BaseButton
-					type="button"
-					variant="primary"
-					data-cy="shop-items-import-results-close-button"
-					@click="showImportResultsModal = false">
-					Close
-				</BaseButton>
+			<div class="flex items-center justify-end">
+				<div class="flex space-x-3">
+					<button
+						type="button"
+						class="btn-secondary--outline"
+						data-cy="shop-items-import-results-close-button"
+						@click="closeShopYamlImportModal">
+						{{ importResultSummary ? 'Close' : 'Cancel' }}
+					</button>
+					<BaseButton
+						v-if="!importResultSummary"
+						type="button"
+						variant="primary"
+						data-cy="shop-items-yaml-import-submit-button"
+						:disabled="!shopYamlImportFile || importLoading || shopAtItemLimit"
+						@click="runShopYamlImport">
+						{{ importLoading ? 'Importing…' : 'Import' }}
+					</BaseButton>
+				</div>
 			</div>
 		</template>
 	</BaseModal>

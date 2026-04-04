@@ -11,7 +11,8 @@ import {
 	where,
 	orderBy,
 	writeBatch,
-	getDocs
+	getDocs,
+	getCountFromServer
 } from 'firebase/firestore'
 import { ref, computed, unref, watch } from 'vue'
 
@@ -19,6 +20,57 @@ function normalizePricingType(pricingType) {
 	if (pricingType === 'from_recipe') return 'from_recipe'
 	if (pricingType === 'base') return 'base'
 	return 'manual'
+}
+
+/** Default cap per shop; override with `max_shop_items` on the shop document (paid tiers, etc.). */
+export const DEFAULT_MAX_SHOP_ITEMS_PER_SHOP = 300
+
+/**
+ * Max items allowed for this shop (reads `shops/{shopId}.max_shop_items` when set).
+ * @param {import('firebase/firestore').Firestore} db
+ * @param {string} shopId
+ */
+export async function getMaxShopItemsForShop(db, shopId) {
+	if (!shopId) return DEFAULT_MAX_SHOP_ITEMS_PER_SHOP
+	const snap = await getDoc(doc(db, 'shops', shopId))
+	if (!snap.exists()) return DEFAULT_MAX_SHOP_ITEMS_PER_SHOP
+	const raw = snap.data()?.max_shop_items
+	if (typeof raw === 'number' && Number.isInteger(raw) && raw >= 1) return raw
+	return DEFAULT_MAX_SHOP_ITEMS_PER_SHOP
+}
+
+/**
+ * @param {import('firebase/firestore').Firestore} db
+ * @param {string} shopId
+ */
+export async function getShopItemCountForShop(db, shopId) {
+	if (!shopId) throw new Error('Shop ID is required')
+	const q = query(collection(db, 'shop_items'), where('shop_id', '==', shopId))
+	const agg = await getCountFromServer(q)
+	return agg.data().count
+}
+
+/**
+ * Throws if adding `additionalNewItemCount` new rows would exceed the shop limit.
+ * @param {import('firebase/firestore').Firestore} db
+ * @param {string} shopId
+ * @param {number} additionalNewItemCount
+ */
+export async function assertShopHasCapacityForNewItems(db, shopId, additionalNewItemCount) {
+	if (!shopId) throw new Error('Shop ID is required')
+	const n = Number(additionalNewItemCount)
+	if (!Number.isFinite(n) || n <= 0) return
+
+	const [max, current] = await Promise.all([
+		getMaxShopItemsForShop(db, shopId),
+		getShopItemCountForShop(db, shopId)
+	])
+	if (current + n > max) {
+		const remaining = Math.max(0, max - current)
+		throw new Error(
+			`This shop can hold up to ${max} items (${current} now). You can add ${remaining} more.`
+		)
+	}
 }
 
 // Check if shop item exists
@@ -56,6 +108,8 @@ export async function addShopItem(shopId, itemId, itemData) {
 
 	try {
 		const db = getFirestore()
+		await assertShopHasCapacityForNewItems(db, shopId, 1)
+
 		const shopItem = {
 			shop_id: shopId,
 			item_id: itemId,
@@ -252,6 +306,9 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 
 	try {
 		const db = getFirestore()
+		const newItemCount = itemsArray.filter((row) => !row?.id).length
+		await assertShopHasCapacityForNewItems(db, shopId, newItemCount)
+
 		const batch = writeBatch(db)
 		const results = []
 
