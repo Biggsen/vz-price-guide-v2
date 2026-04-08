@@ -249,8 +249,8 @@ function handleClose() {
 				</div>
 			</div>
 
-			<!-- Location Input (hidden when creating admin shop) -->
-			<div v-if="isEditMode || !shopForm.server_shop">
+			<!-- Location Input (hidden for admin shops) -->
+			<div v-if="!shopForm.server_shop">
 				<label
 					:for="isEditMode ? 'edit-shop-location' : 'shop-location'"
 					class="block text-sm font-medium text-gray-700 mb-1">

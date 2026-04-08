@@ -228,6 +228,9 @@ const isShopArchived = computed(() => {
 })
 
 const isServerShop = computed(() => Boolean(selectedShop.value?.server_shop))
+const showShopSettingsSection = computed(
+	() => !selectedShop.value?.is_own_shop || !selectedShop.value?.server_shop
+)
 
 const exportModalBusy = computed(
 	() => exportLoading.value || priceGuideExportBusy.value
@@ -3039,7 +3042,7 @@ function getServerName(serverId) {
 		data-cy="shop-items-settings-modal"
 		@close="showShopSettingsModal = false">
 		<div class="space-y-4">
-			<div>
+			<div v-if="showShopSettingsSection">
 				<h3 class="text-sm font-semibold text-gray-900 mb-3">Shop settings</h3>
 				<div class="space-y-3">
 					<div v-if="!selectedShop?.is_own_shop" class="space-y-1">
@@ -3075,7 +3078,7 @@ function getServerName(serverId) {
 							</span>
 						</label>
 					</div>
-					<div>
+					<div v-if="!selectedShop?.server_shop">
 						<label
 							class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
 							<input
@@ -3089,7 +3092,7 @@ function getServerName(serverId) {
 					</div>
 				</div>
 			</div>
-			<div class="pt-4">
+			<div :class="showShopSettingsSection ? 'pt-4' : ''">
 				<h3 class="text-sm font-semibold text-gray-900 mb-3">Items list</h3>
 				<div class="space-y-3">
 					<label

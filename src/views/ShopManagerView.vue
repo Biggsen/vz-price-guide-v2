@@ -977,7 +977,9 @@ function toggleShopsVisibility(serverId) {
 							<p v-if="server.description" class="text-sm text-gray-600">
 								{{ server.description }}
 							</p>
-							<div class="flex flex-col gap-1">
+							<div
+								v-if="shopsByServer[server.id]?.serverShop || server.user_manages_server"
+								class="flex flex-col gap-1">
 								<label class="text-xs font-medium text-gray-600 uppercase tracking-wide">
 									Admin shop
 								</label>
@@ -996,7 +998,7 @@ function toggleShopsVisibility(serverId) {
 										</BaseButton>
 									</RouterLink>
 								<BaseButton
-									v-else
+									v-else-if="server.user_manages_server"
 									variant="secondary"
 									:disabled="shopLoading"
 									@click="showCreateServerShopForm(server.id)"
