@@ -2520,7 +2520,8 @@ function getServerName(serverId) {
 								:rows="listRowsForDisplay"
 								row-key="id"
 								:layout="layout"
-								:hoverable="true">
+								:hoverable="true"
+								:caption="`All Items (${listRowsForDisplay.length})`">
 								<template #cell-item="{ row, layout }">
 									<div
 										class="flex items-center group"
