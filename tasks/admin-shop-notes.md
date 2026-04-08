@@ -27,6 +27,10 @@ created_at: 2026-04-02
 -   **Add Shop Item** (server shop): **Pricing type** hidden until an item is chosen in single-select mode; hidden entirely when **Enable multiple selection** is on (batch add uses shared buy/sell fields only).
 -   **Recipe price recalculation** results: summary uses `NotificationBanner` (same pattern as shop import) instead of side-by-side stat boxes.
 -   **Recipe price recalculation** modal footer: removed extra inner `p-4` so `BaseModal` footer padding is not doubled (matches import modal footer).
+-   **Recipe price recalculation** modal: `max-w-md` so width matches the **Import shop items** modal (`max-w-2xl` → `max-w-md`).
+-   Shop YAML **import results** banner: **Import finished**-style summary (added / couldn’t be added / already in shop, with sensible singular/plural). Banner is **warning** when the only issues are materials newer than the server’s Minecraft version; **error** for other import problems.
+-   Shop YAML import: removed the extra hint lines under the results banner (“skipped already in shop” / **Not imported** counts explanation); detailed unmapped sections below are unchanged.
+-   Shop YAML import — newer-than-server unmapped block: heading **Couldn't be added (N)** and short body copy; removed the long “server runs Minecraft X / not available in Minecraft X” intro. Material lines show **(1.21)**-style version, not **(Minecraft 1.21)**.
 -   Server shop **Pricing type**: long hint moved into `FieldHelpTooltip` (info icon); copy covers **Base**, **Custom**, and **Recipe**.
 
 ## UX / copy / polish

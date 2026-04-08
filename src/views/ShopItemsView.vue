@@ -1782,6 +1782,31 @@ async function runShopYamlImport() {
 	}
 }
 
+/** Multi-line summary for import result banner (items added / not added / already in shop). */
+function importFinishedStatsMessage(imported, skipped, notImported) {
+	const lines = []
+	const itemWord = imported === 1 ? 'item' : 'items'
+	lines.push(`${imported} ${itemWord} added`)
+	if (notImported > 0) {
+		lines.push(`${notImported} couldn't be added`)
+	}
+	if (skipped > 0) {
+		lines.push(`${skipped} already in shop`)
+	}
+	return lines.join('\n')
+}
+
+/** True when every unmapped line is only "material exists for a newer MC version than this server" — not a hard import failure. */
+function importIssuesAreVersionOnly(s) {
+	const missCat = (s.unmappedMissingCategory || []).length
+	const notInDb = (s.unmappedNotInDatabase || []).length
+	const other = (s.unmappedOther || []).length
+	if (missCat > 0 || notInDb > 0 || other > 0) return false
+	const unmapped = s.unmapped || []
+	const newer = s.unmappedNewerThanServer || []
+	return unmapped.length > 0 && newer.length === unmapped.length
+}
+
 const shopImportResultsBanner = computed(() => {
 	const s = importResultSummary.value
 	if (!s) return null
@@ -1790,9 +1815,9 @@ const shopImportResultsBanner = computed(() => {
 	const notImported =
 		(s.unmapped || []).length + (s.unmappedMissingCategory || []).length
 
-	const countsMessage = `Imported: ${imported}\nSkipped: ${skipped}${
-		notImported > 0 ? `\nNot imported: ${notImported}` : ''
-	}`
+	const statsMessage = importFinishedStatsMessage(imported, skipped, notImported)
+
+	const versionOnly = importIssuesAreVersionOnly(s)
 
 	if (notImported === 0 && skipped === 0) {
 		return {
@@ -1810,15 +1835,15 @@ const shopImportResultsBanner = computed(() => {
 	}
 	if (imported === 0 && skipped === 0) {
 		return {
-			type: 'error',
-			title: 'Nothing could be imported',
-			message: countsMessage
+			type: versionOnly ? 'warning' : 'error',
+			title: 'Import finished',
+			message: importFinishedStatsMessage(0, 0, notImported)
 		}
 	}
 	return {
-		type: 'error',
-		title: 'Import completed with issues',
-		message: countsMessage
+		type: versionOnly ? 'warning' : 'error',
+		title: 'Import finished',
+		message: statsMessage
 	}
 })
 
@@ -3210,35 +3235,17 @@ function getServerName(serverId) {
 					:type="shopImportResultsBanner.type"
 					:title="shopImportResultsBanner.title"
 					:message="shopImportResultsBanner.message" />
-				<p v-if="importResultSummary.skipped > 0" class="text-xs text-gray-500">
-					Skipped items were already in this shop
-				</p>
-				<p
-					v-if="
-						(importResultSummary.unmapped || []).length +
-							(importResultSummary.unmappedMissingCategory || []).length >
-						0
-					"
-					class="text-xs text-gray-500">
-					<strong class="font-medium text-gray-600">Not imported</strong> counts YAML lines that
-					could not be added (no guide match, or guide item missing a category).
-				</p>
 				<div v-if="importResultSummary.unmapped.length > 0" class="space-y-4">
-					<p v-if="importResultSummary.serverMinecraftLabel" class="text-sm text-gray-700">
-						This shop's server runs Minecraft
-						<strong>{{ importResultSummary.serverMinecraftLabel }}</strong>. Only guide items for
-						that version can be added here, so YAML entries for blocks from a newer Minecraft
-						version are not imported.
-					</p>
 					<div
 						v-if="(importResultSummary.unmappedNewerThanServer || []).length > 0"
 						class="space-y-2">
 						<p class="text-sm font-semibold text-gray-900">
-							Not available in Minecraft {{ importResultSummary.serverMinecraftLabel }}
+							Couldn't be added ({{
+								(importResultSummary.unmappedNewerThanServer || []).length
+							}})
 						</p>
-						<p class="text-xs text-gray-600">
-							These materials are in the database for a newer Minecraft version than this server,
-							so they are not offered for this shop.
+						<p class="text-sm text-gray-600">
+							These items are from a newer Minecraft version and aren't available on this server.
 						</p>
 						<div class="max-h-40 overflow-y-auto rounded border border-amber-200 bg-amber-50 p-3">
 							<ul class="text-sm text-gray-800 list-disc list-inside space-y-1">
@@ -3247,7 +3254,7 @@ function getServerName(serverId) {
 									:key="row.material">
 									<span class="font-mono">{{ row.material }}</span>
 									<span class="text-gray-600">
-										(Minecraft {{ row.itemVersion }})
+										({{ row.itemVersion }})
 									</span>
 								</li>
 							</ul>
@@ -3328,7 +3335,7 @@ function getServerName(serverId) {
 		:isOpen="showRecalculateResultsModal"
 		title="Recipe price recalculation"
 		size="normal"
-		maxWidth="max-w-2xl"
+		maxWidth="max-w-md"
 		data-cy="shop-items-recalculate-results-modal"
 		@close="showRecalculateResultsModal = false">
 		<div v-if="recalculateResultSummary" class="space-y-4">
