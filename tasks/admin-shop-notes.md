@@ -12,17 +12,18 @@ created_at: 2026-04-02
 
 ### Open
 
--   Admin shop is only for server owners. If the user selects **No — I play on this server**, do not show the add admin shop option.
--   **Edit shop** for an admin shop: do not show the **Location** field.
--   For admin shop, remove **Archive this shop** from settings.
 -   **Add Shop Item** modal: do not show **Pricing Type** until at least one item is selected. On open, no items are selected—that is the default state.
--   At some viewport widths, **Pricing** column content overlaps into the **Profit** column (layout / overflow).
 -   Shop items table briefly shows **Unknown item** (or similar) while rows are still loading—use a loading/skeleton state or defer the item label until data is ready so users don’t see a false “unknown” state.
 -   In recipe pricing, when an ingredient/item is missing from the shop, the UI currently says **No Prices**—replace this with clearer copy so users understand the item is missing from the shop (not just missing a value).
 
 ### Done
 
--
+-   Admin shop create action is now owner/manager-only. If user selects **No — I play on this server**, they no longer see **Add Admin Shop**.
+-   Hidden the **Admin shop** section label when no admin-shop action is available to the current user.
+-   **Edit shop** for admin shops no longer shows the **Location** field.
+-   Removed **Archive this shop** from settings for admin shops.
+-   In settings modal, **Shop settings** heading is hidden when no shop-level settings apply, and spacing above **Items list** collapses correctly.
+-   **Pricing** vs **Profit %** column overlap: `BaseTable` always uses `table-auto` instead of conditional `table-fixed` when columns have width hints, so columns can size from content. Re-check narrow viewports for regressions.
 
 ## UX / copy / polish
 

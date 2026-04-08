@@ -43,11 +43,6 @@ const emit = defineEmits(['sort'])
 
 const slots = useSlots()
 
-// Check if any columns have fixed widths
-const hasFixedWidthColumns = computed(() => {
-	return props.columns.some((col) => col.width || col.widthStyle)
-})
-
 // Sorting state
 const sortField = ref(props.initialSortField || '')
 const sortDirection = ref(props.initialSortDirection || 'asc') // 'asc' or 'desc'
@@ -173,7 +168,7 @@ function resolveRowKey(row, index) {
 
 <template>
 	<div class="overflow-hidden">
-		<table class="w-full border-collapse" :class="{ 'table-fixed': hasFixedWidthColumns }">
+		<table class="w-full border-collapse table-auto">
 			<caption
 				v-if="caption"
 				:class="[
