@@ -263,6 +263,14 @@ const selectedItem = computed(() => {
 	return props.availableItems.find((item) => item.id === formData.value.item_id) || null
 })
 
+// Server shop: pricing type only in single-select add flow (multi-add uses shared manual prices; no recipe UI)
+const showServerShopPricingTypeSection = computed(() => {
+	if (!isServerShop.value) return false
+	if (props.editingItem) return true
+	if (enableMultipleSelection.value) return false
+	return !!selectedItem.value
+})
+
 // "Usable recipe" for UI: guide has a recipe for this MC version. Do not use
 // hasCircularRecipeDependency here — it false-positives when the same material appears
 // on multiple paths (e.g. armor → diamond → diamond block → diamond).
@@ -1652,7 +1660,7 @@ defineExpose({
 			</div>
 
 			<!-- Server shop: pricing type (Custom vs Recipe) -->
-			<div v-if="isServerShop" class="space-y-4">
+			<div v-if="showServerShopPricingTypeSection" class="space-y-4">
 				<div>
 					<label for="pricing-type" class="block text-sm font-medium text-gray-700 mb-1">
 						Pricing type

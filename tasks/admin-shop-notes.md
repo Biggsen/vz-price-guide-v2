@@ -12,7 +12,6 @@ created_at: 2026-04-02
 
 ### Open
 
--   **Add Shop Item** modal: do not show **Pricing Type** until at least one item is selected. On open, no items are selected—that is the default state.
 -   Shop items table briefly shows **Unknown item** (or similar) while rows are still loading—use a loading/skeleton state or defer the item label until data is ready so users don’t see a false “unknown” state.
 -   In recipe pricing, when an ingredient/item is missing from the shop, the UI currently says **No Prices**—replace this with clearer copy so users understand the item is missing from the shop (not just missing a value).
 
@@ -25,6 +24,7 @@ created_at: 2026-04-02
 -   In settings modal, **Shop settings** heading is hidden when no shop-level settings apply, and spacing above **Items list** collapses correctly.
 -   **Pricing** vs **Profit %** column overlap: `BaseTable` always uses `table-auto` instead of conditional `table-fixed` when columns have width hints, so columns can size from content. Re-check narrow viewports for regressions.
 -   List view: `BaseTable` caption **All Items (n)** (same labeling as homepage list view).
+-   **Add Shop Item** (server shop): **Pricing type** hidden until an item is chosen in single-select mode; hidden entirely when **Enable multiple selection** is on (batch add uses shared buy/sell fields only).
 
 ## UX / copy / polish
 
