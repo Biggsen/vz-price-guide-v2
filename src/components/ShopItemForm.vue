@@ -16,6 +16,7 @@ import {
 	normalizeMaterialIdKey
 } from '../utils/guideItemMaterialPick.js'
 import BaseButton from './BaseButton.vue'
+import FieldHelpTooltip from './FieldHelpTooltip.vue'
 import NotificationBanner from './NotificationBanner.vue'
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 import { ArchiveBoxIcon, ArchiveBoxXMarkIcon, XMarkIcon } from '@heroicons/vue/24/outline'
@@ -1662,17 +1663,31 @@ defineExpose({
 			<!-- Server shop: pricing type (Custom vs Recipe) -->
 			<div v-if="showServerShopPricingTypeSection" class="space-y-4">
 				<div>
-					<label for="pricing-type" class="block text-sm font-medium text-gray-700 mb-1">
-						Pricing type
-					</label>
-					<p class="text-xs text-gray-500 mb-1">
-						<template v-if="selectedItem && !hasRecipeForSelectedItem">
-							Base: uses the item's base price (no usable recipe available).
-						</template>
-						<template v-else>
-							Custom: enter prices yourself. Recipe: buy and sell are computed from ingredients in this shop (all must have both prices set).
-						</template>
-					</p>
+					<div class="mb-1 flex flex-wrap items-center gap-1.5">
+						<label for="pricing-type" class="text-sm font-medium text-gray-700">
+							Pricing type
+						</label>
+						<FieldHelpTooltip
+							data-cy="shop-item-pricing-type-help"
+							button-label="How pricing types work">
+							<div class="space-y-3">
+								<p>
+									<strong class="block">Base</strong>
+									<span class="block">
+										No recipe → you set the price (usually raw materials).
+									</span>
+								</p>
+								<p>
+									<strong class="block">Recipe</strong>
+									<span class="block">Auto-calculated from ingredients.</span>
+								</p>
+								<p>
+									<strong class="block">Custom</strong>
+									<span class="block">Manual price override.</span>
+								</p>
+							</div>
+						</FieldHelpTooltip>
+					</div>
 					<input
 						v-if="selectedItem && !hasRecipeForSelectedItem"
 						id="pricing-type"

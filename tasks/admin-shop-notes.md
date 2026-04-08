@@ -27,12 +27,11 @@ created_at: 2026-04-02
 -   **Add Shop Item** (server shop): **Pricing type** hidden until an item is chosen in single-select mode; hidden entirely when **Enable multiple selection** is on (batch add uses shared buy/sell fields only).
 -   **Recipe price recalculation** results: summary uses `NotificationBanner` (same pattern as shop import) instead of side-by-side stat boxes.
 -   **Recipe price recalculation** modal footer: removed extra inner `p-4` so `BaseModal` footer padding is not doubled (matches import modal footer).
+-   Server shop **Pricing type**: long hint moved into `FieldHelpTooltip` (info icon); copy covers **Base**, **Custom**, and **Recipe**.
 
 ## UX / copy / polish
 
 -   **Inline price editing (table):** When editing buy/sell in the table, **Tab** should move focus to the next column (e.g. buy → sell, then next row or next logical cell) so prices can be entered with less mouse use. (Not implemented—note only.)
--   Add a **?** tooltip component (or pattern) for long field hints instead of always showing them inline—e.g. **Pricing Type** and similar fields.
--   **Pricing Type** hint: include **Base** in the explanation (alongside the other types).
 
 ## Security / auth / data
 
