@@ -685,6 +685,12 @@ function getPlayerShopTableRows(serverId) {
 	}))
 }
 
+function serverHasPlayerShops(serverId) {
+	const g = shopsByServer.value[serverId]
+	if (!g) return false
+	return g.own.length + g.player.length > 0
+}
+
 function toggleShopsVisibility(serverId) {
 	shopsHidden.value[serverId] = !shopsHidden.value[serverId]
 	saveShopsVisibility()
@@ -1037,7 +1043,9 @@ function toggleShopsVisibility(serverId) {
 									</BaseButton>
 								</div>
 							</div>
-							<div v-if="shopsByServer[server.id]?.all.length" class="flex gap-2 flex-wrap">
+							<div
+								v-if="serverHasPlayerShops(server.id)"
+								class="flex gap-2 flex-wrap">
 								<RouterLink :to="`/market-overview?serverId=${server.id}`">
 									<BaseButton variant="tertiary">
 										<template #left-icon>
@@ -1048,7 +1056,7 @@ function toggleShopsVisibility(serverId) {
 								</RouterLink>
 							</div>
 							<button
-								v-if="shopsByServer[server.id]?.all.length"
+								v-if="serverHasPlayerShops(server.id)"
 								type="button"
 								@click="toggleShopsVisibility(server.id)"
 								class="mt-2 text-sm text-gray-asparagus hover:text-highland underline text-left"
