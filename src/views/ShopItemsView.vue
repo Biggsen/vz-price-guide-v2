@@ -1822,6 +1822,47 @@ const shopImportResultsBanner = computed(() => {
 	}
 })
 
+const recalculateResultsBanner = computed(() => {
+	const r = recalculateResultSummary.value
+	if (!r) return null
+	if (r.fetchError) {
+		return {
+			type: 'error',
+			title: 'Recalculation failed',
+			message: r.fetchError
+		}
+	}
+	const u = r.updated.length
+	const e = r.errors.length
+	if (u === 0 && e === 0) {
+		return {
+			type: 'info',
+			title: 'Nothing changed',
+			message:
+				'No recipe-based prices were updated. This shop may have no items using from recipe pricing, or costs did not change.'
+		}
+	}
+	if (u > 0 && e === 0) {
+		return {
+			type: 'success',
+			title: 'Recalculation complete',
+			message: `Prices updated: ${u}`
+		}
+	}
+	if (u > 0 && e > 0) {
+		return {
+			type: 'warning',
+			title: 'Recalculation completed with issues',
+			message: `Prices updated: ${u}\nIssues: ${e}`
+		}
+	}
+	return {
+		type: 'error',
+		title: 'Could not recalculate',
+		message: `Issues: ${e}`
+	}
+})
+
 // Helper functions
 function getServerName(serverId) {
 	return servers.value?.find((server) => server.id === serverId)?.name || 'Unknown Server'
@@ -3291,37 +3332,13 @@ function getServerName(serverId) {
 		data-cy="shop-items-recalculate-results-modal"
 		@close="showRecalculateResultsModal = false">
 		<div v-if="recalculateResultSummary" class="space-y-4">
-			<div
-				v-if="recalculateResultSummary.fetchError"
-				class="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-				{{ recalculateResultSummary.fetchError }}
-			</div>
-			<template v-else>
-				<p
-					v-if="
-						recalculateResultSummary.updated.length === 0 &&
-						recalculateResultSummary.errors.length === 0
-					"
-					class="text-sm text-gray-700">
-					No recipe-based prices were updated. This shop may have no items using
-					<strong>from recipe</strong> pricing, or costs did not change.
-				</p>
-				<div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-					<div class="rounded border border-green-200 bg-green-50 px-3 py-2">
-						<p class="text-xs font-semibold uppercase tracking-wide text-green-700">
-							Prices updated
-						</p>
-						<p class="text-lg font-bold text-green-800">
-							{{ recalculateResultSummary.updated.length }}
-						</p>
-					</div>
-					<div class="rounded border border-amber-200 bg-amber-50 px-3 py-2">
-						<p class="text-xs font-semibold uppercase tracking-wide text-amber-800">Issues</p>
-						<p class="text-lg font-bold text-amber-900">
-							{{ recalculateResultSummary.errors.length }}
-						</p>
-					</div>
-				</div>
+			<NotificationBanner
+				v-if="recalculateResultsBanner"
+				data-cy="shop-items-recalculate-results-banner"
+				:type="recalculateResultsBanner.type"
+				:title="recalculateResultsBanner.title"
+				:message="recalculateResultsBanner.message" />
+			<template v-if="recalculateResultSummary && !recalculateResultSummary.fetchError">
 				<div v-if="recalculateResultSummary.updated.length > 0" class="space-y-2">
 					<p class="text-sm font-semibold text-gray-900">Updated items</p>
 					<div class="max-h-48 overflow-y-auto rounded border border-green-100 bg-white p-3">
@@ -3355,7 +3372,7 @@ function getServerName(serverId) {
 			</template>
 		</div>
 		<template #footer>
-			<div class="flex items-center justify-end p-4">
+			<div class="flex items-center justify-end">
 				<BaseButton
 					type="button"
 					variant="primary"
