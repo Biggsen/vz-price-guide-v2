@@ -15,6 +15,7 @@ import {
 	canonicalGuideItemForMaterial,
 	normalizeMaterialIdKey
 } from '../utils/guideItemMaterialPick.js'
+import { DEFAULT_MAX_SHOP_ITEMS_PER_SHOP } from '../utils/shopItems.js'
 import BaseButton from './BaseButton.vue'
 import FieldHelpTooltip from './FieldHelpTooltip.vue'
 import NotificationBanner from './NotificationBanner.vue'
@@ -348,6 +349,37 @@ const showAlreadyInShopNotice = computed(() => {
 	return !!formData.value.item_id && ids.includes(formData.value.item_id)
 })
 
+const resolvedMaxShopItems = computed(() => {
+	const raw = props.shop?.max_shop_items
+	if (typeof raw === 'number' && Number.isInteger(raw) && raw >= 1) return raw
+	return DEFAULT_MAX_SHOP_ITEMS_PER_SHOP
+})
+
+/** New rows that would be created (selection minus items already in the shop). */
+const newShopItemsFromSelectionCount = computed(() => {
+	if (props.editingItem || !enableMultipleSelection.value) return 0
+	const existing = new Set(props.existingItemIds || [])
+	return selectedItemIds.value.filter((id) => !existing.has(id)).length
+})
+
+const shopItemLimitExceeded = computed(() => {
+	if (props.editingItem || !enableMultipleSelection.value) return false
+	const current = (props.existingItemIds || []).length
+	return current + newShopItemsFromSelectionCount.value > resolvedMaxShopItems.value
+})
+
+const shopItemLimitExceededMessage = computed(() => {
+	if (!shopItemLimitExceeded.value) return ''
+	const max = resolvedMaxShopItems.value
+	const current = (props.existingItemIds || []).length
+	const newCount = newShopItemsFromSelectionCount.value
+	const exceededBy = current + newCount - max
+	return (
+		`Limit exceeded by ${exceededBy} items\n` +
+		`(${newCount} selected • ${max} max • ${current} already in shop)`
+	)
+})
+
 // Get all enchantment items
 const allEnchantmentItems = computed(() => {
 	if (!props.availableItems) return []
@@ -559,6 +591,7 @@ const isFormValid = computed(() => {
 		? selectedItemIds.value.length > 0
 		: !!formData.value.item_id
 	if (!hasItem) return false
+	if (enableMultipleSelection.value && shopItemLimitExceeded.value) return false
 	if (!hasRequiredPrices) return false
 	if (
 		!(isServerShop.value && formData.value.pricing_type === 'from_recipe') &&
@@ -657,6 +690,8 @@ function handleSubmit() {
 			formError.value = 'item_id'
 			return
 		}
+
+		if (shopItemLimitExceeded.value) return
 
 		// Validate buy price if provided (both can be empty for catalog bulk-add)
 		if (
@@ -1361,6 +1396,12 @@ defineExpose({
 							size="compact"
 							title="Already in shop"
 							message="One or more of these items have already been added to this shop"
+							class="mt-2" />
+						<NotificationBanner
+							v-if="shopItemLimitExceeded"
+							type="error"
+							title="Too many items selected"
+							:message="shopItemLimitExceededMessage"
 							class="mt-2" />
 					</div>
 

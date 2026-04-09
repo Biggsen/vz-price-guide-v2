@@ -1950,9 +1950,7 @@ function getServerName(serverId) {
 					<span>
 						<span class="font-medium">Items:</span>
 						{{ shopItems.length }}/{{ shopItemSlotsMax }}
-						<span v-if="shopAtItemLimit" class="text-amber-700 font-medium">
-							— shop is full; remove items to add or import more
-						</span>
+						<span v-if="shopAtItemLimit"> (full)</span>
 					</span>
 					<span v-if="selectedShop.location">
 						<span class="font-medium">Location:</span>
