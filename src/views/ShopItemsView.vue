@@ -1844,7 +1844,9 @@ function getServerName(serverId) {
 						type="button"
 						variant="primary"
 						data-cy="shop-item-form-submit-button"
-						:disabled="loading || !shopItemForm?.isFormValid"
+						:disabled="
+							loading || !shopItemForm?.isFormValid || shopItemForm?.hasShopItemLimitError
+						"
 						@click="shopItemForm?.submit()">
 						{{
 							loading
