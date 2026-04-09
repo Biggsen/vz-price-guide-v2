@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArchiveBoxIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
+import { isOfferedShopPrice } from '../utils/shopItems.js'
 
 const props = defineProps({
 	items: {
@@ -309,8 +310,7 @@ function formatDate(dateString) {
 }
 
 function calculateMargin(item) {
-	// Only calculate margin if both buy and sell prices exist
-	if (!item.buy_price || !item.sell_price || item.buy_price === 0) {
+	if (!isOfferedShopPrice(item.buy_price) || !isOfferedShopPrice(item.sell_price)) {
 		return null
 	}
 

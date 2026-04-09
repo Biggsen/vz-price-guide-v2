@@ -17,7 +17,8 @@ import {
 	bulkDeleteShopItems,
 	DEFAULT_MAX_SHOP_ITEMS_PER_SHOP,
 	getMaxShopItemsForShop,
-	getShopItemCountForShop
+	getShopItemCountForShop,
+	isOfferedShopPrice
 } from '../utils/shopItems.js'
 import {
 	parseEconomyShopGuiYaml,
@@ -3353,7 +3354,7 @@ function getServerName(serverId) {
 								:key="row.id">
 								{{ guideNameForItemId(row.item_id) }}
 								<span
-									v-if="row.buy_price != null || row.sell_price != null"
+									v-if="isOfferedShopPrice(row.buy_price) || isOfferedShopPrice(row.sell_price)"
 									class="text-gray-600">
 									(buy {{ row.buy_price ?? '—' }}, sell {{ row.sell_price ?? '—' }})
 								</span>

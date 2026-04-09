@@ -3,7 +3,7 @@
  * using only prices from the same shop. Used when server_shop === true.
  */
 
-import { updateShopItem } from './shopItems.js'
+import { isOfferedShopPrice, updateShopItem } from './shopItems.js'
 import {
 	normalizeMaterialIdKey,
 	buildMergedGuideByMaterialId
@@ -159,10 +159,7 @@ export function computeRecipePriceForShop(
 			}
 		}
 		const ingPrice = ingShopItem[priceField]
-		if (
-			ingPrice == null ||
-			(typeof ingPrice === 'number' && (isNaN(ingPrice) || ingPrice < 0))
-		) {
+		if (!isOfferedShopPrice(ingPrice)) {
 			visited.delete(guideItem.material_id)
 			return {
 				price: null,

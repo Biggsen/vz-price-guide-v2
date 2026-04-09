@@ -15,7 +15,11 @@ import {
 	canonicalGuideItemForMaterial,
 	normalizeMaterialIdKey
 } from '../utils/guideItemMaterialPick.js'
-import { DEFAULT_MAX_SHOP_ITEMS_PER_SHOP } from '../utils/shopItems.js'
+import {
+	DEFAULT_MAX_SHOP_ITEMS_PER_SHOP,
+	isOfferedShopPrice,
+	normalizeShopPriceField
+} from '../utils/shopItems.js'
 import BaseButton from './BaseButton.vue'
 import FieldHelpTooltip from './FieldHelpTooltip.vue'
 import NotificationBanner from './NotificationBanner.vue'
@@ -63,8 +67,8 @@ const emit = defineEmits(['submit', 'cancel'])
 // Form data
 const formData = ref({
 	item_id: '',
-	buy_price: null,
-	sell_price: null,
+	buy_price: 0,
+	sell_price: 0,
 	pricing_type: 'manual',
 	stock_quantity: null,
 	stock_full: false,
@@ -155,14 +159,12 @@ const recipeDisplay = computed(() => {
 		ingredients: recipe.ingredients.map((ing) => {
 			const item = byMaterialId[normalizeMaterialIdKey(ing.material_id)]
 			const shopItem = item ? shopByItemId[item.id] : null
-			const buyPrice =
-				shopItem?.buy_price != null && !isNaN(Number(shopItem.buy_price))
-					? Number(shopItem.buy_price)
-					: null
-			const sellPrice =
-				shopItem?.sell_price != null && !isNaN(Number(shopItem.sell_price))
-					? Number(shopItem.sell_price)
-					: null
+			const buyPrice = isOfferedShopPrice(shopItem?.buy_price)
+				? Number(shopItem.buy_price)
+				: null
+			const sellPrice = isOfferedShopPrice(shopItem?.sell_price)
+				? Number(shopItem.sell_price)
+				: null
 			return {
 				quantity: ing.quantity ?? 1,
 				name: item?.name || ing.material_id,
@@ -203,8 +205,8 @@ function focusSearchInput() {
 function resetForm() {
 	formData.value = {
 		item_id: '',
-		buy_price: null,
-		sell_price: null,
+		buy_price: 0,
+		sell_price: 0,
 		pricing_type: 'manual',
 		stock_quantity: null,
 		stock_full: false,
@@ -238,8 +240,8 @@ onMounted(() => {
 					: 'manual'
 		formData.value = {
 			item_id: props.editingItem.item_id,
-			buy_price: props.editingItem.buy_price,
-			sell_price: props.editingItem.sell_price,
+			buy_price: normalizeShopPriceField(props.editingItem.buy_price),
+			sell_price: normalizeShopPriceField(props.editingItem.sell_price),
 			pricing_type: pricingType,
 			stock_quantity: props.editingItem.stock_quantity,
 			stock_full: props.editingItem.stock_full || false,
@@ -313,8 +315,8 @@ watch(
 						: 'manual'
 			formData.value = {
 				item_id: newEditingItem.item_id,
-				buy_price: newEditingItem.buy_price,
-				sell_price: newEditingItem.sell_price,
+				buy_price: normalizeShopPriceField(newEditingItem.buy_price),
+				sell_price: normalizeShopPriceField(newEditingItem.sell_price),
 				pricing_type: pricingType,
 				stock_quantity: newEditingItem.stock_quantity,
 				stock_full: newEditingItem.stock_full || false,
@@ -424,7 +426,7 @@ const profitMargin = computed(() => {
 	const buyPrice = formData.value.buy_price
 	const sellPrice = formData.value.sell_price
 
-	if (!buyPrice || !sellPrice || buyPrice === 0) {
+	if (!isOfferedShopPrice(buyPrice) || !isOfferedShopPrice(sellPrice)) {
 		return null
 	}
 
@@ -662,8 +664,8 @@ function handleSubmit() {
 		}
 
 		// Clean up form data before submitting
-		let buyPrice = formData.value.buy_price ?? null
-		let sellPrice = formData.value.sell_price ?? null
+		let buyPrice = normalizeShopPriceField(formData.value.buy_price)
+		let sellPrice = normalizeShopPriceField(formData.value.sell_price)
 		if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
 			if (recipePriceResult.value.buy.price != null) buyPrice = recipePriceResult.value.buy.price
 			if (recipePriceResult.value.sell.price != null) sellPrice = recipePriceResult.value.sell.price
@@ -719,8 +721,8 @@ function handleSubmit() {
 
 		// Create array of items with shared form data (multi-select does not support from_recipe)
 		const baseData = {
-			buy_price: formData.value.buy_price ?? null,
-			sell_price: formData.value.sell_price ?? null,
+			buy_price: normalizeShopPriceField(formData.value.buy_price),
+			sell_price: normalizeShopPriceField(formData.value.sell_price),
 			pricing_type: formData.value.pricing_type || 'manual',
 			stock_quantity: formData.value.stock_quantity ?? null,
 			stock_full: formData.value.stock_full || false,
@@ -782,8 +784,8 @@ function handleSubmit() {
 		}
 
 		// Clean up form data before submitting
-		let buyPrice = formData.value.buy_price ?? null
-		let sellPrice = formData.value.sell_price ?? null
+		let buyPrice = normalizeShopPriceField(formData.value.buy_price)
+		let sellPrice = normalizeShopPriceField(formData.value.sell_price)
 		if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
 			if (recipePriceResult.value.buy.price != null) buyPrice = recipePriceResult.value.buy.price
 			if (recipePriceResult.value.sell.price != null) sellPrice = recipePriceResult.value.sell.price
