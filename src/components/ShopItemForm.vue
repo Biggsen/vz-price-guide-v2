@@ -44,6 +44,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['submit', 'cancel'])
+const SHOP_ITEM_LIMIT = 300
 
 // Form data
 const formData = ref({
@@ -173,6 +174,28 @@ const showAlreadyInShopNotice = computed(() => {
 		return selectedItemIds.value.some((id) => ids.includes(id))
 	}
 	return !!formData.value.item_id && ids.includes(formData.value.item_id)
+})
+
+const projectedShopItemCount = computed(() => {
+	if (props.editingItem) return 0
+
+	const existingIds = new Set(props.existingItemIds || [])
+
+	if (enableMultipleSelection.value) {
+		const newSelections = selectedItemIds.value.filter((id) => !existingIds.has(id))
+		return existingIds.size + newSelections.length
+	}
+
+	if (!formData.value.item_id || existingIds.has(formData.value.item_id)) {
+		return existingIds.size
+	}
+
+	return existingIds.size + 1
+})
+
+const hasShopItemLimitError = computed(() => {
+	if (props.editingItem) return false
+	return projectedShopItemCount.value > SHOP_ITEM_LIMIT
 })
 
 // Get all enchantment items
@@ -392,6 +415,10 @@ const isFormValid = computed(() => {
 		return false
 	}
 
+	if (hasShopItemLimitError.value) {
+		return false
+	}
+
 	return true
 })
 
@@ -490,6 +517,11 @@ function handleSubmit() {
 			}
 		}
 
+		if (hasShopItemLimitError.value) {
+			formError.value = 'item_limit'
+			return
+		}
+
 		// Create array of items with shared form data
 		const baseData = {
 			buy_price: formData.value.buy_price ?? null,
@@ -542,6 +574,11 @@ function handleSubmit() {
 				formError.value = 'sell_price'
 				return
 			}
+		}
+
+		if (hasShopItemLimitError.value) {
+			formError.value = 'item_limit'
+			return
 		}
 
 		// Clean up form data before submitting
@@ -1016,7 +1053,8 @@ defineExpose({
 	focusSearchInput,
 	submit: handleSubmit,
 	isFormValid,
-	selectedItemsCount: computed(() => selectedItemIds.value.length)
+	selectedItemsCount: computed(() => selectedItemIds.value.length),
+	hasShopItemLimitError
 })
 </script>
 
@@ -1120,6 +1158,13 @@ defineExpose({
 							title="Already in shop"
 							message="One or more of these items have already been added to this shop"
 							class="mt-2" />
+						<NotificationBanner
+							v-if="hasShopItemLimitError"
+							type="error"
+							size="compact"
+							title="Shop item limit reached"
+							:message="`A shop can have up to ${SHOP_ITEM_LIMIT} items. Your current selection would bring this shop to ${projectedShopItemCount} items.`"
+							class="mt-2" />
 					</div>
 
 					<!-- Item selection dropdown -->
@@ -1213,6 +1258,13 @@ defineExpose({
 						size="compact"
 						title="Already in shop"
 						message="This item has already been added to this shop"
+						class="mt-2" />
+					<NotificationBanner
+						v-if="hasShopItemLimitError"
+						type="error"
+						size="compact"
+						title="Shop item limit reached"
+						:message="`A shop can have up to ${SHOP_ITEM_LIMIT} items. Your current selection would bring this shop to ${projectedShopItemCount} items.`"
 						class="mt-2" />
 				</div>
 			</div>
