@@ -700,14 +700,112 @@ function toggleShopsVisibility(serverId) {
 <template>
 	<!-- Feature Page (shown when user doesn't have access) -->
 	<div v-if="!hasAccess" class="p-4 py-8">
+		<h1
+			class="text-3xl font-bold text-gray-900 mb-8 lg:mb-10 leading-tight lg:px-[70px]">
+			Shop Manager
+		</h1>
 		<!-- Main Feature Section -->
-		<div class="mb-16 lg:ml-[70px]">
+		<div class="mb-16 lg:px-[70px]">
 			<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-center">
 				<!-- Left Column: Text and CTA -->
 				<div>
-					<h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-6 leading-tight">
-						Player Shop Manager is here
-					</h1>
+					<p
+						class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+						For server owners
+					</p>
+					<h2 class="text-2xl font-bold text-gray-900 mb-6 leading-tight">
+						Admin Shops
+					</h2>
+					<p class="text-lg text-gray-600 mb-6 leading-relaxed">
+						Manage your server's admin shop with proper tooling instead of editing
+						config files by hand.
+					</p>
+					<p class="text-lg text-gray-600 mb-8 leading-relaxed">
+						Import existing shop setups and export clean configs when you're ready to
+						push changes.
+					</p>
+					<div class="flex flex-col sm:flex-row gap-4">
+						<BaseButton
+							v-if="!user?.email"
+							@click="handleShopManagerClick"
+							variant="primary"
+							data-cy="shop-manager-cta-button">
+							<template #left-icon>
+								<BuildingStorefrontIcon />
+							</template>
+							Manage Admin Shop
+						</BaseButton>
+						<BaseButton
+							v-else-if="!user?.emailVerified"
+							@click="handleShopManagerClick"
+							variant="primary"
+							class="text-base px-6 py-3"
+							data-cy="shop-manager-cta-button">
+							<template #left-icon>
+								<BuildingStorefrontIcon />
+							</template>
+							Manage Admin Shop
+						</BaseButton>
+						<BaseButton
+							v-else
+							@click="goToSignIn"
+							variant="primary"
+							class="text-base px-6 py-3">
+							Manage Admin Shop
+						</BaseButton>
+					</div>
+				</div>
+
+				<!-- Right Column: Feature Images Grid -->
+				<div class="grid grid-cols-2 gap-3 max-w-md">
+					<div
+						class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+						<img
+							src="/images/promo/shop-manager-1.png"
+							alt="Shop Manager feature"
+							class="w-full h-full object-cover" />
+					</div>
+					<div class="pt-6">
+						<div
+							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+							<img
+								src="/images/promo/shop-manager-2.png"
+								alt="Shop Manager feature"
+								class="w-full h-full object-cover" />
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Main Feature Section (images left, content right) -->
+		<div class="mb-16 lg:px-[70px]">
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-center">
+				<!-- Left Column: Feature Images Grid -->
+				<div class="grid grid-cols-2 gap-3 max-w-md">
+					<div
+						class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+						<img
+							src="/images/promo/shop-manager-1.png"
+							alt="Shop Manager feature"
+							class="w-full h-full object-cover" />
+					</div>
+					<div class="pt-6">
+						<div
+							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+							<img
+								src="/images/promo/shop-manager-2.png"
+								alt="Shop Manager feature"
+								class="w-full h-full object-cover" />
+						</div>
+					</div>
+				</div>
+
+				<!-- Right Column: Text and CTA -->
+				<div>
+					<h2 class="text-2xl font-bold text-gray-900 mb-6 leading-tight">
+						Player shops
+					</h2>
 					<p class="text-lg text-gray-600 mb-8 leading-relaxed">
 						Keep track of your own shops and other player shops across one or more
 						Minecraft servers. The Player Shop Manager helps you record prices, check
@@ -747,42 +845,6 @@ function toggleShopsVisibility(serverId) {
 							class="text-base px-6 py-3">
 							Request Access
 						</BaseButton>
-					</div>
-				</div>
-
-				<!-- Right Column: Feature Images Grid -->
-				<div class="grid grid-cols-2 gap-3 max-w-md">
-					<div class="space-y-3">
-						<div
-							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
-							<img
-								src="/images/promo/shop-manager-1.png"
-								alt="Shop Manager feature"
-								class="w-full h-full object-cover" />
-						</div>
-						<div
-							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
-							<img
-								src="/images/promo/shop-manager-4.png"
-								alt="Shop Manager feature"
-								class="w-full h-full object-cover" />
-						</div>
-					</div>
-					<div class="space-y-3 pt-6">
-						<div
-							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
-							<img
-								src="/images/promo/shop-manager-2.png"
-								alt="Shop Manager feature"
-								class="w-full h-full object-cover" />
-						</div>
-						<div
-							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
-							<img
-								src="/images/promo/shop-manager-3.png"
-								alt="Shop Manager feature"
-								class="w-full h-full object-cover" />
-						</div>
 					</div>
 				</div>
 			</div>
