@@ -146,10 +146,10 @@ Do **not** import at the start of this journey.
 | # | Step | Expected result | Pass | Fail | Notes |
 |---|------|-----------------|------|------|-------|
 | 3.1 | Create server + admin shop (or reuse a managed server with empty admin shop) | Empty shop ready | ☐ | ☐ | |
-| 3.2 | **Add items** → 4–6 raw materials with buy/sell | Rows show **Custom** | ☐ | ☐ | e.g. iron ingot, gold ingot, stick, coal |
+| 3.2 | **Add items** → 4–6 raw materials with buy/sell | Rows have buy/sell set | ☐ | ☐ | Mix of **Base** and **Custom** is normal (recipe-capable materials often **Custom**). e.g. iron ingot, gold ingot, stick, coal |
 | 3.3 | Pricing type selector | Appears after item chosen (single-select) | ☐ | ☐ | |
 | 3.4 | Add crafted item (e.g. iron pickaxe) with all ingredients in shop | **Recipe** pricing computes buy/sell | ☐ | ☐ | |
-| 3.5 | Add crafted item **without** an ingredient in shop | Clear validation error (not vague "No Prices") | ☐ | ☐ | |
+| 3.5 | Add crafted item **without** an ingredient in shop | Clear validation error (not vague "No Prices") | ☐ | ☐ | **Known fail (X2):** ingredient row shows red **No prices**; save message is generic. Log in `admin-shop-notes.md` |
 | 3.6 | Add missing ingredient with price | Recipe can be satisfied | ☐ | ☐ | |
 | 3.7 | **Custom → Recipe** switch in Pricing column | Switch succeeds; prices populate | ☐ | ☐ | |
 | 3.8 | Change a base ingredient price | Saves correctly | ☐ | ☐ | |
@@ -160,7 +160,7 @@ Do **not** import at the start of this journey.
 | 3.13 | Admin shop → **Export Standard YAML** | Downloads; recipe items have resolved prices | ☐ | ☐ | |
 | 3.14 | Admin shop → **Export EconomyShopGUI ZIP** | Downloads; recipe items have resolved prices | ☐ | ☐ | |
 
-**Journey 3 result:** ☐ Pass &nbsp; ☐ Fail
+**Journey 3 result:** ☐ Pass &nbsp; ☐ Fail &nbsp; *(2026-07-01 manual: Pass with step 3.5 / X2 known fail)*
 
 ---
 
@@ -180,4 +180,4 @@ Do **not** import at the start of this journey.
 |------|--------|---------|--------|-------------------|
 | 2026-07-01 | Manual (local emu) | 1 | Pass | Import modal stuck on “Importing…” fixed; ESGUI `Blocks.yml` |
 | 2026-07-01 | Manual (local emu) | 2 | Pass | 2.11–2.12 skipped; import YAML-only; second import Skipped: 21 |
-| | | | | |
+| 2026-07-01 | Manual (local emu) | 3 | Pass (3.5 fail) | Recipe recalc + dual export OK; **3.5 / X2**: “No prices” for missing ingredient (deferred) |
