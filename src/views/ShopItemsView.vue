@@ -3287,7 +3287,7 @@ function getServerName(serverId) {
 					class="block w-full pr-3 py-1 mt-2 mb-2 text-gray-900 font-sans"
 					@change="handleShopYamlImportFileSelect" />
 				<p class="text-xs text-gray-500 mt-1">
-					Upload an EconomyShopGUI shop YAML or VZ price guide export
+					Upload an EconomyShopGUI shop YAML or price guide export
 				</p>
 			</div>
 

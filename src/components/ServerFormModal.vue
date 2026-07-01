@@ -262,7 +262,9 @@ function handleSubmit() {
 							:value="true"
 							type="radio"
 							class="rounded-full border-gray-300 text-gray-asparagus focus:ring-gray-asparagus" />
-						<span class="text-sm text-gray-900">Yes – I manage this server</span>
+						<span class="text-sm text-gray-900">
+							Yes – I manage this server (required for Admin Shop)
+						</span>
 					</label>
 				</div>
 			</div>
