@@ -13,9 +13,10 @@ created_at: 2026-04-02
 ### Open
 
 -   Shop items table briefly shows **Unknown item** (or similar) while rows are still loading—use a loading/skeleton state or defer the item label until data is ready so users don’t see a false “unknown” state.
--   In recipe pricing, when an ingredient/item is missing from the shop, the UI currently says **No Prices**—replace this with clearer copy so users understand the item is missing from the shop (not just missing a value).
 
 ### Done
+
+-   Recipe pricing ingredient rows: replaced vague **No prices** badge with **Not in shop**, **No buy price**, and **No sell price** so missing ingredients are obvious before add is enabled (`ShopItemForm.vue`).
 
 -   Admin shop create action is now owner/manager-only. If user selects **No — I play on this server**, they no longer see **Add Admin Shop**.
 -   Hidden the **Admin shop** section label when no admin-shop action is available to the current user.
