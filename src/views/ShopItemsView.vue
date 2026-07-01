@@ -2,7 +2,7 @@
 import { ref, shallowRef, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
-import { query, collection, orderBy, where } from 'firebase/firestore'
+import { query, collection, orderBy, where, getDocs } from 'firebase/firestore'
 import JSZip from 'jszip'
 import yaml from 'js-yaml'
 import { useAllShops, updateShop } from '../utils/shopProfile.js'
@@ -327,23 +327,26 @@ watch(
 	}
 )
 
-// Guide items query: bind only once `selectedServer` resolves (shop + servers loaded).
-// A computed query alone could leave useCollection stuck empty until another reactive
-// bump (e.g. shop update); driving the query from `selectedServer` fixes Unknown Item names.
+// Guide items query: bind once `selectedServer` resolves. Do not null the query during brief
+// server gaps while switching shops — that tears down useCollection and can leave it stuck empty.
 const allItemsQuery = ref(null)
+const guideItemsFallback = ref(null)
+let guideItemsFallbackFetchInFlight = false
+
+watch(selectedShopId, (shopId) => {
+	if (!shopId) {
+		allItemsQuery.value = null
+		guideItemsFallback.value = null
+	}
+})
 
 watch(
 	selectedServer,
 	(server) => {
-		if (!server) {
-			allItemsQuery.value = null
-			return
-		}
+		if (!server) return
 		const majorMinorVersion = getMajorMinorVersion(server.minecraft_version)
-		if (!majorMinorVersion) {
-			allItemsQuery.value = null
-			return
-		}
+		if (!majorMinorVersion) return
+		guideItemsFallback.value = null
 		allItemsQuery.value = query(
 			collection(db, 'items'),
 			where('version', '<=', majorMinorVersion),
@@ -355,7 +358,47 @@ watch(
 	{ immediate: true }
 )
 
-const availableItems = useCollection(allItemsQuery)
+const availableItemsFromCollection = useCollection(allItemsQuery)
+
+const availableItems = computed(() => {
+	const live = availableItemsFromCollection.value
+	if (live?.length) return live
+	return guideItemsFallback.value ?? live ?? []
+})
+
+const isGuideItemsLoading = computed(
+	() =>
+		Boolean(allItemsQuery.value) &&
+		(shopItems.value?.length ?? 0) > 0 &&
+		(availableItems.value?.length ?? 0) === 0
+)
+
+watch(
+	[allItemsQuery, availableItemsFromCollection, shopItems],
+	async ([itemsQuery, liveItems, items]) => {
+		if (!itemsQuery || guideItemsFallbackFetchInFlight) return
+		const liveLen = liveItems?.length ?? 0
+		const shopLen = items?.length ?? 0
+		if (shopLen === 0 || liveLen > 0) return
+
+		guideItemsFallbackFetchInFlight = true
+		try {
+			const snapshot = await getDocs(itemsQuery)
+			if ((availableItemsFromCollection.value?.length ?? 0) === 0) {
+				guideItemsFallback.value = snapshot.docs.map((docSnap) => ({
+					id: docSnap.id,
+					...docSnap.data()
+				}))
+			}
+		} catch (err) {
+			console.warn('Guide items fallback fetch failed:', err)
+		} finally {
+			guideItemsFallbackFetchInFlight = false
+		}
+	},
+	{ flush: 'post' }
+)
+
 const guideItemsByMaterialId = computed(() =>
 	buildMergedGuideByMaterialId(availableItems.value || [])
 )
@@ -580,6 +623,9 @@ function transformShopItemForTable(shopItem) {
 		includeActions: true,
 		includePricingTypes: isServerShop.value
 	})
+	if (isGuideItemsLoading.value && !shopItem.itemData) {
+		transformed.item = 'Loading…'
+	}
 	if (isServerShop.value) {
 		const effectivePricingType = getEffectivePricingType(shopItem)
 		transformed.pricingTypes =
