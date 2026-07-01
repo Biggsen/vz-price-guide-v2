@@ -29,7 +29,7 @@ Use this stack for manual review unless noted otherwise.
 | Seeded shops on Test Server 1 | `TestPlayer1's Shop` (my shop), `Competitor Shop` (player shop) — neither is an admin shop |
 | Admin shop work | Create a **new** server in the UI with **Yes – I manage this server** (do not rely on Test Server 1 for admin shop creation) |
 | ESGUI fixtures | `reference/EconomyShopGUI/minimalist-shop/` (7 categories) and `reference/EconomyShopGUI/default-shop/` (marketplace downloads) |
-| Import format note | Import accepts **one YAML file per upload** (`shops/Blocks.yml`, etc.) — not a folder or ZIP |
+| Import format note | Admin shop **Import** accepts **one `.yml` / `.yaml` file** per upload — ESGUI shop YAML (`pages:`) or VZ price guide YAML (`material_id` keys + `unit_buy` / `unit_sell`). **Not** JSON, folders, or ZIP |
 
 **Preconditions below** are setup requirements checked **before** you start a journey (not pass/fail steps inside the journey).
 
@@ -43,7 +43,7 @@ Use this stack for manual review unless noted otherwise.
 | P2 | Email verified | ☐ | ☐ | Auto via seed for `test-admin-1` |
 | P3 | **Managed server** ready for admin shop (new server, **Yes – I manage this server**, MC **1.20** recommended) | ☐ | ☐ | Seeded Test Server 1 is for player-shop / Market Overview checks only |
 | P4 | **EconomyShopGUI import file(s)** ready — Journey 1 only | ☐ | ☐ | e.g. `reference/EconomyShopGUI/minimalist-shop/shops/Blocks.yml` (one file per import; all 7 shop files optional) |
-| P5 | **VZ price guide import file** ready — Journey 2 only | ☐ | ☐ | YAML or JSON with material keys + `unit_buy` / `unit_sell` (export from main price guide site, or from a prior admin shop Standard export — **not** the ESGUI reference folder) |
+| P5 | **VZ price guide import file** ready — Journey 2 only | ☐ | ☐ | **`.yml` / `.yaml` only** (material keys + `unit_buy` / `unit_sell`). Export from homepage or a prior admin shop **Standard YAML** export — **not** ESGUI reference folder; JSON exports are valid for sharing but **cannot** be re-imported today |
 
 ### Cross-cutting checks (watch on every journey)
 
@@ -53,7 +53,7 @@ Use this stack for manual review unless noted otherwise.
 | X2 | Recipe rows with missing ingredients show clear copy (not vague **No Prices**) | ☐ | ☐ | Open bug in `admin-shop-notes.md` |
 | X3 | Admin shop **excluded** from Market Overview | ☐ | ☐ | |
 | X4 | Admin shop settings: no **Archive**; no **Location** on edit | ☐ | ☐ | |
-| X5 | **Pricing** and **Profit %** columns readable on narrow viewport | ☐ | ☐ | |
+| X5 | **Pricing** and **Profit %** columns readable on narrow viewport | ☐ | ☐ | Responsive table: below **800px** — **Actions**, **Last updated** hidden; **Buy** / **Sell** shorten (drop “Price”). Below **600px** — **Notes**, **Profit %** hidden; pricing type icons hidden (label text remains). Pass if **Buy**, **Sell**, **Pricing** readable |
 
 ### Permission smoke (5 min, optional)
 
@@ -88,12 +88,12 @@ Use seeded **Test Server 1** (player role) or any server with **No – I play on
 | 1.8 | **Import** → select one ESGUI shop YAML (e.g. `minimalist-shop/shops/Blocks.yml`) | File accepted | ☐ | ☐ | One file per import |
 | 1.9 | Run import | Results banner (added / couldn't be added / already in shop) | ☐ | ☐ | Repeat 1.8–1.9 for more category files if desired |
 | 1.10 | Inventory | Items in categories view; **Pricing** column visible | ☐ | ☐ | |
-| 1.11 | Pricing labels | Imported items mostly **Custom** | ☐ | ☐ | |
-| 1.12 | Toggle **List** view | Items and counts correct | ☐ | ☐ | |
+| 1.11 | Pricing labels | Mix of **Base** and **Custom** as expected | ☐ | ☐ | Simple materials often **Base**; crafted/import overrides often **Custom**. Pencil beside label is decorative; circular arrow switches Custom → Recipe (Journey 3) |
+| 1.12 | Toggle **List** view | Items and counts correct | ☐ | ☐ | **View as** / **Layout** persist in browser `localStorage` across shops (not per shop) |
 | 1.13 | Search + category filters | Filtered counts correct | ☐ | ☐ | |
 | 1.14 | Inline edit buy/sell on 3–5 items | Values save; **Last Updated** changes | ☐ | ☐ | |
 | 1.15 | Profit % | Recalculates after price edits | ☐ | ☐ | |
-| 1.16 | **Settings** | No **Archive this shop**; list toggles work | ☐ | ☐ | |
+| 1.16 | **Settings** | No **Archive this shop**; admin-appropriate options only | ☐ | ☐ | Admin shop: **Hide enchantments** only under Items list. **Categories ↔ List** and **Comfortable ↔ Compact** are on the main toolbar, not in Settings |
 | 1.17 | **Export** → **EconomyShopGUI** tab → download | ZIP downloads | ☐ | ☐ | |
 | 1.18 | ZIP contents | `shops/` and `sections/` YAML present | ☐ | ☐ | |
 | 1.19 | Spot-check export | Edited prices appear on changed materials | ☐ | ☐ | |
@@ -109,25 +109,25 @@ Use seeded **Test Server 1** (player role) or any server with **No – I play on
 
 **Goal:** VZ YAML import → manual tuning → Standard export (JSON/YAML).
 
-**Requires:** P1–P3 and **P5** (VZ import file — export from the main price guide site before starting, or use output from step 2.10 as input for 2.12).
+**Requires:** P1–P3 and **P5** (VZ import YAML — export from the main price guide site before starting, or use **Standard YAML** from step 2.11 for step 2.12).
 
 Use a **different managed server** than Journey 1, or clear all items from Journey 1's admin shop.
 
 | # | Step | Expected result | Pass | Fail | Notes |
 |---|------|-----------------|------|------|-------|
 | 2.1 | Create server + admin shop (manage = Yes) | Same as Journey 1 setup | ☐ | ☐ | |
-| 2.2 | **Import** → VZ price guide YAML or JSON (P5) | Parser accepts; not "Unrecognized YAML" | ☐ | ☐ | Not an ESGUI `pages:` file |
-| 2.3 | Import summary | Banner accurate; items populate with guide categories | ☐ | ☐ | |
+| 2.2 | **Import** → VZ price guide **YAML** (P5) | Parser accepts; not "Unrecognized YAML" | ☐ | ☐ | Not an ESGUI `pages:` file. File picker is `.yml` / `.yaml` only |
+| 2.3 | Import summary | Banner accurate; items populate with guide categories | ☐ | ☐ | Categories view default; **List** ok if carried over from another shop via `localStorage` |
 | 2.4 | **Pricing** column | Mix of **Base**, **Custom** as expected | ☐ | ☐ | |
 | 2.5 | Edit 5 items (2 raw, 2 crafted, 1 enchanted if available) | Inline or form edit saves | ☐ | ☐ | |
 | 2.6 | Add **note** on one item | Note persists after refresh | ☐ | ☐ | |
 | 2.7 | **Categories ↔ List** and **Comfortable ↔ Compact** | Layout and counts correct | ☐ | ☐ | |
-| 2.8 | Narrow viewport | Pricing / Profit % columns usable | ☐ | ☐ | |
-| 2.9 | **Export** → **Standard** tab → **Preview** | Shows `material_id` keys with prices | ☐ | ☐ | |
-| 2.10 | **Export JSON** | File downloads with edited values | ☐ | ☐ | |
-| 2.11 | **Export YAML** (optional) | File downloads with same data | ☐ | ☐ | |
-| 2.12 | Round-trip (optional): clear shop → re-import exported file | Items return with same prices | ☐ | ☐ | |
-| 2.13 | Second import of same file | "Already in shop" behaviour sensible | ☐ | ☐ | |
+| 2.8 | Narrow viewport | **Buy**, **Sell**, **Pricing** usable | ☐ | ☐ | See **X5** — **Profit %** hidden below 600px by design |
+| 2.9 | **Export** → **Standard** tab → **Preview** | Shows `material_id` keys with prices | ☐ | ☐ | Preview shows **first 3 items** plus “N more items” (shape check, not full list) |
+| 2.10 | **Export JSON** | File downloads with edited values | ☐ | ☐ | Includes `stack_buy` / `stack_sell` (derived from unit × stack), same shape as homepage standard export |
+| 2.11 | **Export YAML** (optional) | File downloads with same data | ☐ | ☐ | Use this file for step 2.12 if testing round-trip |
+| 2.12 | Round-trip (optional): clear shop → re-import **YAML** export | Items return with same prices | ☐ | ☐ | **YAML only** — JSON from 2.10 cannot be imported. Skip if not testing round-trip |
+| 2.13 | Second import of same file | "Already in shop" behaviour sensible | ☐ | ☐ | e.g. **Imported: 0**, **Skipped: N** (all already in shop) |
 
 **Journey 2 result:** ☐ Pass &nbsp; ☐ Fail
 
@@ -178,6 +178,6 @@ Do **not** import at the start of this journey.
 
 | Date | Tester | Journey | Result | Bugs filed / notes |
 |------|--------|---------|--------|-------------------|
-| | | | | |
-| | | | | |
+| 2026-07-01 | Manual (local emu) | 1 | Pass | Import modal stuck on “Importing…” fixed; ESGUI `Blocks.yml` |
+| 2026-07-01 | Manual (local emu) | 2 | Pass | 2.11–2.12 skipped; import YAML-only; second import Skipped: 21 |
 | | | | | |
