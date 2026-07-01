@@ -155,7 +155,7 @@ const recipeDisplay = computed(() => {
 	shopItems.forEach((s) => {
 		if (s.item_id) shopByItemId[s.item_id] = s
 	})
-		return {
+	return {
 		ingredients: recipe.ingredients.map((ing) => {
 			const item = byMaterialId[normalizeMaterialIdKey(ing.material_id)]
 			const shopItem = item ? shopByItemId[item.id] : null
@@ -165,13 +165,21 @@ const recipeDisplay = computed(() => {
 			const sellPrice = isOfferedShopPrice(shopItem?.sell_price)
 				? Number(shopItem.sell_price)
 				: null
+			const issues = []
+			if (!shopItem) {
+				issues.push('Not in shop')
+			} else {
+				if (buyPrice == null) issues.push('No buy price')
+				if (sellPrice == null) issues.push('No sell price')
+			}
 			return {
 				quantity: ing.quantity ?? 1,
 				name: item?.name || ing.material_id,
 				image: item?.image || null,
 				buy_price: buyPrice,
 				sell_price: sellPrice,
-				item_id: item?.id ?? null
+				item_id: item?.id ?? null,
+				issues
 			}
 		})
 	}
@@ -1762,11 +1770,14 @@ defineExpose({
 										class="w-5 h-5 object-contain flex-shrink-0" />
 									<span>{{ ing.quantity }} {{ ing.name }}</span>
 								</div>
-								<span
-									v-if="ing.buy_price == null || ing.sell_price == null"
-									class="bg-red-600 text-white text-xs font-medium px-1.5 py-0.5 rounded uppercase">
-									No prices
-								</span>
+								<template v-if="ing.issues.length">
+									<span
+										v-for="(issue, issueIdx) in ing.issues"
+										:key="issueIdx"
+										class="bg-red-600 text-white text-xs font-medium px-1.5 py-0.5 rounded uppercase">
+										{{ issue }}
+									</span>
+								</template>
 								<span
 									v-else
 									class="text-gray-900">
