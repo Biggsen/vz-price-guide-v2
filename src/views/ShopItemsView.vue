@@ -1,5 +1,5 @@
 <script setup>
-import { ref, shallowRef, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, shallowRef, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
@@ -499,6 +499,7 @@ const baseTableColumns = computed(() => {
 		{
 			key: 'buyPrice',
 			label: 'Buy Price',
+			labelNarrow: 'Buy',
 			align: 'right',
 			headerAlign: 'center',
 			sortable: true,
@@ -507,6 +508,7 @@ const baseTableColumns = computed(() => {
 		{
 			key: 'sellPrice',
 			label: 'Sell Price',
+			labelNarrow: 'Sell',
 			align: 'right',
 			headerAlign: 'center',
 			sortable: true,
@@ -527,6 +529,7 @@ const baseTableColumns = computed(() => {
 		{
 			key: 'profitMargin',
 			label: 'Profit %',
+			hideBelow600: true,
 			align: 'center',
 			headerAlign: 'center',
 			sortable: true,
@@ -540,6 +543,7 @@ const baseTableColumns = computed(() => {
 		{
 			key: 'notes',
 			label: 'Notes',
+			hideBelow600: true,
 			sortable: true,
 			headerAlign: 'center',
 			widthStyle: { width: '18%' }
@@ -547,6 +551,7 @@ const baseTableColumns = computed(() => {
 		{
 			key: 'lastUpdated',
 			label: 'Last Updated',
+			hideBelow800: true,
 			sortable: true,
 			headerAlign: 'center',
 			widthStyle: { width: '14%' },
@@ -556,7 +561,14 @@ const baseTableColumns = computed(() => {
 				return valueA - valueB
 			}
 		},
-		{ key: 'actions', label: '', align: 'center', headerAlign: 'center', width: 'w-20' }
+		{
+			key: 'actions',
+			label: '',
+			hideBelow800: true,
+			align: 'center',
+			headerAlign: 'center',
+			width: 'w-20'
+		}
 	)
 	return cols
 })
@@ -1630,6 +1642,13 @@ async function recalculateRecipePrices() {
 
 const BULK_IMPORT_CHUNK_SIZE = 400
 
+/** Clear loading and yield to Vue before rendering the results panel (avoids stuck "Importing…"). */
+async function revealImportResultSummary(summary) {
+	importLoading.value = false
+	await nextTick()
+	importResultSummary.value = summary
+}
+
 function openShopYamlImportModal() {
 	if (!availableItems.value?.length) return
 	shopImportModalError.value = null
@@ -1729,7 +1748,7 @@ async function runShopYamlImport() {
 			}
 		}
 		if (toAdd.length === 0) {
-			importResultSummary.value = {
+			await revealImportResultSummary({
 				importFormat,
 				imported: 0,
 				skipped,
@@ -1740,7 +1759,7 @@ async function runShopYamlImport() {
 				unmappedNotInDatabase,
 				unmappedOther,
 				totalEntries: entries.length
-			}
+			})
 			return
 		}
 		const maxItems = await getMaxShopItemsForShop(db, selectedShopId.value)
@@ -1758,8 +1777,9 @@ async function runShopYamlImport() {
 			const chunk = toAdd.slice(i, i + BULK_IMPORT_CHUNK_SIZE)
 			await bulkUpdateShopItems(selectedShopId.value, chunk)
 			imported += chunk.length
+			await nextTick()
 		}
-		importResultSummary.value = {
+		await revealImportResultSummary({
 			importFormat,
 			imported,
 			skipped,
@@ -1770,7 +1790,7 @@ async function runShopYamlImport() {
 			unmappedNotInDatabase,
 			unmappedOther,
 			totalEntries: entries.length
-		}
+		})
 		if (imported > 0) {
 			shopYamlImportFile.value = null
 			const input = shopYamlFileInput.value
@@ -2087,14 +2107,13 @@ function getServerName(serverId) {
 			<div>
 				<div
 					v-if="shopItems && shopItems.length > 0"
-					class="flex flex-col sm:flex-row justify-start gap-3">
+					class="flex flex-row flex-nowrap items-center gap-2 sm:gap-3 overflow-x-auto pb-0.5">
 					<BaseButton
 						type="button"
 						variant="primary"
 						data-cy="shop-items-add-item-button"
 						@click="showAddItemForm"
-						:disabled="!selectedShop || shopAtItemLimit"
-						class="w-full sm:w-auto justify-center sm:justify-start">
+						:disabled="!selectedShop || shopAtItemLimit">
 						<template #left-icon>
 							<PlusIcon />
 						</template>
@@ -2123,7 +2142,12 @@ function getServerName(serverId) {
 									class="w-4 h-4"
 									:class="{ 'animate-spin': recalculateLoading }" />
 							</template>
-							{{ recalculateLoading ? 'Recalculating…' : 'Recalculate recipe prices' }}
+							<span class="sm:hidden">
+								{{ recalculateLoading ? 'Recalculating…' : 'Recalculate' }}
+							</span>
+							<span class="hidden sm:inline">
+								{{ recalculateLoading ? 'Recalculating…' : 'Recalculate recipe prices' }}
+							</span>
 						</BaseButton>
 					</template>
 				</div>
@@ -2351,15 +2375,15 @@ function getServerName(serverId) {
 											class="inline-flex items-center justify-start gap-1 text-left">
 											<PencilIcon
 												v-if="row.pricingTypes === 'Base'"
-												class="w-3.5 h-3.5 shrink-0 text-highland"
+												class="w-3.5 h-3.5 shrink-0 text-current max-[600px]:hidden"
 												aria-hidden="true" />
 											<PencilIcon
 												v-if="row.pricingTypes === 'Custom'"
-												class="w-3.5 h-3.5 shrink-0 text-highland"
+												class="w-3.5 h-3.5 shrink-0 text-current max-[600px]:hidden"
 												aria-hidden="true" />
 											<Squares2X2Icon
 												v-if="row.pricingTypes === 'Recipe'"
-												class="w-3.5 h-3.5 shrink-0 text-highland"
+												class="w-3.5 h-3.5 shrink-0 text-current max-[600px]:hidden"
 												aria-hidden="true" />
 											{{ row.pricingTypes }}
 											<BaseIconButton
@@ -2682,15 +2706,15 @@ function getServerName(serverId) {
 										class="inline-flex items-center justify-start gap-1 text-left">
 										<PencilIcon
 											v-if="row.pricingTypes === 'Base'"
-											class="w-3.5 h-3.5 shrink-0 text-highland"
+											class="w-3.5 h-3.5 shrink-0 text-current max-[600px]:hidden"
 											aria-hidden="true" />
 										<PencilIcon
 											v-if="row.pricingTypes === 'Custom'"
-											class="w-3.5 h-3.5 shrink-0 text-highland"
+											class="w-3.5 h-3.5 shrink-0 text-current max-[600px]:hidden"
 											aria-hidden="true" />
 										<Squares2X2Icon
 											v-if="row.pricingTypes === 'Recipe'"
-											class="w-3.5 h-3.5 shrink-0 text-highland"
+											class="w-3.5 h-3.5 shrink-0 text-current max-[600px]:hidden"
 											aria-hidden="true" />
 										{{ row.pricingTypes }}
 										<BaseIconButton

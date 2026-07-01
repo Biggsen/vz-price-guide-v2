@@ -164,6 +164,13 @@ function resolveRowKey(row, index) {
 
 	return index
 }
+
+function columnResponsiveHideClass(column) {
+	const classes = []
+	if (column.hideBelow800) classes.push('max-[800px]:hidden')
+	if (column.hideBelow600) classes.push('max-[600px]:hidden')
+	return classes.join(' ')
+}
 </script>
 
 <template>
@@ -195,7 +202,8 @@ function resolveRowKey(row, index) {
 							column.sortable
 								? 'cursor-pointer select-none'
 								: 'hover:bg-gray-asparagus',
-							column.width
+							column.width,
+							columnResponsiveHideClass(column)
 						]"
 						:style="column.widthStyle || null"
 						@click="column.sortable ? toggleSort(column.key) : null">
@@ -214,7 +222,12 @@ function resolveRowKey(row, index) {
 										? 'justify-center'
 										: 'justify-start'
 								]">
-								<span>{{ column.label }}</span>
+								<span v-if="column.labelNarrow" class="min-[800px]:hidden">
+									{{ column.labelNarrow }}
+								</span>
+								<span :class="column.labelNarrow ? 'hidden min-[800px]:inline' : ''">
+									{{ column.label }}
+								</span>
 								<span
 									v-if="column.sortable"
 									class="inline-flex items-center ml-1.5 w-4 h-4 flex-shrink-0">
@@ -243,7 +256,8 @@ function resolveRowKey(row, index) {
 							layoutClasses.cellPadding,
 							layoutClasses.fontSize,
 							alignmentClasses[column.key],
-							column.width
+							column.width,
+							columnResponsiveHideClass(column)
 						]"
 						:style="column.widthStyle || null">
 						<slot
