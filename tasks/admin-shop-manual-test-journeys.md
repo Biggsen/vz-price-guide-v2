@@ -5,6 +5,7 @@ created_at: 2026-06-30
 related:
   - tasks/server-shop-feature-spec.md
   - tasks/admin-shop-notes.md
+  - tasks/testing/admin-shop-testing-spec.md
 ---
 
 # Admin Shop — Manual Test Journeys
@@ -12,7 +13,8 @@ related:
 Use these journeys to review the admin shop feature (`server_shop: true`, UI label **Admin Shop**) from setup through import, price changes, and export.
 
 **Spec:** `tasks/server-shop-feature-spec.md`  
-**Review scratchpad:** `tasks/admin-shop-notes.md`
+**Review scratchpad:** `tasks/admin-shop-notes.md`  
+**Planned Cypress coverage:** `tasks/testing/admin-shop-testing-spec.md`
 
 ---
 
