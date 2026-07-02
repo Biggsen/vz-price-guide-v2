@@ -12,9 +12,11 @@ created_at: 2026-04-02
 
 ### Open
 
--   Shop items table briefly shows **Unknown item** (or similar) while rows are still loading—use a loading/skeleton state or defer the item label until data is ready so users don’t see a false “unknown” state.
+-
 
 ### Done
+
+-   Shop items table **Unknown item** flash when switching shops: show **Loading…** until the guide catalog resolves; keep the guide-items query alive across brief gaps and fall back to `getDocs` when VueFire stays empty (`ShopItemsView.vue`).
 
 -   Recipe pricing ingredient rows: replaced vague **No prices** badge with **Not in shop**, **No buy price**, and **No sell price** so missing ingredients are obvious before add is enabled (`ShopItemForm.vue`).
 

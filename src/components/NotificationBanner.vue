@@ -62,7 +62,7 @@ const IconComponent = props.icon || config.icon
 	<div :class="['border-l-4', config.borderColor]">
 		<div class="border-l-2 border-l-white">
 			<div :class="[size === 'compact' ? 'p-2' : 'p-3', config.backgroundColor]">
-				<div :class="['flex', size === 'compact' ? 'items-center' : 'items-start']">
+				<div class="flex items-start">
 					<IconComponent
 						:class="[
 							'text-heavy-metal mr-2 flex-shrink-0',

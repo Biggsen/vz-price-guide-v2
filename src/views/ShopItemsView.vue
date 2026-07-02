@@ -3287,8 +3287,14 @@ function getServerName(serverId) {
 					class="block w-full pr-3 py-1 mt-2 mb-2 text-gray-900 font-sans"
 					@change="handleShopYamlImportFileSelect" />
 				<p class="text-xs text-gray-500 mt-1">
-					Upload an EconomyShopGUI shop YAML or price guide export
+					Import items from an EconomyShopGUI shop YAML or Price Guide export.
 				</p>
+				<NotificationBanner
+					type="info"
+					size="compact"
+					title="Import note"
+					message="Imported items are organised using the Price Guide categories. Original EconomyShopGUI sections (categories) are not retained."
+					class="mt-2" />
 			</div>
 
 			<NotificationBanner

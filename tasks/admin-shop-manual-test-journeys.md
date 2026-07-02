@@ -49,8 +49,8 @@ Use this stack for manual review unless noted otherwise.
 
 | # | Check | Pass | Fail | Notes |
 |---|-------|------|------|-------|
-| X1 | No persistent **Unknown item** after table finishes loading | ☐ | ☐ | Brief flash during load is a known issue |
-| X2 | Recipe rows with missing ingredients show clear copy (not vague **No Prices**) | ☐ | ☐ | Open bug in `admin-shop-notes.md` |
+| X1 | No persistent **Unknown item** after table finishes loading | ☐ | ☐ | Fixed: **Loading…** while catalog resolves |
+| X2 | Recipe rows with missing ingredients show clear copy (not vague **No prices**) | ☐ | ☐ | **Not in shop** / **No buy price** / **No sell price** badges |
 | X3 | Admin shop **excluded** from Market Overview | ☐ | ☐ | |
 | X4 | Admin shop settings: no **Archive**; no **Location** on edit | ☐ | ☐ | |
 | X5 | **Pricing** and **Profit %** columns readable on narrow viewport | ☐ | ☐ | Responsive table: below **800px** — **Actions**, **Last updated** hidden; **Buy** / **Sell** shorten (drop “Price”). Below **600px** — **Notes**, **Profit %** hidden; pricing type icons hidden (label text remains). Pass if **Buy**, **Sell**, **Pricing** readable |
@@ -149,7 +149,7 @@ Do **not** import at the start of this journey.
 | 3.2 | **Add items** → 4–6 raw materials with buy/sell | Rows have buy/sell set | ☐ | ☐ | Mix of **Base** and **Custom** is normal (recipe-capable materials often **Custom**). e.g. iron ingot, gold ingot, stick, coal |
 | 3.3 | Pricing type selector | Appears after item chosen (single-select) | ☐ | ☐ | |
 | 3.4 | Add crafted item (e.g. iron pickaxe) with all ingredients in shop | **Recipe** pricing computes buy/sell | ☐ | ☐ | |
-| 3.5 | Add crafted item **without** an ingredient in shop | Clear validation error (not vague "No Prices") | ☐ | ☐ | **Known fail (X2):** ingredient row shows red **No prices**; save message is generic. Log in `admin-shop-notes.md` |
+| 3.5 | Add crafted item **without** an ingredient in shop | Clear validation error (not vague "No Prices") | ☐ | ☐ | Ingredient rows use **Not in shop** / **No buy price** / **No sell price** |
 | 3.6 | Add missing ingredient with price | Recipe can be satisfied | ☐ | ☐ | |
 | 3.7 | **Custom → Recipe** switch in Pricing column | Switch succeeds; prices populate | ☐ | ☐ | |
 | 3.8 | Change a base ingredient price | Saves correctly | ☐ | ☐ | |
