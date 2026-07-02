@@ -1,9 +1,11 @@
 ---
 title: Admin Shop — Manual Test Journeys
 description: Three happy-path manual test journeys for reviewing the admin / server shop feature end to end.
+status: completed
 created_at: 2026-06-30
+completed_at: 2026-07-02
 related:
-  - tasks/server-shop-feature-spec.md
+  - tasks/completed/server-shop-feature-spec.md
   - tasks/admin-shop-notes.md
   - tasks/testing/admin-shop-testing-spec.md
 ---
@@ -12,7 +14,7 @@ related:
 
 Use these journeys to review the admin shop feature (`server_shop: true`, UI label **Admin Shop**) from setup through import, price changes, and export.
 
-**Spec:** `tasks/server-shop-feature-spec.md`  
+**Spec:** `tasks/completed/server-shop-feature-spec.md`  
 **Review scratchpad:** `tasks/admin-shop-notes.md`  
 **Planned Cypress coverage:** `tasks/testing/admin-shop-testing-spec.md`
 

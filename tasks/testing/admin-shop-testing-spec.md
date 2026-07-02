@@ -4,8 +4,8 @@ description: Planned end-to-end test coverage for Admin Shop (server_shop) — i
 status: not-started
 created_at: 2026-07-02
 related:
-  - tasks/server-shop-feature-spec.md
-  - tasks/admin-shop-manual-test-journeys.md
+  - tasks/completed/server-shop-feature-spec.md
+  - tasks/completed/admin-shop-manual-test-journeys.md
   - tasks/admin-shop-notes.md
   - tasks/completed/shop-manager-testing-spec.md
   - tasks/testing/cypress-testing.md
@@ -15,7 +15,7 @@ related:
 
 ## Overview
 
-Plan for Cypress coverage of **Admin Shop** (`server_shop: true`, UI label **Admin Shop**) inside Shop Manager. The feature shipped in PR #23; manual journeys in `tasks/admin-shop-manual-test-journeys.md` are the source of truth for happy paths until these specs exist.
+Plan for Cypress coverage of **Admin Shop** (`server_shop: true`, UI label **Admin Shop**) inside Shop Manager. The feature shipped in PR #23; manual journeys in `tasks/completed/admin-shop-manual-test-journeys.md` are the source of truth for happy paths until these specs exist.
 
 **Status:** Not started — implement when ready.
 
