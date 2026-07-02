@@ -1,0 +1,26 @@
+enable: true
+slot: 15
+title: '    &8&l<<=== &c&lRedstone &8&l===>>    '
+hidden: false
+sub-section: false
+display-item: false
+fill-item:
+  material: GRAY_STAINED_GLASS_PANE
+  name: ' '
+nav-bar:
+  mode: SELF
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: ' '
+  items:
+    GoBack:
+      material: NETHER_STAR
+      name: '%translations-back%'
+      action: BACK
+      slot: 5
+item:
+  material: REDSTONE
+  lore:
+  - '&4&lFor all redstone geeks!'
+  displayname: '&c&lRedstone'
+  name: '&c&lRedstone'

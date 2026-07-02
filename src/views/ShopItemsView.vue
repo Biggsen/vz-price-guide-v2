@@ -1,8 +1,10 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, shallowRef, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useCurrentUser, useFirestore, useCollection } from 'vuefire'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
-import { query, collection, orderBy, where } from 'firebase/firestore'
+import { query, collection, orderBy, where, getDocs } from 'firebase/firestore'
+import JSZip from 'jszip'
+import yaml from 'js-yaml'
 import { useAllShops, updateShop } from '../utils/shopProfile.js'
 import { useServers, getMajorMinorVersion } from '../utils/serverProfile.js'
 import {
@@ -10,8 +12,23 @@ import {
 	addShopItem,
 	updateShopItem,
 	deleteShopItem,
-	markShopItemsAsChecked
+	markShopItemsAsChecked,
+	bulkUpdateShopItems,
+	bulkDeleteShopItems,
+	DEFAULT_MAX_SHOP_ITEMS_PER_SHOP,
+	getMaxShopItemsForShop,
+	getShopItemCountForShop,
+	isOfferedShopPrice
 } from '../utils/shopItems.js'
+import {
+	parseEconomyShopGuiYaml,
+	mapToGuideItems
+} from '../utils/economyShopGuiImport.js'
+import { parseVzPriceGuideYaml, isVzPriceGuideExportShape } from '../utils/vzPriceGuideImport.js'
+import { buildEconomyShopGuiExportFiles } from '../utils/economyShopGuiExport.js'
+import { buildVzPriceGuideShopExportData } from '../utils/shopVzPriceGuideExport.js'
+import { serializeJSON, serializeYAML } from '../utils/exportData.js'
+import { classifyUnmappedImportMaterials } from '../utils/shopImportUnmapped.js'
 import ShopItemForm from '../components/ShopItemForm.vue'
 import ShopFormModal from '../components/ShopFormModal.vue'
 import BaseTable from '../components/BaseTable.vue'
@@ -19,9 +36,21 @@ import InlinePriceInput from '../components/InlinePriceInput.vue'
 import InlineNotesInput from '../components/InlineNotesInput.vue'
 import BaseButton from '../components/BaseButton.vue'
 import BaseModal from '../components/BaseModal.vue'
+import NotificationBanner from '../components/NotificationBanner.vue'
+import BaseDetails from '../components/BaseDetails.vue'
 import BaseIconButton from '../components/BaseIconButton.vue'
+import CategoryFilters from '../components/CategoryFilters.vue'
 import { ArrowLeftIcon, PlusIcon, ArrowPathIcon } from '@heroicons/vue/20/solid'
-import { CurrencyDollarIcon, ClipboardDocumentCheckIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
+import { Squares2X2Icon } from '@heroicons/vue/24/solid'
+import {
+	CurrencyDollarIcon,
+	ClipboardDocumentCheckIcon,
+	Cog6ToothIcon,
+	ArrowDownTrayIcon,
+	ArrowUpTrayIcon,
+	ArrowUpIcon,
+	ArrowPathRoundedSquareIcon
+} from '@heroicons/vue/24/outline'
 import {
 	PencilIcon,
 	TrashIcon,
@@ -34,7 +63,17 @@ import { StarIcon } from '@heroicons/vue/24/solid'
 import { getImageUrl, getItemImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
+import {
+	recalculateRecipePricesForShop,
+	versionToKey,
+	getRecipeForItem,
+	computeRecipePriceForShop
+} from '../utils/serverShopRecipes.js'
 import { enabledCategories } from '../constants.js'
+import { buildMergedGuideByMaterialId } from '../utils/guideItemMaterialPick.js'
+
+/** Firestore batch writes cap at 500 ops; stay under for multi-add creates. */
+const MULTI_ADD_SHOP_ITEMS_CHUNK = 400
 
 const user = useCurrentUser()
 const router = useRouter()
@@ -55,6 +94,16 @@ const layout = ref('comfortable') // 'comfortable' or 'condensed'
 const showEnchantments = ref(true) // Show enchantments in item table
 const hideOutOfStock = ref(false) // Hide items that are out of stock
 
+const showBackToTop = ref(false)
+
+function scrollToTop() {
+	window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function handleShopPageScroll() {
+	showBackToTop.value = window.scrollY > 300
+}
+
 // Inline price editing state
 const editingPriceId = ref(null)
 const editingPriceType = ref(null) // 'buy' or 'sell'
@@ -69,6 +118,25 @@ const markingAsChecked = ref(false) // Track if marking items as checked
 const markingItemId = ref(null) // Track which item is being marked as checked
 const catalogStatusLoading = ref(false)
 const catalogStatusError = ref(null)
+const recalculateLoading = ref(false)
+const switchingPricingItemId = ref(null)
+const showRecalculateResultsModal = ref(false)
+const recalculateResultSummary = ref(null)
+const searchQuery = ref('')
+const shopVisibleCategories = shallowRef([])
+const showShopCategoryFilters = ref(false)
+const importLoading = ref(false)
+const exportLoading = ref(false)
+const showExportModal = ref(false)
+const exportModalDestination = ref('standard')
+const priceGuideExportBusy = ref(false)
+const showShopYamlImportModal = ref(false)
+const shopYamlImportFile = ref(null)
+const shopImportModalError = ref(null)
+const shopYamlFileInput = ref(null)
+const importResultSummary = ref(null)
+const clearAllItemsLoading = ref(false)
+const showClearAllModal = ref(false)
 
 // Shop settings modal state
 const showShopSettingsModal = ref(false)
@@ -89,6 +157,7 @@ const shopForm = ref({
 	location: '',
 	description: '',
 	is_own_shop: false,
+	server_shop: false,
 	owner_funds: null
 })
 
@@ -100,6 +169,7 @@ function resetShopForm() {
 		location: '',
 		description: '',
 		is_own_shop: false,
+		server_shop: false,
 		owner_funds: null
 	}
 	usePlayerAsShopName.value = false
@@ -137,6 +207,15 @@ const selectedShop = computed(
 	() => shops.value?.find((shop) => shop.id === selectedShopId.value) || null
 )
 
+/** Matches `getMaxShopItemsForShop` (Firestore); used for labels and disabling controls. */
+const shopItemSlotsMax = computed(() => {
+	const raw = selectedShop.value?.max_shop_items
+	if (typeof raw === 'number' && Number.isInteger(raw) && raw >= 1) return raw
+	return DEFAULT_MAX_SHOP_ITEMS_PER_SHOP
+})
+
+const shopAtItemLimit = computed(() => shopItems.value.length >= shopItemSlotsMax.value)
+
 const isShopOutOfMoney = computed(() => {
 	return selectedShop.value?.owner_funds === 0
 })
@@ -147,6 +226,20 @@ const isShopFullyCataloged = computed(() => {
 
 const isShopArchived = computed(() => {
 	return Boolean(selectedShop.value?.archived)
+})
+
+const isServerShop = computed(() => Boolean(selectedShop.value?.server_shop))
+const showShopSettingsSection = computed(
+	() => !selectedShop.value?.is_own_shop || !selectedShop.value?.server_shop
+)
+
+const exportModalBusy = computed(
+	() => exportLoading.value || priceGuideExportBusy.value
+)
+
+const serverVersionKey = computed(() => {
+	if (!selectedServer.value?.minecraft_version) return '1_21'
+	return versionToKey(getMajorMinorVersion(selectedServer.value.minecraft_version))
 })
 
 async function handleOutOfMoneyChange(checked) {
@@ -234,33 +327,90 @@ watch(
 	}
 )
 
-// Get all items from the main collection for the item selector
-const allItemsQuery = computed(() => {
-	if (!selectedShop.value?.server_id) return null
+// Guide items query: bind once `selectedServer` resolves. Do not null the query during brief
+// server gaps while switching shops — that tears down useCollection and can leave it stuck empty.
+const allItemsQuery = ref(null)
+const guideItemsFallback = ref(null)
+let guideItemsFallbackFetchInFlight = false
 
-	// Get the server to determine Minecraft version
-	const server = servers.value?.find((s) => s.id === selectedShop.value.server_id)
-	if (!server) return null
-
-	// Use major.minor version for filtering (extract from full version if needed)
-	const majorMinorVersion = getMajorMinorVersion(server.minecraft_version)
-
-	return query(
-		collection(db, 'items'),
-		where('version', '<=', majorMinorVersion),
-		orderBy('version', 'asc'),
-		orderBy('category', 'asc'),
-		orderBy('name', 'asc')
-	)
+watch(selectedShopId, (shopId) => {
+	if (!shopId) {
+		allItemsQuery.value = null
+		guideItemsFallback.value = null
+	}
 })
 
-const availableItems = useCollection(allItemsQuery)
+watch(
+	selectedServer,
+	(server) => {
+		if (!server) return
+		const majorMinorVersion = getMajorMinorVersion(server.minecraft_version)
+		if (!majorMinorVersion) return
+		guideItemsFallback.value = null
+		allItemsQuery.value = query(
+			collection(db, 'items'),
+			where('version', '<=', majorMinorVersion),
+			orderBy('version', 'asc'),
+			orderBy('category', 'asc'),
+			orderBy('name', 'asc')
+		)
+	},
+	{ immediate: true }
+)
+
+const availableItemsFromCollection = useCollection(allItemsQuery)
+
+const availableItems = computed(() => {
+	const live = availableItemsFromCollection.value
+	if (live?.length) return live
+	return guideItemsFallback.value ?? live ?? []
+})
+
+const isGuideItemsLoading = computed(
+	() =>
+		Boolean(allItemsQuery.value) &&
+		(shopItems.value?.length ?? 0) > 0 &&
+		(availableItems.value?.length ?? 0) === 0
+)
+
+watch(
+	[allItemsQuery, availableItemsFromCollection, shopItems],
+	async ([itemsQuery, liveItems, items]) => {
+		if (!itemsQuery || guideItemsFallbackFetchInFlight) return
+		const liveLen = liveItems?.length ?? 0
+		const shopLen = items?.length ?? 0
+		if (shopLen === 0 || liveLen > 0) return
+
+		guideItemsFallbackFetchInFlight = true
+		try {
+			const snapshot = await getDocs(itemsQuery)
+			if ((availableItemsFromCollection.value?.length ?? 0) === 0) {
+				guideItemsFallback.value = snapshot.docs.map((docSnap) => ({
+					id: docSnap.id,
+					...docSnap.data()
+				}))
+			}
+		} catch (err) {
+			console.warn('Guide items fallback fetch failed:', err)
+		} finally {
+			guideItemsFallbackFetchInFlight = false
+		}
+	},
+	{ flush: 'post' }
+)
+
+const guideItemsByMaterialId = computed(() =>
+	buildMergedGuideByMaterialId(availableItems.value || [])
+)
 
 const availableItemsForAdding = computed(() => availableItems.value || [])
 
-const existingItemIdsInShop = computed(() =>
-	(shopItems.value || []).map((s) => s.item_id)
-)
+const shopExportPreviewData = computed(() => {
+	if (!shopItems.value?.length || !availableItems.value?.length) return {}
+	return buildVzPriceGuideShopExportData(shopItems.value, availableItems.value)
+})
+
+const existingItemIdsInShop = computed(() => (shopItems.value || []).map((s) => s.item_id))
 
 // Format enchantment name for display
 function formatEnchantmentName(enchantmentId) {
@@ -286,13 +436,13 @@ function formatEnchantmentName(enchantmentId) {
 			const capitalizedEnchant = enchantName
 				.replace(/_/g, ' ')
 				.replace(/\b\w/g, (l) => l.toUpperCase())
-			
+
 			// Don't display level 1 for single-level enchantments (max level 1)
 			const maxLevel = enchantmentItem.enchantment_max_level
 			if (level === '1' && maxLevel === 1) {
 				return capitalizedEnchant
 			}
-			
+
 			return `${capitalizedEnchant} ${level}`
 		}
 
@@ -344,6 +494,16 @@ const shopItemsByCategory = computed(() => {
 		}
 	})
 
+	// Match homepage / useItems.js: subcategory asc, then name asc within each category
+	Object.keys(grouped).forEach((cat) => {
+		grouped[cat].sort((a, b) => {
+			const subA = a.itemData?.subcategory || ''
+			const subB = b.itemData?.subcategory || ''
+			if (subA !== subB) return subA.localeCompare(subB)
+			return (a.itemData?.name || '').localeCompare(b.itemData?.name || '')
+		})
+	})
+
 	return grouped
 })
 
@@ -369,59 +529,113 @@ const allVisibleShopItems = computed(() => {
 		})
 })
 
-// BaseTable column definitions
-const baseTableColumns = computed(() => [
-	{ key: 'item', label: 'Item', sortable: true, headerAlign: 'center' },
-	{
-		key: 'buyPrice',
-		label: 'Buy Price',
-		align: 'right',
-		headerAlign: 'center',
-		sortable: true,
-		width: 'w-32'
-	},
-	{
-		key: 'sellPrice',
-		label: 'Sell Price',
-		align: 'right',
-		headerAlign: 'center',
-		sortable: true,
-		width: 'w-32'
-	},
-	{
-		key: 'profitMargin',
-		label: 'Profit %',
-		align: 'center',
-		headerAlign: 'center',
-		sortable: true,
-		width: 'w-32',
-		sortFn: (a, b) => {
-			// Extract numeric value from formatted string (e.g., "66.7%" -> 66.7)
-			const valueA = a.profitMargin === '—' ? -Infinity : parseFloat(a.profitMargin) || 0
-			const valueB = b.profitMargin === '—' ? -Infinity : parseFloat(b.profitMargin) || 0
-			return valueA - valueB
+// BaseTable column definitions (percentage widths; last column keeps fixed width)
+const baseTableColumns = computed(() => {
+	const cols = [
+		{
+			key: 'item',
+			label: 'Item',
+			sortable: true,
+			headerAlign: 'center',
+			widthStyle: { width: '26%' }
+		},
+		{
+			key: 'buyPrice',
+			label: 'Buy Price',
+			labelNarrow: 'Buy',
+			align: 'right',
+			headerAlign: 'center',
+			sortable: true,
+			widthStyle: { width: '11%' }
+		},
+		{
+			key: 'sellPrice',
+			label: 'Sell Price',
+			labelNarrow: 'Sell',
+			align: 'right',
+			headerAlign: 'center',
+			sortable: true,
+			widthStyle: { width: '11%' }
 		}
-	},
-	{ key: 'notes', label: 'Notes', sortable: true, headerAlign: 'center' },
-	{
-		key: 'lastUpdated',
-		label: 'Last Updated',
-		sortable: true,
-		headerAlign: 'center',
-		width: 'w-40',
-		sortFn: (a, b) => {
-			// Sort by timestamp
-			const valueA = a._lastUpdatedTimestamp || 0
-			const valueB = b._lastUpdatedTimestamp || 0
-			return valueA - valueB
+	]
+	if (isServerShop.value) {
+		cols.push({
+			key: 'pricingTypes',
+			label: 'Pricing',
+			align: 'left',
+			headerAlign: 'center',
+			sortable: true,
+			widthStyle: { width: '9%' }
+		})
+	}
+	cols.push(
+		{
+			key: 'profitMargin',
+			label: 'Profit %',
+			hideBelow600: true,
+			align: 'center',
+			headerAlign: 'center',
+			sortable: true,
+			widthStyle: { width: '11%' },
+			sortFn: (a, b) => {
+				const valueA = a.profitMargin === '—' ? -Infinity : parseFloat(a.profitMargin) || 0
+				const valueB = b.profitMargin === '—' ? -Infinity : parseFloat(b.profitMargin) || 0
+				return valueA - valueB
+			}
+		},
+		{
+			key: 'notes',
+			label: 'Notes',
+			hideBelow600: true,
+			sortable: true,
+			headerAlign: 'center',
+			widthStyle: { width: '18%' }
+		},
+		{
+			key: 'lastUpdated',
+			label: 'Last Updated',
+			hideBelow800: true,
+			sortable: true,
+			headerAlign: 'center',
+			widthStyle: { width: '14%' },
+			sortFn: (a, b) => {
+				const valueA = a._lastUpdatedTimestamp || 0
+				const valueB = b._lastUpdatedTimestamp || 0
+				return valueA - valueB
+			}
+		},
+		{
+			key: 'actions',
+			label: '',
+			hideBelow800: true,
+			align: 'center',
+			headerAlign: 'center',
+			width: 'w-20'
 		}
-	},
-	{ key: 'actions', label: '', align: 'center', headerAlign: 'center', width: 'w-20' }
-])
+	)
+	return cols
+})
 
 // Transform shop items for BaseTable (using shared utility)
 function transformShopItemForTable(shopItem) {
-	return transformShopItem(shopItem, { includeNotes: true, includeActions: true })
+	const transformed = transformShopItem(shopItem, {
+		includeNotes: true,
+		includeActions: true,
+		includePricingTypes: isServerShop.value
+	})
+	if (isGuideItemsLoading.value && !shopItem.itemData) {
+		transformed.item = 'Loading…'
+	}
+	if (isServerShop.value) {
+		const effectivePricingType = getEffectivePricingType(shopItem)
+		transformed.pricingTypes =
+			effectivePricingType === 'from_recipe'
+				? 'Recipe'
+				: effectivePricingType === 'base'
+					? 'Base'
+					: 'Custom'
+	}
+	return transformed
 }
 
 // BaseTable rows for list view
@@ -467,6 +681,146 @@ const sortedCategories = computed(() => {
 
 	return orderedCategories
 })
+
+// Search terms from query (comma-separated, OR logic)
+function getSearchTerms() {
+	if (!searchQuery.value?.trim()) return []
+	return searchQuery.value
+		.trim()
+		.toLowerCase()
+		.split(',')
+		.map((t) => t.trim())
+		.filter((t) => t.length > 0)
+}
+
+// Filter rows by item name matching any search term
+function rowMatchesSearch(row) {
+	const terms = getSearchTerms()
+	if (terms.length === 0) return true
+	const name = (row?.item ?? '').toLowerCase()
+	return terms.some((term) => name.includes(term))
+}
+
+// Filtered list rows (when search active)
+const filteredBaseTableRows = computed(() => {
+	if (getSearchTerms().length === 0) return baseTableRows.value
+	return baseTableRows.value.filter(rowMatchesSearch)
+})
+
+// Filtered category rows (when search active)
+const filteredBaseTableRowsByCategory = computed(() => {
+	if (getSearchTerms().length === 0) return baseTableRowsByCategory.value
+	const filtered = {}
+	Object.entries(baseTableRowsByCategory.value || {}).forEach(([category, rows]) => {
+		const match = rows.filter(rowMatchesSearch)
+		if (match.length > 0) filtered[category] = match
+	})
+	return filtered
+})
+
+// Categories to show (search narrows set; chips narrow further)
+const sortedCategoriesForDisplay = computed(() => {
+	let categories = sortedCategories.value
+	if (getSearchTerms().length > 0) {
+		const filteredKeys = Object.keys(filteredBaseTableRowsByCategory.value || {})
+		categories = categories.filter((c) => filteredKeys.includes(c))
+	}
+	if (shopVisibleCategories.value.length > 0) {
+		categories = categories.filter((c) => shopVisibleCategories.value.includes(c))
+	}
+	return categories
+})
+
+// Count of items matching current search, after category chip filter
+const filteredItemCount = computed(() => {
+	if (getSearchTerms().length === 0) return 0
+	if (viewMode.value === 'list') return listRowsForDisplay.value.length
+	return sortedCategoriesForDisplay.value.reduce((sum, cat) => {
+		const useFiltered = getSearchTerms().length > 0
+		const src = useFiltered ? filteredBaseTableRowsByCategory.value : baseTableRowsByCategory.value
+		return sum + (src[cat] || []).length
+	}, 0)
+})
+
+// Homepage-style category chips: counts per guide category (shop inventory only)
+const shopTotalCategoryCounts = computed(() => {
+	const out = {}
+	for (const cat of enabledCategories) {
+		out[cat] = (baseTableRowsByCategory.value[cat] || []).length
+	}
+	return out
+})
+
+const shopAllCategoriesWithSearch = computed(() => {
+	const acc = {}
+	const terms = getSearchTerms()
+	for (const cat of enabledCategories) {
+		const rows = baseTableRowsByCategory.value[cat] || []
+		acc[cat] = terms.length === 0 ? rows : rows.filter(rowMatchesSearch)
+	}
+	return acc
+})
+
+const shopCategoryFilterTotalItemCount = computed(() => {
+	if (getSearchTerms().length === 0) return baseTableRows.value.length
+	return filteredBaseTableRows.value.length
+})
+
+// List view rows after search + category chip filter
+const listRowsForDisplay = computed(() => {
+	const base =
+		getSearchTerms().length > 0 ? filteredBaseTableRows.value : baseTableRows.value
+	if (shopVisibleCategories.value.length === 0) return base
+	return base.filter((row) => {
+		const cat = row._originalItem?.itemData?.category || 'Uncategorized'
+		return shopVisibleCategories.value.includes(cat)
+	})
+})
+
+function resetSearch() {
+	searchQuery.value = ''
+}
+
+function loadShopVisibleCategories(shopId) {
+	if (!shopId) return []
+	try {
+		const raw = localStorage.getItem(`shopItemsVisibleCategories_${shopId}`)
+		if (!raw) return []
+		const parsed = JSON.parse(raw)
+		if (!Array.isArray(parsed)) return []
+		return parsed.filter((c) => enabledCategories.includes(c))
+	} catch {
+		return []
+	}
+}
+
+function persistShopVisibleCategories() {
+	if (!selectedShopId.value) return
+	try {
+		localStorage.setItem(
+			`shopItemsVisibleCategories_${selectedShopId.value}`,
+			JSON.stringify(shopVisibleCategories.value)
+		)
+	} catch {
+		// ignore
+	}
+}
+
+function handleShopToggleCategory(cat) {
+	const cur = shopVisibleCategories.value
+	const idx = cur.indexOf(cat)
+	if (idx !== -1) {
+		shopVisibleCategories.value = cur.filter((c) => c !== cat)
+	} else {
+		shopVisibleCategories.value = [...cur, cat]
+	}
+	persistShopVisibleCategories()
+}
+
+function handleShopClearCategories() {
+	shopVisibleCategories.value = []
+	persistShopVisibleCategories()
+}
 
 // Load and save view settings from localStorage
 function loadViewSettings() {
@@ -519,6 +873,9 @@ onMounted(() => {
 
 	// Add keyboard shortcut listener
 	document.addEventListener('keydown', handleKeyDown)
+
+	window.addEventListener('scroll', handleShopPageScroll)
+	handleShopPageScroll()
 })
 
 watch(
@@ -575,6 +932,18 @@ watch(selectedShopId, (newShopId) => {
 	}
 })
 
+watch(
+	() => selectedShopId.value,
+	(id) => {
+		if (!id) {
+			shopVisibleCategories.value = []
+			return
+		}
+		shopVisibleCategories.value = loadShopVisibleCategories(id)
+	},
+	{ immediate: true }
+)
+
 // Save view settings when they change
 watch(
 	[viewMode, layout, showEnchantments, hideOutOfStock],
@@ -615,6 +984,8 @@ onUnmounted(() => {
 
 	// Remove keyboard shortcut listener
 	document.removeEventListener('keydown', handleKeyDown)
+
+	window.removeEventListener('scroll', handleShopPageScroll)
 })
 
 // Form handlers
@@ -699,9 +1070,9 @@ async function handleItemSubmit(itemData) {
 		} else {
 			// Add new shop item(s) - handle both single item and array
 			if (Array.isArray(itemData)) {
-				// Multiple items - add each one
-				for (const item of itemData) {
-					await addShopItem(selectedShopId.value, item.item_id, item)
+				for (let offset = 0; offset < itemData.length; offset += MULTI_ADD_SHOP_ITEMS_CHUNK) {
+					const chunk = itemData.slice(offset, offset + MULTI_ADD_SHOP_ITEMS_CHUNK)
+					await bulkUpdateShopItems(selectedShopId.value, chunk)
 				}
 			} else {
 				// Single item (backward compatibility)
@@ -750,6 +1121,30 @@ async function confirmDeleteItem() {
 		error.value = err.message || 'Failed to delete shop item. Please try again.'
 	} finally {
 		loading.value = false
+	}
+}
+
+function openClearAllModal() {
+	if (!shopItems.value?.length) return
+	showClearAllModal.value = true
+}
+
+function closeClearAllModal() {
+	showClearAllModal.value = false
+}
+
+async function confirmClearAllItems() {
+	if (!selectedShopId.value || !shopItems.value?.length) return
+	clearAllItemsLoading.value = true
+	error.value = null
+	try {
+		await bulkDeleteShopItems(selectedShopId.value)
+		closeClearAllModal()
+	} catch (err) {
+		console.error('Error clearing shop items:', err)
+		error.value = err.message || 'Failed to clear items. Please try again.'
+	} finally {
+		clearAllItemsLoading.value = false
 	}
 }
 
@@ -888,6 +1283,154 @@ function cancelEditPrice() {
 	editingPriceType.value = null
 }
 
+function isFromRecipePricing(shopItem) {
+	return getEffectivePricingType(shopItem) === 'from_recipe'
+}
+
+function getStoredPricingType(shopItem) {
+	if (!shopItem) return 'manual'
+	return (
+		shopItem.pricing_type ||
+		(shopItem.buy_pricing_type === 'from_recipe' || shopItem.sell_pricing_type === 'from_recipe'
+			? 'from_recipe'
+			: 'manual')
+	)
+}
+
+function getEffectivePricingType(shopItem) {
+	const storedType = getStoredPricingType(shopItem)
+	const hasUsableRecipe = hasUsableRecipeForPricing(shopItem)
+
+	if (storedType === 'from_recipe') {
+		if (!hasUsableRecipe) return 'base'
+		return 'from_recipe'
+	}
+	if (storedType === 'base') return 'base'
+	if (storedType === 'manual' && !hasUsableRecipe) {
+		return 'base'
+	}
+	return storedType
+}
+
+function hasUsableRecipeForPricing(shopItem) {
+	const guideItem =
+		shopItem?.itemData ||
+		(availableItems.value || []).find((item) => item.id === shopItem?.item_id)
+	const recipe = guideItem ? getRecipeForItem(guideItem, serverVersionKey.value) : null
+	return Boolean(recipe)
+}
+
+function canComputeRecipePricesForPricingSwitch(shopItem) {
+	if (!shopItem) return false
+
+	const guideItem =
+		shopItem.itemData || (availableItems.value || []).find((item) => item.id === shopItem.item_id)
+	if (!guideItem) return false
+
+	const byMaterialId = guideItemsByMaterialId.value || {}
+	const byItemId = {}
+	;(shopItems.value || []).forEach((si) => {
+		if (si?.item_id) byItemId[si.item_id] = si
+	})
+	const currentItem = byItemId[shopItem.item_id]
+	if (!currentItem) return false
+
+	const buyResult = computeRecipePriceForShop(
+		currentItem,
+		guideItem,
+		byItemId,
+		byMaterialId,
+		serverVersionKey.value,
+		'buy'
+	)
+	const sellResult = computeRecipePriceForShop(
+		currentItem,
+		guideItem,
+		byItemId,
+		byMaterialId,
+		serverVersionKey.value,
+		'sell'
+	)
+
+	return (
+		!buyResult.error &&
+		!sellResult.error &&
+		buyResult.price != null &&
+		sellResult.price != null
+	)
+}
+
+function canSwitchCustomToRecipe(shopItem) {
+	if (!isServerShop.value || !shopItem?.id) return false
+	return (
+		getStoredPricingType(shopItem) === 'manual' &&
+		hasUsableRecipeForPricing(shopItem) &&
+		canComputeRecipePricesForPricingSwitch(shopItem)
+	)
+}
+
+function canSwitchRecipeToCustom(shopItem) {
+	if (!isServerShop.value || !shopItem?.id) return false
+	return getStoredPricingType(shopItem) === 'from_recipe'
+}
+
+async function switchCustomToRecipe(shopItem) {
+	if (!selectedShopId.value || !availableItems.value || !canSwitchCustomToRecipe(shopItem)) return
+	switchingPricingItemId.value = shopItem.id
+	error.value = null
+	try {
+		await updateShopItem(shopItem.id, {
+			pricing_type: 'from_recipe',
+			buy_pricing_type: 'from_recipe',
+			sell_pricing_type: 'from_recipe'
+		})
+		const patchedShopItems = (shopItems.value || []).map((si) =>
+			si.id === shopItem.id
+				? {
+						...si,
+						pricing_type: 'from_recipe',
+						buy_pricing_type: 'from_recipe',
+						sell_pricing_type: 'from_recipe'
+					}
+				: si
+		)
+		await recalculateRecipePricesForShop(
+			selectedShopId.value,
+			patchedShopItems,
+			availableItems.value,
+			serverVersionKey.value
+		)
+	} catch (err) {
+		console.error('Error switching pricing type to recipe:', err)
+		error.value = err.message || 'Failed to switch pricing type. Please try again.'
+	} finally {
+		switchingPricingItemId.value = null
+	}
+}
+
+async function switchRecipeToCustom(shopItem) {
+	if (!canSwitchRecipeToCustom(shopItem)) return
+	switchingPricingItemId.value = shopItem.id
+	error.value = null
+	try {
+		await updateShopItem(shopItem.id, {
+			pricing_type: 'manual',
+			buy_pricing_type: 'manual',
+			sell_pricing_type: 'manual'
+		})
+	} catch (err) {
+		console.error('Error switching pricing type to custom:', err)
+		error.value = err.message || 'Failed to switch pricing type. Please try again.'
+	} finally {
+		switchingPricingItemId.value = null
+	}
+}
+
+function formatPriceDisplay(value) {
+	if (value == null || value === '' || isNaN(Number(value)) || Number(value) === 0) return '—'
+	return parseFloat(Number(value).toFixed(2)).toString()
+}
+
 // Inline notes editing functions
 function startEditNotes(itemId) {
 	editingNotesId.value = itemId
@@ -960,6 +1503,7 @@ function openEditShopModal() {
 		location: selectedShop.value.location || '',
 		description: selectedShop.value.description || '',
 		is_own_shop: Boolean(selectedShop.value.is_own_shop),
+		server_shop: Boolean(selectedShop.value.server_shop),
 		owner_funds:
 			selectedShop.value.owner_funds === null || selectedShop.value.owner_funds === undefined
 				? null
@@ -1007,6 +1551,7 @@ async function submitEditShop() {
 			location: shopForm.value.location?.trim() || '',
 			description: shopForm.value.description?.trim() || '',
 			is_own_shop: editingShop.value.is_own_shop,
+			server_shop: shopForm.value.server_shop,
 			owner_funds: editingShop.value.owner_funds
 		}
 
@@ -1023,6 +1568,392 @@ async function submitEditShop() {
 		shopFormLoading.value = false
 	}
 }
+
+function shopExportNameSlug() {
+	return String(selectedShop.value?.name || 'shop')
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '') || 'shop'
+}
+
+function downloadTextFile(filename, text, mimeType) {
+	const blob = new Blob([text], { type: `${mimeType};charset=utf-8` })
+	const url = URL.createObjectURL(blob)
+	const a = document.createElement('a')
+	a.href = url
+	a.download = filename
+	a.click()
+	URL.revokeObjectURL(url)
+}
+
+function openShopExportModal() {
+	error.value = null
+	showExportModal.value = true
+}
+
+// Server shop: VZ Price Guide shape (material_id keys, unit/stack prices), no main-site settings
+async function exportShopPriceGuide(format) {
+	if (!selectedShop.value || !shopItems.value || !availableItems.value) return
+	priceGuideExportBusy.value = true
+	error.value = null
+	try {
+		const data = buildVzPriceGuideShopExportData(shopItems.value, availableItems.value)
+		if (!Object.keys(data).length) {
+			error.value = 'Nothing to export. Add shop items with guide materials assigned.'
+			return
+		}
+		const slug = shopExportNameSlug()
+		if (format === 'json') {
+			const text = serializeJSON(data, false)
+			downloadTextFile(`${slug}-price-guide.json`, text, 'application/json')
+		} else {
+			const text = serializeYAML(data, false)
+			downloadTextFile(`${slug}-price-guide.yaml`, text, 'text/yaml')
+		}
+	} catch (err) {
+		console.error('Error exporting price guide file:', err)
+		error.value = err.message || 'Failed to export price guide file.'
+	} finally {
+		priceGuideExportBusy.value = false
+	}
+}
+
+// Server shop: export EconomyShopGUI files (shops/*.yml + sections/*.yml)
+async function exportShopPrices() {
+	if (!selectedShop.value || !shopItems.value || !availableItems.value) return
+	exportLoading.value = true
+	error.value = null
+	try {
+		const { files, exportedCategories } = buildEconomyShopGuiExportFiles(
+			shopItems.value,
+			availableItems.value
+		)
+		if (!files.length) {
+			error.value =
+				'Nothing to export. Ensure this admin shop has items mapped to categories and guide materials.'
+			return
+		}
+
+		const zip = new JSZip()
+		for (const file of files) {
+			zip.file(file.path, file.content)
+		}
+		const blob = await zip.generateAsync({ type: 'blob' })
+		const url = URL.createObjectURL(blob)
+		const a = document.createElement('a')
+		const slug = shopExportNameSlug()
+		a.href = url
+		a.download = `${slug}-economyshopgui-${exportedCategories.length}-sections.zip`
+		a.click()
+		URL.revokeObjectURL(url)
+	} catch (err) {
+		console.error('Error exporting EconomyShopGUI files:', err)
+		error.value = err.message || 'Failed to export EconomyShopGUI files.'
+	} finally {
+		exportLoading.value = false
+	}
+}
+
+function guideNameForItemId(itemId) {
+	const g = availableItems.value?.find((i) => i.id === itemId)
+	return g?.name || itemId
+}
+
+// Server shop: recalculate all from-recipe prices
+async function recalculateRecipePrices() {
+	if (!selectedShopId.value || !shopItems.value || !availableItems.value) return
+	recalculateLoading.value = true
+	recalculateResultSummary.value = null
+	try {
+		const { updated, errors } = await recalculateRecipePricesForShop(
+			selectedShopId.value,
+			shopItems.value,
+			availableItems.value,
+			serverVersionKey.value
+		)
+		recalculateResultSummary.value = { updated, errors, fetchError: null }
+		showRecalculateResultsModal.value = true
+	} catch (err) {
+		recalculateResultSummary.value = {
+			updated: [],
+			errors: [],
+			fetchError: err.message || 'Recalculation failed.'
+		}
+		showRecalculateResultsModal.value = true
+	} finally {
+		recalculateLoading.value = false
+	}
+}
+
+const BULK_IMPORT_CHUNK_SIZE = 400
+
+/** Clear loading and yield to Vue before rendering the results panel (avoids stuck "Importing…"). */
+async function revealImportResultSummary(summary) {
+	importLoading.value = false
+	await nextTick()
+	importResultSummary.value = summary
+}
+
+function openShopYamlImportModal() {
+	if (!availableItems.value?.length) return
+	shopImportModalError.value = null
+	showShopYamlImportModal.value = true
+}
+
+function closeShopYamlImportModal() {
+	showShopYamlImportModal.value = false
+	shopYamlImportFile.value = null
+	importResultSummary.value = null
+	shopImportModalError.value = null
+	const input = shopYamlFileInput.value
+	if (input) input.value = ''
+}
+
+function handleShopYamlImportFileSelect(event) {
+	const file = event.target?.files?.[0]
+	if (!file) return
+	const ok =
+		file.type === 'text/yaml' ||
+		file.name.toLowerCase().endsWith('.yml') ||
+		file.name.toLowerCase().endsWith('.yaml')
+	if (!ok) {
+		shopImportModalError.value = 'Please select a valid YAML file (.yml or .yaml)'
+		event.target.value = ''
+		return
+	}
+	shopYamlImportFile.value = file
+	importResultSummary.value = null
+	shopImportModalError.value = null
+}
+
+async function runShopYamlImport() {
+	if (!shopYamlImportFile.value) {
+		shopImportModalError.value = 'No file selected'
+		return
+	}
+	if (!selectedShopId.value || !availableItems.value?.length) return
+
+	importLoading.value = true
+	shopImportModalError.value = null
+	const file = shopYamlImportFile.value
+
+	try {
+		const text = await file.text()
+		let data
+		try {
+			data = yaml.load(text)
+		} catch (yamlErr) {
+			shopImportModalError.value = yamlErr?.message || 'Could not parse YAML.'
+			return
+		}
+		if (!data || typeof data !== 'object') {
+			shopImportModalError.value = 'Invalid or empty YAML.'
+			return
+		}
+
+		let entries
+		let importFormat
+		if (data.pages && typeof data.pages === 'object') {
+			importFormat = 'economyshopgui'
+			entries = parseEconomyShopGuiYaml(text)
+		} else if (isVzPriceGuideExportShape(data)) {
+			importFormat = 'vz'
+			entries = parseVzPriceGuideYaml(text)
+		} else {
+			shopImportModalError.value =
+				'Unrecognized YAML. Use EconomyShopGUI shops YAML (pages...) or a VZ Price Guide export (material keys with unit_buy / unit_sell).'
+			return
+		}
+
+		if (entries.length === 0) {
+			shopImportModalError.value =
+				'No valid items found. For EconomyShopGUI: pages.page*.items.* with material, buy, sell. For VZ Price Guide: material keys with unit_buy and unit_sell.'
+			return
+		}
+		const existingIds = (shopItems.value || []).map((s) => s.item_id)
+		const { toAdd, unmapped, unmappedMissingCategory, skipped } = mapToGuideItems(
+			entries,
+			availableItems.value,
+			existingIds,
+			serverVersionKey.value
+		)
+		const serverMM = getMajorMinorVersion(selectedServer.value?.minecraft_version)
+		let unmappedNewerThanServer = []
+		let unmappedNotInDatabase = []
+		let unmappedOther = []
+		if (unmapped.length > 0) {
+			try {
+				const c = await classifyUnmappedImportMaterials(db, unmapped, serverMM)
+				unmappedNewerThanServer = c.newerThanServer
+				unmappedNotInDatabase = c.notInDatabase
+				unmappedOther = c.otherUnmatched
+			} catch (classifyErr) {
+				console.warn('Could not classify unmapped import materials:', classifyErr)
+				unmappedNotInDatabase = unmapped
+			}
+		}
+		if (toAdd.length === 0) {
+			await revealImportResultSummary({
+				importFormat,
+				imported: 0,
+				skipped,
+				unmapped,
+				unmappedMissingCategory,
+				serverMinecraftLabel: serverMM,
+				unmappedNewerThanServer,
+				unmappedNotInDatabase,
+				unmappedOther,
+				totalEntries: entries.length
+			})
+			return
+		}
+		const maxItems = await getMaxShopItemsForShop(db, selectedShopId.value)
+		const currentCount = await getShopItemCountForShop(db, selectedShopId.value)
+		const fileNewItemCount = toAdd.length
+		if (currentCount + fileNewItemCount > maxItems) {
+			const exceededBy = currentCount + fileNewItemCount - maxItems
+			shopImportModalError.value =
+				`Limit exceeded by ${exceededBy} items\n` +
+				`(${fileNewItemCount} in file • ${maxItems} max • ${currentCount} already in shop)`
+			return
+		}
+		let imported = 0
+		for (let i = 0; i < toAdd.length; i += BULK_IMPORT_CHUNK_SIZE) {
+			const chunk = toAdd.slice(i, i + BULK_IMPORT_CHUNK_SIZE)
+			await bulkUpdateShopItems(selectedShopId.value, chunk)
+			imported += chunk.length
+			await nextTick()
+		}
+		await revealImportResultSummary({
+			importFormat,
+			imported,
+			skipped,
+			unmapped,
+			unmappedMissingCategory,
+			serverMinecraftLabel: serverMM,
+			unmappedNewerThanServer,
+			unmappedNotInDatabase,
+			unmappedOther,
+			totalEntries: entries.length
+		})
+		if (imported > 0) {
+			shopYamlImportFile.value = null
+			const input = shopYamlFileInput.value
+			if (input) input.value = ''
+		}
+	} catch (err) {
+		shopImportModalError.value = err.message || 'Import failed.'
+	} finally {
+		importLoading.value = false
+	}
+}
+
+/** Multi-line summary for import result banner (items added / not added / already in shop). */
+function importFinishedStatsMessage(imported, skipped, notImported) {
+	const lines = []
+	const itemWord = imported === 1 ? 'item' : 'items'
+	lines.push(`${imported} ${itemWord} added`)
+	if (notImported > 0) {
+		lines.push(`${notImported} couldn't be added`)
+	}
+	if (skipped > 0) {
+		lines.push(`${skipped} already in shop`)
+	}
+	return lines.join('\n')
+}
+
+/** True when every unmapped line is only "material exists for a newer MC version than this server" — not a hard import failure. */
+function importIssuesAreVersionOnly(s) {
+	const missCat = (s.unmappedMissingCategory || []).length
+	const notInDb = (s.unmappedNotInDatabase || []).length
+	const other = (s.unmappedOther || []).length
+	if (missCat > 0 || notInDb > 0 || other > 0) return false
+	const unmapped = s.unmapped || []
+	const newer = s.unmappedNewerThanServer || []
+	return unmapped.length > 0 && newer.length === unmapped.length
+}
+
+const shopImportResultsBanner = computed(() => {
+	const s = importResultSummary.value
+	if (!s) return null
+	const imported = s.imported
+	const skipped = s.skipped
+	const notImported =
+		(s.unmapped || []).length + (s.unmappedMissingCategory || []).length
+
+	const statsMessage = importFinishedStatsMessage(imported, skipped, notImported)
+
+	const versionOnly = importIssuesAreVersionOnly(s)
+
+	if (notImported === 0 && skipped === 0) {
+		return {
+			type: 'success',
+			title: 'Import completed successfully!',
+			message: `Imported: ${imported}`
+		}
+	}
+	if (notImported === 0) {
+		return {
+			type: 'warning',
+			title: 'Import completed',
+			message: `Imported: ${imported}\nSkipped: ${skipped}`
+		}
+	}
+	if (imported === 0 && skipped === 0) {
+		return {
+			type: versionOnly ? 'warning' : 'error',
+			title: 'Import finished',
+			message: importFinishedStatsMessage(0, 0, notImported)
+		}
+	}
+	return {
+		type: versionOnly ? 'warning' : 'error',
+		title: 'Import finished',
+		message: statsMessage
+	}
+})
+
+const recalculateResultsBanner = computed(() => {
+	const r = recalculateResultSummary.value
+	if (!r) return null
+	if (r.fetchError) {
+		return {
+			type: 'error',
+			title: 'Recalculation failed',
+			message: r.fetchError
+		}
+	}
+	const u = r.updated.length
+	const e = r.errors.length
+	if (u === 0 && e === 0) {
+		return {
+			type: 'info',
+			title: 'Nothing changed',
+			message:
+				'No recipe-based prices were updated. This shop may have no items using from recipe pricing, or costs did not change.'
+		}
+	}
+	if (u > 0 && e === 0) {
+		return {
+			type: 'success',
+			title: 'Recalculation complete',
+			message: `Prices updated: ${u}`
+		}
+	}
+	if (u > 0 && e > 0) {
+		return {
+			type: 'warning',
+			title: 'Recalculation completed with issues',
+			message: `Prices updated: ${u}\nIssues: ${e}`
+		}
+	}
+	return {
+		type: 'error',
+		title: 'Could not recalculate',
+		message: `Issues: ${e}`
+	}
+})
 
 // Helper functions
 function getServerName(serverId) {
@@ -1083,13 +2014,14 @@ function getServerName(serverId) {
 						<span class="font-medium">Version:</span>
 						{{ selectedServer.minecraft_version }}
 					</span>
+					<span>
+						<span class="font-medium">Items:</span>
+						{{ shopItems.length }}/{{ shopItemSlotsMax }}
+						<span v-if="shopAtItemLimit"> (full)</span>
+					</span>
 					<span v-if="selectedShop.location">
 						<span class="font-medium">Location:</span>
 						{{ selectedShop.location }}
-					</span>
-					<span v-if="selectedShop.created_at">
-						<span class="font-medium">Created:</span>
-						{{ new Date(selectedShop.created_at).toLocaleDateString() }}
 					</span>
 				</div>
 			</div>
@@ -1132,9 +2064,40 @@ function getServerName(serverId) {
 
 		<!-- Main content -->
 		<div v-else-if="hasShops && hasServers && selectedShop">
-			<!-- Settings and Market Overview Buttons (Top) -->
-			<div class="mt-4 mb-5">
-				<div class="flex items-center gap-3">
+			<!-- Search + Settings/Export row (search left, actions right; homepage-style layout) -->
+			<div class="mt-4 mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+				<!-- Left: Search (all shop types) -->
+				<div class="flex-1 sm:max-w-md">
+					<div class="flex flex-row gap-2">
+						<input
+							id="shop-items-item-search"
+							type="text"
+							v-model="searchQuery"
+							data-cy="shop-items-search-input"
+							placeholder="Search for items..."
+							class="border-2 border-gray-asparagus rounded px-3 py-2 w-full mb-1 h-10 flex-1" />
+						<BaseButton
+							@click="resetSearch"
+							variant="tertiary"
+							data-cy="shop-items-reset-search-button"
+							class="flex-shrink-0 h-10">
+							<ArrowPathIcon class="w-4 h-4 sm:mr-1.5" />
+							<span class="hidden sm:inline">Reset</span>
+						</BaseButton>
+					</div>
+					<p class="text-xs text-gray-500 mt-1">
+						Tip: Use commas to search multiple terms
+					</p>
+					<div v-if="searchQuery && getSearchTerms().length > 0" class="mt-2 text-sm text-gray-600">
+						<span v-if="filteredItemCount > 0">
+							Showing {{ filteredItemCount }} item{{ filteredItemCount === 1 ? '' : 's' }}
+							matching "{{ searchQuery }}"
+						</span>
+						<span v-else>No items found matching "{{ searchQuery }}"</span>
+					</div>
+				</div>
+				<!-- Right: Settings, Export, Recalculate, Market Overview -->
+				<div class="flex flex-wrap items-center gap-3 sm:ml-4 sm:flex-shrink-0">
 					<BaseButton
 						@click="showShopSettingsModal = true"
 						variant="secondary"
@@ -1144,8 +2107,21 @@ function getServerName(serverId) {
 						</template>
 						Settings
 					</BaseButton>
+					<template v-if="isServerShop">
+						<BaseButton
+							type="button"
+							variant="secondary"
+							:disabled="!shopItems?.length"
+							data-cy="shop-items-export-button"
+							@click="openShopExportModal">
+							<template #left-icon>
+								<ArrowDownTrayIcon class="w-4 h-4" />
+							</template>
+							Export
+						</BaseButton>
+					</template>
 					<RouterLink
-						v-if="selectedShop?.server_id"
+						v-if="selectedShop?.server_id && !selectedShop?.server_shop"
 						:to="`/market-overview?serverId=${selectedShop.server_id}`">
 						<BaseButton
 							type="button"
@@ -1160,23 +2136,66 @@ function getServerName(serverId) {
 				</div>
 			</div>
 
+			<CategoryFilters
+				v-if="shopItems && shopItems.length > 0"
+				:visible-categories="shopVisibleCategories"
+				:search-query="searchQuery"
+				:total-item-count="shopCategoryFilterTotalItemCount"
+				:total-category-counts="shopTotalCategoryCounts"
+				:all-categories-with-search="shopAllCategoriesWithSearch"
+				:show-category-filters="showShopCategoryFilters"
+				data-cy="shop-items-category-filters"
+				@toggle-category="handleShopToggleCategory"
+				@clear-all="handleShopClearCategories"
+				@toggle-visibility="showShopCategoryFilters = !showShopCategoryFilters" />
+
 			<!-- Add Item Button -->
 			<div>
 				<div
 					v-if="shopItems && shopItems.length > 0"
-					class="flex flex-col sm:flex-row justify-start gap-3">
+					class="flex flex-row flex-nowrap items-center gap-2 sm:gap-3 overflow-x-auto pb-0.5">
 					<BaseButton
 						type="button"
 						variant="primary"
 						data-cy="shop-items-add-item-button"
 						@click="showAddItemForm"
-						:disabled="!selectedShop"
-						class="w-full sm:w-auto justify-center sm:justify-start">
+						:disabled="!selectedShop || shopAtItemLimit">
 						<template #left-icon>
 							<PlusIcon />
 						</template>
-						Add Item
+						Add items
 					</BaseButton>
+					<template v-if="isServerShop">
+						<BaseButton
+							type="button"
+							variant="secondary"
+							:disabled="!availableItems?.length || shopAtItemLimit"
+							data-cy="shop-items-import-economyshopgui-button"
+							@click="openShopYamlImportModal">
+							<template #left-icon>
+								<ArrowUpTrayIcon class="w-4 h-4" />
+							</template>
+							Import
+						</BaseButton>
+						<BaseButton
+							type="button"
+							variant="secondary"
+							:disabled="recalculateLoading || !shopItems?.length"
+							data-cy="shop-items-recalculate-button"
+							@click="recalculateRecipePrices">
+							<template #left-icon>
+								<ArrowPathIcon
+									class="w-4 h-4"
+									:class="{ 'animate-spin': recalculateLoading }" />
+							</template>
+							<span class="sm:hidden">
+								{{ recalculateLoading ? 'Recalculating…' : 'Recalculate' }}
+							</span>
+							<span class="hidden sm:inline">
+								{{ recalculateLoading ? 'Recalculating…' : 'Recalculate recipe prices' }}
+							</span>
+						</BaseButton>
+					</template>
 				</div>
 			</div>
 
@@ -1189,28 +2208,28 @@ function getServerName(serverId) {
 							<span class="text-sm font-medium text-heavy-metal block">View as:</span>
 							<div
 								class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
-							<button
-								data-cy="shop-items-view-mode-categories"
-								@click="viewMode = 'categories'"
-								:class="[
-									viewMode === 'categories'
-										? 'bg-gray-asparagus text-white'
-										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
-								]">
-								Categories
-							</button>
-							<button
-								data-cy="shop-items-view-mode-list"
-								@click="viewMode = 'list'"
-								:class="[
-									viewMode === 'list'
-										? 'bg-gray-asparagus text-white'
-										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
-								]">
-								List
-							</button>
+								<button
+									data-cy="shop-items-view-mode-categories"
+									@click="viewMode = 'categories'"
+									:class="[
+										viewMode === 'categories'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-gray-100',
+										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+									]">
+									Categories
+								</button>
+								<button
+									data-cy="shop-items-view-mode-list"
+									@click="viewMode = 'list'"
+									:class="[
+										viewMode === 'list'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-gray-100',
+										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
+									]">
+									List
+								</button>
 							</div>
 						</div>
 
@@ -1219,41 +2238,46 @@ function getServerName(serverId) {
 							<span class="text-sm font-medium text-heavy-metal block">Layout:</span>
 							<div
 								class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1">
-							<button
-								data-cy="shop-items-layout-comfortable"
-								@click="layout = 'comfortable'"
-								:class="[
-									layout === 'comfortable'
-										? 'bg-gray-asparagus text-white'
-										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
-								]">
-								Comfortable
-							</button>
-							<button
-								data-cy="shop-items-layout-compact"
-								@click="layout = 'condensed'"
-								:class="[
-									layout === 'condensed'
-										? 'bg-gray-asparagus text-white'
-										: 'bg-norway text-heavy-metal hover:bg-gray-100',
-									'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
-								]">
-								Compact
-							</button>
+								<button
+									data-cy="shop-items-layout-comfortable"
+									@click="layout = 'comfortable'"
+									:class="[
+										layout === 'comfortable'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-gray-100',
+										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0'
+									]">
+									Comfortable
+								</button>
+								<button
+									data-cy="shop-items-layout-compact"
+									@click="layout = 'condensed'"
+									:class="[
+										layout === 'condensed'
+											? 'bg-gray-asparagus text-white'
+											: 'bg-norway text-heavy-metal hover:bg-gray-100',
+										'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition'
+									]">
+									Compact
+								</button>
 							</div>
 						</div>
 
 						<!-- Mark All as Checked -->
 						<div v-if="!selectedShop.is_own_shop">
-							<span class="text-sm font-medium text-heavy-metal block opacity-0 pointer-events-none">Actions:</span>
+							<span
+								class="text-sm font-medium text-heavy-metal block opacity-0 pointer-events-none">
+								Actions:
+							</span>
 							<div>
 								<BaseButton
 									type="button"
 									variant="secondary"
 									data-cy="shop-items-mark-all-checked-button"
 									@click="handleMarkAllAsChecked"
-									:disabled="markingAsChecked || !shopItems || shopItems.length === 0"
+									:disabled="
+										markingAsChecked || !shopItems || shopItems.length === 0
+									"
 									class="px-3 py-1.5 text-xs sm:text-sm">
 									<template #left-icon>
 										<ArrowPathIcon
@@ -1277,10 +2301,14 @@ function getServerName(serverId) {
 					<!-- BaseTable Implementation (New) -->
 					<div class="mb-8">
 						<template v-if="viewMode === 'categories'">
-							<div v-for="category in sortedCategories" :key="category" class="mb-6">
+							<div v-for="category in sortedCategoriesForDisplay" :key="category" class="mb-6">
 								<BaseTable
 									:columns="baseTableColumns"
-									:rows="baseTableRowsByCategory[category]"
+									:rows="
+										getSearchTerms().length > 0
+											? filteredBaseTableRowsByCategory[category] || []
+											: baseTableRowsByCategory[category]
+									"
 									row-key="id"
 									:layout="layout"
 									:hoverable="true"
@@ -1303,9 +2331,13 @@ function getServerName(serverId) {
 													'mr-3 flex-shrink-0'
 												]">
 												<img
-													:src="getItemImageUrl(row.image, row.enchantments)"
+													:src="
+														getItemImageUrl(row.image, row.enchantments)
+													"
 													:alt="row.item"
-													@error="$event.target.src = getImageUrl(row.image)"
+													@error="
+														$event.target.src = getImageUrl(row.image)
+													"
 													class="w-full h-full object-contain"
 													loading="lazy" />
 											</div>
@@ -1317,7 +2349,9 @@ function getServerName(serverId) {
 															!showEnchantments &&
 															row.enchantments &&
 															row.enchantments.length > 0
-																? formatEnchantmentsForTitle(row.enchantments)
+																? formatEnchantmentsForTitle(
+																		row.enchantments
+																  )
 																: ''
 														">
 														{{ row.item }}
@@ -1331,16 +2365,20 @@ function getServerName(serverId) {
 															@click.stop="
 																toggleStar(
 																	row.id,
-																	row._originalItem?.starred || false
+																	row._originalItem?.starred ||
+																		false
 																)
 															"
 															class="flex-shrink-0 transition-opacity"
 															:class="{
-																'opacity-0 group-hover:opacity-100': !(
-																	row._originalItem?.starred || false
-																),
+																'opacity-0 group-hover:opacity-100':
+																	!(
+																		row._originalItem
+																			?.starred || false
+																	),
 																'opacity-100':
-																	row._originalItem?.starred || false
+																	row._originalItem?.starred ||
+																	false
 															}"
 															:title="
 																row._originalItem?.starred
@@ -1358,19 +2396,67 @@ function getServerName(serverId) {
 												</div>
 												<!-- Enchantments Display -->
 												<div
-													v-if="showEnchantments && row.enchantments && row.enchantments.length > 0"
+													v-if="
+														showEnchantments &&
+														row.enchantments &&
+														row.enchantments.length > 0
+													"
 													class="mt-1 pb-1">
 													<div class="flex flex-wrap gap-1">
 														<span
 															v-for="enchantmentId in row.enchantments"
 															:key="enchantmentId"
 															class="px-1 border border-gray-asparagus text-heavy-metal text-[10px] font-medium rounded uppercase leading-[1.6]">
-															{{ formatEnchantmentName(enchantmentId) }}
+															{{
+																formatEnchantmentName(enchantmentId)
+															}}
 														</span>
 													</div>
 												</div>
 											</div>
 										</div>
+									</template>
+									<template #cell-pricingTypes="{ row }">
+										<span
+											class="inline-flex items-center justify-start gap-1 text-left">
+											<PencilIcon
+												v-if="row.pricingTypes === 'Base'"
+												class="w-3.5 h-3.5 shrink-0 text-current max-[600px]:hidden"
+												aria-hidden="true" />
+											<PencilIcon
+												v-if="row.pricingTypes === 'Custom'"
+												class="w-3.5 h-3.5 shrink-0 text-current max-[600px]:hidden"
+												aria-hidden="true" />
+											<Squares2X2Icon
+												v-if="row.pricingTypes === 'Recipe'"
+												class="w-3.5 h-3.5 shrink-0 text-current max-[600px]:hidden"
+												aria-hidden="true" />
+											{{ row.pricingTypes }}
+											<BaseIconButton
+												v-if="canSwitchCustomToRecipe(row._originalItem)"
+												variant="ghost-in-table"
+												aria-label="Switch to recipe pricing"
+												title="Switch to recipe pricing"
+												:loading="switchingPricingItemId === row._originalItem?.id"
+												:disabled="
+													switchingPricingItemId === row._originalItem?.id
+												"
+												@click.stop="switchCustomToRecipe(row._originalItem)">
+												<ArrowPathRoundedSquareIcon />
+											</BaseIconButton>
+											<BaseIconButton
+												v-if="canSwitchRecipeToCustom(row._originalItem)"
+												variant="ghost-in-table"
+												aria-label="Switch to custom pricing"
+												title="Switch to custom pricing"
+												:loading="switchingPricingItemId === row._originalItem?.id"
+												:disabled="
+													switchingPricingItemId === row._originalItem?.id
+												"
+												@click.stop="switchRecipeToCustom(row._originalItem)">
+												<ArrowPathRoundedSquareIcon />
+											</BaseIconButton>
+										</span>
 									</template>
 									<template #cell-buyPrice="{ row, layout }">
 										<div class="flex items-center justify-end gap-2">
@@ -1383,7 +2469,22 @@ function getServerName(serverId) {
 													aria-label="Out of stock" />
 												<span class="sr-only">Out of stock</span>
 											</div>
+											<template v-if="isFromRecipePricing(row._originalItem)">
+												<span
+													:class="[
+														'text-right text-gray-600',
+														row._originalItem?.stock_quantity === 0 &&
+															'line-through'
+													]">
+													{{
+														formatPriceDisplay(
+															row._originalItem?.buy_price
+														)
+													}}
+												</span>
+											</template>
 											<InlinePriceInput
+												v-else
 												:value="row._originalItem?.buy_price"
 												:layout="layout"
 												:is-editing="
@@ -1444,7 +2545,25 @@ function getServerName(serverId) {
 													}}
 												</span>
 											</div>
+											<template v-if="isFromRecipePricing(row._originalItem)">
+												<span
+													:class="[
+														'text-right text-gray-600',
+														(row._originalItem?.stock_full ||
+															(isShopOutOfMoney &&
+																row._originalItem?.sell_price >
+																	0)) &&
+															'line-through'
+													]">
+													{{
+														formatPriceDisplay(
+															row._originalItem?.sell_price
+														)
+													}}
+												</span>
+											</template>
 											<InlinePriceInput
+												v-else
 												:value="row._originalItem?.sell_price"
 												:layout="layout"
 												:is-editing="
@@ -1491,27 +2610,25 @@ function getServerName(serverId) {
 									<template #cell-lastUpdated="{ row }">
 										<div class="flex items-center justify-end gap-2">
 											<span>{{ row.lastUpdated }}</span>
-										<BaseIconButton
-											v-if="!selectedShop.is_own_shop"
-											variant="ghost-in-table"
-											data-cy="shop-item-mark-checked-button"
-											:ariaLabel="'Mark as price checked today'"
-											title="Mark as price checked today"
-											:loading="markingItemId === row._originalItem?.id"
-											@click="
-												handleMarkItemAsChecked(row._originalItem?.id)
-											"
-											:disabled="markingItemId === row._originalItem?.id">
-											<ArrowPathIcon />
-										</BaseIconButton>
+											<BaseIconButton
+												v-if="!selectedShop.is_own_shop"
+												variant="ghost-in-table"
+												data-cy="shop-item-mark-checked-button"
+												:ariaLabel="'Mark as price checked today'"
+												title="Mark as price checked today"
+												:loading="markingItemId === row._originalItem?.id"
+												@click="
+													handleMarkItemAsChecked(row._originalItem?.id)
+												"
+												:disabled="markingItemId === row._originalItem?.id">
+												<ArrowPathIcon />
+											</BaseIconButton>
 										</div>
 									</template>
 									<template #cell-actions="{ row, layout }">
 										<div
 											class="flex items-center justify-end gap-2 px-3"
-											:class="[
-												layout === 'condensed' ? '-mx-2' : '-mx-4'
-											]">
+											:class="[layout === 'condensed' ? '-mx-2' : '-mx-4']">
 											<BaseIconButton
 												variant="primary"
 												data-cy="shop-item-edit-button"
@@ -1535,10 +2652,11 @@ function getServerName(serverId) {
 						<template v-else>
 							<BaseTable
 								:columns="baseTableColumns"
-								:rows="baseTableRows"
+								:rows="listRowsForDisplay"
 								row-key="id"
 								:layout="layout"
-								:hoverable="true">
+								:hoverable="true"
+								:caption="`All Items (${listRowsForDisplay.length})`">
 								<template #cell-item="{ row, layout }">
 									<div
 										class="flex items-center group"
@@ -1568,12 +2686,15 @@ function getServerName(serverId) {
 														!showEnchantments &&
 														row.enchantments &&
 														row.enchantments.length > 0
-															? formatEnchantmentsForTitle(row.enchantments)
+															? formatEnchantmentsForTitle(
+																	row.enchantments
+															  )
 															: ''
 													">
 													{{ row.item }}
 												</span>
-												<div class="flex items-center gap-2 ml-2 flex-shrink-0">
+												<div
+													class="flex items-center gap-2 ml-2 flex-shrink-0">
 													<ArrowPathIcon
 														v-if="showItemSavingSpinner === row.id"
 														class="w-4 h-4 text-gray-500 animate-spin" />
@@ -1608,7 +2729,11 @@ function getServerName(serverId) {
 											</div>
 											<!-- Enchantments Display -->
 											<div
-												v-if="showEnchantments && row.enchantments && row.enchantments.length > 0"
+												v-if="
+													showEnchantments &&
+													row.enchantments &&
+													row.enchantments.length > 0
+												"
 												class="mt-1 pb-1">
 												<div class="flex flex-wrap gap-1">
 													<span
@@ -1622,6 +2747,44 @@ function getServerName(serverId) {
 										</div>
 									</div>
 								</template>
+								<template #cell-pricingTypes="{ row }">
+									<span
+										class="inline-flex items-center justify-start gap-1 text-left">
+										<PencilIcon
+											v-if="row.pricingTypes === 'Base'"
+											class="w-3.5 h-3.5 shrink-0 text-current max-[600px]:hidden"
+											aria-hidden="true" />
+										<PencilIcon
+											v-if="row.pricingTypes === 'Custom'"
+											class="w-3.5 h-3.5 shrink-0 text-current max-[600px]:hidden"
+											aria-hidden="true" />
+										<Squares2X2Icon
+											v-if="row.pricingTypes === 'Recipe'"
+											class="w-3.5 h-3.5 shrink-0 text-current max-[600px]:hidden"
+											aria-hidden="true" />
+										{{ row.pricingTypes }}
+										<BaseIconButton
+											v-if="canSwitchCustomToRecipe(row._originalItem)"
+											variant="ghost-in-table"
+											aria-label="Switch to recipe pricing"
+											title="Switch to recipe pricing"
+											:loading="switchingPricingItemId === row._originalItem?.id"
+											:disabled="switchingPricingItemId === row._originalItem?.id"
+											@click.stop="switchCustomToRecipe(row._originalItem)">
+											<ArrowPathRoundedSquareIcon />
+										</BaseIconButton>
+										<BaseIconButton
+											v-if="canSwitchRecipeToCustom(row._originalItem)"
+											variant="ghost-in-table"
+											aria-label="Switch to custom pricing"
+											title="Switch to custom pricing"
+											:loading="switchingPricingItemId === row._originalItem?.id"
+											:disabled="switchingPricingItemId === row._originalItem?.id"
+											@click.stop="switchRecipeToCustom(row._originalItem)">
+											<ArrowPathRoundedSquareIcon />
+										</BaseIconButton>
+									</span>
+								</template>
 								<template #cell-buyPrice="{ row, layout }">
 									<div class="flex items-center justify-end gap-2">
 										<div
@@ -1633,7 +2796,20 @@ function getServerName(serverId) {
 												aria-label="Out of stock" />
 											<span class="sr-only">Out of stock</span>
 										</div>
+										<template v-if="isFromRecipePricing(row._originalItem)">
+											<span
+												:class="[
+													'text-right text-gray-600',
+													row._originalItem?.stock_quantity === 0 &&
+														'line-through'
+												]">
+												{{
+													formatPriceDisplay(row._originalItem?.buy_price)
+												}}
+											</span>
+										</template>
 										<InlinePriceInput
+											v-else
 											:value="row._originalItem?.buy_price"
 											:layout="layout"
 											:is-editing="
@@ -1690,7 +2866,24 @@ function getServerName(serverId) {
 												}}
 											</span>
 										</div>
+										<template v-if="isFromRecipePricing(row._originalItem)">
+											<span
+												:class="[
+													'text-right text-gray-600',
+													(row._originalItem?.stock_full ||
+														(isShopOutOfMoney &&
+															row._originalItem?.sell_price > 0)) &&
+														'line-through'
+												]">
+												{{
+													formatPriceDisplay(
+														row._originalItem?.sell_price
+													)
+												}}
+											</span>
+										</template>
 										<InlinePriceInput
+											v-else
 											:value="row._originalItem?.sell_price"
 											:layout="layout"
 											:is-editing="
@@ -1749,9 +2942,7 @@ function getServerName(serverId) {
 								<template #cell-actions="{ row, layout }">
 									<div
 										class="flex items-center justify-end gap-2 px-3"
-										:class="[
-											layout === 'condensed' ? '-mx-2' : '-mx-4'
-										]">
+										:class="[layout === 'condensed' ? '-mx-2' : '-mx-4']">
 										<BaseIconButton
 											variant="primary"
 											aria-label="Edit item"
@@ -1771,25 +2962,53 @@ function getServerName(serverId) {
 					</div>
 				</div>
 
-				<div v-else class="bg-white rounded-lg pt-6 pr-6 pb-6" data-cy="shop-items-empty-state">
+				<div
+					v-else
+					class="bg-white rounded-lg pt-6 pr-6 pb-6"
+					data-cy="shop-items-empty-state">
 					<div class="text-gray-600">
 						<p class="text-lg font-medium mb-2">No items in this shop yet</p>
-						<p class="text-sm">Click "Add Item" to get started with your shop items.</p>
+						<p class="text-sm">Add or import items to get started with your shop.</p>
 					</div>
 				</div>
 
-				<!-- Add Item Button -->
-				<div class="mt-4 flex justify-start">
+				<!-- Add Item Button (below tables) -->
+				<div class="mt-4 flex flex-row flex-wrap items-start gap-2">
+					<div class="flex flex-col items-start gap-4">
+						<BaseButton
+							type="button"
+							variant="primary"
+							data-cy="shop-items-add-item-button-bottom"
+							@click="showAddItemForm"
+							:disabled="!selectedShop || shopAtItemLimit">
+							<template #left-icon>
+								<PlusIcon />
+							</template>
+							Add items
+						</BaseButton>
+						<button
+							v-if="shopItems && shopItems.length > 0"
+							type="button"
+							class="flex items-center gap-1.5 text-sm text-gray-asparagus hover:text-highland hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+							:disabled="clearAllItemsLoading"
+							data-cy="shop-items-clear-all-button"
+							@click="openClearAllModal">
+							<TrashIcon class="w-4 h-4 flex-shrink-0" />
+							{{ clearAllItemsLoading ? 'Clearing…' : 'Clear all items' }}
+						</button>
+					</div>
 					<BaseButton
+						v-if="isServerShop && (!shopItems || shopItems.length === 0)"
 						type="button"
-						variant="primary"
-						data-cy="shop-items-add-item-button-bottom"
-						@click="showAddItemForm"
-						:disabled="!selectedShop">
+						variant="secondary"
+						:disabled="!availableItems?.length || shopAtItemLimit"
+						data-cy="shop-items-import-economyshopgui-button-empty"
+						@click="openShopYamlImportModal"
+						class="self-start">
 						<template #left-icon>
-							<PlusIcon />
+							<ArrowUpTrayIcon class="w-4 h-4" />
 						</template>
-						Add Item
+						Import
 					</BaseButton>
 				</div>
 			</div>
@@ -1827,6 +3046,8 @@ function getServerName(serverId) {
 			:existing-item-ids="existingItemIdsInShop"
 			:server="selectedServer"
 			:shop="selectedShop"
+			:shop-items-for-recipe="shopItems || []"
+			:server-version-key="serverVersionKey"
 			display-variant="modal"
 			@submit="handleItemSubmit"
 			@cancel="cancelForm" />
@@ -1906,6 +3127,48 @@ function getServerName(serverId) {
 		</template>
 	</BaseModal>
 
+	<!-- Clear All Items confirmation -->
+	<BaseModal
+		:isOpen="showClearAllModal"
+		title="Clear All Items"
+		size="small"
+		data-cy="shop-items-clear-all-modal"
+		@close="closeClearAllModal">
+		<div class="space-y-4">
+			<div>
+				<p class="font-normal text-gray-900">
+					Are you sure you want to clear <strong>ALL</strong> items from this shop?
+				</p>
+				<p class="text-sm text-gray-600 mt-2">
+					This action cannot be undone and will permanently delete all
+					{{ shopItems?.length || 0 }} item{{ (shopItems?.length || 0) === 1 ? '' : 's' }}.
+				</p>
+			</div>
+		</div>
+		<template #footer>
+			<div class="flex items-center justify-end p-4">
+				<div class="flex space-x-3">
+					<button
+						type="button"
+						class="btn-secondary--outline"
+						data-cy="shop-items-clear-all-cancel-button"
+						@click="closeClearAllModal">
+						Cancel
+					</button>
+					<BaseButton
+						type="button"
+						variant="primary"
+						data-cy="shop-items-clear-all-confirm-button"
+						class="bg-semantic-danger hover:bg-opacity-90"
+						:disabled="clearAllItemsLoading"
+						@click="confirmClearAllItems">
+						{{ clearAllItemsLoading ? 'Clearing…' : 'Clear All' }}
+					</BaseButton>
+				</div>
+			</div>
+		</template>
+	</BaseModal>
+
 	<!-- Shop Settings Modal -->
 	<BaseModal
 		:isOpen="showShopSettingsModal"
@@ -1915,7 +3178,7 @@ function getServerName(serverId) {
 		data-cy="shop-items-settings-modal"
 		@close="showShopSettingsModal = false">
 		<div class="space-y-4">
-			<div>
+			<div v-if="showShopSettingsSection">
 				<h3 class="text-sm font-semibold text-gray-900 mb-3">Shop settings</h3>
 				<div class="space-y-3">
 					<div v-if="!selectedShop?.is_own_shop" class="space-y-1">
@@ -1951,7 +3214,7 @@ function getServerName(serverId) {
 							</span>
 						</label>
 					</div>
-					<div>
+					<div v-if="!selectedShop?.server_shop">
 						<label
 							class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
 							<input
@@ -1965,7 +3228,7 @@ function getServerName(serverId) {
 					</div>
 				</div>
 			</div>
-			<div class="pt-4">
+			<div :class="showShopSettingsSection ? 'pt-4' : ''">
 				<h3 class="text-sm font-semibold text-gray-900 mb-3">Items list</h3>
 				<div class="space-y-3">
 					<label
@@ -1979,6 +3242,7 @@ function getServerName(serverId) {
 						<span>Hide enchantments</span>
 					</label>
 					<label
+						v-if="!selectedShop?.server_shop"
 						class="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
 						<input
 							data-cy="shop-items-hide-out-of-stock-checkbox"
@@ -1992,4 +3256,367 @@ function getServerName(serverId) {
 			</div>
 		</div>
 	</BaseModal>
+
+	<BaseModal
+		:isOpen="showShopYamlImportModal"
+		title="Import shop items"
+		size="normal"
+		maxWidth="max-w-md"
+		:closeOnBackdrop="false"
+		data-cy="shop-items-import-results-modal"
+		@close="closeShopYamlImportModal">
+		<div class="space-y-4">
+			<p
+				v-if="shopAtItemLimit"
+				class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+				This shop already has {{ shopItemSlotsMax }} items (the maximum). Remove some items before
+				importing.
+			</p>
+			<div>
+				<label
+					for="shop-yaml-file-input"
+					class="block text-sm font-medium text-gray-700 mb-1">
+					Select YAML file
+				</label>
+				<input
+					id="shop-yaml-file-input"
+					ref="shopYamlFileInput"
+					type="file"
+					accept=".yml,.yaml"
+					data-cy="shop-items-yaml-import-file-input"
+					class="block w-full pr-3 py-1 mt-2 mb-2 text-gray-900 font-sans"
+					@change="handleShopYamlImportFileSelect" />
+				<p class="text-xs text-gray-500 mt-1">
+					Import items from an EconomyShopGUI shop YAML or Price Guide export.
+				</p>
+				<NotificationBanner
+					type="info"
+					size="compact"
+					title="Import note"
+					message="Imported items are organised using the Price Guide categories. Original EconomyShopGUI sections (categories) are not retained."
+					class="mt-2" />
+			</div>
+
+			<NotificationBanner
+				v-if="shopImportModalError"
+				type="error"
+				title="Import failed"
+				:message="shopImportModalError" />
+
+			<div v-if="importResultSummary" class="space-y-4">
+				<NotificationBanner
+					v-if="shopImportResultsBanner"
+					data-cy="shop-items-import-results-banner"
+					:type="shopImportResultsBanner.type"
+					:title="shopImportResultsBanner.title"
+					:message="shopImportResultsBanner.message" />
+				<div v-if="importResultSummary.unmapped.length > 0" class="space-y-4">
+					<div
+						v-if="(importResultSummary.unmappedNewerThanServer || []).length > 0"
+						class="space-y-2">
+						<p class="text-sm font-semibold text-gray-900">
+							Couldn't be added ({{
+								(importResultSummary.unmappedNewerThanServer || []).length
+							}})
+						</p>
+						<p class="text-sm text-gray-600">
+							These items are from a newer Minecraft version and aren't available on this server.
+						</p>
+						<div class="max-h-40 overflow-y-auto rounded border border-amber-200 bg-amber-50 p-3">
+							<ul class="text-sm text-gray-800 list-disc list-inside space-y-1">
+								<li
+									v-for="row in importResultSummary.unmappedNewerThanServer.slice(0, 30)"
+									:key="row.material">
+									<span class="font-mono">{{ row.material }}</span>
+									<span class="text-gray-600">
+										({{ row.itemVersion }})
+									</span>
+								</li>
+							</ul>
+						</div>
+					</div>
+					<div
+						v-if="(importResultSummary.unmappedNotInDatabase || []).length > 0"
+						class="space-y-2">
+						<p class="text-sm font-semibold text-gray-900">Not found in the item database</p>
+						<p class="text-xs text-gray-600">
+							No matching guide item for this material id (check spelling or modded names).
+						</p>
+						<div class="max-h-32 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3">
+							<p class="text-sm text-gray-700 break-words font-mono">
+								{{ importResultSummary.unmappedNotInDatabase.slice(0, 30).join(', ') }}
+							</p>
+						</div>
+					</div>
+					<div v-if="(importResultSummary.unmappedOther || []).length > 0" class="space-y-2">
+						<p class="text-sm font-semibold text-gray-900">Could not match to the guide</p>
+						<p class="text-xs text-gray-600">
+							These exist in the database for this Minecraft version but did not match the import
+							list (often a different material id than the YAML name).
+						</p>
+						<div class="max-h-32 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3">
+							<p class="text-sm text-gray-700 break-words font-mono">
+								{{ importResultSummary.unmappedOther.slice(0, 30).join(', ') }}
+							</p>
+						</div>
+					</div>
+				</div>
+				<div
+					v-if="(importResultSummary.unmappedMissingCategory || []).length > 0"
+					class="space-y-2 rounded border border-red-100 bg-red-50/50 p-3">
+					<p class="text-sm font-semibold text-gray-900">Missing category in guide</p>
+					<p class="text-xs text-gray-600">
+						These materials matched a guide item, but that item has no category or is Uncategorized,
+						so it was not imported.
+					</p>
+					<div class="max-h-32 overflow-y-auto rounded border border-red-200 bg-white p-3">
+						<ul class="text-sm text-gray-800 list-disc list-inside space-y-1">
+							<li
+								v-for="mat in (importResultSummary.unmappedMissingCategory || []).slice(0, 30)"
+								:key="mat">
+								<span class="font-mono">{{ mat }}</span>
+								<span class="text-gray-500"> — Missing category in guide</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<template #footer>
+			<div class="flex items-center justify-end">
+				<div class="flex space-x-3">
+					<button
+						type="button"
+						class="btn-secondary--outline"
+						data-cy="shop-items-import-results-close-button"
+						@click="closeShopYamlImportModal">
+						{{ importResultSummary ? 'Close' : 'Cancel' }}
+					</button>
+					<BaseButton
+						v-if="!importResultSummary"
+						type="button"
+						variant="primary"
+						data-cy="shop-items-yaml-import-submit-button"
+						:disabled="!shopYamlImportFile || importLoading || shopAtItemLimit"
+						@click="runShopYamlImport">
+						{{ importLoading ? 'Importing…' : 'Import' }}
+					</BaseButton>
+				</div>
+			</div>
+		</template>
+	</BaseModal>
+
+	<BaseModal
+		:isOpen="showRecalculateResultsModal"
+		title="Recipe price recalculation"
+		size="normal"
+		maxWidth="max-w-md"
+		data-cy="shop-items-recalculate-results-modal"
+		@close="showRecalculateResultsModal = false">
+		<div v-if="recalculateResultSummary" class="space-y-4">
+			<NotificationBanner
+				v-if="recalculateResultsBanner"
+				data-cy="shop-items-recalculate-results-banner"
+				:type="recalculateResultsBanner.type"
+				:title="recalculateResultsBanner.title"
+				:message="recalculateResultsBanner.message" />
+			<template v-if="recalculateResultSummary && !recalculateResultSummary.fetchError">
+				<div v-if="recalculateResultSummary.updated.length > 0" class="space-y-2">
+					<p class="text-sm font-semibold text-gray-900">Updated items</p>
+					<div class="max-h-48 overflow-y-auto rounded border border-green-100 bg-white p-3">
+						<ul class="text-sm text-gray-800 list-disc list-inside space-y-1">
+							<li
+								v-for="row in recalculateResultSummary.updated.slice(0, 50)"
+								:key="row.id">
+								{{ guideNameForItemId(row.item_id) }}
+								<span
+									v-if="isOfferedShopPrice(row.buy_price) || isOfferedShopPrice(row.sell_price)"
+									class="text-gray-600">
+									(buy {{ row.buy_price ?? '—' }}, sell {{ row.sell_price ?? '—' }})
+								</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div v-if="recalculateResultSummary.errors.length > 0" class="space-y-2">
+					<p class="text-sm font-semibold text-gray-900">Could not recalculate</p>
+					<div class="max-h-40 overflow-y-auto rounded border border-amber-200 bg-amber-50/50 p-3">
+						<ul class="text-sm text-gray-800 list-disc list-inside space-y-2">
+							<li
+								v-for="(err, idx) in recalculateResultSummary.errors.slice(0, 30)"
+								:key="idx">
+								<span class="font-medium">{{ err.name || guideNameForItemId(err.item_id) }}</span>
+								<span class="text-red-700"> — {{ err.error }}</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</template>
+		</div>
+		<template #footer>
+			<div class="flex items-center justify-end">
+				<BaseButton
+					type="button"
+					variant="primary"
+					data-cy="shop-items-recalculate-results-close-button"
+					@click="showRecalculateResultsModal = false">
+					Close
+				</BaseButton>
+			</div>
+		</template>
+	</BaseModal>
+
+	<BaseModal
+		:isOpen="showExportModal"
+		title="Export shop"
+		data-cy="shop-items-export-modal"
+		@close="showExportModal = false">
+		<div class="space-y-5">
+			<div>
+				<span class="text-sm font-medium text-heavy-metal block">Export as:</span>
+				<div
+					class="inline-flex border-2 border-gray-asparagus rounded overflow-hidden mt-1"
+					role="tablist"
+					aria-label="Export destination">
+					<button
+						type="button"
+						role="tab"
+						:aria-selected="exportModalDestination === 'standard'"
+						data-cy="shop-items-export-tab-standard"
+						@click="exportModalDestination = 'standard'"
+						:class="[
+							exportModalDestination === 'standard'
+								? 'bg-gray-asparagus text-white'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100',
+							'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition border-r border-gray-asparagus last:border-r-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-asparagus'
+						]">
+						Standard
+					</button>
+					<button
+						type="button"
+						role="tab"
+						:aria-selected="exportModalDestination === 'economy_shop_gui'"
+						data-cy="shop-items-export-tab-economy-shop-gui"
+						@click="exportModalDestination = 'economy_shop_gui'"
+						:class="[
+							exportModalDestination === 'economy_shop_gui'
+								? 'bg-gray-asparagus text-white'
+								: 'bg-norway text-heavy-metal hover:bg-gray-100',
+							'px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-asparagus'
+						]">
+						EconomyShopGUI
+					</button>
+				</div>
+			</div>
+
+			<div v-if="exportModalDestination === 'standard'" class="space-y-4">
+				<p class="text-sm text-gray-600">
+					Export this shop’s prices in the standard price guide format.
+				</p>
+				<div v-if="Object.keys(shopExportPreviewData).length > 0">
+					<BaseDetails
+						summary="Preview"
+						data-cy="shop-items-export-standard-preview">
+						<div
+							class="bg-gray-50 rounded-md p-3 max-h-32 overflow-y-auto text-xs font-mono">
+							<pre>{{
+								JSON.stringify(
+									Object.fromEntries(Object.entries(shopExportPreviewData).slice(0, 3)),
+									null,
+									2
+								)
+							}}</pre>
+							<span
+								v-if="Object.keys(shopExportPreviewData).length > 3"
+								class="text-gray-500">
+								... and
+								{{ Object.keys(shopExportPreviewData).length - 3 }} more items
+							</span>
+						</div>
+					</BaseDetails>
+				</div>
+			</div>
+
+			<div v-if="exportModalDestination === 'economy_shop_gui'">
+				<p class="text-sm text-gray-600">
+					Export EconomyShopGUI <code class="text-xs bg-gray-100 px-1 rounded">shops</code> and
+					<code class="text-xs bg-gray-100 px-1 rounded">sections</code> YAML files as a ZIP
+					archive.
+				</p>
+			</div>
+		</div>
+
+		<template #footer>
+			<div class="space-y-4 sm:space-y-6">
+				<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+					<div class="text-sm text-gray-600">
+						{{ shopItems?.length ?? 0 }}
+						item{{ (shopItems?.length ?? 0) === 1 ? '' : 's' }}
+						<span class="hidden sm:inline"> in this shop</span>
+					</div>
+					<div class="flex flex-wrap items-center gap-2 sm:gap-3 sm:justify-end">
+						<BaseButton
+							type="button"
+							variant="tertiary"
+							class="hidden sm:inline-flex"
+							data-cy="shop-items-export-modal-cancel"
+							@click="showExportModal = false">
+							Cancel
+						</BaseButton>
+						<template v-if="exportModalDestination === 'standard'">
+							<BaseButton
+								type="button"
+								variant="primary"
+								:disabled="!shopItems?.length || exportModalBusy"
+								:loading="priceGuideExportBusy"
+								data-cy="shop-items-export-price-guide-json"
+								@click="exportShopPriceGuide('json')">
+								<template #left-icon>
+									<ArrowDownTrayIcon class="w-4 h-4" />
+								</template>
+								<span class="sm:hidden">JSON</span>
+								<span class="hidden sm:inline">Export JSON</span>
+							</BaseButton>
+							<BaseButton
+								type="button"
+								variant="primary"
+								:disabled="!shopItems?.length || exportModalBusy"
+								:loading="priceGuideExportBusy"
+								data-cy="shop-items-export-price-guide-yaml"
+								@click="exportShopPriceGuide('yaml')">
+								<template #left-icon>
+									<ArrowDownTrayIcon class="w-4 h-4" />
+								</template>
+								<span class="sm:hidden">YAML</span>
+								<span class="hidden sm:inline">Export YAML</span>
+							</BaseButton>
+						</template>
+						<BaseButton
+							v-else
+							type="button"
+							variant="primary"
+							:disabled="!shopItems?.length || exportModalBusy"
+							:loading="exportLoading"
+							data-cy="shop-items-export-economy-shop-gui-zip"
+							@click="exportShopPrices">
+							<template #left-icon>
+								<ArrowDownTrayIcon class="w-4 h-4" />
+							</template>
+							Export
+						</BaseButton>
+					</div>
+				</div>
+			</div>
+		</template>
+	</BaseModal>
+
+	<button
+		v-if="showBackToTop"
+		type="button"
+		class="fixed bottom-6 right-6 z-50 bg-amulet text-white p-3 opacity-50 hover:opacity-100 transition-all duration-200 flex items-center justify-center"
+		aria-label="Back to top"
+		data-cy="shop-items-back-to-top"
+		@click="scrollToTop">
+		<ArrowUpIcon class="w-6 h-6" />
+	</button>
 </template>

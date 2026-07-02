@@ -1,5 +1,20 @@
 [
 	{
+		"id": 45,
+		"title": "Admin Shop — Manage Your Server Economy",
+		"date": "2026-07-01",
+		"types": ["Feature"],
+		"hidden": false,
+		"description": "Managing a server economy often means juggling configuration files, spreadsheets and manual price adjustments. **Admin Shop**, a new feature within **Shop Manager**, brings everything together in one place.\n\nWhether you're building a new economy from scratch or refining an existing one, Admin Shop gives you a dedicated workspace to manage your server's buy and sell prices. Make changes, experiment with pricing, automatically recalculate crafted items, and when you're happy with the result, export directly to **EconomyShopGUI** to update your live server.",
+		"changes": [
+			"**One Admin Shop per server** – Keep your server's economy organised in a single place.",
+			"**Recipe-driven pricing** – Automatically calculate the buy and sell prices of crafted items from their ingredients.",
+			"**Recalculate in one click** – Update the price of a base ingredient and automatically recalculate every dependent recipe-priced item.",
+			"**EconomyShopGUI import/export** – Import your existing EconomyShopGUI shop into Admin Shop, make your changes, then export it back to EconomyShopGUI ready to update your server.",
+			"**Price Guide import/export** – Create an Admin Shop from a Price Guide export or export your economy in the standard Price Guide format."
+		]
+	},
+	{
 		"id": 44,
 		"title": "Homepage Improvements & Fixes",
 		"date": "2026-02-25",

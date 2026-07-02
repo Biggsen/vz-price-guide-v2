@@ -5,7 +5,12 @@ import { useRouter, useRoute } from 'vue-router'
 import { query, collection, orderBy, where } from 'firebase/firestore'
 import { useShops, useServerShops } from '../utils/shopProfile.js'
 import { useServers, getMajorMinorVersion } from '../utils/serverProfile.js'
-import { useServerShopItems, updateShopItem, markShopItemsAsChecked } from '../utils/shopItems.js'
+import {
+	useServerShopItems,
+	updateShopItem,
+	markShopItemsAsChecked,
+	isOfferedShopPrice
+} from '../utils/shopItems.js'
 import { isAdmin, enabledCategories } from '../constants'
 import BaseDetails from '../components/BaseDetails.vue'
 import BaseStatCard from '../components/BaseStatCard.vue'
@@ -100,17 +105,17 @@ const serverIdForQuery = computed(() => {
 })
 const { shops: allServerShops } = useServerShops(serverIdForQuery)
 
-// Filter shops based on admin status
+// Filter shops based on admin status; exclude server shops (Market Overview is player shops only)
 // Note: useServerShops and useShops already filter out archived shops client-side
 const serverShops = computed(() => {
+	let list = []
 	if (userIsAdmin.value) {
-		// Admins can see all shops on the server (already filtered by useServerShops)
-		return allServerShops.value || []
+		list = allServerShops.value || []
 	} else {
-		// Non-admins (including shopManager) can only see their own shops on the server (already filtered by useShops)
 		if (!shops.value || !selectedServerId.value) return []
-		return shops.value.filter((shop) => shop.server_id === selectedServerId.value)
+		list = shops.value.filter((shop) => shop.server_id === selectedServerId.value)
 	}
+	return list.filter((shop) => shop.server_shop !== true)
 })
 
 // Get shop IDs for all shops on server
@@ -690,11 +695,7 @@ const priceAnalysis = computed(() => {
 		}
 
 		// Only include buy prices if item is not out of stock
-		if (
-			shopItem.buy_price !== null &&
-			shopItem.buy_price !== undefined &&
-			shopItem.stock_quantity !== 0
-		) {
+		if (isOfferedShopPrice(shopItem.buy_price) && shopItem.stock_quantity !== 0) {
 			itemPrices[itemId].buyPrices.push({
 				price: shopItem.buy_price,
 				shopId: shopItem.shop_id,
@@ -704,11 +705,7 @@ const priceAnalysis = computed(() => {
 		}
 
 		// Only include sell prices if item is not stock full
-		if (
-			shopItem.sell_price !== null &&
-			shopItem.sell_price !== undefined &&
-			!shopItem.stock_full
-		) {
+		if (isOfferedShopPrice(shopItem.sell_price) && !shopItem.stock_full) {
 			itemPrices[itemId].sellPrices.push({
 				price: shopItem.sell_price,
 				shopId: shopItem.shop_id,

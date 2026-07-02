@@ -6,7 +6,7 @@ import { doc, updateDoc, getDoc, collection, getDocs, deleteField } from 'fireba
 import { versions } from '../constants.js'
 import { useAdmin } from '../utils/admin.js'
 import { validateIngredientsInDatabase } from '../utils/recipes.js'
-import { calculateRecipePrice, getEffectivePrice, customRoundPrice } from '../utils/pricing.js'
+import { calculateRecipePrice } from '../utils/pricing.js'
 import BackButton from '../components/BackButton.vue'
 import BaseModal from '../components/BaseModal.vue'
 import BaseButton from '../components/BaseButton.vue'
@@ -228,6 +228,10 @@ function validateRecipe() {
 async function calculatePricePreview() {
 	priceCalculationStatus.value = 'calculating'
 
+	function formatNum(n) {
+		return typeof n === 'number' ? n.toFixed(2).replace(/\.00$/, '') : n
+	}
+
 	try {
 		// Create a temporary item with this recipe for calculation
 		const tempItem = {
@@ -242,10 +246,6 @@ async function calculatePricePreview() {
 			availableItems.value,
 			selectedVersion.value.replace('.', '_')
 		)
-
-		function formatNum(n) {
-			return typeof n === 'number' ? n.toFixed(2).replace(/\.00$/, '') : n
-		}
 
 		// Format calculation chain numbers
 		const formattedChain = result.chain.map((step) =>
@@ -320,14 +320,22 @@ async function saveRecipe() {
 	}
 }
 
-function closeDeleteRecipeModal() {
-	if (!saving.value) {
-		showDeleteRecipeModal.value = false
+function openDeleteRecipeModal() {
+	if (!canBulkUpdate.value) {
+		error.value = 'You do not have permission to delete recipes'
+		return
 	}
+	error.value = null
+	showDeleteRecipeModal.value = true
 }
 
-// Delete recipe
-async function deleteRecipe() {
+function closeDeleteRecipeModal() {
+	if (saving.value) return
+	showDeleteRecipeModal.value = false
+}
+
+// Delete recipe (confirmed via modal)
+async function confirmDeleteRecipe() {
 	if (!canBulkUpdate.value) {
 		error.value = 'You do not have permission to delete recipes'
 		showDeleteRecipeModal.value = false
@@ -611,7 +619,7 @@ onMounted(() => {
 					<button
 						type="button"
 						v-if="item?.recipes_by_version?.[selectedVersion.replace('.', '_')]"
-						@click="showDeleteRecipeModal = true"
+						@click="openDeleteRecipeModal"
 						:disabled="saving"
 						class="inline-flex items-center px-4 py-2 bg-semantic-danger text-white text-sm font-medium rounded-md hover:bg-semantic-danger/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-semantic-danger disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
 						Delete Recipe
@@ -636,11 +644,11 @@ onMounted(() => {
 			<div class="space-y-4">
 				<div>
 					<h3 class="font-normal text-gray-900">
-						Delete the
-						<span class="font-semibold">{{ selectedVersion }}</span>
-						recipe for
+						Delete recipe for
 						<span class="font-semibold">{{ item?.name || item?.material_id }}</span>
-						?
+						<span class="text-gray-600">
+							({{ item?.material_id }}, Minecraft {{ selectedVersion }})?
+						</span>
 					</h3>
 					<p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
 				</div>
@@ -657,11 +665,12 @@ onMounted(() => {
 							Cancel
 						</button>
 						<BaseButton
+							type="button"
 							variant="primary"
 							class="bg-semantic-danger hover:bg-opacity-90"
 							data-cy="edit-recipe-delete-confirm"
 							:disabled="saving"
-							@click="deleteRecipe">
+							@click="confirmDeleteRecipe">
 							{{ saving ? 'Deleting...' : 'Delete' }}
 						</BaseButton>
 					</div>

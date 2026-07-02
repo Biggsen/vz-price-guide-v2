@@ -1,0 +1,24 @@
+enable: true
+slot: 13
+title: '       &8&l<<=== &f&lOres &8&l===>>       '
+hidden: false
+sub-section: false
+display-item: false
+fill-item:
+  material: GRAY_STAINED_GLASS_PANE
+  name: ' '
+nav-bar:
+  mode: SELF
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: ' '
+  items:
+    GoBack:
+      material: NETHER_STAR
+      name: '%translations-back%'
+      action: BACK
+      slot: 5
+item:
+  material: IRON_INGOT
+  displayname: '&f&lOres'
+  name: '&f&lOres'

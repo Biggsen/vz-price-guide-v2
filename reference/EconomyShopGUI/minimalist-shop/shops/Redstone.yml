@@ -1,0 +1,74 @@
+pages:
+  page1:
+    gui-rows: 4
+    items:
+      '2':
+        material: DAYLIGHT_DETECTOR
+        buy: 47.72
+        sell: 11.93
+        slot: 11
+      '3':
+        material: DISPENSER
+        buy: 33.74
+        sell: 8.44
+        slot: 12
+      '4':
+        material: DROPPER
+        buy: 8.68
+        sell: 2.17
+        slot: 13
+      '5':
+        material: HOPPER
+        buy: 38.67
+        sell: 9.67
+        slot: 14
+      '7':
+        material: JUKEBOX
+        buy: 64.39
+        sell: 16.1
+        slot: 15
+      '10':
+        material: NOTE_BLOCK
+        buy: 12.94
+        sell: 3.24
+        slot: 16
+      '12':
+        material: REDSTONE_LAMP
+        buy: 45.57
+        sell: 11.4
+        slot: 17
+      '13':
+        material: REDSTONE_TORCH
+        buy: 4.29
+        sell: 1.08
+        slot: 20
+      '15':
+        material: TARGET
+        buy: 64.32
+        sell: 16.08
+        slot: 21
+      '17':
+        material: COMPARATOR
+        buy: 24.43
+        sell: 6.11
+        slot: 22
+      '18':
+        material: REPEATER
+        buy: 14.92
+        sell: 3.73
+        slot: 23
+      '22':
+        material: PISTON
+        buy: 15.8
+        sell: 3.95
+        slot: 24
+      '27':
+        material: LIGHT_WEIGHTED_PRESSURE_PLATE
+        buy: 17.37
+        sell: 4.35
+        slot: 25
+      '28':
+        material: HEAVY_WEIGHTED_PRESSURE_PLATE
+        buy: 11.58
+        sell: 2.9
+        slot: 26

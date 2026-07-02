@@ -42,6 +42,9 @@ export async function createShop(userId, shopData) {
 	if (typeof shopData.is_own_shop !== 'boolean') {
 		shopData.is_own_shop = false // Default to competitor
 	}
+	if (typeof shopData.server_shop !== 'boolean') {
+		shopData.server_shop = false
+	}
 
 	// Validate owner_funds if provided
 	if (shopData.owner_funds !== null && shopData.owner_funds !== undefined) {
@@ -58,6 +61,7 @@ export async function createShop(userId, shopData) {
 			server_id: shopData.server_id,
 			owner_id: userId,
 			is_own_shop: shopData.is_own_shop,
+			server_shop: shopData.server_shop,
 			location: shopData.location?.trim() || '',
 			description: shopData.description?.trim() || '',
 			owner_funds: shopData.owner_funds || null,

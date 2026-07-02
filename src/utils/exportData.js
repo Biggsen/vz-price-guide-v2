@@ -14,6 +14,52 @@ import {
 } from './pricing.js'
 
 /**
+ * Name, category, and stack for standard (money) price guide exports — same fields as
+ * generateExportData with includeMetadata.
+ *
+ * @param {Object} item - Guide item
+ * @returns {{ name: string, category: string, stack: number }}
+ */
+export function buildPriceGuideItemMetadata(item) {
+	const stackSize = item.stack || 64
+	return {
+		name: item.name,
+		category: item.category,
+		stack: stackSize
+	}
+}
+
+/**
+ * One material’s worth of standard export data: optional metadata plus unit/stack buy & sell
+ * from explicit unit prices (e.g. shop row prices). Omits price keys when unit price is null.
+ *
+ * @param {Object} item - Guide item (name, category, stack)
+ * @param {{ unitBuy: number|null|undefined, unitSell: number|null|undefined, includeMetadata?: boolean }} opts
+ * @returns {Record<string, unknown>}
+ */
+export function buildStandardPriceGuideItemPayload(item, opts) {
+	const { unitBuy, unitSell, includeMetadata = true } = opts
+	const entry = {}
+	if (includeMetadata) {
+		Object.assign(entry, buildPriceGuideItemMetadata(item))
+	}
+	const stackSize = item.stack || 64
+	if (unitBuy != null) {
+		entry.unit_buy = unitBuy
+	}
+	if (unitSell != null) {
+		entry.unit_sell = unitSell
+	}
+	if (unitBuy != null) {
+		entry.stack_buy = unitBuy * stackSize
+	}
+	if (unitSell != null) {
+		entry.stack_sell = unitSell * stackSize
+	}
+	return entry
+}
+
+/**
  * Generates export data from items and config.
  *
  * @param {Array} items - Array of item objects to export
@@ -57,11 +103,8 @@ export function generateExportData(items, config) {
 		const stackSize = item.stack || 64
 		const itemData = {}
 
-		// Add item metadata if requested
 		if (includeMetadata) {
-			itemData.name = item.name
-			itemData.category = item.category
-			itemData.stack = stackSize
+			Object.assign(itemData, buildPriceGuideItemMetadata(item))
 		}
 
 		// Handle diamond currency vs money currency differently

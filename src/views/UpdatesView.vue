@@ -126,13 +126,15 @@ function getUpdateTypeClass(type) {
 	return classes[type] || 'bg-gray-100 text-gray-800'
 }
 
-// Parse markdown-style links [text](url) in descriptions
+// Parse inline markdown: links [text](url) and bold **text**
 function parseLinks(text) {
 	if (!text) return ''
-	return text.replace(
-		/\[([^\]]+)\]\(([^)]+)\)/g,
-		'<a href="$2" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-600">$1</a>'
-	)
+	return text
+		.replace(
+			/\[([^\]]+)\]\(([^)]+)\)/g,
+			'<a href="$2" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-600">$1</a>'
+		)
+		.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-gray-800">$1</strong>')
 }
 
 function getStatusClass(status) {
@@ -221,9 +223,8 @@ function formatCompletionDate(dateString) {
 						<li
 							v-for="change in update.changes"
 							:key="change"
-							class="text-sm text-gray-600 list-disc">
-							{{ change }}
-						</li>
+							class="text-sm text-gray-600 list-disc"
+							v-html="parseLinks(change)"></li>
 					</ul>
 					<div class="mt-3 flex flex-wrap gap-1">
 						<template v-if="update.types">

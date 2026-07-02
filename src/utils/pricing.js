@@ -363,9 +363,11 @@ export function customRoundPrice(price) {
  * @returns {number|null} Profit margin percentage or null if invalid
  */
 export function calculateProfitMargin(buyPrice, sellPrice) {
-	if (!buyPrice || !sellPrice || buyPrice === 0) return null
-	const profit = buyPrice - sellPrice
-	const margin = (profit / buyPrice) * 100
+	const b = Number(buyPrice)
+	const s = Number(sellPrice)
+	if (!Number.isFinite(b) || !Number.isFinite(s) || b <= 0 || s <= 0) return null
+	const profit = b - s
+	const margin = (profit / b) * 100
 	return margin
 }
 

@@ -9,7 +9,6 @@ import BaseTable from '../components/BaseTable.vue'
 import ShopFormModal from '../components/ShopFormModal.vue'
 import LinkWithActions from '../components/LinkWithActions.vue'
 import ServerFormModal from '../components/ServerFormModal.vue'
-import NotificationBanner from '../components/NotificationBanner.vue'
 import {
 	GlobeAltIcon,
 	CurrencyDollarIcon,
@@ -18,10 +17,7 @@ import {
 	PlusIcon,
 	ClipboardDocumentCheckIcon,
 	WalletIcon,
-	ChartBarIcon,
-	MagnifyingGlassIcon,
-	CheckCircleIcon,
-	CubeIcon
+	CheckCircleIcon
 } from '@heroicons/vue/24/outline'
 import { XCircleIcon, MapPinIcon, UserIcon, BuildingStorefrontIcon } from '@heroicons/vue/24/solid'
 import { useAdmin } from '../utils/admin.js'
@@ -107,7 +103,8 @@ const defaultVersion = minecraftVersions[0]?.value || '1.21'
 const serverForm = ref({
 	name: '',
 	minecraft_version: defaultVersion,
-	description: ''
+	description: '',
+	user_manages_server: false
 })
 
 const showShopForm = ref(false)
@@ -191,6 +188,7 @@ const shopForm = ref({
 	location: '',
 	description: '',
 	is_own_shop: false,
+	server_shop: false,
 	owner_funds: null
 })
 
@@ -248,17 +246,20 @@ const shopsByServer = computed(() => {
 	// Initialize groups for each server
 	servers.value.forEach((server) => {
 		grouped[server.id] = {
+			serverShop: null,
 			own: [],
 			player: [],
 			all: []
 		}
 	})
 
-	// Group shops by server
+	// Group shops by server (server shop is separate; "own" = owner's player shops only)
 	shops.value.forEach((shop) => {
 		if (shop.server_id && grouped[shop.server_id]) {
 			grouped[shop.server_id].all.push(shop)
-			if (shop.is_own_shop) {
+			if (shop.server_shop === true) {
+				grouped[shop.server_id].serverShop = shop
+			} else if (shop.is_own_shop) {
 				grouped[shop.server_id].own.push(shop)
 			} else {
 				grouped[shop.server_id].player.push(shop)
@@ -315,7 +316,8 @@ function resetServerForm() {
 	serverForm.value = {
 		name: '',
 		minecraft_version: defaultVersion,
-		description: ''
+		description: '',
+		user_manages_server: false
 	}
 }
 
@@ -335,7 +337,8 @@ function showEditServerForm(server) {
 	serverForm.value = {
 		name: server.name,
 		minecraft_version: server.minecraft_version,
-		description: server.description || ''
+		description: server.description || '',
+		user_manages_server: server.user_manages_server === true
 	}
 	formError.value = null
 	nameValidationError.value = null
@@ -431,6 +434,7 @@ function resetShopForm() {
 		location: '',
 		description: '',
 		is_own_shop: false,
+		server_shop: false,
 		owner_funds: null
 	}
 	usePlayerAsShopName.value = false
@@ -444,6 +448,25 @@ function showCreateShopForm(serverId = '', isOwnShop = null) {
 	presetShopType.value = typeof isOwnShop === 'boolean' ? isOwnShop : null
 	if (serverId) shopForm.value.server_id = serverId
 	if (typeof isOwnShop === 'boolean') shopForm.value.is_own_shop = isOwnShop
+	shopForm.value.server_shop = false
+	shopCreateError.value = null
+	shopEditError.value = null
+	shopNameValidationError.value = null
+	shopServerValidationError.value = null
+	shopPlayerValidationError.value = null
+	shopError.value = null
+}
+
+function showCreateServerShopForm(serverId) {
+	showShopForm.value = true
+	editingShop.value = null
+	resetShopForm()
+	presetServerId.value = serverId || null
+	presetShopType.value = true
+	shopForm.value.server_id = serverId
+	shopForm.value.is_own_shop = true
+	shopForm.value.server_shop = true
+	shopForm.value.name = 'Admin Shop'
 	shopCreateError.value = null
 	shopEditError.value = null
 	shopNameValidationError.value = null
@@ -464,6 +487,7 @@ function showEditShopForm(shop) {
 		location: shop.location || '',
 		description: shop.description || '',
 		is_own_shop: Boolean(shop.is_own_shop),
+		server_shop: Boolean(shop.server_shop),
 		owner_funds:
 			shop.owner_funds === null || shop.owner_funds === undefined ? null : shop.owner_funds
 	}
@@ -534,6 +558,14 @@ async function handleShopSubmit() {
 			await updateShop(editingShop.value.id, shopData)
 			closeShopModals()
 		} else {
+			if (shopData.server_shop && shopData.server_id) {
+				const others = (shops.value || []).filter(
+					(s) => s.server_id === shopData.server_id && s.server_shop === true
+				)
+				for (const s of others) {
+					await updateShop(s.id, { server_shop: false })
+				}
+			}
 			const newShop = await createShop(user.value.uid, shopData)
 			closeShopModals()
 			router.push({ name: 'shop', params: { shopId: newShop.id } })
@@ -649,6 +681,12 @@ function getPlayerShopTableRows(serverId) {
 	}))
 }
 
+function serverHasPlayerShops(serverId) {
+	const g = shopsByServer.value[serverId]
+	if (!g) return false
+	return g.own.length + g.player.length > 0
+}
+
 function toggleShopsVisibility(serverId) {
 	shopsHidden.value[serverId] = !shopsHidden.value[serverId]
 	saveShopsVisibility()
@@ -658,25 +696,31 @@ function toggleShopsVisibility(serverId) {
 <template>
 	<!-- Feature Page (shown when user doesn't have access) -->
 	<div v-if="!hasAccess" class="p-4 py-8">
+		<h1
+			class="text-3xl font-bold text-gray-900 mb-8 lg:mb-10 leading-tight lg:px-[70px]">
+			Shop Manager
+		</h1>
 		<!-- Main Feature Section -->
-		<div class="mb-16 lg:ml-[70px]">
-			<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-center">
+		<div class="mb-16 lg:px-[70px]">
+			<div class="grid grid-cols-1 min-[400px]:grid-cols-2 gap-4 sm:gap-8 lg:gap-20 items-center">
 				<!-- Left Column: Text and CTA -->
-				<div>
-					<h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-6 leading-tight">
-						Player Shop Manager is here
-					</h1>
-					<p class="text-lg text-gray-600 mb-8 leading-relaxed">
-						Keep track of your own shops and other player shops across one or more
-						Minecraft servers. The Player Shop Manager helps you record prices, check
-						competitors, and spot outdated listings without relying on spreadsheets or
-						memory.
+				<div class="min-w-0">
+					<p
+						class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+						For server owners
 					</p>
-					<p class="text-lg text-gray-600 mb-8 leading-relaxed">
-						Set up servers by Minecraft version, add shops, track buy and sell prices,
-						and use the Market Overview to compare items across all shops in one place.
+					<h2 class="text-2xl font-bold text-gray-900 mb-6 leading-tight">
+						Admin Shop
+					</h2>
+					<p class="text-base sm:text-lg text-gray-600 mb-6 leading-relaxed">
+						Manage your server's economy from one place.
 					</p>
-					<div class="flex flex-col sm:flex-row gap-4">
+					<p class="text-base sm:text-lg text-gray-600 mb-8 leading-relaxed">
+						Keep your buy and sell prices organised, automatically recalculate crafted
+						items from recipes, and import or export directly with EconomyShopGUI when
+						you're ready to update your server.
+					</p>
+					<div class="flex flex-col sm:flex-row gap-4 items-start">
 						<BaseButton
 							v-if="!user?.email"
 							@click="handleShopManagerClick"
@@ -685,7 +729,7 @@ function toggleShopsVisibility(serverId) {
 							<template #left-icon>
 								<BuildingStorefrontIcon />
 							</template>
-							Try the Shop Manager
+							Manage Admin Shop
 						</BaseButton>
 						<BaseButton
 							v-else-if="!user?.emailVerified"
@@ -696,7 +740,103 @@ function toggleShopsVisibility(serverId) {
 							<template #left-icon>
 								<BuildingStorefrontIcon />
 							</template>
-							Try the Shop Manager
+							Manage Admin Shop
+						</BaseButton>
+						<BaseButton
+							v-else
+							@click="goToSignIn"
+							variant="primary"
+							class="text-base px-6 py-3">
+							Manage Admin Shop
+						</BaseButton>
+					</div>
+				</div>
+
+				<!-- Right Column: Feature Images Grid -->
+				<div
+					class="hidden min-[400px]:grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 max-w-full w-full min-w-0">
+					<div
+						class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+						<img
+							src="/images/promo/admin-shop-1.png"
+							alt="Admin Shop feature"
+							class="w-full h-full object-cover" />
+					</div>
+					<div class="hidden sm:block sm:pt-6">
+						<div
+							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+							<img
+								src="/images/promo/admin-shop-2.png"
+								alt="Admin Shop feature"
+								class="w-full h-full object-cover" />
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Main Feature Section (images left, content right) -->
+		<div class="mb-16 lg:px-[70px]">
+			<div class="grid grid-cols-1 min-[400px]:grid-cols-2 gap-4 sm:gap-8 lg:gap-20 items-center">
+				<!-- Left Column: Feature Images Grid -->
+				<div
+					class="hidden min-[400px]:grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 max-w-full w-full min-w-0">
+					<div
+						class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+						<img
+							src="/images/promo/shop-manager-1.png"
+							alt="Shop Manager feature"
+							class="w-full h-full object-cover" />
+					</div>
+					<div class="hidden sm:block sm:pt-6">
+						<div
+							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
+							<img
+								src="/images/promo/shop-manager-2.png"
+								alt="Shop Manager feature"
+								class="w-full h-full object-cover" />
+						</div>
+					</div>
+				</div>
+
+				<!-- Right Column: Text and CTA -->
+				<div class="min-w-0">
+					<p
+						class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+						For market tracking
+					</p>
+					<h2 class="text-2xl font-bold text-gray-900 mb-6 leading-tight">
+						Player Shops
+					</h2>
+					<p class="text-base sm:text-lg text-gray-600 mb-6 leading-relaxed">
+						Track the player-driven economy on your server.
+					</p>
+					<p class="text-base sm:text-lg text-gray-600 mb-8 leading-relaxed">
+						Record prices from your own shops and other players' shops, compare
+						listings with Market Overview, and spot opportunities as the market
+						changes.
+					</p>
+					<div class="flex flex-col sm:flex-row gap-4 items-start">
+						<BaseButton
+							v-if="!user?.email"
+							@click="handleShopManagerClick"
+							variant="primary"
+							data-cy="shop-manager-cta-button">
+							<template #left-icon>
+								<BuildingStorefrontIcon />
+							</template>
+							Open the Shop Manager
+						</BaseButton>
+						<BaseButton
+							v-else-if="!user?.emailVerified"
+							@click="handleShopManagerClick"
+							variant="primary"
+							class="text-base px-6 py-3"
+							data-cy="shop-manager-cta-button">
+							<template #left-icon>
+								<BuildingStorefrontIcon />
+							</template>
+							Open the Shop Manager
 						</BaseButton>
 						<BaseButton
 							v-else
@@ -707,152 +847,7 @@ function toggleShopsVisibility(serverId) {
 						</BaseButton>
 					</div>
 				</div>
-
-				<!-- Right Column: Feature Images Grid -->
-				<div class="grid grid-cols-2 gap-3 max-w-md">
-					<div class="space-y-3">
-						<div
-							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
-							<img
-								src="/images/promo/shop-manager-1.png"
-								alt="Shop Manager feature"
-								class="w-full h-full object-cover" />
-						</div>
-						<div
-							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
-							<img
-								src="/images/promo/shop-manager-4.png"
-								alt="Shop Manager feature"
-								class="w-full h-full object-cover" />
-						</div>
-					</div>
-					<div class="space-y-3 pt-6">
-						<div
-							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
-							<img
-								src="/images/promo/shop-manager-2.png"
-								alt="Shop Manager feature"
-								class="w-full h-full object-cover" />
-						</div>
-						<div
-							class="bg-gray-100 rounded-lg aspect-square overflow-hidden border-2 border-amulet">
-							<img
-								src="/images/promo/shop-manager-3.png"
-								alt="Shop Manager feature"
-								class="w-full h-full object-cover" />
-						</div>
-					</div>
-				</div>
 			</div>
-		</div>
-
-		<!-- Features Grid -->
-		<div class="mb-16">
-			<h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">
-				Tools to help you manage and compare shops
-			</h2>
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-				<BaseCard variant="tertiary">
-					<template #header>
-						<div class="flex items-center gap-3">
-							<GlobeAltIcon class="w-6 h-6 text-gray-asparagus" />
-							<span class="font-semibold">Servers & Shops</span>
-						</div>
-					</template>
-					<template #body>
-						<p class="text-gray-600">
-							Keep separate shop setups for different Minecraft servers in one place.
-							Track your own shops and other player shops without relying on
-							spreadsheets or scattered notes.
-						</p>
-					</template>
-				</BaseCard>
-
-				<BaseCard variant="tertiary">
-					<template #header>
-						<div class="flex items-center gap-3">
-							<ChartBarIcon class="w-6 h-6 text-gray-asparagus" />
-							<span class="font-semibold">Price Checking</span>
-						</div>
-					</template>
-					<template #body>
-						<p class="text-gray-600">
-							Compare item prices across all shops on a server. Quickly see how prices
-							differ between shops while checking or updating listings.
-						</p>
-					</template>
-				</BaseCard>
-
-				<BaseCard variant="tertiary">
-					<template #header>
-						<div class="flex items-center gap-3">
-							<MagnifyingGlassIcon class="w-6 h-6 text-gray-asparagus" />
-							<span class="font-semibold">Server Market Overview</span>
-						</div>
-					</template>
-					<template #body>
-						<p class="text-gray-600">
-							Browse all items across all shops on a server in one combined view. Use
-							search and categories to compare prices without opening each shop
-							individually.
-						</p>
-					</template>
-				</BaseCard>
-
-				<BaseCard variant="tertiary">
-					<template #header>
-						<div class="flex items-center gap-3">
-							<ClipboardDocumentCheckIcon class="w-6 h-6 text-gray-asparagus" />
-							<span class="font-semibold">Availability Tracking</span>
-						</div>
-					</template>
-					<template #body>
-						<p class="text-gray-600">
-							Mark items as out of stock and keep track of shop availability while
-							price checking. Useful for noting when listings are temporarily
-							unavailable.
-						</p>
-					</template>
-				</BaseCard>
-
-				<BaseCard variant="tertiary">
-					<template #header>
-						<div class="flex items-center gap-3">
-							<CurrencyDollarIcon class="w-6 h-6 text-gray-asparagus" />
-							<span class="font-semibold">Inline Price Editing</span>
-						</div>
-					</template>
-					<template #body>
-						<p class="text-gray-600">
-							Update buy and sell prices directly in the item table using inline
-							editing, making quick price checks and adjustments easier.
-						</p>
-					</template>
-				</BaseCard>
-
-				<BaseCard variant="tertiary">
-					<template #header>
-						<div class="flex items-center gap-3">
-							<CubeIcon class="w-6 h-6 text-gray-asparagus" />
-							<span class="font-semibold">Minecraft Version Support</span>
-						</div>
-					</template>
-					<template #body>
-						<p class="text-gray-600">
-							Servers are tagged with a Minecraft version so item lists only show
-							items that exist in that version when adding new shop entries.
-						</p>
-					</template>
-				</BaseCard>
-			</div>
-		</div>
-
-		<!-- Info Alert -->
-		<div class="mb-16">
-			<NotificationBanner
-				type="info"
-				title="Designed for manual price tracking and regular shop upkeep."
-				message="The Shop Manager does not connect to your Minecraft server or modify in-game shops." />
 		</div>
 	</div>
 
@@ -861,9 +856,10 @@ function toggleShopsVisibility(serverId) {
 		<!-- Header -->
 		<div class="mb-8">
 			<div>
-				<h1 class="text-3xl font-bold text-gray-900 mb-2">Player Shop Manager</h1>
+				<h1 class="text-3xl font-bold text-gray-900 mb-2">Shop Manager</h1>
 				<p class="text-gray-600">
-					Manage your shops and other player shops across all your servers.
+					Manage your server economy and track player shops across your Minecraft
+					servers.
 				</p>
 			</div>
 			<div class="mt-4">
@@ -884,7 +880,7 @@ function toggleShopsVisibility(serverId) {
 		<!-- Other Section -->
 		<div class="mb-8">
 			<h2 class="text-2xl font-semibold text-gray-700 border-b-2 border-gray-asparagus pb-2">
-				My Servers and Shops
+				Servers and Shops
 			</h2>
 		</div>
 
@@ -932,36 +928,79 @@ function toggleShopsVisibility(serverId) {
 					</template>
 					<template #body>
 						<div class="flex flex-col gap-4">
-							<div class="text-xs uppercase tracking-wide text-gray-500">
-								Version {{ server.minecraft_version || 'n/a' }}
+							<div class="flex items-center gap-2 flex-wrap text-xs uppercase tracking-wide text-gray-500">
+								<span>Version {{ server.minecraft_version || 'n/a' }}</span>
+								<span class="px-1.5 py-0.5 rounded font-medium bg-semantic-info text-white">
+									{{ server.user_manages_server ? 'Owner/Manager' : 'Player' }}
+								</span>
 							</div>
 							<p v-if="server.description" class="text-sm text-gray-600">
 								{{ server.description }}
 							</p>
-							<div class="flex gap-2 flex-wrap">
+							<div
+								v-if="shopsByServer[server.id]?.serverShop || server.user_manages_server"
+								class="flex flex-col gap-1">
+								<label class="text-xs font-medium text-gray-600 uppercase tracking-wide">
+									Admin shop
+								</label>
+								<div class="flex gap-2 flex-wrap">
+									<RouterLink
+										v-if="shopsByServer[server.id]?.serverShop"
+										:to="{
+											name: 'shop',
+											params: { shopId: shopsByServer[server.id].serverShop.id }
+										}">
+										<BaseButton variant="secondary" data-cy="server-shop-button">
+											<template #left-icon>
+												<BuildingStorefrontIcon class="w-4 h-4" />
+											</template>
+											Manage Admin Shop
+										</BaseButton>
+									</RouterLink>
 								<BaseButton
+									v-else-if="server.user_manages_server"
 									variant="secondary"
 									:disabled="shopLoading"
-									@click="showCreateShopForm(server.id, true)"
-									data-cy="shop-manager-add-shop-button">
+									@click="showCreateServerShopForm(server.id)"
+									data-cy="server-shop-create-button">
 									<template #left-icon>
 										<PlusIcon class="w-4 h-4" />
 									</template>
-									Add My Shop
+									Add Admin Shop
 								</BaseButton>
-								<BaseButton
-									variant="secondary"
-									:disabled="shopLoading"
-									@click="showCreateShopForm(server.id, false)"
-									data-cy="shop-manager-add-shop-button">
-									<template #left-icon>
-										<PlusIcon class="w-4 h-4" />
-									</template>
-									Add Player Shop
-								</BaseButton>
-								<RouterLink
-									v-if="shopsByServer[server.id]?.all.length"
-									:to="`/market-overview?serverId=${server.id}`">
+								</div>
+							</div>
+							<div class="flex flex-col gap-1">
+								<label class="text-xs font-medium text-gray-600 uppercase tracking-wide">
+									Player shops
+								</label>
+								<div class="flex gap-2 flex-wrap">
+									<BaseButton
+										variant="secondary"
+										:disabled="shopLoading"
+										@click="showCreateShopForm(server.id, true)"
+										data-cy="shop-manager-add-shop-button">
+										<template #left-icon>
+											<PlusIcon class="w-4 h-4" />
+										</template>
+										Add My Shop
+									</BaseButton>
+									<BaseButton
+										variant="secondary"
+										:disabled="shopLoading"
+										@click="showCreateShopForm(server.id, false)"
+										data-cy="shop-manager-add-shop-button">
+										<template #left-icon>
+											<PlusIcon class="w-4 h-4" />
+										</template>
+										Add Player Shop
+									</BaseButton>
+								</div>
+							</div>
+							<div
+								v-if="serverHasPlayerShops(server.id)"
+								class="flex gap-2 flex-wrap">
+								<RouterLink :to="`/market-overview?serverId=${server.id}`">
 									<BaseButton variant="tertiary">
 										<template #left-icon>
 											<CurrencyDollarIcon class="w-4 h-4" />
@@ -971,7 +1010,7 @@ function toggleShopsVisibility(serverId) {
 								</RouterLink>
 							</div>
 							<button
-								v-if="shopsByServer[server.id]?.all.length"
+								v-if="serverHasPlayerShops(server.id)"
 								type="button"
 								@click="toggleShopsVisibility(server.id)"
 								class="mt-2 text-sm text-gray-asparagus hover:text-highland underline text-left"
@@ -1077,11 +1116,8 @@ function toggleShopsVisibility(serverId) {
 												</BaseIconButton>
 											</div>
 										</template>
-										<template #empty>No personal shops yet.</template>
+										<template #empty></template>
 									</BaseTable>
-									<p v-else class="text-sm italic text-gray-500 mt-2">
-										No personal shops yet.
-									</p>
 								</div>
 								<div>
 									<BaseTable
@@ -1185,11 +1221,8 @@ function toggleShopsVisibility(serverId) {
 												</BaseIconButton>
 											</div>
 										</template>
-										<template #empty>No player shops tracked.</template>
+										<template #empty></template>
 									</BaseTable>
-									<p v-else class="text-sm italic text-gray-500 mt-2">
-										No player shops tracked.
-									</p>
 								</div>
 							</div>
 						</div>
@@ -1320,21 +1353,22 @@ function toggleShopsVisibility(serverId) {
 	<!-- Shop Manager Modal -->
 	<BaseModal
 		:isOpen="showShopManagerModal"
-		title="Try the Shop Manager"
+		title="Shop Manager"
 		data-cy="shop-manager-modal"
 		@close="closeShopManagerModal">
 		<!-- Sign-up content for unauthenticated users -->
 		<div v-if="!user?.email" class="text-left pt-2 pb-4 sm:py-4">
 			<div class="mb-8">
 				<h1 class="text-3xl font-bold text-gray-900 mb-2">Almost there!</h1>
-				<p class="mb-6">You'll need an account to use the Shop Manager.</p>
-				<p class="text-sm text-gray-900 mb-2">With an account, you can:</p>
+				<p class="mb-6">You'll need an account to use Shop Manager.</p>
+				<p class="text-sm text-gray-900 mb-2">With an account you can:</p>
 				<ul class="text-sm text-gray-900 space-y-1 list-disc list-inside">
-					<li>track your own shops and other player shops across multiple servers</li>
-					<li>set up servers by Minecraft version and organize shops by server</li>
-					<li>record buy and sell prices for items in each shop</li>
-					<li>use the Market Overview to compare prices across all shops</li>
-					<li>mark items as out of stock and track shop availability</li>
+					<li>Manage your server economy with Admin Shop</li>
+					<li>Import and export EconomyShopGUI price lists</li>
+					<li>Automatically recalculate crafted item prices from recipes</li>
+					<li>Track your own shops and other player shops</li>
+					<li>Compare prices using Market Overview</li>
+					<li>Manage shops across multiple Minecraft servers</li>
 				</ul>
 			</div>
 
@@ -1364,14 +1398,15 @@ function toggleShopsVisibility(serverId) {
 		<div v-else-if="isSignedInButNotVerified" class="text-left pt-2 pb-4 sm:py-4">
 			<div class="mb-8">
 				<h1 class="text-3xl font-bold text-gray-900 mb-2">So close!</h1>
-				<p class="mb-6">Please verify your email address to use the Shop Manager.</p>
+				<p class="mb-6">Please verify your email address to use Shop Manager.</p>
 				<p class="text-sm text-gray-900 mb-2">Once verified, you can:</p>
 				<ul class="text-sm text-gray-900 space-y-1 list-disc list-inside">
-					<li>track your own shops and other player shops across multiple servers</li>
-					<li>set up servers by Minecraft version and organize shops by server</li>
-					<li>record buy and sell prices for items in each shop</li>
-					<li>use the Market Overview to compare prices across all shops</li>
-					<li>mark items as out of stock and track shop availability</li>
+					<li>Manage your server economy with Admin Shop</li>
+					<li>Import and export EconomyShopGUI price lists</li>
+					<li>Automatically recalculate crafted item prices from recipes</li>
+					<li>Track your own shops and other player shops</li>
+					<li>Compare prices using Market Overview</li>
+					<li>Manage shops across multiple Minecraft servers</li>
 				</ul>
 			</div>
 

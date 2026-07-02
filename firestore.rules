@@ -41,7 +41,10 @@ service cloud.firestore {
          (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0)) &&
         (!('archived' in request.resource.data) ||
          request.resource.data.archived == null ||
-         request.resource.data.archived is bool);
+         request.resource.data.archived is bool) &&
+        (!('server_shop' in request.resource.data) ||
+         request.resource.data.server_shop == null ||
+         request.resource.data.server_shop is bool);
       allow delete: if request.auth != null && request.auth.uid == resource.data.owner_id;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.owner_id &&
         request.resource.data.keys().hasAll(['name', 'server_id', 'owner_id', 'is_own_shop']) &&
@@ -54,7 +57,9 @@ service cloud.firestore {
         (request.resource.data.owner_funds == null || 
          (request.resource.data.owner_funds is number && request.resource.data.owner_funds >= 0)) &&
         (request.resource.data.archived == null ||
-         request.resource.data.archived is bool);
+         request.resource.data.archived is bool) &&
+        (request.resource.data.server_shop == null ||
+         request.resource.data.server_shop is bool);
     }
     // Shop Items: Allow authenticated users to read, only shop owner can write
     match /shop_items/{itemId} {
@@ -71,9 +76,10 @@ service cloud.firestore {
          (request.resource.data.buy_price is number && request.resource.data.buy_price >= 0)) &&
         (request.resource.data.sell_price == null || 
          (request.resource.data.sell_price is number && request.resource.data.sell_price >= 0)) &&
-        (request.resource.data.buy_price != null || request.resource.data.sell_price != null) &&
         request.resource.data.stock_full is bool &&
-        (request.resource.data.starred == null || request.resource.data.starred is bool);
+        (request.resource.data.starred == null || request.resource.data.starred is bool) &&
+        (request.resource.data.pricing_type == null ||
+         request.resource.data.pricing_type in ['manual', 'from_recipe', 'base']);
     }
     // Suggestions: Users can read/write their own, admins can read/update/delete all
     match /suggestions/{suggestionId} {

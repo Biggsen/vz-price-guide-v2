@@ -58,7 +58,7 @@ const disableAlert = ref(false) // Set to true to disable all alerts regardless 
 // Feature announcement state (reusable template for new announcements)
 // To enable: set showFeatureAnnouncement to true and update the template content
 const featureAnnouncementStorageKey = STORAGE_KEYS.FEATURE_ANNOUNCEMENT_DISMISSED
-const showFeatureAnnouncement = ref(false) // Disabled by default - set to true when you have a new announcement
+const showFeatureAnnouncement = ref(true)
 
 function dismissFeatureAnnouncement() {
 	showFeatureAnnouncement.value = false
@@ -382,8 +382,9 @@ watch(
 			<div class="flex items-center">
 				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					<strong>New feature announcement!</strong>
-					Update this text with your announcement.
+					<strong>Introducing Admin Shop.</strong>
+					Manage your server economy from one place with recipe pricing and EconomyShopGUI
+					import/export.
 					<router-link to="/updates" class="underline hover:text-gray-asparagus">
 						<span>Read more</span>
 					</router-link>

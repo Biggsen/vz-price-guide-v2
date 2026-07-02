@@ -1,0 +1,116 @@
+pages:
+  page1:
+    gui-rows: 4
+    items:
+      '7':
+        material: SPAWNER
+        spawnertype: CAVE_SPIDER
+        displayname: '&c[&bCave Spider Spawner&c]'
+        name: '&c[&bCave Spider Spawner&c]'
+        buy: 55000
+        sell: -1
+        slot: 11
+      '8':
+        material: SPAWNER
+        spawnertype: CHICKEN
+        displayname: '&c[&bChicken Spawner&c]'
+        name: '&c[&bChicken Spawner&c]'
+        buy: 15000
+        sell: -1
+        slot: 12
+      '10':
+        material: SPAWNER
+        spawnertype: COW
+        displayname: '&c[&bCow Spawner&c]'
+        name: '&c[&bCow Spawner&c]'
+        buy: 100000
+        sell: -1
+        slot: 13
+      '16':
+        material: SPAWNER
+        spawnertype: HORSE
+        displayname: '&c[&bHorse Spawner&c]'
+        name: '&c[&bHorse Spawner&c]'
+        buy: 65000
+        sell: -1
+        slot: 14
+      '18':
+        material: SPAWNER
+        spawnertype: IRON_GOLEM
+        displayname: '&c[&bIron Golem Spawner&c]'
+        name: '&c[&bIron Golem Spawner&c]'
+        buy: 1000000
+        sell: -1
+        slot: 15
+      '20':
+        material: SPAWNER
+        spawnertype: MUSHROOM_COW
+        displayname: '&c[&bMushroom Cow Spawner&c]'
+        name: '&c[&bMushroom Cow Spawner&c]'
+        buy: 125000
+        sell: -1
+        slot: 16
+      '25':
+        material: SPAWNER
+        spawnertype: RABBIT
+        displayname: '&c[&bRabbit Spawner&c]'
+        name: '&c[&bRabbit Spawner&c]'
+        buy: 45000
+        sell: -1
+        slot: 17
+      '26':
+        material: SPAWNER
+        spawnertype: SHEEP
+        displayname: '&c[&bSheep Spawner&c]'
+        name: '&c[&bSheep Spawner&c]'
+        buy: 45000
+        sell: -1
+        slot: 20
+      '28':
+        material: SPAWNER
+        spawnertype: SKELETON
+        displayname: '&c[&bSkeleton Spawner&c]'
+        name: '&c[&bSkeleton Spawner&c]'
+        buy: 125000
+        sell: -1
+        slot: 21
+      '29':
+        material: SPAWNER
+        spawnertype: SLIME
+        displayname: '&c[&bSlime Spawner&c]'
+        name: '&c[&bSlime Spawner&c]'
+        buy: 550000
+        sell: -1
+        slot: 22
+      '31':
+        material: SPAWNER
+        spawnertype: SPIDER
+        displayname: '&c[&bSpider Spawner&c]'
+        name: '&c[&bSpider Spawner&c]'
+        buy: 45000
+        sell: -1
+        slot: 23
+      '34':
+        material: SPAWNER
+        spawnertype: WITCH
+        displayname: '&c[&bWitch Spawner&c]'
+        name: '&c[&bWitch Spawner&c]'
+        buy: 500000
+        sell: -1
+        slot: 24
+      '35':
+        material: SPAWNER
+        spawnertype: WOLF
+        displayname: '&c[&bWolf Spawner&c]'
+        name: '&c[&bWolf Spawner&c]'
+        buy: 250000
+        sell: -1
+        slot: 25
+      '36':
+        material: SPAWNER
+        spawnertype: ZOMBIE
+        displayname: '&c[&bZombie Spawner&c]'
+        name: '&c[&bZombie Spawner&c]'
+        buy: 120000
+        sell: -1
+        slot: 26

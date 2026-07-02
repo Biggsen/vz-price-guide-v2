@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
-import { collection, getDocs, doc, updateDoc, deleteField } from 'firebase/firestore'
+import { collection, getDocs, doc, getDoc, updateDoc, deleteField } from 'firebase/firestore'
 import { versions } from '../../constants.js'
 import { useAdmin } from '../../utils/admin.js'
 import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
@@ -75,7 +75,6 @@ const showOnlyInvalid = ref(initialRecipeManage.showOnlyInvalid)
 const showOnlyCircular = ref(initialRecipeManage.showOnlyCircular)
 const sortKey = ref('material_id')
 const sortAsc = ref(true)
-
 const deletingRowKey = ref(null)
 const deleteError = ref(null)
 const recipePendingDelete = ref(null)
@@ -126,7 +125,6 @@ function checkCircularDependency(recipe, item, dbItems, versionKey) {
 	if (!recipe || !recipe.ingredients || recipe.ingredients.length === 0) return false
 
 	const outputMaterialId = item.material_id
-	const outputCount = recipe.output_count || 1
 
 	// Check each ingredient to see if it has a recipe that uses this recipe's output
 	for (const ingredient of recipe.ingredients) {
@@ -168,11 +166,6 @@ function checkCircularDependency(recipe, item, dbItems, versionKey) {
 			)
 
 			if (createsCircularDependency) {
-				// Determine if this recipe is decompression (1 → many) or compression (many → 1)
-				const isDecompression = outputCount > 1 && recipe.ingredients.length === 1
-				const isCompression = outputCount === 1 && ingredient.quantity > 1
-
-				// Return true if it's a circular dependency (both types are circular, but we want to show both)
 				return true
 			}
 		}
@@ -410,6 +403,7 @@ function recipeRowKey(recipe) {
 
 function requestDeleteRecipe(recipe) {
 	if (!canBulkUpdate.value) return
+	deleteError.value = null
 	recipePendingDelete.value = recipe
 }
 
@@ -422,31 +416,37 @@ async function confirmDeleteRecipeFromModal() {
 	const recipe = recipePendingDelete.value
 	if (!recipe || !canBulkUpdate.value) return
 
-	const item = dbItems.value.find((i) => i.id === recipe.id)
-	if (!item?.recipes_by_version) {
-		deleteError.value = 'Item or recipe not found. Try refreshing the page.'
-		recipePendingDelete.value = null
-		return
-	}
-
-	const versionKey = recipe.version.replace('.', '_')
-	if (!item.recipes_by_version[versionKey]) {
-		deleteError.value = 'This recipe version is no longer on the item. Try refreshing the page.'
-		recipePendingDelete.value = null
-		return
-	}
-
-	deletingRowKey.value = recipeRowKey(recipe)
 	deleteError.value = null
+	const versionKey = recipe.version.replace('.', '_')
+	deletingRowKey.value = recipeRowKey(recipe)
 
 	try {
-		const remainingRecipes = { ...item.recipes_by_version }
+		const itemRef = doc(db, 'items', recipe.id)
+		const snap = await getDoc(itemRef)
+
+		if (!snap.exists()) {
+			deleteError.value = 'Item no longer exists. Refreshing list.'
+			recipePendingDelete.value = null
+			await loadDbItems()
+			await loadExistingRecipes()
+			return
+		}
+
+		const data = snap.data()
+		const recipesByVersion = data.recipes_by_version || {}
+
+		if (!recipesByVersion[versionKey]) {
+			recipePendingDelete.value = null
+			await loadDbItems()
+			await loadExistingRecipes()
+			return
+		}
+
+		const remainingRecipes = { ...recipesByVersion }
 		delete remainingRecipes[versionKey]
 		const hasOtherRecipes = Object.keys(remainingRecipes).length > 0
 
-		const itemRef = doc(db, 'items', item.id)
 		const updateData = {}
-
 		if (hasOtherRecipes) {
 			updateData[`recipes_by_version.${versionKey}`] = deleteField()
 		} else {
@@ -455,12 +455,12 @@ async function confirmDeleteRecipeFromModal() {
 		}
 
 		await updateDoc(itemRef, updateData)
+		recipePendingDelete.value = null
 		await loadDbItems()
 		await loadExistingRecipes()
-		recipePendingDelete.value = null
 	} catch (err) {
 		console.error('Error deleting recipe:', err)
-		deleteError.value = 'Failed to delete recipe'
+		deleteError.value = 'Failed to delete recipe. Try again.'
 	} finally {
 		deletingRowKey.value = null
 	}
@@ -576,6 +576,13 @@ function highlightMatch(text) {
 					</label>
 				</div>
 			</div>
+
+			<p
+				v-if="deleteError"
+				class="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+				role="alert">
+				{{ deleteError }}
+			</p>
 
 			<!-- Recipe count -->
 			<div class="mb-4 text-sm text-gray-600">
@@ -747,8 +754,13 @@ function highlightMatch(text) {
 											type="button"
 											:disabled="deletingRowKey === recipeRowKey(recipe)"
 											class="rounded bg-semantic-danger px-3 py-1 text-sm text-white hover:bg-opacity-80 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+											data-cy="delete-recipe-button"
 											@click="requestDeleteRecipe(recipe)">
-											Delete
+											{{
+												deletingRowKey === recipeRowKey(recipe)
+													? 'Deleting...'
+													: 'Delete'
+											}}
 										</button>
 									</div>
 								</td>
@@ -773,13 +785,14 @@ function highlightMatch(text) {
 			<div class="space-y-4">
 				<div>
 					<h3 class="font-normal text-gray-900">
-						Delete the
-						<span class="font-semibold">{{ recipePendingDelete?.version }}</span>
-						recipe for
-						<span class="font-semibold">{{
-							recipePendingDelete?.name || recipePendingDelete?.material_id
-						}}</span>
-						?
+						Delete recipe for
+						<span class="font-semibold">
+							{{ recipePendingDelete?.name || recipePendingDelete?.material_id }}
+						</span>
+						<span class="text-gray-600">
+							({{ recipePendingDelete?.material_id }}, Minecraft
+							{{ recipePendingDelete?.version }})?
+						</span>
 					</h3>
 					<p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
 				</div>
@@ -796,6 +809,7 @@ function highlightMatch(text) {
 							Cancel
 						</button>
 						<BaseButton
+							type="button"
 							variant="primary"
 							class="bg-semantic-danger hover:bg-opacity-90"
 							data-cy="recipe-manage-delete-confirm"

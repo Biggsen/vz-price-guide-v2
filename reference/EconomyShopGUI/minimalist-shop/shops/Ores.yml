@@ -1,0 +1,39 @@
+pages:
+  page1:
+    gui-rows: 3
+    items:
+      '7':
+        material: COPPER_INGOT
+        buy: 0.92
+        sell: 0.23
+        slot: 11
+      '9':
+        material: DIAMOND
+        buy: 52.5
+        sell: 13.13
+        slot: 12
+      '11':
+        material: EMERALD
+        buy: 39.38
+        sell: 9.85
+        slot: 13
+      '14':
+        material: GOLD_INGOT
+        buy: 8.27
+        sell: 2.07
+        slot: 14
+      '16':
+        material: IRON_INGOT
+        buy: 5.52
+        sell: 1.38
+        slot: 15
+      '18':
+        material: LAPIS_LAZULI
+        buy: 7.22
+        sell: 1.81
+        slot: 16
+      '23':
+        material: REDSTONE
+        buy: 3.5
+        sell: 0.88
+        slot: 17

@@ -1,0 +1,109 @@
+pages:
+  page1:
+    gui-rows: 5
+    items:
+      '3':
+        material: HAY_BLOCK
+        buy: 47.25
+        sell: 11.82
+        slot: 11
+      '6':
+        material: PACKED_ICE
+        buy: 13.5
+        sell: 3.38
+        slot: 12
+      '9':
+        material: SNOW_BLOCK
+        buy: 12.6
+        sell: 3.15
+        slot: 13
+      '11':
+        material: STONE
+        buy: 0.72
+        sell: 0.18
+        slot: 29
+      '13':
+        material: TUFF
+        buy: 2
+        sell: 0.5
+        slot: 32
+      '14':
+        material: GLOWSTONE
+        buy: 29.4
+        sell: 7.35
+        slot: 14
+      '19':
+        material: BAMBOO_BLOCK
+        buy: 0.95
+        sell: 0.24
+        slot: 15
+      '33':
+        material: BLACKSTONE
+        buy: 0.75
+        sell: 0.19
+        slot: 33
+      '53':
+        material: BASALT
+        buy: 40
+        sell: 10
+        slot: 34
+      '54':
+        material: COBBLESTONE
+        buy: 0.68
+        sell: 0.17
+        slot: 30
+      '55':
+        material: MOSSY_COBBLESTONE
+        buy: 8.07
+        sell: 2.02
+        slot: 31
+      '92':
+        material: DEEPSLATE
+        buy: 0.72
+        sell: 0.18
+        slot: 35
+      '103':
+        material: GRASS_BLOCK
+        buy: 8
+        sell: 2
+        slot: 16
+      '119':
+        material: MUD
+        buy: 3.19
+        sell: 0.8
+        slot: 17
+      '150':
+        material: SAND
+        buy: 6
+        sell: 1.5
+        slot: 22
+      '165':
+        material: STONE_BRICKS
+        buy: 0.75
+        sell: 0.19
+        slot: 25
+      '168':
+        material: MOSSY_STONE_BRICKS
+        buy: 8.14
+        sell: 2.04
+        slot: 26
+      '206':
+        material: OAK_LOG
+        buy: 3
+        sell: 0.75
+        slot: 21
+      '237':
+        material: WHITE_WOOL
+        buy: 29.4
+        sell: 7.35
+        slot: 20
+      '38':
+        material: BOOKSHELF
+        buy: 119.12
+        sell: 29.78
+        slot: 23
+      '104':
+        material: GRAVEL
+        buy: 8
+        sell: 2
+        slot: 24

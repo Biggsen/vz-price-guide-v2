@@ -9,8 +9,19 @@ import {
 	hasEnchantmentConflict,
 	getEnchantmentConflictReason
 } from '../utils/enchantments.js'
+import { computeRecipePriceForShop, getRecipeForItem } from '../utils/serverShopRecipes.js'
+import {
+	buildMergedGuideByMaterialId,
+	canonicalGuideItemForMaterial,
+	normalizeMaterialIdKey
+} from '../utils/guideItemMaterialPick.js'
+import {
+	DEFAULT_MAX_SHOP_ITEMS_PER_SHOP,
+	isOfferedShopPrice,
+	normalizeShopPriceField
+} from '../utils/shopItems.js'
 import BaseButton from './BaseButton.vue'
-import BaseModal from './BaseModal.vue'
+import FieldHelpTooltip from './FieldHelpTooltip.vue'
 import NotificationBanner from './NotificationBanner.vue'
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 import { ArchiveBoxIcon, ArchiveBoxXMarkIcon, XMarkIcon } from '@heroicons/vue/24/outline'
@@ -36,6 +47,14 @@ const props = defineProps({
 		type: Object,
 		default: null
 	},
+	shopItemsForRecipe: {
+		type: Array,
+		default: () => []
+	},
+	serverVersionKey: {
+		type: String,
+		default: ''
+	},
 	displayVariant: {
 		type: String,
 		default: 'card',
@@ -48,12 +67,122 @@ const emit = defineEmits(['submit', 'cancel'])
 // Form data
 const formData = ref({
 	item_id: '',
-	buy_price: null,
-	sell_price: null,
+	buy_price: 0,
+	sell_price: 0,
+	pricing_type: 'manual',
 	stock_quantity: null,
 	stock_full: false,
 	notes: '',
 	enchantments: []
+})
+
+const isServerShop = computed(() => Boolean(props.shop?.server_shop))
+
+// Server shop: computed recipe buy and sell prices (when pricing type is from_recipe)
+const recipePriceResult = computed(() => {
+	if (!isServerShop.value || !props.availableItems?.length || !props.serverVersionKey) {
+		return { buy: { price: null, error: null }, sell: { price: null, error: null } }
+	}
+	const guideItem = props.availableItems.find((g) => g.id === formData.value.item_id)
+	if (!guideItem) return { buy: { price: null, error: null }, sell: { price: null, error: null } }
+	const guideByMaterialId = buildMergedGuideByMaterialId(props.availableItems)
+	const shopItems = [...(props.shopItemsForRecipe || [])]
+	const existing = shopItems.find((s) => s.item_id === formData.value.item_id)
+	if (!existing) {
+		shopItems.push({
+			item_id: formData.value.item_id,
+			buy_price: formData.value.buy_price,
+			sell_price: formData.value.sell_price,
+			pricing_type: formData.value.pricing_type
+		})
+	}
+	const byItemId = {}
+	shopItems.forEach((s) => { byItemId[s.item_id] = s })
+	const current = byItemId[formData.value.item_id] || {
+		...formData.value,
+		item_id: formData.value.item_id
+	}
+	if (formData.value.pricing_type !== 'from_recipe') {
+		return { buy: { price: null, error: null }, sell: { price: null, error: null } }
+	}
+	const buyResult = computeRecipePriceForShop(
+		current,
+		guideItem,
+		byItemId,
+		guideByMaterialId,
+		props.serverVersionKey,
+		'buy'
+	)
+	const sellResult = computeRecipePriceForShop(
+		current,
+		guideItem,
+		byItemId,
+		guideByMaterialId,
+		props.serverVersionKey,
+		'sell'
+	)
+	return { buy: buyResult, sell: sellResult }
+})
+
+// Recipe ingredients for display when Recipe pricing is selected
+const recipeDisplay = computed(() => {
+	if (
+		!isServerShop.value ||
+		formData.value.pricing_type !== 'from_recipe' ||
+		!props.availableItems?.length ||
+		!props.serverVersionKey
+	) {
+		return null
+	}
+	const itemId = formData.value.item_id
+	if (!itemId) return null
+	const guideItem = props.availableItems.find((g) => g.id === itemId)
+	if (!guideItem) return null
+	const recipe = getRecipeForItem(guideItem, props.serverVersionKey)
+	if (!recipe?.ingredients?.length) return null
+	const byMaterialId = buildMergedGuideByMaterialId(props.availableItems)
+	const shopItems = [...(props.shopItemsForRecipe || [])]
+	const existing = shopItems.find((s) => s.item_id === formData.value.item_id)
+	if (!existing) {
+		shopItems.push({
+			item_id: formData.value.item_id,
+			buy_price: formData.value.buy_price,
+			sell_price: formData.value.sell_price,
+			pricing_type: formData.value.pricing_type
+		})
+	}
+	const shopByItemId = {}
+	shopItems.forEach((s) => {
+		if (s.item_id) shopByItemId[s.item_id] = s
+	})
+	return {
+		ingredients: recipe.ingredients.map((ing) => {
+			const item = byMaterialId[normalizeMaterialIdKey(ing.material_id)]
+			const shopItem = item ? shopByItemId[item.id] : null
+			const buyPrice = isOfferedShopPrice(shopItem?.buy_price)
+				? Number(shopItem.buy_price)
+				: null
+			const sellPrice = isOfferedShopPrice(shopItem?.sell_price)
+				? Number(shopItem.sell_price)
+				: null
+			const issues = []
+			if (!shopItem) {
+				issues.push('Not in shop')
+			} else {
+				if (buyPrice == null) issues.push('No buy price')
+				if (sellPrice == null) issues.push('No sell price')
+			}
+			return {
+				quantity: ing.quantity ?? 1,
+				name: item?.name || ing.material_id,
+				image: item?.image || null,
+				buy_price: buyPrice,
+				sell_price: sellPrice,
+				item_id: item?.id ?? null,
+				issues
+			}
+		})
+	}
 })
 
 // Form state
@@ -84,8 +213,9 @@ function focusSearchInput() {
 function resetForm() {
 	formData.value = {
 		item_id: '',
-		buy_price: null,
-		sell_price: null,
+		buy_price: 0,
+		sell_price: 0,
+		pricing_type: 'manual',
 		stock_quantity: null,
 		stock_full: false,
 		notes: '',
@@ -104,10 +234,23 @@ function resetForm() {
 // Initialize form when editing
 onMounted(() => {
 	if (props.editingItem) {
+		const guideItem =
+			props.editingItem.itemData ||
+			props.availableItems.find((a) => a.id === props.editingItem.item_id)
+		const hasRecipe = guideItem && !!getRecipeForItem(guideItem, props.serverVersionKey)
+		const pricingType =
+			props.editingItem.pricing_type === 'from_recipe' ||
+			props.editingItem.buy_pricing_type === 'from_recipe' ||
+			props.editingItem.sell_pricing_type === 'from_recipe'
+				? 'from_recipe'
+				: props.editingItem.pricing_type === 'base' || !hasRecipe
+					? 'base'
+					: 'manual'
 		formData.value = {
 			item_id: props.editingItem.item_id,
-			buy_price: props.editingItem.buy_price,
-			sell_price: props.editingItem.sell_price,
+			buy_price: normalizeShopPriceField(props.editingItem.buy_price),
+			sell_price: normalizeShopPriceField(props.editingItem.sell_price),
+			pricing_type: pricingType,
 			stock_quantity: props.editingItem.stock_quantity,
 			stock_full: props.editingItem.stock_full || false,
 			notes: props.editingItem.notes || '',
@@ -124,15 +267,65 @@ onMounted(() => {
 	}
 })
 
+// Computed: selected item (must be before hasRecipeForSelectedItem and sync watcher)
+const selectedItem = computed(() => {
+	if (props.editingItem && props.editingItem.itemData && formData.value.item_id === props.editingItem.item_id) {
+		return props.editingItem.itemData
+	}
+	return props.availableItems.find((item) => item.id === formData.value.item_id) || null
+})
+
+// Server shop: pricing type only in single-select add flow (multi-add uses shared manual prices; no recipe UI)
+const showServerShopPricingTypeSection = computed(() => {
+	if (!isServerShop.value) return false
+	if (props.editingItem) return true
+	if (enableMultipleSelection.value) return false
+	return !!selectedItem.value
+})
+
+// "Usable recipe" for UI: guide has a recipe for this MC version. Do not use
+// hasCircularRecipeDependency here — it false-positives when the same material appears
+// on multiple paths (e.g. armor → diamond → diamond block → diamond).
+const hasRecipeForSelectedItem = computed(() => {
+	if (!isServerShop.value || !props.serverVersionKey || !selectedItem.value) return false
+	return getRecipeForItem(selectedItem.value, props.serverVersionKey) != null
+})
+
+// Sync pricing_type to base when selected item has no recipe (server shop)
+watch(
+	[() => formData.value.item_id, hasRecipeForSelectedItem],
+	([itemId, hasRecipe]) => {
+		if (!isServerShop.value || !itemId) return
+		if (!hasRecipe) {
+			formData.value.pricing_type = 'base'
+		} else if (formData.value.pricing_type === 'base') {
+			formData.value.pricing_type = 'manual'
+		}
+	}
+)
+
 // Watch for editing item changes
 watch(
 	() => props.editingItem,
 	(newEditingItem) => {
 		if (newEditingItem) {
+			const guideItem =
+				newEditingItem.itemData ||
+				props.availableItems.find((a) => a.id === newEditingItem.item_id)
+			const hasRecipe = guideItem && !!getRecipeForItem(guideItem, props.serverVersionKey)
+			const pricingType =
+				newEditingItem.pricing_type === 'from_recipe' ||
+				newEditingItem.buy_pricing_type === 'from_recipe' ||
+				newEditingItem.sell_pricing_type === 'from_recipe'
+					? 'from_recipe'
+					: newEditingItem.pricing_type === 'base' || !hasRecipe
+						? 'base'
+						: 'manual'
 			formData.value = {
 				item_id: newEditingItem.item_id,
-				buy_price: newEditingItem.buy_price,
-				sell_price: newEditingItem.sell_price,
+				buy_price: normalizeShopPriceField(newEditingItem.buy_price),
+				sell_price: normalizeShopPriceField(newEditingItem.sell_price),
+				pricing_type: pricingType,
 				stock_quantity: newEditingItem.stock_quantity,
 				stock_full: newEditingItem.stock_full || false,
 				notes: newEditingItem.notes || '',
@@ -150,16 +343,7 @@ watch(
 	}
 )
 
-// Computed properties
-const selectedItem = computed(() => {
-	// When editing, use itemData from editingItem if available
-	if (props.editingItem && props.editingItem.itemData && formData.value.item_id === props.editingItem.item_id) {
-		return props.editingItem.itemData
-	}
-	// Otherwise, look up in availableItems
-	return props.availableItems.find((item) => item.id === formData.value.item_id) || null
-})
-
+// Computed properties (selectedItem and hasRecipeForSelectedItem moved above sync watcher)
 const selectedItems = computed(() => {
 	return props.availableItems.filter((item) => selectedItemIds.value.includes(item.id))
 })
@@ -173,6 +357,37 @@ const showAlreadyInShopNotice = computed(() => {
 		return selectedItemIds.value.some((id) => ids.includes(id))
 	}
 	return !!formData.value.item_id && ids.includes(formData.value.item_id)
+})
+
+const resolvedMaxShopItems = computed(() => {
+	const raw = props.shop?.max_shop_items
+	if (typeof raw === 'number' && Number.isInteger(raw) && raw >= 1) return raw
+	return DEFAULT_MAX_SHOP_ITEMS_PER_SHOP
+})
+
+/** New rows that would be created (selection minus items already in the shop). */
+const newShopItemsFromSelectionCount = computed(() => {
+	if (props.editingItem || !enableMultipleSelection.value) return 0
+	const existing = new Set(props.existingItemIds || [])
+	return selectedItemIds.value.filter((id) => !existing.has(id)).length
+})
+
+const shopItemLimitExceeded = computed(() => {
+	if (props.editingItem || !enableMultipleSelection.value) return false
+	const current = (props.existingItemIds || []).length
+	return current + newShopItemsFromSelectionCount.value > resolvedMaxShopItems.value
+})
+
+const shopItemLimitExceededMessage = computed(() => {
+	if (!shopItemLimitExceeded.value) return ''
+	const max = resolvedMaxShopItems.value
+	const current = (props.existingItemIds || []).length
+	const newCount = newShopItemsFromSelectionCount.value
+	const exceededBy = current + newCount - max
+	return (
+		`Limit exceeded by ${exceededBy} items\n` +
+		`(${newCount} selected • ${max} max • ${current} already in shop)`
+	)
 })
 
 // Get all enchantment items
@@ -219,7 +434,7 @@ const profitMargin = computed(() => {
 	const buyPrice = formData.value.buy_price
 	const sellPrice = formData.value.sell_price
 
-	if (!buyPrice || !sellPrice || buyPrice === 0) {
+	if (!isOfferedShopPrice(buyPrice) || !isOfferedShopPrice(sellPrice)) {
 		return null
 	}
 
@@ -328,70 +543,80 @@ const flattenedItems = computed(() => {
 	return flattened
 })
 
-// Form validation
-const isFormValid = computed(() => {
-	// For editing, use single item validation
-	if (props.editingItem) {
-		const hasItemId = !!formData.value.item_id
-		const hasBuyPrice =
-			formData.value.buy_price !== null &&
-			formData.value.buy_price !== undefined &&
-			formData.value.buy_price !== ''
-		const hasSellPrice =
-			formData.value.sell_price !== null &&
-			formData.value.sell_price !== undefined &&
-			formData.value.sell_price !== ''
-		const hasAtLeastOnePrice = hasBuyPrice || hasSellPrice
-
-		if (!hasItemId) {
-			return false
-		}
-
-		if (!hasAtLeastOnePrice) {
-			return false
-		}
-
-		if (hasBuyPrice && (isNaN(formData.value.buy_price) || formData.value.buy_price < 0)) {
-			return false
-		}
-
-		if (hasSellPrice && (isNaN(formData.value.sell_price) || formData.value.sell_price < 0)) {
-			return false
-		}
-
-		return true
+// Helper: effective buy/sell price validity (server shop from_recipe uses computed buy/sell from recipe)
+function effectiveHasBuyPrice() {
+	if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
+		return !recipePriceResult.value.buy.error && recipePriceResult.value.buy.price != null
 	}
-
-	// For adding new items, check based on selection mode
-	const hasItem = enableMultipleSelection.value
-		? selectedItemIds.value.length > 0
-		: !!formData.value.item_id
-	const hasBuyPrice =
+	return (
 		formData.value.buy_price !== null &&
 		formData.value.buy_price !== undefined &&
 		formData.value.buy_price !== ''
-	const hasSellPrice =
+	)
+}
+function effectiveHasSellPrice() {
+	if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
+		return !recipePriceResult.value.sell.error && recipePriceResult.value.sell.price != null
+	}
+	return (
 		formData.value.sell_price !== null &&
 		formData.value.sell_price !== undefined &&
 		formData.value.sell_price !== ''
-	const hasAtLeastOnePrice = hasBuyPrice || hasSellPrice
+	)
+}
 
-	if (!hasItem) {
-		return false
+// Form validation
+const isFormValid = computed(() => {
+	const hasBuyPrice = effectiveHasBuyPrice()
+	const hasSellPrice = effectiveHasSellPrice()
+	const hasRequiredPrices =
+		isServerShop.value && formData.value.pricing_type === 'from_recipe'
+			? hasBuyPrice && hasSellPrice
+			: true
+
+	// For editing, use single item validation
+	if (props.editingItem) {
+		const hasItemId = !!formData.value.item_id
+		if (!hasItemId) return false
+		if (!hasRequiredPrices) return false
+		if (
+			!(isServerShop.value && formData.value.pricing_type === 'from_recipe') &&
+			hasBuyPrice &&
+			(isNaN(formData.value.buy_price) || formData.value.buy_price < 0)
+		) {
+			return false
+		}
+		if (
+			!(isServerShop.value && formData.value.pricing_type === 'from_recipe') &&
+			hasSellPrice &&
+			(isNaN(formData.value.sell_price) || formData.value.sell_price < 0)
+		) {
+			return false
+		}
+		return true
 	}
 
-	if (!hasAtLeastOnePrice) {
+	// For adding new items
+	const hasItem = enableMultipleSelection.value
+		? selectedItemIds.value.length > 0
+		: !!formData.value.item_id
+	if (!hasItem) return false
+	if (enableMultipleSelection.value && shopItemLimitExceeded.value) return false
+	if (!hasRequiredPrices) return false
+	if (
+		!(isServerShop.value && formData.value.pricing_type === 'from_recipe') &&
+		hasBuyPrice &&
+		(isNaN(formData.value.buy_price) || formData.value.buy_price < 0)
+	) {
 		return false
 	}
-
-	if (hasBuyPrice && (isNaN(formData.value.buy_price) || formData.value.buy_price < 0)) {
+	if (
+		!(isServerShop.value && formData.value.pricing_type === 'from_recipe') &&
+		hasSellPrice &&
+		(isNaN(formData.value.sell_price) || formData.value.sell_price < 0)
+	) {
 		return false
 	}
-
-	if (hasSellPrice && (isNaN(formData.value.sell_price) || formData.value.sell_price < 0)) {
-		return false
-	}
-
 	return true
 })
 
@@ -407,14 +632,22 @@ function handleSubmit() {
 			return
 		}
 
-		// Validate at least one price
-		if (!formData.value.buy_price && !formData.value.sell_price) {
-			formError.value = 'prices'
-			return
+		// Validate recipe prices when from_recipe (manual prices can both be empty)
+		if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
+			if (
+				recipePriceResult.value.buy.error ||
+				recipePriceResult.value.sell.error ||
+				recipePriceResult.value.buy.price == null ||
+				recipePriceResult.value.sell.price == null
+			) {
+				formError.value = 'prices'
+				return
+			}
 		}
 
-		// Validate buy price if provided
+		// Validate buy price if provided (skip when from_recipe — already validated above)
 		if (
+			formData.value.pricing_type !== 'from_recipe' &&
 			formData.value.buy_price !== null &&
 			formData.value.buy_price !== undefined &&
 			formData.value.buy_price !== ''
@@ -425,8 +658,9 @@ function handleSubmit() {
 			}
 		}
 
-		// Validate sell price if provided
+		// Validate sell price if provided (skip when from_recipe — already validated above)
 		if (
+			formData.value.pricing_type !== 'from_recipe' &&
 			formData.value.sell_price !== null &&
 			formData.value.sell_price !== undefined &&
 			formData.value.sell_price !== ''
@@ -438,10 +672,17 @@ function handleSubmit() {
 		}
 
 		// Clean up form data before submitting
+		let buyPrice = normalizeShopPriceField(formData.value.buy_price)
+		let sellPrice = normalizeShopPriceField(formData.value.sell_price)
+		if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
+			if (recipePriceResult.value.buy.price != null) buyPrice = recipePriceResult.value.buy.price
+			if (recipePriceResult.value.sell.price != null) sellPrice = recipePriceResult.value.sell.price
+		}
 		const submitData = {
 			...formData.value,
-			buy_price: formData.value.buy_price ?? null,
-			sell_price: formData.value.sell_price ?? null,
+			buy_price: buyPrice,
+			sell_price: sellPrice,
+			pricing_type: formData.value.pricing_type || 'manual',
 			stock_quantity: formData.value.stock_quantity ?? null,
 			notes: formData.value.notes?.trim() || '',
 			enchantments: Array.isArray(formData.value.enchantments) ? [...formData.value.enchantments] : []
@@ -460,13 +701,9 @@ function handleSubmit() {
 			return
 		}
 
-		// Validate at least one price
-		if (!formData.value.buy_price && !formData.value.sell_price) {
-			formError.value = 'prices'
-			return
-		}
+		if (shopItemLimitExceeded.value) return
 
-		// Validate buy price if provided
+		// Validate buy price if provided (both can be empty for catalog bulk-add)
 		if (
 			formData.value.buy_price !== null &&
 			formData.value.buy_price !== undefined &&
@@ -490,10 +727,11 @@ function handleSubmit() {
 			}
 		}
 
-		// Create array of items with shared form data
+		// Create array of items with shared form data (multi-select does not support from_recipe)
 		const baseData = {
-			buy_price: formData.value.buy_price ?? null,
-			sell_price: formData.value.sell_price ?? null,
+			buy_price: normalizeShopPriceField(formData.value.buy_price),
+			sell_price: normalizeShopPriceField(formData.value.sell_price),
+			pricing_type: formData.value.pricing_type || 'manual',
 			stock_quantity: formData.value.stock_quantity ?? null,
 			stock_full: formData.value.stock_full || false,
 			notes: formData.value.notes?.trim() || ''
@@ -502,7 +740,7 @@ function handleSubmit() {
 		const itemsToSubmit = selectedItemIds.value.map((itemId) => ({
 			...baseData,
 			item_id: itemId,
-			enchantments: [] // Multiple selection mode doesn't support enchantments per item
+			enchantments: []
 		}))
 
 		emit('submit', itemsToSubmit)
@@ -514,14 +752,22 @@ function handleSubmit() {
 			return
 		}
 
-		// Validate at least one price
-		if (!formData.value.buy_price && !formData.value.sell_price) {
-			formError.value = 'prices'
-			return
+		// Validate recipe prices when from_recipe (manual prices can both be empty)
+		if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
+			if (
+				recipePriceResult.value.buy.error ||
+				recipePriceResult.value.sell.error ||
+				recipePriceResult.value.buy.price == null ||
+				recipePriceResult.value.sell.price == null
+			) {
+				formError.value = 'prices'
+				return
+			}
 		}
 
-		// Validate buy price if provided
+		// Validate buy price if provided (skip when from_recipe — already validated above)
 		if (
+			formData.value.pricing_type !== 'from_recipe' &&
 			formData.value.buy_price !== null &&
 			formData.value.buy_price !== undefined &&
 			formData.value.buy_price !== ''
@@ -532,8 +778,9 @@ function handleSubmit() {
 			}
 		}
 
-		// Validate sell price if provided
+		// Validate sell price if provided (skip when from_recipe — already validated above)
 		if (
+			formData.value.pricing_type !== 'from_recipe' &&
 			formData.value.sell_price !== null &&
 			formData.value.sell_price !== undefined &&
 			formData.value.sell_price !== ''
@@ -545,10 +792,17 @@ function handleSubmit() {
 		}
 
 		// Clean up form data before submitting
+		let buyPrice = normalizeShopPriceField(formData.value.buy_price)
+		let sellPrice = normalizeShopPriceField(formData.value.sell_price)
+		if (isServerShop.value && formData.value.pricing_type === 'from_recipe') {
+			if (recipePriceResult.value.buy.price != null) buyPrice = recipePriceResult.value.buy.price
+			if (recipePriceResult.value.sell.price != null) sellPrice = recipePriceResult.value.sell.price
+		}
 		const submitData = {
 			...formData.value,
-			buy_price: formData.value.buy_price ?? null,
-			sell_price: formData.value.sell_price ?? null,
+			buy_price: buyPrice,
+			sell_price: sellPrice,
+			pricing_type: formData.value.pricing_type || 'manual',
 			stock_quantity: formData.value.stock_quantity ?? null,
 			notes: formData.value.notes?.trim() || '',
 			enchantments: Array.isArray(formData.value.enchantments) ? [...formData.value.enchantments] : []
@@ -639,11 +893,14 @@ function handleSearchInput() {
 
 // Toggle item selection (for multiple selection)
 function toggleItemSelection(item) {
-	const index = selectedItemIds.value.indexOf(item.id)
+	const best = isServerShop.value
+		? canonicalGuideItemForMaterial(props.availableItems, item)
+		: item
+	const index = selectedItemIds.value.indexOf(best.id)
 	if (index > -1) {
 		selectedItemIds.value.splice(index, 1)
 	} else {
-		selectedItemIds.value.push(item.id)
+		selectedItemIds.value.push(best.id)
 	}
 	if (formError.value === 'item_id') {
 		formError.value = null
@@ -672,6 +929,34 @@ function handleMultipleSelectionToggle(checked) {
 // Check if item is selected
 function isItemSelected(itemId) {
 	return selectedItemIds.value.includes(itemId)
+}
+
+// Category selection (multiple selection mode)
+function isCategoryFullySelected(category) {
+	const items = orderedItemsByCategory.value[category] || []
+	return items.length > 0 && items.every((item) => selectedItemIds.value.includes(item.id))
+}
+
+function isCategoryPartiallySelected(category) {
+	const items = orderedItemsByCategory.value[category] || []
+	if (items.length === 0) return false
+	const selectedCount = items.filter((item) => selectedItemIds.value.includes(item.id)).length
+	return selectedCount > 0 && selectedCount < items.length
+}
+
+function toggleCategorySelection(category) {
+	const items = orderedItemsByCategory.value[category] || []
+	const ids = items.map((i) => i.id)
+	const allSelected = ids.every((id) => selectedItemIds.value.includes(id))
+	if (allSelected) {
+		selectedItemIds.value = selectedItemIds.value.filter((id) => !ids.includes(id))
+	} else {
+		const toAdd = ids.filter((id) => !selectedItemIds.value.includes(id))
+		selectedItemIds.value = [...selectedItemIds.value, ...toAdd]
+	}
+	if (formError.value === 'item_id') {
+		formError.value = null
+	}
 }
 
 // Remove selected item
@@ -708,9 +993,16 @@ function handleFormKeyDown(event) {
 
 // Select item handler (kept for backward compatibility, but not used in new multi-select mode)
 function selectItem(item) {
-	formData.value.item_id = item.id
+	const best = isServerShop.value
+		? canonicalGuideItemForMaterial(props.availableItems, item)
+		: item
+	formData.value.item_id = best.id
+	if (isServerShop.value && props.serverVersionKey) {
+		const recipe = getRecipeForItem(best, props.serverVersionKey)
+		formData.value.pricing_type = recipe ? 'manual' : 'base'
+	}
 	// Clear enchantments when item changes (if new item is not enchantable or is different)
-	if (!isItemEnchantable(item) || item.category === 'enchantments') {
+	if (!isItemEnchantable(best) || best.category === 'enchantments') {
 		formData.value.enchantments = []
 	}
 	searchQuery.value = '' // Clear search query when item is selected
@@ -993,16 +1285,6 @@ function handlePriceInput(field, event) {
 	}
 }
 
-function handleQuantityInput(event) {
-	const value = event.target.value
-	if (value === '' || value === null) {
-		formData.value.stock_quantity = null
-	} else {
-		const numValue = parseInt(value)
-		formData.value.stock_quantity = isNaN(numValue) ? null : numValue
-	}
-}
-
 function handleOutOfStockChange(checked) {
 	if (checked) {
 		formData.value.stock_quantity = 0
@@ -1087,25 +1369,30 @@ defineExpose({
 						}}
 					</div>
 
-					<!-- Selected items display (multiple mode only) -->
+					<!-- Selected items display (multiple mode only; show first 10 then "and N more") -->
 					<div
 						v-if="enableMultipleSelection && selectedItems.length > 0"
 						class="mt-2 mb-2">
-						<div class="flex flex-wrap gap-2">
-							<div
-								v-for="item in selectedItems"
-								:key="item.id"
-								class="px-2 py-1 bg-sea-mist border border-highland rounded flex items-center gap-2">
-								<span class="text-sm font-medium text-heavy-metal">
-									{{ item.name }}
-								</span>
-								<button
-									type="button"
-									@click="removeSelectedItem(item.id)"
-									class="text-gray-600 hover:text-gray-900">
-									<XCircleIcon class="w-4 h-4" />
-								</button>
-							</div>
+						<div class="flex flex-wrap gap-2 items-center">
+							<template v-for="item in selectedItems.slice(0, 10)" :key="item.id">
+								<div
+									class="px-2 py-1 bg-sea-mist border border-highland rounded flex items-center gap-2">
+									<span class="text-sm font-medium text-heavy-metal">
+										{{ item.name }}
+									</span>
+									<button
+										type="button"
+										@click="removeSelectedItem(item.id)"
+										class="text-gray-600 hover:text-gray-900">
+										<XCircleIcon class="w-4 h-4" />
+									</button>
+								</div>
+							</template>
+							<span
+								v-if="selectedItems.length > 10"
+								class="text-sm text-gray-600 italic">
+								and {{ selectedItems.length - 10 }} more
+							</span>
 						</div>
 						<button
 							type="button"
@@ -1120,6 +1407,12 @@ defineExpose({
 							title="Already in shop"
 							message="One or more of these items have already been added to this shop"
 							class="mt-2" />
+						<NotificationBanner
+							v-if="shopItemLimitExceeded"
+							type="error"
+							title="Too many items selected"
+							:message="shopItemLimitExceededMessage"
+							class="mt-2" />
 					</div>
 
 					<!-- Item selection dropdown -->
@@ -1131,8 +1424,20 @@ defineExpose({
 							v-for="(categoryItems, category) in orderedItemsByCategory"
 							:key="category">
 							<div
-								class="px-3 py-2 bg-gray-100 text-sm font-medium text-gray-700 border-b">
-								{{ category }}
+								:class="[
+									'px-3 py-2 border-b flex items-center gap-3 text-sm font-medium text-gray-700',
+									enableMultipleSelection ? 'bg-gray-100 cursor-pointer hover:bg-gray-200' : 'bg-gray-100'
+								]"
+								@click="enableMultipleSelection && toggleCategorySelection(category)">
+								<input
+									v-if="enableMultipleSelection"
+									type="checkbox"
+									:checked="isCategoryFullySelected(category)"
+									:indeterminate.prop="isCategoryPartiallySelected(category)"
+									class="checkbox-input flex-shrink-0"
+									@click.stop
+									@change.stop="toggleCategorySelection(category)" />
+								<span class="flex-1">{{ category }}</span>
 							</div>
 							<div
 								v-for="(item, categoryIndex) in categoryItems"
@@ -1406,6 +1711,85 @@ defineExpose({
 				</div>
 			</div>
 
+			<!-- Server shop: pricing type (Custom vs Recipe) -->
+			<div v-if="showServerShopPricingTypeSection" class="space-y-4">
+				<div>
+					<div class="mb-1 flex flex-wrap items-center gap-1.5">
+						<label for="pricing-type" class="text-sm font-medium text-gray-700">
+							Pricing type
+						</label>
+						<FieldHelpTooltip
+							data-cy="shop-item-pricing-type-help"
+							button-label="How pricing types work">
+							<div class="space-y-3">
+								<p>
+									<strong class="block">Base</strong>
+									<span class="block">
+										No recipe → you set the price (usually raw materials).
+									</span>
+								</p>
+								<p>
+									<strong class="block">Recipe</strong>
+									<span class="block">Auto-calculated from ingredients.</span>
+								</p>
+								<p>
+									<strong class="block">Custom</strong>
+									<span class="block">Manual price override.</span>
+								</p>
+							</div>
+						</FieldHelpTooltip>
+					</div>
+					<input
+						v-if="selectedItem && !hasRecipeForSelectedItem"
+						id="pricing-type"
+						type="text"
+						value="Base"
+						readonly
+						disabled
+						class="mt-2 block w-full max-w-[200px] rounded border-2 border-gray-300 bg-gray-100 px-3 py-1.5 text-gray-600 font-sans cursor-not-allowed" />
+					<select
+						v-else-if="selectedItem"
+						id="pricing-type"
+						v-model="formData.pricing_type"
+						class="mt-2 block w-full max-w-[200px] rounded border-2 border-gray-asparagus px-3 py-1.5 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
+						<option value="manual">Custom</option>
+						<option value="from_recipe">Recipe</option>
+					</select>
+					<div v-if="recipeDisplay" class="mt-3">
+						<label class="block text-sm font-medium text-gray-700 mb-1">Ingredients</label>
+						<div class="flex flex-col gap-2">
+							<div
+								v-for="(ing, idx) in recipeDisplay.ingredients"
+								:key="idx"
+								class="flex items-center gap-2 text-sm text-gray-900">
+								<div class="flex items-center gap-2 min-w-[160px] flex-shrink-0">
+									<img
+										v-if="ing.image"
+										:src="ing.image"
+										:alt="ing.name"
+										class="w-5 h-5 object-contain flex-shrink-0" />
+									<span>{{ ing.quantity }} {{ ing.name }}</span>
+								</div>
+								<template v-if="ing.issues.length">
+									<span
+										v-for="(issue, issueIdx) in ing.issues"
+										:key="issueIdx"
+										class="bg-red-600 text-white text-xs font-medium px-1.5 py-0.5 rounded uppercase">
+										{{ issue }}
+									</span>
+								</template>
+								<span
+									v-else
+									class="text-gray-900">
+									Buy: <span class="font-semibold">{{ parseFloat(ing.buy_price.toFixed(2)).toString() }}</span>
+									<span class="mx-1.5">Sell: <span class="font-semibold">{{ parseFloat(ing.sell_price.toFixed(2)).toString() }}</span></span>
+								</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
 			<!-- Price inputs -->
 			<div class="space-y-4">
 				<div>
@@ -1419,17 +1803,31 @@ defineExpose({
 						id="buy-price"
 						ref="buyPriceInput"
 						data-cy="shop-item-buy-price-input"
-						:value="formData.buy_price"
-						@input="handlePriceInput('buy_price', $event)"
+						:value="
+							isServerShop && formData.pricing_type === 'from_recipe' && recipePriceResult.buy.price != null
+								? (typeof recipePriceResult.buy.price === 'number'
+										? parseFloat(recipePriceResult.buy.price.toFixed(2)).toString()
+										: recipePriceResult.buy.price)
+								: formData.buy_price
+						"
+						:readonly="isServerShop && formData.pricing_type === 'from_recipe'"
+						@input="
+							!(isServerShop && formData.pricing_type === 'from_recipe') && handlePriceInput('buy_price', $event)
+						"
 						type="number"
 						step="0.01"
 						min="0"
 						placeholder="0.00"
 						:class="[
-							'mt-2 block w-[150px] rounded border-2 px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
-							formError === 'buy_price'
-								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-								: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+							'mt-2 block w-[150px] rounded border-2 px-3 py-1 font-sans',
+							isServerShop && formData.pricing_type === 'from_recipe'
+								? 'bg-gray-100 text-gray-700 cursor-not-allowed border-gray-300 font-semibold'
+								: [
+										'text-gray-900 placeholder:text-gray-400 focus:ring-2',
+										formError === 'buy_price'
+											? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+											: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+									]
 						]" />
 					<div
 						v-if="formError === 'buy_price'"
@@ -1437,8 +1835,8 @@ defineExpose({
 						<XCircleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
 						Buy price must be a valid number greater than or equal to 0
 					</div>
-					<!-- Out of stock checkbox -->
-					<div v-if="shop" class="mt-2">
+					<!-- Out of stock checkbox (hidden for server shops) -->
+					<div v-if="shop && !isServerShop" class="mt-2">
 						<label class="flex items-center">
 							<input
 								:checked="formData.stock_quantity === 0"
@@ -1458,23 +1856,37 @@ defineExpose({
 						Sell Price
 					</label>
 					<p class="text-xs text-gray-500 mb-1">
-						This is the amount players get when selling the item to a shop
+						This is the amount players get when selling the item
 					</p>
 					<div class="flex items-center gap-2">
 						<input
 							id="sell-price"
 							data-cy="shop-item-sell-price-input"
-							:value="formData.sell_price"
-							@input="handlePriceInput('sell_price', $event)"
+							:value="
+								isServerShop && formData.pricing_type === 'from_recipe' && recipePriceResult.sell.price != null
+									? (typeof recipePriceResult.sell.price === 'number'
+											? parseFloat(recipePriceResult.sell.price.toFixed(2)).toString()
+											: recipePriceResult.sell.price)
+									: formData.sell_price
+							"
+							:readonly="isServerShop && formData.pricing_type === 'from_recipe'"
+							@input="
+								!(isServerShop && formData.pricing_type === 'from_recipe') && handlePriceInput('sell_price', $event)
+							"
 							type="number"
 							step="0.01"
 							min="0"
 							placeholder="0.00"
 							:class="[
-								'mt-2 block w-[150px] rounded border-2 px-3 py-1 text-gray-900 placeholder:text-gray-400 focus:ring-2 font-sans',
-								formError === 'sell_price'
-									? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-									: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+								'mt-2 block w-[150px] rounded border-2 px-3 py-1 font-sans',
+								isServerShop && formData.pricing_type === 'from_recipe'
+									? 'bg-gray-100 text-gray-700 cursor-not-allowed border-gray-300 font-semibold'
+									: [
+											'text-gray-900 placeholder:text-gray-400 focus:ring-2',
+											formError === 'sell_price'
+												? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+												: 'border-gray-asparagus focus:ring-gray-asparagus focus:border-gray-asparagus'
+										]
 							]" />
 						<span v-if="profitMargin !== null" class="mt-2 text-sm text-gray-600">
 							{{ profitMargin.toFixed(1) }}%

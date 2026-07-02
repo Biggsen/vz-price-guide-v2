@@ -1,0 +1,74 @@
+pages:
+  page1:
+    gui-rows: 4
+    items:
+      '5':
+        material: BEETROOT_SEEDS
+        buy: 3
+        sell: 0.75
+        slot: 11
+      '6':
+        material: BROWN_MUSHROOM
+        buy: 2
+        sell: 0.5
+        slot: 12
+      '7':
+        material: CACTUS
+        buy: 0.1
+        sell: 0.03
+        slot: 13
+      '8':
+        material: CARROT
+        buy: 5
+        sell: 1.25
+        slot: 14
+      '11':
+        material: COCOA_BEANS
+        buy: 6
+        sell: 1.5
+        slot: 15
+      '13':
+        material: EGG
+        buy: 5
+        sell: 1.25
+        slot: 16
+      '14':
+        material: KELP
+        buy: 0.1
+        sell: 0.03
+        slot: 17
+      '17':
+        material: MELON_SEEDS
+        buy: 3
+        sell: 0.75
+        slot: 20
+      '19':
+        material: NETHER_WART
+        buy: 3
+        sell: 0.75
+        slot: 21
+      '21':
+        material: POTATO
+        buy: 5
+        sell: 1.25
+        slot: 22
+      '23':
+        material: PUMPKIN_SEEDS
+        buy: 1.19
+        sell: 0.3
+        slot: 23
+      '25':
+        material: SUGAR_CANE
+        buy: 0.1
+        sell: 0.03
+        slot: 24
+      '28':
+        material: WHEAT
+        buy: 5
+        sell: 1.25
+        slot: 25
+      '29':
+        material: WHEAT_SEEDS
+        buy: 3
+        sell: 0.75
+        slot: 26

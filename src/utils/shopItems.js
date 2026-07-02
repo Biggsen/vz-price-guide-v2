@@ -1,7 +1,6 @@
 import { useFirestore, useDocument, useCollection } from 'vuefire'
 import {
 	doc,
-	setDoc,
 	getDoc,
 	getFirestore,
 	collection,
@@ -12,11 +11,100 @@ import {
 	where,
 	orderBy,
 	writeBatch,
-	arrayUnion,
-	arrayRemove,
-	getDocs
+	getDocs,
+	getCountFromServer
 } from 'firebase/firestore'
 import { ref, computed, unref, watch } from 'vue'
+
+function normalizePricingType(pricingType) {
+	if (pricingType === 'from_recipe') return 'from_recipe'
+	if (pricingType === 'base') return 'base'
+	return 'manual'
+}
+
+/**
+ * Canonical stored value for "not offered": 0. Maps null/undefined/'' and invalid numbers to 0.
+ * Call after validating explicit user input when non-empty (see add/update paths).
+ * @param {unknown} value
+ * @returns {number}
+ */
+export function normalizeShopPriceField(value) {
+	if (value === null || value === undefined || value === '') return 0
+	const n = Number(value)
+	if (!Number.isFinite(n) || n < 0) return 0
+	return n
+}
+
+/** True when this side has an active shop price (positive finite number). */
+export function isOfferedShopPrice(value) {
+	const n = Number(value)
+	return Number.isFinite(n) && n > 0
+}
+
+/**
+ * Ensure client-side shop row uses 0 instead of null for missing buy/sell (legacy Firestore).
+ * @param {Object} item
+ * @returns {Object}
+ */
+export function normalizeShopItemPricesForClient(item) {
+	if (!item) return item
+	return {
+		...item,
+		buy_price: normalizeShopPriceField(item.buy_price),
+		sell_price: normalizeShopPriceField(item.sell_price)
+	}
+}
+
+/** Default cap per shop; override with `max_shop_items` on the shop document (paid tiers, etc.). */
+export const DEFAULT_MAX_SHOP_ITEMS_PER_SHOP = 300
+
+/**
+ * Max items allowed for this shop (reads `shops/{shopId}.max_shop_items` when set).
+ * @param {import('firebase/firestore').Firestore} db
+ * @param {string} shopId
+ */
+export async function getMaxShopItemsForShop(db, shopId) {
+	if (!shopId) return DEFAULT_MAX_SHOP_ITEMS_PER_SHOP
+	const snap = await getDoc(doc(db, 'shops', shopId))
+	if (!snap.exists()) return DEFAULT_MAX_SHOP_ITEMS_PER_SHOP
+	const raw = snap.data()?.max_shop_items
+	if (typeof raw === 'number' && Number.isInteger(raw) && raw >= 1) return raw
+	return DEFAULT_MAX_SHOP_ITEMS_PER_SHOP
+}
+
+/**
+ * @param {import('firebase/firestore').Firestore} db
+ * @param {string} shopId
+ */
+export async function getShopItemCountForShop(db, shopId) {
+	if (!shopId) throw new Error('Shop ID is required')
+	const q = query(collection(db, 'shop_items'), where('shop_id', '==', shopId))
+	const agg = await getCountFromServer(q)
+	return agg.data().count
+}
+
+/**
+ * Throws if adding `additionalNewItemCount` new rows would exceed the shop limit.
+ * @param {import('firebase/firestore').Firestore} db
+ * @param {string} shopId
+ * @param {number} additionalNewItemCount
+ */
+export async function assertShopHasCapacityForNewItems(db, shopId, additionalNewItemCount) {
+	if (!shopId) throw new Error('Shop ID is required')
+	const n = Number(additionalNewItemCount)
+	if (!Number.isFinite(n) || n <= 0) return
+
+	const [max, current] = await Promise.all([
+		getMaxShopItemsForShop(db, shopId),
+		getShopItemCountForShop(db, shopId)
+	])
+	if (current + n > max) {
+		const remaining = Math.max(0, max - current)
+		throw new Error(
+			`This shop can hold up to ${max} items (${current} now). You can add ${remaining} more.`
+		)
+	}
+}
 
 // Check if shop item exists
 export async function shopItemExists(itemId) {
@@ -38,29 +126,37 @@ export async function addShopItem(shopId, itemId, itemData) {
 	// Validation
 	if (!shopId) throw new Error('Shop ID is required')
 	if (!itemId) throw new Error('Item ID is required')
-	if (!itemData.buy_price && !itemData.sell_price) {
-		throw new Error('At least one price (buy or sell) is required')
-	}
 
-	// Validate price values
-	if (itemData.buy_price !== null && itemData.buy_price !== undefined) {
+	// Validate explicit non-empty prices (0 and unset are allowed as "not offered")
+	if (
+		itemData.buy_price !== null &&
+		itemData.buy_price !== undefined &&
+		itemData.buy_price !== ''
+	) {
 		if (isNaN(itemData.buy_price) || itemData.buy_price < 0) {
-			throw new Error('Buy price must be a valid positive number')
+			throw new Error('Buy price must be a valid non-negative number')
 		}
 	}
-	if (itemData.sell_price !== null && itemData.sell_price !== undefined) {
+	if (
+		itemData.sell_price !== null &&
+		itemData.sell_price !== undefined &&
+		itemData.sell_price !== ''
+	) {
 		if (isNaN(itemData.sell_price) || itemData.sell_price < 0) {
-			throw new Error('Sell price must be a valid positive number')
+			throw new Error('Sell price must be a valid non-negative number')
 		}
 	}
 
 	try {
 		const db = getFirestore()
+		await assertShopHasCapacityForNewItems(db, shopId, 1)
+
 		const shopItem = {
 			shop_id: shopId,
 			item_id: itemId,
-			buy_price: itemData.buy_price ?? null,
-			sell_price: itemData.sell_price ?? null,
+			buy_price: normalizeShopPriceField(itemData.buy_price),
+			sell_price: normalizeShopPriceField(itemData.sell_price),
+			pricing_type: normalizePricingType(itemData.pricing_type),
 			previous_buy_price: null,
 			previous_sell_price: null,
 			previous_price_date: null,
@@ -82,20 +178,7 @@ export async function addShopItem(shopId, itemId, itemData) {
 
 // Update shop item with price history logic
 export async function updateShopItem(itemId, updates) {
-	// Validation
 	if (!itemId) throw new Error('Item ID is required')
-
-	// Validate price values if provided
-	if (updates.buy_price !== null && updates.buy_price !== undefined) {
-		if (isNaN(updates.buy_price) || updates.buy_price < 0) {
-			throw new Error('Buy price must be a valid positive number')
-		}
-	}
-	if (updates.sell_price !== null && updates.sell_price !== undefined) {
-		if (isNaN(updates.sell_price) || updates.sell_price < 0) {
-			throw new Error('Sell price must be a valid positive number')
-		}
-	}
 
 	try {
 		const db = getFirestore()
@@ -109,6 +192,31 @@ export async function updateShopItem(itemId, updates) {
 
 		const currentData = docSnap.data()
 		const updatedData = { ...updates }
+
+		if (updates.buy_price !== undefined) {
+			if (
+				updates.buy_price !== null &&
+				updates.buy_price !== undefined &&
+				updates.buy_price !== ''
+			) {
+				if (isNaN(updates.buy_price) || Number(updates.buy_price) < 0) {
+					throw new Error('Buy price must be a valid non-negative number')
+				}
+			}
+			updatedData.buy_price = normalizeShopPriceField(updates.buy_price)
+		}
+		if (updates.sell_price !== undefined) {
+			if (
+				updates.sell_price !== null &&
+				updates.sell_price !== undefined &&
+				updates.sell_price !== ''
+			) {
+				if (isNaN(updates.sell_price) || Number(updates.sell_price) < 0) {
+					throw new Error('Sell price must be a valid non-negative number')
+				}
+			}
+			updatedData.sell_price = normalizeShopPriceField(updates.sell_price)
+		}
 
 		// Implement price history logic - only save if prices actually changed
 		if (updates.buy_price !== undefined || updates.sell_price !== undefined) {
@@ -124,11 +232,11 @@ export async function updateShopItem(itemId, updates) {
 				pricesChanged = true
 			}
 
+			const hadOfferedPrice =
+				isOfferedShopPrice(currentData.buy_price) || isOfferedShopPrice(currentData.sell_price)
+
 			// Only save price history if at least one price actually changed
-			if (
-				pricesChanged &&
-				(currentData.buy_price !== null || currentData.sell_price !== null)
-			) {
+			if (pricesChanged && hadOfferedPrice) {
 				updatedData.previous_buy_price = currentData.buy_price
 				updatedData.previous_sell_price = currentData.sell_price
 				updatedData.previous_price_date = currentData.last_updated
@@ -172,6 +280,33 @@ export async function deleteShopItem(itemId) {
 		console.error('Error deleting shop item:', error)
 		throw error
 	}
+}
+
+const BATCH_DELETE_LIMIT = 500
+
+/**
+ * Delete all shop items for a shop (batch deletes, respects Firestore limit).
+ * @param {string} shopId
+ * @returns {Promise<number>} number of items deleted
+ */
+export async function bulkDeleteShopItems(shopId) {
+	if (!shopId) throw new Error('Shop ID is required')
+
+	const db = getFirestore()
+	const q = query(collection(db, 'shop_items'), where('shop_id', '==', shopId))
+	const snapshot = await getDocs(q)
+	if (snapshot.empty) return 0
+
+	const docIds = snapshot.docs.map((d) => d.id)
+	let deleted = 0
+	for (let i = 0; i < docIds.length; i += BATCH_DELETE_LIMIT) {
+		const chunk = docIds.slice(i, i + BATCH_DELETE_LIMIT)
+		const batch = writeBatch(db)
+		chunk.forEach((id) => batch.delete(doc(db, 'shop_items', id)))
+		await batch.commit()
+		deleted += chunk.length
+	}
+	return deleted
 }
 
 // Get shop items
@@ -224,6 +359,9 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 
 	try {
 		const db = getFirestore()
+		const newItemCount = itemsArray.filter((row) => !row?.id).length
+		await assertShopHasCapacityForNewItems(db, shopId, newItemCount)
+
 		const batch = writeBatch(db)
 		const results = []
 
@@ -232,22 +370,25 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 			if (!itemData.item_id) {
 				throw new Error('Item ID is required for each item')
 			}
-			if (!itemData.buy_price && !itemData.sell_price) {
-				throw new Error('At least one price (buy or sell) is required for each item')
-			}
-
-			// Validate price values
-			if (itemData.buy_price !== null && itemData.buy_price !== undefined) {
+			if (
+				itemData.buy_price !== null &&
+				itemData.buy_price !== undefined &&
+				itemData.buy_price !== ''
+			) {
 				if (isNaN(itemData.buy_price) || itemData.buy_price < 0) {
 					throw new Error(
-						`Buy price must be a valid positive number for item ${itemData.item_id}`
+						`Buy price must be a valid non-negative number for item ${itemData.item_id}`
 					)
 				}
 			}
-			if (itemData.sell_price !== null && itemData.sell_price !== undefined) {
+			if (
+				itemData.sell_price !== null &&
+				itemData.sell_price !== undefined &&
+				itemData.sell_price !== ''
+			) {
 				if (isNaN(itemData.sell_price) || itemData.sell_price < 0) {
 					throw new Error(
-						`Sell price must be a valid positive number for item ${itemData.item_id}`
+						`Sell price must be a valid non-negative number for item ${itemData.item_id}`
 					)
 				}
 			}
@@ -261,6 +402,13 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 				if (docSnap.exists()) {
 					const currentData = docSnap.data()
 					const updatedData = { ...itemData }
+
+					if (updatedData.buy_price !== undefined) {
+						updatedData.buy_price = normalizeShopPriceField(updatedData.buy_price)
+					}
+					if (updatedData.sell_price !== undefined) {
+						updatedData.sell_price = normalizeShopPriceField(updatedData.sell_price)
+					}
 
 					// Implement price history logic - only save if prices actually changed
 					if (itemData.buy_price !== undefined || itemData.sell_price !== undefined) {
@@ -282,11 +430,12 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 							pricesChanged = true
 						}
 
+						const hadOfferedPrice =
+							isOfferedShopPrice(currentData.buy_price) ||
+							isOfferedShopPrice(currentData.sell_price)
+
 						// Only save price history if at least one price actually changed
-						if (
-							pricesChanged &&
-							(currentData.buy_price !== null || currentData.sell_price !== null)
-						) {
+						if (pricesChanged && hadOfferedPrice) {
 							updatedData.previous_buy_price = currentData.buy_price
 							updatedData.previous_sell_price = currentData.sell_price
 							updatedData.previous_price_date = currentData.last_updated
@@ -310,18 +459,20 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 					results.push({ id: itemData.id, ...updatedData })
 				}
 			} else {
-				// Create new item
+				// Create new item (match addShopItem payload so Firestore rules accept)
 				const newDocRef = doc(collection(db, 'shop_items'))
 				const shopItem = {
 					shop_id: shopId,
 					item_id: itemData.item_id,
-					buy_price: itemData.buy_price ?? null,
-					sell_price: itemData.sell_price ?? null,
+					buy_price: normalizeShopPriceField(itemData.buy_price),
+					sell_price: normalizeShopPriceField(itemData.sell_price),
+					pricing_type: normalizePricingType(itemData.pricing_type),
 					previous_buy_price: null,
 					previous_sell_price: null,
 					previous_price_date: null,
 					stock_quantity: itemData.stock_quantity ?? null,
 					stock_full: itemData.stock_full || false,
+					starred: false,
 					notes: itemData.notes?.trim() || '',
 					enchantments: Array.isArray(itemData.enchantments) ? itemData.enchantments : [],
 					last_updated: new Date().toISOString()
@@ -402,7 +553,7 @@ export function useShopItems(shopId) {
 			}
 		})
 
-		return itemsWithIds
+		return itemsWithIds.map(normalizeShopItemPricesForClient)
 	})
 
 	return { items }
@@ -581,10 +732,10 @@ export function useServerShopItems(serverId, shopIds) {
 				docId = `missing-${index}-${Date.now()}`
 			}
 
-			return {
+			return normalizeShopItemPricesForClient({
 				...item,
 				id: docId
-			}
+			})
 		})
 	})
 
@@ -689,11 +840,9 @@ export function usePriceComparison(itemIds) {
 			return []
 		}
 
-		if (ids.length <= 30) {
-			return smallArrayItems.value || []
-		} else {
-			return largeArrayItems.value || []
-		}
+		const raw =
+			ids.length <= 30 ? smallArrayItems.value || [] : largeArrayItems.value || []
+		return raw.map(normalizeShopItemPricesForClient)
 	})
 
 	// Computed to organize items by item_id
@@ -724,7 +873,7 @@ export async function getShopItemById(itemId) {
 		const docSnap = await getDoc(docRef)
 
 		if (docSnap.exists()) {
-			return { id: docSnap.id, ...docSnap.data() }
+			return normalizeShopItemPricesForClient({ id: docSnap.id, ...docSnap.data() })
 		} else {
 			return null
 		}
@@ -752,12 +901,8 @@ export function calculatePriceTrend(currentPrice, previousPrice) {
 export function findBestPrices(shopItems) {
 	if (!shopItems || shopItems.length === 0) return null
 
-	const buyPrices = shopItems.filter(
-		(item) => item.buy_price !== null && item.buy_price !== undefined
-	)
-	const sellPrices = shopItems.filter(
-		(item) => item.sell_price !== null && item.sell_price !== undefined
-	)
+	const buyPrices = shopItems.filter((item) => isOfferedShopPrice(item.buy_price))
+	const sellPrices = shopItems.filter((item) => isOfferedShopPrice(item.sell_price))
 
 	const bestBuyPrice =
 		buyPrices.length > 0

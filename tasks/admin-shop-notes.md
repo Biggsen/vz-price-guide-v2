@@ -1,0 +1,49 @@
+---
+title: Admin Shop — Manual Review Notes
+description: Scratchpad while manually reviewing the admin / server shop feature. Things to fix, verify, or follow up.
+created_at: 2026-04-02
+---
+
+## Open questions
+
+-
+
+## Bugs / fixes needed
+
+### Open
+
+-
+
+### Done
+
+-   Shop items table **Unknown item** flash when switching shops: show **Loading…** until the guide catalog resolves; keep the guide-items query alive across brief gaps and fall back to `getDocs` when VueFire stays empty (`ShopItemsView.vue`).
+
+-   Recipe pricing ingredient rows: replaced vague **No prices** badge with **Not in shop**, **No buy price**, and **No sell price** so missing ingredients are obvious before add is enabled (`ShopItemForm.vue`).
+
+-   Admin shop create action is now owner/manager-only. If user selects **No — I play on this server**, they no longer see **Add Admin Shop**.
+-   Hidden the **Admin shop** section label when no admin-shop action is available to the current user.
+-   **Edit shop** for admin shops no longer shows the **Location** field.
+-   Removed **Archive this shop** from settings for admin shops.
+-   In settings modal, **Shop settings** heading is hidden when no shop-level settings apply, and spacing above **Items list** collapses correctly.
+-   **Pricing** vs **Profit %** column overlap: `BaseTable` always uses `table-auto` instead of conditional `table-fixed` when columns have width hints, so columns can size from content. Re-check narrow viewports for regressions.
+-   List view: `BaseTable` caption **All Items (n)** (same labeling as homepage list view).
+-   **Add Shop Item** (server shop): **Pricing type** hidden until an item is chosen in single-select mode; hidden entirely when **Enable multiple selection** is on (batch add uses shared buy/sell fields only).
+-   **Recipe price recalculation** results: summary uses `NotificationBanner` (same pattern as shop import) instead of side-by-side stat boxes.
+-   **Recipe price recalculation** modal footer: removed extra inner `p-4` so `BaseModal` footer padding is not doubled (matches import modal footer).
+-   **Recipe price recalculation** modal: `max-w-md` so width matches the **Import shop items** modal (`max-w-2xl` → `max-w-md`).
+-   Shop YAML **import results** banner: **Import finished**-style summary (added / couldn’t be added / already in shop, with sensible singular/plural). Banner is **warning** when the only issues are materials newer than the server’s Minecraft version; **error** for other import problems.
+-   Shop YAML import: removed the extra hint lines under the results banner (“skipped already in shop” / **Not imported** counts explanation); detailed unmapped sections below are unchanged.
+-   Shop YAML import — newer-than-server unmapped block: heading **Couldn't be added (N)** and short body copy; removed the long “server runs Minecraft X / not available in Minecraft X” intro. Material lines show **(1.21)**-style version, not **(Minecraft 1.21)**.
+-   Server shop **Pricing type**: long hint moved into `FieldHelpTooltip` (info icon); copy covers **Base**, **Custom**, and **Recipe**.
+
+## UX / copy / polish
+
+-   **Inline price editing (table):** When editing buy/sell in the table, **Tab** should move focus to the next column (e.g. buy → sell, then next row or next logical cell) so prices can be entered with less mouse use. (Not implemented—note only.)
+
+## Security / auth / data
+
+-
+
+## Follow-ups (non-blocking)
+
+-
