@@ -160,7 +160,7 @@ Do **not** import at the start of this journey.
 | 3.13 | Admin shop → **Export Standard YAML** | Downloads; recipe items have resolved prices | ☐ | ☐ | |
 | 3.14 | Admin shop → **Export EconomyShopGUI ZIP** | Downloads; recipe items have resolved prices | ☐ | ☐ | |
 
-**Journey 3 result:** ☐ Pass &nbsp; ☐ Fail &nbsp; *(2026-07-01 manual: Pass with step 3.5 / X2 known fail)*
+**Journey 3 result:** ☑ Pass &nbsp; ☐ Fail &nbsp; *(2026-07-02: step 3.5 re-tested and confirmed after ingredient copy fix)*
 
 ---
 
@@ -181,3 +181,4 @@ Do **not** import at the start of this journey.
 | 2026-07-01 | Manual (local emu) | 1 | Pass | Import modal stuck on “Importing…” fixed; ESGUI `Blocks.yml` |
 | 2026-07-01 | Manual (local emu) | 2 | Pass | 2.11–2.12 skipped; import YAML-only; second import Skipped: 21 |
 | 2026-07-01 | Manual (local emu) | 3 | Pass (3.5 fail) | Recipe recalc + dual export OK; **3.5 / X2**: “No prices” for missing ingredient (deferred) |
+| 2026-07-02 | Manual (local emu) | 3.5 | Pass | Re-test after ingredient copy fix: **Not in shop** / **No buy price** / **No sell price** badges confirmed |
