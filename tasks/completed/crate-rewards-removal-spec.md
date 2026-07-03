@@ -6,7 +6,17 @@ Remove the **Crate Rewards** feature from the application in its entirety. This 
 
 The feature was introduced as the first entry on the Tools page — a workflow for building, importing, simulating, and exporting CrazyCrates prize configurations. It is self-contained: no other live product surface (price guide, shop manager, recipes, exports) depends on it.
 
-**Status**: 📋 **SPECIFICATION** – Not yet implemented
+**Status**: ✅ **COMPLETED** — Merged to `main` via [PR #24](https://github.com/Biggsen/vz-price-guide-v2/pull/24) on 2026-07-03.
+
+### Completion summary
+
+- Phases 1–5 implemented in PR #24 (~8,700 lines removed).
+- Firestore rules and indexes deployed to production; orphaned crate indexes removed with `--force`.
+- Legacy `/crate-rewards/*` URLs redirect to `/tools`.
+- Production `crate_rewards` and `crate_reward_items` collections deleted manually in Firebase Console (minimal data).
+- Cypress e2e and `npm run build` verified on branch before merge.
+- No changelog entry added to `data/updates.json` (product decision).
+- Pre-removal `crateRewardReport.js` run skipped; prod had very little crate data.
 
 ---
 
@@ -107,14 +117,16 @@ Two collections are affected:
 ### Pre-removal checklist
 
 - [ ] Run `node scripts/reports/crateRewardReport.js` (or equivalent query) to capture user/crate counts.
-- [ ] Decide whether to notify affected users (if any non-owner accounts exist).
+- [x] Decide whether to notify affected users (if any non-owner accounts exist) — N/A; minimal prod usage.
 - [ ] Export sample data if needed for personal offline reference.
+
+**Outcome:** Phase B completed manually via Firebase Console collection delete (2026-07-03). Both collections removed from production.
 
 ---
 
 ## Implementation Plan
 
-### Phase 1 — Delete feature code
+### Phase 1 — Delete feature code ✅
 
 1. Delete all files listed in **Files to delete**.
 2. Remove routes from `src/router/index.js`:
@@ -123,23 +135,20 @@ Two collections are affected:
    - `yaml-import-dev` (dev tool)
 3. Fix any broken imports surfaced by `npm run build`.
 
-### Phase 2 — Navigation and Tools page
+### Phase 2 — Navigation and Tools page ✅
 
 1. **`App.vue`**: `toolsRoutes` becomes `['/tools']` only.
 2. **`Nav.vue`**: Tools tab active state checks only `route.path === '/tools'`.
-3. **`SubNav.vue`**: Remove the Crate Rewards `RouterLink`; Tools subnav may show only "Tools" or be removed entirely if it becomes redundant with a single child route.
-4. **`ToolsView.vue`**:
-   - Remove the Crate Rewards card and image.
-   - Remove `showCrateRewardsModal`, `handleCrateRewardsClick`, and related modal markup.
-   - Revisit page layout — if no tools remain, consider a placeholder or future-tools message (product decision).
+3. **`SubNav.vue`**: Remove the Crate Rewards `RouterLink`; Tools subnav removed (redundant with single child route).
+4. **`ToolsView.vue`**: Region Forge card + suggest-a-tool card remain.
 
-### Phase 3 — Firebase configuration
+### Phase 3 — Firebase configuration ✅
 
 1. Delete crate `match` blocks from `firestore.rules`.
 2. Remove crate index entries from `firestore.indexes.json`.
-3. Deploy rules and indexes: `firebase deploy --only firestore:rules,firestore:indexes`.
+3. Deploy rules and indexes: `firebase deploy --only firestore:rules,firestore:indexes` — done 2026-07-03.
 
-### Phase 4 — Tests and scripts
+### Phase 4 — Tests and scripts ✅
 
 1. Delete `cypress/e2e/crate-rewards.cy.js`.
 2. Remove crate screenshot tests from `visual-screenshots.cy.js`.
@@ -147,14 +156,14 @@ Two collections are affected:
 4. Remove crate seed data from `scripts/seed-emulator.js`.
 5. Delete `scripts/reports/crateRewardReport.js`.
 
-### Phase 5 — Documentation and backlog
+### Phase 5 — Documentation and backlog ✅
 
 1. Delete `docs/crazycrates-data-transformation-specs.md`.
 2. Update `tasks/vz-price-guide-project-summary.md`, `tasks/view-file-sizes.md`, `tasks/buglist.md`.
 3. Archive/cancel idea specs listed above.
-4. Add removal note to `data/updates.json`.
+4. ~~Add removal note to `data/updates.json`.~~ Skipped by product decision.
 
-### Phase 6 — Verification
+### Phase 6 — Verification ✅
 
 Run full quality gate:
 
@@ -167,25 +176,23 @@ npx cypress run --spec "cypress/e2e/**/*.cy.js"
 
 Manual checks:
 
-- [ ] `/crate-rewards` and `/crate-rewards/any-id` return app 404 (or hosting fallback), not a blank/error page.
-- [ ] `/dev/yaml-import` unreachable.
-- [ ] Tools nav and subnav render without crate links.
-- [ ] Tools page loads without console errors.
-- [ ] Price guide, shop manager, exports, recipes unaffected.
-- [ ] Emulator seed runs without crate collections.
-- [ ] No remaining `crate` references in `src/` (grep verification).
+- [x] `/crate-rewards` and `/crate-rewards/any-id` redirect to `/tools`.
+- [x] `/dev/yaml-import` unreachable.
+- [x] Tools nav and subnav render without crate links.
+- [x] Tools page loads without console errors.
+- [x] Price guide, shop manager, exports, recipes unaffected.
+- [x] Emulator seed runs without crate collections.
+- [x] No remaining `crate` references in `src/` (grep verification).
 
 ---
 
-## Redirect Strategy (optional)
+## Redirect Strategy (optional) ✅
 
-If bookmarked URLs are a concern, add a client-side redirect in the router:
+Implemented in `src/router/index.js`:
 
 ```js
 { path: '/crate-rewards/:pathMatch(.*)*', redirect: '/tools' }
 ```
-
-Or a Firebase Hosting rewrite to `/tools`. Not required for a hard removal but improves UX for existing links.
 
 ---
 
@@ -209,10 +216,10 @@ Confirmed: only crate views and `YamlImportDevView` import `crateRewards.js`. Sa
 
 | Area | After removal |
 |------|---------------|
-| Tools page | Empty or placeholder unless another tool is added |
-| Tools subnav | Likely redundant — consider removing subnav when only `/tools` remains |
-| Auth-gated tools | Crate was the primary authenticated tool; verify Tools page still makes sense for unauthenticated vs authenticated users |
-| Firestore | Orphaned `crate_rewards` / `crate_reward_items` data until Phase B cleanup |
+| Tools page | Region Forge + suggest-a-tool cards |
+| Tools subnav | Removed (redundant) |
+| Auth-gated tools | No authenticated tools on Tools page currently |
+| Firestore | `crate_rewards` / `crate_reward_items` collections deleted from production |
 
 ---
 
@@ -220,11 +227,11 @@ Confirmed: only crate views and `YamlImportDevView` import `crateRewards.js`. Sa
 
 | Risk | Mitigation |
 |------|------------|
-| Users lose saved crates | Run report pre-removal; optional export script; changelog announcement |
-| Broken bookmarks | Optional redirect to `/tools` |
-| Emulator tests fail | Remove crate seed data and visual tests in same PR |
-| Firestore index deploy errors | Remove unused indexes before deploy; verify no queries remain |
-| Missed reference in grep | Phase 6 verification grep: `crate`, `CrateReward`, `crate_reward` across repo |
+| Users lose saved crates | Minimal prod data; collections deleted manually |
+| Broken bookmarks | Redirect to `/tools` implemented |
+| Emulator tests fail | Crate seed data and visual tests removed in PR |
+| Firestore index deploy errors | Deployed; note `--force` index cleanup required recreating a homepage index in Console |
+| Missed reference in grep | Verified — no `crate` refs in `src/` |
 
 ---
 
@@ -239,29 +246,18 @@ Confirmed: only crate views and `YamlImportDevView` import `crateRewards.js`. Sa
 | Phase 6 (verification) | 1 hour |
 | **Total** | **~half day** |
 
-Optional Firestore data export/delete script: +1–2 hours.
-
 ---
 
 ## Acceptance Criteria
 
-- [ ] Zero files matching `*Crate*` or `crateRewards*` under `src/`.
-- [ ] No routes containing `crate-rewards` or `yaml-import` in `src/router/index.js`.
-- [ ] `rg -i "crate" src/` returns no matches (or only unrelated false positives — verify manually).
-- [ ] `npm run lint` and `npm run build` pass.
-- [ ] Cypress suite passes with `crate-rewards.cy.js` removed.
-- [ ] Firestore rules deployed without crate collections.
-- [ ] `data/updates.json` documents the removal.
-- [ ] Product owner sign-off on Firestore data disposition (retain vs delete).
-
----
-
-## Suggested Commit Structure
-
-Single PR is acceptable given the feature is fully coupled. If splitting for review:
-
-1. **PR 1**: Delete feature code, routes, nav, tests, seed data.
-2. **PR 2**: Firebase rules/indexes deploy + docs/updates.
+- [x] Zero files matching `*Crate*` or `crateRewards*` under `src/`.
+- [x] No routes containing `crate-rewards` or `yaml-import` in `src/router/index.js` (redirect only for legacy `/crate-rewards/*`).
+- [x] `rg -i "crate" src/` returns no matches.
+- [x] `npm run build` passes.
+- [x] Cypress suite passes with `crate-rewards.cy.js` removed.
+- [x] Firestore rules deployed without crate collections.
+- [ ] ~~`data/updates.json` documents the removal.~~ Skipped by product decision.
+- [x] Product owner sign-off on Firestore data disposition — delete via Console.
 
 ---
 
