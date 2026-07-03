@@ -1262,6 +1262,7 @@ function toggleShopsVisibility(serverId) {
 			:isOpen="showShopDeleteModal"
 			title="Delete Shop"
 			size="small"
+			data-cy="shop-delete-modal"
 			@close="closeShopModals">
 			<div class="space-y-4">
 				<div>
@@ -1287,6 +1288,7 @@ function toggleShopsVisibility(serverId) {
 							@click="executeDeleteShop"
 							:disabled="shopLoading"
 							variant="primary"
+							data-cy="shop-delete-confirm-button"
 							class="bg-semantic-danger hover:bg-opacity-90">
 							{{ shopLoading ? 'Deleting...' : 'Delete' }}
 						</BaseButton>

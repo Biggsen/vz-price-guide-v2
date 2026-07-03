@@ -4,14 +4,46 @@ describe('Shop Manager - Shop Management', () => {
 		cy.acceptCookies()
 	})
 
+	function clickAddMyShop() {
+		cy.contains('[data-cy="shop-manager-add-shop-button"]', 'Add My Shop').first().click()
+	}
+
+	function clickAddPlayerShop() {
+		cy.contains('[data-cy="shop-manager-add-shop-button"]', 'Add Player Shop').first().click()
+	}
+
+	function ensureShopsTableVisible() {
+		cy.get('body').then(($body) => {
+			const toggles = $body.find('[data-cy="shop-visibility-toggle"]')
+			const hiddenToggle = toggles.filter((_, el) => el.textContent.includes('Show all shops'))
+			if (hiddenToggle.length) {
+				cy.wrap(hiddenToggle.first()).click()
+			}
+		})
+	}
+
+	function deleteShopByName(shopName) {
+		ensureShopsTableVisible()
+		cy.contains('table tbody tr a', shopName)
+			.closest('tr')
+			.find('[data-cy="shop-delete-button"]')
+			.click({ force: true })
+	}
+
+	function confirmDeleteShopModal(shopName) {
+		cy.location('pathname').should('eq', '/shop-manager')
+		cy.get('[data-cy="shop-delete-modal"]').should('be.visible')
+		cy.contains('[data-cy="shop-delete-modal"]', shopName).should('be.visible')
+		cy.get('[data-cy="shop-delete-confirm-button"]').click()
+	}
+
 	describe('Create Shop', () => {
 		beforeEach(() => {
 			cy.navigateToShopManagerAsAdmin()
 		})
 
 		it('creates shop with valid data', () => {
-			// Click add shop button (assuming a server exists)
-			cy.get('[data-cy="shop-manager-add-shop-button"]').first().click()
+			clickAddMyShop()
 
 			// Modal should open
 			cy.get('[data-cy="shop-form-modal"]').should('be.visible')
@@ -30,8 +62,7 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('creates player shop with player name', () => {
-			// Click add player shop button
-			cy.get('[data-cy="shop-manager-add-shop-button"]').last().click()
+			clickAddPlayerShop()
 
 			// Modal should open
 			cy.get('[data-cy="shop-form-modal"]').should('be.visible')
@@ -54,7 +85,7 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('shows validation error for missing shop name', () => {
-			cy.get('[data-cy="shop-manager-add-shop-button"]').first().click()
+			clickAddMyShop()
 			cy.get('[data-cy="shop-form-modal"]').should('be.visible')
 
 			// Try to submit without name
@@ -65,7 +96,7 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('shows validation error for missing player name on player shop', () => {
-			cy.get('[data-cy="shop-manager-add-shop-button"]').last().click()
+			clickAddPlayerShop()
 			cy.get('[data-cy="shop-form-modal"]').should('be.visible')
 
 			// Fill in name but not player (server is inferred from the button context)
@@ -79,7 +110,7 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('creates shop with location and description', () => {
-			cy.get('[data-cy="shop-manager-add-shop-button"]').first().click()
+			clickAddMyShop()
 			cy.get('[data-cy="shop-form-modal"]').should('be.visible')
 
 			// Fill in form (server is inferred from the button context)
@@ -98,7 +129,7 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('uses player name as shop name when checkbox is checked', () => {
-			cy.get('[data-cy="shop-manager-add-shop-button"]').last().click()
+			clickAddPlayerShop()
 			cy.get('[data-cy="shop-form-modal"]').should('be.visible')
 
 			// Fill in player name
@@ -169,25 +200,14 @@ describe('Shop Manager - Shop Management', () => {
 		})
 
 		it('deletes shop with confirmation', () => {
-			// Create a test shop first (server is inferred from the button context)
-			cy.get('[data-cy="shop-manager-add-shop-button"]').first().click()
+			clickAddMyShop()
+			cy.get('[data-cy="shop-form-modal"]').should('be.visible')
 			cy.get('[data-cy="shop-name-input"]').type('Shop to Delete')
 			cy.get('[data-cy="create-shop-submit-button"]').click()
-			cy.wait(500) // Wait for shop to be created
+			cy.get('[data-cy="shop-form-modal"]').should('not.exist')
 
-			// Find delete button for the shop we just created
-			cy.contains('Shop to Delete')
-				.parents('tr, [data-cy="shop-row"]')
-				.within(() => {
-					cy.get('[data-cy="shop-delete-button"]').click()
-				})
-
-			// Delete confirmation modal should open
-			cy.contains('Delete Shop').should('be.visible')
-			cy.contains('Shop to Delete').should('be.visible')
-
-			// Confirm delete
-			cy.get('button').contains('Delete').click()
+			deleteShopByName('Shop to Delete')
+			confirmDeleteShopModal('Shop to Delete')
 
 			// Shop should be removed
 			cy.contains('Shop to Delete').should('not.exist')
@@ -199,14 +219,10 @@ describe('Shop Manager - Shop Management', () => {
 				if (deleteButton.length > 0) {
 					cy.wrap(deleteButton.first()).click({ force: true })
 
-					// Delete confirmation modal should open
-					cy.contains('Delete Shop').should('be.visible')
+					cy.get('[data-cy="shop-delete-modal"]').should('be.visible')
+					cy.get('[data-cy="shop-delete-modal"]').contains('button', 'Cancel').click()
 
-					// Cancel
-					cy.get('button').contains('Cancel').click()
-
-					// Modal should close and shop should still exist
-					cy.contains('Delete Shop').should('not.exist')
+					cy.get('[data-cy="shop-delete-modal"]').should('not.exist')
 				}
 			})
 		})
@@ -259,13 +275,9 @@ describe('Shop Manager - Shop Management', () => {
 		testShopNames.forEach((shopName) => {
 			cy.get('body').then(($body) => {
 				if ($body.text().includes(shopName)) {
-					cy.contains(shopName)
-						.parents('tr, [data-cy="shop-row"]')
-						.within(() => {
-							cy.get('[data-cy="shop-delete-button"]').click({ force: true })
-						})
-					cy.get('button').contains('Delete').click({ force: true })
-					cy.wait(500) // Wait for deletion to complete
+					deleteShopByName(shopName)
+					cy.get('[data-cy="shop-delete-confirm-button"]').click({ force: true })
+					cy.get('[data-cy="shop-delete-modal"]').should('not.exist')
 				}
 			})
 		})
