@@ -3,7 +3,7 @@ import { inject, computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useAdmin } from '../utils/admin.js'
 
-const { user, isAdmin } = useAdmin()
+const { isAdmin } = useAdmin()
 const activeMainNav = inject('activeMainNav')
 const route = useRoute()
 
@@ -39,14 +39,6 @@ const isCommunityActive = computed(() => {
 
 const isReportsActive = computed(() => {
 	return route.path === '/admin/reports' || route.path.startsWith('/admin/reports/')
-})
-
-const isToolsActive = computed(() => {
-	return (
-		route.path === '/tools' ||
-		route.path === '/crate-rewards' ||
-		route.path.startsWith('/crate-rewards/')
-	)
 })
 
 </script>
@@ -91,27 +83,6 @@ const isToolsActive = computed(() => {
 			<div class="ml-auto">
 				<span class="px-2 py-1 bg-red-600 text-xs rounded font-bold">ADMIN</span>
 			</div>
-		</div>
-	</nav>
-
-	<!-- Tools Subnav (Desktop Only) -->
-	<nav
-		v-if="activeMainNav === 'tools' && user?.email"
-		class="bg-gray-700 text-white border-t border-gray-600 hidden sm:block">
-		<!-- Desktop: Horizontal layout -->
-		<div class="hidden sm:flex gap-6 items-center px-4 py-2">
-			<RouterLink
-				class="hover:underline"
-				:class="{ 'underline font-semibold': route.path === '/tools' }"
-				to="/tools">
-				Tools
-			</RouterLink>
-			<RouterLink
-				class="hover:underline"
-				:class="{ 'underline font-semibold': isToolsActive && route.path !== '/tools' }"
-				to="/crate-rewards">
-				Crate Rewards
-			</RouterLink>
 		</div>
 	</nav>
 </template>

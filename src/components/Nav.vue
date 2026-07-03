@@ -555,9 +555,7 @@ onUnmounted(() => {
 			"
 			:class="[
 				'px-3 max-[800px]:px-2 py-2 rounded transition-colors whitespace-nowrap',
-				route.path === '/tools' ||
-				route.path === '/crate-rewards' ||
-				route.path.startsWith('/crate-rewards/')
+				route.path === '/tools'
 					? 'bg-gray-700 text-white'
 					: 'hover:bg-gray-700 hover:text-white'
 			]">
