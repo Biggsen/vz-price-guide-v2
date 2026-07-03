@@ -235,38 +235,6 @@ function buildSeedPayload() {
 		item_id: remapItemId(entry.item_id, `recipe/${entry.id}`)
 	}))
 
-	const crate_reward_items = TEST_DATA.crate_reward_items.map((entry) => {
-		const remappedItems = (entry.items || []).map((item, index) => {
-			const remappedEnchantments = Array.isArray(item.enchantments)
-				? item.enchantments.map((id) =>
-						remapItemId(id, `crate_reward_item/${entry.id}/items/${index}/enchantments`)
-					)
-				: item.enchantments
-
-			return {
-				...item,
-				item_id: remapItemId(item.item_id, `crate_reward_item/${entry.id}/items/${index}`),
-				enchantments: remappedEnchantments
-			}
-		})
-
-		const remappedDisplayEnchantments = Array.isArray(entry.display_enchantments)
-			? entry.display_enchantments.map((id) =>
-					remapItemId(id, `crate_reward_item/${entry.id}/display_enchantments`)
-				)
-			: entry.display_enchantments
-
-		const remappedEntry = {
-			...entry,
-			display_item: remapItemId(entry.display_item, `crate_reward_item/${entry.id}/display_item`),
-			items: remappedItems
-		}
-		if (Array.isArray(entry.display_enchantments)) {
-			remappedEntry.display_enchantments = remappedDisplayEnchantments
-		}
-		return remappedEntry
-	})
-
 	console.log(
 		`[seed] Item id remap summary: remapped=${remappedCount}, unresolved=${unresolvedCount}`
 	)
@@ -275,8 +243,7 @@ function buildSeedPayload() {
 		...TEST_DATA,
 		items: seedItems,
 		shop_items,
-		recipes,
-		crate_reward_items
+		recipes
 	}
 }
 
@@ -2949,108 +2916,6 @@ const TEST_DATA = {
 			created_at: nowIso(),
 			updated_at: nowIso()
 		}
-	],
-	crate_rewards: [
-		{
-			id: 'test-crate-1',
-			user_id: 'test-admin-1',
-			name: 'Test Starter Crate',
-			description: 'A test crate with basic items for new players',
-			minecraft_version: '1.21',
-			created_at: nowIso(),
-			updated_at: nowIso()
-		}
-	],
-	crate_reward_items: [
-		{
-			id: 'test-crate-item-1',
-			crate_reward_id: 'test-crate-1',
-			weight: 25,
-			display_name: '1x diamond',
-			display_item: 'XVCyPYaBBsdifkVvJjJe',
-			display_amount: 1,
-			custom_model_data: -1,
-			import_source: 'manual',
-			items: [
-				{
-					item_id: 'XVCyPYaBBsdifkVvJjJe',
-					quantity: 1,
-					enchantments: {},
-					catalog_item: true,
-					matched: true,
-					name: ''
-				}
-			],
-			created_at: nowIso(),
-			updated_at: nowIso()
-		},
-		{
-			id: 'test-crate-item-2',
-			crate_reward_id: 'test-crate-1',
-			weight: 50,
-			display_name: '1x iron ingot',
-			display_item: 'UXTtxkUcRiIfpMcYsKFa',
-			display_amount: 5,
-			custom_model_data: -1,
-			import_source: 'manual',
-			items: [
-				{
-					item_id: 'UXTtxkUcRiIfpMcYsKFa',
-					quantity: 5,
-					enchantments: {},
-					catalog_item: true,
-					matched: true,
-					name: ''
-				}
-			],
-			created_at: nowIso(),
-			updated_at: nowIso()
-		},
-		{
-			id: 'test-crate-item-3',
-			crate_reward_id: 'test-crate-1',
-			weight: 55,
-			display_name: '1x firework rocket',
-			display_item: 'VCppHTgrqhEqkJkQWlDq',
-			display_amount: 48,
-			custom_model_data: -1,
-			import_source: 'manual',
-			items: [
-				{
-					item_id: 'VCppHTgrqhEqkJkQWlDq',
-					quantity: 48,
-					enchantments: {},
-					catalog_item: true,
-					matched: true,
-					name: ''
-				}
-			],
-			created_at: nowIso(),
-			updated_at: nowIso()
-		},
-		{
-			id: 'test-crate-item-4',
-			crate_reward_id: 'test-crate-1',
-			weight: 10,
-			display_name: '1x enchanted book',
-			display_item: 'xsdQqpscAytYFvladiMw',
-			display_amount: 1,
-			display_enchantments: ['FAolooXwUfooppFZFmCO'],
-			custom_model_data: -1,
-			import_source: 'manual',
-			items: [
-				{
-					item_id: 'xsdQqpscAytYFvladiMw',
-					quantity: 1,
-					enchantments: ['FAolooXwUfooppFZFmCO'],
-					catalog_item: true,
-					matched: true,
-					name: ''
-				}
-			],
-			created_at: nowIso(),
-			updated_at: nowIso()
-		}
 	]
 }
 
@@ -3169,20 +3034,6 @@ async function seedEmulator() {
 		for (const r of seedPayload.recipes) {
 			await upsertDoc('recipes', r.id, r)
 			console.log(`  ✓ ${r.item_id} recipe`)
-		}
-
-		// Crate Rewards
-		console.log('🎁 Seeding crate rewards...')
-		for (const cr of seedPayload.crate_rewards) {
-			await upsertDoc('crate_rewards', cr.id, cr)
-			console.log(`  ✓ ${cr.name}`)
-		}
-
-		// Crate Reward Items
-		console.log('🎁 Seeding crate reward items...')
-		for (const cri of seedPayload.crate_reward_items) {
-			await upsertDoc('crate_reward_items', cri.id, cri)
-			console.log(`  ✓ ${cri.id} → ${cri.crate_reward_id}`)
 		}
 
 		console.log('🎉 Seeding complete!')
