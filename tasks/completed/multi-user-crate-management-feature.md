@@ -1,5 +1,7 @@
 # Multi-User Crate Management Feature
 
+**Status**: Cancelled — Crate Rewards feature removed (2026-07). Kept for historical reference.
+
 ## Overview
 
 Allow multiple users to collaborate on crate management by implementing role-based permissions, shared crate ownership, and collaborative editing capabilities.

@@ -10,7 +10,7 @@
 	"status": "active",
 	"domain": "minecraft",
 	"type": "webapp",
-	"lastUpdated": "2026-01-18",
+	"lastUpdated": "2026-07-03",
 	"links": {
 		"prod": "https://minecraft-economy-price-guide.net/",
 		"staging": null
@@ -49,14 +49,14 @@
   Include: purpose, main goals, target audience, key value proposition.
 -->
 
-**verzion's economy price guide** is a Vue 3 + Firebase application for Minecraft economy price tracking and management. The project has evolved from a simple price guide into a comprehensive platform with user accounts, shop management, crate rewards, and dynamic pricing systems.
+**verzion's economy price guide** is a Vue 3 + Firebase application for Minecraft economy price tracking and management. The project has evolved from a simple price guide into a comprehensive platform with user accounts, shop management, and dynamic pricing systems.
 
 ### Key Features
 
 -   **User Accounts System** - Registration, authentication, email verification, password reset
 -   **Recipes & Dynamic Pricing** - 2,000+ recipes with automatic price calculations
 -   **Shop Manager** - Multi-server shop tracking
--   **Crate Rewards Management** - YAML import, custom pricing, value calculations
+-   **Tools** - External server utilities (e.g. Region Forge)
 -   **Suggestions System** - User feedback and feature requests with admin management
 -   **Price Export** - JSON/YAML export with filtering and version selection
 -   **Item Catalog** - 1,600+ items across 6 Minecraft versions (1.16-1.21, including 1.21.11)
@@ -92,7 +92,6 @@ Upcoming focus areas:
    - Base Input Component Refactor - Standardize form inputs across the application
    - Market Overview Refactoring - Extract ViewModeLayoutToggle, MarketItemsTable components, and composables
    - Shop Refactoring - Extract useShopForm composable, ShopItemsTable component, and useInlineEditing composable
-   - Crate Single View Refactoring - Break down 2,853-line component into manageable pieces
 
 ---
 
@@ -110,7 +109,6 @@ Upcoming focus areas:
 -   [x] User Accounts System - Registration, authentication, email verification, password reset
 -   [x] Recipes & Dynamic Pricing - 2,000+ recipes with automatic price calculations
 -   [x] Suggestions System - User feedback and feature requests with admin management
--   [x] Crate Rewards Management - YAML import, custom pricing, value calculations
 -   [x] Shop Manager - Multi-server shop tracking with starring, archiving, and market overview
 -   [x] Price Export - JSON/YAML export with filtering and version selection
 -   [x] Bulk Item Management - Admin tools for managing the item catalog
@@ -118,12 +116,9 @@ Upcoming focus areas:
 -   [x] Item Catalog - 1,600+ items across 6 Minecraft versions (1.16-1.21) including 1.21.11
 -   [x] Price Field Migration - Version-aware pricing with inheritance and fallback logic
 -   [x] Homepage Refactoring - Reduced HomeView.vue from 988 lines to 309 lines (69% reduction), extracted composables and utilities
--   [x] Custom Pricing for Crates - Enhanced crate pricing capabilities
 -   [x] Brewing Category - Complete potion catalog with brewing recipes
 -   [x] Market Overview Refactoring - Shared utility functions extracted (date, pricing, tableTransform)
 -   [x] Shop Manager Refactoring - ShopFormModal component extracted, ~423 lines of code eliminated
--   [x] Crate Rewards Mobile Display - Comprehensive mobile responsive improvements
--   [x] Duplicate Crate Name Detection - Auto-append number suffixes when importing duplicate crates
 -   [x] Comment to SuggestionMessages Refactor - Refactored comment system to use suggestionMessages terminology, renamed all files and components, updated Firestore collection path
 -   [x] Homepage Analytics (GA4) - Added rich homepage + modal events (categories, settings, export, view/layout, item link clicks) and debounced search tracking
 
@@ -296,29 +291,11 @@ _No active bugs currently - all recent issues have been resolved._
 -   **Description**: Mobile and desktop admin navigation showed different links
 -   **Solution**: Removed dead code from SubNav.vue (256 lines), now consistent across devices
 
-#### Crate Rewards Mobile Display Issues
-
--   **Status**: ✅ Resolved (2025-01-27)
--   **Description**: Crate rewards display was broken or poorly formatted on mobile devices
--   **Solution**: Comprehensive mobile responsive improvements to CrateSingleView.vue
-
 #### Price Guide vs Export Item Count Discrepancy
 
 -   **Status**: ✅ Resolved (2025-01-27)
 -   **Description**: Price guide count included 0-priced items while export correctly excluded them
 -   **Solution**: Updated count functions to exclude 0-priced items for consistency
-
-#### Duplicate Crate Names When Importing Same File
-
--   **Status**: ✅ Resolved (2025-01-27)
--   **Description**: Multiple imports of same crate YAML created identical names
--   **Solution**: Added duplicate checking with auto-append number suffixes and warning dialog
-
-#### Enchantment Books Not Separated When Adding Crate Items
-
--   **Status**: ✅ Resolved (2025-01-27)
--   **Description**: Enchanted books not being added as separate book and enchantment entities
--   **Solution**: Added fallback logic to extract display enchantments from Items array when DisplayEnchantments is missing
 
 ---
 
@@ -353,8 +330,6 @@ _No active bugs currently - all recent issues have been resolved._
 -   [ ] Community Features - Platform transformation to community-driven marketplace
 -   [ ] Diamond Currency - Currency toggle with 32:1 conversion ratio
 -   [ ] Linked Shops - Collaborative market intelligence
--   [ ] Multi-User Crate Management - Role-based collaboration
--   [ ] Single Prize Import - Granular crate prize import
 -   [ ] User Price Guide - Custom price guides with dynamic pricing
 -   [ ] Membership/Sponsorship - Premium features and monetization
 
@@ -379,7 +354,7 @@ _No active bugs currently - all recent issues have been resolved._
 -   **Completed Features**: 18
 -   **Frontend Components**: 38 Vue components and views
 -   **Backend Utilities**: 12 utility modules
--   **Testing Suites**: 7 Cypress test suites
+-   **Testing Suites**: 6 Cypress test suites
 -   **Node Scripts**: 15 Node.js utilities
 
 ### Feature Completeness
@@ -464,6 +439,7 @@ _No active bugs currently - all recent issues have been resolved._
 
 ### Recent Changes
 
+-   **2026-07-03**: Removed Crate Rewards tool (UI, routes, tests, emulator seed, and Firestore rules/indexes). Tools page now highlights external utilities such as Region Forge.
 -   **2026-01-18**: Implemented GA4 homepage analytics instrumentation (rich `homepage_interaction` + `modal_interaction` events, debounced search intent, SPA pageview tracking, consistent modal close reasons). Verified locally with Tag Assistant.
 -   **2025-12-28**: Completed Homepage Refactoring (Phases 1-3) - Reduced HomeView.vue from 988 lines to 309 lines (69% reduction). Extracted composables (useEconomyConfig, useFilters, useItems), created utility functions and constants. Improved code organization, maintainability, and testability. Phase 4 (unit testing) pending.
 -   **2025-12-26**: Added Minecraft 1.21.11 items to catalog including spears, nautilus armor variants, and netherite horse armor - all with accurate pricing.
@@ -512,7 +488,7 @@ _No active bugs currently - all recent issues have been resolved._
 2. **User Experience Enhancement** - Price Export improvements (CSV/XLSX), enhanced suggestions, user account settings
 3. **Code Quality & Maintainability** - ✅ Component extraction complete, composable patterns established, shared utilities, testing coverage improvement
 4. **Platform Evolution** - Community features, advanced collaboration, market intelligence, Shop Manager Enhanced features
-5. **Innovation & Growth** - Diamond currency, linked shops, expert network, multi-user crate management
+5. **Innovation & Growth** - Diamond currency, linked shops, expert network
 
 ---
 

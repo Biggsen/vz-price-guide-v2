@@ -1,5 +1,7 @@
 # Single Prize Import Feature
 
+**Status**: Cancelled — Crate Rewards feature removed (2026-07). Kept for historical reference.
+
 ## Overview
 
 Allow users to import individual prizes into existing crates, providing granular control for adding custom items or specific rewards without requiring a full crate YAML file.

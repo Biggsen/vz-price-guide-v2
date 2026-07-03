@@ -152,6 +152,10 @@ Removed all dead code from `SubNav.vue`:
 -   The issue was caused by dead code in `SubNav.vue` that appeared to be a mobile implementation but was never rendered
 -   Navigation consistency verified across all devices
 
+### Crate Rewards (obsolete)
+
+> **Feature removed 2026-07.** The entries below document bugs fixed while Crate Rewards was live. The feature has since been removed from the application.
+
 ### Crate Rewards Mobile Display Issues
 
 **Status**: ✅ Resolved  
