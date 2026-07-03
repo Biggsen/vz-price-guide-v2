@@ -1,5 +1,6 @@
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { getMajorMinorVersion } from './serverProfile.js'
+import { compareVersions } from '../constants/minecraftVersions.js'
 
 /**
  * Compare major.minor strings like "1.20" vs "1.21".
@@ -8,18 +9,7 @@ import { getMajorMinorVersion } from './serverProfile.js'
  * @returns {number}
  */
 export function compareMajorMinorVersions(a, b) {
-	const pa = String(a ?? '')
-		.split('.')
-		.map((x) => parseInt(x, 10) || 0)
-	const pb = String(b ?? '')
-		.split('.')
-		.map((x) => parseInt(x, 10) || 0)
-	const aM = pa[0] ?? 0
-	const aN = pa[1] ?? 0
-	const bM = pb[0] ?? 0
-	const bN = pb[1] ?? 0
-	if (aM !== bM) return aM - bM
-	return aN - bN
+	return compareVersions(a, b)
 }
 
 function itemVersionMajorMinor(itemVersion) {

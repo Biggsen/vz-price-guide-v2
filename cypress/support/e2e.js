@@ -452,8 +452,13 @@ Cypress.Commands.add(
 			// Check the checkbox to use Minecraft username as display name
 			cy.get('[data-cy="profile-use-minecraft-username"]').check()
 		} else {
-			// Fill out the display name field
-			cy.get('[data-cy="profile-display-name"]').type(displayName)
+			// New accounts default to "use Minecraft username" — uncheck to enter a custom display name
+			cy.get('[data-cy="profile-use-minecraft-username"]').then(($checkbox) => {
+				if ($checkbox.is(':checked')) {
+					cy.wrap($checkbox).uncheck()
+				}
+			})
+			cy.get('[data-cy="profile-display-name"]').should('be.enabled').type(displayName)
 		}
 
 		if (bio) {

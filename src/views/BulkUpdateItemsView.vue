@@ -4,6 +4,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore'
 import { categories, versions } from '../constants.js'
+import { versionToKey } from '../constants/minecraftVersions.js'
 import { useAdmin } from '../utils/admin.js'
 import { getWikiUrl } from '../utils/image.js'
 import BaseModal from '../components/BaseModal.vue'
@@ -314,7 +315,7 @@ function getTotalItemCount() {
 
 function getPriceForVersion(item, version) {
 	if (version === 'all' || !item.prices_by_version) return null
-	const versionKey = version.replace('.', '_')
+	const versionKey = versionToKey(version)
 	const price = item.prices_by_version[versionKey]
 	return price !== undefined ? price : null
 }
@@ -478,7 +479,7 @@ async function updateSelectedPrices() {
 	updateResult.value = null
 	let updated = 0,
 		failed = 0
-	const versionKey = selectedVersion.value.replace('.', '_')
+	const versionKey = versionToKey(selectedVersion.value)
 	for (const id of selectedItems.value) {
 		try {
 			await updateDoc(doc(db, 'items', id), {

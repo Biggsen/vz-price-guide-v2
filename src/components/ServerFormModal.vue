@@ -3,10 +3,12 @@ import { computed, ref, watch } from 'vue'
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
 import { XCircleIcon } from '@heroicons/vue/24/solid'
+import { useAdmin } from '../utils/admin.js'
 import {
 	getMinecraftVersions,
 	getMinecraftPatches,
-	getMajorMinorVersion
+	getMajorMinorVersion,
+	isGamedropVersion
 } from '../utils/serverProfile.js'
 
 const props = defineProps({
@@ -42,30 +44,31 @@ const props = defineProps({
 
 const emit = defineEmits(['update:formData', 'submit', 'close', 'clear-errors'])
 
-const minecraftVersions = getMinecraftVersions()
+const { canEditItems } = useAdmin()
+
+const minecraftVersions = computed(() =>
+	getMinecraftVersions({ includePrivate: canEditItems.value === true })
+)
 
 // Local state for version selection
 const selectedMajorMinor = ref('')
 const selectedPatch = ref('')
 
-// Initialize version state from formData when modal opens or editingServer changes
+// Hydrate UI from formData only — do not rewrite formData (preserves patch on edit)
 watch(
 	[() => props.isOpen, () => props.editingServer],
 	() => {
 		if (props.isOpen) {
 			const fullVersion = props.formData.minecraft_version || ''
 			if (fullVersion) {
-				// Extract major.minor and patch from full version
-				const majorMinor = getMajorMinorVersion(fullVersion)
-				selectedMajorMinor.value = majorMinor || ''
+				const catalogVersion = getMajorMinorVersion(fullVersion)
+				selectedMajorMinor.value = catalogVersion || ''
 
-				// Extract patch number if present, otherwise default to 0
-				const parts = fullVersion.split('.')
-				if (parts.length >= 3) {
-					selectedPatch.value = parts[2]
+				if (isGamedropVersion(catalogVersion)) {
+					selectedPatch.value = ''
 				} else {
-					// Default to patch 0 if no patch specified
-					selectedPatch.value = '0'
+					const parts = fullVersion.split('.')
+					selectedPatch.value = parts.length >= 3 ? parts[2] : '0'
 				}
 			} else {
 				selectedMajorMinor.value = ''
@@ -76,45 +79,45 @@ watch(
 	{ immediate: true }
 )
 
-// Watch for major.minor changes and set default patch to 0
-watch(selectedMajorMinor, () => {
-	if (selectedMajorMinor.value) {
-		// Auto-select patch 0 as default
-		selectedPatch.value = '0'
-	} else {
-		selectedPatch.value = ''
-	}
-	updateFormDataVersion()
-})
-
-// Watch for patch changes and update form data
-watch(selectedPatch, () => {
-	updateFormDataVersion()
-})
-
-// Update formData.minecraft_version when version selection changes
 function updateFormDataVersion() {
 	if (!selectedMajorMinor.value) {
 		emit('update:formData', { ...props.formData, minecraft_version: '' })
 		return
 	}
 
-	// Always include patch (defaults to 0)
-	if (selectedPatch.value) {
-		emit('update:formData', {
-			...props.formData,
-			minecraft_version: `${selectedMajorMinor.value}.${selectedPatch.value}`
-		})
-	} else {
-		// Fallback to just major.minor if no patch selected (shouldn't happen with default 0)
+	// Gamedrop catalog versions are stored as-is (e.g. 26.2), no patch segment
+	if (isGamedropVersion(selectedMajorMinor.value) || selectedPatch.value === '') {
 		emit('update:formData', {
 			...props.formData,
 			minecraft_version: selectedMajorMinor.value
 		})
+		return
 	}
+
+	emit('update:formData', {
+		...props.formData,
+		minecraft_version: `${selectedMajorMinor.value}.${selectedPatch.value}`
+	})
 }
 
-// Available patches for selected major.minor version
+// User changed catalog version — default patch for classic lines, then sync formData
+function handleCatalogVersionChange() {
+	if (selectedMajorMinor.value && !isGamedropVersion(selectedMajorMinor.value)) {
+		selectedPatch.value = '0'
+	} else {
+		selectedPatch.value = ''
+	}
+	handleInput('version')
+	updateFormDataVersion()
+}
+
+// User changed patch — sync formData only
+function handlePatchChange() {
+	handleInput('version')
+	updateFormDataVersion()
+}
+
+// Available patches for classic versions only (empty for gamedrops)
 const availablePatches = computed(() => {
 	if (!selectedMajorMinor.value) return []
 	return getMinecraftPatches(selectedMajorMinor.value)
@@ -199,7 +202,7 @@ function handleSubmit() {
 							v-model="selectedMajorMinor"
 							required
 							:data-cy="`${inputPrefix}-minecraft-version-select`"
-							@change="handleInput('version')"
+							@change="handleCatalogVersionChange"
 							:class="[
 								'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 font-sans',
 								versionValidationError
@@ -224,7 +227,7 @@ function handleSubmit() {
 						<select
 							:id="`${inputPrefix}-minecraft-patch`"
 							v-model="selectedPatch"
-							@change="handleInput('version')"
+							@change="handlePatchChange"
 							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
 							<option
 								v-for="patch in availablePatches"

@@ -182,7 +182,7 @@ function loadSnapshotItems() {
 }
 
 function buildSeedPayload() {
-	const useSnapshotItems = boolEnv('USE_SNAPSHOT_ITEMS', true)
+	const useSnapshotItems = boolEnv('USE_SNAPSHOT_ITEMS', false)
 	const fallbackItems = TEST_DATA.items
 	const seedItems = useSnapshotItems ? loadSnapshotItems() : fallbackItems
 

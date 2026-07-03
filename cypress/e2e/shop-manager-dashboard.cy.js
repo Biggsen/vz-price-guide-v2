@@ -9,7 +9,7 @@ describe('Shop Manager Dashboard', () => {
 			cy.navigateToShopManagerAsUser()
 			cy.location('pathname').should('eq', '/shop-manager')
 
-			cy.contains('Player Shop Manager').should('be.visible')
+			cy.contains('h1', 'Shop Manager').should('be.visible')
 			cy.get('[data-cy="shop-manager-add-server-button"]').should('be.visible')
 		})
 

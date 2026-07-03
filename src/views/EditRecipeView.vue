@@ -4,6 +4,7 @@ import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { doc, updateDoc, getDoc, collection, getDocs, deleteField } from 'firebase/firestore'
 import { versions } from '../constants.js'
+import { getOldestVersion, versionToKey } from '../constants/minecraftVersions.js'
 import { useAdmin } from '../utils/admin.js'
 import { validateIngredientsInDatabase } from '../utils/recipes.js'
 import { calculateRecipePrice } from '../utils/pricing.js'
@@ -26,7 +27,7 @@ const showDeleteRecipeModal = ref(false)
 
 // Recipe data
 const item = ref(null)
-const selectedVersion = ref('1.16')
+const selectedVersion = ref(getOldestVersion())
 const recipe = ref({
 	ingredients: [],
 	output_count: 1
@@ -76,7 +77,7 @@ async function loadItem() {
 
 // Load recipe for the selected version
 function loadRecipeForVersion() {
-	const versionKey = selectedVersion.value.replace('.', '_')
+	const versionKey = versionToKey(selectedVersion.value)
 	const versionRecipe = item.value.recipes_by_version?.[versionKey]
 
 	if (versionRecipe) {
@@ -237,14 +238,14 @@ async function calculatePricePreview() {
 		const tempItem = {
 			...item.value,
 			recipes_by_version: {
-				[selectedVersion.value.replace('.', '_')]: recipe.value
+				[versionToKey(selectedVersion.value)]: recipe.value
 			}
 		}
 
 		const result = calculateRecipePrice(
 			tempItem,
 			availableItems.value,
-			selectedVersion.value.replace('.', '_')
+			versionToKey(selectedVersion.value)
 		)
 
 		// Format calculation chain numbers
@@ -291,7 +292,7 @@ async function saveRecipe() {
 	error.value = null
 
 	try {
-		const versionKey = selectedVersion.value.replace('.', '_')
+		const versionKey = versionToKey(selectedVersion.value)
 		const itemRef = doc(db, 'items', item.value.id)
 
 		// Prepare recipe data
@@ -346,7 +347,7 @@ async function confirmDeleteRecipe() {
 	error.value = null
 
 	try {
-		const versionKey = selectedVersion.value.replace('.', '_')
+		const versionKey = versionToKey(selectedVersion.value)
 		const itemRef = doc(db, 'items', item.value.id)
 
 		// Check if this is the only recipe version
@@ -618,7 +619,7 @@ onMounted(() => {
 
 					<button
 						type="button"
-						v-if="item?.recipes_by_version?.[selectedVersion.replace('.', '_')]"
+						v-if="item?.recipes_by_version?.[versionToKey(selectedVersion)]"
 						@click="openDeleteRecipeModal"
 						:disabled="saving"
 						class="inline-flex items-center px-4 py-2 bg-semantic-danger text-white text-sm font-medium rounded-md hover:bg-semantic-danger/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-semantic-danger disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">

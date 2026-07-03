@@ -4,6 +4,8 @@ import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
 import { useAdmin } from '../../utils/admin.js'
+import { versions } from '../../constants.js'
+import { getDefaultVersion, versionToKey } from '../../constants/minecraftVersions.js'
 import { ArrowUpIcon, ArrowDownIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
 
 const db = useFirestore()
@@ -12,7 +14,7 @@ const itemsJson = ref([])
 const dbItems = ref([])
 const loading = ref(true)
 const showOnlyNeedingUpdate = ref(true)
-const selectedVersion = ref('1.21')
+const selectedVersion = ref(getDefaultVersion())
 const searchQuery = ref('')
 
 const sortKey = ref('name')
@@ -25,11 +27,11 @@ const updatedItems = ref([])
 const selectedItems = ref([])
 
 // Available Minecraft versions
-const availableVersions = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
+const availableVersions = versions
 
 // Load items from JSON file based on selected version
 async function loadJsonItems() {
-	const versionKey = selectedVersion.value.replace('.', '_')
+	const versionKey = versionToKey(selectedVersion.value)
 	const response = await fetch(`/resource/items_${versionKey}.json`)
 	itemsJson.value = await response.json()
 }

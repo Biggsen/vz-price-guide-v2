@@ -22,13 +22,8 @@ import {
 import { XCircleIcon, MapPinIcon, UserIcon, BuildingStorefrontIcon } from '@heroicons/vue/24/solid'
 import { useAdmin } from '../utils/admin.js'
 import { useAllShops, createShop, updateShop, deleteShop } from '../utils/shopProfile.js'
-import {
-	useServers,
-	createServer,
-	updateServer,
-	deleteServer,
-	getMinecraftVersions
-} from '../utils/serverProfile.js'
+import { getOldestVersion } from '../constants/minecraftVersions.js'
+import { useServers, createServer, updateServer, deleteServer } from '../utils/serverProfile.js'
 import { useUserProfile, generateMinecraftAvatar } from '../utils/userProfile.js'
 
 const router = useRouter()
@@ -97,8 +92,7 @@ const formError = ref(null)
 const nameValidationError = ref(null)
 const versionValidationError = ref(null)
 
-const minecraftVersions = getMinecraftVersions()
-const defaultVersion = minecraftVersions[0]?.value || '1.21'
+const defaultVersion = getOldestVersion()
 
 const serverForm = ref({
 	name: '',
@@ -1261,6 +1255,7 @@ function toggleShopsVisibility(serverId) {
 			:isOpen="showShopDeleteModal"
 			title="Delete Shop"
 			size="small"
+			data-cy="shop-delete-modal"
 			@close="closeShopModals">
 			<div class="space-y-4">
 				<div>
@@ -1286,6 +1281,7 @@ function toggleShopsVisibility(serverId) {
 							@click="executeDeleteShop"
 							:disabled="shopLoading"
 							variant="primary"
+							data-cy="shop-delete-confirm-button"
 							class="bg-semantic-danger hover:bg-opacity-90">
 							{{ shopLoading ? 'Deleting...' : 'Delete' }}
 						</BaseButton>

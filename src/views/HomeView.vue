@@ -10,7 +10,6 @@ import CategoryFilters from '../components/CategoryFilters.vue'
 import ViewControls from '../components/ViewControls.vue'
 import LoadingState from '../components/LoadingState.vue'
 import { enabledCategories, versions, baseEnabledVersions } from '../constants.js'
-import { FALLBACK_VERSIONS } from '../constants/homepage.js'
 import { STORAGE_KEYS } from '../constants/homepage.js'
 import { useAdmin } from '../utils/admin.js'
 import { useEconomyConfig } from '../composables/useEconomyConfig.js'
@@ -24,15 +23,12 @@ import { Cog6ToothIcon, ArrowDownTrayIcon, ArrowUpIcon } from '@heroicons/vue/24
 const route = useRoute()
 const { user, canEditItems } = useAdmin()
 
-// Ensure versions array is available as fallback
-const fallbackVersions = FALLBACK_VERSIONS
-
 // Computed property for enabled versions based on user type
 const enabledVersions = computed(() => {
 	try {
 		// Admin users can access all versions (but only if admin status is fully loaded)
 		if (user.value?.email && canEditItems.value === true) {
-			return [...(versions || fallbackVersions)] // Return a copy to avoid mutations
+			return [...versions]
 		}
 		// Regular users only get base enabled versions
 		return [...baseEnabledVersions] // Return a copy to avoid mutations

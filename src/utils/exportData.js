@@ -12,6 +12,7 @@ import {
 	getDiamondPricing,
 	getDiamondShulkerPricing
 } from './pricing.js'
+import { versionToKey } from '../constants/minecraftVersions.js'
 
 /**
  * Name, category, and stack for standard (money) price guide exports — same fields as
@@ -94,7 +95,7 @@ export function generateExportData(items, config) {
 		isDonation = false
 	} = config
 
-	const versionKey = version.replace('.', '_')
+	const versionKey = versionToKey(version)
 	const isDiamondCurrency = currencyType === 'diamond' && diamondItem !== null
 	const data = {}
 

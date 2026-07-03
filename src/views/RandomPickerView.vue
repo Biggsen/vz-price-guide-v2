@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs } from 'firebase/firestore'
 import { enabledCategories, versions } from '../constants.js'
+import { getDefaultVersion, versionToKey } from '../constants/minecraftVersions.js'
 import { useAdmin } from '../utils/admin.js'
 import { filterItemsByVersion, filterItemsByPriceAndImage } from '../utils/homepage.js'
 import { getItemImageUrl } from '../utils/image.js'
@@ -15,7 +16,7 @@ const { user } = useAdmin()
 
 const loading = ref(true)
 const allItems = ref([])
-const selectedVersion = ref('1.21')
+const selectedVersion = ref(getDefaultVersion())
 
 const randomCategoryResult = ref(null)
 const randomItemsCount = ref(5)
@@ -92,7 +93,7 @@ function getRandomFromCategories() {
 }
 
 function getItemPrice(item) {
-	const versionKey = selectedVersion.value.replace('.', '_')
+	const versionKey = versionToKey(selectedVersion.value)
 	const price = getEffectivePriceMemoized(item, versionKey)
 	return price ? formatCurrency(price) : '—'
 }

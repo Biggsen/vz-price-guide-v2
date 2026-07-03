@@ -4,6 +4,25 @@ describe('Shop Manager - Shop Items Management', () => {
 		cy.acceptCookies()
 	})
 
+	function clickAddMyShop() {
+		cy.contains('[data-cy="shop-manager-add-shop-button"]', 'Add My Shop').first().click()
+	}
+
+	function ensureShopsTableVisible() {
+		cy.get('body').then(($body) => {
+			const toggles = $body.find('[data-cy="shop-visibility-toggle"]')
+			const hiddenToggle = toggles.filter((_, el) => el.textContent.includes('Show all shops'))
+			if (hiddenToggle.length) {
+				cy.wrap(hiddenToggle.first()).click()
+			}
+		})
+	}
+
+	function openShopByName(shopName) {
+		ensureShopsTableVisible()
+		cy.contains('table tbody tr a', shopName).click()
+	}
+
 	describe('Navigation to Shop Items View', () => {
 		it('navigates to shop items view from shop manager', () => {
 			cy.navigateToShopManagerAsAdmin()
@@ -36,30 +55,27 @@ describe('Shop Manager - Shop Items Management', () => {
 
 		it('displays empty state when no items exist', () => {
 			cy.navigateToShopManagerAsUser()
+			cy.acceptCookies()
 			cy.wait(1000)
 
 			// First, create a server (user@example.com has no servers)
 			cy.get('[data-cy="shop-manager-add-server-button"]').click()
 			cy.get('[data-cy="server-form-modal"]').should('be.visible')
-			cy.get('[data-cy="create-server-name-input"]').type('Empty Shop Test Server')
+			cy.get('[data-cy="create-server-name-input"]').type('Items Test Server')
+			cy.ensureCookieBannerDismissed()
 			cy.get('[data-cy="create-server-submit-button"]').click()
-			cy.wait(1000) // Wait for server to be created
+			cy.get('[data-cy="server-form-modal"]').should('not.exist')
 
-			// Now create a shop on that server
-			cy.get('[data-cy="shop-manager-add-shop-button"]').first().click()
+			// Create a shop on that server (name must not overlap with server name substring)
+			clickAddMyShop()
 			cy.get('[data-cy="shop-form-modal"]').should('be.visible')
-			cy.get('[data-cy="shop-name-input"]').type('Empty Shop Test')
+			cy.get('[data-cy="shop-name-input"]').type('Empty Catalog Shop')
 			cy.get('[data-cy="create-shop-submit-button"]').click()
-			cy.wait(1500) // Wait for shop to be created and modal to close
+			cy.get('[data-cy="shop-form-modal"]').should('not.exist')
 
-			// Verify shop appears in list
-			cy.contains('Empty Shop Test').should('be.visible')
+			openShopByName('Empty Catalog Shop')
+			cy.location('pathname').should('match', /^\/shop\/.+/)
 
-			// Navigate to the shop by clicking the link
-			cy.contains('a', 'Empty Shop Test').click()
-			cy.wait(2000) // Wait for shop items page to fully load
-
-			// Should see empty state - the empty state div should be visible
 			cy.get('[data-cy="shop-items-empty-state"]', { timeout: 5000 }).should('be.visible')
 			cy.contains('No items in this shop yet').should('be.visible')
 		})
@@ -90,6 +106,8 @@ describe('Shop Manager - Shop Items Management', () => {
 			// Fill in prices
 			cy.get('[data-cy="shop-item-buy-price-input"]').type('10')
 			cy.get('[data-cy="shop-item-sell-price-input"]').type('8')
+
+			cy.ensureCookieBannerDismissed()
 
 			// Submit
 			cy.get('[data-cy="shop-item-form-submit-button"]').click()
@@ -146,18 +164,32 @@ describe('Shop Manager - Shop Items Management', () => {
 			cy.get('[data-cy="shop-item-form-submit-button"]').should('be.disabled')
 		})
 
-		it('shows validation error for missing prices', () => {
+		it('allows submit without prices when item is selected', () => {
 			cy.navigateToShopItems('test-shop-1')
 
 			cy.get('[data-cy="shop-items-add-item-button"]').click()
 			cy.get('[data-cy="shop-item-form-modal"]').should('be.visible')
 
-			// Select item
 			cy.get('[data-cy="shop-item-search-input"]').type('diamond')
 			cy.wait(500)
 			cy.get('[data-cy="shop-item-dropdown-item"]').first().click()
 
-			// Try to submit without prices
+			// Player shops allow cataloging items without prices
+			cy.get('[data-cy="shop-item-form-submit-button"]').should('not.be.disabled')
+		})
+
+		it('shows validation error for invalid prices', () => {
+			cy.navigateToShopItems('test-shop-1')
+
+			cy.get('[data-cy="shop-items-add-item-button"]').click()
+			cy.get('[data-cy="shop-item-form-modal"]').should('be.visible')
+
+			cy.get('[data-cy="shop-item-search-input"]').type('diamond')
+			cy.wait(500)
+			cy.get('[data-cy="shop-item-dropdown-item"]').first().click()
+
+			// Number inputs with min="0" reject typed negatives in Cypress; set value directly
+			cy.get('[data-cy="shop-item-buy-price-input"]').invoke('val', '-1').trigger('input')
 			cy.get('[data-cy="shop-item-form-submit-button"]').should('be.disabled')
 		})
 

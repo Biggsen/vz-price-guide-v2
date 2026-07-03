@@ -41,9 +41,11 @@ export const categoryByKey = Object.fromEntries(
 	categoryDefinitions.map((category) => [category.key, category])
 )
 
-export const versions = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
+import { getAllVersions, getPublicVersions } from './constants/minecraftVersions.js'
 
-export const baseEnabledVersions = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
+export const versions = getAllVersions()
+
+export const baseEnabledVersions = getPublicVersions()
 
 export const roadmapStatusLegend = {
 	Idea: {

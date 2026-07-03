@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, doc, getDoc, updateDoc, deleteField } from 'firebase/firestore'
 import { versions } from '../../constants.js'
+import { compareVersions, keyToVersion, versionToKey } from '../../constants/minecraftVersions.js'
 import { useAdmin } from '../../utils/admin.js'
 import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
 import BaseModal from '../../components/BaseModal.vue'
@@ -90,30 +91,17 @@ async function loadDbItems() {
 function getActiveRecipeVersion(item, targetVersionKey) {
 	if (!item.recipes_by_version) return null
 
-	// Check if recipe exists for exact version
 	if (item.recipes_by_version[targetVersionKey]) {
-		return targetVersionKey.replace('_', '.')
+		return keyToVersion(targetVersionKey)
 	}
 
-	// Find the version that would be used (same logic as calculateRecipePrice)
-	const availableVersions = Object.keys(item.recipes_by_version)
-	const sortedVersions = availableVersions.sort((a, b) => {
-		const aVersion = a.replace('_', '.')
-		const bVersion = b.replace('_', '.')
-		const [aMajor, aMinor] = aVersion.split('.').map(Number)
-		const [bMajor, bMinor] = bVersion.split('.').map(Number)
-		if (aMajor !== bMajor) return bMajor - aMajor
-		return bMinor - aMinor
-	})
-
-	const targetVersion = targetVersionKey.replace('_', '.')
-	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+	const sortedVersions = Object.keys(item.recipes_by_version).sort((a, b) =>
+		compareVersions(b, a)
+	)
 
 	for (const availableVersion of sortedVersions) {
-		const availableVersionFormatted = availableVersion.replace('_', '.')
-		const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
-		if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
-			return availableVersionFormatted
+		if (compareVersions(availableVersion, targetVersionKey) <= 0) {
+			return keyToVersion(availableVersion)
 		}
 	}
 
@@ -134,21 +122,11 @@ function checkCircularDependency(recipe, item, dbItems, versionKey) {
 		// Get recipe for this ingredient (check target version or earlier)
 		let ingredientRecipe = ingredientItem.recipes_by_version[versionKey]
 		if (!ingredientRecipe && ingredientItem.recipes_by_version) {
-			const availableVersions = Object.keys(ingredientItem.recipes_by_version)
-			const sortedVersions = availableVersions.sort((a, b) => {
-				const aVersion = a.replace('_', '.')
-				const bVersion = b.replace('_', '.')
-				const [aMajor, aMinor] = aVersion.split('.').map(Number)
-				const [bMajor, bMinor] = bVersion.split('.').map(Number)
-				if (aMajor !== bMajor) return bMajor - aMajor
-				return bMinor - aMinor
-			})
-			const targetVersion = versionKey.replace('_', '.')
-			const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+			const sortedVersions = Object.keys(ingredientItem.recipes_by_version).sort((a, b) =>
+				compareVersions(b, a)
+			)
 			for (const availableVersion of sortedVersions) {
-				const availableVersionFormatted = availableVersion.replace('_', '.')
-				const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
-				if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
+				if (compareVersions(availableVersion, versionKey) <= 0) {
 					ingredientRecipe = ingredientItem.recipes_by_version[availableVersion]
 					break
 				}
@@ -207,7 +185,8 @@ async function loadExistingRecipes() {
 					// Check if this recipe is active (used for price calculation)
 					const isActive = item.pricing_type === 'dynamic'
 					const activeRecipeVersion = getActiveRecipeVersion(item, versionKey)
-					const isInherited = activeRecipeVersion !== null && activeRecipeVersion !== versionKey.replace('_', '.')
+					const isInherited =
+						activeRecipeVersion !== null && activeRecipeVersion !== keyToVersion(versionKey)
 
 					return {
 						id: item.id, // Include item ID for editing
@@ -222,13 +201,13 @@ async function loadExistingRecipes() {
 						isActive: isActive, // Recipe is being used for price calculation
 						activeRecipeVersion: activeRecipeVersion, // Version of recipe actually used
 						isInherited: isInherited, // Recipe is inherited from different version
-						version: versionKey.replace('_', '.') // Add version for display
+						version: keyToVersion(versionKey) // Add version for display
 					}
 				})
 			})
 	} else {
 		// Load recipes from specific version
-		const versionKey = selectedVersion.value.replace('.', '_')
+		const versionKey = versionToKey(selectedVersion.value)
 		existingRecipes.value = dbItems.value
 			.filter((item) => item.recipes_by_version && item.recipes_by_version[versionKey])
 			.map((item) => {
@@ -417,7 +396,7 @@ async function confirmDeleteRecipeFromModal() {
 	if (!recipe || !canBulkUpdate.value) return
 
 	deleteError.value = null
-	const versionKey = recipe.version.replace('.', '_')
+	const versionKey = versionToKey(recipe.version)
 	deletingRowKey.value = recipeRowKey(recipe)
 
 	try {

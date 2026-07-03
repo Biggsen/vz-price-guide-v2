@@ -4,6 +4,7 @@ import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { useFirestore, useDocument, useCollection } from 'vuefire'
 import { doc, updateDoc, query, collection, orderBy } from 'firebase/firestore'
 import { categories, versions } from '../constants.js'
+import { versionToKey } from '../constants/minecraftVersions.js'
 import { useAdmin } from '../utils/admin.js'
 import { calculateRecipePrice, getEffectivePrice } from '../utils/pricing.js'
 import BackButton from '../components/BackButton.vue'
@@ -90,14 +91,14 @@ watch(itemSource, (itemSource) => {
 		const normalizedPrices = {}
 		if (editItem.value.prices_by_version) {
 			Object.entries(editItem.value.prices_by_version).forEach(([key, value]) => {
-				const normalizedKey = key.replace('.', '_')
+				const normalizedKey = versionToKey(key)
 				normalizedPrices[normalizedKey] = value
 			})
 		}
 		editItem.value.prices_by_version = normalizedPrices
 
 		// Initialize pricing for current version if not exists
-		const currentVersionKey = editItem.value.version.replace('.', '_')
+		const currentVersionKey = versionToKey(editItem.value.version)
 		if (!editItem.value.prices_by_version[currentVersionKey] && editItem.value.price) {
 			editItem.value.prices_by_version[currentVersionKey] = editItem.value.price
 		}
@@ -136,7 +137,7 @@ const hasRecipes = computed(() => {
 
 const versionPrices = computed(() => {
 	return availableVersions.value.map((version) => {
-		const versionKey = version.replace('.', '_')
+		const versionKey = versionToKey(version)
 		const price = editItem.value.prices_by_version[versionKey]
 		const hasExplicitPrice = price !== undefined
 		const effectivePrice = hasExplicitPrice ? price : getInheritedPrice(versionKey)
@@ -190,9 +191,9 @@ const inheritedPriceVersions = computed(() => {
 // Helper functions
 function getInheritedPrice(versionKey) {
 	// Find the nearest earlier version with a price
-	const currentVersionIndex = versions.findIndex((v) => v.replace('.', '_') === versionKey)
+	const currentVersionIndex = versions.findIndex((v) => versionToKey(v) === versionKey)
 	for (let i = currentVersionIndex - 1; i >= 0; i--) {
-		const checkVersionKey = versions[i].replace('.', '_')
+		const checkVersionKey = versionToKey(versions[i])
 		if (editItem.value.prices_by_version[checkVersionKey] !== undefined) {
 			return editItem.value.prices_by_version[checkVersionKey]
 		}
@@ -201,9 +202,9 @@ function getInheritedPrice(versionKey) {
 }
 
 function getInheritanceSource(versionKey) {
-	const currentVersionIndex = versions.findIndex((v) => v.replace('.', '_') === versionKey)
+	const currentVersionIndex = versions.findIndex((v) => versionToKey(v) === versionKey)
 	for (let i = currentVersionIndex - 1; i >= 0; i--) {
-		const checkVersionKey = versions[i].replace('.', '_')
+		const checkVersionKey = versionToKey(versions[i])
 		if (editItem.value.prices_by_version[checkVersionKey] !== undefined) {
 			return versions[i]
 		}
@@ -228,7 +229,7 @@ function onPricingTypeChange(newType) {
 		// If switching to dynamic, mark all versions for recalculation
 		if (newType === 'dynamic') {
 			availableVersions.value.forEach((version) => {
-				const versionKey = version.replace('.', '_')
+				const versionKey = versionToKey(version)
 				recalculationStatus.value[versionKey] = 'needs_recalculation'
 			})
 		}
@@ -247,9 +248,9 @@ async function recalculatePrice(versionKey) {
 		let recipeVersionKey = versionKey
 		let foundRecipe = false
 		const item = editItem.value
-		const versionIndex = versions.findIndex((v) => v.replace('.', '_') === versionKey)
+		const versionIndex = versions.findIndex((v) => versionToKey(v) === versionKey)
 		for (let i = versionIndex; i >= 0; i--) {
-			const checkVersionKey = versions[i].replace('.', '_')
+			const checkVersionKey = versionToKey(versions[i])
 			if (item.recipes_by_version && item.recipes_by_version[checkVersionKey]) {
 				recipeVersionKey = checkVersionKey
 				foundRecipe = true
@@ -293,7 +294,7 @@ async function recalculatePrice(versionKey) {
 
 async function recalculateAllPrices() {
 	for (const version of availableVersions.value) {
-		const versionKey = version.replace('.', '_')
+		const versionKey = versionToKey(version)
 		await recalculatePrice(versionKey)
 	}
 }
@@ -364,7 +365,7 @@ async function updateItem() {
 }
 
 function isBaseVersion(versionKey) {
-	return versionKey === editItem.value.version.replace('.', '_')
+	return versionKey === versionToKey(editItem.value.version)
 }
 
 function copyItem() {

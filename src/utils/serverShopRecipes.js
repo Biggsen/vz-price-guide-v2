@@ -3,21 +3,15 @@
  * using only prices from the same shop. Used when server_shop === true.
  */
 
-import { isOfferedShopPrice, updateShopItem } from './shopItems.js'
+import {
+	isOfferedShopPrice,
+	updateShopItem
+} from './shopItems.js'
 import {
 	normalizeMaterialIdKey,
 	buildMergedGuideByMaterialId
 } from './guideItemMaterialPick.js'
-
-/**
- * Normalize version to key format (e.g. "1.21" -> "1_21")
- * @param {string} version
- * @returns {string}
- */
-function versionToKey(version) {
-	if (!version) return ''
-	return String(version).replace('.', '_')
-}
+import { compareVersions, getDefaultVersion, versionToKey } from '../constants/minecraftVersions.js'
 
 /**
  * Get recipe for a guide item for the given version (with fallback to earlier versions)
@@ -32,16 +26,9 @@ export function getRecipeForItem(guideItem, versionKey) {
 	const recipes = guideItem.recipes_by_version
 	let recipe = recipes[versionKey]
 	if (!recipe && Object.keys(recipes).length > 0) {
-		const sorted = Object.keys(recipes).sort((a, b) => {
-			const [aM, aN] = a.replace('_', '.').split('.').map(Number)
-			const [bM, bN] = b.replace('_', '.').split('.').map(Number)
-			if (aM !== bM) return bM - aM
-			return bN - aN
-		})
-		const [reqM, reqN] = versionKey.replace('_', '.').split('.').map(Number)
+		const sorted = Object.keys(recipes).sort((a, b) => compareVersions(b, a))
 		for (const k of sorted) {
-			const [vM, vN] = k.replace('_', '.').split('.').map(Number)
-			if (vM < reqM || (vM === reqM && vN <= reqN)) {
+			if (compareVersions(k, versionKey) <= 0) {
 				recipe = recipes[k]
 				break
 			}
@@ -221,7 +208,7 @@ export async function recalculateRecipePricesForShop(
 	const updated = []
 	const errors = []
 	const byMaterialId = buildMergedGuideByMaterialId(guideItems)
-	const version = versionKey || '1_21'
+	const version = versionKey || versionToKey(getDefaultVersion())
 
 	const needRecalc = shopItems.filter(
 		(si) =>

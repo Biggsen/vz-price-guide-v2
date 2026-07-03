@@ -4,6 +4,8 @@ import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, updateDoc, doc, query, where } from 'firebase/firestore'
 import { useAdmin } from '../../utils/admin.js'
+import { versions } from '../../constants.js'
+import { getDefaultVersion, versionToKey } from '../../constants/minecraftVersions.js'
 import { ArrowUpIcon, ArrowDownIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
 
 const db = useFirestore()
@@ -12,7 +14,7 @@ const { user, canBulkUpdate } = useAdmin()
 const enchantmentsJson = ref([])
 const dbBooks = ref([])
 const loading = ref(true)
-const selectedVersion = ref('1.21')
+const selectedVersion = ref(getDefaultVersion())
 const searchQuery = ref('')
 const statusFilter = ref('') // 'needs_update', 'up_to_date', 'not_found', ''
 
@@ -26,11 +28,11 @@ const updatedItems = ref([])
 const selectedItems = ref([])
 
 // Available Minecraft versions
-const availableVersions = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
+const availableVersions = versions
 
 // Load enchantments from JSON file based on selected version
 async function loadEnchantmentsJson() {
-	const versionKey = selectedVersion.value.replace('.', '_')
+	const versionKey = versionToKey(selectedVersion.value)
 	const response = await fetch(`/resource/enchantments_${versionKey}.json`)
 	enchantmentsJson.value = await response.json()
 }
