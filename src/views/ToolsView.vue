@@ -1,193 +1,14 @@
 <script setup>
-import { ref, computed } from 'vue'
 import { useCurrentUser } from 'vuefire'
-import { useRouter } from 'vue-router'
 import BaseButton from '../components/BaseButton.vue'
 import BaseCard from '../components/BaseCard.vue'
-import BaseModal from '../components/BaseModal.vue'
-import {
-	CalculatorIcon,
-	ChartBarIcon,
-	Cog6ToothIcon,
-	DocumentTextIcon,
-	GlobeAltIcon,
-	LightBulbIcon,
-	RocketLaunchIcon,
-	PuzzlePieceIcon,
-	SparklesIcon,
-	WrenchScrewdriverIcon,
-	UserIcon,
-	CheckCircleIcon
-} from '@heroicons/vue/24/outline'
+import { LightBulbIcon } from '@heroicons/vue/24/outline'
 
 const user = useCurrentUser()
-const router = useRouter()
-
-// Modal state
-const showCrateRewardsModal = ref(false)
-
-// Computed properties for authentication states
-const isAuthenticated = computed(() => {
-	return user.value?.email && user.value?.emailVerified
-})
-
-const isSignedInButNotVerified = computed(() => {
-	return user.value?.email && !user.value?.emailVerified
-})
-
-// Tool categories and their tools
-const toolCategories = ref([
-	{
-		id: 'calculators',
-		name: 'Calculators',
-		description: 'Mathematical tools for pricing and economics',
-		icon: CalculatorIcon,
-		color: 'bg-blue-500',
-		tools: [
-			{
-				name: 'Price Calculator',
-				description: 'Calculate item prices with custom multipliers and margins',
-				status: 'coming-soon',
-				icon: CalculatorIcon
-			},
-			{
-				name: 'Stack Value Calculator',
-				description: 'Calculate the total value of item stacks',
-				status: 'coming-soon',
-				icon: ChartBarIcon
-			},
-			{
-				name: 'Profit Margin Calculator',
-				description: 'Calculate buy/sell profit margins for items',
-				status: 'coming-soon',
-				icon: ChartBarIcon
-			}
-		]
-	},
-	{
-		id: 'converters',
-		name: 'Converters',
-		description: 'Convert between different formats and units',
-		icon: Cog6ToothIcon,
-		color: 'bg-green-500',
-		tools: [
-			{
-				name: 'JSON to YAML Converter',
-				description: 'Convert price lists between JSON and YAML formats',
-				status: 'available',
-				icon: DocumentTextIcon
-			},
-			{
-				name: 'Version Converter',
-				description: 'Convert item data between Minecraft versions',
-				status: 'coming-soon',
-				icon: PuzzlePieceIcon
-			}
-		]
-	},
-	{
-		id: 'generators',
-		name: 'Generators',
-		description: 'Generate useful content and configurations',
-		icon: SparklesIcon,
-		color: 'bg-purple-500',
-		tools: [
-			{
-				name: 'Shop Configuration Generator',
-				description: 'Generate shop plugin configurations from price lists',
-				status: 'coming-soon',
-				icon: WrenchScrewdriverIcon
-			},
-			{
-				name: 'Recipe Generator',
-				description: 'Generate crafting recipes for items',
-				status: 'coming-soon',
-				icon: LightBulbIcon
-			}
-		]
-	},
-	{
-		id: 'analyzers',
-		name: 'Analyzers',
-		description: 'Analyze and visualize your data',
-		icon: ChartBarIcon,
-		color: 'bg-orange-500',
-		tools: [
-			{
-				name: 'Price Trend Analyzer',
-				description: 'Analyze price trends over time',
-				status: 'coming-soon',
-				icon: ChartBarIcon
-			},
-			{
-				name: 'Market Analysis',
-				description: 'Analyze market conditions and opportunities',
-				status: 'coming-soon',
-				icon: GlobeAltIcon
-			}
-		]
-	}
-])
-
-function getStatusColor(status) {
-	switch (status) {
-		case 'available':
-			return 'bg-green-100 text-green-800'
-		case 'coming-soon':
-			return 'bg-yellow-100 text-yellow-800'
-		case 'beta':
-			return 'bg-blue-100 text-blue-800'
-		default:
-			return 'bg-gray-100 text-gray-800'
-	}
-}
-
-function getStatusText(status) {
-	switch (status) {
-		case 'available':
-			return 'Available'
-		case 'coming-soon':
-			return 'Coming Soon'
-		case 'beta':
-			return 'Beta'
-		default:
-			return 'Unknown'
-	}
-}
-
-// Navigation functions
-function goToSignUp() {
-	router.push('/signup')
-}
-
-function goToSignIn() {
-	router.push('/signin')
-}
-
-function goToVerifyEmail() {
-	router.push('/verify-email')
-}
-
-// Handle crate rewards button click
-function handleCrateRewardsClick() {
-	if (isAuthenticated.value) {
-		// User is authenticated and verified, navigate directly
-		router.push('/crate-rewards')
-	} else {
-		// User is not authenticated or not verified, show modal
-		showCrateRewardsModal.value = true
-	}
-}
-
-function closeCrateRewardsModal() {
-	showCrateRewardsModal.value = false
-}
 </script>
 
 <template>
-	<!-- Main Content -->
 	<div class="p-4 py-8">
-		<!-- Header -->
 		<div class="text-left mb-8">
 			<h1 class="text-3xl font-bold text-gray-900 mb-2">Tools</h1>
 			<p class="text-gray-600 max-w-2xl">
@@ -196,46 +17,8 @@ function closeCrateRewardsModal() {
 				setup and manage my own Minecraft servers.
 			</p>
 		</div>
-		<!-- Tools Grid -->
-		<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-12">
-			<!-- Crate Rewards Tool Card -->
-			<BaseCard variant="primary">
-				<template #media>
-					<img
-						src="/images/tools/crate-rewards.png"
-						alt="Crate Rewards"
-						class="w-full h-36 object-cover object-top" />
-				</template>
-				<template #header>CrazyCrates Crate Rewards</template>
-				<template #body>
-					<div class="flex flex-col text-left h-full">
-						<p class="mb-4">
-							Build up crate prizes one item at a time, set their weights, and see
-							their values. Export your configuration as CrazyCrates Prizes format for
-							easy integration into your server.
-						</p>
-						<div class="mb-6">
-							<span class="font-bold">Plugin:</span>
-							<a
-								href="https://modrinth.com/plugin/crazycrates"
-								target="_blank"
-								rel="noopener noreferrer"
-								class="ml-2 text-heavy-metal hover:text-gray-asparagus">
-								<span class="underline">CrazyCrates</span>
-							</a>
-						</div>
-						<BaseButton
-							@click="handleCrateRewardsClick"
-							variant="primary"
-							data-cy="crate-rewards-tool"
-							class="self-start">
-							{{ isAuthenticated ? 'Open Crate Rewards' : 'Try Crate Rewards' }}
-						</BaseButton>
-					</div>
-				</template>
-			</BaseCard>
 
-			<!-- Minecraft Region Forge Tool Card -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-12">
 			<BaseCard variant="primary">
 				<template #media>
 					<img
@@ -273,7 +56,6 @@ function closeCrateRewardsModal() {
 				</template>
 			</BaseCard>
 
-			<!-- Call to Action Card -->
 			<BaseCard variant="tertiary">
 				<template #header>Need a specific tool?</template>
 				<template #body>
@@ -305,84 +87,4 @@ function closeCrateRewardsModal() {
 			</BaseCard>
 		</div>
 	</div>
-
-	<!-- Crate Rewards Modal -->
-	<BaseModal
-		:isOpen="showCrateRewardsModal"
-		title="Try Crate Rewards"
-		@close="closeCrateRewardsModal">
-		<!-- Sign-up content for unauthenticated users -->
-		<div v-if="!user?.email" class="text-left pt-2 pb-4 sm:py-4">
-			<div class="mb-8">
-				<h1 class="text-3xl font-bold text-gray-900 mb-2">Almost there!</h1>
-				<p class="mb-6">You'll need an account to use the Crate Rewards tool.</p>
-				<p class="text-sm text-gray-900 mb-2">With an account, you can:</p>
-				<ul class="text-sm text-gray-900 space-y-1 list-disc list-inside">
-					<li>
-						import existing crates with items, quantities, weights, and enchantments
-					</li>
-					<li>build up your own crates and set quantities, weights, and enchantments</li>
-					<li>export your crate in CrazyCrates Prizes YAML format</li>
-					<li>test your crate with the simulate rewards functionality</li>
-				</ul>
-			</div>
-
-			<!-- Action buttons -->
-			<div>
-				<BaseButton @click="goToSignUp" variant="primary">
-					<template #left-icon>
-						<UserIcon />
-					</template>
-					Create Account
-				</BaseButton>
-				<div class="text-left pt-4">
-					<p class="text-sm text-gray-500">
-						Already have an account?
-						<button @click="goToSignIn" class="text-gray-700 hover:text-opacity-80">
-							<span class="underline">Sign in</span>
-						</button>
-					</p>
-				</div>
-			</div>
-		</div>
-
-		<!-- Email verification content for signed-in but unverified users -->
-		<div v-else-if="isSignedInButNotVerified" class="text-left pt-2 pb-4 sm:py-4">
-			<div class="mb-8">
-				<h1 class="text-3xl font-bold text-gray-900 mb-2">So close!</h1>
-				<p class="mb-6">Please verify your email address to use the Crate Rewards tool.</p>
-				<p class="text-sm text-gray-900 mb-2">Once verified, you can:</p>
-				<ul class="text-sm text-gray-900 space-y-1 list-disc list-inside">
-					<li>
-						import existing crates with items, quantities, weights, and enchantments
-					</li>
-					<li>build up your own crates and set quantities, weights, and enchantments</li>
-					<li>export your crate in CrazyCrates Prizes YAML format</li>
-					<li>test your crate with the simulate rewards functionality</li>
-				</ul>
-			</div>
-
-			<!-- Action buttons -->
-			<div>
-				<BaseButton @click="goToVerifyEmail" variant="primary">
-					<template #left-icon>
-						<CheckCircleIcon />
-					</template>
-					Resend verification email
-				</BaseButton>
-				<div class="text-left pt-4">
-					<p class="text-sm text-gray-500">
-						Need to sign in with a different account?
-						<button @click="goToSignIn" class="text-gray-700 hover:text-opacity-80">
-							<span class="underline">Sign in</span>
-						</button>
-					</p>
-				</div>
-			</div>
-		</div>
-	</BaseModal>
 </template>
-
-<style scoped>
-/* Additional custom styles if needed */
-</style>

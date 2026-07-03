@@ -8,14 +8,11 @@ This document contains the line count data for all Vue view files in the project
 | ---------------------------- | --------- | --------------------------------------------------- |
 | **ShopItemsView.vue**        | **1,997** | **Largest view file - Shop items management**      |
 | PrivacyPolicyView.vue        | 1,906     | Privacy policy content                              |
-| CrateSingleView.vue          | 1,865     | Complex crate functionality (refactored from 2,853) |
 | MarketOverviewView.vue       | 1,598     | Market overview display                             |
 | StyleguideView.vue           | 1,573     | Style guide documentation                           |
 | ShopManagerView.vue          | 1,425     | Shop management                                     |
 | TermsOfUseView.vue           | 1,273     | Terms of use content                                |
 | BulkUpdateItemsView.vue      | 1,247     | Bulk item update functionality                      |
-| YamlImportDevView.vue        | 1,069     | YAML import development tools                       |
-| CrateRewardManagerView.vue   | 1,041     | Crate reward management                             |
 | VisualGalleryView.vue        | 703       | Visual gallery display                              |
 | EditItemView.vue             | 695       | Item editing functionality                          |
 | AddItemView.vue              | 632       | Add new item functionality                          |
@@ -27,7 +24,7 @@ This document contains the line count data for all Vue view files in the project
 | CookiePolicyView.vue         | 477       | Cookie policy content                               |
 | MissingItemsView.vue         | 399       | Missing items display                               |
 | SignUpView.vue               | 399       | User registration                                   |
-| ToolsView.vue                | 389       | Tools page                                          |
+| ToolsView.vue                | 90        | Tools page (external utilities)                     |
 | UpdatesView.vue              | 388       | Updates display                                     |
 | ShopManagerStatsView.vue     | 352       | Shop manager statistics                             |
 | ResetPasswordConfirmView.vue | 341       | Password reset confirmation                         |
@@ -62,21 +59,18 @@ This document contains the line count data for all Vue view files in the project
 
 ## Summary
 
--   **Total view files**: 44 files
+-   **Total view files**: 41 files
 -   **Largest file**: ShopItemsView.vue (1,997 lines)
 -   **Average file size**: ~650 lines
--   **Files over 1,000 lines**: 11 files
+-   **Files over 1,000 lines**: 8 files
 -   **Files under 100 lines**: 5 files
 
 ## Notes
 
--   **CrateSingleView.vue** was successfully refactored (January 2026) from 2,853 lines to 1,865 lines - a reduction of 988 lines (35% reduction). Components, composables, and utilities were extracted to improve maintainability.
--   **ShopItemsView.vue** is now the largest view file at 1,997 lines and may benefit from refactoring similar to CrateSingleView
+-   **ShopItemsView.vue** is the largest view file and may benefit from refactoring
 -   **MarketOverviewView.vue** has grown to 1,598 lines and may also benefit from refactoring
 -   Privacy policy and terms of use files are large due to content, not complexity
 -   Most functional views (CRUD operations, management) range from 200-800 lines
--   The recipes subdirectory contains moderately complex views for recipe management
--   The enchantments subdirectory contains views for managing enchantment-related functionality
--   Several views have grown substantially since the last analysis, indicating active development
+-   Crate Rewards views (`CrateSingleView`, `CrateRewardManagerView`) and `YamlImportDevView` were removed in July 2026
 
-_Last updated: January 2026_
+_Last updated: July 2026_

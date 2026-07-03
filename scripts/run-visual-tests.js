@@ -101,8 +101,7 @@ function organizeScreenshots() {
 			screenshot.includes('market-overview') ||
 			screenshot.includes('recipes') ||
 			screenshot.includes('styleguide') ||
-			screenshot.includes('suggestions-admin') ||
-			screenshot.includes('crate-rewards')
+			screenshot.includes('suggestions-admin')
 		) {
 			category = 'admin-pages'
 		} else if (

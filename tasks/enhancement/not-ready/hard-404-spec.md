@@ -6,7 +6,7 @@
 ## Blockers / Open Questions
 - **404 page strategy with Vite**: `public/404.html` is copied verbatim and won’t automatically reference hashed build assets, so the spec must define how `404.html` loads the built JS/CSS (and preserves the scripts from `index.html`, e.g. GA + Termly).
 - **Expected dev-server behaviour**: Vite dev typically serves the SPA shell for unknown paths (often HTTP 200) and lets Vue render the not-found route; the “hard 404” verification needs to be scoped to Netlify Preview/Production.
-- **Explicit list of “known route” rewrites**: must enumerate static + dynamic route patterns from `src/router/index.js` (e.g. `/edit/*`, `/crate-rewards/*`, `/shop/*`, `/recipes/*`, `/admin/*`) and define rule order to avoid breaking deep links.
+- **Explicit list of “known route” rewrites**: must enumerate static + dynamic route patterns from `src/router/index.js` (e.g. `/edit/*`, `/shop/*`, `/recipes/*`, `/admin/*`) and define rule order to avoid breaking deep links.
 - **Scope boundary**: this approach can hard-404 unknown route patterns, but can’t hard-404 “invalid IDs” without server-side validation/SSR/edge logic.
 
 ## Summary
