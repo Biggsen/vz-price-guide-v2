@@ -3,10 +3,12 @@ import { computed, ref, watch } from 'vue'
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
 import { XCircleIcon } from '@heroicons/vue/24/solid'
+import { useAdmin } from '../utils/admin.js'
 import {
 	getMinecraftVersions,
 	getMinecraftPatches,
-	getMajorMinorVersion
+	getMajorMinorVersion,
+	isGamedropVersion
 } from '../utils/serverProfile.js'
 
 const props = defineProps({
@@ -42,7 +44,11 @@ const props = defineProps({
 
 const emit = defineEmits(['update:formData', 'submit', 'close', 'clear-errors'])
 
-const minecraftVersions = getMinecraftVersions()
+const { canEditItems } = useAdmin()
+
+const minecraftVersions = computed(() =>
+	getMinecraftVersions({ includePrivate: canEditItems.value === true })
+)
 
 // Local state for version selection
 const selectedMajorMinor = ref('')
@@ -55,17 +61,15 @@ watch(
 		if (props.isOpen) {
 			const fullVersion = props.formData.minecraft_version || ''
 			if (fullVersion) {
-				// Extract major.minor and patch from full version
-				const majorMinor = getMajorMinorVersion(fullVersion)
-				selectedMajorMinor.value = majorMinor || ''
+				const catalogVersion = getMajorMinorVersion(fullVersion)
+				selectedMajorMinor.value = catalogVersion || ''
 
-				// Extract patch number if present, otherwise default to 0
-				const parts = fullVersion.split('.')
-				if (parts.length >= 3) {
-					selectedPatch.value = parts[2]
+				if (isGamedropVersion(catalogVersion)) {
+					// Gamedrop id is the full catalog version (e.g. 26.2)
+					selectedPatch.value = ''
 				} else {
-					// Default to patch 0 if no patch specified
-					selectedPatch.value = '0'
+					const parts = fullVersion.split('.')
+					selectedPatch.value = parts.length >= 3 ? parts[2] : '0'
 				}
 			} else {
 				selectedMajorMinor.value = ''
@@ -76,10 +80,9 @@ watch(
 	{ immediate: true }
 )
 
-// Watch for major.minor changes and set default patch to 0
+// Watch for catalog version changes; classic lines default patch to 0
 watch(selectedMajorMinor, () => {
-	if (selectedMajorMinor.value) {
-		// Auto-select patch 0 as default
+	if (selectedMajorMinor.value && !isGamedropVersion(selectedMajorMinor.value)) {
 		selectedPatch.value = '0'
 	} else {
 		selectedPatch.value = ''
@@ -99,22 +102,22 @@ function updateFormDataVersion() {
 		return
 	}
 
-	// Always include patch (defaults to 0)
-	if (selectedPatch.value) {
-		emit('update:formData', {
-			...props.formData,
-			minecraft_version: `${selectedMajorMinor.value}.${selectedPatch.value}`
-		})
-	} else {
-		// Fallback to just major.minor if no patch selected (shouldn't happen with default 0)
+	// Gamedrop catalog versions are stored as-is (e.g. 26.2), no patch segment
+	if (isGamedropVersion(selectedMajorMinor.value) || selectedPatch.value === '') {
 		emit('update:formData', {
 			...props.formData,
 			minecraft_version: selectedMajorMinor.value
 		})
+		return
 	}
+
+	emit('update:formData', {
+		...props.formData,
+		minecraft_version: `${selectedMajorMinor.value}.${selectedPatch.value}`
+	})
 }
 
-// Available patches for selected major.minor version
+// Available patches for classic versions only (empty for gamedrops)
 const availablePatches = computed(() => {
 	if (!selectedMajorMinor.value) return []
 	return getMinecraftPatches(selectedMajorMinor.value)

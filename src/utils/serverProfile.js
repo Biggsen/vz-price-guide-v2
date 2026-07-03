@@ -205,5 +205,6 @@ export async function getServerById(serverId) {
 export {
 	getMajorMinorVersion,
 	getMinecraftVersions,
-	getPatches as getMinecraftPatches
+	getPatches as getMinecraftPatches,
+	isGamedropVersion
 } from '../constants/minecraftVersions.js'

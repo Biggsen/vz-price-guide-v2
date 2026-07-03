@@ -254,7 +254,7 @@ defineExpose({
 		<!-- Version Selection -->
 		<VersionSelector
 			v-model="selectedVersion"
-			:versions="versions"
+			:versions="enabledVersions"
 			:enabled-versions="enabledVersions"
 			@update:model-value="trackSettingsChange('selectedVersion', selectedVersion)" />
 

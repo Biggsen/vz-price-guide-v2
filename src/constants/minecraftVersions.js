@@ -1,17 +1,61 @@
 const MINECRAFT_VERSIONS = [
-	{ id: '1.16', key: '1_16', label: 'Minecraft 1.16', patches: [0, 4, 5], public: true },
-	{ id: '1.17', key: '1_17', label: 'Minecraft 1.17', patches: [0, 1], public: true },
-	{ id: '1.18', key: '1_18', label: 'Minecraft 1.18', patches: [0, 2], public: true },
-	{ id: '1.19', key: '1_19', label: 'Minecraft 1.19', patches: [0, 1, 2, 3, 4], public: true },
-	{ id: '1.20', key: '1_20', label: 'Minecraft 1.20', patches: [0, 1, 2, 3, 4, 5, 6], public: true },
+	{
+		id: '1.16',
+		key: '1_16',
+		label: 'Minecraft 1.16',
+		format: 'classic',
+		patches: [0, 4, 5],
+		public: true
+	},
+	{
+		id: '1.17',
+		key: '1_17',
+		label: 'Minecraft 1.17',
+		format: 'classic',
+		patches: [0, 1],
+		public: true
+	},
+	{
+		id: '1.18',
+		key: '1_18',
+		label: 'Minecraft 1.18',
+		format: 'classic',
+		patches: [0, 2],
+		public: true
+	},
+	{
+		id: '1.19',
+		key: '1_19',
+		label: 'Minecraft 1.19',
+		format: 'classic',
+		patches: [0, 1, 2, 3, 4],
+		public: true
+	},
+	{
+		id: '1.20',
+		key: '1_20',
+		label: 'Minecraft 1.20',
+		format: 'classic',
+		patches: [0, 1, 2, 3, 4, 5, 6],
+		public: true
+	},
 	{
 		id: '1.21',
 		key: '1_21',
 		label: 'Minecraft 1.21',
+		format: 'classic',
 		patches: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
 		public: true
 	},
-	{ id: '26.2', key: '26_2', label: 'Minecraft 26.2', patches: [0, 1], public: false }
+	// Year/gamedrop format: catalog id is the gamedrop (e.g. 26.2); no patch segment
+	{
+		id: '26.2',
+		key: '26_2',
+		label: 'Minecraft 26.2',
+		format: 'gamedrop',
+		patches: [],
+		public: false
+	}
 ]
 
 function parseVersionParts(version) {
@@ -44,6 +88,10 @@ export function getOldestVersion() {
 
 export function getVersionById(id) {
 	return MINECRAFT_VERSIONS.find((v) => v.id === id) ?? null
+}
+
+export function isGamedropVersion(id) {
+	return getVersionById(id)?.format === 'gamedrop'
 }
 
 export function versionToKey(version) {
@@ -83,13 +131,19 @@ export function getMajorMinorVersion(fullVersion) {
 export function getPatches(id) {
 	if (!id) return []
 	const entry = getVersionById(id)
-	if (!entry) return []
+	if (!entry || entry.format === 'gamedrop') return []
 	return entry.patches.map((patch) => ({
 		value: patch,
 		label: `${id}.${patch}`
 	}))
 }
 
-export function getMinecraftVersions() {
-	return MINECRAFT_VERSIONS.filter((v) => v.public).map((v) => ({ value: v.id, label: v.label }))
+export function getMinecraftVersions(options = {}) {
+	const includePrivate = options.includePrivate === true
+	return MINECRAFT_VERSIONS.filter((v) => v.public || includePrivate).map((v) => ({
+		value: v.id,
+		label: v.label,
+		public: v.public,
+		format: v.format
+	}))
 }

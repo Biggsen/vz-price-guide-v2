@@ -286,5 +286,21 @@ describe('Shop Manager - Server Management', () => {
 			// Check that default version is selected (should be 1.16, the first version in the array)
 			cy.get('[data-cy="create-minecraft-version-select"]').should('have.value', '1.16')
 		})
+
+		it('shows private registry versions for admin users', () => {
+			cy.get('[data-cy="server-form-modal-close"]').click()
+			cy.get('[data-cy="server-form-modal"]').should('not.exist')
+
+			cy.navigateToShopManagerAsAdmin()
+			cy.get('[data-cy="shop-manager-add-server-button"]').click()
+			cy.get('[data-cy="server-form-modal"]').should('be.visible')
+
+			cy.get('[data-cy="create-minecraft-version-select"]')
+				.find('option')
+				.then(($options) => {
+					const optionTexts = Array.from($options).map((el) => el.textContent)
+					expect(optionTexts).to.include('Minecraft 26.2')
+				})
+		})
 	})
 })

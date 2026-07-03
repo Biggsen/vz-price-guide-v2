@@ -23,13 +23,7 @@ import { XCircleIcon, MapPinIcon, UserIcon, BuildingStorefrontIcon } from '@hero
 import { useAdmin } from '../utils/admin.js'
 import { useAllShops, createShop, updateShop, deleteShop } from '../utils/shopProfile.js'
 import { getOldestVersion } from '../constants/minecraftVersions.js'
-import {
-	useServers,
-	createServer,
-	updateServer,
-	deleteServer,
-	getMinecraftVersions
-} from '../utils/serverProfile.js'
+import { useServers, createServer, updateServer, deleteServer } from '../utils/serverProfile.js'
 import { useUserProfile, generateMinecraftAvatar } from '../utils/userProfile.js'
 
 const router = useRouter()
@@ -98,8 +92,7 @@ const formError = ref(null)
 const nameValidationError = ref(null)
 const versionValidationError = ref(null)
 
-const minecraftVersions = getMinecraftVersions()
-const defaultVersion = minecraftVersions[0]?.value || getOldestVersion()
+const defaultVersion = getOldestVersion()
 
 const serverForm = ref({
 	name: '',
