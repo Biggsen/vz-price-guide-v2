@@ -19,14 +19,23 @@ The `scripts/seed-emulator.js` script is **ONLY** for local development with Fir
 **Use these safe npm scripts instead of running scripts directly:**
 
 ```bash
-# Safe: Seed emulator (requires emulators to be running)
+# Safe: Seed emulator with built-in test items (requires emulators to be running)
 npm run seed:emu
+
+# Safe: Seed emulator with full prod snapshot catalog (~1600+ items)
+npm run seed:emu:full
 
 # Safe: Seed emulator with one-shot execution
 npm run seed:emu:exec
 
+# Safe: Full catalog, one-shot execution
+npm run seed:emu:full:exec
+
 # Safe: Test seeding without making changes
 npm run seed:emu:dry
+
+# Safe: Test full-catalog seeding without making changes
+npm run seed:emu:full:dry
 ```
 
 **NEVER run this directly:**
