@@ -514,26 +514,6 @@ const router = createRouter({
 			}
 		},
 		{
-			path: '/crate-rewards',
-			name: 'crate-rewards',
-			component: () => import('../views/CrateRewardManagerView.vue'),
-			meta: {
-				requiresAuth: true,
-				requiresVerification: true,
-				title: `Crate Rewards - ${siteName}`
-			}
-		},
-		{
-			path: '/crate-rewards/:id',
-			name: 'crate-reward-detail',
-			component: () => import('../views/CrateSingleView.vue'),
-			meta: {
-				requiresAuth: true,
-				requiresVerification: true,
-				title: `Manage Crate Reward - ${siteName}`
-			}
-		},
-		{
 			path: '/admin/random-picker',
 			name: 'admin-random-picker',
 			component: () => import('../views/RandomPickerView.vue'),
@@ -542,17 +522,6 @@ const router = createRouter({
 				requiresVerification: true,
 				requiresAdmin: true,
 				title: `Random Picker - ${siteName}`
-			}
-		},
-		{
-			path: '/dev/yaml-import',
-			name: 'yaml-import-dev',
-			component: () => import('../views/YamlImportDevView.vue'),
-			meta: {
-				requiresAuth: true,
-				requiresVerification: true,
-				requiresAdmin: true,
-				title: `YAML Import Dev - ${siteName}`
 			}
 		},
 		{
