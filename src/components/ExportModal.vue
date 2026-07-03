@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { ArrowDownTrayIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { UserIcon } from '@heroicons/vue/24/solid'
-import { enabledCategories, baseEnabledVersions } from '../constants.js'
+import { enabledCategories, versions, baseEnabledVersions } from '../constants.js'
 import { isVersionLessOrEqual, versionToKey } from '../constants/minecraftVersions.js'
 import { useAdmin } from '../utils/admin.js'
 import { trackModalInteraction } from '../utils/analytics.js'
@@ -98,7 +98,7 @@ const enabledVersions = computed(() => {
 	try {
 		// Admin users can access all versions (but only if admin status is fully loaded)
 		if (user.value?.email && canEditItems.value === true) {
-			return [...baseEnabledVersions]
+			return [...versions]
 		}
 		// Regular users only get base enabled versions
 		return [...baseEnabledVersions]

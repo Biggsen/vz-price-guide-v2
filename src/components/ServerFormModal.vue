@@ -54,7 +54,7 @@ const minecraftVersions = computed(() =>
 const selectedMajorMinor = ref('')
 const selectedPatch = ref('')
 
-// Initialize version state from formData when modal opens or editingServer changes
+// Hydrate UI from formData only — do not rewrite formData (preserves patch on edit)
 watch(
 	[() => props.isOpen, () => props.editingServer],
 	() => {
@@ -65,7 +65,6 @@ watch(
 				selectedMajorMinor.value = catalogVersion || ''
 
 				if (isGamedropVersion(catalogVersion)) {
-					// Gamedrop id is the full catalog version (e.g. 26.2)
 					selectedPatch.value = ''
 				} else {
 					const parts = fullVersion.split('.')
@@ -80,22 +79,6 @@ watch(
 	{ immediate: true }
 )
 
-// Watch for catalog version changes; classic lines default patch to 0
-watch(selectedMajorMinor, () => {
-	if (selectedMajorMinor.value && !isGamedropVersion(selectedMajorMinor.value)) {
-		selectedPatch.value = '0'
-	} else {
-		selectedPatch.value = ''
-	}
-	updateFormDataVersion()
-})
-
-// Watch for patch changes and update form data
-watch(selectedPatch, () => {
-	updateFormDataVersion()
-})
-
-// Update formData.minecraft_version when version selection changes
 function updateFormDataVersion() {
 	if (!selectedMajorMinor.value) {
 		emit('update:formData', { ...props.formData, minecraft_version: '' })
@@ -115,6 +98,23 @@ function updateFormDataVersion() {
 		...props.formData,
 		minecraft_version: `${selectedMajorMinor.value}.${selectedPatch.value}`
 	})
+}
+
+// User changed catalog version — default patch for classic lines, then sync formData
+function handleCatalogVersionChange() {
+	if (selectedMajorMinor.value && !isGamedropVersion(selectedMajorMinor.value)) {
+		selectedPatch.value = '0'
+	} else {
+		selectedPatch.value = ''
+	}
+	handleInput('version')
+	updateFormDataVersion()
+}
+
+// User changed patch — sync formData only
+function handlePatchChange() {
+	handleInput('version')
+	updateFormDataVersion()
 }
 
 // Available patches for classic versions only (empty for gamedrops)
@@ -202,7 +202,7 @@ function handleSubmit() {
 							v-model="selectedMajorMinor"
 							required
 							:data-cy="`${inputPrefix}-minecraft-version-select`"
-							@change="handleInput('version')"
+							@change="handleCatalogVersionChange"
 							:class="[
 								'block w-full rounded border-2 px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 font-sans',
 								versionValidationError
@@ -227,7 +227,7 @@ function handleSubmit() {
 						<select
 							:id="`${inputPrefix}-minecraft-patch`"
 							v-model="selectedPatch"
-							@change="handleInput('version')"
+							@change="handlePatchChange"
 							class="block w-full rounded border-2 border-gray-asparagus px-3 py-1 mt-2 mb-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans">
 							<option
 								v-for="patch in availablePatches"
