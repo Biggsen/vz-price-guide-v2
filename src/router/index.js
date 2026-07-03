@@ -525,6 +525,10 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/crate-rewards/:pathMatch(.*)*',
+			redirect: '/tools'
+		},
+		{
 			path: '/:pathMatch(.*)*',
 			name: 'not-found',
 			component: () => import('../views/NotFoundView.vue'),
