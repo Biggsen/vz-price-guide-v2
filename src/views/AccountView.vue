@@ -105,7 +105,7 @@ watch(
 			}
 			// Update checkbox state
 			useMinecraftUsername.value = newProfile.display_name === newProfile.minecraft_username
-			
+
 			// Update marketing opt-in status
 			if (newProfile.marketing_opt_in) {
 				marketingOptIn.value = newProfile.marketing_opt_in.enabled
@@ -217,7 +217,7 @@ async function saveMarketingOptInPreference() {
 	try {
 		// Get account creation time from Auth metadata for old accounts without user records
 		const accountCreatedAt = user.value.metadata?.creationTime || null
-		
+
 		await saveMarketingOptIn(
 			user.value.uid,
 			marketingOptIn.value,
@@ -471,9 +471,7 @@ function signOutOfFirebase() {
 						data-cy="account-marketing-opt-in"
 						class="checkbox-input"
 						:disabled="marketingOptInLoading" />
-					<label
-						for="account-marketing-opt-in"
-						class="text-base leading-6 text-gray-900">
+					<label for="account-marketing-opt-in" class="text-base leading-6 text-gray-900">
 						Send me occasional updates about new features and improvements.
 					</label>
 				</div>
