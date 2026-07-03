@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
 import { versions } from '../../constants.js'
+import { compareVersions, getOldestVersion, keyToVersion, versionToKey } from '../../constants/minecraftVersions.js'
 import { useAdmin } from '../../utils/admin.js'
 import {
 	createIdToMaterialMap,
@@ -18,7 +19,7 @@ const { user, canBulkUpdate } = useAdmin()
 // State management
 const loading = ref(true)
 const dbItems = ref([])
-const selectedVersion = ref('1.16')
+const selectedVersion = ref(getOldestVersion())
 
 // Import section state
 const importProgress = ref({ current: 0, total: 0, completed: 0, overwritten: 0, skipped: 0 })
@@ -110,7 +111,7 @@ function checkCircularDependency(recipe, dbItems, targetVersion) {
 
 	const outputMaterialId = recipe.outputItem.material_id
 	const outputCount = recipe.outputItem.count || 1
-	const targetVersionKey = targetVersion.replace('.', '_')
+	const targetVersionKey = versionToKey(targetVersion)
 
 	// Check each ingredient to see if it has a recipe that uses this recipe's output
 	for (const ingredient of recipe.ingredients) {
@@ -120,20 +121,11 @@ function checkCircularDependency(recipe, dbItems, targetVersion) {
 		// Get recipe for this ingredient (check target version or earlier)
 		let ingredientRecipe = ingredientItem.recipes_by_version[targetVersionKey]
 		if (!ingredientRecipe && ingredientItem.recipes_by_version) {
-			const availableVersions = Object.keys(ingredientItem.recipes_by_version)
-			const sortedVersions = availableVersions.sort((a, b) => {
-				const aVersion = a.replace('_', '.')
-				const bVersion = b.replace('_', '.')
-				const [aMajor, aMinor] = aVersion.split('.').map(Number)
-				const [bMajor, bMinor] = bVersion.split('.').map(Number)
-				if (aMajor !== bMajor) return bMajor - aMajor
-				return bMinor - aMinor
-			})
-			const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+			const sortedVersions = Object.keys(ingredientItem.recipes_by_version).sort((a, b) =>
+				compareVersions(b, a)
+			)
 			for (const availableVersion of sortedVersions) {
-				const availableVersionFormatted = availableVersion.replace('_', '.')
-				const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
-				if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
+				if (compareVersions(availableVersion, targetVersionKey) <= 0) {
 					ingredientRecipe = ingredientItem.recipes_by_version[availableVersion]
 					break
 				}
@@ -191,7 +183,7 @@ async function startImport() {
 		// Reset ingredient filter to default
 		selectedIngredient.value = ''
 		// Dynamically build file paths based on selectedVersion
-		const versionUnderscore = selectedVersion.value.replace('.', '_')
+		const versionUnderscore = versionToKey(selectedVersion.value)
 		const recipesResponse = await fetch(`/resource/recipes_${versionUnderscore}.json`)
 		const recipesJson = await recipesResponse.json()
 
@@ -292,7 +284,7 @@ function checkRecipeExists(recipe) {
 	if (!recipe || !recipe.outputItem) return false
 
 	const materialId = recipe.outputItem.material_id
-	const targetVersionKey = selectedVersion.value.replace('.', '_')
+	const targetVersionKey = versionToKey(selectedVersion.value)
 
 	// Find the item in the database
 	const item = dbItems.value.find((item) => item.material_id === materialId)
@@ -304,29 +296,12 @@ function checkRecipeExists(recipe) {
 	}
 
 	// If not found, check earlier versions in descending order
-	const availableVersions = Object.keys(item.recipes_by_version)
-	const sortedVersions = availableVersions.sort((a, b) => {
-		// Convert version keys like "1_16" to comparable format
-		const aVersion = a.replace('_', '.')
-		const bVersion = b.replace('_', '.')
-		const [aMajor, aMinor] = aVersion.split('.').map(Number)
-		const [bMajor, bMinor] = bVersion.split('.').map(Number)
-
-		// Sort in descending order (newest first)
-		if (aMajor !== bMajor) return bMajor - aMajor
-		return bMinor - aMinor
-	})
-
-	// Find the latest version that's not newer than the target version
-	const targetVersion = targetVersionKey.replace('_', '.')
-	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+	const sortedVersions = Object.keys(item.recipes_by_version).sort((a, b) =>
+		compareVersions(b, a)
+	)
 
 	for (const availableVersion of sortedVersions) {
-		const availableVersionFormatted = availableVersion.replace('_', '.')
-		const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
-
-		// Use this version if it's not newer than target
-		if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
+		if (compareVersions(availableVersion, targetVersionKey) <= 0) {
 			return true // Any recipe exists for this output item in this or earlier version
 		}
 	}
@@ -339,7 +314,7 @@ function checkRecipeIsIdentical(recipe) {
 	if (!recipe || !recipe.outputItem) return false
 
 	const materialId = recipe.outputItem.material_id
-	const targetVersionKey = selectedVersion.value.replace('.', '_')
+	const targetVersionKey = versionToKey(selectedVersion.value)
 
 	// Find the item in the database
 	const item = dbItems.value.find((item) => item.material_id === materialId)
@@ -359,23 +334,12 @@ function checkRecipeIsIdentical(recipe) {
 	}
 
 	// If not found or different, check earlier versions in descending order
-	const availableVersions = Object.keys(item.recipes_by_version)
-	const sortedVersions = availableVersions.sort((a, b) => {
-		const aVersion = a.replace('_', '.')
-		const bVersion = b.replace('_', '.')
-		const [aMajor, aMinor] = aVersion.split('.').map(Number)
-		const [bMajor, bMinor] = bVersion.split('.').map(Number)
-		if (aMajor !== bMajor) return bMajor - aMajor
-		return bMinor - aMinor
-	})
-
-	const targetVersion = targetVersionKey.replace('_', '.')
-	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+	const sortedVersions = Object.keys(item.recipes_by_version).sort((a, b) =>
+		compareVersions(b, a)
+	)
 
 	for (const availableVersion of sortedVersions) {
-		const availableVersionFormatted = availableVersion.replace('_', '.')
-		const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
-		if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
+		if (compareVersions(availableVersion, targetVersionKey) <= 0) {
 			const existingRecipe = item.recipes_by_version[availableVersion]
 			if (recipesAreIdentical(existingRecipe, newRecipeInternal)) {
 				return true
@@ -435,7 +399,7 @@ async function importCurrentRecipe() {
 			)
 			if (itemQuery) {
 				const itemRef = doc(db, 'items', itemQuery.id)
-				const versionKey = selectedVersion.value.replace('.', '_')
+				const versionKey = versionToKey(selectedVersion.value)
 				await updateDoc(itemRef, {
 					[`recipes_by_version.${versionKey}`]: {
 						ingredients: internalRecipe.ingredients,
@@ -560,7 +524,7 @@ const recipeStatistics = computed(() => {
 const previousRecipeInfo = computed(() => {
 	if (!currentRecipe.value || !currentRecipe.value.outputItem) return null
 	const materialId = currentRecipe.value.outputItem.material_id
-	const targetVersionKey = selectedVersion.value.replace('.', '_')
+	const targetVersionKey = versionToKey(selectedVersion.value)
 	const item = dbItems.value.find((item) => item.material_id === materialId)
 	if (!item || !item.recipes_by_version) return null
 
@@ -569,24 +533,14 @@ const previousRecipeInfo = computed(() => {
 
 	const identical = checkRecipeIsIdentical(currentRecipe.value)
 
-	const availableVersions = Object.keys(item.recipes_by_version)
-	const sortedVersions = availableVersions.sort((a, b) => {
-		const aVersion = a.replace('_', '.')
-		const bVersion = b.replace('_', '.')
-		const [aMajor, aMinor] = aVersion.split('.').map(Number)
-		const [bMajor, bMinor] = bVersion.split('.').map(Number)
-		if (aMajor !== bMajor) return bMajor - aMajor
-		return bMinor - aMinor
-	})
-	const targetVersion = targetVersionKey.replace('_', '.')
-	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
+	const sortedVersions = Object.keys(item.recipes_by_version).sort((a, b) =>
+		compareVersions(b, a)
+	)
 	for (const availableVersion of sortedVersions) {
-		const availableVersionFormatted = availableVersion.replace('_', '.')
-		const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
-		if (avMajor < targetMajor || (avMajor === targetMajor && avMinor <= targetMinor)) {
+		if (compareVersions(availableVersion, targetVersionKey) <= 0) {
 			const existingRecipe = item.recipes_by_version[availableVersion]
 			return {
-				version: availableVersionFormatted,
+				version: keyToVersion(availableVersion),
 				identical,
 				existingRecipe
 			}

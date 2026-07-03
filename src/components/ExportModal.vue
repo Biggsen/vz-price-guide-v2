@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { ArrowDownTrayIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { UserIcon } from '@heroicons/vue/24/solid'
 import { enabledCategories, baseEnabledVersions } from '../constants.js'
+import { isVersionLessOrEqual, versionToKey } from '../constants/minecraftVersions.js'
 import { useAdmin } from '../utils/admin.js'
 import { trackModalInteraction } from '../utils/analytics.js'
 import { getEffectivePrice } from '../utils/pricing.js'
@@ -266,17 +267,6 @@ const priceFields = computed(() => {
 })
 
 // Helper function to compare version strings (e.g., "1.16" vs "1.17")
-function isVersionLessOrEqual(itemVersion, targetVersion) {
-	if (!itemVersion || !targetVersion) return false
-
-	const [itemMajor, itemMinor] = itemVersion.split('.').map(Number)
-	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
-
-	if (itemMajor < targetMajor) return true
-	if (itemMajor > targetMajor) return false
-	return itemMinor <= targetMinor
-}
-
 function shouldShowItemForVersion(item, selectedVersion) {
 	// Item must have a version and be <= selected version
 	if (!item.version || !isVersionLessOrEqual(item.version, selectedVersion)) {
@@ -307,7 +297,7 @@ const filteredItems = computed(() => {
 	filtered = filtered.filter((item) => enabledCategories.includes(item.category))
 
 	// Filter out items with 0 base price
-	const versionKey = selectedVersion.value.replace('.', '_')
+	const versionKey = versionToKey(selectedVersion.value)
 	filtered = filtered.filter((item) => {
 		const basePrice = getEffectivePrice(item, versionKey)
 		return basePrice > 0
@@ -335,7 +325,7 @@ const sortedFilteredItems = computed(() => {
 		}
 
 		if (sortField.value === 'buy') {
-			const versionKey = selectedVersion.value.replace('.', '_')
+			const versionKey = versionToKey(selectedVersion.value)
 			const basePriceA = getEffectivePrice(a, versionKey)
 			const basePriceB = getEffectivePrice(b, versionKey)
 
@@ -476,7 +466,7 @@ function exportYAML() {
 
 function downloadFile(content, extension, mimeType) {
 	const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-	const versionKey = selectedVersion.value.replace('.', '_')
+	const versionKey = versionToKey(selectedVersion.value)
 	const filename = `prices_${versionKey}_${timestamp}.${extension}`
 
 	const blob = new Blob([content], { type: mimeType })

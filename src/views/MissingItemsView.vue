@@ -4,6 +4,8 @@ import { RouterLink } from 'vue-router'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, addDoc } from 'firebase/firestore'
 import { useAdmin } from '../utils/admin.js'
+import { versions } from '../constants.js'
+import { getOldestVersion, versionToKey } from '../constants/minecraftVersions.js'
 import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
 
 const db = useFirestore()
@@ -12,7 +14,7 @@ const itemsJson = ref([])
 const dbItems = ref([])
 const loading = ref(true)
 const showOnlyMissing = ref(true)
-const selectedVersion = ref('1.16')
+const selectedVersion = ref(getOldestVersion())
 
 const sortKey = ref('name')
 const sortAsc = ref(true)
@@ -24,11 +26,11 @@ const addedItems = ref([])
 const selectedItems = ref([])
 
 // Available Minecraft versions
-const availableVersions = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
+const availableVersions = versions
 
 // Load items from JSON file based on selected version
 async function loadJsonItems() {
-	const response = await fetch(`/resource/items_${selectedVersion.value.replace('.', '_')}.json`)
+	const response = await fetch(`/resource/items_${versionToKey(selectedVersion.value)}.json`)
 	itemsJson.value = await response.json()
 }
 
@@ -99,7 +101,7 @@ async function addAllMissing() {
 				image: '',
 				url: '',
 				prices_by_version: {
-					[selectedVersion.value.replace('.', '_')]: 1
+					[versionToKey(selectedVersion.value)]: 1
 				},
 				pricing_type: 'static',
 				category: '',
@@ -127,7 +129,7 @@ async function addSingleItem(item) {
 			image: '',
 			url: '',
 			prices_by_version: {
-				[selectedVersion.value.replace('.', '_')]: 1
+				[versionToKey(selectedVersion.value)]: 1
 			},
 			pricing_type: 'static',
 			category: '',
@@ -191,7 +193,7 @@ async function addSelectedMissing() {
 				image: '',
 				url: '',
 				prices_by_version: {
-					[selectedVersion.value.replace('.', '_')]: 1
+					[versionToKey(selectedVersion.value)]: 1
 				},
 				pricing_type: 'static',
 				category: '',

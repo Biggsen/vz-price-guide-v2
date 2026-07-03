@@ -1,16 +1,7 @@
 import { getEffectivePriceMemoized } from './pricing.js'
+import { isVersionLessOrEqual, versionToKey } from '../constants/minecraftVersions.js'
 
-// Version comparison utility
-export function isVersionLessOrEqual(itemVersion, targetVersion) {
-	if (!itemVersion || !targetVersion) return false
-
-	const [itemMajor, itemMinor] = itemVersion.split('.').map(Number)
-	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
-
-	if (itemMajor < targetMajor) return true
-	if (itemMajor > targetMajor) return false
-	return itemMinor <= targetMinor
-}
+export { isVersionLessOrEqual } from '../constants/minecraftVersions.js'
 
 // Search term processing
 export function processSearchTerms(query) {
@@ -48,6 +39,8 @@ export function filterItemsByVersion(items, selectedVersion) {
 export function filterItemsByPriceAndImage(items, user, selectedVersion) {
 	if (!items) return []
 
+	const versionKey = versionToKey(selectedVersion)
+
 	return items.filter((item) => {
 		// Filter out items with null/empty categories (client-side filtering)
 		if (!item.category || item.category.trim() === '') {
@@ -56,10 +49,7 @@ export function filterItemsByPriceAndImage(items, user, selectedVersion) {
 
 		// Admin users see all items (except those with 0 prices)
 		if (user?.email) {
-			const effectivePrice = getEffectivePriceMemoized(
-				item,
-				selectedVersion.replace('.', '_')
-			)
+			const effectivePrice = getEffectivePriceMemoized(item, versionKey)
 			return effectivePrice && effectivePrice !== 0
 		}
 
@@ -68,11 +58,7 @@ export function filterItemsByPriceAndImage(items, user, selectedVersion) {
 			return false
 		}
 
-		const effectivePrice = getEffectivePriceMemoized(
-			item,
-			selectedVersion.replace('.', '_')
-		)
+		const effectivePrice = getEffectivePriceMemoized(item, versionKey)
 		return effectivePrice && effectivePrice !== 0
 	})
 }
-

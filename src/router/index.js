@@ -2,14 +2,16 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import { getCurrentUser } from 'vuefire'
 import { isAdmin } from '../constants'
+import { getDefaultVersion, getPublicVersions } from '../constants/minecraftVersions.js'
 import { trackPageView } from '../utils/analytics.js'
 
 const siteName = "verzion's economy price guide for Minecraft"
+const publicVersionRange = `${getPublicVersions()[0]}-${getDefaultVersion()}`
 
 const defaultSeo = {
 	title: siteName,
 	description:
-		'Comprehensive, searchable and exportable Minecraft economy price guide with unit and stack prices for over 1600 items from versions 1.16-1.21',
+		`Comprehensive, searchable and exportable Minecraft economy price guide with unit and stack prices for over 1600 items from versions ${publicVersionRange}`,
 	keywords:
 		'minecraft, price guide, economy, items, unit price, stack price, minecraft server economy, ores, stone, brick, copper, earth, sand, wood, drops, food, utility, light, plants, redstone, tools, weapons, armor, enchantments, ocean, nether, end, deep dark, archaeology, ice, dyed, discs',
 	ogImage: 'https://minecraft-economy-price-guide.net/cube.png',

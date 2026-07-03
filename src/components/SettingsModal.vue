@@ -69,7 +69,7 @@ const enabledVersions = computed(() => {
 	try {
 		// Admin users can access all versions (but only if admin status is fully loaded)
 		if (user.value?.email && canEditItems.value === true) {
-			return [...(versions || ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21'])]
+			return [...versions]
 		}
 		// Regular users only get base enabled versions
 		return [...baseEnabledVersions]

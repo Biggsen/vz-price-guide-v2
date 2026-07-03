@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { getEffectivePrice } from '../utils/pricing.js'
 import { disabledCategories, enabledCategories } from '../constants.js'
 import { getMajorMinorVersion } from '../utils/serverProfile.js'
+import { getOldestVersion, versionToKey } from '../constants/minecraftVersions.js'
 import {
 	isItemEnchantable,
 	getCompatibleEnchantments,
@@ -449,8 +450,8 @@ const filteredItems = computed(() => {
 
 	// First filter out items with zero prices using effective pricing
 	// Use the server's Minecraft version for price checking (extract major.minor if needed)
-	const majorMinorVersion = getMajorMinorVersion(props.server?.minecraft_version) || '1.16'
-	const serverVersion = majorMinorVersion.replace('.', '_')
+	const majorMinorVersion = getMajorMinorVersion(props.server?.minecraft_version) || getOldestVersion()
+	const serverVersion = versionToKey(majorMinorVersion)
 	const nonZeroItems = props.availableItems.filter((item) => {
 		const effectivePrice = getEffectivePrice(item, serverVersion)
 		return effectivePrice > 0

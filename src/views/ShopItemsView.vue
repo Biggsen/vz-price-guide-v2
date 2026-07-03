@@ -7,6 +7,7 @@ import JSZip from 'jszip'
 import yaml from 'js-yaml'
 import { useAllShops, updateShop } from '../utils/shopProfile.js'
 import { useServers, getMajorMinorVersion } from '../utils/serverProfile.js'
+import { getDefaultVersion } from '../constants/minecraftVersions.js'
 import {
 	useShopItems,
 	addShopItem,
@@ -238,7 +239,7 @@ const exportModalBusy = computed(
 )
 
 const serverVersionKey = computed(() => {
-	if (!selectedServer.value?.minecraft_version) return '1_21'
+	if (!selectedServer.value?.minecraft_version) return versionToKey(getDefaultVersion())
 	return versionToKey(getMajorMinorVersion(selectedServer.value.minecraft_version))
 })
 

@@ -7,6 +7,7 @@ import { XCircleIcon, ArrowDownTrayIcon, HeartIcon } from '@heroicons/vue/24/sol
 import BaseButton from '@/components/BaseButton.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'
 import { enabledCategories } from '@/constants.js'
+import { getDefaultVersion, isVersionLessOrEqual, versionToKey } from '@/constants/minecraftVersions.js'
 import {
 	verifyDonationSession,
 	getExportIntent,
@@ -48,16 +49,6 @@ const itemsQuery = query(
 )
 const allItems = useCollection(itemsQuery)
 
-// Helper function to check version
-function isVersionLessOrEqual(itemVersion, targetVersion) {
-	if (!itemVersion || !targetVersion) return false
-	const [itemMajor, itemMinor] = itemVersion.split('.').map(Number)
-	const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
-	if (itemMajor < targetMajor) return true
-	if (itemMajor > targetMajor) return false
-	return itemMinor <= targetMinor
-}
-
 function shouldShowItemForVersion(item, selectedVersion) {
 	if (!item.version || !isVersionLessOrEqual(item.version, selectedVersion)) {
 		return false
@@ -81,7 +72,7 @@ function filterItems(items, config) {
 	}
 
 	// Filter out items with 0 base price
-	const versionKey = config.version.replace('.', '_')
+	const versionKey = versionToKey(config.version)
 	filtered = filtered.filter((item) => {
 		const basePrice = getEffectivePrice(item, versionKey)
 		return basePrice > 0
@@ -107,7 +98,7 @@ function sortItems(items, config) {
 		}
 
 		if (config.sortField === 'buy') {
-			const versionKey = config.version.replace('.', '_')
+			const versionKey = versionToKey(config.version)
 			valueA = getEffectivePrice(a, versionKey)
 			valueB = getEffectivePrice(b, versionKey)
 			const comparison = valueA - valueB
@@ -121,7 +112,7 @@ function sortItems(items, config) {
 // Download file
 function downloadFile(content, extension, mimeType, config) {
 	const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-	const versionKey = config.version.replace('.', '_')
+	const versionKey = versionToKey(config.version)
 	const filename = `prices_${versionKey}_${timestamp}.${extension}`
 
 	const blob = new Blob([content], { type: mimeType })
@@ -247,7 +238,7 @@ async function verifyAndDownload() {
 			// Fallback: reconstruct minimal config from Stripe metadata
 			config = {
 				format: result.metadata.exportFormat || 'json',
-				version: result.metadata.exportVersion || '1.21',
+				version: result.metadata.exportVersion || getDefaultVersion(),
 				priceFields: ['unit_buy', 'unit_sell', 'stack_buy', 'stack_sell'],
 				sortField: 'default',
 				sortDirection: 'asc',

@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useFirestore } from 'vuefire'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
 import { versions } from '../../constants.js'
+import { getOldestVersion, versionToKey } from '../../constants/minecraftVersions.js'
 import { useAdmin } from '../../utils/admin.js'
 import { recalculateDynamicPrices } from '../../utils/pricing.js'
 import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
@@ -13,7 +14,7 @@ const { user, canBulkUpdate } = useAdmin()
 // State management
 const loading = ref(true)
 const dbItems = ref([])
-const selectedVersion = ref('1.16')
+const selectedVersion = ref(getOldestVersion())
 
 // Price recalculation state
 const priceRecalculation = ref({
@@ -94,7 +95,7 @@ async function runPriceRecalculation() {
 	priceRecalculation.value.error = null
 
 	try {
-		const versionKey = selectedVersion.value.replace('.', '_')
+		const versionKey = versionToKey(selectedVersion.value)
 		const results = recalculateDynamicPrices(dbItems.value, versionKey)
 
 		// Save calculated prices to database
@@ -187,7 +188,7 @@ function clearPriceRecalculationResults() {
 						<li>
 							• Results are saved to
 							<code>
-								prices_by_version["{{ selectedVersion.replace('.', '_') }}"]
+								prices_by_version["{{ versionToKey(selectedVersion) }}"]
 							</code>
 						</li>
 					</ul>

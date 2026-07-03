@@ -4,8 +4,10 @@ export const LOADING_DELAY_FAST = 300
 export const LOADING_DELAY_SLOW = 100
 export const LOADING_THRESHOLD = 100
 
+import { getPublicVersions } from './minecraftVersions.js'
+
 // Fallback values
-export const FALLBACK_VERSIONS = ['1.16', '1.17', '1.18', '1.19', '1.20', '1.21']
+export const FALLBACK_VERSIONS = getPublicVersions()
 
 // LocalStorage keys
 export const STORAGE_KEYS = {

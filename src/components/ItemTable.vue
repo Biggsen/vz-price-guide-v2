@@ -13,6 +13,7 @@ import {
 	formatNumber
 } from '../utils/pricing.js'
 import { getImageUrl, getWikiUrl } from '../utils/image.js'
+import { getDefaultVersion, compareVersions, versionToKey } from '../constants/minecraftVersions.js'
 import { trackHomepageInteraction } from '../utils/analytics.js'
 import { computed, ref, reactive, watch, onMounted, onUnmounted } from 'vue'
 import { Squares2X2Icon } from '@heroicons/vue/16/solid'
@@ -103,7 +104,7 @@ const roundToWhole = computed(() => props.economyConfig.roundToWhole)
 const showFullNumbers = computed(() => props.economyConfig.showFullNumbers === true)
 const hideSellPrices = computed(() => props.economyConfig.hideSellPrices === true)
 const useSmartNumberFormatting = computed(() => !showFullNumbers.value)
-const currentVersion = computed(() => props.economyConfig.version || '1.21')
+const currentVersion = computed(() => props.economyConfig.version || getDefaultVersion())
 const currencyType = computed(() => props.economyConfig.currencyType || 'money')
 const diamondItemId = computed(() => props.economyConfig.diamondItemId)
 const diamondRoundingDirection = computed(() => props.economyConfig.diamondRoundingDirection || 'nearest')
@@ -155,7 +156,7 @@ const sortedCollection = computed(() => {
 
 		if (sortField.value === 'buy') {
 			// Calculate buy prices for comparison using effective price
-			const versionKey = currentVersion.value.replace('.', '_')
+			const versionKey = versionToKey(currentVersion.value)
 			valueA = getEffectivePrice(a, versionKey) * (priceMultiplier.value || 1)
 			valueB = getEffectivePrice(b, versionKey) * (priceMultiplier.value || 1)
 			const comparison = valueA - valueB
@@ -196,7 +197,7 @@ function toggleSort(field) {
 
 // Helper function to get effective price for template use
 function getItemEffectivePrice(item) {
-	const versionKey = currentVersion.value.replace('.', '_')
+	const versionKey = versionToKey(currentVersion.value)
 	return getEffectivePriceMemoized(item, versionKey)
 }
 
@@ -255,7 +256,7 @@ function getItemRecipe(item) {
 		return null
 	}
 
-	const versionKey = currentVersion.value.replace('.', '_')
+	const versionKey = versionToKey(currentVersion.value)
 	const availableVersions = Object.keys(item.recipes_by_version)
 
 	// First try to get the exact version
@@ -264,30 +265,12 @@ function getItemRecipe(item) {
 	}
 
 	// If no exact match, find the latest available version that's <= current version
-	const sortedVersions = availableVersions
-		.map((v) => v.replace('_', '.'))
-		.sort((a, b) => {
-			const aParts = a.split('.').map(Number)
-			const bParts = b.split('.').map(Number)
-			for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-				const aVal = aParts[i] || 0
-				const bVal = bParts[i] || 0
-				if (aVal !== bVal) return bVal - aVal // Sort descending (newest first)
-			}
-			return 0
-		})
-		.filter((v) => {
-			const vParts = v.split('.').map(Number)
-			const currentParts = currentVersion.value.split('.').map(Number)
-			return (
-				vParts[0] < currentParts[0] ||
-				(vParts[0] === currentParts[0] && vParts[1] <= currentParts[1])
-			)
-		})
+	const sortedVersions = availableVersions.sort((a, b) => compareVersions(b, a))
 
-	if (sortedVersions.length > 0) {
-		const fallbackVersion = sortedVersions[0].replace('.', '_')
-		return item.recipes_by_version[fallbackVersion]
+	for (const availableVersion of sortedVersions) {
+		if (compareVersions(availableVersion, versionKey) <= 0) {
+			return item.recipes_by_version[availableVersion]
+		}
 	}
 
 	return null

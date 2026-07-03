@@ -1,3 +1,13 @@
+import {
+	compareVersions,
+	versionToKey,
+	keyToVersion,
+	getOldestVersion,
+	isVersionLessOrEqual
+} from '../constants/minecraftVersions.js'
+
+const OLDEST_VERSION_KEY = versionToKey(getOldestVersion())
+
 export function formatNumber(num) {
 	if (num === undefined || num === null || typeof num !== 'number' || isNaN(num)) {
 		return '0'
@@ -146,12 +156,12 @@ export function sellStackPriceRaw(price, stack, priceMultiplier, sellMargin, rou
  * @param {string} version - Version key (e.g., "1_16")
  * @returns {number} - The effective price
  */
-export function getEffectivePrice(item, version = '1_16') {
+export function getEffectivePrice(item, version = OLDEST_VERSION_KEY) {
 	// Normalize prices_by_version to handle mixed version key formats
 	const normalizedPrices = {}
 	if (item.prices_by_version) {
 		Object.entries(item.prices_by_version).forEach(([key, value]) => {
-			const normalizedKey = key.replace('.', '_')
+			const normalizedKey = versionToKey(key)
 			normalizedPrices[normalizedKey] = value
 		})
 	}
@@ -164,29 +174,10 @@ export function getEffectivePrice(item, version = '1_16') {
 		}
 
 		// If not found, try earlier versions in descending order
-		const availableVersions = Object.keys(normalizedPrices)
-		const sortedVersions = availableVersions.sort((a, b) => {
-			// Convert version keys like "1_16" to comparable format
-			const aVersion = a.replace('_', '.')
-			const bVersion = b.replace('_', '.')
-			const [aMajor, aMinor] = aVersion.split('.').map(Number)
-			const [bMajor, bMinor] = bVersion.split('.').map(Number)
-
-			// Sort in descending order (newest first)
-			if (aMajor !== bMajor) return bMajor - aMajor
-			return bMinor - aMinor
-		})
-
-		// Find the latest version that's not newer than the requested version
-		const requestedVersion = version.replace('_', '.')
-		const [reqMajor, reqMinor] = requestedVersion.split('.').map(Number)
+		const sortedVersions = Object.keys(normalizedPrices).sort((a, b) => compareVersions(b, a))
 
 		for (const availableVersion of sortedVersions) {
-			const availableVersionFormatted = availableVersion.replace('_', '.')
-			const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
-
-			// Use this version if it's not newer than requested
-			if (avMajor < reqMajor || (avMajor === reqMajor && avMinor <= reqMinor)) {
+			if (compareVersions(availableVersion, version) <= 0) {
 				return extractPriceValue(normalizedPrices[availableVersion])
 			}
 		}
@@ -229,7 +220,7 @@ function extractPriceValue(priceData) {
  * @param {Set} visited - Set to track visited items (prevents infinite recursion)
  * @returns {Object} - { price: number|null, error: string|null, chain: string[] }
  */
-export function calculateRecipePrice(item, allItems, version = '1_16', visited = new Set()) {
+export function calculateRecipePrice(item, allItems, version = OLDEST_VERSION_KEY, visited = new Set()) {
 	// Prevent infinite recursion
 	if (visited.has(item.material_id)) {
 		return {
@@ -242,21 +233,11 @@ export function calculateRecipePrice(item, allItems, version = '1_16', visited =
 	// Fallback logic: find the nearest previous version with a recipe
 	let recipe = item.recipes_by_version?.[version]
 	if (!recipe && item.recipes_by_version) {
-		const availableVersions = Object.keys(item.recipes_by_version)
-		const sortedVersions = availableVersions.sort((a, b) => {
-			const aVersion = a.replace('_', '.')
-			const bVersion = b.replace('_', '.')
-			const [aMajor, aMinor] = aVersion.split('.').map(Number)
-			const [bMajor, bMinor] = bVersion.split('.').map(Number)
-			if (aMajor !== bMajor) return bMajor - aMajor
-			return bMinor - aMinor
-		})
-		const requestedVersion = version.replace('_', '.')
-		const [reqMajor, reqMinor] = requestedVersion.split('.').map(Number)
+		const sortedVersions = Object.keys(item.recipes_by_version).sort((a, b) =>
+			compareVersions(b, a)
+		)
 		for (const availableVersion of sortedVersions) {
-			const availableVersionFormatted = availableVersion.replace('_', '.')
-			const [avMajor, avMinor] = availableVersionFormatted.split('.').map(Number)
-			if (avMajor < reqMajor || (avMajor === reqMajor && avMinor <= reqMinor)) {
+			if (compareVersions(availableVersion, version) <= 0) {
 				recipe = item.recipes_by_version[availableVersion]
 				break
 			}
@@ -424,7 +405,7 @@ export function getCacheStats() {
  * @param {string} version - Version key (e.g., "1_16")
  * @returns {number} - The effective price
  */
-export function getEffectivePriceMemoized(item, version = '1_16') {
+export function getEffectivePriceMemoized(item, version = OLDEST_VERSION_KEY) {
 	// Create cache key from item properties that affect price calculation
 	const cacheKey = `${item.id || item.material_id}-${version}-${
 		item.prices_by_version ? JSON.stringify(item.prices_by_version) : 'no-prices'
@@ -449,7 +430,7 @@ export function getEffectivePriceMemoized(item, version = '1_16') {
  * @param {string} version - Version key (e.g., "1_16")
  * @returns {Object} - { success: Array, failed: Array, summary: Object }
  */
-export function recalculateDynamicPrices(allItems, version = '1_16') {
+export function recalculateDynamicPrices(allItems, version = OLDEST_VERSION_KEY) {
 	const results = {
 		success: [],
 		failed: [],
@@ -461,8 +442,10 @@ export function recalculateDynamicPrices(allItems, version = '1_16') {
 		}
 	}
 
+	const selectedVersion = keyToVersion(version)
+
 	// Helper function to check if item should be shown for selected version
-	function shouldShowItemForVersion(item, selectedVersion) {
+	function shouldShowItemForVersion(item) {
 		// Item must have a version and be <= selected version
 		if (!item.version || !isVersionLessOrEqual(item.version, selectedVersion)) {
 			return false
@@ -476,23 +459,9 @@ export function recalculateDynamicPrices(allItems, version = '1_16') {
 		return true
 	}
 
-	// Helper function to compare version strings (e.g., "1.16" vs "1.17")
-	function isVersionLessOrEqual(itemVersion, targetVersion) {
-		if (!itemVersion || !targetVersion) return false
-
-		const [itemMajor, itemMinor] = itemVersion.split('.').map(Number)
-		const [targetMajor, targetMinor] = targetVersion.split('.').map(Number)
-
-		if (itemMajor < targetMajor) return true
-		if (itemMajor > targetMajor) return false
-		return itemMinor <= targetMinor
-	}
-
 	// Find all items with dynamic pricing that are available in the selected version
 	const dynamicItems = allItems.filter(
-		(item) =>
-			item.pricing_type === 'dynamic' &&
-			shouldShowItemForVersion(item, version.replace('_', '.'))
+		(item) => item.pricing_type === 'dynamic' && shouldShowItemForVersion(item)
 	)
 	results.summary.total = dynamicItems.length
 
@@ -666,7 +635,7 @@ export function getDiamondPricing(item, diamondItem, version, sellMargin = 0.3, 
 		}
 	}
 
-	const versionKey = version.replace('.', '_')
+	const versionKey = versionToKey(version)
 	const itemPrice = getEffectivePrice(item, versionKey)
 	const diamondPrice = getEffectivePrice(diamondItem, versionKey)
 
@@ -701,7 +670,7 @@ export function getDiamondShulkerPricing(item, diamondItem, version, sellMargin 
 		}
 	}
 
-	const versionKey = version.replace('.', '_')
+	const versionKey = versionToKey(version)
 	const itemPrice = getEffectivePrice(item, versionKey)
 	const diamondPrice = getEffectivePrice(diamondItem, versionKey)
 	

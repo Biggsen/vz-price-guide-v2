@@ -1,21 +1,7 @@
-function parseVersionKey(versionKey) {
-	if (!versionKey) return null
-	const match = versionKey.match(/^(\d+)_(\d+)$/)
-	if (!match) return null
-	return { major: Number(match[1]), minor: Number(match[2]) }
-}
-
-function compareVersionKeys(a, b) {
-	const pa = parseVersionKey(a)
-	const pb = parseVersionKey(b)
-	if (!pa || !pb) return 0
-	if (pa.major !== pb.major) return pa.major - pb.major
-	return pa.minor - pb.minor
-}
+import { compareVersions, versionToKey } from '../constants/minecraftVersions.js'
 
 export function normalizeMinecraftVersionKey(version) {
-	if (!version) return null
-	return version.toString().trim().replace('.', '_')
+	return versionToKey(version)
 }
 
 const ENCHANTMENT_DEF_MODULES = import.meta.glob('../../resource/enchantments_*.json', { eager: true })
@@ -27,7 +13,7 @@ function getResourceEnchantmentVersionKeys() {
 			return match ? match[1] : null
 		})
 		.filter(Boolean)
-		.sort(compareVersionKeys)
+		.sort((a, b) => compareVersions(a, b))
 }
 
 export function getNearestPreviousEnchantmentVersionKey(versionKey) {
@@ -35,8 +21,8 @@ export function getNearestPreviousEnchantmentVersionKey(versionKey) {
 	if (!keys.length) return null
 	if (!versionKey) return keys[keys.length - 1]
 
-	const sorted = [...keys].sort(compareVersionKeys)
-	const candidates = sorted.filter((k) => compareVersionKeys(k, versionKey) <= 0)
+	const sorted = [...keys].sort((a, b) => compareVersions(a, b))
+	const candidates = sorted.filter((k) => compareVersions(k, versionKey) <= 0)
 	if (candidates.length) return candidates[candidates.length - 1]
 	return sorted[0]
 }

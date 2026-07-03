@@ -264,7 +264,7 @@ describe('Shop Manager - Server Management', () => {
 			cy.get('[data-cy="server-form-modal"]').should('be.visible')
 		})
 
-		it('shows all supported versions in dropdown', () => {
+		it('shows all supported public versions in dropdown', () => {
 			cy.get('[data-cy="server-form-modal"]').should('be.visible')
 
 			// Check for version options by getting all option elements
@@ -278,6 +278,7 @@ describe('Shop Manager - Server Management', () => {
 					expect(optionTexts).to.include('Minecraft 1.19')
 					expect(optionTexts).to.include('Minecraft 1.20')
 					expect(optionTexts).to.include('Minecraft 1.21')
+					expect(optionTexts).not.to.include('Minecraft 26.2')
 				})
 		})
 

@@ -22,6 +22,7 @@ import {
 import { XCircleIcon, MapPinIcon, UserIcon, BuildingStorefrontIcon } from '@heroicons/vue/24/solid'
 import { useAdmin } from '../utils/admin.js'
 import { useAllShops, createShop, updateShop, deleteShop } from '../utils/shopProfile.js'
+import { getOldestVersion } from '../constants/minecraftVersions.js'
 import {
 	useServers,
 	createServer,
@@ -98,7 +99,7 @@ const nameValidationError = ref(null)
 const versionValidationError = ref(null)
 
 const minecraftVersions = getMinecraftVersions()
-const defaultVersion = minecraftVersions[0]?.value || '1.21'
+const defaultVersion = minecraftVersions[0]?.value || getOldestVersion()
 
 const serverForm = ref({
 	name: '',
