@@ -1,18 +1,6 @@
 [
 	{
-		"id": 46,
-		"title": "Crate Rewards Tool Removed",
-		"date": "2026-07-03",
-		"types": ["Change"],
-		"hidden": false,
-		"description": "The **Crate Rewards** tool has been removed from the site. It was originally built for managing CrazyCrates prize configurations — importing YAML, balancing weights, and exporting back to server format.\n\nThe price guide, shop manager, recipes, and other tools are unaffected. The **Tools** page now focuses on external utilities like Region Forge, with room for new tools over time.",
-		"changes": [
-			"Removed Crate Rewards manager, detail views, and CrazyCrates YAML import/export",
-			"Removed Crate Rewards from navigation and the Tools page",
-			"Firestore rules and indexes for crate data will be updated on deploy after this release"
-		]
-	},
-	{
+		"id": 45,
 		"title": "Admin Shop — Manage Your Server Economy",
 		"date": "2026-07-01",
 		"types": ["Feature"],
