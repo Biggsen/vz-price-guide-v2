@@ -185,12 +185,21 @@ function ensureOutputDir() {
 	fs.mkdirSync(OUTPUT_DIR, { recursive: true })
 }
 
+function sanitizeMaterialIdForFilename(materialId) {
+	return String(materialId || '')
+		.toLowerCase()
+		.replace(/\s+/g, '_')
+		.replace(/[^a-z0-9_\-\.]/g, '')
+}
+
 async function downloadImageToPublicItems(imageUrl, materialId) {
 	if (!materialId) throw new Error('material_id is required to save image')
+	const safeMaterialId = sanitizeMaterialIdForFilename(materialId)
+	if (!safeMaterialId) throw new Error('material_id is invalid for filename')
 	ensureOutputDir()
 
 	const ext = inferExtensionFromUrl(imageUrl)
-	const filename = `${materialId}${ext}`
+	const filename = `${safeMaterialId}${ext}`
 	const outputPath = path.join(OUTPUT_DIR, filename)
 	const publicPath = `/images/items/${filename}`
 
@@ -206,9 +215,11 @@ async function downloadImageToPublicItems(imageUrl, materialId) {
 
 async function downloadInviconToPublicItems(imageUrl, materialId) {
 	if (!materialId) throw new Error('material_id is required to save image')
+	const safeMaterialId = sanitizeMaterialIdForFilename(materialId)
+	if (!safeMaterialId) throw new Error('material_id is invalid for filename')
 	ensureOutputDir()
 
-	const filename = `${materialId}.webp`
+	const filename = `${safeMaterialId}.webp`
 	const outputPath = path.join(OUTPUT_DIR, filename)
 	const publicPath = `/images/items/${filename}`
 
@@ -267,5 +278,6 @@ module.exports = {
 	downloadInviconToPublicItems,
 	extractInfoboxImageUrl,
 	extractInviconImageUrl,
-	getWikiCandidates
+	getWikiCandidates,
+	sanitizeMaterialIdForFilename
 }

@@ -42,13 +42,17 @@ function wikiImageDevApiPlugin() {
 						url: body.url
 					}
 					const mode = body.mode === 'invicon' ? 'invicon' : 'infobox'
+					const materialId =
+						typeof body.material_id === 'string' ? body.material_id.trim() : ''
 
-					if (!item.material_id && !item.name) {
+					if (!materialId) {
 						res.statusCode = 400
 						res.setHeader('Content-Type', 'application/json')
-						res.end(JSON.stringify({ ok: false, error: 'material_id or name is required' }))
+						res.end(JSON.stringify({ ok: false, error: 'material_id is required' }))
 						return
 					}
+
+					item.material_id = materialId
 
 					const result =
 						mode === 'invicon'
