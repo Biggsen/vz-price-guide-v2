@@ -204,117 +204,53 @@ The script provides console output showing:
 
 ## Purpose
 
-This Node.js script automatically fetches image URLs from Minecraft Wiki for items in your Firestore database that don't already have images. It scrapes the infobox images from wiki pages and populates your database.
+Fetches infobox image URLs from **minecraft.wiki** for Firestore items that do not already have an image. Uses the main infobox render in `.infobox-imagearea` (not Invicon / invslot sprites).
 
 ## Prerequisites
 
 1. **Node.js** installed on your system
-2. **Required packages**: `npm install firebase-admin axios cheerio fs`
-3. **Firebase service account key** JSON file
-
-## Setup
-
-1. Obtain your Firebase service account key JSON file from the Firebase Console:
-
-    - Go to Project Settings → Service Accounts
-    - Generate new private key
-    - Save the JSON file as `service-account.json` in the project root
-
-2. Update the path to your service account file in the script:
-    ```javascript
-    const serviceAccount = require('../service-account.json')
-    ```
+2. **Required packages**: `npm install firebase-admin axios cheerio`
+3. **Firebase service account key** JSON file at project root (`service-account.json`)
 
 ## Configuration
 
-The script has a `DRY_RUN` constant that controls its behavior:
-
--   `DRY_RUN = true`: Only logs what would be updated (safe for testing)
--   `DRY_RUN = false`: Actually updates the Firestore database with images and URLs
+- `DRY_RUN = true`: Log what would be updated without writing to Firestore
+- `DRY_RUN = false`: Apply image and wiki URL updates
 
 ## How it Works
 
-The script:
-
-1. Connects to your Firestore database using the service account credentials
-2. Fetches all documents from the 'items' collection
-3. For each item **without an existing image**:
-    - Constructs or uses the wiki URL (from `item.url` or generated from `item.name`)
-    - Scrapes the first infobox image from the Minecraft Wiki page
-    - Processes the image URL (removes query params, resizes to 50px width, cleans up)
-    - Updates the Firestore document with both the image URL and wiki URL
-
-## Wiki URL Generation
-
--   If an item has a `url` field, it uses that
--   Otherwise, it constructs the URL from the item name:
-    -   Replaces underscores with spaces
-    -   Capitalizes words
-    -   Creates: `https://minecraft.fandom.com/wiki/Item_Name`
-
-## Image Processing
-
-The script automatically:
-
--   Extracts the first image from the wiki page's infobox
--   Removes query parameters from the URL
--   Resizes images to 50px width (replaces `/268` with `/50`)
--   Truncates everything after `.png` to ensure clean URLs
+1. Reads all items from Firestore
+2. Skips items that already have an `image`
+3. Builds minecraft.wiki URLs from `material_id` / `name` (ignores legacy fandom.com `url` values)
+4. Scrapes `.infobox-imagearea img.mw-file-element` where alt text includes `Infobox image`
+5. Excludes Invicon / inventory sprite images
+6. Prefers highest-resolution `srcset` entry
+7. Updates `image` and `url` in Firestore
 
 ## Usage
 
-1. **Install dependencies:**
+```bash
+# Dry run (recommended first) — set DRY_RUN = true in the script
+node scripts/fetchImages.js
 
-    ```bash
-    npm install firebase-admin axios cheerio fs
-    ```
-
-2. **Test run (recommended first):**
-
-    ```bash
-    # Ensure DRY_RUN = true in the script
-    node scripts/fetchImages.js
-    ```
-
-3. **Actual image fetching:**
-    ```bash
-    # Set DRY_RUN = false in the script
-    node scripts/fetchImages.js
-    ```
-
-## Example
-
-For an item named "ancient_debris", the script will:
-
-1. Generate wiki URL: `https://minecraft.fandom.com/wiki/Ancient_Debris`
-2. Scrape the infobox image
-3. Process the image URL to something like: `https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/50/Ancient_Debris_JE2_BE1.png`
-4. Update the Firestore document with both the image URL and wiki URL
-
-## Output
-
-The script provides console output showing:
-
--   Items being processed
--   Successfully fetched images with URLs
--   Items where no images were found
--   Success/failure counts
--   Any errors encountered
-
-## Safety Features
-
--   **Selective processing**: Only updates items that don't already have images
--   **DRY_RUN mode**: Preview changes before applying them
--   **Error handling**: Continues processing even if individual items fail
--   **Detailed logging**: Shows exactly what's being updated
--   **URL validation**: Handles various wiki URL formats and edge cases
+# Apply updates — set DRY_RUN = false
+node scripts/fetchImages.js
+```
 
 ## Notes
 
--   The script is specifically designed for Minecraft Wiki scraping
--   It targets the infobox images which are typically the main item images
--   Image URLs are processed to be consistent and clean
--   Both image URL and wiki URL are stored for future reference
+- **Fandom wiki is no longer used** — minecraft.fandom.com returns 403 to scripts.
+- **Spawn eggs** on the wiki share a generic page; the script may return the generic Creeper spawn egg infobox image. Handle those manually or with `getGalleryImageUrls.js`.
+- **Ambiguous names** like `light` fall back to `Light_(block)`.
+- After fetching remote URLs, run `downloadImages.js` to save files under `public/images/items/`.
+
+## Invicon fetch (Bulk Update UI, dev only)
+
+In **Bulk update items → Image**, use **Fetch Invicon from wiki** for inventory-style sprites (blocks shown in-world vs inventory icon, armor, etc.):
+
+- Matches Invicon / inventory sprite alt text for the selected item
+- Resizes to 64×64 (nearest-neighbor) and saves as `/images/items/{material_id}.webp`
+- Overwrites existing image paths for selected items
 
 ---
 
