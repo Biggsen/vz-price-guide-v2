@@ -7,6 +7,7 @@ import { categories, versions } from '../constants.js'
 import { versionToKey } from '../constants/minecraftVersions.js'
 import { useAdmin } from '../utils/admin.js'
 import { getWikiUrl } from '../utils/image.js'
+import { fetchWikiImageFromDevApi } from '../utils/wikiImageFetch.js'
 import BaseModal from '../components/BaseModal.vue'
 import {
 	NoSymbolIcon,
@@ -15,7 +16,8 @@ import {
 	PencilIcon,
 	TrashIcon,
 	ArrowPathIcon,
-	Squares2X2Icon
+	Squares2X2Icon,
+	ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
 import { Squares2X2Icon as Squares2X2IconSolid } from '@heroicons/vue/24/solid'
 
@@ -49,6 +51,7 @@ const selectedCategories = ref([])
 const activeTab = ref('categories') // Add active tab state
 const showDeleteModal = ref(false)
 const itemToDelete = ref(null)
+const isDev = import.meta.env.DEV
 
 // localStorage key for bulk update settings
 const BULK_UPDATE_STORAGE_KEY = 'bulkUpdateSettings'
@@ -427,6 +430,77 @@ async function updateSelectedImagesAsMaterialId() {
 	selectedItems.value = []
 }
 
+async function fetchSelectedWikiImages() {
+	if (!anySelected.value || updating.value) return
+	updating.value = true
+	updateResult.value = null
+	let updated = 0
+	let skipped = 0
+	let failed = 0
+
+	for (const id of selectedItems.value) {
+		const item = dbItems.value.find((row) => row.id === id)
+		if (!item) {
+			failed++
+			continue
+		}
+		if (item.image && item.image.trim() !== '') {
+			skipped++
+			continue
+		}
+		if (!item.material_id) {
+			failed++
+			continue
+		}
+
+		try {
+			const { imagePath, wikiUrl } = await fetchWikiImageFromDevApi(item)
+			await updateDoc(doc(db, 'items', id), {
+				image: imagePath,
+				url: wikiUrl
+			})
+			updated++
+		} catch (_) {
+			failed++
+		}
+	}
+
+	updateResult.value = `Wiki fetch: ${updated} updated, ${skipped} skipped (had image), ${failed} failed`
+	await loadDbItems()
+	updating.value = false
+}
+
+async function fetchSelectedWikiInvicons() {
+	if (!anySelected.value || updating.value) return
+	updating.value = true
+	updateResult.value = null
+	let updated = 0
+	let failed = 0
+
+	for (const id of selectedItems.value) {
+		const item = dbItems.value.find((row) => row.id === id)
+		if (!item || !item.material_id) {
+			failed++
+			continue
+		}
+
+		try {
+			const { imagePath, wikiUrl } = await fetchWikiImageFromDevApi(item, { mode: 'invicon' })
+			await updateDoc(doc(db, 'items', id), {
+				image: imagePath,
+				url: wikiUrl
+			})
+			updated++
+		} catch (_) {
+			failed++
+		}
+	}
+
+	updateResult.value = `Wiki invicon fetch: ${updated} updated, ${failed} failed`
+	await loadDbItems()
+	updating.value = false
+}
+
 async function updateSelectedVersions() {
 	if (!newVersion.value || !anySelected.value) return
 	updating.value = true
@@ -799,6 +873,32 @@ function resetSearch() {
 							class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50">
 							Save image(s) as material id
 						</button>
+					</div>
+					<div v-if="isDev" class="mt-2">
+						<button
+							@click="fetchSelectedWikiImages"
+							:disabled="!anySelected || updating"
+							class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 flex items-center gap-2">
+							<ArrowDownTrayIcon class="w-4 h-4" />
+							Fetch images from wiki
+						</button>
+						<p class="text-sm text-gray-600 mt-1">
+							Dev only: scrapes minecraft.wiki infobox for selected items without an
+							image, saves to public/images/items/, and updates Firestore.
+						</p>
+					</div>
+					<div v-if="isDev" class="mt-2">
+						<button
+							@click="fetchSelectedWikiInvicons"
+							:disabled="!anySelected || updating"
+							class="rounded-md bg-purple-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700 disabled:opacity-50 flex items-center gap-2">
+							<ArrowDownTrayIcon class="w-4 h-4" />
+							Fetch Invicon from wiki
+						</button>
+						<p class="text-sm text-gray-600 mt-1">
+							Dev only: uses the inventory sprite (Invicon), resizes to 64×64, saves as
+							.webp, and overwrites the selected item image paths.
+						</p>
 					</div>
 				</div>
 			</div>
