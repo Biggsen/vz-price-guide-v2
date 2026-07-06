@@ -1,5 +1,16 @@
 [
 	{
+		"id": 47,
+		"title": "Search Exclusions",
+		"date": "2026-07-06",
+		"types": ["Enhancement"],
+		"hidden": false,
+		"description": "Search now supports exclusions to help you narrow down large item lists.",
+		"changes": [
+			"Prefix a term with `-` to exclude it. For example, `door,-trapdoor` only shows doors."
+		]
+	},
+	{
 		"id": 46,
 		"title": "Minecraft 26.2 (Chaos Cubed) Items Added",
 		"date": "2026-07-06",

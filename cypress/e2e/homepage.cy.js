@@ -153,11 +153,20 @@ describe('Homepage Functionality', () => {
 		it('can search with multiple terms using commas', () => {
 			cy.visit('/')
 
-			// Search for multiple terms
+			// Comma-separated terms broaden results (OR)
 			cy.get('input[placeholder*="Search for items"]').type('oak,log')
 
-			// Should find items matching either term
 			cy.contains('oak log', { matchCase: false }).should('be.visible')
+			cy.contains('oak planks', { matchCase: false }).should('be.visible')
+		})
+
+		it('can exclude terms with a leading minus', () => {
+			cy.visit('/')
+
+			cy.get('input[placeholder*="Search for items"]').type('oak,-stairs')
+
+			cy.contains('oak log', { matchCase: false }).should('be.visible')
+			cy.get('table tbody').contains('stairs', { matchCase: false }).should('not.exist')
 		})
 
 		it('shows "No items found" when search has no results', () => {

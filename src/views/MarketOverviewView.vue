@@ -22,6 +22,12 @@ import { getImageUrl, getItemImageUrl } from '../utils/image.js'
 import { generateMinecraftAvatar } from '../utils/userProfile.js'
 import { transformShopItemForTable as transformShopItem } from '../utils/tableTransform.js'
 import {
+	hasActiveSearchTerms,
+	processSearchTerms,
+	SEARCH_INPUT_TIP,
+	textMatchesSearch
+} from '../utils/search.js'
+import {
 	ArchiveBoxIcon,
 	ArchiveBoxXMarkIcon,
 	ArrowPathIcon,
@@ -301,21 +307,9 @@ const filteredShopItemsByCategory = computed(() => {
 
 			// Filter by search query if provided
 			if (query) {
-				const itemName = item.itemData.name.toLowerCase()
-
-				// Split search query by commas only, then trim and filter out empty strings
-				// Spaces within terms are preserved (e.g., "iron ingot" stays as one term)
-				// Comma-separated terms use OR logic (e.g., "iron,ingot" matches items with "iron" OR "ingot")
-				const searchTerms = query
-					.split(',')
-					.map((term) => term.trim())
-					.filter((term) => term.length > 0)
-
-				// If no valid search terms, return all items
-				if (searchTerms.length === 0) return true
-
-				// Check if item name contains any of the search terms (OR logic for comma-separated terms)
-				if (!searchTerms.some((term) => itemName.includes(term))) {
+				const searchTerms = processSearchTerms(query)
+				if (!hasActiveSearchTerms(searchTerms)) return true
+				if (!textMatchesSearch(item.itemData.name, searchTerms)) {
 					return false
 				}
 			}
@@ -975,7 +969,7 @@ const priceAnalysis = computed(() => {
 							placeholder="Search for items..."
 							class="border-2 border-gray-asparagus rounded px-3 py-2 w-full mb-1 h-10" />
 						<p class="text-xs text-gray-500 mb-2 sm:mb-0 hidden sm:block">
-							Tip: Use commas to search multiple terms
+							{{ SEARCH_INPUT_TIP }}
 						</p>
 					</div>
 					<div class="flex gap-2 sm:gap-0 sm:ml-2">
@@ -990,7 +984,7 @@ const priceAnalysis = computed(() => {
 					</div>
 				</div>
 				<p class="text-xs text-gray-500 mt-1 sm:hidden">
-					Tip: Use commas to search multiple terms
+					{{ SEARCH_INPUT_TIP }}
 				</p>
 				<div v-if="searchQuery" class="mt-2 text-sm text-gray-600">
 					Showing {{ filteredItemCount }} item{{

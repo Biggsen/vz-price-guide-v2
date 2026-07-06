@@ -85,13 +85,17 @@ function getUpdateTypeClass(type) {
 	return classes[type] || 'bg-gray-100 text-gray-800'
 }
 
-// Parse inline markdown: links [text](url) and bold **text**
+// Parse inline markdown: links [text](url), bold **text**, and inline code `text`
 function parseLinks(text) {
 	if (!text) return ''
 	return text
 		.replace(
 			/\[([^\]]+)\]\(([^)]+)\)/g,
 			'<a href="$2" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-600">$1</a>'
+		)
+		.replace(
+			/`([^`]+)`/g,
+			'<code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono text-gray-800">$1</code>'
 		)
 		.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-gray-800">$1</strong>')
 }
