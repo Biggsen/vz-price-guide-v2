@@ -8,6 +8,12 @@ import { versionToKey } from '../constants/minecraftVersions.js'
 import { useAdmin } from '../utils/admin.js'
 import { getWikiUrl } from '../utils/image.js'
 import { fetchWikiImageFromDevApi } from '../utils/wikiImageFetch.js'
+import {
+	filterItemsBySearch,
+	hasActiveSearchTerms,
+	processSearchTerms,
+	SEARCH_INPUT_TIP
+} from '../utils/search.js'
 import BaseModal from '../components/BaseModal.vue'
 import {
 	NoSymbolIcon,
@@ -175,9 +181,14 @@ watch(showUrlColumn, saveSettings)
 watch(showPriceColumn, saveSettings)
 watch(showDocumentIdColumn, saveSettings)
 
+function filterBySearchQuery(items) {
+	const searchTerms = processSearchTerms(searchQuery.value.trim())
+	if (!hasActiveSearchTerms(searchTerms)) return items
+	return filterItemsBySearch(items, searchTerms)
+}
+
 const filteredItems = computed(() => {
-	const query = searchQuery.value.trim().toLowerCase()
-	let items = dbItems.value.filter((item) => item.name && item.name.toLowerCase().includes(query))
+	let items = filterBySearchQuery(dbItems.value)
 
 	// Filter by version
 	if (selectedVersion.value !== 'all') {
@@ -287,8 +298,7 @@ function clearAllCategories() {
 
 function getCategoryItemCount(category) {
 	// Get items that match current filters (search, version) but without category filter
-	const query = searchQuery.value.trim().toLowerCase()
-	let items = dbItems.value.filter((item) => item.name && item.name.toLowerCase().includes(query))
+	let items = filterBySearchQuery(dbItems.value)
 
 	// Filter by version
 	if (selectedVersion.value !== 'all') {
@@ -303,8 +313,7 @@ function getCategoryItemCount(category) {
 
 function getTotalItemCount() {
 	// Get items that match current filters (search, version) but without category filter
-	const query = searchQuery.value.trim().toLowerCase()
-	let items = dbItems.value.filter((item) => item.name && item.name.toLowerCase().includes(query))
+	let items = filterBySearchQuery(dbItems.value)
 
 	// Filter by version
 	if (selectedVersion.value !== 'all') {
@@ -641,12 +650,15 @@ function resetSearch() {
 			<!-- Search and filters (always visible) -->
 			<div class="mb-6">
 				<!-- Search input -->
-				<div class="mb-4 flex gap-2">
-					<input
-						type="text"
-						v-model="searchQuery"
-						placeholder="Search for an item..."
-						class="border-2 border-gray-asparagus rounded px-3 py-1 flex-1 max-w-md" />
+				<div class="mb-4 flex items-start gap-2">
+					<div class="flex-1 max-w-md">
+						<input
+							type="text"
+							v-model="searchQuery"
+							placeholder="Search for an item..."
+							class="border-2 border-gray-asparagus rounded px-3 py-1 w-full" />
+						<p class="text-xs text-gray-500 mt-1">{{ SEARCH_INPUT_TIP }}</p>
+					</div>
 					<button
 						@click="resetSearch"
 						class="inline-flex items-center px-3 py-1 border-2 border-gray-asparagus rounded text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
