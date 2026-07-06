@@ -689,7 +689,7 @@ const sortedCategories = computed(() => {
 	return orderedCategories
 })
 
-// Search terms from query (comma-separated AND logic, -prefix excludes)
+// Search terms from query (comma-separated OR logic, -prefix excludes)
 const processedSearchTerms = computed(() => processSearchTerms(searchQuery.value?.trim() ?? ''))
 
 function isSearchActive() {
