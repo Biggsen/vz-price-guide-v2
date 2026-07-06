@@ -1,6 +1,7 @@
 <script setup>
 import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 import BaseButton from './BaseButton.vue'
+import { SEARCH_INPUT_TIP } from '../utils/search.js'
 
 defineProps({
 	modelValue: {
@@ -23,7 +24,7 @@ const emit = defineEmits(['update:modelValue', 'reset'])
 					placeholder="Search for items..."
 					class="border-2 border-gray-asparagus rounded px-3 py-2 w-full mb-1 h-10" />
 				<p class="text-xs text-gray-500 mb-2 sm:mb-0 hidden sm:block">
-					Tip: Use commas to search multiple terms
+					{{ SEARCH_INPUT_TIP }}
 				</p>
 			</div>
 			<div class="flex gap-2 sm:gap-0 sm:ml-2 flex-shrink-0">

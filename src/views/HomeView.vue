@@ -18,6 +18,7 @@ import { useFilters } from '../composables/useFilters.js'
 import { useItems } from '../composables/useItems.js'
 import { getImageUrl } from '../utils/image.js'
 import { trackHomepageInteraction, trackSearch } from '../utils/analytics.js'
+import { countSearchTerms, processSearchTerms } from '../utils/search.js'
 import { RocketLaunchIcon } from '@heroicons/vue/24/solid'
 import { Cog6ToothIcon, ArrowDownTrayIcon, ArrowUpIcon } from '@heroicons/vue/24/outline'
 
@@ -294,10 +295,7 @@ watch(
 			if (!settled) return
 			if (settled === lastSentSearchTerm) return
 
-			const termCount = settled
-				.split(',')
-				.map((t) => t.trim())
-				.filter(Boolean).length
+			const termCount = countSearchTerms(processSearchTerms(settled))
 
 			// Guardrails: avoid single-character noise unless multi-term search
 			if (settled.length < 2 && termCount <= 1) return

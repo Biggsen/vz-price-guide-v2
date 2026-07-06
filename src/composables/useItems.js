@@ -9,6 +9,7 @@ import {
 	filterItemsByPriceAndImage,
 	filterItemsBySearch,
 	processSearchTerms,
+	hasActiveSearchTerms,
 	isVersionLessOrEqual
 } from '../utils/homepage.js'
 import { getCacheStats as getPricingCacheStats } from '../utils/pricing.js'
@@ -263,7 +264,7 @@ export function useItems(selectedVersion, visibleCategories, searchQuery) {
 		items = items.filter((item) => enabledCategories.includes(item.category))
 
 		// Apply search filtering if there's a search query
-		if (searchTerms.length > 0) {
+		if (hasActiveSearchTerms(searchTerms)) {
 			items = filterItemsBySearch(items, searchTerms)
 		}
 

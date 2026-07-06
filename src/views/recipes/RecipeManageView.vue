@@ -9,6 +9,7 @@ import { useAdmin } from '../../utils/admin.js'
 import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline'
 import BaseModal from '../../components/BaseModal.vue'
 import BaseButton from '../../components/BaseButton.vue'
+import { hasActiveSearchTerms, processSearchTerms, textMatchesSearch } from '../../utils/search.js'
 
 const db = useFirestore()
 const { user, canBulkUpdate } = useAdmin()
@@ -289,22 +290,16 @@ const filteredExistingRecipes = computed(() => {
 
 	if (query) {
 		if (query.includes(',')) {
-			// Comma-separated: OR logic
-			const searchTerms = query
-				.split(',')
-				.map((term) => term.trim())
-				.filter((term) => term.length > 0)
+			const searchTerms = processSearchTerms(query)
 
-			if (searchTerms.length > 0) {
-				recipes = recipes.filter((recipe) =>
-					searchTerms.some(
-						(term) =>
-							recipe.material_id.toLowerCase().includes(term) ||
-							recipe.ingredients.some((ing) =>
-								ing.material_id.toLowerCase().includes(term)
-							)
-					)
-				)
+			if (hasActiveSearchTerms(searchTerms)) {
+				recipes = recipes.filter((recipe) => {
+					const searchable = [
+						recipe.material_id,
+						...recipe.ingredients.map((ing) => ing.material_id)
+					].join(' ')
+					return textMatchesSearch(searchable, searchTerms)
+				})
 			}
 		} else {
 			// No comma: exact phrase match, treat spaces as underscores

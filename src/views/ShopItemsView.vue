@@ -72,6 +72,12 @@ import {
 } from '../utils/serverShopRecipes.js'
 import { enabledCategories } from '../constants.js'
 import { buildMergedGuideByMaterialId } from '../utils/guideItemMaterialPick.js'
+import {
+	hasActiveSearchTerms,
+	processSearchTerms,
+	SEARCH_INPUT_TIP,
+	textMatchesSearch
+} from '../utils/search.js'
 
 /** Firestore batch writes cap at 500 ops; stay under for multi-add creates. */
 const MULTI_ADD_SHOP_ITEMS_CHUNK = 400
@@ -683,34 +689,27 @@ const sortedCategories = computed(() => {
 	return orderedCategories
 })
 
-// Search terms from query (comma-separated, OR logic)
-function getSearchTerms() {
-	if (!searchQuery.value?.trim()) return []
-	return searchQuery.value
-		.trim()
-		.toLowerCase()
-		.split(',')
-		.map((t) => t.trim())
-		.filter((t) => t.length > 0)
+// Search terms from query (comma-separated AND logic, -prefix excludes)
+const processedSearchTerms = computed(() => processSearchTerms(searchQuery.value?.trim() ?? ''))
+
+function isSearchActive() {
+	return hasActiveSearchTerms(processedSearchTerms.value)
 }
 
-// Filter rows by item name matching any search term
 function rowMatchesSearch(row) {
-	const terms = getSearchTerms()
-	if (terms.length === 0) return true
-	const name = (row?.item ?? '').toLowerCase()
-	return terms.some((term) => name.includes(term))
+	if (!isSearchActive()) return true
+	return textMatchesSearch(row?.item ?? '', processedSearchTerms.value)
 }
 
 // Filtered list rows (when search active)
 const filteredBaseTableRows = computed(() => {
-	if (getSearchTerms().length === 0) return baseTableRows.value
+	if (!isSearchActive()) return baseTableRows.value
 	return baseTableRows.value.filter(rowMatchesSearch)
 })
 
 // Filtered category rows (when search active)
 const filteredBaseTableRowsByCategory = computed(() => {
-	if (getSearchTerms().length === 0) return baseTableRowsByCategory.value
+	if (!isSearchActive()) return baseTableRowsByCategory.value
 	const filtered = {}
 	Object.entries(baseTableRowsByCategory.value || {}).forEach(([category, rows]) => {
 		const match = rows.filter(rowMatchesSearch)
@@ -722,7 +721,7 @@ const filteredBaseTableRowsByCategory = computed(() => {
 // Categories to show (search narrows set; chips narrow further)
 const sortedCategoriesForDisplay = computed(() => {
 	let categories = sortedCategories.value
-	if (getSearchTerms().length > 0) {
+	if (isSearchActive()) {
 		const filteredKeys = Object.keys(filteredBaseTableRowsByCategory.value || {})
 		categories = categories.filter((c) => filteredKeys.includes(c))
 	}
@@ -734,10 +733,10 @@ const sortedCategoriesForDisplay = computed(() => {
 
 // Count of items matching current search, after category chip filter
 const filteredItemCount = computed(() => {
-	if (getSearchTerms().length === 0) return 0
+	if (!isSearchActive()) return 0
 	if (viewMode.value === 'list') return listRowsForDisplay.value.length
 	return sortedCategoriesForDisplay.value.reduce((sum, cat) => {
-		const useFiltered = getSearchTerms().length > 0
+		const useFiltered = isSearchActive()
 		const src = useFiltered ? filteredBaseTableRowsByCategory.value : baseTableRowsByCategory.value
 		return sum + (src[cat] || []).length
 	}, 0)
@@ -754,23 +753,23 @@ const shopTotalCategoryCounts = computed(() => {
 
 const shopAllCategoriesWithSearch = computed(() => {
 	const acc = {}
-	const terms = getSearchTerms()
+	const searchActive = isSearchActive()
 	for (const cat of enabledCategories) {
 		const rows = baseTableRowsByCategory.value[cat] || []
-		acc[cat] = terms.length === 0 ? rows : rows.filter(rowMatchesSearch)
+		acc[cat] = searchActive ? rows.filter(rowMatchesSearch) : rows
 	}
 	return acc
 })
 
 const shopCategoryFilterTotalItemCount = computed(() => {
-	if (getSearchTerms().length === 0) return baseTableRows.value.length
+	if (!isSearchActive()) return baseTableRows.value.length
 	return filteredBaseTableRows.value.length
 })
 
 // List view rows after search + category chip filter
 const listRowsForDisplay = computed(() => {
 	const base =
-		getSearchTerms().length > 0 ? filteredBaseTableRows.value : baseTableRows.value
+		isSearchActive() ? filteredBaseTableRows.value : baseTableRows.value
 	if (shopVisibleCategories.value.length === 0) return base
 	return base.filter((row) => {
 		const cat = row._originalItem?.itemData?.category || 'Uncategorized'
@@ -2087,9 +2086,9 @@ function getServerName(serverId) {
 						</BaseButton>
 					</div>
 					<p class="text-xs text-gray-500 mt-1">
-						Tip: Use commas to search multiple terms
+						{{ SEARCH_INPUT_TIP }}
 					</p>
-					<div v-if="searchQuery && getSearchTerms().length > 0" class="mt-2 text-sm text-gray-600">
+					<div v-if="searchQuery && isSearchActive()" class="mt-2 text-sm text-gray-600">
 						<span v-if="filteredItemCount > 0">
 							Showing {{ filteredItemCount }} item{{ filteredItemCount === 1 ? '' : 's' }}
 							matching "{{ searchQuery }}"
@@ -2306,7 +2305,7 @@ function getServerName(serverId) {
 								<BaseTable
 									:columns="baseTableColumns"
 									:rows="
-										getSearchTerms().length > 0
+										isSearchActive()
 											? filteredBaseTableRowsByCategory[category] || []
 											: baseTableRowsByCategory[category]
 									"

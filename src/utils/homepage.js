@@ -3,24 +3,14 @@ import { isVersionLessOrEqual, versionToKey } from '../constants/minecraftVersio
 
 export { isVersionLessOrEqual } from '../constants/minecraftVersions.js'
 
-// Search term processing
-export function processSearchTerms(query) {
-	return query
-		.split(',')
-		.map((term) => term.trim())
-		.filter((term) => term.length > 0)
-}
-
-// Item filtering utilities
-export function filterItemsBySearch(items, searchTerms) {
-	if (searchTerms.length === 0) return items
-
-	return items.filter((item) => {
-		if (!item.name) return false
-		const itemName = item.name.toLowerCase()
-		return searchTerms.some((term) => itemName.includes(term))
-	})
-}
+export {
+	SEARCH_INPUT_TIP,
+	processSearchTerms,
+	hasActiveSearchTerms,
+	countSearchTerms,
+	textMatchesSearch,
+	filterItemsBySearch
+} from './search.js'
 
 export function filterItemsByVersion(items, selectedVersion) {
 	if (!items) return []
