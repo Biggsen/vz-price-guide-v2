@@ -271,29 +271,42 @@
 	},
 	{
 		"id": 12,
-		"title": "Custom Price Guides - Create Your Own Price References",
-		"status": "Idea",
-		"description": "Create your own price guides with custom prices and notes. Set prices for any item from the main guide, add personal notes, and choose between static or recipe-based pricing. Perfect for documenting server-specific prices or building your own price reference.",
+		"title": "Admin Shop - Build and Manage Your Server Shop",
+		"status": "Completed",
+		"completedDate": "2026-07-01",
+		"description": "Create and maintain your server's admin shop using your own prices. Import existing shops from supported plugins, edit prices, and export ready-to-use shop configurations whenever your economy changes.\n\nReference: This feature originated from the original Custom Price Guide concept and has since evolved into the Admin Shop system.",
 		"features": [
 			{
-				"name": "📝 Create multiple price guides - name them and optionally link to servers",
-				"completed": false
+				"name": "📁 Create multiple admin shops and optionally link them to your Minecraft servers",
+				"completed": true
 			},
 			{
-				"name": "💰 Set custom prices for any item from the main guide",
-				"completed": false
+				"name": "📥 Import existing shop items from supported shop plugins",
+				"completed": true
 			},
 			{
-				"name": "📝 Add personal notes to document your pricing decisions",
-				"completed": false
+				"name": "💰 Set custom buy and sell prices for any Minecraft item",
+				"completed": true
 			},
 			{
-				"name": "🔧 Choose static or recipe-based pricing for each item",
-				"completed": false
+				"name": "📝 Add personal notes to document pricing decisions",
+				"completed": true
 			},
 			{
-				"name": "⚡ Bulk import items and recalculate recipe-based prices",
-				"completed": false
+				"name": "🔧 Choose between static prices or recipe-based pricing for individual items",
+				"completed": true
+			},
+			{
+				"name": "⚡ Bulk recalculate recipe-based prices whenever base material prices change",
+				"completed": true
+			},
+			{
+				"name": "📤 Export complete shop configurations for supported plugins",
+				"completed": true
+			},
+			{
+				"name": "🔄 Update existing shops by importing the latest plugin configuration while preserving your custom pricing where possible",
+				"completed": true
 			}
 		]
 	},

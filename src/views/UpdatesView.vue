@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import updatesData from '../../data/updates.json'
 import roadmapData from '../../data/roadmap.json'
 import { roadmapStatusLegend } from '../constants.js'
-import BaseDetails from '../components/BaseDetails.vue'
+import { DISCORD_INVITE_URL } from '../constants/socialLinks.js'
 
 // Load data from JSON files and convert date strings to Date objects
 const updates = ref(
@@ -17,58 +17,17 @@ const roadmap = ref(roadmapData)
 const showAllUpdates = ref(false)
 const showCompletedRoadmap = ref(false)
 
-// Sort roadmap by status priority
-const statusOrder = {
-	'In Progress': 1,
-	'In Development': 2,
-	Pending: 3,
-	Idea: 4,
-	Completed: 5
-}
-
-const sortedRoadmap = computed(() => {
-	return [...roadmap.value].sort((a, b) => {
-		const priorityA = statusOrder[a.status] || 999
-		const priorityB = statusOrder[b.status] || 999
-
-		// Primary sort by status priority
-		if (priorityA !== priorityB) {
-			return priorityA - priorityB
-		}
-
-		// For completed items, sort by completion date (newest first)
-		if (a.status === 'Completed' && b.status === 'Completed') {
+const completedRoadmap = computed(() => {
+	return [...roadmap.value]
+		.filter((item) => item.status === 'Completed')
+		.sort((a, b) => {
 			const dateA = new Date(a.completedDate || 0)
 			const dateB = new Date(b.completedDate || 0)
-			return dateB - dateA // Newest first
-		}
-
-		// Secondary sort by ID for non-completed items
-		return a.id - b.id
-	})
+			return dateB - dateA
+		})
 })
 
-// Filter roadmap to show/hide completed items
-const displayedRoadmap = computed(() => {
-	if (showCompletedRoadmap.value) {
-		return sortedRoadmap.value
-	}
-	return sortedRoadmap.value.filter((item) => item.status !== 'Completed')
-})
-
-// Count completed items for the toggle button
-const completedRoadmapCount = computed(() => {
-	return roadmap.value.filter((item) => item.status === 'Completed').length
-})
-
-// Sort status legend in the same order
-const sortedStatusLegend = computed(() => {
-	return Object.entries(roadmapStatusLegend).sort((a, b) => {
-		const priorityA = statusOrder[a[0]] || 999
-		const priorityB = statusOrder[b[0]] || 999
-		return priorityA - priorityB
-	})
-})
+const completedRoadmapCount = computed(() => completedRoadmap.value.length)
 
 // Computed property to control displayed updates
 const displayedUpdates = computed(() => {
@@ -137,16 +96,6 @@ function parseLinks(text) {
 		.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-gray-800">$1</strong>')
 }
 
-function getStatusClass(status) {
-	const classes = {
-		Completed: 'bg-green-100 text-green-800',
-		'In Progress': 'bg-blue-100 text-blue-800',
-		Planned: 'bg-yellow-100 text-yellow-800',
-		Future: 'bg-gray-100 text-gray-800'
-	}
-	return classes[status] || 'bg-gray-100 text-gray-800'
-}
-
 function getStatusStyle(status) {
 	const statusInfo = roadmapStatusLegend[status]
 	if (!statusInfo) return { backgroundColor: '#6B7280', color: 'white' }
@@ -155,17 +104,6 @@ function getStatusStyle(status) {
 		backgroundColor: statusInfo.color,
 		color: 'white'
 	}
-}
-
-function calculateProgress(phase) {
-	if (!phase.features || phase.features.length === 0) {
-		return 0
-	}
-
-	const completedFeatures = phase.features.filter((feature) => feature.completed).length
-	const totalFeatures = phase.features.length
-
-	return Math.round((completedFeatures / totalFeatures) * 100)
 }
 
 function getDependencyTitles(dependencies) {
@@ -186,6 +124,7 @@ function formatCompletionDate(dateString) {
 		day: 'numeric'
 	})
 }
+
 </script>
 
 <template>
@@ -270,21 +209,40 @@ function formatCompletionDate(dateString) {
 				Roadmap
 			</h2>
 
-			<!-- Status Legend -->
-			<BaseDetails summary="Status Legend" class="mb-6">
-				<ul class="space-y-1 text-sm">
-					<li v-for="[status, statusInfo] in sortedStatusLegend" :key="status">
-						<span
-							:style="getStatusStyle(status)"
-							class="inline-block w-3 h-3 rounded-full mr-2"></span>
-						<strong>{{ status }}:</strong>
-						{{ statusInfo.description }}
-					</li>
-				</ul>
-			</BaseDetails>
+			<div class="space-y-4 text-gray-700">
+				<p class="font-semibold">The roadmap is currently being planned.</p>
+				<p>
+					I have a number of ideas I'd like to build, but I'd like to get community
+					feedback before deciding what to prioritise. I'll be adding ideas to the new
+					<a
+						:href="DISCORD_INVITE_URL"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="underline hover:text-gray-600">Feature Discussion</a>
+					forum on Discord,
+					where you can discuss them, vote on them, and help shape the roadmap.
+				</p>
+				<p>
+					Don't use Discord? You can also submit ideas using the
+					<router-link to="/suggestions" class="underline hover:text-gray-600">Suggestions</router-link>
+					feature on the website.
+				</p>
+			</div>
 
-			<div class="space-y-4">
-				<div v-for="phase in displayedRoadmap" :key="phase.id" class="py-3">
+			<div v-if="completedRoadmapCount > 0" class="mt-6 text-center">
+				<button
+					@click="toggleShowCompletedRoadmap"
+					class="text-highland hover:text-gray-asparagus font-medium underline transition-colors duration-200">
+					{{
+						showCompletedRoadmap
+							? 'Hide completed'
+							: `Show all ${completedRoadmapCount} completed`
+					}}
+				</button>
+			</div>
+
+			<div v-if="showCompletedRoadmap" class="mt-6 space-y-4">
+				<div v-for="phase in completedRoadmap" :key="phase.id" class="py-3">
 					<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
 						<div class="flex items-center gap-3 mb-2 sm:mb-0">
 							<h3 class="text-xl font-semibold text-gray-800">
@@ -296,24 +254,17 @@ function formatCompletionDate(dateString) {
 								{{ phase.status }}
 							</span>
 						</div>
-						<div class="flex items-center gap-2">
-							<span v-if="phase.timeline" class="text-sm text-gray-500">
-								{{ phase.timeline }}
-							</span>
-						</div>
 					</div>
 
-					<p class="text-gray-700 mb-4">{{ phase.description }}</p>
+					<p class="text-gray-700 mb-4 whitespace-pre-line">{{ phase.description }}</p>
 
-					<!-- Completion Date -->
-					<div v-if="phase.status === 'Completed' && phase.completedDate" class="mb-4">
+					<div v-if="phase.completedDate" class="mb-4">
 						<h4 class="text-sm font-semibold text-gray-600 mb-1">Released</h4>
 						<p class="text-sm text-gray-600">
 							{{ formatCompletionDate(phase.completedDate) }}
 						</p>
 					</div>
 
-					<!-- Dependencies -->
 					<div v-if="phase.dependencies && phase.dependencies.length" class="mb-4">
 						<h4 class="text-sm font-semibold text-gray-600 mb-1">Dependencies</h4>
 						<p class="text-sm text-gray-600">
@@ -333,57 +284,20 @@ function formatCompletionDate(dateString) {
 					</div>
 
 					<div v-if="phase.features && phase.features.length" class="mb-4">
-						<h4 class="text-sm font-semibold text-gray-600 mb-2">
-							{{ phase.status === 'Completed' ? 'Delivered:' : 'Planned:' }}
-						</h4>
+						<h4 class="text-sm font-semibold text-gray-600 mb-2">Delivered:</h4>
 						<ul class="ml-2 space-y-1">
 							<li
 								v-for="feature in phase.features"
 								:key="feature.name"
 								class="flex items-start gap-2">
-								<span class="text-xs mt-1 flex-shrink-0">
-									{{ feature.completed ? '✅' : '⏳' }}
-								</span>
-								<span
-									:class="
-										feature.completed
-											? 'line-through text-gray-500'
-											: 'text-gray-600'
-									"
-									class="text-sm">
+								<span class="text-xs mt-1 flex-shrink-0">✅</span>
+								<span class="text-sm line-through text-gray-500">
 									{{ feature.name }}
 								</span>
 							</li>
 						</ul>
 					</div>
-
-					<div v-if="phase.status === 'In Progress'" class="p-3 rounded">
-						<div class="flex justify-between items-center mb-1">
-							<span class="text-sm font-medium text-gray-800">Progress</span>
-							<span class="text-sm text-gray-600">
-								{{ calculateProgress(phase) }}%
-							</span>
-						</div>
-						<div class="w-full bg-gray-300 rounded-full h-2">
-							<div
-								class="bg-gray-600 h-2 rounded-full transition-all duration-300"
-								:style="{ width: calculateProgress(phase) + '%' }"></div>
-						</div>
-					</div>
 				</div>
-			</div>
-
-			<!-- Show All Completed Toggle -->
-			<div v-if="completedRoadmapCount > 0" class="mt-6 text-center">
-				<button
-					@click="toggleShowCompletedRoadmap"
-					class="text-highland hover:text-gray-asparagus font-medium underline transition-colors duration-200">
-					{{
-						showCompletedRoadmap
-							? 'Hide completed'
-							: `Show all ${completedRoadmapCount} completed`
-					}}
-				</button>
 			</div>
 		</section>
 	</div>
