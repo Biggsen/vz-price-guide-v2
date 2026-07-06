@@ -11,6 +11,7 @@ import ViewControls from '../components/ViewControls.vue'
 import LoadingState from '../components/LoadingState.vue'
 import { enabledCategories, versions, baseEnabledVersions } from '../constants.js'
 import { STORAGE_KEYS } from '../constants/homepage.js'
+import { getActiveHomepageBanner } from '../constants/homepageBanners.js'
 import { useAdmin } from '../utils/admin.js'
 import { useEconomyConfig } from '../composables/useEconomyConfig.js'
 import { useFilters } from '../composables/useFilters.js'
@@ -51,10 +52,11 @@ const openHoverPanel = ref(null) // Track which item has hover panel open (item.
 const showExportFeature = ref(true) // Set to true to enable export functionality
 const disableAlert = ref(false) // Set to true to disable all alerts regardless of showAlert state
 
-// Feature announcement state (reusable template for new announcements)
-// To enable: set showFeatureAnnouncement to true and update the template content
-const featureAnnouncementStorageKey = STORAGE_KEYS.FEATURE_ANNOUNCEMENT_DISMISSED
-const showFeatureAnnouncement = ref(true)
+// Feature announcement (see homepageBanners.js — enable one banner at a time)
+const activeFeatureBanner = getActiveHomepageBanner()
+const featureAnnouncementStorageKey =
+	activeFeatureBanner?.dismissStorageKey ?? STORAGE_KEYS.FEATURE_ANNOUNCEMENT_DISMISSED
+const showFeatureAnnouncement = ref(Boolean(activeFeatureBanner))
 
 function dismissFeatureAnnouncement() {
 	showFeatureAnnouncement.value = false
@@ -370,18 +372,19 @@ watch(
 </script>
 
 <template>
-	<!-- Feature Announcement Banner (template - update content when enabling) -->
+	<!-- Feature Announcement Banner (config: src/constants/homepageBanners.js) -->
 	<div
-		v-if="!disableAlert && showFeatureAnnouncement"
+		v-if="activeFeatureBanner && !disableAlert && showFeatureAnnouncement"
 		class="bg-semantic-info-light border-l-4 border-l-semantic-info text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
 				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					<strong>Introducing Admin Shop.</strong>
-					Manage your server economy from one place with recipe pricing and EconomyShopGUI
-					import/export.
-					<router-link to="/updates" class="underline hover:text-gray-asparagus">
+					<strong>{{ activeFeatureBanner.title }}</strong>
+					{{ activeFeatureBanner.message }}
+					<router-link
+						:to="activeFeatureBanner.readMoreHref"
+						class="underline hover:text-gray-asparagus">
 						<span>Read more</span>
 					</router-link>
 				</span>

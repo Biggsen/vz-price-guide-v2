@@ -1,5 +1,19 @@
 [
 	{
+		"id": 46,
+		"title": "Minecraft 26.2 (Chaos Cubed) Items Added",
+		"date": "2026-07-06",
+		"types": ["Content"],
+		"hidden": false,
+		"description": "Added all survival-obtainable Minecraft 26.2 (Chaos Cubed) blocks and items to the catalog with accurate pricing.",
+		"changes": [
+			"**Sulfur & Cinnabar** – complete block families including polished, brick, slab, stair, wall and chiseled variants",
+			"**Golden Dandelion** – a new flower that prevents young animals from growing",
+			"**Bucket of Sulfur Cube** – the new bucketable mob item",
+			"**Bounce music disc** – found in sulfur cave mineshaft chests"
+		]
+	},
+	{
 		"id": 45,
 		"title": "Admin Shop — Manage Your Server Economy",
 		"date": "2026-07-01",
