@@ -2,15 +2,6 @@
 import { onMounted, ref } from 'vue'
 import { useCurrentUser } from 'vuefire'
 import { getShopManagerStats } from '../utils/stats.js'
-import {
-	ChartBarIcon,
-	ServerIcon,
-	ShoppingBagIcon,
-	CubeIcon,
-	UserIcon,
-	ArrowTrendingUpIcon,
-	ClockIcon
-} from '@heroicons/vue/24/outline'
 
 const user = useCurrentUser()
 const loading = ref(true)
@@ -19,21 +10,22 @@ const stats = ref({
 	totalShops: 0,
 	totalShopItems: 0,
 	totalUsers: 0,
-	usersWithShopManagerAccess: 0,
 	activeUsersCount: 0,
+	managedServersCount: 0,
+	serversWithAdminShop: 0,
+	managedServersWithoutAdminShop: 0,
 	avgServersPerUser: '0.00',
 	maxServersPerUser: 0,
 	avgShopsPerUser: '0.00',
 	maxShopsPerUser: 0,
-	avgShopsPerServer: '0.00',
-	maxShopsPerServer: 0,
-	avgShopItemsPerShop: '0.00',
-	maxShopItemsPerShop: 0,
+	avgPlayerShopsPerServer: '0.00',
+	maxPlayerShopsPerServer: 0,
 	recentServers: 0,
-	recentShops: 0,
-	recentShopItems: 0,
 	serversWithoutShops: 0,
-	shopsWithoutItems: 0
+	itemsAdded7d: 0,
+	itemsUpdated7d: 0,
+	itemsActive7d: 0,
+	shopTypeStats: []
 })
 
 const fetchStats = async () => {
@@ -55,297 +47,222 @@ onMounted(() => {
 </script>
 
 <template>
-	<div class="p-4 pt-8">
-		<div class="mb-8">
-			<div class="flex items-center mb-4">
-				<div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
-					<ChartBarIcon class="w-6 h-6 text-indigo-600" />
-				</div>
-				<div>
-					<h1 class="text-3xl font-bold text-gray-900">Shop Manager Statistics</h1>
-					<p class="text-gray-600">
-						Detailed usage statistics and analytics for the Shop Manager feature.
-					</p>
-				</div>
-			</div>
-		</div>
+	<div class="p-4 pt-6 max-w-4xl">
+		<h1 class="text-xl font-bold text-gray-900">Shop Manager Statistics</h1>
+		<p class="text-sm text-gray-600 mt-1 mb-4">
+			Usage statistics for the Shop Manager feature. Totals include admin and player shops.
+		</p>
 
-		<div v-if="loading" class="flex justify-center items-center py-12">
-			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-		</div>
+		<div v-if="loading" class="py-8 text-sm text-gray-500">Loading statistics…</div>
 
-		<div v-else>
-			<!-- Overview Statistics -->
-			<div class="mb-8">
-				<h2 class="text-2xl font-bold text-gray-900 mb-6">Overview</h2>
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-					<!-- Total Servers -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-								<ServerIcon class="w-6 h-6 text-blue-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">Total Servers</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.totalServers }}
-								</p>
-							</div>
-						</div>
+		<div v-else class="border border-gray-200 rounded-lg bg-white divide-y divide-gray-200 text-sm">
+			<section class="px-4 py-3">
+				<h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+					Overview
+				</h2>
+				<dl class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-3">
+					<div>
+						<dt class="text-gray-600">Servers</dt>
+						<dd class="text-lg font-semibold text-gray-900 tabular-nums">
+							{{ stats.totalServers }}
+						</dd>
 					</div>
-
-					<!-- Total Shops -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-								<ShoppingBagIcon class="w-6 h-6 text-green-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">Total Shops</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.totalShops }}
-								</p>
-							</div>
-						</div>
+					<div>
+						<dt class="text-gray-600">Shops</dt>
+						<dd class="text-lg font-semibold text-gray-900 tabular-nums">
+							{{ stats.totalShops }}
+						</dd>
 					</div>
-
-					<!-- Total Shop Items -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-								<CubeIcon class="w-6 h-6 text-purple-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">Total Shop Items</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.totalShopItems }}
-								</p>
-							</div>
-						</div>
+					<div>
+						<dt class="text-gray-600">Shop items</dt>
+						<dd class="text-lg font-semibold text-gray-900 tabular-nums">
+							{{ stats.totalShopItems }}
+						</dd>
 					</div>
-
-					<!-- Active Users -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-								<UserIcon class="w-6 h-6 text-orange-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">Active Users</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.activeUsersCount }}
-								</p>
-							</div>
-						</div>
-						<p class="text-gray-600 text-xs mt-2">
-							Users who have created servers or shops
-						</p>
+					<div>
+						<dt class="text-gray-600">Active users</dt>
+						<dd class="text-lg font-semibold text-gray-900 tabular-nums">
+							{{ stats.activeUsersCount }}
+						</dd>
 					</div>
-				</div>
-			</div>
-
-			<!-- User Statistics -->
-			<div class="mb-8">
-				<h2 class="text-2xl font-bold text-gray-900 mb-6">User Statistics</h2>
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-					<!-- Users with Shop Manager Access -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-								<UserIcon class="w-6 h-6 text-indigo-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">Shop Manager Access</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.usersWithShopManagerAccess }}
-								</p>
-							</div>
-						</div>
-						<p class="text-gray-600 text-xs mt-2">
-							Users with shop manager permissions
-						</p>
+					<div>
+						<dt class="text-gray-600">Managed servers</dt>
+						<dd class="text-lg font-semibold text-gray-900 tabular-nums">
+							{{ stats.managedServersCount }}
+						</dd>
 					</div>
-
-					<!-- Average Servers Per User -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-								<ArrowTrendingUpIcon class="w-6 h-6 text-blue-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">Avg Servers/User</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.avgServersPerUser }}
-								</p>
-							</div>
-						</div>
-						<p class="text-gray-600 text-xs mt-2">
-							Max: {{ stats.maxServersPerUser }} servers
-						</p>
+					<div>
+						<dt class="text-gray-600">Servers with admin shop</dt>
+						<dd class="text-lg font-semibold text-gray-900 tabular-nums">
+							{{ stats.serversWithAdminShop }}
+						</dd>
 					</div>
+				</dl>
+			</section>
 
-					<!-- Average Shops Per User -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-								<ArrowTrendingUpIcon class="w-6 h-6 text-green-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">Avg Shops/User</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.avgShopsPerUser }}
-								</p>
-							</div>
-						</div>
-						<p class="text-gray-600 text-xs mt-2">
-							Max: {{ stats.maxShopsPerUser }} shops
-						</p>
-					</div>
-				</div>
-			</div>
+			<section class="px-4 py-3 overflow-x-auto">
+				<h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+					Item activity (last 7 days)
+				</h2>
+				<table class="w-full min-w-[36rem]">
+					<thead>
+						<tr class="text-left text-gray-600">
+							<th class="font-medium pb-1 pr-4">Type</th>
+							<th class="font-medium pb-1 pr-4 w-20 text-right">Added</th>
+							<th class="font-medium pb-1 pr-4 w-20 text-right">Updated</th>
+							<th class="font-medium pb-1 w-20 text-right">Total</th>
+						</tr>
+					</thead>
+					<tbody class="text-gray-900">
+						<tr
+							v-for="row in stats.shopTypeStats"
+							:key="`activity-${row.key}`"
+							:class="[
+								'border-t border-gray-100',
+								row.isTotal ? 'font-semibold' : '',
+								row.isSubtotal ? 'text-gray-700' : ''
+							]">
+							<td class="py-1.5 pr-4">
+								<span :class="row.isSubtotal || row.isTotal ? 'pl-2' : ''">
+									{{ row.label }}
+								</span>
+							</td>
+							<td class="py-1.5 pr-4 text-right tabular-nums">
+								{{ row.itemsAdded7d }}
+							</td>
+							<td class="py-1.5 pr-4 text-right tabular-nums text-gray-600">
+								{{ row.itemsUpdated7d }}
+							</td>
+							<td class="py-1.5 text-right tabular-nums text-gray-600">
+								{{ row.itemsActive7d }}
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<p class="text-xs text-gray-500 mt-2">
+					Added uses <code class="text-gray-600">created_at</code> when available; older
+					items without it are estimated from first activity.
+				</p>
+			</section>
 
-			<!-- Server & Shop Statistics -->
-			<div class="mb-8">
-				<h2 class="text-2xl font-bold text-gray-900 mb-6">Server & Shop Statistics</h2>
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-					<!-- Average Shops Per Server -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-								<ServerIcon class="w-6 h-6 text-blue-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">Avg Shops/Server</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.avgShopsPerServer }}
-								</p>
-							</div>
-						</div>
-						<p class="text-gray-600 text-xs mt-2">
-							Max: {{ stats.maxShopsPerServer }} shops
-						</p>
-					</div>
+			<section class="px-4 py-3 overflow-x-auto">
+				<h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+					Shops by type
+				</h2>
+				<table class="w-full min-w-[40rem]">
+					<thead>
+						<tr class="text-left text-gray-600">
+							<th class="font-medium pb-1 pr-4">Type</th>
+							<th class="font-medium pb-1 pr-4 w-16 text-right">Shops</th>
+							<th class="font-medium pb-1 pr-4 w-16 text-right">Items</th>
+							<th class="font-medium pb-1 pr-4 w-20 text-right">Avg items</th>
+							<th class="font-medium pb-1 pr-4 w-16 text-right">Max</th>
+							<th class="font-medium pb-1 pr-4 w-16 text-right">Empty</th>
+							<th class="font-medium pb-1 pr-4 w-20 text-right">New shops</th>
+						</tr>
+					</thead>
+					<tbody class="text-gray-900">
+						<tr
+							v-for="row in stats.shopTypeStats"
+							:key="row.key"
+							:class="[
+								'border-t border-gray-100',
+								row.isTotal ? 'font-semibold' : '',
+								row.isSubtotal ? 'text-gray-700' : ''
+							]">
+							<td class="py-1.5 pr-4">
+								<span :class="row.isSubtotal || row.isTotal ? 'pl-2' : ''">
+									{{ row.label }}
+								</span>
+							</td>
+							<td class="py-1.5 pr-4 text-right tabular-nums">{{ row.shops }}</td>
+							<td class="py-1.5 pr-4 text-right tabular-nums">{{ row.items }}</td>
+							<td class="py-1.5 pr-4 text-right tabular-nums">
+								{{ row.avgItemsPerShop }}
+							</td>
+							<td class="py-1.5 pr-4 text-right tabular-nums text-gray-600">
+								{{ row.maxItemsPerShop }}
+							</td>
+							<td class="py-1.5 pr-4 text-right tabular-nums text-gray-600">
+								{{ row.shopsWithoutItems }}
+							</td>
+							<td class="py-1.5 pr-4 text-right tabular-nums text-gray-600">
+								{{ row.recentShops }}
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
 
-					<!-- Average Shop Items Per Shop -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-								<CubeIcon class="w-6 h-6 text-purple-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">Avg Items/Shop</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.avgShopItemsPerShop }}
-								</p>
-							</div>
-						</div>
-						<p class="text-gray-600 text-xs mt-2">
-							Max: {{ stats.maxShopItemsPerShop }} items
-						</p>
-					</div>
+			<section class="px-4 py-3">
+				<h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+					Usage
+				</h2>
+				<table class="w-full">
+					<thead>
+						<tr class="text-left text-gray-600">
+							<th class="font-medium pb-1 pr-4">Metric</th>
+							<th class="font-medium pb-1 pr-4 w-20 text-right">Avg</th>
+							<th class="font-medium pb-1 w-20 text-right">Max</th>
+						</tr>
+					</thead>
+					<tbody class="text-gray-900">
+						<tr class="border-t border-gray-100">
+							<td class="py-1.5 pr-4">Servers per user</td>
+							<td class="py-1.5 pr-4 text-right tabular-nums font-medium">
+								{{ stats.avgServersPerUser }}
+							</td>
+							<td class="py-1.5 text-right tabular-nums text-gray-600">
+								{{ stats.maxServersPerUser }}
+							</td>
+						</tr>
+						<tr class="border-t border-gray-100">
+							<td class="py-1.5 pr-4">Player shops per user</td>
+							<td class="py-1.5 pr-4 text-right tabular-nums font-medium">
+								{{ stats.avgShopsPerUser }}
+							</td>
+							<td class="py-1.5 text-right tabular-nums text-gray-600">
+								{{ stats.maxShopsPerUser }}
+							</td>
+						</tr>
+						<tr class="border-t border-gray-100">
+							<td class="py-1.5 pr-4">Player shops per server</td>
+							<td class="py-1.5 pr-4 text-right tabular-nums font-medium">
+								{{ stats.avgPlayerShopsPerServer }}
+							</td>
+							<td class="py-1.5 text-right tabular-nums text-gray-600">
+								{{ stats.maxPlayerShopsPerServer }}
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
 
-					<!-- Servers Without Shops -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-								<ServerIcon class="w-6 h-6 text-yellow-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">Servers Without Shops</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.serversWithoutShops }}
-								</p>
-							</div>
-						</div>
-						<p class="text-gray-600 text-xs mt-2">
-							Servers that have no shops created
-						</p>
+			<section class="px-4 py-3">
+				<h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+					Gaps
+				</h2>
+				<dl class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-2">
+					<div class="flex justify-between sm:block">
+						<dt class="text-gray-600">Servers without any shop</dt>
+						<dd class="font-semibold text-gray-900 tabular-nums sm:mt-0.5">
+							{{ stats.serversWithoutShops }}
+						</dd>
 					</div>
-
-					<!-- Shops Without Items -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-								<ShoppingBagIcon class="w-6 h-6 text-yellow-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">Shops Without Items</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.shopsWithoutItems }}
-								</p>
-							</div>
-						</div>
-						<p class="text-gray-600 text-xs mt-2">
-							Shops that have no items added
-						</p>
+					<div class="flex justify-between sm:block">
+						<dt class="text-gray-600">Managed servers without admin shop</dt>
+						<dd class="font-semibold text-gray-900 tabular-nums sm:mt-0.5">
+							{{ stats.managedServersWithoutAdminShop }}
+						</dd>
 					</div>
-				</div>
-			</div>
-
-			<!-- Recent Activity (Last 7 Days) -->
-			<div class="mb-8">
-				<h2 class="text-2xl font-bold text-gray-900 mb-6">Recent Activity (Last 7 Days)</h2>
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-					<!-- Recent Servers -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-								<ClockIcon class="w-6 h-6 text-blue-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">New Servers</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.recentServers }}
-								</p>
-							</div>
-						</div>
+					<div class="flex justify-between sm:block">
+						<dt class="text-gray-600">New servers (7 days)</dt>
+						<dd class="font-semibold text-gray-900 tabular-nums sm:mt-0.5">
+							{{ stats.recentServers }}
+						</dd>
 					</div>
-
-					<!-- Recent Shops -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-								<ClockIcon class="w-6 h-6 text-green-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">New Shops</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.recentShops }}
-								</p>
-							</div>
-						</div>
-					</div>
-
-					<!-- Recent Shop Items -->
-					<div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-						<div class="flex items-center mb-4">
-							<div
-								class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-								<ClockIcon class="w-6 h-6 text-purple-600" />
-							</div>
-							<div class="ml-4">
-								<p class="text-sm text-gray-600">Updated Shop Items</p>
-								<p class="text-3xl font-bold text-gray-900">
-									{{ stats.recentShopItems }}
-								</p>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+				</dl>
+			</section>
 		</div>
 	</div>
 </template>

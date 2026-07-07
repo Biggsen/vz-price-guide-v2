@@ -131,6 +131,92 @@ export function useStats() {
 	}
 }
 
+function isAdminShop(shop) {
+	return shop.server_shop === true
+}
+
+function isOwnPlayerShop(shop) {
+	return !isAdminShop(shop) && shop.is_own_shop === true
+}
+
+function isOtherPlayerShop(shop) {
+	return !isAdminShop(shop) && shop.is_own_shop !== true
+}
+
+function parseFirestoreDate(value) {
+	if (!value) return null
+	if (value.toDate) return value.toDate()
+	if (value instanceof Date) return value
+	return new Date(value)
+}
+
+function isWithinLastSevenDays(value) {
+	const date = parseFirestoreDate(value)
+	if (!date || Number.isNaN(date.getTime())) return false
+	const sevenDaysAgo = new Date()
+	sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+	return date >= sevenDaysAgo
+}
+
+function wasItemAddedRecently(item) {
+	if (item.created_at && isWithinLastSevenDays(item.created_at)) return true
+	return (
+		!item.created_at &&
+		!item.previous_price_date &&
+		isWithinLastSevenDays(item.last_updated)
+	)
+}
+
+function wasItemUpdatedRecently(item) {
+	return isWithinLastSevenDays(item.last_updated) && !wasItemAddedRecently(item)
+}
+
+function getShopItemActivityStats(items) {
+	let itemsAdded7d = 0
+	let itemsUpdated7d = 0
+
+	items.forEach((item) => {
+		if (wasItemAddedRecently(item)) {
+			itemsAdded7d++
+		} else if (wasItemUpdatedRecently(item)) {
+			itemsUpdated7d++
+		}
+	})
+
+	return {
+		itemsAdded7d,
+		itemsUpdated7d,
+		itemsActive7d: itemsAdded7d + itemsUpdated7d
+	}
+}
+
+function getShopSubsetStats(shops, shopItems) {
+	const shopIds = new Set(shops.map((shop) => shop.id))
+	const items = shopItems.filter((item) => shopIds.has(item.shop_id))
+	const itemsByShop = {}
+
+	items.forEach((item) => {
+		if (item.shop_id) {
+			itemsByShop[item.shop_id] = (itemsByShop[item.shop_id] || 0) + 1
+		}
+	})
+
+	const shopsWithItems = new Set(items.map((item) => item.shop_id).filter(Boolean))
+	const itemCounts = Object.values(itemsByShop)
+	const itemActivity = getShopItemActivityStats(items)
+
+	return {
+		shops: shops.length,
+		items: items.length,
+		avgItemsPerShop:
+			shops.length > 0 ? (items.length / shops.length).toFixed(2) : '0.00',
+		maxItemsPerShop: itemCounts.length > 0 ? Math.max(...itemCounts) : 0,
+		shopsWithoutItems: shops.filter((shop) => !shopsWithItems.has(shop.id)).length,
+		recentShops: shops.filter((shop) => isWithinLastSevenDays(shop.created_at)).length,
+		...itemActivity
+	}
+}
+
 // Get detailed shop manager usage statistics
 export async function getShopManagerStats(excludeUserId = null) {
 	const db = useFirestore()
@@ -181,15 +267,29 @@ export async function getShopManagerStats(excludeUserId = null) {
 			users = users.filter((user) => user.id !== excludeUserId)
 		}
 
+		const adminShops = shops.filter(isAdminShop)
+		const ownPlayerShops = shops.filter(isOwnPlayerShop)
+		const otherPlayerShops = shops.filter(isOtherPlayerShop)
+		const playerShops = shops.filter((shop) => !isAdminShop(shop))
+
+		const adminShopStats = getShopSubsetStats(adminShops, shopItems)
+		const ownPlayerShopStats = getShopSubsetStats(ownPlayerShops, shopItems)
+		const otherPlayerShopStats = getShopSubsetStats(otherPlayerShops, shopItems)
+		const playerShopStats = getShopSubsetStats(playerShops, shopItems)
+		const allShopStats = getShopSubsetStats(shops, shopItems)
+		const itemActivity = getShopItemActivityStats(shopItems)
+
 		// Basic counts
 		const totalServers = servers.length
 		const totalShops = shops.length
 		const totalShopItems = shopItems.length
 		const totalUsers = users.length
-
-		// Users with shop manager access
-		const usersWithShopManagerAccess = users.filter(
-			(user) => user.shopManager === true
+		const managedServers = servers.filter((server) => server.user_manages_server === true)
+		const serversWithAdminShop = new Set(
+			adminShops.map((shop) => shop.server_id).filter(Boolean)
+		)
+		const managedServersWithoutAdminShop = managedServers.filter(
+			(server) => !serversWithAdminShop.has(server.id)
 		).length
 
 		// Active users (users who have created at least one server or shop)
@@ -211,83 +311,38 @@ export async function getShopManagerStats(excludeUserId = null) {
 				: '0.00'
 		const maxServersPerUser = Math.max(...Object.values(serversByUser), 0)
 
-		// Shops per user
+		// Player shops per user
 		const shopsByUser = {}
-		shops.forEach((shop) => {
+		playerShops.forEach((shop) => {
 			if (shop.owner_id) {
 				shopsByUser[shop.owner_id] = (shopsByUser[shop.owner_id] || 0) + 1
 			}
 		})
 		const avgShopsPerUser =
 			activeUserIds.size > 0
-				? (totalShops / activeUserIds.size).toFixed(2)
+				? (playerShops.length / activeUserIds.size).toFixed(2)
 				: '0.00'
 		const maxShopsPerUser = Math.max(...Object.values(shopsByUser), 0)
 
-		// Shops per server
-		const shopsByServer = {}
-		shops.forEach((shop) => {
+		// Player shops per server
+		const playerShopsByServer = {}
+		playerShops.forEach((shop) => {
 			if (shop.server_id) {
-				shopsByServer[shop.server_id] = (shopsByServer[shop.server_id] || 0) + 1
+				playerShopsByServer[shop.server_id] =
+					(playerShopsByServer[shop.server_id] || 0) + 1
 			}
 		})
-		const avgShopsPerServer =
-			totalServers > 0 ? (totalShops / totalServers).toFixed(2) : '0.00'
-		const maxShopsPerServer = Math.max(...Object.values(shopsByServer), 0)
+		const playerShopsPerServerCounts = Object.values(playerShopsByServer)
+		const avgPlayerShopsPerServer =
+			totalServers > 0 ? (playerShops.length / totalServers).toFixed(2) : '0.00'
+		const maxPlayerShopsPerServer =
+			playerShopsPerServerCounts.length > 0
+				? Math.max(...playerShopsPerServerCounts)
+				: 0
 
-		// Shop items per shop
-		const shopItemsByShop = {}
-		shopItems.forEach((item) => {
-			if (item.shop_id) {
-				shopItemsByShop[item.shop_id] = (shopItemsByShop[item.shop_id] || 0) + 1
-			}
-		})
-		const avgShopItemsPerShop =
-			totalShops > 0 ? (totalShopItems / totalShops).toFixed(2) : '0.00'
-		const maxShopItemsPerShop = Math.max(...Object.values(shopItemsByShop), 0)
-
-		// Recent activity (last 7 days)
-		const sevenDaysAgo = new Date()
-		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-
-		const recentServers = servers.filter((server) => {
-			if (!server.created_at) return false
-			let createdAt
-			if (server.created_at.toDate) {
-				createdAt = server.created_at.toDate()
-			} else if (server.created_at instanceof Date) {
-				createdAt = server.created_at
-			} else {
-				createdAt = new Date(server.created_at)
-			}
-			return createdAt >= sevenDaysAgo
-		}).length
-
-		const recentShops = shops.filter((shop) => {
-			if (!shop.created_at) return false
-			let createdAt
-			if (shop.created_at.toDate) {
-				createdAt = shop.created_at.toDate()
-			} else if (shop.created_at instanceof Date) {
-				createdAt = shop.created_at
-			} else {
-				createdAt = new Date(shop.created_at)
-			}
-			return createdAt >= sevenDaysAgo
-		}).length
-
-		const recentShopItems = shopItems.filter((item) => {
-			if (!item.last_updated) return false
-			let lastUpdated
-			if (item.last_updated.toDate) {
-				lastUpdated = item.last_updated.toDate()
-			} else if (item.last_updated instanceof Date) {
-				lastUpdated = item.last_updated
-			} else {
-				lastUpdated = new Date(item.last_updated)
-			}
-			return lastUpdated >= sevenDaysAgo
-		}).length
+		const recentServers = servers.filter((server) =>
+			isWithinLastSevenDays(server.created_at)
+		).length
 
 		// Servers with no shops
 		const serversWithShops = new Set(shops.map((s) => s.server_id).filter(Boolean))
@@ -295,30 +350,33 @@ export async function getShopManagerStats(excludeUserId = null) {
 			(s) => !serversWithShops.has(s.id)
 		).length
 
-		// Shops with no items
-		const shopsWithItems = new Set(shopItems.map((i) => i.shop_id).filter(Boolean))
-		const shopsWithoutItems = shops.filter((s) => !shopsWithItems.has(s.id)).length
-
 		return {
 			totalServers,
 			totalShops,
 			totalShopItems,
 			totalUsers,
-			usersWithShopManagerAccess,
 			activeUsersCount,
+			managedServersCount: managedServers.length,
+			serversWithAdminShop: serversWithAdminShop.size,
+			managedServersWithoutAdminShop,
 			avgServersPerUser,
 			maxServersPerUser,
 			avgShopsPerUser,
 			maxShopsPerUser,
-			avgShopsPerServer,
-			maxShopsPerServer,
-			avgShopItemsPerShop,
-			maxShopItemsPerShop,
+			avgPlayerShopsPerServer,
+			maxPlayerShopsPerServer,
 			recentServers,
-			recentShops,
-			recentShopItems,
 			serversWithoutShops,
-			shopsWithoutItems
+			itemsAdded7d: itemActivity.itemsAdded7d,
+			itemsUpdated7d: itemActivity.itemsUpdated7d,
+			itemsActive7d: itemActivity.itemsActive7d,
+			shopTypeStats: [
+				{ key: 'admin', label: 'Admin shops', ...adminShopStats },
+				{ key: 'ownPlayer', label: 'Own player shops', ...ownPlayerShopStats },
+				{ key: 'otherPlayer', label: 'Other player shops', ...otherPlayerShopStats },
+				{ key: 'player', label: 'All player shops', ...playerShopStats, isSubtotal: true },
+				{ key: 'total', label: 'Total', ...allShopStats, isTotal: true }
+			]
 		}
 	} catch (error) {
 		console.error('Error fetching shop manager stats:', error)
@@ -327,21 +385,22 @@ export async function getShopManagerStats(excludeUserId = null) {
 			totalShops: 0,
 			totalShopItems: 0,
 			totalUsers: 0,
-			usersWithShopManagerAccess: 0,
 			activeUsersCount: 0,
+			managedServersCount: 0,
+			serversWithAdminShop: 0,
+			managedServersWithoutAdminShop: 0,
 			avgServersPerUser: '0.00',
 			maxServersPerUser: 0,
 			avgShopsPerUser: '0.00',
 			maxShopsPerUser: 0,
-			avgShopsPerServer: '0.00',
-			maxShopsPerServer: 0,
-			avgShopItemsPerShop: '0.00',
-			maxShopItemsPerShop: 0,
+			avgPlayerShopsPerServer: '0.00',
+			maxPlayerShopsPerServer: 0,
 			recentServers: 0,
-			recentShops: 0,
-			recentShopItems: 0,
 			serversWithoutShops: 0,
-			shopsWithoutItems: 0
+			itemsAdded7d: 0,
+			itemsUpdated7d: 0,
+			itemsActive7d: 0,
+			shopTypeStats: []
 		}
 	}
 }

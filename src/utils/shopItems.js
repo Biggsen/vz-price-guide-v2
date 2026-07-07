@@ -151,6 +151,7 @@ export async function addShopItem(shopId, itemId, itemData) {
 		const db = getFirestore()
 		await assertShopHasCapacityForNewItems(db, shopId, 1)
 
+		const now = new Date().toISOString()
 		const shopItem = {
 			shop_id: shopId,
 			item_id: itemId,
@@ -165,7 +166,8 @@ export async function addShopItem(shopId, itemId, itemData) {
 			starred: false,
 			notes: itemData.notes?.trim() || '',
 			enchantments: Array.isArray(itemData.enchantments) ? itemData.enchantments : [],
-			last_updated: new Date().toISOString()
+			created_at: now,
+			last_updated: now
 		}
 
 		const docRef = await addDoc(collection(db, 'shop_items'), shopItem)
@@ -460,6 +462,7 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 				}
 			} else {
 				// Create new item (match addShopItem payload so Firestore rules accept)
+				const now = new Date().toISOString()
 				const newDocRef = doc(collection(db, 'shop_items'))
 				const shopItem = {
 					shop_id: shopId,
@@ -475,7 +478,8 @@ export async function bulkUpdateShopItems(shopId, itemsArray) {
 					starred: false,
 					notes: itemData.notes?.trim() || '',
 					enchantments: Array.isArray(itemData.enchantments) ? itemData.enchantments : [],
-					last_updated: new Date().toISOString()
+					created_at: now,
+					last_updated: now
 				}
 
 				batch.set(newDocRef, shopItem)
