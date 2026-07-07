@@ -2,6 +2,23 @@ import { useFirestore, useCollection } from 'vuefire'
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore'
 import { ref, computed } from 'vue'
 
+export const SHOP_MANAGER_STATS_EXCLUDED_USER_IDS = ['dx4cm54EArZeVE3d1CPJuU2kJbl2']
+
+const MONTH_LABELS = [
+	'January',
+	'February',
+	'March',
+	'April',
+	'May',
+	'June',
+	'July',
+	'August',
+	'September',
+	'October',
+	'November',
+	'December'
+]
+
 // Get basic collection counts
 export async function getCollectionStats() {
 	const db = useFirestore()
@@ -158,6 +175,12 @@ function isWithinLastSevenDays(value) {
 	return date >= sevenDaysAgo
 }
 
+function isInMonthYear(value, year, monthIndex) {
+	const date = parseFirestoreDate(value)
+	if (!date || Number.isNaN(date.getTime())) return false
+	return date.getFullYear() === year && date.getMonth() === monthIndex
+}
+
 function wasItemAddedRecently(item) {
 	if (item.created_at && isWithinLastSevenDays(item.created_at)) return true
 	return (
@@ -169,6 +192,22 @@ function wasItemAddedRecently(item) {
 
 function wasItemUpdatedRecently(item) {
 	return isWithinLastSevenDays(item.last_updated) && !wasItemAddedRecently(item)
+}
+
+function wasItemAddedInMonth(item, year, monthIndex) {
+	if (item.created_at && isInMonthYear(item.created_at, year, monthIndex)) return true
+	return (
+		!item.created_at &&
+		!item.previous_price_date &&
+		isInMonthYear(item.last_updated, year, monthIndex)
+	)
+}
+
+function wasItemUpdatedInMonth(item, year, monthIndex) {
+	return (
+		isInMonthYear(item.last_updated, year, monthIndex) &&
+		!wasItemAddedInMonth(item, year, monthIndex)
+	)
 }
 
 function getShopItemActivityStats(items) {
@@ -188,6 +227,114 @@ function getShopItemActivityStats(items) {
 		itemsUpdated7d,
 		itemsActive7d: itemsAdded7d + itemsUpdated7d
 	}
+}
+
+async function fetchShopManagerCollections() {
+	const db = useFirestore()
+	const [serversSnapshot, shopsSnapshot, shopItemsSnapshot, usersSnapshot] = await Promise.all([
+		getDocs(collection(db, 'servers')),
+		getDocs(collection(db, 'shops')),
+		getDocs(collection(db, 'shop_items')),
+		getDocs(collection(db, 'users'))
+	])
+
+	return {
+		servers: serversSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+		shops: shopsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+		shopItems: shopItemsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+		users: usersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+	}
+}
+
+function filterShopManagerData({ servers, shops, shopItems, users }, excludeUserIds = []) {
+	const excludeSet = new Set(excludeUserIds.filter(Boolean))
+	if (excludeSet.size === 0) {
+		return { servers, shops, shopItems, users }
+	}
+
+	const excludedShopIds = new Set(
+		shops.filter((shop) => excludeSet.has(shop.owner_id)).map((shop) => shop.id)
+	)
+
+	return {
+		servers: servers.filter((server) => !excludeSet.has(server.owner_id)),
+		shops: shops.filter((shop) => !excludeSet.has(shop.owner_id)),
+		shopItems: shopItems.filter((item) => !excludedShopIds.has(item.shop_id)),
+		users: users.filter((user) => !excludeSet.has(user.id))
+	}
+}
+
+function createEmptyMonthRow(monthIndex, year) {
+	return {
+		month: monthIndex + 1,
+		label: MONTH_LABELS[monthIndex],
+		newServers: 0,
+		newManagedServers: 0,
+		newShops: 0,
+		newAdminShops: 0,
+		newOwnPlayerShops: 0,
+		newOtherPlayerShops: 0,
+		itemsAdded: 0,
+		itemsUpdated: 0,
+		cumulativeServers: 0,
+		cumulativeShops: 0,
+		cumulativeAdminShops: 0
+	}
+}
+
+function buildMonthlyRows(servers, shops, shopItems, year) {
+	const rows = Array.from({ length: 12 }, (_, monthIndex) =>
+		createEmptyMonthRow(monthIndex, year)
+	)
+
+	servers.forEach((server) => {
+		const createdAt = parseFirestoreDate(server.created_at)
+		if (!createdAt || createdAt.getFullYear() !== year) return
+		const monthIndex = createdAt.getMonth()
+		rows[monthIndex].newServers++
+		if (server.user_manages_server === true) {
+			rows[monthIndex].newManagedServers++
+		}
+	})
+
+	shops.forEach((shop) => {
+		const createdAt = parseFirestoreDate(shop.created_at)
+		if (!createdAt || createdAt.getFullYear() !== year) return
+		const monthIndex = createdAt.getMonth()
+		rows[monthIndex].newShops++
+		if (isAdminShop(shop)) rows[monthIndex].newAdminShops++
+		else if (isOwnPlayerShop(shop)) rows[monthIndex].newOwnPlayerShops++
+		else rows[monthIndex].newOtherPlayerShops++
+	})
+
+	shopItems.forEach((item) => {
+		for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+			if (wasItemAddedInMonth(item, year, monthIndex)) {
+				rows[monthIndex].itemsAdded++
+			} else if (wasItemUpdatedInMonth(item, year, monthIndex)) {
+				rows[monthIndex].itemsUpdated++
+			}
+		}
+	})
+
+	for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+		const endOfMonth = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999)
+		rows[monthIndex].cumulativeServers = servers.filter((server) => {
+			const createdAt = parseFirestoreDate(server.created_at)
+			return createdAt && createdAt <= endOfMonth
+		}).length
+		rows[monthIndex].cumulativeShops = shops.filter((shop) => {
+			const createdAt = parseFirestoreDate(shop.created_at)
+			return createdAt && createdAt <= endOfMonth
+		}).length
+		rows[monthIndex].cumulativeAdminShops = shops.filter((shop) => {
+			if (!isAdminShop(shop)) return false
+			const createdAt = parseFirestoreDate(shop.created_at)
+			return createdAt && createdAt <= endOfMonth
+		}).length
+	}
+
+	return rows
 }
 
 function getShopSubsetStats(shops, shopItems) {
@@ -401,6 +548,71 @@ export async function getShopManagerStats(excludeUserId = null) {
 			itemsUpdated7d: 0,
 			itemsActive7d: 0,
 			shopTypeStats: []
+		}
+	}
+}
+
+export async function getShopManagerMonthlyStats(year = 2026) {
+	try {
+		const collections = await fetchShopManagerCollections()
+		const { servers, shops, shopItems } = filterShopManagerData(
+			collections,
+			SHOP_MANAGER_STATS_EXCLUDED_USER_IDS
+		)
+		const months = buildMonthlyRows(servers, shops, shopItems, year)
+		const yearTotals = months.reduce(
+			(totals, month) => ({
+				newServers: totals.newServers + month.newServers,
+				newManagedServers: totals.newManagedServers + month.newManagedServers,
+				newShops: totals.newShops + month.newShops,
+				newAdminShops: totals.newAdminShops + month.newAdminShops,
+				newOwnPlayerShops: totals.newOwnPlayerShops + month.newOwnPlayerShops,
+				newOtherPlayerShops: totals.newOtherPlayerShops + month.newOtherPlayerShops,
+				itemsAdded: totals.itemsAdded + month.itemsAdded,
+				itemsUpdated: totals.itemsUpdated + month.itemsUpdated
+			}),
+			{
+				newServers: 0,
+				newManagedServers: 0,
+				newShops: 0,
+				newAdminShops: 0,
+				newOwnPlayerShops: 0,
+				newOtherPlayerShops: 0,
+				itemsAdded: 0,
+				itemsUpdated: 0
+			}
+		)
+
+		const latestCumulative = months[months.length - 1]
+
+		return {
+			year,
+			excludedUserIds: [...SHOP_MANAGER_STATS_EXCLUDED_USER_IDS],
+			months,
+			yearTotals,
+			endOfYearServers: latestCumulative?.cumulativeServers || 0,
+			endOfYearShops: latestCumulative?.cumulativeShops || 0,
+			endOfYearAdminShops: latestCumulative?.cumulativeAdminShops || 0
+		}
+	} catch (error) {
+		console.error('Error fetching shop manager monthly stats:', error)
+		return {
+			year,
+			excludedUserIds: [...SHOP_MANAGER_STATS_EXCLUDED_USER_IDS],
+			months: [],
+			yearTotals: {
+				newServers: 0,
+				newManagedServers: 0,
+				newShops: 0,
+				newAdminShops: 0,
+				newOwnPlayerShops: 0,
+				newOtherPlayerShops: 0,
+				itemsAdded: 0,
+				itemsUpdated: 0
+			},
+			endOfYearServers: 0,
+			endOfYearShops: 0,
+			endOfYearAdminShops: 0
 		}
 	}
 }
