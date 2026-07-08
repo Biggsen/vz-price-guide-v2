@@ -5,7 +5,7 @@
 export const HOMEPAGE_FEATURE_BANNERS = [
 	{
 		id: 'minecraft-26-2-chaos-cubed',
-		enabled: true,
+		enabled: false,
 		dismissStorageKey: 'featureAnnouncementDismissed_minecraft262',
 		title: 'Minecraft 26.2 (Chaos Cubed) items added!',
 		message:
@@ -14,7 +14,7 @@ export const HOMEPAGE_FEATURE_BANNERS = [
 	},
 	{
 		id: 'admin-shop',
-		enabled: false,
+		enabled: true,
 		dismissStorageKey: 'featureAnnouncementDismissed',
 		title: 'Introducing Admin Shop.',
 		message:
