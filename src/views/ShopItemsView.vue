@@ -1074,9 +1074,11 @@ async function handleItemSubmit(itemData) {
 			}
 
 			await updateShopItem(editingItem.value.id, itemData)
-			trackAdminShopItemUpdated({
-				pricing_type: mapPricingTypeForAnalytics(itemData.pricing_type || 'manual')
-			})
+			if (isServerShop.value && didAdminShopPriceFieldsChange(editingItem.value, itemData)) {
+				trackAdminShopItemUpdated({
+					pricing_type: mapPricingTypeForAnalytics(itemData.pricing_type || 'manual')
+				})
+			}
 		} else {
 			// Add new shop item(s) - handle both single item and array
 			if (Array.isArray(itemData)) {
@@ -1280,7 +1282,7 @@ async function savePrice(row, priceType, newPrice) {
 
 		try {
 			const saved = await handleQuickEdit(updatedItem)
-			if (saved) {
+			if (saved && isServerShop.value) {
 				trackAdminShopItemUpdated({
 					pricing_type: mapPricingTypeForAnalytics(getStoredPricingType(originalItem))
 				})
@@ -1312,6 +1314,16 @@ function getStoredPricingType(shopItem) {
 			? 'from_recipe'
 			: 'manual')
 	)
+}
+
+/** True when form save changed buy/sell price or pricing type (Admin Shop analytics). */
+function didAdminShopPriceFieldsChange(before, after) {
+	if (!before || !after) return false
+	const beforePricing = getStoredPricingType(before)
+	const afterPricing = after.pricing_type || 'manual'
+	if (beforePricing !== afterPricing) return true
+	const norm = (v) => (v == null || v === '' || Number.isNaN(Number(v)) ? null : Number(v))
+	return norm(before.buy_price) !== norm(after.buy_price) || norm(before.sell_price) !== norm(after.sell_price)
 }
 
 function getEffectivePricingType(shopItem) {
