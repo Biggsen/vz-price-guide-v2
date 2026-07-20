@@ -1322,6 +1322,8 @@ function didAdminShopPriceFieldsChange(before, after) {
 	const beforePricing = getStoredPricingType(before)
 	const afterPricing = after.pricing_type || 'manual'
 	if (beforePricing !== afterPricing) return true
+	// from_recipe submits always rewrite recomputed prices — ignore those diffs
+	if (afterPricing === 'from_recipe') return false
 	const norm = (v) => (v == null || v === '' || Number.isNaN(Number(v)) ? null : Number(v))
 	return norm(before.buy_price) !== norm(after.buy_price) || norm(before.sell_price) !== norm(after.sell_price)
 }
@@ -1642,11 +1644,13 @@ async function exportShopPriceGuide(format) {
 			const text = serializeYAML(data, false)
 			downloadTextFile(`${slug}-price-guide.yaml`, text, 'text/yaml')
 		}
-		trackAdminShopExport({
-			format,
-			items_exported: Object.keys(data).length,
-			minecraft_version: selectedServer.value?.minecraft_version
-		})
+		if (isServerShop.value) {
+			trackAdminShopExport({
+				format,
+				items_exported: Object.keys(data).length,
+				minecraft_version: selectedServer.value?.minecraft_version
+			})
+		}
 	} catch (err) {
 		console.error('Error exporting price guide file:', err)
 		error.value = err.message || 'Failed to export price guide file.'
@@ -1683,11 +1687,13 @@ async function exportShopPrices() {
 		a.download = `${slug}-economyshopgui-${exportedCategories.length}-sections.zip`
 		a.click()
 		URL.revokeObjectURL(url)
-		trackAdminShopExport({
-			format: 'economyshopgui_zip',
-			items_exported: itemsExported,
-			minecraft_version: selectedServer.value?.minecraft_version
-		})
+		if (isServerShop.value) {
+			trackAdminShopExport({
+				format: 'economyshopgui_zip',
+				items_exported: itemsExported,
+				minecraft_version: selectedServer.value?.minecraft_version
+			})
+		}
 	} catch (err) {
 		console.error('Error exporting EconomyShopGUI files:', err)
 		error.value = err.message || 'Failed to export EconomyShopGUI files.'
@@ -1713,7 +1719,9 @@ async function recalculateRecipePrices() {
 			availableItems.value,
 			serverVersionKey.value
 		)
-		trackAdminShopRecalculate({ items_changed: updated.length })
+		if (isServerShop.value) {
+			trackAdminShopRecalculate({ items_changed: updated.length })
+		}
 		recalculateResultSummary.value = { updated, errors, fetchError: null }
 		showRecalculateResultsModal.value = true
 	} catch (err) {
@@ -1881,11 +1889,13 @@ async function runShopYamlImport() {
 			totalEntries: entries.length
 		})
 		if (imported > 0) {
-			trackAdminShopImport({
-				items_imported: imported,
-				import_source: importFormat,
-				duration_ms: Date.now() - importStartedAt
-			})
+			if (isServerShop.value) {
+				trackAdminShopImport({
+					items_imported: imported,
+					import_source: importFormat,
+					duration_ms: Date.now() - importStartedAt
+				})
+			}
 			shopYamlImportFile.value = null
 			const input = shopYamlFileInput.value
 			if (input) input.value = ''
