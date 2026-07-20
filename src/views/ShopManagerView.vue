@@ -25,6 +25,7 @@ import { useAllShops, createShop, updateShop, deleteShop } from '../utils/shopPr
 import { getOldestVersion } from '../constants/minecraftVersions.js'
 import { useServers, createServer, updateServer, deleteServer } from '../utils/serverProfile.js'
 import { useUserProfile, generateMinecraftAvatar } from '../utils/userProfile.js'
+import { trackAdminShopCreated } from '../utils/analytics.js'
 
 const router = useRouter()
 const { user, userProfile, canAccessShopManager } = useAdmin()
@@ -561,6 +562,13 @@ async function handleShopSubmit() {
 				}
 			}
 			const newShop = await createShop(user.value.uid, shopData)
+			if (shopData.server_shop) {
+				const server = (servers.value || []).find((s) => s.id === shopData.server_id)
+				trackAdminShopCreated({
+					minecraft_version: server?.minecraft_version,
+					user_manages_server: Boolean(server?.user_manages_server)
+				})
+			}
 			closeShopModals()
 			router.push({ name: 'shop', params: { shopId: newShop.id } })
 		}

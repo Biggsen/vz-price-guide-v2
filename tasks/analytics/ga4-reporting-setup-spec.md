@@ -2,7 +2,7 @@
 
 ## Status (progress tracker)
 
-**Last updated:** 2026-01-21
+**Last updated:** 2026-07-20
 
 ### Completed
 
@@ -33,11 +33,13 @@
 	- [ ] Field → `field`
 	- [ ] Optional: Category → `category`, Search active → `search_active`, Export format → `export_format`
 	- [ ] Optional: event-scoped custom metrics (Integer) used in reports
+	- [ ] Admin Shop: `minecraft_version`, `user_manages_server`, `pricing_type`, `import_source`, `format`, metrics `items_imported` / `items_exported` / `items_changed` / `duration_ms`
 - [ ] Step 2: Create additional derived events (recommended for a clean funnel)
 	- [ ] Optional: `settings_open`, `settings_save`
 	- [ ] Optional: `export_sign_in_click`, `export_verify_email_click`
 - [ ] Step 4: Create additional Explorations (gate analysis)
 	- [ ] Path exploration: “Export gate path” (starting point `export_create_account_click`, Step +1: page path)
+	- [ ] Funnel exploration: Admin Shop workflow (`admin_shop_created` → import → item_updated → export)
 
 ## Goal
 
@@ -57,6 +59,7 @@ Event/parameter names must match what the app sends:
 	- `homepage_interaction` (single rich event)
 	- `modal_interaction` (single rich event)
 	- `search` (GA4 recommended event name)
+	- Admin Shop: `admin_shop_created`, `admin_shop_import`, `admin_shop_export`, `admin_shop_item_updated`, `admin_shop_recalculate`
 	- adds `device_type` to **all events**
 - `src/views/HomeView.vue`
 	- `homepage_interaction` actions (category clicks, open settings/export, view/layout toggles)
@@ -65,6 +68,10 @@ Event/parameter names must match what the app sends:
 	- `modal_interaction` for settings open/close/change/cta
 - `src/components/ExportModal.vue`
 	- `modal_interaction` for export open/close/change/cta/export_click
+- `src/views/ShopManagerView.vue`
+	- `admin_shop_created` on successful Admin Shop create
+- `src/views/ShopItemsView.vue`
+	- `admin_shop_import`, `admin_shop_export`, `admin_shop_item_updated`, `admin_shop_recalculate`
 
 ## Naming Conventions
 
@@ -251,4 +258,48 @@ Sometimes:
 - `export_format`, `export_item_count`
 - `selected_categories_count`
 - `selected_price_fields_count`
+
+## Admin Shop Events
+
+Lean success-only events for the Admin Shop workflow. Implemented in `src/utils/analytics.js`; fired from `ShopManagerView.vue` (create) and `ShopItemsView.vue` (import / export / item update / recalculate).
+
+| Event | When | Parameters |
+|-------|------|------------|
+| `admin_shop_created` | Admin Shop create succeeds (`server_shop: true`) | `minecraft_version`, `user_manages_server` (boolean) |
+| `admin_shop_import` | YAML import writes ≥1 item | `items_imported`, `import_source` (`economyshopgui` \| `vz`), `duration_ms` |
+| `admin_shop_export` | Export download succeeds | `format` (`json` \| `yaml` \| `economyshopgui_zip`), `items_exported`, `minecraft_version` |
+| `admin_shop_item_updated` | Form edit, inline buy/sell, or pricing-type switch | `pricing_type` (`base` \| `custom` \| `recipe`) |
+| `admin_shop_recalculate` | Bulk “Recalculate recipe prices” completes | `items_changed` |
+
+Notes:
+
+- Storage pricing types map to GA: `manual` → `custom`, `from_recipe` → `recipe`, `base` → `base`
+- `admin_shop_item_updated` does **not** fire for notes/stock/star, item add, import, or bulk recalculate
+- Pricing switch Custom → Recipe fires `admin_shop_item_updated` only (not `admin_shop_recalculate`)
+- All events still receive `device_type` from `trackEvent`
+
+### Recommended GA4 custom definitions (Admin Shop)
+
+Event-scoped dimensions:
+
+- **Minecraft version** → `minecraft_version`
+- **User manages server** → `user_manages_server`
+- **Pricing type** → `pricing_type`
+- **Import source** → `import_source`
+- **Format** → `format` (Admin Shop export; distinct from homepage `export_format`)
+
+Event-scoped metrics (Integer):
+
+- **Items imported** → `items_imported`
+- **Items exported** → `items_exported`
+- **Items changed** → `items_changed`
+- **Duration ms** → `duration_ms`
+
+### Recommended funnel exploration
+
+1. `admin_shop_created`
+2. `admin_shop_import`
+3. `admin_shop_item_updated`
+4. `admin_shop_recalculate` (optional step)
+5. `admin_shop_export`
 

@@ -78,6 +78,13 @@ import {
 	SEARCH_INPUT_TIP,
 	textMatchesSearch
 } from '../utils/search.js'
+import {
+	mapPricingTypeForAnalytics,
+	trackAdminShopImport,
+	trackAdminShopExport,
+	trackAdminShopItemUpdated,
+	trackAdminShopRecalculate
+} from '../utils/analytics.js'
 
 /** Firestore batch writes cap at 500 ops; stay under for multi-add creates. */
 const MULTI_ADD_SHOP_ITEMS_CHUNK = 400
@@ -1067,6 +1074,9 @@ async function handleItemSubmit(itemData) {
 			}
 
 			await updateShopItem(editingItem.value.id, itemData)
+			trackAdminShopItemUpdated({
+				pricing_type: mapPricingTypeForAnalytics(itemData.pricing_type || 'manual')
+			})
 		} else {
 			// Add new shop item(s) - handle both single item and array
 			if (Array.isArray(itemData)) {
@@ -1188,10 +1198,10 @@ async function handleQuickEdit(updatedItem) {
 	if (!updatedItem.id) {
 		console.error('ShopItemsView: Cannot quick edit item without document ID')
 		error.value = 'Cannot update item: missing document ID'
-		return
+		return false
 	}
 
-	if (!user.value?.uid || !selectedShopId.value) return
+	if (!user.value?.uid || !selectedShopId.value) return false
 
 	// Set saving state for this item
 	const isPriceUpdate = savingPriceId.value !== null
@@ -1218,6 +1228,7 @@ async function handleQuickEdit(updatedItem) {
 			const { updateShop } = await import('../utils/shopProfile.js')
 			await updateShop(updatedItem._shopId, { owner_funds: updatedItem._setOwnerFunds })
 		}
+		return true
 	} catch (err) {
 		console.error('Error updating shop item:', err)
 		error.value = err.message || 'Failed to update shop item. Please try again.'
@@ -1226,6 +1237,7 @@ async function handleQuickEdit(updatedItem) {
 		if (!isPriceUpdate) {
 			savingItemId.value = null
 		}
+		return false
 	} finally {
 		// Clear saving state if not a price update
 		const isPriceUpdate = savingPriceId.value !== null
@@ -1267,7 +1279,12 @@ async function savePrice(row, priceType, newPrice) {
 		savingPriceType.value = priceType
 
 		try {
-			await handleQuickEdit(updatedItem)
+			const saved = await handleQuickEdit(updatedItem)
+			if (saved) {
+				trackAdminShopItemUpdated({
+					pricing_type: mapPricingTypeForAnalytics(getStoredPricingType(originalItem))
+				})
+			}
 		} finally {
 			// Clear saving state
 			savingPriceId.value = null
@@ -1384,6 +1401,7 @@ async function switchCustomToRecipe(shopItem) {
 			buy_pricing_type: 'from_recipe',
 			sell_pricing_type: 'from_recipe'
 		})
+		trackAdminShopItemUpdated({ pricing_type: 'recipe' })
 		const patchedShopItems = (shopItems.value || []).map((si) =>
 			si.id === shopItem.id
 				? {
@@ -1418,6 +1436,7 @@ async function switchRecipeToCustom(shopItem) {
 			buy_pricing_type: 'manual',
 			sell_pricing_type: 'manual'
 		})
+		trackAdminShopItemUpdated({ pricing_type: 'custom' })
 	} catch (err) {
 		console.error('Error switching pricing type to custom:', err)
 		error.value = err.message || 'Failed to switch pricing type. Please try again.'
@@ -1611,6 +1630,11 @@ async function exportShopPriceGuide(format) {
 			const text = serializeYAML(data, false)
 			downloadTextFile(`${slug}-price-guide.yaml`, text, 'text/yaml')
 		}
+		trackAdminShopExport({
+			format,
+			items_exported: Object.keys(data).length,
+			minecraft_version: selectedServer.value?.minecraft_version
+		})
 	} catch (err) {
 		console.error('Error exporting price guide file:', err)
 		error.value = err.message || 'Failed to export price guide file.'
@@ -1625,7 +1649,7 @@ async function exportShopPrices() {
 	exportLoading.value = true
 	error.value = null
 	try {
-		const { files, exportedCategories } = buildEconomyShopGuiExportFiles(
+		const { files, exportedCategories, itemsExported } = buildEconomyShopGuiExportFiles(
 			shopItems.value,
 			availableItems.value
 		)
@@ -1647,6 +1671,11 @@ async function exportShopPrices() {
 		a.download = `${slug}-economyshopgui-${exportedCategories.length}-sections.zip`
 		a.click()
 		URL.revokeObjectURL(url)
+		trackAdminShopExport({
+			format: 'economyshopgui_zip',
+			items_exported: itemsExported,
+			minecraft_version: selectedServer.value?.minecraft_version
+		})
 	} catch (err) {
 		console.error('Error exporting EconomyShopGUI files:', err)
 		error.value = err.message || 'Failed to export EconomyShopGUI files.'
@@ -1672,6 +1701,7 @@ async function recalculateRecipePrices() {
 			availableItems.value,
 			serverVersionKey.value
 		)
+		trackAdminShopRecalculate({ items_changed: updated.length })
 		recalculateResultSummary.value = { updated, errors, fetchError: null }
 		showRecalculateResultsModal.value = true
 	} catch (err) {
@@ -1737,6 +1767,7 @@ async function runShopYamlImport() {
 	importLoading.value = true
 	shopImportModalError.value = null
 	const file = shopYamlImportFile.value
+	const importStartedAt = Date.now()
 
 	try {
 		const text = await file.text()
@@ -1838,6 +1869,11 @@ async function runShopYamlImport() {
 			totalEntries: entries.length
 		})
 		if (imported > 0) {
+			trackAdminShopImport({
+				items_imported: imported,
+				import_source: importFormat,
+				duration_ms: Date.now() - importStartedAt
+			})
 			shopYamlImportFile.value = null
 			const input = shopYamlFileInput.value
 			if (input) input.value = ''
