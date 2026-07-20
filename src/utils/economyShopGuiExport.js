@@ -132,7 +132,7 @@ function buildSectionsYamlForCategory(categoryKey, slot, iconMaterial) {
  * Build EconomyShopGUI export files for the given shop inventory.
  * @param {Array<{ item_id: string, buy_price: number|null, sell_price: number|null }>} shopItems
  * @param {Array<{ id: string, category?: string, material_id?: string }>} guideItems
- * @returns {{ files: Array<{ path: string, content: string }>, exportedCategories: string[] }}
+ * @returns {{ files: Array<{ path: string, content: string }>, exportedCategories: string[], itemsExported: number }}
  */
 export function buildEconomyShopGuiExportFiles(shopItems, guideItems) {
 	const guideById = {}
@@ -175,8 +175,11 @@ export function buildEconomyShopGuiExportFiles(shopItems, guideItems) {
 		})
 	})
 
+	const itemsExported = categoryKeys.reduce((n, key) => n + byCategory[key].length, 0)
+
 	return {
 		files,
-		exportedCategories: categoryKeys
+		exportedCategories: categoryKeys,
+		itemsExported
 	}
 }

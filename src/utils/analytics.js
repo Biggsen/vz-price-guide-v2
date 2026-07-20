@@ -167,6 +167,85 @@ export function trackPageView(options = {}) {
 }
 
 /**
+ * Map stored shop pricing type to GA4 pricing_type param.
+ * @param {string} storedType - Storage value: base | manual | from_recipe
+ * @returns {'base'|'custom'|'recipe'}
+ */
+export function mapPricingTypeForAnalytics(storedType) {
+	if (storedType === 'from_recipe') return 'recipe'
+	if (storedType === 'base') return 'base'
+	return 'custom'
+}
+
+/**
+ * Track successful Admin Shop creation.
+ * @param {Object} options
+ * @param {string} [options.minecraft_version]
+ * @param {boolean} [options.user_manages_server]
+ */
+export function trackAdminShopCreated(options = {}) {
+	trackEvent('admin_shop_created', {
+		minecraft_version: options.minecraft_version,
+		user_manages_server: options.user_manages_server
+	})
+}
+
+/**
+ * Track successful Admin Shop import.
+ * @param {Object} options
+ * @param {number} options.items_imported
+ * @param {string} options.import_source - economyshopgui | vz
+ * @param {number} [options.duration_ms]
+ */
+export function trackAdminShopImport(options = {}) {
+	const params = {
+		items_imported: options.items_imported,
+		import_source: options.import_source
+	}
+	if (options.duration_ms != null) {
+		params.duration_ms = options.duration_ms
+	}
+	trackEvent('admin_shop_import', params)
+}
+
+/**
+ * Track successful Admin Shop export.
+ * @param {Object} options
+ * @param {string} options.format - json | yaml | economyshopgui_zip
+ * @param {number} options.items_exported
+ * @param {string} [options.minecraft_version]
+ */
+export function trackAdminShopExport(options = {}) {
+	trackEvent('admin_shop_export', {
+		format: options.format,
+		items_exported: options.items_exported,
+		minecraft_version: options.minecraft_version
+	})
+}
+
+/**
+ * Track successful Admin Shop item save (form edit, inline price, pricing switch).
+ * @param {Object} options
+ * @param {'base'|'custom'|'recipe'|string} options.pricing_type
+ */
+export function trackAdminShopItemUpdated(options = {}) {
+	trackEvent('admin_shop_item_updated', {
+		pricing_type: options.pricing_type
+	})
+}
+
+/**
+ * Track successful Admin Shop recipe price recalculation.
+ * @param {Object} options
+ * @param {number} options.items_changed
+ */
+export function trackAdminShopRecalculate(options = {}) {
+	trackEvent('admin_shop_recalculate', {
+		items_changed: options.items_changed
+	})
+}
+
+/**
  * Navigation click handlers for consistent tracking
  */
 export const navigationHandlers = {
