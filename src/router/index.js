@@ -483,6 +483,17 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/admin/reports/marketing-opt-in',
+			name: 'admin-reports-marketing-opt-in',
+			component: () => import('../views/MarketingOptInStatsView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: `Marketing Opt-In - ${siteName}`
+			}
+		},
+		{
 			path: '/admin/enchantments/migrate-items',
 			name: 'enchantments-migrate-items',
 			component: () => import('../views/enchantments/MigrateItemsView.vue'),
