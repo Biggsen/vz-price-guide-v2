@@ -616,3 +616,138 @@ export async function getShopManagerMonthlyStats(year = 2026) {
 		}
 	}
 }
+
+const emptyMarketingOptInStats = {
+	optedIn: 0,
+	optedOut: 0,
+	noPreference: 0,
+	totalUsers: 0,
+	optInRate: '0.0%',
+	optedInViaSignup: 0,
+	optedInViaSettings: 0,
+	optedInVerified: 0
+}
+
+const emptyMarketingMonthlyTotals = {
+	optedIn: 0,
+	viaSignup: 0,
+	viaSettings: 0,
+	optedOut: 0
+}
+
+async function fetchUsers() {
+	const db = useFirestore()
+	const usersSnapshot = await getDocs(collection(db, 'users'))
+	return usersSnapshot.docs.map((userDoc) => ({ id: userDoc.id, ...userDoc.data() }))
+}
+
+function formatOptInRate(optedIn, totalUsers) {
+	if (!totalUsers) return '0.0%'
+	return `${((optedIn / totalUsers) * 100).toFixed(1)}%`
+}
+
+function buildMarketingMonthlyRows(users, year) {
+	return MONTH_LABELS.map((label, monthIndex) => {
+		let optedIn = 0
+		let viaSignup = 0
+		let viaSettings = 0
+		let optedOut = 0
+
+		users.forEach((user) => {
+			const optIn = user.marketing_opt_in
+			if (!optIn) return
+			if (!isInMonthYear(optIn.timestamp, year, monthIndex)) return
+
+			if (optIn.enabled === true) {
+				optedIn++
+				if (optIn.method === 'signup') viaSignup++
+				else if (optIn.method === 'settings') viaSettings++
+			} else {
+				optedOut++
+			}
+		})
+
+		return {
+			month: monthIndex + 1,
+			label,
+			optedIn,
+			viaSignup,
+			viaSettings,
+			optedOut
+		}
+	})
+}
+
+export async function getMarketingOptInStats() {
+	try {
+		const users = await fetchUsers()
+		let optedIn = 0
+		let optedOut = 0
+		let noPreference = 0
+		let optedInViaSignup = 0
+		let optedInViaSettings = 0
+		let optedInVerified = 0
+
+		users.forEach((user) => {
+			const optIn = user.marketing_opt_in
+			if (!optIn) {
+				noPreference++
+				return
+			}
+
+			if (optIn.enabled === true) {
+				optedIn++
+				if (optIn.method === 'signup') optedInViaSignup++
+				else if (optIn.method === 'settings') optedInViaSettings++
+				if (user.email_verified === true) optedInVerified++
+			} else {
+				optedOut++
+			}
+		})
+
+		const totalUsers = users.length
+
+		return {
+			optedIn,
+			optedOut,
+			noPreference,
+			totalUsers,
+			optInRate: formatOptInRate(optedIn, totalUsers),
+			optedInViaSignup,
+			optedInViaSettings,
+			optedInVerified
+		}
+	} catch (error) {
+		console.error('Error fetching marketing opt-in stats:', error)
+		return { ...emptyMarketingOptInStats }
+	}
+}
+
+export async function getMarketingOptInMonthlyStats(year = 2026) {
+	try {
+		const users = await fetchUsers()
+		const months = buildMarketingMonthlyRows(users, year)
+		const yearTotals = months.reduce(
+			(totals, month) => ({
+				optedIn: totals.optedIn + month.optedIn,
+				viaSignup: totals.viaSignup + month.viaSignup,
+				viaSettings: totals.viaSettings + month.viaSettings,
+				optedOut: totals.optedOut + month.optedOut
+			}),
+			{ ...emptyMarketingMonthlyTotals }
+		)
+
+		return {
+			year,
+			months,
+			yearTotals
+		}
+	} catch (error) {
+		console.error('Error fetching marketing opt-in monthly stats:', error)
+		return {
+			year,
+			months: [],
+			yearTotals: { ...emptyMarketingMonthlyTotals }
+		}
+	}
+}

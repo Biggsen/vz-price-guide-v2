@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { ChartBarIcon, ShoppingBagIcon } from '@heroicons/vue/24/outline'
+import { ChartBarIcon, EnvelopeIcon, ShoppingBagIcon } from '@heroicons/vue/24/outline'
 </script>
 
 <template>
@@ -39,6 +39,23 @@ import { ChartBarIcon, ShoppingBagIcon } from '@heroicons/vue/24/outline'
 				<p class="text-gray-600 text-sm">
 					Detailed usage statistics and analytics for the Shop Manager feature, including
 					servers, shops, items, and user activity.
+				</p>
+			</RouterLink>
+
+			<!-- Marketing Opt-In -->
+			<RouterLink
+				to="/admin/reports/marketing-opt-in"
+				class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-indigo-300">
+				<div class="flex items-center mb-4">
+					<div
+						class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+						<EnvelopeIcon class="w-6 h-6 text-indigo-600" />
+					</div>
+					<h3 class="text-lg font-semibold text-gray-900 ml-3">Marketing Opt-In</h3>
+				</div>
+				<p class="text-gray-600 text-sm">
+					How many people have signed up for news emails, including current totals and a
+					monthly breakdown.
 				</p>
 			</RouterLink>
 		</div>
