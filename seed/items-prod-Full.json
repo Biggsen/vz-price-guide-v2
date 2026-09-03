@@ -1,9 +1,9 @@
 {
   "meta": {
     "source_project_id": "vz-price-guide",
-    "exported_at": "2026-03-28T15:00:41.239Z",
-    "total_items_in_source": 1806,
-    "exported_item_count": 1806,
+    "exported_at": "2026-09-03T11:57:39.186Z",
+    "total_items_in_source": 1838,
+    "exported_item_count": 1838,
     "limit_applied": 0,
     "schema_version": 1
   },
@@ -1670,7 +1670,6 @@
     {
       "id": "dSDubvY7fQ4GBhU7xy3v",
       "name": "arrow of wind charging",
-      "material_id": "arrow_of_wind_charging_1",
       "image": "/images/items/arrow_of_wind_charging.png",
       "url": "https://minecraft.wiki/w/arrow_of_wind_charging",
       "category": "brewing",
@@ -1683,7 +1682,8 @@
         "1_21": 9
       },
       "version": "1.21",
-      "stack": 64
+      "stack": 64,
+      "material_id": "arrow_of_wind_charged_1"
     },
     {
       "id": "yoFfNLlxqfiOJrAcZj8H",
@@ -6048,7 +6048,6 @@
       "material_id": "cherry_boat",
       "name": "cherry boat",
       "stack": 1,
-      "url": "https://minecraft.fandom.com/wiki/Cherry_Boat",
       "version": "1.20",
       "pricing_type": "dynamic",
       "recipes_by_version": {
@@ -6067,8 +6066,9 @@
         "1_20": 10
       },
       "subcategory": "boat",
-      "image": "/images/items/cherry_boat.png",
-      "category": "transport"
+      "category": "transport",
+      "image": "/images/items/cherry_boat.webp",
+      "url": "https://minecraft.wiki/w/Cherry_Boat"
     },
     {
       "id": "199Yr6F9R6Wr77CJYza5",
@@ -6549,7 +6549,6 @@
       "material_id": "chest_minecart",
       "name": "minecart with chest",
       "stack": 1,
-      "url": "",
       "version": "1.16",
       "version_removed": null,
       "price": 120,
@@ -6573,9 +6572,10 @@
         "1_16": 116,
         "1_18": 91
       },
-      "image": "/images/items/chest_minecart.png",
       "category": "transport",
-      "subcategory": "cart"
+      "subcategory": "cart",
+      "image": "/images/items/chest_minecart.webp",
+      "url": "https://minecraft.wiki/w/Chest_Minecart"
     },
     {
       "id": "c49U5Cl1G1UOP5B8tOIE",
@@ -6659,6 +6659,32 @@
       "category": "utility",
       "subcategory": "bookshelf",
       "image": "/images/items/chiseled_bookshelf.png"
+    },
+    {
+      "id": "YBXlrLG65lj84inTAoDp",
+      "material_id": "chiseled_cinnabar",
+      "name": "chiseled cinnabar",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "cinnabar_slab",
+              "quantity": 2
+            }
+          ],
+          "output_count": 1
+        }
+      },
+      "image": "/images/items/chiseled_cinnabar.png",
+      "url": "https://minecraft.wiki/w/Chiseled_Cinnabar",
+      "category": "stone",
+      "subcategory": "cinnabar",
+      "prices_by_version": {
+        "26_2": 10
+      }
     },
     {
       "id": "qz87iVaqw47Tkj4Fp3I4",
@@ -6847,10 +6873,10 @@
       "url": "https://minecraft.wiki/w/Chiseled_Resin_Bricks",
       "image": "/images/items/chiseled_resin_bricks.png",
       "category": "brick",
+      "subcategory": "resin",
       "prices_by_version": {
-        "1_21": 144
-      },
-      "subcategory": "resin"
+        "1_21": 100
+      }
     },
     {
       "id": "QhlF0EWat9AWLGwlAXJE",
@@ -6907,6 +6933,32 @@
         }
       },
       "image": "/images/items/chiseled_stone_bricks.png"
+    },
+    {
+      "id": "VeGdHuGFu5cidzqzFVi4",
+      "material_id": "chiseled_sulfur",
+      "name": "chiseled sulfur",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "sulfur_slab",
+              "quantity": 2
+            }
+          ],
+          "output_count": 1
+        }
+      },
+      "image": "/images/items/chiseled_sulfur.png",
+      "url": "https://minecraft.wiki/w/Chiseled_Sulfur",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 10
+      }
     },
     {
       "id": "EExD0Pv3UupKoIBopgzU",
@@ -7012,6 +7064,204 @@
         "1_16": 0
       },
       "image": "/images/items/chorus_plant.png"
+    },
+    {
+      "id": "JhoQGkhcuwdMTymIAZLK",
+      "material_id": "cinnabar",
+      "name": "cinnabar",
+      "stack": 64,
+      "pricing_type": "static",
+      "version": "26.2",
+      "image": "/images/items/cinnabar.png",
+      "url": "https://minecraft.wiki/w/Cinnabar",
+      "category": "stone",
+      "subcategory": "cinnabar",
+      "version_removed": "",
+      "prices_by_version": {
+        "26_2": 10
+      }
+    },
+    {
+      "id": "j6oBgPWWCsXDZMKwvSMp",
+      "material_id": "cinnabar_brick_slab",
+      "name": "cinnabar brick slab",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "cinnabar_bricks",
+              "quantity": 3
+            }
+          ],
+          "output_count": 6
+        }
+      },
+      "image": "/images/items/cinnabar_brick_slab.png",
+      "url": "https://minecraft.wiki/w/Cinnabar_Brick_Slab",
+      "category": "stone",
+      "subcategory": "cinnabar",
+      "prices_by_version": {
+        "26_2": 5
+      }
+    },
+    {
+      "id": "8fSEauHMSfoLIuOAMJdf",
+      "material_id": "cinnabar_brick_stairs",
+      "name": "cinnabar brick stairs",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "cinnabar_bricks",
+              "quantity": 6
+            }
+          ],
+          "output_count": 4
+        }
+      },
+      "image": "/images/items/cinnabar_brick_stairs.png",
+      "url": "https://minecraft.wiki/w/Cinnabar_Brick_Stairs",
+      "category": "stone",
+      "subcategory": "cinnabar",
+      "prices_by_version": {
+        "26_2": 15
+      }
+    },
+    {
+      "id": "nKq865j5svAQkngHBlxm",
+      "material_id": "cinnabar_brick_wall",
+      "name": "cinnabar brick wall",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "cinnabar_bricks",
+              "quantity": 6
+            }
+          ],
+          "output_count": 6
+        }
+      },
+      "image": "/images/items/cinnabar_brick_wall.png",
+      "url": "https://minecraft.wiki/w/Cinnabar_Brick_Wall",
+      "category": "stone",
+      "subcategory": "cinnabar",
+      "prices_by_version": {
+        "26_2": 10
+      }
+    },
+    {
+      "id": "KzF1U2sW3mzPJitSdUmE",
+      "material_id": "cinnabar_bricks",
+      "name": "cinnabar bricks",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "polished_cinnabar",
+              "quantity": 4
+            }
+          ],
+          "output_count": 4
+        }
+      },
+      "image": "/images/items/cinnabar_bricks.png",
+      "url": "https://minecraft.wiki/w/Cinnabar_Bricks",
+      "category": "stone",
+      "subcategory": "cinnabar",
+      "prices_by_version": {
+        "26_2": 10
+      }
+    },
+    {
+      "id": "I2B8hWmVTT70Q35sAlTP",
+      "material_id": "cinnabar_slab",
+      "name": "cinnabar slab",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "cinnabar",
+              "quantity": 3
+            }
+          ],
+          "output_count": 6
+        }
+      },
+      "image": "/images/items/cinnabar_slab.png",
+      "url": "https://minecraft.wiki/w/Cinnabar_Slab",
+      "category": "stone",
+      "subcategory": "cinnabar",
+      "prices_by_version": {
+        "26_2": 5
+      }
+    },
+    {
+      "id": "qLS3iicYBEKKYVuvJNBp",
+      "material_id": "cinnabar_stairs",
+      "name": "cinnabar stairs",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "cinnabar",
+              "quantity": 6
+            }
+          ],
+          "output_count": 4
+        }
+      },
+      "image": "/images/items/cinnabar_stairs.png",
+      "url": "https://minecraft.wiki/w/Cinnabar_Stairs",
+      "category": "stone",
+      "subcategory": "cinnabar",
+      "prices_by_version": {
+        "26_2": 15
+      }
+    },
+    {
+      "id": "wxddVwAL9SsaOicSqYVE",
+      "material_id": "cinnabar_wall",
+      "name": "cinnabar wall",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "cinnabar",
+              "quantity": 6
+            }
+          ],
+          "output_count": 6
+        }
+      },
+      "image": "/images/items/cinnabar_wall.png",
+      "url": "https://minecraft.wiki/w/Cinnabar_Wall",
+      "category": "stone",
+      "subcategory": "cinnabar",
+      "prices_by_version": {
+        "26_2": 10
+      }
     },
     {
       "id": "2OY1Rmxp8z35qSXW9DIa",
@@ -8815,10 +9065,10 @@
         }
       },
       "image": "/images/items/creaking_heart.png",
+      "category": "utility",
       "prices_by_version": {
-        "1_21": 333
-      },
-      "category": "utility"
+        "1_21": 234
+      }
     },
     {
       "id": "pjlC6VFMmzJUN13guskg",
@@ -10055,7 +10305,6 @@
       "stack": 64,
       "price": 1,
       "category": "plants",
-      "url": "https://minecraft.fandom.com/wiki/Dandelion",
       "subcategory": "flower",
       "version": "1.16",
       "version_removed": null,
@@ -10063,7 +10312,8 @@
       "prices_by_version": {
         "1_16": 1
       },
-      "image": "/images/items/dandelion.png"
+      "image": "/images/items/dandelion.webp",
+      "url": "https://minecraft.wiki/w/Dandelion"
     },
     {
       "id": "QQ8Oj4LY4rQwMSnP59FM",
@@ -17305,6 +17555,36 @@
       ]
     },
     {
+      "id": "sbsWymIVRlTQjNUWbLxJ",
+      "material_id": "golden_dandelion",
+      "name": "golden dandelion",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "gold_nugget",
+              "quantity": 8
+            },
+            {
+              "material_id": "dandelion",
+              "quantity": 1
+            }
+          ],
+          "output_count": 1
+        }
+      },
+      "url": "https://minecraft.wiki/w/Golden_Dandelion",
+      "image": "/images/items/golden_dandelion.webp",
+      "prices_by_version": {
+        "26_2": 55
+      },
+      "category": "plants",
+      "subcategory": "flower"
+    },
+    {
       "id": "ip2BMc6GZvP60MV5G9n2",
       "material_id": "golden_helmet",
       "name": "golden helmet",
@@ -18905,7 +19185,6 @@
       "url": "https://minecraft.fandom.com/wiki/Honey_Block",
       "subcategory": "",
       "version": "1.16",
-      "version_removed": null,
       "pricing_type": "dynamic",
       "recipes_by_version": {
         "1_16": {
@@ -18918,12 +19197,17 @@
           "output_count": 1
         }
       },
+      "image": "/images/items/honey_block.png",
+      "version_removed": "",
       "prices_by_version": {
-        "1_16": 12,
-        "1_17": 12,
-        "1_18": 12
-      },
-      "image": "/images/items/honey_block.png"
+        "1_16": 20,
+        "1_17": 20,
+        "1_18": 20,
+        "1_19": 20,
+        "1_20": 20,
+        "1_21": 20,
+        "26_2": 28
+      }
     },
     {
       "id": "GAJUlmntv9S0a3fKde6h",
@@ -18935,12 +19219,18 @@
       "url": "https://minecraft.fandom.com/wiki/Honey_Bottle",
       "subcategory": "",
       "version": "1.16",
-      "pricing_type": "static",
       "version_removed": "",
+      "image": "/images/items/honey_bottle.png",
       "prices_by_version": {
-        "1_16": 3
+        "1_16": 5,
+        "1_17": 5,
+        "1_18": 5,
+        "1_19": 5,
+        "1_20": 5,
+        "1_21": 5,
+        "26_2": 7
       },
-      "image": "/images/items/honey_bottle.png"
+      "pricing_type": "static"
     },
     {
       "id": "0QdEfiGeZQa6cgnsEec1",
@@ -23128,7 +23418,6 @@
     {
       "id": "LRbnZDcl6bFVxLs9r9Si",
       "name": "lingering potion of wind charging",
-      "material_id": "lingering_potion_of_wind_charging_1",
       "image": "/images/items/lingering_potion_of_wind_charging.png",
       "url": "https://minecraft.wiki/w/lingering_potion_of_wind_charging",
       "stack": 1,
@@ -23141,7 +23430,8 @@
         "1_21": 46
       },
       "version": "1.21",
-      "subcategory": "potion lingering"
+      "subcategory": "potion lingering",
+      "material_id": "lingering_potion_of_wind_charged_1"
     },
     {
       "id": "UkRDdf76SrUZcDEYDwlh",
@@ -23718,10 +24008,8 @@
       "subcategory": "",
       "url": "https://minecraft.fandom.com/wiki/Magma_Block",
       "version": "1.16",
-      "version_removed": null,
       "price": 4,
       "category": "nether",
-      "pricing_type": "dynamic",
       "recipes_by_version": {
         "1_16": {
           "ingredients": [
@@ -23733,10 +24021,12 @@
           "output_count": 1
         }
       },
+      "image": "/images/items/magma_block.gif",
+      "pricing_type": "static",
+      "version_removed": "",
       "prices_by_version": {
-        "1_16": 100
-      },
-      "image": "/images/items/magma_block.gif"
+        "1_16": 3
+      }
     },
     {
       "id": "HDUzvnJtPoHJQvAAcoaQ",
@@ -25125,6 +25415,22 @@
       "category": "discs"
     },
     {
+      "id": "2jTEfvBek6U0AKq1u7NT",
+      "material_id": "music_disc_bounce",
+      "stack": 1,
+      "pricing_type": "static",
+      "subcategory": "",
+      "version": "26.2",
+      "image": "/images/items/music_disc_bounce.png",
+      "url": "https://minecraft.wiki/w/Music_Disc_Bounce",
+      "version_removed": "",
+      "name": "bounce disc",
+      "prices_by_version": {
+        "26_2": 130
+      },
+      "category": "discs"
+    },
+    {
       "id": "tlTDl1UEc4TEcHHIpupp",
       "material_id": "music_disc_cat",
       "name": "cat disc",
@@ -25452,11 +25758,27 @@
       "subcategory": "",
       "version": "1.16",
       "version_removed": null,
-      "pricing_type": "static",
-      "prices_by_version": {
-        "1_16": 50
+      "image": "/images/items/name_tag.png",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "copper_nugget",
+              "quantity": 1
+            },
+            {
+              "material_id": "paper",
+              "quantity": 1
+            }
+          ],
+          "output_count": 1
+        }
       },
-      "image": "/images/items/name_tag.png"
+      "prices_by_version": {
+        "1_16": 50,
+        "26_2": 1.5
+      }
     },
     {
       "id": "egPAzRQShvGzz4cEBKX5",
@@ -27750,7 +28072,6 @@
       "name": "pale oak boat",
       "stack": 1,
       "version": "1.21",
-      "url": "https://minecraft.fandom.com/wiki/Pale_Oak_Boat",
       "pricing_type": "dynamic",
       "recipes_by_version": {
         "1_21": {
@@ -27763,12 +28084,13 @@
           "output_count": 1
         }
       },
-      "image": "/images/items/pale_oak_boat.png",
       "prices_by_version": {
         "1_21": 12
       },
       "subcategory": "boat",
-      "category": "transport"
+      "category": "transport",
+      "image": "/images/items/pale_oak_boat.webp",
+      "url": "https://minecraft.wiki/w/Pale_Oak_Boat"
     },
     {
       "id": "uMkZ7y9ilsEK60yAxykc",
@@ -27801,7 +28123,6 @@
       "material_id": "pale_oak_chest_boat",
       "name": "pale oak boat with chest",
       "stack": 1,
-      "url": "",
       "version": "1.21",
       "pricing_type": "dynamic",
       "recipes_by_version": {
@@ -27819,12 +28140,13 @@
           "output_count": 1
         }
       },
-      "image": "/images/items/pale_oak_chest_boat.png",
       "prices_by_version": {
         "1_21": 28
       },
       "subcategory": "boat",
-      "category": "transport"
+      "category": "transport",
+      "image": "/images/items/pale_oak_chest_boat.webp",
+      "url": "https://minecraft.wiki/w/Pale_Oak_Chest_Boat"
     },
     {
       "id": "p9HKho3tRQayTpIPEvAk",
@@ -29483,6 +29805,110 @@
       "image": "/images/items/polished_blackstone_wall.png"
     },
     {
+      "id": "MKKh3NoEBiw6GbmuUXqa",
+      "material_id": "polished_cinnabar",
+      "name": "polished cinnabar",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "cinnabar",
+              "quantity": 4
+            }
+          ],
+          "output_count": 4
+        }
+      },
+      "image": "/images/items/polished_cinnabar.png",
+      "url": "https://minecraft.wiki/w/Polished_Cinnabar",
+      "category": "stone",
+      "subcategory": "cinnabar",
+      "prices_by_version": {
+        "26_2": 10
+      }
+    },
+    {
+      "id": "PrZ2OilZse4ncC2pKwyr",
+      "material_id": "polished_cinnabar_slab",
+      "name": "polished cinnabar slab",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "polished_cinnabar",
+              "quantity": 3
+            }
+          ],
+          "output_count": 6
+        }
+      },
+      "image": "/images/items/polished_cinnabar_slab.png",
+      "url": "https://minecraft.wiki/w/Polished_Cinnabar_Slab",
+      "category": "stone",
+      "subcategory": "cinnabar",
+      "prices_by_version": {
+        "26_2": 5
+      }
+    },
+    {
+      "id": "L8MqYj3DTap4xwy5snEv",
+      "material_id": "polished_cinnabar_stairs",
+      "name": "polished cinnabar stairs",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "polished_cinnabar",
+              "quantity": 6
+            }
+          ],
+          "output_count": 4
+        }
+      },
+      "image": "/images/items/polished_cinnabar_stairs.png",
+      "url": "https://minecraft.wiki/w/Polished_Cinnabar_Stairs",
+      "category": "stone",
+      "subcategory": "cinnabar",
+      "prices_by_version": {
+        "26_2": 15
+      }
+    },
+    {
+      "id": "CiEbOiRwIhyijJGQVzPx",
+      "material_id": "polished_cinnabar_wall",
+      "name": "polished cinnabar wall",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "polished_cinnabar",
+              "quantity": 6
+            }
+          ],
+          "output_count": 6
+        }
+      },
+      "image": "/images/items/polished_cinnabar_wall.png",
+      "url": "https://minecraft.wiki/w/Polished_Cinnabar_Wall",
+      "category": "stone",
+      "subcategory": "cinnabar",
+      "prices_by_version": {
+        "26_2": 10
+      }
+    },
+    {
       "id": "RzIpPqd1M1NZNbqmTqCK",
       "material_id": "polished_deepslate",
       "name": "polished deepslate",
@@ -29759,6 +30185,110 @@
       "image": "/images/items/polished_granite_stairs.png"
     },
     {
+      "id": "TjDH8nSjvVfLEh92OcEW",
+      "material_id": "polished_sulfur",
+      "name": "polished sulfur",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "sulfur",
+              "quantity": 4
+            }
+          ],
+          "output_count": 4
+        }
+      },
+      "image": "/images/items/polished_sulfur.png",
+      "url": "https://minecraft.wiki/w/Polished_Sulfur",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 10
+      }
+    },
+    {
+      "id": "meHAx4cQIj2TzPXysFlc",
+      "material_id": "polished_sulfur_slab",
+      "name": "polished sulfur slab",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "polished_sulfur",
+              "quantity": 3
+            }
+          ],
+          "output_count": 6
+        }
+      },
+      "image": "/images/items/polished_sulfur_slab.png",
+      "url": "https://minecraft.wiki/w/Polished_Sulfur_Slab",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 5
+      }
+    },
+    {
+      "id": "21s5ZIr5Y7xGONVJK1Qa",
+      "material_id": "polished_sulfur_stairs",
+      "name": "polished sulfur stairs",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "polished_sulfur",
+              "quantity": 6
+            }
+          ],
+          "output_count": 4
+        }
+      },
+      "image": "/images/items/polished_sulfur_stairs.png",
+      "url": "https://minecraft.wiki/w/Polished_Sulfur_Stairs",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 15
+      }
+    },
+    {
+      "id": "iypVmPtw9Cp3yOOwGQzN",
+      "material_id": "polished_sulfur_wall",
+      "name": "polished sulfur wall",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "polished_sulfur",
+              "quantity": 6
+            }
+          ],
+          "output_count": 6
+        }
+      },
+      "image": "/images/items/polished_sulfur_wall.png",
+      "url": "https://minecraft.wiki/w/Polished_Sulfur_Wall",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 10
+      }
+    },
+    {
       "id": "MUZLlnM6HNiupFNcnyd6",
       "material_id": "polished_tuff",
       "name": "polished tuff",
@@ -29933,6 +30463,32 @@
         "1_16": 2
       },
       "image": "/images/items/potato.png"
+    },
+    {
+      "id": "SAEkIw3KkVRNdvJG0Jpp",
+      "material_id": "potent_sulfur",
+      "name": "potent sulfur",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "sulfur",
+              "quantity": 9
+            }
+          ],
+          "output_count": 1
+        }
+      },
+      "image": "/images/items/potent_sulfur.png",
+      "url": "https://minecraft.wiki/w/Potent_Sulfur",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 90
+      }
     },
     {
       "id": "9ZcplW1sHPEkktJ2O2Fc",
@@ -30601,7 +31157,6 @@
     {
       "id": "Gh87848WE3SY0DUiTBUh",
       "name": "potion of wind charging",
-      "material_id": "potion_of_wind_charging_1",
       "url": "",
       "price": 1,
       "stack": 1,
@@ -30614,7 +31169,8 @@
       "prices_by_version": {
         "1_21": 28
       },
-      "subcategory": "potion"
+      "subcategory": "potion",
+      "material_id": "potion_of_wind_charged_1"
     },
     {
       "id": "QuCQAaaDvc7HS1GWJMpQ",
@@ -33080,10 +33636,10 @@
       "url": "https://minecraft.wiki/w/Block_of_Resin",
       "image": "/images/items/block_of_resin.png",
       "category": "drops",
+      "subcategory": "resin",
       "prices_by_version": {
-        "1_21": 315
-      },
-      "subcategory": "resin"
+        "1_21": 216
+      }
     },
     {
       "id": "UesTpTdWD4cgruhFJ3nA",
@@ -33095,10 +33651,11 @@
       "image": "/images/items/resin_brick.png",
       "url": "https://minecraft.wiki/w/Resin_Brick",
       "category": "brick",
+      "subcategory": "resin",
+      "version_removed": "",
       "prices_by_version": {
-        "1_21": 36
-      },
-      "subcategory": "resin"
+        "1_21": 25
+      }
     },
     {
       "id": "yO1l0ZOv1338UbotWWBw",
@@ -33121,10 +33678,10 @@
       "image": "/images/items/resin_brick_slab.png",
       "url": "https://minecraft.wiki/w/Resin_Brick_Slab",
       "category": "brick",
+      "subcategory": "resin",
       "prices_by_version": {
-        "1_21": 72
-      },
-      "subcategory": "resin"
+        "1_21": 50
+      }
     },
     {
       "id": "A86sG6zXDdTyjBV3epqs",
@@ -33147,10 +33704,10 @@
       "image": "/images/items/resin_brick_stairs.png",
       "url": "https://minecraft.wiki/w/Resin_Brick_Stairs",
       "category": "brick",
+      "subcategory": "resin",
       "prices_by_version": {
-        "1_21": 216
-      },
-      "subcategory": "resin"
+        "1_21": 150
+      }
     },
     {
       "id": "5V42Mz1r2SmKDXKYfdJ2",
@@ -33173,10 +33730,10 @@
       "image": "/images/items/resin_brick_wall.png",
       "url": "https://minecraft.wiki/w/Resin_Brick_Wall",
       "category": "brick",
+      "subcategory": "resin",
       "prices_by_version": {
-        "1_21": 144
-      },
-      "subcategory": "resin"
+        "1_21": 100
+      }
     },
     {
       "id": "uaQppr93E2Q4Ga4tJOpv",
@@ -33199,10 +33756,10 @@
       "url": "https://minecraft.wiki/w/Resin_Bricks",
       "image": "/images/items/resin_bricks.png",
       "category": "brick",
+      "subcategory": "resin",
       "prices_by_version": {
-        "1_21": 144
-      },
-      "subcategory": "resin"
+        "1_21": 100
+      }
     },
     {
       "id": "u3MpESwOpxJm4bmr1tgs",
@@ -33214,11 +33771,11 @@
       "version_removed": "",
       "url": "https://minecraft.wiki/w/Resin_Clump",
       "category": "drops",
-      "prices_by_version": {
-        "1_21": 35
-      },
       "pricing_type": "static",
-      "subcategory": "resin"
+      "subcategory": "resin",
+      "prices_by_version": {
+        "1_21": 24
+      }
     },
     {
       "id": "YXYOzXcCFcFMM8zwvzDe",
@@ -35619,18 +36176,19 @@
     {
       "id": "RDJBTJz2uT5PP0HnRVCW",
       "name": "splash potion of wind charging",
-      "material_id": "splash_potion_of_wind_charging_1",
       "image": "/images/items/splash_potion_of_wind_charging.png",
       "url": "https://minecraft.wiki/w/splash_potion_of_wind_charging",
       "stack": 1,
       "category": "brewing",
       "version": "1.16",
-      "version_removed": null,
       "prices_by_version": {
         "1_16": 32
       },
       "price": 32,
-      "subcategory": "potion splash"
+      "subcategory": "potion splash",
+      "pricing_type": "static",
+      "version_removed": "",
+      "material_id": "splash_potion_of_wind_charged_1"
     },
     {
       "id": "Sdnrm3F0o9jzb0hGXniS",
@@ -37426,6 +37984,261 @@
         "1_16": 1
       },
       "image": "/images/items/sugar_cane.png"
+    },
+    {
+      "id": "XizVP6cUfwEyanaggBoT",
+      "material_id": "sulfur",
+      "name": "sulfur",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "sulfur_spike",
+              "quantity": 4
+            }
+          ],
+          "output_count": 1
+        }
+      },
+      "image": "/images/items/sulfur.png",
+      "url": "https://minecraft.wiki/w/Sulfur",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 10
+      }
+    },
+    {
+      "id": "BsLokzu7Vd1Mv0h3vdxc",
+      "material_id": "sulfur_brick_slab",
+      "name": "sulfur brick slab",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "sulfur_bricks",
+              "quantity": 3
+            }
+          ],
+          "output_count": 6
+        }
+      },
+      "image": "/images/items/sulfur_brick_slab.png",
+      "url": "https://minecraft.wiki/w/Sulfur_Brick_Slab",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 5
+      }
+    },
+    {
+      "id": "Fzl1QigUrJi6xpZ56rR8",
+      "material_id": "sulfur_brick_stairs",
+      "name": "sulfur brick stairs",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "sulfur_bricks",
+              "quantity": 6
+            }
+          ],
+          "output_count": 4
+        }
+      },
+      "image": "/images/items/sulfur_brick_stairs.png",
+      "url": "https://minecraft.wiki/w/Sulfur_Brick_Stairs",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 15
+      }
+    },
+    {
+      "id": "5dhofAJl1BAnymPPtr0c",
+      "material_id": "sulfur_brick_wall",
+      "name": "sulfur brick wall",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "sulfur_bricks",
+              "quantity": 6
+            }
+          ],
+          "output_count": 6
+        }
+      },
+      "image": "/images/items/sulfur_brick_wall.png",
+      "url": "https://minecraft.wiki/w/Sulfur_Brick_Wall",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 10
+      }
+    },
+    {
+      "id": "zJJswQw3uv3dy3li8q61",
+      "material_id": "sulfur_bricks",
+      "name": "sulfur bricks",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "polished_sulfur",
+              "quantity": 4
+            }
+          ],
+          "output_count": 4
+        }
+      },
+      "image": "/images/items/sulfur_bricks.png",
+      "url": "https://minecraft.wiki/w/Sulfur_Bricks",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 10
+      }
+    },
+    {
+      "id": "mazA4lmTKbvdVilJMuOo",
+      "material_id": "sulfur_cube_bucket",
+      "name": "bucket of sulfur cube",
+      "stack": 1,
+      "pricing_type": "static",
+      "subcategory": "",
+      "version": "26.2",
+      "image": "/images/items/sulfur_cube_bucket.png",
+      "url": "https://minecraft.wiki/w/Sulfur_Cube_Bucket",
+      "version_removed": "",
+      "prices_by_version": {
+        "26_2": 80
+      },
+      "category": "utility"
+    },
+    {
+      "id": "WEiG30RhtdUQoHhNvIkG",
+      "material_id": "sulfur_cube_spawn_egg",
+      "name": "sulfur cube spawn egg",
+      "stack": 64,
+      "prices_by_version": {
+        "26_2": 1
+      },
+      "pricing_type": "static",
+      "category": "",
+      "subcategory": "",
+      "version": "26.2",
+      "image": "/images/items/sulfur_cube_spawn_egg.png",
+      "url": "https://minecraft.wiki/w/Sulfur_Cube_Spawn_Egg"
+    },
+    {
+      "id": "ahQMFzJY9Gc7RXjn5HmR",
+      "material_id": "sulfur_slab",
+      "name": "sulfur slab",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "sulfur",
+              "quantity": 3
+            }
+          ],
+          "output_count": 6
+        }
+      },
+      "image": "/images/items/sulfur_slab.png",
+      "url": "https://minecraft.wiki/w/Sulfur_Slab",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 5
+      }
+    },
+    {
+      "id": "Eo4ppDNbCTrlXnJfXnUh",
+      "material_id": "sulfur_spike",
+      "name": "sulfur spike",
+      "stack": 64,
+      "pricing_type": "static",
+      "version": "26.2",
+      "url": "https://minecraft.wiki/w/Sulfur_Spike",
+      "image": "/images/items/sulfur_spike.webp",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "version_removed": "",
+      "prices_by_version": {
+        "26_2": 2.5
+      }
+    },
+    {
+      "id": "6YRI1Eb90gI5AotQjzlN",
+      "material_id": "sulfur_stairs",
+      "name": "sulfur stairs",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "sulfur",
+              "quantity": 6
+            }
+          ],
+          "output_count": 4
+        }
+      },
+      "image": "/images/items/sulfur_stairs.png",
+      "url": "https://minecraft.wiki/w/Sulfur_Stairs",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 15
+      }
+    },
+    {
+      "id": "vQKYVuavjugYVlDbUCpv",
+      "material_id": "sulfur_wall",
+      "name": "sulfur wall",
+      "stack": 64,
+      "version": "26.2",
+      "pricing_type": "dynamic",
+      "recipes_by_version": {
+        "26_2": {
+          "ingredients": [
+            {
+              "material_id": "sulfur",
+              "quantity": 6
+            }
+          ],
+          "output_count": 6
+        }
+      },
+      "image": "/images/items/sulfur_wall.png",
+      "url": "https://minecraft.wiki/w/Sulfur_Wall",
+      "category": "stone",
+      "subcategory": "sulfur",
+      "prices_by_version": {
+        "26_2": 10
+      }
     },
     {
       "id": "6K0iccC2pas8SJ9Iq8OR",
