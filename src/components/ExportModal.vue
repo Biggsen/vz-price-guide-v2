@@ -6,7 +6,7 @@ import { enabledCategories, versions, baseEnabledVersions } from '../constants.j
 import { isVersionLessOrEqual, versionToKey } from '../constants/minecraftVersions.js'
 import { useAdmin } from '../utils/admin.js'
 import { trackModalInteraction } from '../utils/analytics.js'
-import { getEffectivePrice } from '../utils/pricing.js'
+import { getEffectivePrice, getShopBuyPrice, getProcessingCostConfig } from '../utils/pricing.js'
 import { generateExportData, serializeYAML } from '../utils/exportData.js'
 import { isDonationsEnabled, createDonationCheckout, saveExportIntent } from '../utils/donations.js'
 import { useRouter } from 'vue-router'
@@ -326,11 +326,24 @@ const sortedFilteredItems = computed(() => {
 
 		if (sortField.value === 'buy') {
 			const versionKey = versionToKey(selectedVersion.value)
-			const basePriceA = getEffectivePrice(a, versionKey)
-			const basePriceB = getEffectivePrice(b, versionKey)
-
-			valueA = basePriceA * priceMultiplier.value
-			valueB = basePriceB * priceMultiplier.value
+			const costConfig = getProcessingCostConfig(props.economyConfig)
+			const memo = new Map()
+			valueA = getShopBuyPrice(
+				a,
+				versionKey,
+				priceMultiplier.value,
+				costConfig,
+				props.items,
+				memo
+			)
+			valueB = getShopBuyPrice(
+				b,
+				versionKey,
+				priceMultiplier.value,
+				costConfig,
+				props.items,
+				memo
+			)
 
 			const comparison = valueA - valueB
 			return sortDirection.value === 'asc' ? comparison : -comparison
@@ -354,7 +367,12 @@ const exportData = computed(() => {
 		diamondRoundingDirection: diamondRoundingDirection.value,
 		sortField: sortField.value,
 		sortDirection: sortDirection.value,
-		isDonation: false
+		isDonation: false,
+		pricingItems: props.items,
+		craftingCostEnabled: props.economyConfig.craftingCostEnabled === true,
+		smeltingCostEnabled: props.economyConfig.smeltingCostEnabled === true,
+		craftingCost: props.economyConfig.craftingCost ?? 2,
+		smeltingCost: props.economyConfig.smeltingCost ?? 3
 	})
 })
 
@@ -381,7 +399,11 @@ function buildExportConfig(format) {
 		sellMargin: sellMargin.value,
 		currencyType: currencyType.value,
 		diamondItemId: diamondItem.value?.material_id || null,
-		diamondRoundingDirection: diamondRoundingDirection.value
+		diamondRoundingDirection: diamondRoundingDirection.value,
+		craftingCostEnabled: props.economyConfig.craftingCostEnabled === true,
+		smeltingCostEnabled: props.economyConfig.smeltingCostEnabled === true,
+		craftingCost: props.economyConfig.craftingCost ?? 2,
+		smeltingCost: props.economyConfig.smeltingCost ?? 3
 	}
 }
 

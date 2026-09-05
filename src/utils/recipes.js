@@ -252,6 +252,16 @@ export function validateIngredientsInDatabase(ingredients, dbItems) {
 }
 
 /**
+ * Whether a stored recipes_by_version entry is a smelting recipe.
+ * @param {*} storedRecipe
+ * @returns {boolean}
+ */
+export function isStoredSmeltingRecipe(storedRecipe) {
+	if (!storedRecipe || Array.isArray(storedRecipe)) return false
+	return storedRecipe.process === 'smelting'
+}
+
+/**
  * Generate suggestions for missing materials
  * @param {Array} missingIngredients - Array of missing ingredient objects
  * @param {Array} dbItems - Array of items from database
@@ -335,6 +345,7 @@ export function toInternalFormat(parsedRecipe) {
 		output_count: parsedRecipe.outputItem.count,
 		ingredients: parsedRecipe.ingredients,
 		recipe_type: parsedRecipe.rawRecipe.inShape ? 'shaped' : 'shapeless',
+		process: 'crafting',
 		created_at: new Date().toISOString(),
 		version: '1.16' // TODO: Make this dynamic
 	}

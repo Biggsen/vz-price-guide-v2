@@ -23,5 +23,30 @@ export const STORAGE_KEYS = {
 	CURRENCY_TYPE: 'currencyType',
 	DIAMOND_ITEM_ID: 'diamondItemId',
 	DIAMOND_ROUNDING_DIRECTION: 'diamondRoundingDirection',
+	PROCESSING_COST_ENABLED: 'processingCostEnabled',
+	CRAFTING_COST_ENABLED: 'craftingCostEnabled',
+	SMELTING_COST_ENABLED: 'smeltingCostEnabled',
+	CRAFTING_COST: 'craftingCost',
+	SMELTING_COST: 'smeltingCost',
 	FEATURE_ANNOUNCEMENT_DISMISSED: 'featureAnnouncementDismissed'
+}
+
+/**
+ * Independent crafting/smelting cost toggles.
+ * If the new keys are missing, a legacy shared toggle of true turns both on.
+ */
+export function readProcessingCostToggles(storage = localStorage) {
+	const craftingEnabled = storage.getItem(STORAGE_KEYS.CRAFTING_COST_ENABLED)
+	const smeltingEnabled = storage.getItem(STORAGE_KEYS.SMELTING_COST_ENABLED)
+	if (craftingEnabled !== null || smeltingEnabled !== null) {
+		return {
+			craftingCostEnabled: craftingEnabled === 'true',
+			smeltingCostEnabled: smeltingEnabled === 'true'
+		}
+	}
+	const bothOn = storage.getItem(STORAGE_KEYS.PROCESSING_COST_ENABLED) === 'true'
+	return {
+		craftingCostEnabled: bothOn,
+		smeltingCostEnabled: bothOn
+	}
 }

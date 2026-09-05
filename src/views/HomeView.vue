@@ -121,8 +121,43 @@ const {
 	layout,
 	economyConfig,
 	currencyType,
-	diamondItemId
+	diamondItemId,
+	craftingCostEnabled,
+	smeltingCostEnabled,
+	craftingCost,
+	smeltingCost,
+	resetPricingToDefaults
 } = economyConfigComposable
+
+const modifiedPricingChips = computed(() => {
+	const chips = []
+	if (Number(priceMultiplier.value) !== 1) {
+		chips.push(`Buy ×${priceMultiplier.value}`)
+	}
+	if (Number(sellMargin.value) !== 0.3) {
+		chips.push(`Sell ${Math.round(Number(sellMargin.value) * 100)}%`)
+	}
+	if (craftingCostEnabled.value) {
+		chips.push(`Crafting +${craftingCost.value}`)
+	}
+	if (smeltingCostEnabled.value) {
+		chips.push(`Smelting +${smeltingCost.value}`)
+	}
+	if (roundToWhole.value) {
+		chips.push('Round to whole')
+	}
+	if (currencyType.value === 'diamond') {
+		chips.push('Diamond')
+	}
+	return chips
+})
+
+const hasModifiedPricing = computed(() => modifiedPricingChips.value.length > 0)
+
+function handleResetModifiedPricing() {
+	resetPricingToDefaults()
+	trackHomepageInteraction('modified_pricing_reset', getHomepageAnalyticsContext())
+}
 
 // Find diamond item for currency indicator
 const diamondItem = computed(() => {
@@ -332,6 +367,18 @@ function handleSaveSettings(settings) {
 	if (settings.diamondRoundingDirection) {
 		economyConfigComposable.diamondRoundingDirection.value = settings.diamondRoundingDirection
 	}
+	if (settings.craftingCostEnabled !== undefined) {
+		economyConfigComposable.craftingCostEnabled.value = settings.craftingCostEnabled
+	}
+	if (settings.smeltingCostEnabled !== undefined) {
+		economyConfigComposable.smeltingCostEnabled.value = settings.smeltingCostEnabled
+	}
+	if (settings.craftingCost !== undefined) {
+		economyConfigComposable.craftingCost.value = settings.craftingCost
+	}
+	if (settings.smeltingCost !== undefined) {
+		economyConfigComposable.smeltingCost.value = settings.smeltingCost
+	}
 
 	// Close the modal
 	showSettingsModal.value = false
@@ -437,9 +484,9 @@ watch(
 			@clear-all="handleClearAllCategories"
 			@toggle-visibility="toggleCategoryFilters" />
 
-		<div class="text-sm text-gray-asparagus font-medium h-9 flex items-center">
+		<div class="text-sm text-gray-asparagus font-medium min-h-9 flex flex-col justify-center gap-1 py-1">
 			<span v-if="isLoading">Loading price guide...</span>
-			<span v-else>
+			<template v-else>
 				<div class="flex items-center gap-2">
 					<span class="text-xl text-heavy-metal font-bold">MC {{ selectedVersion }}</span>
 					<img
@@ -453,7 +500,24 @@ watch(
 						class="w-6 h-6"
 						title="Diamond Currency Mode" />
 				</div>
-			</span>
+				<div
+					v-if="hasModifiedPricing"
+					class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-asparagus">
+					<span>Modified pricing</span>
+					<span
+						v-for="chip in modifiedPricingChips"
+						:key="chip"
+						class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-white text-heavy-metal border border-gray-asparagus">
+						{{ chip }}
+					</span>
+					<button
+						type="button"
+						class="text-gray-asparagus hover:text-heavy-metal underline"
+						@click="handleResetModifiedPricing">
+						Reset
+					</button>
+				</div>
+			</template>
 		</div>
 
 		<ViewControls

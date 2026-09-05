@@ -4,8 +4,14 @@ import {
 	sellUnitPrice,
 	buyStackPrice,
 	sellStackPrice,
-	getEffectivePrice,
-	getEffectivePriceMemoized,
+	getShopBuyPrice,
+	getShopBuyStackPrice,
+	getShopMaterialUnitPrice,
+	getUnitProcessingCost,
+	getStackProcessingCost,
+	getProcessingCostConfig,
+	getResolvedRecipe,
+	getRecipeProcess,
 	getDiamondPricing,
 	getDiamondShulkerPricing,
 	formatDiamondRatio,
@@ -13,10 +19,10 @@ import {
 	formatNumber
 } from '../utils/pricing.js'
 import { getImageUrl, getWikiUrl } from '../utils/image.js'
-import { getDefaultVersion, compareVersions, versionToKey } from '../constants/minecraftVersions.js'
+import { getDefaultVersion, versionToKey } from '../constants/minecraftVersions.js'
 import { trackHomepageInteraction } from '../utils/analytics.js'
 import { computed, ref, reactive, watch, onMounted, onUnmounted } from 'vue'
-import { Squares2X2Icon } from '@heroicons/vue/16/solid'
+import { Squares2X2Icon, FireIcon } from '@heroicons/vue/16/solid'
 
 // Sorting state
 const sortField = ref('')
@@ -108,6 +114,15 @@ const currentVersion = computed(() => props.economyConfig.version || getDefaultV
 const currencyType = computed(() => props.economyConfig.currencyType || 'money')
 const diamondItemId = computed(() => props.economyConfig.diamondItemId)
 const diamondRoundingDirection = computed(() => props.economyConfig.diamondRoundingDirection || 'nearest')
+const processingCostConfig = computed(() => getProcessingCostConfig(props.economyConfig))
+
+const shopPriceContext = computed(() => ({
+	versionKey: versionToKey(currentVersion.value),
+	mult: priceMultiplier.value || 1,
+	costConfig: processingCostConfig.value,
+	allItems: props.allItems || [],
+	memo: new Map()
+}))
 
 // Find diamond item from all items
 const diamondItem = computed(() => {
@@ -155,10 +170,23 @@ const sortedCollection = computed(() => {
 		}
 
 		if (sortField.value === 'buy') {
-			// Calculate buy prices for comparison using effective price
-			const versionKey = versionToKey(currentVersion.value)
-			valueA = getEffectivePrice(a, versionKey) * (priceMultiplier.value || 1)
-			valueB = getEffectivePrice(b, versionKey) * (priceMultiplier.value || 1)
+			const ctx = shopPriceContext.value
+			valueA = getShopBuyPrice(
+				a,
+				ctx.versionKey,
+				ctx.mult,
+				ctx.costConfig,
+				ctx.allItems,
+				ctx.memo
+			)
+			valueB = getShopBuyPrice(
+				b,
+				ctx.versionKey,
+				ctx.mult,
+				ctx.costConfig,
+				ctx.allItems,
+				ctx.memo
+			)
 			const comparison = valueA - valueB
 			return sortDirection.value === 'asc' ? comparison : -comparison
 		}
@@ -195,10 +223,26 @@ function toggleSort(field) {
 	}
 }
 
-// Helper function to get effective price for template use
-function getItemEffectivePrice(item) {
-	const versionKey = versionToKey(currentVersion.value)
-	return getEffectivePriceMemoized(item, versionKey)
+function getItemShopMaterialPrice(item) {
+	const ctx = shopPriceContext.value
+	return getShopMaterialUnitPrice(
+		item,
+		ctx.versionKey,
+		ctx.mult,
+		ctx.costConfig,
+		ctx.allItems,
+		ctx.memo
+	)
+}
+
+function getItemProcessingCost(item) {
+	const ctx = shopPriceContext.value
+	return getUnitProcessingCost(item, ctx.versionKey, ctx.costConfig)
+}
+
+function getItemStackProcessingCost(item) {
+	const ctx = shopPriceContext.value
+	return getStackProcessingCost(item, ctx.versionKey, ctx.costConfig, item.stack)
 }
 
 // Get diamond pricing for an item
@@ -206,12 +250,21 @@ function getItemDiamondPricing(item) {
 	if (!isDiamondCurrency.value || !diamondItem.value) {
 		return null
 	}
+	const ctx = shopPriceContext.value
 	return getDiamondPricing(
 		item,
 		diamondItem.value,
 		currentVersion.value,
 		sellMargin.value,
-		diamondRoundingDirection.value
+		diamondRoundingDirection.value,
+		getShopBuyPrice(
+			item,
+			ctx.versionKey,
+			ctx.mult,
+			ctx.costConfig,
+			ctx.allItems,
+			ctx.memo
+		)
 	)
 }
 
@@ -220,12 +273,21 @@ function getItemDiamondShulkerPricing(item) {
 	if (!isDiamondCurrency.value || !diamondItem.value) {
 		return null
 	}
+	const ctx = shopPriceContext.value
 	return getDiamondShulkerPricing(
 		item,
 		diamondItem.value,
 		currentVersion.value,
 		sellMargin.value,
-		diamondRoundingDirection.value
+		diamondRoundingDirection.value,
+		getShopBuyStackPrice(
+			item,
+			ctx.versionKey,
+			ctx.mult,
+			ctx.costConfig,
+			ctx.allItems,
+			ctx.memo
+		)
 	)
 }
 
@@ -250,30 +312,17 @@ function handleItemWikiClick(item) {
 	})
 }
 
-// Get recipe for an item based on current version with fallback logic
 function getItemRecipe(item) {
-	if (!item.recipes_by_version || !currentVersion.value) {
-		return null
-	}
+	if (!currentVersion.value) return null
+	return getResolvedRecipe(item, versionToKey(currentVersion.value))
+}
 
-	const versionKey = versionToKey(currentVersion.value)
-	const availableVersions = Object.keys(item.recipes_by_version)
+function showRecipeIcon(item) {
+	return Boolean(getItemRecipe(item)) || item.pricing_type === 'dynamic'
+}
 
-	// First try to get the exact version
-	if (item.recipes_by_version[versionKey]) {
-		return item.recipes_by_version[versionKey]
-	}
-
-	// If no exact match, find the latest available version that's <= current version
-	const sortedVersions = availableVersions.sort((a, b) => compareVersions(b, a))
-
-	for (const availableVersion of sortedVersions) {
-		if (compareVersions(availableVersion, versionKey) <= 0) {
-			return item.recipes_by_version[availableVersion]
-		}
-	}
-
-	return null
+function isSmeltingItem(item) {
+	return getRecipeProcess(item, versionToKey(currentVersion.value)) === 'smelting'
 }
 </script>
 
@@ -369,10 +418,17 @@ function getItemRecipe(item) {
 								{{ item.name }}
 							</a>
 							<span
-								v-if="item.pricing_type === 'dynamic'"
+								v-if="showRecipeIcon(item)"
 								class="text-highland text-xs cursor-pointer ml-auto relative"
 								@click="handleToggleHoverPanel(item.id, $event)">
+								<FireIcon
+									v-if="isSmeltingItem(item)"
+									:class="[
+										'w-3 h-3 sm:w-4 sm:h-4',
+										!hasClickedRecipe ? 'gentle-pulse' : ''
+									]" />
 								<Squares2X2Icon
+									v-else
 									:class="[
 										'w-3 h-3 sm:w-4 sm:h-4',
 										!hasClickedRecipe ? 'gentle-pulse' : ''
@@ -507,10 +563,11 @@ function getItemRecipe(item) {
 						<template v-else>
 							{{
 								buyUnitPrice(
-									getItemEffectivePrice(item),
-									priceMultiplier,
+									getItemShopMaterialPrice(item),
+									1,
 									roundToWhole,
-									useSmartNumberFormatting
+									useSmartNumberFormatting,
+									getItemProcessingCost(item)
 								)
 							}}
 						</template>
@@ -543,11 +600,12 @@ function getItemRecipe(item) {
 						<template v-else>
 							{{
 								sellUnitPrice(
-									getItemEffectivePrice(item),
-									priceMultiplier,
+									getItemShopMaterialPrice(item),
+									1,
 									sellMargin,
 									roundToWhole,
-									useSmartNumberFormatting
+									useSmartNumberFormatting,
+									getItemProcessingCost(item)
 								)
 							}}
 						</template>
@@ -577,11 +635,12 @@ function getItemRecipe(item) {
 						<template v-else>
 							{{
 								buyStackPrice(
-									getItemEffectivePrice(item),
+									getItemShopMaterialPrice(item),
 									item.stack,
-									priceMultiplier,
+									1,
 									roundToWhole,
-									useSmartNumberFormatting
+									useSmartNumberFormatting,
+									getItemStackProcessingCost(item)
 								)
 							}}
 						</template>
@@ -609,12 +668,13 @@ function getItemRecipe(item) {
 						<template v-else>
 							{{
 								sellStackPrice(
-									getItemEffectivePrice(item),
+									getItemShopMaterialPrice(item),
 									item.stack,
-									priceMultiplier,
+									1,
 									sellMargin,
 									roundToWhole,
-									useSmartNumberFormatting
+									useSmartNumberFormatting,
+									getItemStackProcessingCost(item)
 								)
 							}}
 						</template>

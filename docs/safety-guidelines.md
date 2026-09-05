@@ -36,6 +36,20 @@ npm run seed:emu:dry
 
 # Safe: Test full-catalog seeding without making changes
 npm run seed:emu:full:dry
+
+# Safe: Backfill smelting recipes on the emulator
+npm run backfill:smelting:emu:dry
+npm run backfill:smelting:emu
+
+# Safe: Snapshot emulator items into seed/items-prod-Full.json
+npm run snapshot:items:emu
+```
+
+Production smelting backfill is a confirmed ops step. Dry-run first, then apply:
+
+```bash
+npm run backfill:smelting:prod:dry
+npm run backfill:smelting:prod
 ```
 
 **NEVER run this directly:**
@@ -171,6 +185,8 @@ This means you (correctly) cancelled a production operation. To continue with em
 | `VITE_FIREBASE_EMULATORS`     | Enables emulator mode        | `1` or `true`                         |
 | `GCLOUD_PROJECT`              | Firebase project ID          | `demo-vz-price-guide` (for emulators) |
 | `DRY_RUN`                     | Test mode without changes    | `true` or `1`                         |
+| `ALLOW_PROD_WRITE`            | Permit confirmed prod writes | unset unless running prod backfill    |
+| `CONFIRM_PROD_WRITE`          | Prod write confirmation      | `YES` (with `ALLOW_PROD_WRITE=true`)  |
 
 ## Contact
 

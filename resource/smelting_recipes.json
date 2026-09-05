@@ -1,0 +1,622 @@
+{
+  "iron_ingot": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "iron_ore",
+          "quantity": 1
+        }
+      ]
+    },
+    "1_17": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "raw_iron",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "gold_ingot": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "gold_ore",
+          "quantity": 1
+        }
+      ]
+    },
+    "1_17": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "raw_gold",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "copper_ingot": {
+    "1_17": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "raw_copper",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "netherite_scrap": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "ancient_debris",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "cooked_porkchop": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "porkchop",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "cooked_beef": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "beef",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "cooked_chicken": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "chicken",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "cooked_mutton": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "mutton",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "cooked_rabbit": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "rabbit",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "cooked_cod": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "cod",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "cooked_salmon": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "salmon",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "baked_potato": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "potato",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "dried_kelp": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "kelp",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "glass": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "sand",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "stone": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "cobblestone",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "smooth_stone": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "stone",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "smooth_sandstone": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "sandstone",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "smooth_red_sandstone": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "red_sandstone",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "smooth_quartz": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "quartz_block",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "cracked_stone_bricks": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "stone_bricks",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "cracked_nether_bricks": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "nether_bricks",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "cracked_polished_blackstone_bricks": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "polished_blackstone_bricks",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "cracked_deepslate_bricks": {
+    "1_17": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "deepslate_bricks",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "cracked_deepslate_tiles": {
+    "1_17": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "deepslate_tiles",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "deepslate": {
+    "1_17": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "cobbled_deepslate",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "sponge": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "wet_sponge",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "smooth_basalt": {
+    "1_17": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "basalt",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "brick": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "clay_ball",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "clay",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "nether_brick": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "netherrack",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "green_dye": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "cactus",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "lime_dye": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "sea_pickle",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "charcoal": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "oak_log",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "popped_chorus_fruit": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "chorus_fruit",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "white_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "white_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "orange_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "orange_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "magenta_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "magenta_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "light_blue_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "light_blue_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "yellow_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "yellow_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "lime_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "lime_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "pink_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "pink_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "gray_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "gray_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "light_gray_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "light_gray_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "cyan_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "cyan_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "purple_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "purple_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "blue_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "blue_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "brown_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "brown_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "green_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "green_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "red_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "red_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  },
+  "black_glazed_terracotta": {
+    "1_16": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "black_terracotta",
+          "quantity": 1
+        }
+      ]
+    }
+  }
+}

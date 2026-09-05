@@ -55,14 +55,24 @@ export function formatCurrency(
 	return formatNumber(rounded)
 }
 
+function shopBuyUnit(price, priceMultiplier, processingCost = 0) {
+	return price * priceMultiplier + processingCost
+}
+
+/** Stack buy: materials × stack + stack-level processing cost (not unit fee × stack). */
+function shopBuyStack(price, stack, priceMultiplier, stackProcessingCost = 0) {
+	return price * priceMultiplier * stack + stackProcessingCost
+}
+
 export function buyUnitPrice(
 	price,
 	priceMultiplier,
 	roundToWhole = false,
-	useSmartNumberFormatting = true
+	useSmartNumberFormatting = true,
+	processingCost = 0
 ) {
 	return formatCurrency(
-		price * priceMultiplier,
+		shopBuyUnit(price, priceMultiplier, processingCost),
 		roundToWhole,
 		useSmartNumberFormatting
 	)
@@ -73,10 +83,11 @@ export function sellUnitPrice(
 	priceMultiplier,
 	sellMargin,
 	roundToWhole = false,
-	useSmartNumberFormatting = true
+	useSmartNumberFormatting = true,
+	processingCost = 0
 ) {
 	return formatCurrency(
-		price * priceMultiplier * sellMargin,
+		shopBuyUnit(price, priceMultiplier, processingCost) * sellMargin,
 		roundToWhole,
 		useSmartNumberFormatting
 	)
@@ -87,10 +98,11 @@ export function buyStackPrice(
 	stack,
 	priceMultiplier,
 	roundToWhole = false,
-	useSmartNumberFormatting = true
+	useSmartNumberFormatting = true,
+	stackProcessingCost = 0
 ) {
 	return formatCurrency(
-		price * stack * priceMultiplier,
+		shopBuyStack(price, stack, priceMultiplier, stackProcessingCost),
 		roundToWhole,
 		useSmartNumberFormatting
 	)
@@ -102,10 +114,11 @@ export function sellStackPrice(
 	priceMultiplier,
 	sellMargin,
 	roundToWhole = false,
-	useSmartNumberFormatting = true
+	useSmartNumberFormatting = true,
+	stackProcessingCost = 0
 ) {
 	return formatCurrency(
-		price * stack * priceMultiplier * sellMargin,
+		shopBuyStack(price, stack, priceMultiplier, stackProcessingCost) * sellMargin,
 		roundToWhole,
 		useSmartNumberFormatting
 	)
@@ -130,24 +143,56 @@ function roundPriceForExport(rawPrice, roundToWhole = false) {
 	return Math.round(rawPrice)
 }
 
-export function buyUnitPriceRaw(price, priceMultiplier, roundToWhole = false) {
-	const rawPrice = price * priceMultiplier
-	return roundPriceForExport(rawPrice, roundToWhole)
+export function buyUnitPriceRaw(
+	price,
+	priceMultiplier,
+	roundToWhole = false,
+	processingCost = 0
+) {
+	return roundPriceForExport(
+		shopBuyUnit(price, priceMultiplier, processingCost),
+		roundToWhole
+	)
 }
 
-export function sellUnitPriceRaw(price, priceMultiplier, sellMargin, roundToWhole = false) {
-	const rawPrice = price * priceMultiplier * sellMargin
-	return roundPriceForExport(rawPrice, roundToWhole)
+export function sellUnitPriceRaw(
+	price,
+	priceMultiplier,
+	sellMargin,
+	roundToWhole = false,
+	processingCost = 0
+) {
+	return roundPriceForExport(
+		shopBuyUnit(price, priceMultiplier, processingCost) * sellMargin,
+		roundToWhole
+	)
 }
 
-export function buyStackPriceRaw(price, stack, priceMultiplier, roundToWhole = false) {
-	const rawPrice = price * stack * priceMultiplier
-	return roundPriceForExport(rawPrice, roundToWhole)
+export function buyStackPriceRaw(
+	price,
+	stack,
+	priceMultiplier,
+	roundToWhole = false,
+	stackProcessingCost = 0
+) {
+	return roundPriceForExport(
+		shopBuyStack(price, stack, priceMultiplier, stackProcessingCost),
+		roundToWhole
+	)
 }
 
-export function sellStackPriceRaw(price, stack, priceMultiplier, sellMargin, roundToWhole = false) {
-	const rawPrice = price * stack * priceMultiplier * sellMargin
-	return roundPriceForExport(rawPrice, roundToWhole)
+export function sellStackPriceRaw(
+	price,
+	stack,
+	priceMultiplier,
+	sellMargin,
+	roundToWhole = false,
+	stackProcessingCost = 0
+) {
+	return roundPriceForExport(
+		shopBuyStack(price, stack, priceMultiplier, stackProcessingCost) * sellMargin,
+		roundToWhole
+	)
 }
 
 /**
@@ -185,6 +230,329 @@ export function getEffectivePrice(item, version = OLDEST_VERSION_KEY) {
 
 	// Final fallback to legacy price field
 	return item.price || 0
+}
+
+function normalizeRecipe(recipe) {
+	if (!recipe) return null
+	const ingredients = Array.isArray(recipe) ? recipe : recipe.ingredients
+	const outputCount = Array.isArray(recipe) ? 1 : recipe.output_count || 1
+	if (!ingredients || !Array.isArray(ingredients)) return null
+	return {
+		ingredients,
+		output_count: outputCount,
+		process: Array.isArray(recipe) ? undefined : recipe.process
+	}
+}
+
+/**
+ * Resolve the recipe for an item at a version, falling back to earlier versions.
+ * @param {Object} item
+ * @param {string} version - Version key (e.g. "1_16")
+ * @returns {Object|null} { ingredients, output_count, process }
+ */
+export function getResolvedRecipe(item, version = OLDEST_VERSION_KEY) {
+	if (!item?.recipes_by_version || typeof item.recipes_by_version !== 'object') {
+		return null
+	}
+
+	const versionKey = versionToKey(version)
+	let recipe = item.recipes_by_version[versionKey]
+	if (!recipe) {
+		const sortedVersions = Object.keys(item.recipes_by_version).sort((a, b) =>
+			compareVersions(b, a)
+		)
+		for (const availableVersion of sortedVersions) {
+			if (compareVersions(availableVersion, versionKey) <= 0) {
+				recipe = item.recipes_by_version[availableVersion]
+				break
+			}
+		}
+	}
+
+	return normalizeRecipe(recipe)
+}
+
+/**
+ * @param {Object|null} recipe
+ * @returns {boolean}
+ */
+export function isSmeltingRecipe(recipe) {
+	return recipe?.process === 'smelting'
+}
+
+/**
+ * Crafting vs smelting process for cost and icons.
+ * Missing process + dynamic → crafting. Static with no recipe → null.
+ * @param {Object} item
+ * @param {string} version - Version key or dotted version
+ * @returns {'crafting'|'smelting'|null}
+ */
+export function getRecipeProcess(item, version = OLDEST_VERSION_KEY) {
+	const recipe = getResolvedRecipe(item, version)
+	if (recipe?.process === 'smelting' || recipe?.process === 'crafting') {
+		return recipe.process
+	}
+	if (item?.pricing_type === 'dynamic') {
+		return 'crafting'
+	}
+	return null
+}
+
+export function clampProcessingCost(value) {
+	const num = Number(value)
+	if (!Number.isFinite(num)) return 0
+	return Math.min(100, Math.max(0, num))
+}
+
+function isProcessCostEnabled(costConfig, enabledKey) {
+	if (costConfig[enabledKey] !== undefined) return costConfig[enabledKey] === true
+	return costConfig.processingCostEnabled === true
+}
+
+/**
+ * Flat crafting/smelting cost for an item (full sitting fee / per-item smelt fee).
+ * Not scaled by Buy ×.
+ * @param {Object} item
+ * @param {string} version
+ * @param {Object} [costConfig]
+ * @returns {number}
+ */
+export function getProcessingCostAmount(item, version, costConfig = {}) {
+	const process = getRecipeProcess(item, version)
+	if (!process) return 0
+	if (process === 'smelting') {
+		if (!isProcessCostEnabled(costConfig, 'smeltingCostEnabled')) return 0
+		return clampProcessingCost(costConfig.smeltingCost)
+	}
+	if (!isProcessCostEnabled(costConfig, 'craftingCostEnabled')) return 0
+	return clampProcessingCost(costConfig.craftingCost)
+}
+
+/**
+ * Processing cost to add on a single unit buy.
+ * Crafting: one craft’s fee split across output_count.
+ * Smelting: full fee per unit.
+ * @param {Object} item
+ * @param {string} version
+ * @param {Object} [costConfig]
+ * @returns {number}
+ */
+export function getUnitProcessingCost(item, version, costConfig = {}) {
+	const amount = getProcessingCostAmount(item, version, costConfig)
+	if (!amount) return 0
+	if (getRecipeProcess(item, version) !== 'crafting') return amount
+	const recipe = getResolvedRecipe(item, version)
+	const outputCount = Number(recipe?.output_count)
+	const n = Number.isFinite(outputCount) && outputCount > 0 ? outputCount : 1
+	return amount / n
+}
+
+/**
+ * Processing cost to add on a stack buy (not unit fee × stack).
+ * Crafting: fee once for the whole stack.
+ * Smelting: full fee × stack.
+ * @param {Object} item
+ * @param {string} version
+ * @param {Object} [costConfig]
+ * @param {number} [stack]
+ * @returns {number}
+ */
+export function getStackProcessingCost(item, version, costConfig = {}, stack = 64) {
+	const amount = getProcessingCostAmount(item, version, costConfig)
+	if (!amount) return 0
+	if (getRecipeProcess(item, version) === 'crafting') return amount
+	const stackSize = Number(stack)
+	const n = Number.isFinite(stackSize) && stackSize > 0 ? stackSize : 64
+	return amount * n
+}
+
+function processingCostConfigKey(costConfig = {}) {
+	return [
+		costConfig.craftingCostEnabled,
+		costConfig.smeltingCostEnabled,
+		costConfig.craftingCost,
+		costConfig.smeltingCost,
+		costConfig.processingCostEnabled
+	].join('|')
+}
+
+/**
+ * @param {Array|Map} allItems
+ * @returns {Map<string, Object>|null}
+ */
+export function toItemsByMaterialId(allItems) {
+	if (!allItems) return null
+	if (allItems instanceof Map) return allItems
+	const map = new Map()
+	for (const item of allItems) {
+		if (item?.material_id) map.set(item.material_id, item)
+	}
+	return map
+}
+
+/**
+ * Material portion of listed unit buy (Buy × applied; nested craft/smelt fees chained).
+ * Dynamic items live-walk the recipe using ingredient shop unit prices.
+ * @param {Object} item
+ * @param {string} version
+ * @param {number} [priceMultiplier]
+ * @param {Object} [costConfig]
+ * @param {Array|Map} [allItems]
+ * @param {Map} [memo]
+ * @param {Set} [visited]
+ * @returns {number}
+ */
+export function getShopMaterialUnitPrice(
+	item,
+	version,
+	priceMultiplier = 1,
+	costConfig = {},
+	allItems = null,
+	memo = null,
+	visited = null
+) {
+	const versionKey = versionToKey(version)
+	const mult = Number(priceMultiplier) || 1
+	const id = item?.material_id
+	const cache = memo ?? null
+	const memoKey = id
+		? `${id}|${versionKey}|${mult}|${processingCostConfigKey(costConfig)}|material`
+		: null
+	if (memoKey && cache?.has(memoKey)) return cache.get(memoKey)
+
+	const fallback = () => getEffectivePrice(item, versionKey) * mult
+	const recipe =
+		item?.pricing_type === 'dynamic' ? getResolvedRecipe(item, versionKey) : null
+	const itemsById = toItemsByMaterialId(allItems)
+
+	let material = fallback()
+	if (recipe?.ingredients?.length && itemsById?.size && id) {
+		const visiting = visited ?? new Set()
+		if (visiting.has(id)) {
+			material = fallback()
+		} else {
+			visiting.add(id)
+			let total = 0
+			let complete = true
+			for (const ingredient of recipe.ingredients) {
+				const ingredientItem = itemsById.get(ingredient.material_id)
+				if (!ingredientItem) {
+					complete = false
+					break
+				}
+				const qty = Number(ingredient.quantity) || 0
+				total +=
+					getShopBuyPrice(
+						ingredientItem,
+						versionKey,
+						mult,
+						costConfig,
+						itemsById,
+						cache,
+						visiting
+					) * qty
+			}
+			visiting.delete(id)
+			if (complete) {
+				const outputCount = Number(recipe.output_count)
+				const n = Number.isFinite(outputCount) && outputCount > 0 ? outputCount : 1
+				material = total / n
+			}
+		}
+	}
+
+	if (memoKey && cache) cache.set(memoKey, material)
+	return material
+}
+
+/**
+ * Listed unit buy: chained materials + this item’s unit processing cost.
+ * @param {Object} item
+ * @param {string} version
+ * @param {number} [priceMultiplier]
+ * @param {Object} [costConfig]
+ * @param {Array|Map} [allItems]
+ * @param {Map} [memo]
+ * @param {Set} [visited]
+ * @returns {number}
+ */
+export function getShopBuyPrice(
+	item,
+	version,
+	priceMultiplier = 1,
+	costConfig = {},
+	allItems = null,
+	memo = null,
+	visited = null
+) {
+	const versionKey = versionToKey(version)
+	const mult = Number(priceMultiplier) || 1
+	const id = item?.material_id
+	const cache = memo ?? null
+	const memoKey = id
+		? `${id}|${versionKey}|${mult}|${processingCostConfigKey(costConfig)}|unit`
+		: null
+	if (memoKey && cache?.has(memoKey)) return cache.get(memoKey)
+
+	const material = getShopMaterialUnitPrice(
+		item,
+		versionKey,
+		mult,
+		costConfig,
+		allItems,
+		cache,
+		visited
+	)
+	const result = material + getUnitProcessingCost(item, versionKey, costConfig)
+	if (memoKey && cache) cache.set(memoKey, result)
+	return result
+}
+
+/**
+ * Listed stack buy: chained materials × stack + stack processing cost.
+ * @param {Object} item
+ * @param {string} version
+ * @param {number} [priceMultiplier]
+ * @param {Object} [costConfig]
+ * @param {Array|Map} [allItems]
+ * @param {Map} [memo]
+ * @param {Set} [visited]
+ * @returns {number}
+ */
+export function getShopBuyStackPrice(
+	item,
+	version,
+	priceMultiplier = 1,
+	costConfig = {},
+	allItems = null,
+	memo = null,
+	visited = null
+) {
+	const versionKey = versionToKey(version)
+	const stack = Number(item?.stack)
+	const stackSize = Number.isFinite(stack) && stack > 0 ? stack : 64
+	const material = getShopMaterialUnitPrice(
+		item,
+		versionKey,
+		priceMultiplier,
+		costConfig,
+		allItems,
+		memo,
+		visited
+	)
+	return (
+		material * stackSize +
+		getStackProcessingCost(item, versionKey, costConfig, stackSize)
+	)
+}
+
+export function getProcessingCostConfig(economyOrExportConfig = {}) {
+	return {
+		craftingCostEnabled: isProcessCostEnabled(economyOrExportConfig, 'craftingCostEnabled'),
+		smeltingCostEnabled: isProcessCostEnabled(economyOrExportConfig, 'smeltingCostEnabled'),
+		craftingCost: economyOrExportConfig.craftingCost ?? 2,
+		smeltingCost: economyOrExportConfig.smeltingCost ?? 3
+	}
 }
 
 /**
@@ -627,7 +995,14 @@ export function formatDiamondRatioFull(diamonds, quantity, itemName) {
  * @param {string} roundingDirection - 'nearest' | 'up' | 'down'
  * @returns {Object} Pricing object with buy/sell ratios
  */
-export function getDiamondPricing(item, diamondItem, version, sellMargin = 0.3, roundingDirection = 'nearest') {
+export function getDiamondPricing(
+	item,
+	diamondItem,
+	version,
+	sellMargin = 0.3,
+	roundingDirection = 'nearest',
+	itemPriceOverride = null
+) {
 	if (!item || !diamondItem) {
 		return {
 			buy: { diamonds: 0, quantity: 1 },
@@ -636,7 +1011,8 @@ export function getDiamondPricing(item, diamondItem, version, sellMargin = 0.3, 
 	}
 
 	const versionKey = versionToKey(version)
-	const itemPrice = getEffectivePrice(item, versionKey)
+	const itemPrice =
+		itemPriceOverride != null ? itemPriceOverride : getEffectivePrice(item, versionKey)
 	const diamondPrice = getEffectivePrice(diamondItem, versionKey)
 
 	// Calculate buy ratio (using item price directly)
@@ -660,9 +1036,17 @@ export function getDiamondPricing(item, diamondItem, version, sellMargin = 0.3, 
  * @param {string} version - Version key
  * @param {number} sellMargin - Sell margin multiplier
  * @param {string} roundingDirection - 'nearest' | 'up' | 'down'
+ * @param {number|null} [stackBuyPriceOverride] - Full stack buy price (materials + stack fee)
  * @returns {Object} Shulker pricing object
  */
-export function getDiamondShulkerPricing(item, diamondItem, version, sellMargin = 0.3, roundingDirection = 'nearest') {
+export function getDiamondShulkerPricing(
+	item,
+	diamondItem,
+	version,
+	sellMargin = 0.3,
+	roundingDirection = 'nearest',
+	stackBuyPriceOverride = null
+) {
 	if (!item || !diamondItem) {
 		return {
 			buy: { diamonds: 0, quantity: 1728 },
@@ -671,16 +1055,19 @@ export function getDiamondShulkerPricing(item, diamondItem, version, sellMargin 
 	}
 
 	const versionKey = versionToKey(version)
-	const itemPrice = getEffectivePrice(item, versionKey)
-	const diamondPrice = getEffectivePrice(diamondItem, versionKey)
-	
-	// Calculate shulker capacity: 27 slots × stack size
 	const stackSize = item.stack || 64
+	const stackBuyPrice =
+		stackBuyPriceOverride != null
+			? stackBuyPriceOverride
+			: getEffectivePrice(item, versionKey) * stackSize
+	const diamondPrice = getEffectivePrice(diamondItem, versionKey)
+
+	// Calculate shulker capacity: 27 slots × stack size
 	const SHULKER_CAPACITY = 27 * stackSize
 
-	// Calculate price for a full shulker
-	const shulkerBuyPrice = itemPrice * SHULKER_CAPACITY
-	const shulkerSellPrice = itemPrice * sellMargin * SHULKER_CAPACITY
+	// 27 stacks; stack buy already includes once-per-stack crafting fee
+	const shulkerBuyPrice = stackBuyPrice * 27
+	const shulkerSellPrice = stackBuyPrice * sellMargin * 27
 
 	// Calculate how many diamonds for a shulker
 	const buyDiamonds = Math.round(shulkerBuyPrice / diamondPrice)

@@ -9,7 +9,8 @@ import {
 	createIdToMaterialMap,
 	processAllRecipes,
 	validateIngredientsInDatabase,
-	toInternalFormat
+	toInternalFormat,
+	isStoredSmeltingRecipe
 } from '../../utils/recipes.js'
 import { ArrowPathIcon, DocumentArrowDownIcon } from '@heroicons/vue/24/outline'
 
@@ -46,15 +47,21 @@ onMounted(async () => {
 })
 
 // New: Filter recipes by ingredient
+function isBlockedFromCraftingImport(recipe) {
+	return checkRecipeExists(recipe) || isProtectedSmeltingRecipe(recipe)
+}
+
 function filterRecipesByIngredient() {
 	if (!selectedIngredient.value) {
 		// "All recipes" - only show recipes that haven't been imported yet
-		filteredRecipes.value = allRecipes.value.filter((recipe) => !checkRecipeExists(recipe))
+		filteredRecipes.value = allRecipes.value.filter(
+			(recipe) => !isBlockedFromCraftingImport(recipe)
+		)
 	} else {
 		// Filter by ingredient and exclude already-imported recipes
 		filteredRecipes.value = allRecipes.value.filter(
 			(recipe) =>
-				!checkRecipeExists(recipe) &&
+				!isBlockedFromCraftingImport(recipe) &&
 				recipe.ingredients.some(
 					(ingredient) => ingredient.material_id === selectedIngredient.value
 				)
@@ -210,7 +217,9 @@ async function startImport() {
 		extractAvailableIngredients()
 
 		// Initially show only recipes that haven't been imported yet
-		filteredRecipes.value = allRecipes.value.filter((recipe) => !checkRecipeExists(recipe))
+		filteredRecipes.value = allRecipes.value.filter(
+			(recipe) => !isBlockedFromCraftingImport(recipe)
+		)
 
 		// Pre-check: are all recipes already imported?
 		const allExist = allRecipes.value.every((recipe) => checkRecipeExists(recipe))
@@ -309,6 +318,33 @@ function checkRecipeExists(recipe) {
 	return false
 }
 
+function getStoredRecipeForOutput(recipe) {
+	if (!recipe || !recipe.outputItem) return null
+
+	const materialId = recipe.outputItem.material_id
+	const targetVersionKey = versionToKey(selectedVersion.value)
+	const item = dbItems.value.find((entry) => entry.material_id === materialId)
+	if (!item || !item.recipes_by_version) return null
+
+	if (item.recipes_by_version[targetVersionKey]) {
+		return item.recipes_by_version[targetVersionKey]
+	}
+
+	const sortedVersions = Object.keys(item.recipes_by_version).sort((a, b) =>
+		compareVersions(b, a)
+	)
+	for (const availableVersion of sortedVersions) {
+		if (compareVersions(availableVersion, targetVersionKey) <= 0) {
+			return item.recipes_by_version[availableVersion]
+		}
+	}
+	return null
+}
+
+function isProtectedSmeltingRecipe(recipe) {
+	return isStoredSmeltingRecipe(getStoredRecipeForOutput(recipe))
+}
+
 // Check if an existing recipe is identical to the new recipe (for display purposes)
 function checkRecipeIsIdentical(recipe) {
 	if (!recipe || !recipe.outputItem) return false
@@ -390,6 +426,18 @@ function showNextRecipe() {
 async function importCurrentRecipe() {
 	if (!currentRecipe.value || !currentRecipe.value.isValid) return
 
+	if (isProtectedSmeltingRecipe(currentRecipe.value)) {
+		importProgress.value.skipped++
+		importResults.value.push({
+			recipe: currentRecipe.value,
+			status: 'skipped_smelting',
+			timestamp: new Date().toISOString()
+		})
+		importProgress.value.current++
+		showNextRecipe()
+		return
+	}
+
 	try {
 		const internalRecipe = toInternalFormat(currentRecipe.value)
 		if (internalRecipe) {
@@ -403,7 +451,8 @@ async function importCurrentRecipe() {
 				await updateDoc(itemRef, {
 					[`recipes_by_version.${versionKey}`]: {
 						ingredients: internalRecipe.ingredients,
-						output_count: internalRecipe.output_count
+						output_count: internalRecipe.output_count,
+						process: internalRecipe.process || 'crafting'
 					},
 					pricing_type: 'dynamic'
 				})

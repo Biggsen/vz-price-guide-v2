@@ -30,8 +30,18 @@ const item = ref(null)
 const selectedVersion = ref(getOldestVersion())
 const recipe = ref({
 	ingredients: [],
-	output_count: 1
+	output_count: 1,
+	process: ''
 })
+const originalProcess = ref(null)
+
+function storedRecipeProcess(versionRecipe) {
+	if (!versionRecipe || Array.isArray(versionRecipe)) return ''
+	if (versionRecipe.process === 'smelting' || versionRecipe.process === 'crafting') {
+		return versionRecipe.process
+	}
+	return ''
+}
 
 // Ingredient management
 const newIngredient = ref({
@@ -81,19 +91,22 @@ function loadRecipeForVersion() {
 	const versionRecipe = item.value.recipes_by_version?.[versionKey]
 
 	if (versionRecipe) {
-		// Handle both old format (array) and new format (object)
+		const process = storedRecipeProcess(versionRecipe)
 		recipe.value = {
 			ingredients: Array.isArray(versionRecipe)
 				? versionRecipe
 				: versionRecipe.ingredients || [],
-			output_count: Array.isArray(versionRecipe) ? 1 : versionRecipe.output_count || 1
+			output_count: Array.isArray(versionRecipe) ? 1 : versionRecipe.output_count || 1,
+			process
 		}
+		originalProcess.value = process || null
 	} else {
-		// No recipe for this version, start with empty recipe
 		recipe.value = {
 			ingredients: [],
-			output_count: 1
+			output_count: 1,
+			process: ''
 		}
+		originalProcess.value = null
 	}
 	// Trigger validation and price preview after loading recipe
 	validateRecipe()
@@ -296,16 +309,23 @@ async function saveRecipe() {
 		const itemRef = doc(db, 'items', item.value.id)
 
 		// Prepare recipe data
+		const process = storedRecipeProcess({ process: recipe.value.process })
 		const recipeData = {
 			ingredients: recipe.value.ingredients,
 			output_count: recipe.value.output_count
 		}
+		if (process) {
+			recipeData.process = process
+		}
 
-		// Update the item with the new recipe
-		await updateDoc(itemRef, {
-			[`recipes_by_version.${versionKey}`]: recipeData,
-			pricing_type: 'dynamic' // Set to dynamic since we're adding a recipe
-		})
+		const updateData = {
+			[`recipes_by_version.${versionKey}`]: recipeData
+		}
+		if (process === 'crafting') {
+			updateData.pricing_type = 'dynamic'
+		}
+
+		await updateDoc(itemRef, updateData)
 
 		success.value = true
 
@@ -470,6 +490,50 @@ onMounted(() => {
 						min="1"
 						max="64"
 						class="border-2 border-gray-asparagus rounded px-3 py-1 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus w-24" />
+				</div>
+
+				<div class="mb-6">
+					<label
+						for="recipe-process"
+						class="block text-sm font-medium text-gray-700 mb-2">
+						Process:
+					</label>
+					<select
+						id="recipe-process"
+						v-model="recipe.process"
+						class="border-2 border-gray-asparagus rounded px-3 py-1 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus">
+						<option value="">Not set</option>
+						<option value="crafting">Crafting</option>
+						<option value="smelting">Smelting</option>
+					</select>
+					<p
+						v-if="recipe.process === 'smelting'"
+						class="text-sm text-gray-600 mt-2">
+						Smelting recipes keep the item's current pricing type. Saving will not
+						switch the item to dynamic.
+					</p>
+					<p
+						v-else-if="recipe.process === 'crafting' && originalProcess === 'smelting'"
+						class="text-sm text-amber-700 mt-2">
+						Changing this to crafting will replace the furnace recipe and set the
+						item to dynamic pricing.
+					</p>
+					<p
+						v-else-if="recipe.process === 'crafting'"
+						class="text-sm text-gray-600 mt-2">
+						Saving as crafting sets the item to dynamic pricing.
+					</p>
+					<p
+						v-else-if="originalProcess === 'smelting'"
+						class="text-sm text-amber-700 mt-2">
+						Clearing process will replace the furnace recipe and will not change
+						pricing type.
+					</p>
+					<p
+						v-else
+						class="text-sm text-gray-600 mt-2">
+						Process is not stored on this recipe. Saving will not change pricing type.
+					</p>
 				</div>
 
 				<!-- Ingredients section -->
