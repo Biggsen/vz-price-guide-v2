@@ -7,6 +7,7 @@ import {
 	getShopBuyPrice,
 	getShopBuyStackPrice,
 	getShopMaterialUnitPrice,
+	getShopPriceBreakdown,
 	getUnitProcessingCost,
 	getStackProcessingCost,
 	getProcessingCostConfig,
@@ -23,6 +24,7 @@ import { getDefaultVersion, versionToKey } from '../constants/minecraftVersions.
 import { trackHomepageInteraction } from '../utils/analytics.js'
 import { computed, ref, reactive, watch, onMounted, onUnmounted } from 'vue'
 import { Squares2X2Icon, FireIcon } from '@heroicons/vue/16/solid'
+import PriceBreakdownModal from './PriceBreakdownModal.vue'
 
 // Sorting state
 const sortField = ref('')
@@ -35,6 +37,10 @@ const hasClickedRecipe = ref(localStorage.getItem('hasClickedRecipe') === 'true'
 // Track which item images have finished loading (for subtle loader)
 const loadedImages = reactive({})
 
+const priceBreakdownOpen = ref(false)
+const priceBreakdown = ref(null)
+const modifierHeld = ref(false)
+
 // Mobile detection (below 640px, Tailwind's sm breakpoint)
 const isMobile = ref(false)
 
@@ -42,13 +48,27 @@ function checkMobile() {
 	isMobile.value = window.innerWidth < 640
 }
 
+function syncModifierHeld(event) {
+	modifierHeld.value = Boolean(event?.ctrlKey || event?.metaKey)
+}
+
+function clearModifierHeld() {
+	modifierHeld.value = false
+}
+
 onMounted(() => {
 	checkMobile()
 	window.addEventListener('resize', checkMobile)
+	window.addEventListener('keydown', syncModifierHeld)
+	window.addEventListener('keyup', syncModifierHeld)
+	window.addEventListener('blur', clearModifierHeld)
 })
 
 onUnmounted(() => {
 	window.removeEventListener('resize', checkMobile)
+	window.removeEventListener('keydown', syncModifierHeld)
+	window.removeEventListener('keyup', syncModifierHeld)
+	window.removeEventListener('blur', clearModifierHeld)
 })
 
 // Format diamond ratio for mobile (uses "/" instead of " per ")
@@ -135,6 +155,13 @@ const diamondItem = computed(() => {
 
 // Check if we're in diamond currency mode
 const isDiamondCurrency = computed(() => currencyType.value === 'diamond' && diamondItem.value !== null)
+
+const priceBreakdownTriggerClass = computed(() => [
+	'bg-transparent border-0 p-0 font-inherit',
+	modifierHeld.value && !isDiamondCurrency.value
+		? 'cursor-help underline decoration-dotted decoration-gray-asparagus/50 underline-offset-2'
+		: 'cursor-default'
+])
 
 // Check if sorting is enabled (only in list view)
 const sortingEnabled = computed(() => props.viewMode === 'list')
@@ -297,6 +324,30 @@ function handleToggleHoverPanel(itemId, event) {
 	hasClickedRecipe.value = true // Stop animation after first click
 	localStorage.setItem('hasClickedRecipe', 'true') // Persist to localStorage
 	props.toggleHoverPanel(itemId)
+}
+
+function openPriceBreakdown(item, kind, event) {
+	if (!event?.ctrlKey && !event?.metaKey) return
+	if (isDiamondCurrency.value) return
+	event.preventDefault()
+	event.stopPropagation()
+	const ctx = shopPriceContext.value
+	priceBreakdown.value = getShopPriceBreakdown(
+		item,
+		kind,
+		ctx.versionKey,
+		ctx.mult,
+		sellMargin.value,
+		ctx.costConfig,
+		ctx.allItems,
+		ctx.memo
+	)
+	priceBreakdownOpen.value = true
+}
+
+function closePriceBreakdown() {
+	priceBreakdownOpen.value = false
+	priceBreakdown.value = null
 }
 
 function handleItemWikiClick(item) {
@@ -561,15 +612,21 @@ function isSmeltingItem(item) {
 							<span v-else>—</span>
 						</template>
 						<template v-else>
-							{{
-								buyUnitPrice(
-									getItemShopMaterialPrice(item),
-									1,
-									roundToWhole,
-									useSmartNumberFormatting,
-									getItemProcessingCost(item)
-								)
-							}}
+							<button
+								type="button"
+								:class="priceBreakdownTriggerClass"
+								:title="modifierHeld ? 'Ctrl+click (⌘ on Mac) for price breakdown' : undefined"
+								@click="openPriceBreakdown(item, 'unit_buy', $event)">
+								{{
+									buyUnitPrice(
+										getItemShopMaterialPrice(item),
+										1,
+										roundToWhole,
+										useSmartNumberFormatting,
+										getItemProcessingCost(item)
+									)
+								}}
+							</button>
 						</template>
 					</td>
 
@@ -598,16 +655,22 @@ function isSmeltingItem(item) {
 							<span v-else>—</span>
 						</template>
 						<template v-else>
-							{{
-								sellUnitPrice(
-									getItemShopMaterialPrice(item),
-									1,
-									sellMargin,
-									roundToWhole,
-									useSmartNumberFormatting,
-									getItemProcessingCost(item)
-								)
-							}}
+							<button
+								type="button"
+								:class="priceBreakdownTriggerClass"
+								:title="modifierHeld ? 'Ctrl+click (⌘ on Mac) for price breakdown' : undefined"
+								@click="openPriceBreakdown(item, 'unit_sell', $event)">
+								{{
+									sellUnitPrice(
+										getItemShopMaterialPrice(item),
+										1,
+										sellMargin,
+										roundToWhole,
+										useSmartNumberFormatting,
+										getItemProcessingCost(item)
+									)
+								}}
+							</button>
 						</template>
 					</td>
 
@@ -633,16 +696,22 @@ function isSmeltingItem(item) {
 							<span v-else>—</span>
 						</template>
 						<template v-else>
-							{{
-								buyStackPrice(
-									getItemShopMaterialPrice(item),
-									item.stack,
-									1,
-									roundToWhole,
-									useSmartNumberFormatting,
-									getItemStackProcessingCost(item)
-								)
-							}}
+							<button
+								type="button"
+								:class="priceBreakdownTriggerClass"
+								:title="modifierHeld ? 'Ctrl+click (⌘ on Mac) for price breakdown' : undefined"
+								@click="openPriceBreakdown(item, 'stack_buy', $event)">
+								{{
+									buyStackPrice(
+										getItemShopMaterialPrice(item),
+										item.stack,
+										1,
+										roundToWhole,
+										useSmartNumberFormatting,
+										getItemStackProcessingCost(item)
+									)
+								}}
+							</button>
 						</template>
 					</td>
 
@@ -666,17 +735,23 @@ function isSmeltingItem(item) {
 							<span v-else>—</span>
 						</template>
 						<template v-else>
-							{{
-								sellStackPrice(
-									getItemShopMaterialPrice(item),
-									item.stack,
-									1,
-									sellMargin,
-									roundToWhole,
-									useSmartNumberFormatting,
-									getItemStackProcessingCost(item)
-								)
-							}}
+							<button
+								type="button"
+								:class="priceBreakdownTriggerClass"
+								:title="modifierHeld ? 'Ctrl+click (⌘ on Mac) for price breakdown' : undefined"
+								@click="openPriceBreakdown(item, 'stack_sell', $event)">
+								{{
+									sellStackPrice(
+										getItemShopMaterialPrice(item),
+										item.stack,
+										1,
+										sellMargin,
+										roundToWhole,
+										useSmartNumberFormatting,
+										getItemStackProcessingCost(item)
+									)
+								}}
+							</button>
 						</template>
 					</td>
 					<td v-if="showStackSize" class="text-center px-1 py-0.5 w-16">
@@ -685,6 +760,11 @@ function isSmeltingItem(item) {
 				</tr>
 			</tbody>
 		</table>
+
+		<PriceBreakdownModal
+			:isOpen="priceBreakdownOpen"
+			:breakdown="priceBreakdown"
+			@close="closePriceBreakdown" />
 	</div>
 </template>
 

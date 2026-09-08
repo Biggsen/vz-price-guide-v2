@@ -355,6 +355,18 @@
       ]
     }
   },
+  "resin_brick": {
+    "1_21": {
+      "process": "smelting",
+      "output_count": 1,
+      "ingredients": [
+        {
+          "material_id": "resin_clump",
+          "quantity": 1
+        }
+      ]
+    }
+  },
   "terracotta": {
     "1_16": {
       "process": "smelting",

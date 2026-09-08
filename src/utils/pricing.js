@@ -546,6 +546,224 @@ export function getShopBuyStackPrice(
 	)
 }
 
+function formatBreakdownAmount(value) {
+	const num = Number(value)
+	if (!Number.isFinite(num)) return '0'
+	return parseFloat(num.toFixed(4)).toString()
+}
+
+const PRICE_BREAKDOWN_KIND_LABELS = {
+	unit_buy: 'Buy (unit)',
+	unit_sell: 'Sell (unit)',
+	stack_buy: 'Buy (stack)',
+	stack_sell: 'Sell (stack)'
+}
+
+/**
+ * Human-readable breakdown of a listed shop price (homepage/export money mode).
+ * @param {Object} item
+ * @param {'unit_buy'|'unit_sell'|'stack_buy'|'stack_sell'} kind
+ * @param {string} version
+ * @param {number} [priceMultiplier]
+ * @param {number} [sellMargin]
+ * @param {Object} [costConfig]
+ * @param {Array|Map} [allItems]
+ * @param {Map} [memo]
+ * @returns {Object}
+ */
+export function getShopPriceBreakdown(
+	item,
+	kind,
+	version,
+	priceMultiplier = 1,
+	sellMargin = 0.3,
+	costConfig = {},
+	allItems = null,
+	memo = null
+) {
+	const versionKey = versionToKey(version)
+	const mult = Number(priceMultiplier) || 1
+	const margin = Number(sellMargin)
+	const sellPct = Number.isFinite(margin) ? margin : 0.3
+	const stack = Number(item?.stack)
+	const stackSize = Number.isFinite(stack) && stack > 0 ? stack : 64
+	const cache = memo ?? new Map()
+	const steps = []
+
+	const material = getShopMaterialUnitPrice(
+		item,
+		versionKey,
+		mult,
+		costConfig,
+		allItems,
+		cache
+	)
+	const unitFee = getUnitProcessingCost(item, versionKey, costConfig)
+	const stackFee = getStackProcessingCost(item, versionKey, costConfig, stackSize)
+	const unitBuy = material + unitFee
+	const stackBuy = material * stackSize + stackFee
+	const process = getRecipeProcess(item, versionKey)
+	const recipe =
+		item?.pricing_type === 'dynamic' ? getResolvedRecipe(item, versionKey) : null
+	const itemsById = toItemsByMaterialId(allItems)
+
+	if (recipe?.ingredients?.length && itemsById?.size) {
+		const outputCount = Number(recipe.output_count)
+		const n = Number.isFinite(outputCount) && outputCount > 0 ? outputCount : 1
+		let ingredientTotal = 0
+		for (const ingredient of recipe.ingredients) {
+			const ingredientItem = itemsById.get(ingredient.material_id)
+			const qty = Number(ingredient.quantity) || 0
+			if (!ingredientItem) {
+				steps.push({
+					label: `${ingredient.material_id} × ${qty}`,
+					detail: 'Missing from catalog',
+					value: null,
+					image: null
+				})
+				continue
+			}
+			const ingMaterial = getShopMaterialUnitPrice(
+				ingredientItem,
+				versionKey,
+				mult,
+				costConfig,
+				itemsById,
+				cache
+			)
+			const ingFee = getUnitProcessingCost(ingredientItem, versionKey, costConfig)
+			const ingProcess = getRecipeProcess(ingredientItem, versionKey)
+			const ingUnit = ingMaterial + ingFee
+			const line = ingUnit * qty
+			ingredientTotal += line
+
+			let detail = `${formatBreakdownAmount(ingMaterial)} base`
+			if (ingFee > 0) {
+				const feeName =
+					ingProcess === 'smelting'
+						? 'smelting'
+						: ingProcess === 'crafting'
+							? 'crafting'
+							: 'processing'
+				detail += ` + ${formatBreakdownAmount(ingFee)} ${feeName}`
+			}
+			detail += ` = ${formatBreakdownAmount(ingUnit)} each`
+
+			steps.push({
+				label: `${ingredientItem.name || ingredient.material_id} × ${qty}`,
+				detail,
+				value: line,
+				image: ingredientItem.image || null,
+				process: ingProcess,
+				fee: ingFee > 0 ? ingFee : null
+			})
+		}
+		steps.push({
+			label: `Materials ÷ ${n} output`,
+			detail: `${formatBreakdownAmount(ingredientTotal)} ÷ ${n}`,
+			value: material
+		})
+	} else {
+		const stored = getEffectivePrice(item, versionKey)
+		steps.push({
+			label: mult !== 1 ? `Stored price × Buy ${mult}` : 'Stored price',
+			detail: mult !== 1 ? `${formatBreakdownAmount(stored)} × ${mult}` : null,
+			value: material,
+			image: item?.image || null
+		})
+	}
+
+	const isStack = kind === 'stack_buy' || kind === 'stack_sell'
+	const isSell = kind === 'unit_sell' || kind === 'stack_sell'
+
+	if (isStack) {
+		steps.push({
+			label: `Materials × stack ${stackSize}`,
+			value: material * stackSize
+		})
+		if (stackFee > 0) {
+			const feeDetail =
+				process === 'crafting'
+					? `Crafting cost once per stack (+${formatBreakdownAmount(getProcessingCostAmount(item, versionKey, costConfig))})`
+					: process === 'smelting'
+						? `Smelting cost × ${stackSize}`
+						: 'Processing cost'
+			steps.push({
+				label: 'Processing cost',
+				detail: feeDetail,
+				value: stackFee,
+				image: item?.image || null,
+				process,
+				fee: stackFee
+			})
+		}
+		steps.push({
+			label: 'Buy (stack)',
+			value: stackBuy,
+			emphasis: true
+		})
+		if (isSell) {
+			steps.push({
+				label: `Sell ${Math.round(sellPct * 100)}% of buy`,
+				detail: `${formatBreakdownAmount(stackBuy)} × ${sellPct}`,
+				value: stackBuy * sellPct,
+				emphasis: true
+			})
+		}
+	} else {
+		if (unitFee > 0) {
+			const amount = getProcessingCostAmount(item, versionKey, costConfig)
+			const outputCount = Number(recipe?.output_count)
+			const outN = Number.isFinite(outputCount) && outputCount > 0 ? outputCount : 1
+			const feeDetail =
+				process === 'crafting'
+					? `Crafting ${formatBreakdownAmount(amount)} ÷ ${outN} output`
+					: process === 'smelting'
+						? 'Smelting cost per unit'
+						: 'Processing cost'
+			steps.push({
+				label: 'Processing cost',
+				detail: feeDetail,
+				value: unitFee,
+				image: item?.image || null,
+				process,
+				fee: unitFee
+			})
+		}
+		steps.push({
+			label: 'Buy (unit)',
+			value: unitBuy,
+			emphasis: true
+		})
+		if (isSell) {
+			steps.push({
+				label: `Sell ${Math.round(sellPct * 100)}% of buy`,
+				detail: `${formatBreakdownAmount(unitBuy)} × ${sellPct}`,
+				value: unitBuy * sellPct,
+				emphasis: true
+			})
+		}
+	}
+
+	const total = isStack
+		? isSell
+			? stackBuy * sellPct
+			: stackBuy
+		: isSell
+			? unitBuy * sellPct
+			: unitBuy
+
+	return {
+		itemName: item?.name || item?.material_id || 'Item',
+		materialId: item?.material_id || '',
+		image: item?.image || null,
+		kind,
+		kindLabel: PRICE_BREAKDOWN_KIND_LABELS[kind] || kind,
+		total,
+		steps
+	}
+}
+
 export function getProcessingCostConfig(economyOrExportConfig = {}) {
 	return {
 		craftingCostEnabled: isProcessCostEnabled(economyOrExportConfig, 'craftingCostEnabled'),
