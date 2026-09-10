@@ -91,5 +91,24 @@ export function formatSuggestionMessageTime(timestamp) {
 	if (diffHours < 24) return `${diffHours}h ago`
 	if (diffDays < 7) return `${diffDays}d ago`
 
-	return date.toLocaleDateString()
+	return date.toLocaleDateString('en-US', {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric'
+	})
+}
+
+/**
+ * Format timestamp time of day for hover details
+ */
+export function formatSuggestionTimestampTime(timestamp) {
+	if (!timestamp) return ''
+
+	const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+	if (Number.isNaN(date.getTime())) return ''
+
+	return date.toLocaleTimeString('en-US', {
+		hour: 'numeric',
+		minute: '2-digit'
+	})
 }

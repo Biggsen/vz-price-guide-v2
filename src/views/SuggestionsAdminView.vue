@@ -1,26 +1,22 @@
 <template>
 	<div class="p-4 py-8 max-w-4xl">
 		<h1 class="text-2xl font-bold mb-6">All Suggestions</h1>
-		<div class="mb-6 flex gap-2">
+		<div class="mb-6 flex flex-wrap gap-2" role="group" aria-label="Filter by status">
 			<button
-				@click="tab = 'active'"
+				v-for="option in statusFilterOptions"
+				:key="option.value"
+				@click="statusFilter = option.value"
+				:aria-pressed="statusFilter === option.value"
 				:class="[
-					tab === 'active'
+					statusFilter === option.value
 						? 'bg-gray-700 text-white'
 						: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
 					'px-4 py-2 rounded font-medium text-sm transition'
 				]">
-				Active
-			</button>
-			<button
-				@click="tab = 'deleted'"
-				:class="[
-					tab === 'deleted'
-						? 'bg-gray-700 text-white'
-						: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-					'px-4 py-2 rounded font-medium text-sm transition'
-				]">
-				Deleted
+				{{ option.label }}
+				<span class="ml-1 tabular-nums opacity-80">
+					{{ statusCounts[option.value] }}
+				</span>
 			</button>
 		</div>
 		<div v-if="loading" class="text-gray-500">Loading...</div>
@@ -42,11 +38,9 @@
 							? 'border-semantic-success border-2 bg-semantic-success/10'
 							: s.status === 'rejected'
 							? 'border-semantic-danger border-2 bg-semantic-danger/10'
-							: 'border bg-white',
-						tab === 'active' && s.deleted ? 'hidden' : '',
-						tab === 'deleted' && !s.deleted ? 'hidden' : ''
+							: 'border bg-white'
 					]">
-					<template v-if="tab === 'deleted'">
+					<template v-if="statusFilter === 'deleted'">
 						<div class="absolute top-3 right-3 z-10">
 							<span
 								class="bg-gray-300 text-gray-700 text-xs font-semibold px-2 py-1 rounded-full">
@@ -77,7 +71,9 @@
 								</div>
 							</div>
 						</div>
-						<div class="text-sm text-gray-700 font-semibold">
+						<div
+							class="text-sm text-gray-700 font-semibold"
+							:title="formatSuggestionTimestampTime(s.createdAt)">
 							{{ formatDate(s.createdAt?.toDate ? s.createdAt.toDate() : null) }}
 						</div>
 					</div>
@@ -130,39 +126,31 @@
 
 					<!-- Messages Section -->
 					<div class="mt-4 pt-4 border-t border-gray-200">
-						<div class="flex items-center justify-between mb-3">
-							<h4 class="text-sm font-medium text-gray-700">Discussion</h4>
-						</div>
+						<BaseDetails summary="Discussion">
+							<!-- Messages List -->
+							<SuggestionMessageList
+								v-if="messagesData[s.id] && messagesData[s.id].length > 0"
+								:messages="messagesData[s.id]"
+								:suggestion-id="s.id"
+								@suggestion-message-updated="handleMessageUpdated(s.id)"
+								@suggestion-message-deleted="handleMessageDeleted(s.id)" />
 
-						<!-- Messages List -->
-						<SuggestionMessageList
-							v-if="messagesData[s.id] && messagesData[s.id].length > 0"
-							:messages="messagesData[s.id]"
-							:suggestion-id="s.id"
-							@suggestion-message-updated="handleMessageUpdated(s.id)"
-							@suggestion-message-deleted="handleMessageDeleted(s.id)" />
+							<!-- Reply Button -->
+							<div class="mt-3 text-right">
+								<button
+									@click="toggleMessageForm(s.id)"
+									class="text-sm text-gray-600 hover:text-gray-800 underline">
+									{{ showMessageForm[s.id] ? 'Cancel' : 'Reply' }}
+								</button>
+							</div>
 
-						<!-- Reply Button -->
-						<div class="mt-3 text-right">
-							<button
-								@click="toggleMessageForm(s.id)"
-								class="text-sm text-gray-600 hover:text-gray-800 underline">
-								{{
-									showMessageForm[s.id]
-										? 'Cancel'
-										: messagesData[s.id] && messagesData[s.id].length > 0
-										? 'Reply'
-										: 'Reply'
-								}}
-							</button>
-						</div>
-
-						<!-- Message Form -->
-						<AdminSuggestionMessageForm
-							v-if="showMessageForm[s.id]"
-							:suggestion-id="s.id"
-							@suggestion-message-added="handleMessageAdded(s.id)"
-							@cancel="showMessageForm[s.id] = false" />
+							<!-- Message Form -->
+							<AdminSuggestionMessageForm
+								v-if="showMessageForm[s.id]"
+								:suggestion-id="s.id"
+								@suggestion-message-added="handleMessageAdded(s.id)"
+								@cancel="showMessageForm[s.id] = false" />
+						</BaseDetails>
 					</div>
 				</div>
 			</div>
@@ -270,24 +258,26 @@ import AdminSuggestionMessageForm from '@/components/AdminSuggestionMessageForm.
 import SuggestionMessageList from '@/components/SuggestionMessageList.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseModal from '@/components/BaseModal.vue'
-import { getSuggestionMessagesQuery } from '@/utils/suggestionMessages.js'
+import BaseDetails from '@/components/BaseDetails.vue'
+import {
+	getSuggestionMessagesQuery,
+	formatSuggestionTimestampTime
+} from '@/utils/suggestionMessages.js'
 import { useAdmin } from '@/utils/admin.js'
 
 function formatDate(date) {
 	if (!date) return ''
-	const d = new Date(date)
-	const now = new Date()
-	const yesterday = new Date()
-	yesterday.setDate(now.getDate() - 1)
-	if (d.toDateString() === now.toDateString()) return 'Today'
-	if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
-	return d.toLocaleDateString()
+	return new Date(date).toLocaleDateString('en-US', {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric'
+	})
 }
 
 const db = getFirestore()
 const suggestions = ref([])
 const loading = ref(true)
-const tab = ref('active')
+const statusFilter = ref('all')
 const showMessageForm = ref({})
 const messagesData = ref({})
 const messageUnsubscribers = ref({})
@@ -306,6 +296,12 @@ const statusOptions = [
 	{ value: 'closed', label: 'Done' },
 	{ value: 'rejected', label: 'Not Right Now' }
 ]
+const statusFilterOptions = [
+	{ value: 'all', label: 'All' },
+	...statusOptions,
+	{ value: 'deleted', label: 'Deleted' }
+]
+
 function setStatus(suggestion, value) {
 	if (suggestion.status !== value) {
 		suggestion.status = value
@@ -443,10 +439,33 @@ async function executePermanentDelete() {
 	}
 }
 
+const activeSuggestions = computed(() => suggestions.value.filter((s) => !s.deleted))
+const deletedSuggestions = computed(() => suggestions.value.filter((s) => s.deleted))
+
+const statusCounts = computed(() => {
+	const counts = {
+		all: activeSuggestions.value.length,
+		deleted: deletedSuggestions.value.length
+	}
+	statusOptions.forEach((option) => {
+		counts[option.value] = 0
+	})
+	activeSuggestions.value.forEach((suggestion) => {
+		if (counts[suggestion.status] !== undefined) {
+			counts[suggestion.status]++
+		}
+	})
+	return counts
+})
+
 const filteredSuggestions = computed(() => {
-	return tab.value === 'active'
-		? suggestions.value.filter((s) => !s.deleted)
-		: suggestions.value.filter((s) => s.deleted)
+	if (statusFilter.value === 'deleted') {
+		return deletedSuggestions.value
+	}
+	if (statusFilter.value === 'all') {
+		return activeSuggestions.value
+	}
+	return activeSuggestions.value.filter((s) => s.status === statusFilter.value)
 })
 
 // Message handling functions

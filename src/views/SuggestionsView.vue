@@ -91,11 +91,7 @@
 							<div class="text-sm text-heavy-metal space-y-1">
 								<div>
 									<span class="font-medium">Submitted:</span>
-									{{
-										s.createdAt?.toDate
-											? s.createdAt.toDate().toLocaleDateString()
-											: ''
-									}}
+									{{ formatDate(s.createdAt) }}
 								</div>
 								<div class="flex items-center">
 									<span class="font-medium mr-1">Status:</span>
@@ -494,6 +490,17 @@ async function saveEdit(suggestionId) {
 	} finally {
 		loading.value = false
 	}
+}
+
+function formatDate(timestamp) {
+	if (!timestamp) return ''
+	const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+	if (Number.isNaN(date.getTime())) return ''
+	return date.toLocaleDateString('en-US', {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric'
+	})
 }
 
 function statusLabel(status) {

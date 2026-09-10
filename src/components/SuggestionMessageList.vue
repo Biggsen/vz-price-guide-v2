@@ -20,8 +20,14 @@
 								{{ message.userDisplayName }}
 							</div>
 							<div class="text-xs text-gray-500">
-								{{ formatSuggestionMessageTime(message.createdAt) }}
-								<span v-if="message.editedAt">(edited)</span>
+								<span :title="formatSuggestionTimestampTime(message.createdAt)">
+									{{ formatSuggestionMessageTime(message.createdAt) }}
+								</span>
+								<span
+									v-if="message.editedAt"
+									:title="formatSuggestionTimestampTime(message.editedAt)">
+									(edited)
+								</span>
 							</div>
 						</div>
 					</div>
@@ -129,7 +135,8 @@ import { ref, computed } from 'vue'
 import {
 	updateSuggestionMessage,
 	deleteSuggestionMessage,
-	formatSuggestionMessageTime
+	formatSuggestionMessageTime,
+	formatSuggestionTimestampTime
 } from '@/utils/suggestionMessages.js'
 import { useFirebaseAuth } from 'vuefire'
 import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
