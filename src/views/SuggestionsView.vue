@@ -58,9 +58,11 @@
 				<BaseCard
 					v-for="s in suggestions"
 					:key="s.id"
+					:id="suggestionElementId(s.id)"
 					variant="secondary"
 					:class="[
 						'transition-opacity duration-300',
+						suggestionHighlightClass(s.id, highlightedSuggestionId),
 						deletingSuggestionId === s.id ? 'opacity-0' : 'opacity-100'
 					]">
 					<template #header>
@@ -95,7 +97,9 @@
 								</div>
 								<div class="flex items-center">
 									<span class="font-medium mr-1">Status:</span>
-									<span v-if="s.status === 'open'" class="inline-flex items-center">
+									<span
+										v-if="s.status === 'open'"
+										class="inline-flex items-center">
 										<InboxIcon class="w-4 h-4 mr-1 align-middle -mt-0.5" />
 										{{ statusLabel(s.status) }}
 									</span>
@@ -108,7 +112,8 @@
 									<span
 										v-else-if="s.status === 'closed'"
 										class="inline-flex items-center">
-										<CheckCircleIcon class="w-4 h-4 mr-1 align-middle -mt-0.5" />
+										<CheckCircleIcon
+											class="w-4 h-4 mr-1 align-middle -mt-0.5" />
 										{{ statusLabel(s.status) }}
 									</span>
 									<span
@@ -249,7 +254,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import {
 	collection,
 	addDoc,
@@ -273,7 +279,14 @@ import SuggestionMessageForm from '@/components/SuggestionMessageForm.vue'
 import SuggestionMessageList from '@/components/SuggestionMessageList.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'
 import { getSuggestionMessagesQuery } from '@/utils/suggestionMessages.js'
+import {
+	suggestionElementId,
+	querySuggestionId,
+	highlightSuggestionCard,
+	suggestionHighlightClass
+} from '@/utils/suggestionDeepLink.js'
 
+const route = useRoute()
 const auth = useFirebaseAuth()
 const db = useFirestore()
 const form = ref({ title: '', body: '' })
@@ -297,6 +310,8 @@ const showMessageForm = ref({})
 const messagesData = ref({})
 const messageUnsubscribers = ref({})
 const isVerified = computed(() => auth.currentUser?.emailVerified)
+const highlightedSuggestionId = ref(null)
+let highlightedQueryId = null
 
 // Load messages for a specific suggestion with real-time updates
 function loadMessages(suggestionId) {
@@ -364,6 +379,20 @@ const suggestions = computed(() => {
 	if (!rawSuggestions.value) return []
 	return rawSuggestions.value.filter((s) => !s.deleted)
 })
+
+watch(
+	[suggestions, () => route.query.id],
+	async () => {
+		const id = querySuggestionId(route)
+		if (!id || highlightedQueryId === id) return
+		if (!suggestions.value.some((item) => item.id === id)) return
+		await nextTick()
+		if (highlightSuggestionCard(id, highlightedSuggestionId)) {
+			highlightedQueryId = id
+		}
+	},
+	{ immediate: true }
+)
 
 // Load messages when suggestions change
 watch(
