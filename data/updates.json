@@ -12,7 +12,7 @@
 			"**Smelting** – The full smelting cost is applied per item, so it scales directly with quantity.",
 			"**Chained costs** – When an item is made from crafted or smelted ingredients, their added costs are included in the final price.",
 			"**Modified pricing** – The homepage shows when Buy ×, Sell %, crafting/smelting costs, or other price settings differ from the defaults, with a quick option to reset them.",
-			"**Price breakdown** – Hold Ctrl (⌘ on Mac) and click a price to see exactly how it was calculated, including nested crafting and smelting costs."
+			"**Price breakdown** – Hold `Ctrl` (`⌘` on Mac) and click a price to see exactly how it was calculated, including nested crafting and smelting costs."
 		]
 	},
 	{
