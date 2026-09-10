@@ -4,7 +4,12 @@
  */
 
 import {
-	getEffectivePrice,
+	getShopMaterialUnitPrice,
+	getShopBuyPrice,
+	getShopBuyStackPrice,
+	getUnitProcessingCost,
+	getStackProcessingCost,
+	getProcessingCostConfig,
 	buyUnitPriceRaw,
 	sellUnitPriceRaw,
 	buyStackPriceRaw,
@@ -77,6 +82,7 @@ export function buildStandardPriceGuideItemPayload(item, opts) {
  * @param {string} config.sortField - Sort field used (for metadata)
  * @param {string} config.sortDirection - Sort direction used (for metadata)
  * @param {boolean} config.isDonation - Whether this export is from a donation flow
+ * @param {Array} [config.pricingItems] - Full catalog for recipe cost chaining (defaults to items)
  * @returns {Object} Export data object ready for serialization
  */
 export function generateExportData(items, config) {
@@ -92,16 +98,34 @@ export function generateExportData(items, config) {
 		diamondRoundingDirection = 'nearest',
 		sortField = 'default',
 		sortDirection = 'asc',
-		isDonation = false
+		isDonation = false,
+		pricingItems = null
 	} = config
 
 	const versionKey = versionToKey(version)
+	const costConfig = getProcessingCostConfig(config)
 	const isDiamondCurrency = currencyType === 'diamond' && diamondItem !== null
+	const catalog = pricingItems || items
+	const memo = new Map()
 	const data = {}
 
 	items.forEach((item) => {
-		const basePrice = getEffectivePrice(item, versionKey)
 		const stackSize = item.stack || 64
+		const materialUnit = getShopMaterialUnitPrice(
+			item,
+			versionKey,
+			priceMultiplier,
+			costConfig,
+			catalog,
+			memo
+		)
+		const unitProcessingCost = getUnitProcessingCost(item, versionKey, costConfig)
+		const stackProcessingCost = getStackProcessingCost(
+			item,
+			versionKey,
+			costConfig,
+			stackSize
+		)
 		const itemData = {}
 
 		if (includeMetadata) {
@@ -116,14 +140,30 @@ export function generateExportData(items, config) {
 				diamondItem,
 				versionKey,
 				sellMargin,
-				diamondRoundingDirection
+				diamondRoundingDirection,
+				getShopBuyPrice(
+					item,
+					versionKey,
+					priceMultiplier,
+					costConfig,
+					catalog,
+					memo
+				)
 			)
 			const shulkerPricing = getDiamondShulkerPricing(
 				item,
 				diamondItem,
 				versionKey,
 				sellMargin,
-				diamondRoundingDirection
+				diamondRoundingDirection,
+				getShopBuyStackPrice(
+					item,
+					versionKey,
+					priceMultiplier,
+					costConfig,
+					catalog,
+					memo
+				)
 			)
 
 			if (priceFields.includes('unit_buy')) {
@@ -141,31 +181,39 @@ export function generateExportData(items, config) {
 		} else {
 			// Money currency: export raw numbers with existing property names
 			if (priceFields.includes('unit_buy')) {
-				itemData.unit_buy = buyUnitPriceRaw(basePrice, priceMultiplier, roundToWhole)
+				itemData.unit_buy = buyUnitPriceRaw(
+					materialUnit,
+					1,
+					roundToWhole,
+					unitProcessingCost
+				)
 			}
 			if (priceFields.includes('unit_sell')) {
 				itemData.unit_sell = sellUnitPriceRaw(
-					basePrice,
-					priceMultiplier,
+					materialUnit,
+					1,
 					sellMargin,
-					roundToWhole
+					roundToWhole,
+					unitProcessingCost
 				)
 			}
 			if (priceFields.includes('stack_buy')) {
 				itemData.stack_buy = buyStackPriceRaw(
-					basePrice,
+					materialUnit,
 					stackSize,
-					priceMultiplier,
-					roundToWhole
+					1,
+					roundToWhole,
+					stackProcessingCost
 				)
 			}
 			if (priceFields.includes('stack_sell')) {
 				itemData.stack_sell = sellStackPriceRaw(
-					basePrice,
+					materialUnit,
 					stackSize,
-					priceMultiplier,
+					1,
 					sellMargin,
-					roundToWhole
+					roundToWhole,
+					stackProcessingCost
 				)
 			}
 		}
@@ -183,6 +231,10 @@ export function generateExportData(items, config) {
 		currency_type: currencyType,
 		price_multiplier: priceMultiplier,
 		sell_margin: sellMargin,
+		crafting_cost_enabled: costConfig.craftingCostEnabled,
+		smelting_cost_enabled: costConfig.smeltingCostEnabled,
+		crafting_cost: costConfig.craftingCost,
+		smelting_cost: costConfig.smeltingCost,
 		round_to_whole: roundToWhole,
 		sort_field: sortField,
 		sort_direction: sortField === 'default' ? 'curated' : sortDirection

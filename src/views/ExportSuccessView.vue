@@ -15,7 +15,7 @@ import {
 	hasSessionBeenDownloaded,
 	markSessionAsDownloaded
 } from '@/utils/donations.js'
-import { getEffectivePrice } from '@/utils/pricing.js'
+import { getEffectivePrice, getShopBuyPrice, getProcessingCostConfig } from '@/utils/pricing.js'
 import { generateExportData, serializeYAML, findDiamondItem } from '@/utils/exportData.js'
 import { trackModalInteraction } from '@/utils/analytics.js'
 
@@ -82,7 +82,7 @@ function filterItems(items, config) {
 }
 
 // Sort items based on config
-function sortItems(items, config) {
+function sortItems(items, config, pricingCatalog = items) {
 	if (config.sortField === 'default') {
 		return items // Keep original order
 	}
@@ -99,8 +99,24 @@ function sortItems(items, config) {
 
 		if (config.sortField === 'buy') {
 			const versionKey = versionToKey(config.version)
-			valueA = getEffectivePrice(a, versionKey)
-			valueB = getEffectivePrice(b, versionKey)
+			const costConfig = getProcessingCostConfig(config)
+			const memo = new Map()
+			valueA = getShopBuyPrice(
+				a,
+				versionKey,
+				config.priceMultiplier ?? 1,
+				costConfig,
+				pricingCatalog,
+				memo
+			)
+			valueB = getShopBuyPrice(
+				b,
+				versionKey,
+				config.priceMultiplier ?? 1,
+				costConfig,
+				pricingCatalog,
+				memo
+			)
 			const comparison = valueA - valueB
 			return config.sortDirection === 'asc' ? comparison : -comparison
 		}
@@ -136,7 +152,7 @@ async function triggerDownload() {
 	try {
 		// Filter and sort items
 		const filtered = filterItems(allItems.value, exportConfig.value)
-		const sorted = sortItems(filtered, exportConfig.value)
+		const sorted = sortItems(filtered, exportConfig.value, allItems.value)
 
 		// Find diamond item if needed for diamond currency mode
 		const diamondItem =
@@ -157,7 +173,13 @@ async function triggerDownload() {
 			diamondRoundingDirection: exportConfig.value.diamondRoundingDirection ?? 'nearest',
 			sortField: exportConfig.value.sortField,
 			sortDirection: exportConfig.value.sortDirection,
-			isDonation: true
+			isDonation: true,
+			pricingItems: allItems.value,
+			craftingCostEnabled: exportConfig.value.craftingCostEnabled,
+			smeltingCostEnabled: exportConfig.value.smeltingCostEnabled,
+			processingCostEnabled: exportConfig.value.processingCostEnabled,
+			craftingCost: exportConfig.value.craftingCost ?? 2,
+			smeltingCost: exportConfig.value.smeltingCost ?? 3
 		})
 
 		// Download based on format

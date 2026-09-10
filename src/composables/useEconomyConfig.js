@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue'
-import { STORAGE_KEYS } from '../constants/homepage.js'
+import { STORAGE_KEYS, readProcessingCostToggles } from '../constants/homepage.js'
 import { clearPriceCache } from '../utils/pricing.js'
 
 export function useEconomyConfig(selectedVersion) {
@@ -15,6 +15,10 @@ export function useEconomyConfig(selectedVersion) {
 	const currencyType = ref('money') // 'money' or 'diamond'
 	const diamondItemId = ref(null) // Reference to diamond item for ratio calculation
 	const diamondRoundingDirection = ref('nearest') // 'nearest' | 'up' | 'down'
+	const craftingCostEnabled = ref(false)
+	const smeltingCostEnabled = ref(false)
+	const craftingCost = ref(2)
+	const smeltingCost = ref(3)
 
 	// Computed
 	const economyConfig = computed(() => ({
@@ -27,7 +31,11 @@ export function useEconomyConfig(selectedVersion) {
 		version: selectedVersion.value,
 		currencyType: currencyType.value,
 		diamondItemId: diamondItemId.value,
-		diamondRoundingDirection: diamondRoundingDirection.value
+		diamondRoundingDirection: diamondRoundingDirection.value,
+		craftingCostEnabled: craftingCostEnabled.value,
+		smeltingCostEnabled: smeltingCostEnabled.value,
+		craftingCost: craftingCost.value,
+		smeltingCost: smeltingCost.value
 	}))
 
 	// Methods
@@ -44,6 +52,9 @@ export function useEconomyConfig(selectedVersion) {
 		const savedCurrencyType = localStorage.getItem(STORAGE_KEYS.CURRENCY_TYPE)
 		const savedDiamondItemId = localStorage.getItem(STORAGE_KEYS.DIAMOND_ITEM_ID)
 		const savedDiamondRoundingDirection = localStorage.getItem(STORAGE_KEYS.DIAMOND_ROUNDING_DIRECTION)
+		const savedCraftingCost = localStorage.getItem(STORAGE_KEYS.CRAFTING_COST)
+		const savedSmeltingCost = localStorage.getItem(STORAGE_KEYS.SMELTING_COST)
+		const costToggles = readProcessingCostToggles()
 
 		if (savedPriceMultiplier !== null) {
 			priceMultiplier.value = parseFloat(savedPriceMultiplier)
@@ -78,6 +89,20 @@ export function useEconomyConfig(selectedVersion) {
 		if (savedDiamondRoundingDirection !== null) {
 			diamondRoundingDirection.value = savedDiamondRoundingDirection
 		}
+		craftingCostEnabled.value = costToggles.craftingCostEnabled
+		smeltingCostEnabled.value = costToggles.smeltingCostEnabled
+		if (savedCraftingCost !== null) {
+			const parsed = parseFloat(savedCraftingCost)
+			if (Number.isFinite(parsed)) {
+				craftingCost.value = Math.min(100, Math.max(0, parsed))
+			}
+		}
+		if (savedSmeltingCost !== null) {
+			const parsed = parseFloat(savedSmeltingCost)
+			if (Number.isFinite(parsed)) {
+				smeltingCost.value = Math.min(100, Math.max(0, parsed))
+			}
+		}
 		// Note: selectedVersion is managed by useFilters, not here
 		// We just load it for initial setup, but it should be set by useFilters
 	}
@@ -99,20 +124,40 @@ export function useEconomyConfig(selectedVersion) {
 			localStorage.setItem(STORAGE_KEYS.DIAMOND_ITEM_ID, diamondItemId.value)
 		}
 		localStorage.setItem(STORAGE_KEYS.DIAMOND_ROUNDING_DIRECTION, diamondRoundingDirection.value)
+		localStorage.setItem(
+			STORAGE_KEYS.CRAFTING_COST_ENABLED,
+			craftingCostEnabled.value.toString()
+		)
+		localStorage.setItem(
+			STORAGE_KEYS.SMELTING_COST_ENABLED,
+			smeltingCostEnabled.value.toString()
+		)
+		localStorage.removeItem(STORAGE_KEYS.PROCESSING_COST_ENABLED)
+		localStorage.setItem(STORAGE_KEYS.CRAFTING_COST, craftingCost.value.toString())
+		localStorage.setItem(STORAGE_KEYS.SMELTING_COST, smeltingCost.value.toString())
 	}
 
-	function resetToDefaults() {
+	function resetPricingToDefaults() {
 		priceMultiplier.value = 1
 		sellMargin.value = 0.3
 		roundToWhole.value = false
+		currencyType.value = 'money'
+		diamondItemId.value = null
+		diamondRoundingDirection.value = 'nearest'
+		craftingCostEnabled.value = false
+		smeltingCostEnabled.value = false
+		craftingCost.value = 2
+		smeltingCost.value = 3
+		saveConfig()
+	}
+
+	function resetToDefaults() {
+		resetPricingToDefaults()
 		showStackSize.value = false
 		showFullNumbers.value = false
 		hideSellPrices.value = false
 		viewMode.value = 'categories'
 		layout.value = 'comfortable'
-		currencyType.value = 'money'
-		diamondItemId.value = null
-		diamondRoundingDirection.value = 'nearest'
 		// Note: selectedVersion is managed by useFilters
 		saveConfig()
 	}
@@ -131,6 +176,10 @@ export function useEconomyConfig(selectedVersion) {
 			currencyType,
 			diamondItemId,
 			diamondRoundingDirection,
+			craftingCostEnabled,
+			smeltingCostEnabled,
+			craftingCost,
+			smeltingCost,
 			selectedVersion
 		],
 		() => {
@@ -154,6 +203,10 @@ export function useEconomyConfig(selectedVersion) {
 		currencyType,
 		diamondItemId,
 		diamondRoundingDirection,
+		craftingCostEnabled,
+		smeltingCostEnabled,
+		craftingCost,
+		smeltingCost,
 
 		// Computed
 		economyConfig,
@@ -161,7 +214,7 @@ export function useEconomyConfig(selectedVersion) {
 		// Methods
 		loadConfig,
 		saveConfig,
+		resetPricingToDefaults,
 		resetToDefaults
 	}
 }
-

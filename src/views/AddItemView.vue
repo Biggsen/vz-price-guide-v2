@@ -7,7 +7,7 @@ import { categories, versions } from '../constants.js'
 import { versionToKey } from '../constants/minecraftVersions.js'
 import { useAdmin } from '../utils/admin.js'
 import { useCollection } from 'vuefire'
-import { calculateRecipePrice, getEffectivePrice } from '../utils/pricing.js'
+import { calculateRecipePrice, getEffectivePrice, customRoundPrice } from '../utils/pricing.js'
 import { orderBy } from 'firebase/firestore'
 import NotificationBanner from '../components/NotificationBanner.vue'
 
@@ -191,7 +191,7 @@ async function recalculatePrice(versionKey) {
 		}
 		const result = calculateRecipePrice(item, allItems, recipeVersionKey)
 		if (result.price !== null) {
-			const newPrice = Math.ceil(result.price)
+			const newPrice = customRoundPrice(result.price)
 			newItem.value.prices_by_version[versionKey] = newPrice
 			recalculationStatus.value[versionKey] = 'success'
 		} else {

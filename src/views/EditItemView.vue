@@ -6,7 +6,7 @@ import { doc, updateDoc, query, collection, orderBy } from 'firebase/firestore'
 import { categories, versions } from '../constants.js'
 import { versionToKey } from '../constants/minecraftVersions.js'
 import { useAdmin } from '../utils/admin.js'
-import { calculateRecipePrice, getEffectivePrice } from '../utils/pricing.js'
+import { calculateRecipePrice, getEffectivePrice, customRoundPrice } from '../utils/pricing.js'
 import BackButton from '../components/BackButton.vue'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/solid'
 
@@ -279,7 +279,7 @@ async function recalculatePrice(versionKey) {
 			result
 		)
 		if (result.price !== null) {
-			const newPrice = Math.ceil(result.price)
+			const newPrice = customRoundPrice(result.price)
 			editItem.value.prices_by_version[versionKey] = newPrice
 			recalculationStatus.value[versionKey] = 'success'
 		} else {

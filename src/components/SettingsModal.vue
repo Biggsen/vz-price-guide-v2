@@ -4,6 +4,7 @@ import { useAdmin } from '../utils/admin.js'
 import { versions, baseEnabledVersions } from '../constants.js'
 import { useRoute } from 'vue-router'
 import { trackModalInteraction } from '../utils/analytics.js'
+import { STORAGE_KEYS, readProcessingCostToggles } from '../constants/homepage.js'
 import BaseModal from './BaseModal.vue'
 import BaseButton from './BaseButton.vue'
 import VersionSelector from './VersionSelector.vue'
@@ -91,6 +92,10 @@ const hideSellPrices = ref(false)
 const currencyType = ref('money')
 const diamondItemId = ref(null)
 const diamondRoundingDirection = ref('nearest')
+const craftingCostEnabled = ref(false)
+const smeltingCostEnabled = ref(false)
+const craftingCost = ref(2)
+const smeltingCost = ref(3)
 
 // Watch for prop changes and update local state
 watch(
@@ -120,6 +125,9 @@ function loadSettings() {
 	const savedCurrencyType = localStorage.getItem('currencyType')
 	const savedDiamondItemId = localStorage.getItem('diamondItemId')
 	const savedDiamondRoundingDirection = localStorage.getItem('diamondRoundingDirection')
+	const savedCraftingCost = localStorage.getItem(STORAGE_KEYS.CRAFTING_COST)
+	const savedSmeltingCost = localStorage.getItem(STORAGE_KEYS.SMELTING_COST)
+	const costToggles = readProcessingCostToggles()
 
 	// Check URL query parameters first for version
 	const versionParam = route.query.version
@@ -156,6 +164,20 @@ function loadSettings() {
 	if (savedDiamondRoundingDirection !== null) {
 		diamondRoundingDirection.value = savedDiamondRoundingDirection
 	}
+	craftingCostEnabled.value = costToggles.craftingCostEnabled
+	smeltingCostEnabled.value = costToggles.smeltingCostEnabled
+	if (savedCraftingCost !== null) {
+		const parsed = parseFloat(savedCraftingCost)
+		if (Number.isFinite(parsed)) {
+			craftingCost.value = Math.min(100, Math.max(0, parsed))
+		}
+	}
+	if (savedSmeltingCost !== null) {
+		const parsed = parseFloat(savedSmeltingCost)
+		if (Number.isFinite(parsed)) {
+			smeltingCost.value = Math.min(100, Math.max(0, parsed))
+		}
+	}
 }
 
 // Save settings to localStorage and emit to parent
@@ -172,6 +194,11 @@ function saveSettings() {
 		localStorage.setItem('diamondItemId', diamondItemId.value)
 	}
 	localStorage.setItem('diamondRoundingDirection', diamondRoundingDirection.value)
+	localStorage.setItem(STORAGE_KEYS.CRAFTING_COST_ENABLED, craftingCostEnabled.value.toString())
+	localStorage.setItem(STORAGE_KEYS.SMELTING_COST_ENABLED, smeltingCostEnabled.value.toString())
+	localStorage.removeItem(STORAGE_KEYS.PROCESSING_COST_ENABLED)
+	localStorage.setItem(STORAGE_KEYS.CRAFTING_COST, craftingCost.value.toString())
+	localStorage.setItem(STORAGE_KEYS.SMELTING_COST, smeltingCost.value.toString())
 
 	// Emit settings to parent component
 	emit('save-settings', {
@@ -184,7 +211,11 @@ function saveSettings() {
 		hideSellPrices: hideSellPrices.value,
 		currencyType: currencyType.value,
 		diamondItemId: diamondItemId.value,
-		diamondRoundingDirection: diamondRoundingDirection.value
+		diamondRoundingDirection: diamondRoundingDirection.value,
+		craftingCostEnabled: craftingCostEnabled.value,
+		smeltingCostEnabled: smeltingCostEnabled.value,
+		craftingCost: craftingCost.value,
+		smeltingCost: smeltingCost.value
 	})
 }
 
@@ -293,7 +324,7 @@ defineExpose({
 				<div class="flex items-center gap-2">
 					<label
 						for="priceMultiplier"
-						class="text-sm font-medium text-gray-700 whitespace-nowrap">
+						class="text-sm text-gray-700 whitespace-nowrap">
 						Buy ×
 					</label>
 					<input
@@ -311,7 +342,7 @@ defineExpose({
 				<div class="flex items-center gap-2">
 					<label
 						for="sellMargin"
-						class="text-sm font-medium text-gray-700 whitespace-nowrap">
+						class="text-sm text-gray-700 whitespace-nowrap">
 						Sell %
 					</label>
 					<input
@@ -325,6 +356,57 @@ defineExpose({
 						class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm" />
 				</div>
 			</div>
+
+			<div class="grid grid-cols-[auto_auto_auto] gap-x-2 gap-y-2 items-center w-max mb-3">
+				<input
+					id="craftingCostEnabled"
+					v-model="craftingCostEnabled"
+					type="checkbox"
+					aria-label="Enable crafting cost"
+					@change="trackSettingsChange('craftingCostEnabled', craftingCostEnabled)"
+					class="checkbox-input" />
+				<label
+					for="craftingCostEnabled"
+					class="text-sm text-gray-700 whitespace-nowrap">
+					Crafting cost
+				</label>
+				<input
+					id="craftingCost"
+					v-model.number="craftingCost"
+					type="number"
+					aria-label="Crafting cost amount"
+					:disabled="!craftingCostEnabled"
+					@change="trackSettingsChange('craftingCost', craftingCost)"
+					min="0"
+					max="100"
+					step="1"
+					class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm disabled:opacity-50" />
+				<input
+					id="smeltingCostEnabled"
+					v-model="smeltingCostEnabled"
+					type="checkbox"
+					aria-label="Enable smelting cost"
+					@change="trackSettingsChange('smeltingCostEnabled', smeltingCostEnabled)"
+					class="checkbox-input" />
+				<label
+					for="smeltingCostEnabled"
+					class="text-sm text-gray-700 whitespace-nowrap">
+					Smelting cost
+				</label>
+				<input
+					id="smeltingCost"
+					v-model.number="smeltingCost"
+					type="number"
+					aria-label="Smelting cost amount"
+					:disabled="!smeltingCostEnabled"
+					@change="trackSettingsChange('smeltingCost', smeltingCost)"
+					min="0"
+					max="100"
+					step="1"
+					class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm disabled:opacity-50" />
+			</div>
+
+			<label class="block text-sm font-medium text-gray-700 mt-4 mb-2">Display:</label>
 
 			<!-- Round to Whole -->
 			<div class="flex items-center gap-2">
