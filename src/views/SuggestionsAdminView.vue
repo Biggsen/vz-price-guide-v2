@@ -28,8 +28,10 @@
 				<div
 					v-for="s in filteredSuggestions"
 					:key="s.id"
+					:id="suggestionElementId(s.id)"
 					:class="[
 						'rounded-lg p-6 shadow-sm relative',
+						suggestionHighlightClass(s.id, highlightedSuggestionId),
 						s.status === 'open'
 							? 'border-semantic-info border-2 bg-semantic-info/10'
 							: s.status === 'in progress'
@@ -239,7 +241,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
+import { ref, onMounted, computed, watch, onUnmounted, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import {
 	getFirestore,
 	collection,
@@ -264,6 +267,12 @@ import {
 	formatSuggestionTimestampTime
 } from '@/utils/suggestionMessages.js'
 import { useAdmin } from '@/utils/admin.js'
+import {
+	suggestionElementId,
+	querySuggestionId,
+	highlightSuggestionCard,
+	suggestionHighlightClass
+} from '@/utils/suggestionDeepLink.js'
 
 function formatDate(date) {
 	if (!date) return ''
@@ -275,9 +284,12 @@ function formatDate(date) {
 }
 
 const db = getFirestore()
+const route = useRoute()
 const suggestions = ref([])
 const loading = ref(true)
 const statusFilter = ref('all')
+const highlightedSuggestionId = ref(null)
+let highlightedQueryId = null
 const showMessageForm = ref({})
 const messagesData = ref({})
 const messageUnsubscribers = ref({})
@@ -467,6 +479,30 @@ const filteredSuggestions = computed(() => {
 	}
 	return activeSuggestions.value.filter((s) => s.status === statusFilter.value)
 })
+
+watch(
+	[suggestions, filteredSuggestions, () => route.query.id, loading],
+	async () => {
+		if (loading.value) return
+		const id = querySuggestionId(route)
+		if (!id || highlightedQueryId === id) return
+		const match = suggestions.value.find((item) => item.id === id)
+		if (!match) return
+		if (match.deleted) {
+			statusFilter.value = 'deleted'
+		} else if (
+			statusFilter.value === 'deleted' ||
+			(statusFilter.value !== 'all' && statusFilter.value !== match.status)
+		) {
+			statusFilter.value = 'all'
+		}
+		await nextTick()
+		if (highlightSuggestionCard(id, highlightedSuggestionId)) {
+			highlightedQueryId = id
+		}
+	},
+	{ immediate: true }
+)
 
 // Message handling functions
 function toggleMessageForm(suggestionId) {

@@ -126,5 +126,9 @@ service cloud.firestore {
         request.auth.token.admin == true
       );
     }
+    // Email logs: Cloud Functions (Admin SDK) only
+    match /email_logs/{logId} {
+      allow read, write: if false;
+    }
   }
 }
