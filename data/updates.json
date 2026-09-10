@@ -1,5 +1,22 @@
 [
 	{
+		"id": 48,
+		"title": "Crafting & Smelting Costs",
+		"date": "2026-09-10",
+		"types": ["Feature"],
+		"hidden": false,
+		"description": "You can now add flat crafting and smelting costs on top of item prices, useful when you want shop prices to reflect the work involved in making an item, not just the cost of its ingredients.\n\nCosts are off by default. Turn them on in **Settings** and set the amounts you want to use. Enabled costs are also included in price exports.",
+		"changes": [
+			"**Separate crafting and smelting toggles** – Enable either or both, each with its own cost.",
+			"**Crafting** – The crafting cost is applied per recipe and divided across the recipe’s output when calculating the unit price.",
+			"**Smelting** – The full smelting cost is applied per item, so it scales directly with quantity.",
+			"**Chained costs** – When an item is made from crafted or smelted ingredients, their added costs are included in the final price.",
+			"**Modified pricing** – The homepage shows when Buy ×, Sell %, crafting/smelting costs, or other price settings differ from the defaults, with a quick option to reset them.",
+			"**Price breakdown** – Hold `Ctrl` (`⌘` on Mac) and click a price to see exactly how it was calculated, including nested crafting and smelting costs.",
+			"**Note:** The Shop Manager doesn't support crafting and smelting costs yet, but I'll be looking at adding them there as well."
+		]
+	},
+	{
 		"id": 47,
 		"title": "Search Exclusions",
 		"date": "2026-07-06",

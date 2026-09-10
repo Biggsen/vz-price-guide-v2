@@ -4,6 +4,14 @@
  */
 export const HOMEPAGE_FEATURE_BANNERS = [
 	{
+		id: 'crafting-smelting-costs',
+		enabled: true,
+		dismissStorageKey: 'featureAnnouncementDismissed_craftingSmeltingCosts',
+		title: 'New! Crafting & Smelting Costs',
+		message: 'Add optional crafting and smelting costs on top of item prices.',
+		readMoreHref: '/updates'
+	},
+	{
 		id: 'minecraft-26-2-chaos-cubed',
 		enabled: false,
 		dismissStorageKey: 'featureAnnouncementDismissed_minecraft262',
@@ -14,7 +22,7 @@ export const HOMEPAGE_FEATURE_BANNERS = [
 	},
 	{
 		id: 'admin-shop',
-		enabled: true,
+		enabled: false,
 		dismissStorageKey: 'featureAnnouncementDismissed',
 		title: 'Introducing Admin Shop.',
 		message:

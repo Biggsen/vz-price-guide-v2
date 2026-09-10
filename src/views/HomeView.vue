@@ -19,7 +19,7 @@ import { useItems } from '../composables/useItems.js'
 import { getImageUrl } from '../utils/image.js'
 import { trackHomepageInteraction, trackSearch } from '../utils/analytics.js'
 import { countSearchTerms, processSearchTerms } from '../utils/search.js'
-import { RocketLaunchIcon } from '@heroicons/vue/24/solid'
+import { WrenchIcon } from '@heroicons/vue/24/solid'
 import { Cog6ToothIcon, ArrowDownTrayIcon, ArrowUpIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -423,9 +423,9 @@ watch(
 		class="bg-semantic-info-light border-l-4 border-l-semantic-info text-heavy-metal p-2 sm:p-4 relative mb-4">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center">
-				<RocketLaunchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
+				<WrenchIcon class="w-7 h-7 sm:w-8 sm:h-8 mr-2 min-w-[2rem]" />
 				<span class="text-sm sm:text-base">
-					<strong>{{ activeFeatureBanner.title }}</strong>
+					<strong class="mr-2">{{ activeFeatureBanner.title }}</strong>
 					{{ activeFeatureBanner.message }}
 					<router-link
 						:to="activeFeatureBanner.readMoreHref"

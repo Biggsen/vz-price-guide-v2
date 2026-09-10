@@ -406,6 +406,11 @@ defineExpose({
 					class="border-2 border-gray-asparagus rounded px-2 py-1 w-16 text-sm disabled:opacity-50" />
 			</div>
 
+			<p class="text-xs text-gray-500 mt-3">
+				Tip: Hold <code class="text-xs">Ctrl</code> (<code class="text-xs">⌘</code> on Mac) and
+				click a price to get a price breakdown.
+			</p>
+
 			<label class="block text-sm font-medium text-gray-700 mt-4 mb-2">Display:</label>
 
 			<!-- Round to Whole -->
