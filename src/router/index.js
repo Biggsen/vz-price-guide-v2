@@ -11,7 +11,7 @@ const publicVersionRange = `${getPublicVersions()[0]}-${getDefaultVersion()}`
 const defaultSeo = {
 	title: siteName,
 	description:
-		`Comprehensive, searchable and exportable Minecraft economy price guide with unit and stack prices for over 1600 items from versions ${publicVersionRange}`,
+		`Comprehensive, searchable and exportable Minecraft economy price guide with unit and stack prices for over 1800 items from versions ${publicVersionRange}`,
 	keywords:
 		'minecraft, price guide, economy, items, unit price, stack price, minecraft server economy, ores, stone, brick, copper, earth, sand, wood, drops, food, utility, light, plants, redstone, tools, weapons, armor, enchantments, ocean, nether, end, deep dark, archaeology, ice, dyed, discs',
 	ogImage: 'https://minecraft-economy-price-guide.net/cube.png',
