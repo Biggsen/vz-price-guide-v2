@@ -72,11 +72,99 @@ function pickBestSrc(img) {
 	return img.attr('src')
 }
 
-function extractInfoboxImageUrl(pageHtml, itemLabel = '') {
+const LABEL_STOPWORDS = new Set([
+	'a',
+	'an',
+	'and',
+	'for',
+	'in',
+	'of',
+	'on',
+	'the',
+	'with',
+	'invicon',
+	'infobox',
+	'image',
+	'inventory',
+	'sprite'
+])
+
+function tokenize(...values) {
+	const tokens = new Set()
+	for (const value of values) {
+		if (!value) continue
+		const parts = String(value)
+			.toLowerCase()
+			.replace(/[_-]+/g, ' ')
+			.split(/[^a-z0-9]+/)
+		for (const part of parts) {
+			if (!part || part.length < 2 || LABEL_STOPWORDS.has(part)) continue
+			tokens.add(part)
+		}
+	}
+	return tokens
+}
+
+function getItemTokens(item) {
+	return tokenize(item?.material_id, item?.name)
+}
+
+function extractSpriteLabel(alt = '', url = '') {
+	const altTitle = String(alt)
+		.split(':')[0]
+		.replace(/\.(png|gif|webp|jpg|jpeg)$/i, '')
+		.replace(/^invicon\s+/i, '')
+		.replace(/^infobox image(?: for minecraft (?:block|item))?/i, '')
+		.trim()
+
+	let urlTitle = ''
+	const match = String(url).match(/\/(?:Invicon_)?([^/?#]+)$/i)
+	if (match) {
+		urlTitle = decodeURIComponent(match[1])
+			.replace(/^Invicon_/i, '')
+			.replace(/\.(png|gif|webp|jpg|jpeg)$/i, '')
+			.replace(/_/g, ' ')
+	}
+
+	return `${altTitle} ${urlTitle}`.trim()
+}
+
+function scoreSpriteAgainstItem(itemTokens, alt, url, baseScore = 0) {
+	const spriteTokens = tokenize(extractSpriteLabel(alt, url))
+	const haystack = tokenize(alt, url.replace(/_/g, ' '), extractSpriteLabel(alt, url))
+
+	if (!itemTokens.size) {
+		return { complete: false, score: baseScore + 1 }
+	}
+
+	let complete = true
+	for (const token of itemTokens) {
+		if (!haystack.has(token)) {
+			complete = false
+			break
+		}
+	}
+
+	let extraCount = 0
+	for (const token of spriteTokens) {
+		if (!itemTokens.has(token)) extraCount += 1
+	}
+
+	const tokenScore = complete ? itemTokens.size * 20 - extraCount * 8 : 0
+	return { complete, score: baseScore + tokenScore }
+}
+
+function pickBestScoredUrl(candidates) {
+	if (!candidates.length) return null
+	const complete = candidates.filter((candidate) => candidate.complete)
+	const pool = complete.length ? complete : candidates
+	pool.sort((a, b) => b.score - a.score)
+	return pool[0].url
+}
+
+function extractInfoboxImageUrl(pageHtml, item = {}) {
 	const $ = cheerio.load(pageHtml)
-	const normalizedLabel = String(itemLabel || '')
-		.toLowerCase()
-		.replace(/_/g, ' ')
+	const itemTokens = getItemTokens(item)
 
 	const candidates = []
 	$('.infobox-imagearea img.mw-file-element').each((_, el) => {
@@ -89,30 +177,19 @@ function extractInfoboxImageUrl(pageHtml, itemLabel = '') {
 		const url = resolveImageUrl(raw)
 		if (!url) return
 
-		let score = 0
-		if (normalizedLabel && alt.toLowerCase().includes(normalizedLabel)) score += 10
-		if (alt.includes('Infobox image for Minecraft block')) score += 1
-		if (alt.includes('Infobox image for Minecraft item')) score += 1
+		let baseScore = 0
+		if (alt.includes('Infobox image for Minecraft block')) baseScore += 1
+		if (alt.includes('Infobox image for Minecraft item')) baseScore += 1
 
-		candidates.push({ url, score })
+		candidates.push({ url, ...scoreSpriteAgainstItem(itemTokens, alt, url, baseScore) })
 	})
 
-	if (!candidates.length) return null
-	candidates.sort((a, b) => b.score - a.score)
-	return candidates[0].url
+	return pickBestScoredUrl(candidates)
 }
 
-function normalizeItemLabel(itemLabel = '') {
-	return String(itemLabel || '')
-		.toLowerCase()
-		.replace(/_/g, ' ')
-		.trim()
-}
-
-function extractInviconImageUrl(pageHtml, itemLabel = '') {
+function extractInviconImageUrl(pageHtml, item = {}) {
 	const $ = cheerio.load(pageHtml)
-	const normalizedLabel = normalizeItemLabel(itemLabel)
-	const titleLabel = toWikiTitle(itemLabel).replace(/_/g, ' ').toLowerCase()
+	const itemTokens = getItemTokens(item)
 
 	const candidates = []
 	$('.infobox-imagearea img.mw-file-element, .invslot img').each((_, el) => {
@@ -126,23 +203,17 @@ function extractInviconImageUrl(pageHtml, itemLabel = '') {
 		const url = resolveImageUrl(raw)
 		if (!url) return
 
-		let score = 0
-		const altLower = alt.toLowerCase()
-		if (normalizedLabel && altLower.includes(normalizedLabel)) score += 20
-		if (titleLabel && altLower.includes(titleLabel)) score += 15
-		if (/^Invicon\b/i.test(alt)) score += 5
-		if (url.includes('/Invicon_')) score += 3
+		let baseScore = 0
+		if (/^Invicon\b/i.test(alt)) baseScore += 5
+		if (url.includes('/Invicon_')) baseScore += 3
 
-		candidates.push({ url, score, alt })
+		candidates.push({ url, ...scoreSpriteAgainstItem(itemTokens, alt, url, baseScore) })
 	})
 
-	if (!candidates.length) return null
-	candidates.sort((a, b) => b.score - a.score)
-	return candidates[0].url
+	return pickBestScoredUrl(candidates)
 }
 
 async function fetchWikiPageImageForItem(item, extractFn) {
-	const label = item.material_id || item.name
 	const candidates = getWikiCandidates(item)
 
 	for (const wikiUrl of candidates) {
@@ -151,7 +222,7 @@ async function fetchWikiPageImageForItem(item, extractFn) {
 				headers: { 'User-Agent': WIKI_USER_AGENT },
 				timeout: 20000
 			})
-			const imageUrl = extractFn(data, label)
+			const imageUrl = extractFn(data, item)
 			if (imageUrl) return { imageUrl, wikiUrl }
 		} catch (_) {
 			// try next candidate URL

@@ -69,23 +69,34 @@ export function extractEnchantmentName(materialId) {
 	return null
 }
 
+const WIKI_BASE = 'https://minecraft.wiki'
+
+function resolveStoredWikiUrl(url) {
+	const trimmed = String(url).trim()
+	if (!trimmed || trimmed.includes('fandom.com')) return null
+	if (/^https?:\/\//i.test(trimmed)) return trimmed
+	if (trimmed.startsWith('//')) return `https:${trimmed}`
+	if (trimmed.startsWith('/')) return `${WIKI_BASE}${trimmed}`
+	return `${WIKI_BASE}/w/${trimmed}`
+}
+
 /**
  * Generate the appropriate wiki URL for an item
- * @param {Object} item - The item object with material_id
+ * @param {Object} item - The item object with material_id and optional url overwrite
  * @returns {string} - The wiki URL
  */
 export function getWikiUrl(item) {
+	const override = resolveStoredWikiUrl(item?.url)
+	if (override) return override
+
 	if (!item?.material_id) {
 		return '#'
 	}
 
-	// Check if this is an enchanted book
 	const enchantmentName = extractEnchantmentName(item.material_id)
 	if (enchantmentName) {
-		// For enchanted books, link to the enchantment page
-		return `https://minecraft.wiki/w/${enchantmentName}`
+		return `${WIKI_BASE}/w/${enchantmentName}`
 	}
 
-	// For regular items, use the material_id
-	return `https://minecraft.wiki/w/${item.material_id}`
+	return `${WIKI_BASE}/w/${item.material_id}`
 }
