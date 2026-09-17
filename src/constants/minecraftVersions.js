@@ -55,6 +55,14 @@ const MINECRAFT_VERSIONS = [
 		format: 'gamedrop',
 		patches: [],
 		public: true
+	},
+	{
+		id: '26.3',
+		key: '26_3',
+		label: 'Minecraft 26.3',
+		format: 'gamedrop',
+		patches: [],
+		public: true
 	}
 ]
 

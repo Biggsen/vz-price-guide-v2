@@ -4,8 +4,17 @@
  */
 export const HOMEPAGE_FEATURE_BANNERS = [
 	{
-		id: 'crafting-smelting-costs',
+		id: 'minecraft-26-3-wilderness-bound',
 		enabled: true,
+		dismissStorageKey: 'featureAnnouncementDismissed_minecraft263',
+		title: 'Minecraft 26.3 (Wilderness Bound) items added!',
+		message:
+			'Over 120 new items are now in the Price Guide, including the full poplar wood set, new dyed slabs and stairs, cushions, explorer maps, and more.',
+		readMoreHref: '/updates'
+	},
+	{
+		id: 'crafting-smelting-costs',
+		enabled: false,
 		dismissStorageKey: 'featureAnnouncementDismissed_craftingSmeltingCosts',
 		title: 'New! Crafting & Smelting Costs',
 		message: 'Add optional crafting and smelting costs on top of item prices.',

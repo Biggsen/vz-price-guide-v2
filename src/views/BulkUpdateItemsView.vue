@@ -45,6 +45,7 @@ const newPrice = ref('')
 const sortKey = ref('name')
 const sortAsc = ref(true)
 const showOnlyNoCategory = ref(false)
+const hideDynamicPrices = ref(false)
 const showCategoryColumns = ref(true)
 const showImageColumn = ref(true)
 const showNameColumn = ref(true)
@@ -68,6 +69,7 @@ const defaultSettings = {
 	selectedVersion: 'all',
 	selectedCategories: [],
 	showOnlyNoCategory: false,
+	hideDynamicPrices: false,
 	showCategoryColumns: true,
 	showImageColumn: true,
 	showNameColumn: true,
@@ -90,6 +92,8 @@ function loadSettings() {
 				settings.selectedCategories || defaultSettings.selectedCategories
 			showOnlyNoCategory.value =
 				settings.showOnlyNoCategory ?? defaultSettings.showOnlyNoCategory
+			hideDynamicPrices.value =
+				settings.hideDynamicPrices ?? defaultSettings.hideDynamicPrices
 			showCategoryColumns.value =
 				settings.showCategoryColumns ?? defaultSettings.showCategoryColumns
 			showImageColumn.value = settings.showImageColumn ?? defaultSettings.showImageColumn
@@ -114,6 +118,7 @@ function saveSettings() {
 			selectedVersion: selectedVersion.value,
 			selectedCategories: selectedCategories.value,
 			showOnlyNoCategory: showOnlyNoCategory.value,
+			hideDynamicPrices: hideDynamicPrices.value,
 			showCategoryColumns: showCategoryColumns.value,
 			showImageColumn: showImageColumn.value,
 			showNameColumn: showNameColumn.value,
@@ -137,6 +142,7 @@ function clearSettings() {
 		selectedVersion.value = defaultSettings.selectedVersion
 		selectedCategories.value = defaultSettings.selectedCategories
 		showOnlyNoCategory.value = defaultSettings.showOnlyNoCategory
+		hideDynamicPrices.value = defaultSettings.hideDynamicPrices
 		showCategoryColumns.value = defaultSettings.showCategoryColumns
 		showImageColumn.value = defaultSettings.showImageColumn
 		showNameColumn.value = defaultSettings.showNameColumn
@@ -173,6 +179,15 @@ watch(searchQuery, saveSettings)
 watch(selectedVersion, saveSettings)
 watch(selectedCategories, saveSettings, { deep: true })
 watch(showOnlyNoCategory, saveSettings)
+watch(hideDynamicPrices, (hide) => {
+	if (hide) {
+		selectedItems.value = selectedItems.value.filter((id) => {
+			const item = dbItems.value.find((row) => row.id === id)
+			return item?.pricing_type !== 'dynamic'
+		})
+	}
+	saveSettings()
+})
 watch(showCategoryColumns, saveSettings)
 watch(showImageColumn, saveSettings)
 watch(showNameColumn, saveSettings)
@@ -210,6 +225,10 @@ const filteredItems = computed(() => {
 		items = items.filter((item) => !item.category || item.category === '')
 		// Override category filter when showing only items without category
 		selectedCategories.value = []
+	}
+
+	if (hideDynamicPrices.value) {
+		items = items.filter((item) => item.pricing_type !== 'dynamic')
 	}
 	if (sortKey.value) {
 		items = [...items].sort((a, b) => {
@@ -958,6 +977,13 @@ function resetSearch() {
 							Update Price
 						</button>
 					</div>
+					<label class="inline-flex items-center mt-4">
+						<input
+							type="checkbox"
+							v-model="hideDynamicPrices"
+							class="mr-2 checkbox-input" />
+						Hide items with dynamic prices
+					</label>
 				</div>
 			</div>
 

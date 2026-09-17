@@ -1,5 +1,20 @@
 [
 	{
+		"id": 49,
+		"title": "Minecraft 26.3 (Wilderness Bound) Items Added",
+		"date": "2026-09-17",
+		"types": ["Content"],
+		"hidden": false,
+		"description": "Added over 120 new survival-obtainable items and blocks from Minecraft 26.3 (Wilderness Bound) to the catalog, all with accurate pricing.",
+		"changes": [
+			"**Dappled Forest** – the full poplar wood set, plus shelf mushrooms and red shrubs",
+			"**New dyed slabs and stairs** – concrete and wool variants in all 16 colours",
+			"**Cushions** – all 16 dyed cushion variants",
+			"**Explorer maps** – new maps for locating villages, buried structures, woodland mansions, ocean monuments, and other landmarks",
+			"**Straw bed** – the new straw variant of the bed"
+		]
+	},
+	{
 		"id": 48,
 		"title": "Crafting & Smelting Costs",
 		"date": "2026-09-10",
