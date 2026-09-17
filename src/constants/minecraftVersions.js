@@ -62,7 +62,7 @@ const MINECRAFT_VERSIONS = [
 		label: 'Minecraft 26.3',
 		format: 'gamedrop',
 		patches: [],
-		public: false
+		public: true
 	}
 ]
 
