@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, provide } from 'vue'
+import { computed, ref, watch, provide } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 
 import HeaderBanner from './components/HeaderBanner.vue'
@@ -10,6 +10,15 @@ import { useAdmin } from './utils/admin.js'
 
 const route = useRoute()
 const { isAdmin } = useAdmin()
+const hideChrome = computed(() => route.meta.hideChrome === true)
+
+watch(
+	hideChrome,
+	(hidden) => {
+		document.body.classList.toggle('hide-site-chrome', hidden)
+	},
+	{ immediate: true }
+)
 
 // Navigation state for subnav
 const activeMainNav = ref(null)
@@ -62,16 +71,16 @@ function setActiveMainNav(section) {
 
 <template>
 	<div class="min-h-screen flex flex-col" data-cy="app-loaded">
-		<header>
+		<header v-if="!hideChrome">
 			<HeaderBanner />
 			<Nav :activeMainNav="activeMainNav" @setActiveMainNav="setActiveMainNav" />
 			<SubNav />
 		</header>
 
-		<main class="flex-1 sm:pt-0 pt-16">
+		<main class="flex-1 sm:pt-0" :class="hideChrome ? 'pt-0' : 'pt-16'">
 			<RouterView />
 		</main>
 
-		<Footer />
+		<Footer v-if="!hideChrome" />
 	</div>
 </template>

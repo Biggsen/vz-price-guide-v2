@@ -38,6 +38,26 @@ function applyWrap(before, after) {
 	})
 }
 
+function applyHeading() {
+	if (props.disabled) return
+	const { start } = currentRange()
+	const text = props.modelValue
+	const lineStart = text.lastIndexOf('\n', start - 1) + 1
+	const already = text.slice(lineStart).startsWith('### ')
+	const prefix = already ? '' : '### '
+	const nextValue = already
+		? `${text.slice(0, lineStart)}${text.slice(lineStart).replace(/^###\s+/, '')}`
+		: `${text.slice(0, lineStart)}${prefix}${text.slice(lineStart)}`
+	const delta = already ? -4 : 4
+	emit('update:modelValue', nextValue)
+	nextTick(() => {
+		const el = textareaRef.value
+		if (!el) return
+		el.focus()
+		el.setSelectionRange(start + delta, start + delta)
+	})
+}
+
 function applyLink() {
 	if (props.disabled) return
 	const url = window.prompt('Link URL (https://…)')
@@ -77,6 +97,14 @@ function applyLink() {
 				type="button"
 				class="px-2 py-1 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 disabled:opacity-50"
 				:disabled="disabled"
+				data-cy="newsletter-format-heading"
+				@click="applyHeading">
+				Heading
+			</button>
+			<button
+				type="button"
+				class="px-2 py-1 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 disabled:opacity-50"
+				:disabled="disabled"
 				data-cy="newsletter-format-link"
 				@click="applyLink">
 				Link
@@ -89,7 +117,7 @@ function applyLink() {
 			rows="14"
 			data-cy="newsletter-body"
 			class="block w-full rounded border-2 border-gray-asparagus px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus font-sans disabled:bg-gray-50"
-			placeholder="Write the email body. Use Bold, Italic, or Link, or type **bold**, *italic*, and [text](https://example.com)."
+			placeholder="Write the email body. Use Heading, Bold, Italic, or Link. Headings are lines starting with #, ##, or ###."
 			@input="emit('update:modelValue', $event.target.value)"></textarea>
 	</div>
 </template>

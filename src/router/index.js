@@ -491,7 +491,8 @@ const router = createRouter({
 			component: () => import('../views/UnsubscribeView.vue'),
 			meta: {
 				title: `Unsubscribe - ${siteName}`,
-				noindex: true
+				noindex: true,
+				hideChrome: true
 			}
 		},
 		{

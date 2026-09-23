@@ -36,3 +36,13 @@ body {
 	padding: 0;
 	font-weight: normal;
 }
+
+body.hide-site-chrome #app {
+	max-width: none;
+}
+
+body.hide-site-chrome #termly-code-snippet-support,
+body.hide-site-chrome [id^='termly-'],
+body.hide-site-chrome iframe[src*='termly'] {
+	display: none !important;
+}

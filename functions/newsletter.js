@@ -6,7 +6,7 @@ const { FieldPath, FieldValue } = require('firebase-admin/firestore')
 const {
 	REGION,
 	SITE_URL,
-	FROM,
+	NEWSLETTER_FROM,
 	isAlreadyExists,
 	hasAdminClaim,
 	createResend,
@@ -261,6 +261,7 @@ exports.sendNewsletterTest = onCall(
 					type: 'newsletter_test'
 				},
 				to: adminUser.email,
+				from: NEWSLETTER_FROM,
 				subject: `[Test] ${subject}`,
 				html: rendered.html,
 				text: rendered.text,
@@ -355,7 +356,7 @@ exports.sendNewsletter = onCall(
 				const token = signUnsubscribeToken({ uid: recipient.uid, newsletterId })
 				const rendered = renderCampaignEmail({ bodyMarkdown, token })
 				return {
-					from: FROM,
+					from: NEWSLETTER_FROM,
 					to: [recipient.email],
 					subject,
 					html: rendered.html,

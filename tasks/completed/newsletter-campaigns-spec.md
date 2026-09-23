@@ -21,7 +21,7 @@ Lives under **Admin → Community**, not the Price Guide dashboard.
 - `/admin/newsletter` — campaign list (drafts and sent). Sent rows show unique opens, clicks, unsubscribes.
 - `/admin/newsletter/new` and `/admin/newsletter/:id` — compose a draft, or a read-only sent campaign with preview and stats.
 
-Compose uses a markdown toolbar (bold, italic, links) stored as `bodyMarkdown`. Preview is escaped HTML with only `p`, `br`, `strong`, `em`, `a`.
+Compose uses a markdown toolbar (heading, bold, italic, links) stored as `bodyMarkdown`. Preview is escaped HTML with `h1`–`h3`, `p`, `br`, `strong`, `em`, `a`. Headings are lines starting with `#`, `##`, or `###`.
 
 Actions: save draft, send a test to the signed-in admin (not counted in campaign stats), send to all eligible subscribers after confirm. Sent campaigns are read-only.
 
@@ -52,13 +52,13 @@ Cloud Functions in [`functions/newsletter.js`](../../functions/newsletter.js), e
 - `sendNewsletterTest` — admin callable; subject prefixed `[Test]`; no campaign tags.
 - `sendNewsletter` — admin callable; Resend batches of 100; timeout 540s; tags `newsletter_id` and `uid`; List-Unsubscribe headers.
 
-From address and Resend key match suggestion mail (`RESEND_API_KEY`).
+From: `vz price guide <updates@minecraft-economy-price-guide.net>`. Suggestion mail still uses `support@`. Same `RESEND_API_KEY`.
 
 Shared helpers live in [`functions/emailShared.js`](../../functions/emailShared.js).
 
 ## Unsubscribe
 
-- Public page `/unsubscribe?token=` (no auth). Calls `unsubscribeMarketing`.
+- Public page `/unsubscribe?token=` (no auth): success, already unsubscribed, or invalid token. Site chrome (nav, footer, cookie banner) is hidden. Preview without a token: `/unsubscribe?preview=1` (success), `?preview=already`, `?preview=invalid`.
 - HTTP function `unsubscribeMarketing` (`GET` JSON for the page, `POST` 200 for Gmail one-click).
 - HMAC token (`uid` + newsletter id) signed with `RESEND_API_KEY`.
 - Sets `marketing_opt_in.enabled: false`, `method: 'unsubscribe'`, increments campaign `stats.unsubscribed` once.

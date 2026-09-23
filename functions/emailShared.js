@@ -8,6 +8,7 @@ const resendApiKey = defineSecret('RESEND_API_KEY')
 const REGION = 'us-central1'
 const SITE_URL = 'https://minecraft-economy-price-guide.net'
 const FROM = 'vz price guide <support@minecraft-economy-price-guide.net>'
+const NEWSLETTER_FROM = 'vz price guide <updates@minecraft-economy-price-guide.net>'
 const SUPPORT_EMAIL = 'support@minecraft-economy-price-guide.net'
 
 function escapeHtml(value) {
@@ -48,7 +49,7 @@ function createResend() {
 	return new Resend(key)
 }
 
-async function claimAndSend({ eventKey, logData, to, subject, html, text, extraSend = {} }) {
+async function claimAndSend({ eventKey, logData, to, subject, html, text, from = FROM, extraSend = {} }) {
 	const db = admin.firestore()
 	const logRef = db.collection('email_logs').doc(eventKey)
 
@@ -69,7 +70,7 @@ async function claimAndSend({ eventKey, logData, to, subject, html, text, extraS
 	try {
 		const resend = createResend()
 		const { data, error } = await resend.emails.send({
-			from: FROM,
+			from,
 			to,
 			subject,
 			html,
@@ -96,6 +97,7 @@ module.exports = {
 	REGION,
 	SITE_URL,
 	FROM,
+	NEWSLETTER_FROM,
 	SUPPORT_EMAIL,
 	escapeHtml,
 	isAlreadyExists,
