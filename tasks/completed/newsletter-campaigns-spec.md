@@ -36,7 +36,7 @@ Open counts are labelled as approximate in the UI.
 - `subject`, `bodyMarkdown`
 - `status`: `draft` | `sending` | `sent` | `failed`
 - `createdBy`, `createdAt`, `updatedAt`, `sentAt`
-- `recipientCount`, `sentCount`, `failedCount`
+- `recipientCount`, `sentCount`, `failedCount` (`failedCount` is this send/resume run only; a clean resume writes `0`)
 - `stats`: `delivered`, `uniqueOpened`, `uniqueClicked`, `bounced`, `complained`, `unsubscribed`, `clicksByUrl`
 
 Status after a send run:

@@ -157,10 +157,9 @@ async function handleSend() {
 		if (!id) return
 		const result = await sendNewsletter(id)
 		showSendConfirm.value = false
-		successMessage.value =
-			result?.failedCount > 0
-				? 'Send finished with failures. You can resume.'
-				: 'Campaign sent.'
+		successMessage.value = result?.success
+			? 'Campaign sent.'
+			: 'Send finished with failures. You can resume.'
 		await loadCampaign()
 	} catch (error) {
 		console.error(error)

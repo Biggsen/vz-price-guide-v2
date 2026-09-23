@@ -441,14 +441,13 @@ exports.sendNewsletter = onCall(
 
 		const previousSent = campaign.sentCount || 0
 		const finalSent = previousSent + sentCount
-		const totalFailed = (campaign.failedCount || 0) + failedCount
 		const status = failedCount === 0 ? 'sent' : 'failed'
 
 		await campaignRef.set(
 			{
 				status,
 				sentCount: finalSent,
-				failedCount: totalFailed,
+				failedCount,
 				sentAt: FieldValue.serverTimestamp(),
 				updatedAt: FieldValue.serverTimestamp()
 			},
@@ -459,7 +458,7 @@ exports.sendNewsletter = onCall(
 			success: failedCount === 0,
 			recipientCount: recipients.length,
 			sentCount: finalSent,
-			failedCount: totalFailed
+			failedCount
 		}
 		} catch (error) {
 			rethrowSendError(error)
