@@ -9,6 +9,7 @@ const { sendSuggestionMessageEmail, sendNewSuggestionEmail } = require('./sugges
 const {
 	sendNewsletterTest,
 	sendNewsletter,
+	countNewsletterRecipients,
 	unsubscribeMarketing,
 	resendWebhook
 } = require('./newsletter')
@@ -17,6 +18,7 @@ exports.sendSuggestionMessageEmail = sendSuggestionMessageEmail
 exports.sendNewSuggestionEmail = sendNewSuggestionEmail
 exports.sendNewsletterTest = sendNewsletterTest
 exports.sendNewsletter = sendNewsletter
+exports.countNewsletterRecipients = countNewsletterRecipients
 exports.unsubscribeMarketing = unsubscribeMarketing
 exports.resendWebhook = resendWebhook
 

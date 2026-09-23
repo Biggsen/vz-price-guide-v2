@@ -33,6 +33,7 @@ const bodyMarkdown = ref('')
 const status = ref('draft')
 const stats = ref(null)
 const sentCount = ref(0)
+const failedCount = ref(0)
 const recipientCount = ref(0)
 const eligibleCount = ref(null)
 const sentAt = ref(null)
@@ -45,7 +46,9 @@ const showSendConfirm = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 
-const isReadOnly = computed(() => ['sent', 'sending'].includes(status.value))
+const isSent = computed(() => status.value === 'sent')
+const isContentLocked = computed(() => ['sent', 'sending', 'failed'].includes(status.value))
+const isResume = computed(() => status.value === 'sending' || status.value === 'failed')
 const previewHtml = computed(() => markdownToPreviewHtml(bodyMarkdown.value))
 const clickRows = computed(() => clicksByUrlRows(stats.value?.clicksByUrl))
 
@@ -66,6 +69,7 @@ async function loadCampaign() {
 		status.value = campaign.status || 'draft'
 		stats.value = campaign.stats || null
 		sentCount.value = campaign.sentCount || 0
+		failedCount.value = campaign.failedCount || 0
 		recipientCount.value = campaign.recipientCount || 0
 		sentAt.value = campaign.sentAt || null
 	} catch (error) {
@@ -86,7 +90,7 @@ async function loadRecipientCount() {
 }
 
 async function saveDraft() {
-	if (isReadOnly.value) return
+	if (isContentLocked.value) return
 	errorMessage.value = ''
 	saving.value = true
 	try {
@@ -120,7 +124,7 @@ async function ensureSaved() {
 	if (!newsletterId.value) {
 		return saveDraft()
 	}
-	if (!isReadOnly.value) {
+	if (!isContentLocked.value) {
 		await updateNewsletterDraft(newsletterId.value, {
 			subject: subject.value,
 			bodyMarkdown: bodyMarkdown.value
@@ -151,9 +155,12 @@ async function handleSend() {
 	try {
 		const id = await ensureSaved()
 		if (!id) return
-		await sendNewsletter(id)
+		const result = await sendNewsletter(id)
 		showSendConfirm.value = false
-		successMessage.value = 'Campaign sent.'
+		successMessage.value =
+			result?.failedCount > 0
+				? 'Send finished with failures. You can resume.'
+				: 'Campaign sent.'
 		await loadCampaign()
 	} catch (error) {
 		console.error(error)
@@ -187,7 +194,7 @@ onMounted(() => {
 			</div>
 			<div>
 				<h1 class="text-3xl font-bold text-gray-900">
-					{{ isReadOnly ? 'Campaign' : newsletterId ? 'Edit campaign' : 'New campaign' }}
+					{{ isSent ? 'Campaign' : newsletterId ? 'Edit campaign' : 'New campaign' }}
 				</h1>
 				<p class="text-gray-600">
 					<RouterLink to="/admin/newsletter" class="underline">All campaigns</RouterLink>
@@ -222,23 +229,31 @@ onMounted(() => {
 					id="newsletter-subject"
 					v-model="subject"
 					type="text"
-					:disabled="isReadOnly"
+					:disabled="isContentLocked"
 					data-cy="newsletter-subject"
 					class="block w-full rounded border-2 border-gray-asparagus px-3 py-2 text-gray-900 focus:ring-2 focus:ring-gray-asparagus focus:border-gray-asparagus disabled:bg-gray-50" />
 
 				<label class="block text-sm font-medium text-gray-700 mt-4 mb-1">Body</label>
-				<NewsletterMarkdownEditor v-model="bodyMarkdown" :disabled="isReadOnly" />
+				<NewsletterMarkdownEditor v-model="bodyMarkdown" :disabled="isContentLocked" />
 
-				<div v-if="!isReadOnly" class="flex flex-wrap gap-3 mt-4">
-					<BaseButton :loading="saving" @click="saveDraft">Save draft</BaseButton>
-					<BaseButton variant="secondary" :loading="testing" @click="handleTestSend">
-						Send test to me
-					</BaseButton>
+				<div v-if="!isSent" class="flex flex-wrap gap-3 mt-4">
+					<template v-if="!isContentLocked">
+						<BaseButton :loading="saving" @click="saveDraft">Save draft</BaseButton>
+						<BaseButton variant="secondary" :loading="testing" @click="handleTestSend">
+							Send test to me
+						</BaseButton>
+						<BaseButton
+							variant="tertiary"
+							data-cy="newsletter-send"
+							@click="showSendConfirm = true">
+							Send to subscribers
+						</BaseButton>
+					</template>
 					<BaseButton
-						variant="tertiary"
+						v-else
 						data-cy="newsletter-send"
 						@click="showSendConfirm = true">
-						Send to subscribers
+						Resume send
 					</BaseButton>
 				</div>
 			</div>
@@ -251,7 +266,7 @@ onMounted(() => {
 					v-html="previewHtml"></div>
 
 				<div
-					v-if="status === 'sent' || status === 'failed'"
+					v-if="status === 'sent' || status === 'failed' || status === 'sending'"
 					class="mt-6 bg-white border border-gray-200 rounded-lg p-4"
 					data-cy="newsletter-stats">
 					<h2 class="text-lg font-semibold text-gray-900 mb-2">Stats</h2>
@@ -265,6 +280,7 @@ onMounted(() => {
 						<li>Bounced: {{ stats?.bounced || 0 }}</li>
 						<li>Unsubscribed: {{ stats?.unsubscribed || 0 }}</li>
 						<li>Complained: {{ stats?.complained || 0 }}</li>
+						<li v-if="failedCount">Failed this send: {{ failedCount }}</li>
 					</ul>
 					<p class="text-xs text-gray-500 mt-3">
 						Open counts are approximate. Some mail apps prefetch images, so this can
@@ -304,15 +320,23 @@ onMounted(() => {
 			class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
 			data-cy="newsletter-send-confirm">
 			<div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-				<h2 class="text-lg font-semibold text-gray-900">Send this campaign?</h2>
-				<p class="text-sm text-gray-600 mt-2">
+				<h2 class="text-lg font-semibold text-gray-900">
+					{{ isResume ? 'Resume this campaign?' : 'Send this campaign?' }}
+				</h2>
+				<p v-if="isResume" class="text-sm text-gray-600 mt-2">
+					This will email remaining opted-in, verified subscribers who have not yet received
+					this campaign. People who already got it will be skipped.
+				</p>
+				<p v-else class="text-sm text-gray-600 mt-2">
 					This will email
 					<strong>{{ eligibleCount ?? 'all eligible' }}</strong>
 					opted-in, verified subscribers. You cannot edit it after sending.
 				</p>
 				<div class="flex justify-end gap-3 mt-6">
 					<BaseButton variant="tertiary" @click="showSendConfirm = false">Cancel</BaseButton>
-					<BaseButton :loading="sending" @click="handleSend">Send now</BaseButton>
+					<BaseButton :loading="sending" @click="handleSend">
+						{{ isResume ? 'Resume send' : 'Send now' }}
+					</BaseButton>
 				</div>
 			</div>
 		</div>

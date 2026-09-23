@@ -1,14 +1,4 @@
-import {
-	addDoc,
-	collection,
-	doc,
-	getCountFromServer,
-	getDoc,
-	query,
-	serverTimestamp,
-	updateDoc,
-	where
-} from 'firebase/firestore'
+import { addDoc, collection, doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { db, functions } from '../firebase'
 
@@ -51,13 +41,9 @@ export async function getNewsletter(newsletterId) {
 }
 
 export async function countNewsletterRecipients() {
-	const recipientQuery = query(
-		collection(db, 'users'),
-		where('marketing_opt_in.enabled', '==', true),
-		where('email_verified', '==', true)
-	)
-	const snapshot = await getCountFromServer(recipientQuery)
-	return snapshot.data().count
+	const count = httpsCallable(functions, 'countNewsletterRecipients')
+	const result = await count()
+	return result.data.count
 }
 
 export function callableErrorMessage(error) {

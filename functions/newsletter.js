@@ -21,6 +21,7 @@ const {
 
 const resendApiKey = defineSecret('RESEND_API_KEY')
 const resendWebhookSecret = defineSecret('RESEND_WEBHOOK_SECRET')
+const unsubscribeSecret = defineSecret('NEWSLETTER_UNSUBSCRIBE_SECRET')
 
 const BATCH_SIZE = 100
 
@@ -56,13 +57,30 @@ function httpFunctionUrl(name) {
 
 function getUnsubscribeSigningSecret() {
 	try {
-		return resendApiKey.value()
+		return unsubscribeSecret.value()
 	} catch (error) {
 		if (process.env.FUNCTIONS_EMULATOR) {
-			return 'emulator-unsubscribe-secret'
+			return process.env.NEWSLETTER_UNSUBSCRIBE_SECRET || 'emulator-unsubscribe-secret'
 		}
 		throw error
 	}
+}
+
+function isUnsubscribeClickUrl(url) {
+	if (!url) return false
+	const value = String(url)
+	try {
+		const parsed = new URL(value)
+		if (parsed.pathname === '/unsubscribe' || parsed.pathname.startsWith('/unsubscribe/')) {
+			return true
+		}
+		if (parsed.pathname.includes('unsubscribeMarketing')) {
+			return true
+		}
+	} catch {
+		return value.includes('/unsubscribe') || value.includes('unsubscribeMarketing')
+	}
+	return false
 }
 
 function rethrowSendError(error) {
@@ -223,10 +241,20 @@ async function applyUnsubscribe({ uid, newsletterId }) {
 	return alreadyOff ? 'already' : 'unsubscribed'
 }
 
+exports.countNewsletterRecipients = onCall({ region: REGION }, async (request) => {
+	try {
+		await requireAdmin(request)
+		const recipients = await loadEligibleRecipients()
+		return { count: recipients.length }
+	} catch (error) {
+		rethrowSendError(error)
+	}
+})
+
 exports.sendNewsletterTest = onCall(
 	{
 		region: REGION,
-		secrets: [resendApiKey]
+		secrets: [resendApiKey, unsubscribeSecret]
 	},
 	async (request) => {
 		try {
@@ -280,7 +308,7 @@ exports.sendNewsletterTest = onCall(
 exports.sendNewsletter = onCall(
 	{
 		region: REGION,
-		secrets: [resendApiKey],
+		secrets: [resendApiKey, unsubscribeSecret],
 		timeoutSeconds: 540,
 		memory: '512MiB'
 	},
@@ -311,6 +339,10 @@ exports.sendNewsletter = onCall(
 		}
 
 		const recipients = await loadEligibleRecipients()
+		if (recipients.length === 0) {
+			throw new HttpsError('failed-precondition', 'No eligible subscribers')
+		}
+
 		const sendingUpdate = {
 			status: 'sending',
 			recipientCount: recipients.length,
@@ -340,6 +372,10 @@ exports.sendNewsletter = onCall(
 				pending.push(recipient)
 			} catch (error) {
 				if (isAlreadyExists(error)) {
+					const existing = await logRef.get()
+					if (existing.data()?.status !== 'sent') {
+						pending.push(recipient)
+					}
 					continue
 				}
 				throw error
@@ -405,28 +441,25 @@ exports.sendNewsletter = onCall(
 
 		const previousSent = campaign.sentCount || 0
 		const finalSent = previousSent + sentCount
-		const status = failedCount > 0 && finalSent === 0 ? 'failed' : 'sent'
+		const totalFailed = (campaign.failedCount || 0) + failedCount
+		const status = failedCount === 0 ? 'sent' : 'failed'
 
 		await campaignRef.set(
 			{
 				status,
 				sentCount: finalSent,
-				failedCount: (campaign.failedCount || 0) + failedCount,
+				failedCount: totalFailed,
 				sentAt: FieldValue.serverTimestamp(),
 				updatedAt: FieldValue.serverTimestamp()
 			},
 			{ merge: true }
 		)
 
-		if (status === 'failed') {
-			throw new HttpsError('failed-precondition', 'Failed to send this campaign. Try again.')
-		}
-
 		return {
-			success: true,
+			success: failedCount === 0,
 			recipientCount: recipients.length,
 			sentCount: finalSent,
-			failedCount: (campaign.failedCount || 0) + failedCount
+			failedCount: totalFailed
 		}
 		} catch (error) {
 			rethrowSendError(error)
@@ -447,7 +480,7 @@ exports.unsubscribeMarketing = onRequest(
 		region: REGION,
 		cors: true,
 		invoker: 'public',
-		secrets: [resendApiKey]
+		secrets: [unsubscribeSecret]
 	},
 	async (req, res) => {
 		if (req.method !== 'GET' && req.method !== 'POST') {
@@ -555,6 +588,9 @@ async function applyTrackingEvent(eventType, data) {
 	}
 
 	if (eventType === 'email.clicked') {
+		if (isUnsubscribeClickUrl(clickUrl)) {
+			return
+		}
 		const uniqueAny = await claimUniqueEvent(`${newsletterId}_${uid}_clicked`, {
 			newsletterId,
 			uid,

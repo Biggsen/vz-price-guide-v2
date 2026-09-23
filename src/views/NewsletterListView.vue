@@ -71,7 +71,7 @@ function statusClass(status) {
 					</span>
 				</div>
 				<div
-					v-if="campaign.status === 'sent'"
+					v-if="campaign.status === 'sent' || campaign.status === 'failed'"
 					class="mt-3 flex flex-wrap gap-4 text-sm text-gray-600"
 					data-cy="newsletter-list-stats">
 					<span>Sent {{ campaign.sentCount || 0 }}</span>
