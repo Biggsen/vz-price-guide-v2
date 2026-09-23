@@ -1,9 +1,6 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { useAdmin } from '../utils/admin.js'
-import { LightBulbIcon, UsersIcon } from '@heroicons/vue/24/outline'
-
-const { user, isAdmin } = useAdmin()
+import { EnvelopeIcon, LightBulbIcon, UsersIcon } from '@heroicons/vue/24/outline'
 </script>
 
 <template>
@@ -17,8 +14,7 @@ const { user, isAdmin } = useAdmin()
 				<div>
 					<h1 class="text-3xl font-bold text-gray-900">Community Dashboard</h1>
 					<p class="text-gray-600">
-						Manage user suggestions and community feedback for the Minecraft economy
-						guide.
+						Manage user suggestions and send newsletters to opted-in subscribers.
 					</p>
 				</div>
 			</div>
@@ -44,6 +40,23 @@ const { user, isAdmin } = useAdmin()
 				<p class="text-gray-600 text-sm">
 					Review and manage user suggestions for improving the price guide and site
 					functionality.
+				</p>
+			</RouterLink>
+
+			<RouterLink
+				to="/admin/newsletter"
+				data-cy="community-newsletter-card"
+				class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 hover:border-indigo-300">
+				<div class="flex items-center mb-4">
+					<div
+						class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+						<EnvelopeIcon class="w-6 h-6 text-indigo-600" />
+					</div>
+					<h3 class="text-lg font-semibold text-gray-900 ml-3">Newsletter</h3>
+				</div>
+				<p class="text-gray-600 text-sm">
+					Write and send emails to people who opted in for occasional updates, and view
+					open and click stats.
 				</p>
 			</RouterLink>
 		</div>

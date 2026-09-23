@@ -6,9 +6,19 @@ const { FieldValue } = require('firebase-admin/firestore')
 admin.initializeApp()
 
 const { sendSuggestionMessageEmail, sendNewSuggestionEmail } = require('./suggestionEmails')
+const {
+	sendNewsletterTest,
+	sendNewsletter,
+	unsubscribeMarketing,
+	resendWebhook
+} = require('./newsletter')
 
 exports.sendSuggestionMessageEmail = sendSuggestionMessageEmail
 exports.sendNewSuggestionEmail = sendNewSuggestionEmail
+exports.sendNewsletterTest = sendNewsletterTest
+exports.sendNewsletter = sendNewsletter
+exports.unsubscribeMarketing = unsubscribeMarketing
+exports.resendWebhook = resendWebhook
 
 // Stripe secret key - set via `firebase functions:secrets:set STRIPE_SECRET_KEY`
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY')

@@ -133,7 +133,7 @@ export async function isMinecraftUsernameTaken(minecraftUsername, excludeUserId 
  * Save marketing email opt-in preference and sync email/verification status
  * @param {string} userId
  * @param {boolean} enabled
- * @param {'signup' | 'settings'} method
+ * @param {'signup' | 'settings' | 'unsubscribe'} method
  * @param {string} [email] - Optional email address to store
  * @param {boolean} [emailVerified] - Optional email verification status to store
  * @param {string} [accountCreatedAt] - Optional ISO string for account creation time (from Auth metadata)

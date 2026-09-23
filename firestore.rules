@@ -130,5 +130,29 @@ service cloud.firestore {
     match /email_logs/{logId} {
       allow read, write: if false;
     }
+    // Newsletter campaign events: Cloud Functions (Admin SDK) only
+    match /newsletter_events/{eventId} {
+      allow read, write: if false;
+    }
+    // Newsletter campaigns: admins can manage drafts; send/stats are Functions-only
+    match /newsletters/{newsletterId} {
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      allow create: if request.auth != null && request.auth.token.admin == true
+        && request.resource.data.status == 'draft'
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.subject is string
+        && request.resource.data.bodyMarkdown is string;
+      allow update: if request.auth != null && request.auth.token.admin == true
+        && resource.data.status == 'draft'
+        && request.resource.data.status == 'draft'
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.subject is string
+        && request.resource.data.bodyMarkdown is string
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'stats', 'sentCount', 'failedCount', 'recipientCount', 'sentAt', 'createdBy', 'createdAt'
+        ]);
+      allow delete: if request.auth != null && request.auth.token.admin == true
+        && resource.data.status == 'draft';
+    }
   }
 }

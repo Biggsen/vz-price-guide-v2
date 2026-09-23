@@ -34,7 +34,8 @@ const isDesignActive = computed(() => {
 })
 
 const isCommunityActive = computed(() => {
-	return ['/admin/community', '/admin/suggestions'].includes(route.path)
+	return ['/admin/community', '/admin/suggestions'].includes(route.path) ||
+		route.path.startsWith('/admin/newsletter')
 })
 
 const isReportsActive = computed(() => {
