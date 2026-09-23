@@ -1,45 +1,15 @@
 const { onDocumentCreated } = require('firebase-functions/v2/firestore')
-const { defineSecret } = require('firebase-functions/params')
 const admin = require('firebase-admin')
-const { FieldValue } = require('firebase-admin/firestore')
-const { Resend } = require('resend')
-
-const resendApiKey = defineSecret('RESEND_API_KEY')
-
-const REGION = 'us-central1'
-const SITE_URL = 'https://minecraft-economy-price-guide.net'
-const FROM = 'vz price guide <support@minecraft-economy-price-guide.net>'
-const SUPPORT_EMAIL = 'support@minecraft-economy-price-guide.net'
-
-function escapeHtml(value) {
-	return String(value ?? '')
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-}
-
-function isAlreadyExists(error) {
-	return error?.code === 6 || error?.code === 'already-exists'
-}
-
-async function getAuthUser(uid) {
-	if (!uid) return null
-	try {
-		return await admin.auth().getUser(uid)
-	} catch (error) {
-		console.warn('Auth user not found', uid, error.message)
-		return null
-	}
-}
-
-function hasAdminClaim(user) {
-	return user?.customClaims?.admin === true
-}
-
-function suggestionLink(path, suggestionId) {
-	return `${SITE_URL}${path}?id=${encodeURIComponent(suggestionId)}`
-}
+const {
+	resendApiKey,
+	REGION,
+	SUPPORT_EMAIL,
+	escapeHtml,
+	getAuthUser,
+	hasAdminClaim,
+	suggestionLink,
+	claimAndSend
+} = require('./emailShared')
 
 function layoutHtml({ heading, intro, rows, linkHref, linkLabel }) {
 	const rowHtml = rows
@@ -60,46 +30,6 @@ function layoutHtml({ heading, intro, rows, linkHref, linkLabel }) {
 	<p><a href="${escapeHtml(linkHref)}">${escapeHtml(linkLabel)}</a></p>
 </body>
 </html>`
-}
-
-async function claimAndSend({ eventKey, logData, to, subject, html, text }) {
-	const db = admin.firestore()
-	const logRef = db.collection('email_logs').doc(eventKey)
-
-	try {
-		await logRef.create({
-			...logData,
-			status: 'pending',
-			sentAt: null
-		})
-	} catch (error) {
-		if (isAlreadyExists(error)) {
-			console.log('Skipping duplicate email', eventKey)
-			return
-		}
-		throw error
-	}
-
-	try {
-		const resend = new Resend(resendApiKey.value())
-		const { error } = await resend.emails.send({
-			from: FROM,
-			to,
-			subject,
-			html,
-			text
-		})
-		if (error) {
-			throw new Error(error.message || 'Resend send failed')
-		}
-		await logRef.update({
-			status: 'sent',
-			sentAt: FieldValue.serverTimestamp()
-		})
-	} catch (error) {
-		await logRef.delete()
-		throw error
-	}
 }
 
 async function sendAdminReplyToAuthor({ suggestionId, messageId, message, suggestion }) {

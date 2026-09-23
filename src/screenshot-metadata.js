@@ -247,6 +247,18 @@ export const screenshotToViewMap = {
 		type: 'admin',
 		description: 'Admin interface for managing user suggestions'
 	},
+	'newsletter-list-default': {
+		viewFile: 'src/views/NewsletterListView.vue',
+		route: '/admin/newsletter',
+		type: 'admin',
+		description: 'Admin newsletter campaign list'
+	},
+	'newsletter-compose-default': {
+		viewFile: 'src/views/NewsletterCampaignView.vue',
+		route: '/admin/newsletter/new',
+		type: 'admin',
+		description: 'Compose a newsletter campaign'
+	},
 	'styleguide-default': {
 		viewFile: 'src/views/StyleguideView.vue',
 		route: '/styleguide',

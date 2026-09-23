@@ -450,6 +450,52 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/admin/newsletter',
+			name: 'admin-newsletter',
+			component: () => import('../views/NewsletterListView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: `Newsletter - ${siteName}`,
+				noindex: true
+			}
+		},
+		{
+			path: '/admin/newsletter/new',
+			name: 'admin-newsletter-new',
+			component: () => import('../views/NewsletterCampaignView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: `New campaign - ${siteName}`,
+				noindex: true
+			}
+		},
+		{
+			path: '/admin/newsletter/:id',
+			name: 'admin-newsletter-campaign',
+			component: () => import('../views/NewsletterCampaignView.vue'),
+			meta: {
+				requiresAuth: true,
+				requiresVerification: true,
+				requiresAdmin: true,
+				title: `Newsletter campaign - ${siteName}`,
+				noindex: true
+			}
+		},
+		{
+			path: '/unsubscribe',
+			name: 'unsubscribe',
+			component: () => import('../views/UnsubscribeView.vue'),
+			meta: {
+				title: `Unsubscribe - ${siteName}`,
+				noindex: true,
+				hideChrome: true
+			}
+		},
+		{
 			path: '/admin/access',
 			name: 'admin-access',
 			component: () => import('../views/AccessManagementView.vue'),
